@@ -856,6 +856,24 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
         expect(explanation.unresolvedCanonicalFactPaths).toEqual(
           report.engineTransferBoundary.unresolvedCanonicalInputs.map(item => item.factPath),
         );
+        expect(explanation.inputRemediation.map(item => item.factPath))
+          .toEqual(explanation.unresolvedCanonicalFactPaths);
+        for (const remediation of explanation.inputRemediation) {
+          const inputGap = report.engineTransferBoundary.unresolvedCanonicalInputs
+            .find(item => item.factPath === remediation.factPath);
+          if (!inputGap) throw new TypeError('Unresolved original Canonical fact disappeared.');
+          expect(remediation.canonicalInputKind).toBe(inputGap.canonicalInputKind);
+          expect(remediation.sourceSurfaces).toEqual(
+            inputGap.affectedOriginalSources.map(item => item.sourceSurface),
+          );
+          expect(remediation.nextStep).toBe(
+            remediation.factPath === 'pillars.hour' && remediation.canonicalInputKind === 'pillar'
+              ? 'CHECK_BIRTH_TIME_AND_RECALCULATE' : 'REQUIRES_CANONICAL_FACT_RESOLUTION',
+          );
+          expect(remediation.koreanNotice.length).toBeGreaterThan(20);
+          expect(remediation.correctionAloneEnablesFamilyInterpretation).toBe(false);
+          expect(remediation.correctionAloneGrantsOfficialAuthority).toBe(false);
+        }
         expect(explanation.missingCanonicalConceptSourceSurfaces).toEqual(
           [...new Set(report.engineTransferBoundary.canonicalInputAndConceptHolds
             .filter(item => item.reasonCode === 'R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE')
@@ -894,6 +912,20 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
       scope: 'children', snapshotId: unknown.snapshotId, calculationHash: unknown.calculationHash,
     });
     expect(unknownNotice.unresolvedCanonicalFactPaths).toContain('pillars.hour');
+    expect(unknownNotice.inputRemediation.find(item =>
+      item.factPath === 'pillars.hour')).toMatchObject({
+        canonicalInputKind: 'pillar',
+        sourceSurfaces: ['時為子息'],
+        nextStep: 'CHECK_BIRTH_TIME_AND_RECALCULATE',
+        correctionAloneEnablesFamilyInterpretation: false,
+        correctionAloneGrantsOfficialAuthority: false,
+      });
+    expect(knownNotice.inputRemediation.some(item =>
+      item.nextStep === 'CHECK_BIRTH_TIME_AND_RECALCULATE')).toBe(false);
+    expect(unknownNotice.inputRemediation.filter(item =>
+      item.canonicalInputKind === 'visible_t5' ||
+      item.canonicalInputKind === 'hidden_stem_membership').every(item =>
+      item.nextStep === 'REQUIRES_CANONICAL_FACT_RESOLUTION')).toBe(true);
     const hourReason = unknownNotice.sourceReasons.find(reason =>
       reason.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED' &&
       reason.sourceSurfaces.includes('時為子息'));
@@ -928,6 +960,8 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
       scope: 'parents', snapshotId: female.snapshotId, calculationHash: female.calculationHash,
     });
     expect(maleNotice.missingCanonicalConceptSourceSurfaces).toContain('胎為母');
+    expect(maleNotice.inputRemediation.every(item =>
+      !item.factPath.includes('fetus') && !item.factPath.includes('胎'))).toBe(true);
     expect(maleNotice.explanation).toContain('태주 계산 사실이 정의되지 않았습니다');
     expect(femaleNotice.missingCanonicalConceptSourceSurfaces).not.toContain('胎為母');
     expect(femaleNotice.explanation).not.toContain('태주 계산 사실이 정의되지 않았습니다');
