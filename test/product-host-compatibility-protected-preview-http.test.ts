@@ -88,7 +88,19 @@ describe('existing compatibility browser route stays protected and research-only
       ]);
       expect(body.explanation).toContain('T10 궁합 해석');
       expect(body.limitations.length).toBeGreaterThan(0);
-      expect(JSON.stringify(body)).not.toContain('personalRelationship');
+      const serialized = JSON.stringify(body);
+      expect(serialized).not.toContain('personalRelationship');
+      // Research handoffs must not widen the existing authenticated Preview
+      // transport or become source-certified T10 compatibility assertions.
+      expect(Object.keys(body).sort()).toEqual([
+        'coverage', 'explanation', 'generatedInterpretationClaims', 'lifecycle',
+        'limitations', 'mayPersist', 'mayPublish', 'maySell', 'subjects',
+      ]);
+      expect(serialized).not.toContain('sourceScopeHandoff');
+      expect(serialized).not.toContain('comparedSourceSurfaces');
+      expect(serialized).not.toContain('eligiblePairwiseClaim');
+      expect(serialized).not.toContain('pairwiseT10Admitted');
+      expect(serialized).not.toContain('R068_R069');
     });
   });
 
