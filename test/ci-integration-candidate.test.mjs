@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { assertSubmissionEvent, assertPrerequisites, assertStagedPolicy, resolveCandidateMergeability, validateCandidate } from '../scripts/ci/integration-candidate.mjs';
+import { assertSubmissionEvent, assertPrerequisites, assertStagedPolicy, execGhApiWithTransientRetry, ghApiRetryDelayMs, resolveCandidateMergeability, validateCandidate } from '../scripts/ci/integration-candidate.mjs';
 
 const candidate = { pr: '42', head: 'a'.repeat(40), base: 'b'.repeat(40) };
 const current = () => ({
@@ -223,5 +223,78 @@ describe('integration workflow current-base execution', () => {
     expect(workflow).not.toContain(
       'group: ci-integration-admission\n',
     );
+  });
+});
+
+describe('GitHub API transient failure recovery for integration verification', () => {
+  const serverError = status => Object.assign(new Error('GitHub API failed'), {
+    stderr: `gh: HTTP ${status}\n`,
+  });
+
+  it('retries an HTTP 500 check-runs fetch and preserves the exact API arguments', () => {
+    const waits = [];
+    const calls = [];
+    const run = (program, args, options) => {
+      calls.push({ program, args, options });
+      if (calls.length === 1) throw serverError(500);
+      return '[{"check_runs":[]}]';
+    };
+    const result = execGhApiWithTransientRetry(
+      ['--paginate', '--slurp', 'repos/owner/repo/commits/abc/check-runs?per_page=100'],
+      { run, wait: ms => waits.push(ms) },
+    );
+    expect(JSON.parse(result)).toEqual([{ check_runs: [] }]);
+    expect(calls).toHaveLength(2);
+    expect(calls[0]).toEqual(calls[1]);
+    expect(calls[0]?.program).toBe('gh');
+    expect(calls[0]?.args.slice(0, 3)).toEqual(['api', '--paginate', '--slurp']);
+    expect(waits).toEqual([ghApiRetryDelayMs]);
+  });
+
+  it('bounds retries on 502/503/504 and returns the original failure after exhaustion', () => {
+    const waits = [];
+    let calls = 0;
+    const err = serverError(503);
+    expect(() => execGhApiWithTransientRetry(['repos/owner/repo/checks'], {
+      run: () => { calls += 1; throw err; },
+      wait: ms => waits.push(ms),
+    })).toThrow(err);
+    expect(calls).toBe(3);
+    expect(waits).toEqual([ghApiRetryDelayMs, 2 * ghApiRetryDelayMs]);
+
+    for (const status of [502, 504]) {
+      let attempts = 0;
+      const output = execGhApiWithTransientRetry(['repos/owner/repo/checks'], {
+        run: () => {
+          attempts += 1;
+          if (attempts === 1) throw serverError(status);
+          return '{"status":"ok"}';
+        },
+        wait: () => {},
+      });
+      expect(output).toBe('{"status":"ok"}');
+      expect(attempts).toBe(2);
+    }
+  });
+
+  it.each([401, 403, 404, 422])('fails closed without retry for GitHub HTTP %s', status => {
+    let attempts = 0;
+    let sleeps = 0;
+    expect(() => execGhApiWithTransientRetry(['repos/owner/repo/checks'], {
+      run: () => { attempts += 1; throw serverError(status); },
+      wait: () => { sleeps += 1; },
+    })).toThrow('GitHub API failed');
+    expect(attempts).toBe(1);
+    expect(sleeps).toBe(0);
+  });
+
+  it('never retries a non-GitHub transport or malformed response failure', () => {
+    let attempts = 0;
+    const err = new Error('connection refused');
+    expect(() => execGhApiWithTransientRetry(['repos/owner/repo/checks'], {
+      run: () => { attempts += 1; throw err; },
+      wait: () => { throw new Error('should not wait'); },
+    })).toThrow(err);
+    expect(attempts).toBe(1);
   });
 });
