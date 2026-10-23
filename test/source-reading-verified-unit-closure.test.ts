@@ -124,6 +124,10 @@ describe('Saju 2B-3C Preview signed response and Reader S3 source-unit closure',
     expect(result.material.interpretationRunId).toBe(handoff.source.interpretationRunId);
     expect(result.material.registrySnapshotId).toBe(handoff.source.registrySnapshotId);
     expect(result.material.profileRef).toEqual(handoff.source.profileRef);
+    expect(result.interpretationPolicyVersionPins).toEqual({
+      registrySnapshotId: handoff.source.registrySnapshotId,
+      profileRef: handoff.source.profileRef,
+    });
     expect(result.material.evidenceBundleHash).toBe(handoff.source.evidenceBundleHash);
     expect(result.material.responseBodyHash).toBe(deterministicContentHash(response));
     expect(result.sourceUnitInventory.segments.length).toBeGreaterThan(0);
