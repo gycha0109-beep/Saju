@@ -22,25 +22,46 @@ function escapeHtml(input) {
 
 export function validateNatalBirthForm(form) {
   const date = form.get('date');
+  const calendarType = form.get('calendarType') ?? 'solar';
+  const sex = form.get('sex') ?? 'unspecified';
+  const isLeapMonth = form.get('isLeapMonth') === 'on';
   const timeUnknown = form.get('timeUnknown') === 'on';
   const enteredTime = form.get('time');
+  if (calendarType !== 'solar' && calendarType !== 'lunar') {
+    throw new TypeError('달력 기준을 양력 또는 음력으로 선택해 주세요.');
+  }
+  if (sex !== 'male' && sex !== 'female' && sex !== 'unspecified') {
+    throw new TypeError('전통 계산용 성별을 다시 선택해 주세요.');
+  }
+  if (calendarType === 'solar' && isLeapMonth) {
+    throw new TypeError('윤달은 음력 출생정보에서만 선택할 수 있습니다.');
+  }
   if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/u.test(date)) {
     throw new TypeError('출생일을 YYYY-MM-DD 형식으로 입력해 주세요.');
   }
-  const parsed = new Date(date + 'T00:00:00.000Z');
-  if (!Number.isFinite(parsed.getTime()) ||
-      parsed.toISOString().slice(0, 10) !== date) {
-    throw new TypeError('실제로 존재하는 출생일을 입력해 주세요.');
+  const [year, month, day] = date.split('-').map(Number);
+  if (year < 1 || year > new Date().getUTCFullYear() ||
+      month < 1 || month > 12 || day < 1 || (calendarType === 'lunar' && day > 30)) {
+    throw new TypeError('유효한 출생 연월일을 입력해 주세요.');
   }
-  if (parsed.getTime() > Date.now()) {
-    throw new TypeError('미래의 출생일은 사용할 수 없습니다.');
+  if (calendarType === 'solar') {
+    const parsed = new Date(date + 'T00:00:00.000Z');
+    if (!Number.isFinite(parsed.getTime()) ||
+        parsed.toISOString().slice(0, 10) !== date) {
+      throw new TypeError('실제로 존재하는 출생일을 입력해 주세요.');
+    }
+    if (parsed.getTime() > Date.now()) {
+      throw new TypeError('미래의 출생일은 사용할 수 없습니다.');
+    }
   }
-  if (timeUnknown) return { date, time: 'unknown' };
-  if (typeof enteredTime !== 'string' ||
-      !/^([01]\d|2[0-3]):[0-5]\d$/u.test(enteredTime)) {
+  let time;
+  if (timeUnknown) time = 'unknown';
+  else if (typeof enteredTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/u.test(enteredTime)) {
+    time = enteredTime;
+  } else {
     throw new TypeError('출생시간을 HH:MM 형식으로 입력하거나 시간 미상을 선택해 주세요.');
   }
-  return { date, time: enteredTime };
+  return { date, time, calendarType, isLeapMonth, sex };
 }
 
 function page(message = '') {
@@ -52,7 +73,7 @@ function page(message = '') {
   body{font:16px/1.65 system-ui,sans-serif;color:#ede9f8;background:#10121d;margin:0}
   main{max-width:680px;margin:5vh auto;padding:34px;background:#1d2031;border:1px solid #3e405d;border-radius:20px}
   h1{font-size:28px;margin:0 0 12px}p{color:#ccc8e0}label{display:block;margin:22px 0 8px;font-weight:600}
-  input[type=date],input[type=time]{display:block;width:100%;padding:12px;border:1px solid #76748a;border-radius:9px;background:#121523;color:#fff;font:inherit}
+  input[type=text],input[type=time],select{display:block;width:100%;padding:12px;border:1px solid #76748a;border-radius:9px;background:#121523;color:#fff;font:inherit}
   .check{display:flex;align-items:center;gap:10px;font-weight:400}
   .check input{width:20px;height:20px}
   button{margin-top:24px;background:#cbc3fa;color:#171422;padding:14px 22px;border:0;border-radius:11px;font:700 16px system-ui;cursor:pointer;width:100%}
@@ -60,10 +81,14 @@ function page(message = '') {
   .error{color:#ffb4b4;font-weight:600}
 </style></head><body><main><h1>내 명식으로 사주 풀이 보기</h1>
 <p>생년월일과 출생시간을 입력하면 기존 계산 엔진과 한국어 풀이 엔진을 실행해 원국 5개 분야의 결과를 이 브라우저에 표시합니다.</p>
-<p class="notice">현재는 <strong>개발자용 로컬 연구 미리보기</strong>입니다. 양력 기준이며 출생시각을 모르면 미상으로 선택할 수 있습니다. 근거가 부족한 풀이는 부족하다고 표시합니다. 공식 공개·보관·판매되는 결과가 아닙니다.</p>
+<p class="notice">현재는 <strong>개발자용 로컬 연구 미리보기</strong>입니다. 양력·음력(윤달)을 선택할 수 있고 출생시각을 모르면 미상으로 선택할 수 있습니다. 근거가 부족한 풀이는 부족하다고 표시합니다. 공식 공개·보관·판매되는 결과가 아닙니다.</p>
 ${message ? `<p role="alert" class="error">${escapeHtml(message)}</p>` : ''}
 <form method="post" action="/reading">
-<label for="date">양력 출생일</label><input id="date" name="date" type="date" required>
+<label for="calendarType">달력 기준</label>
+<select id="calendarType" name="calendarType"><option value="solar">양력</option><option value="lunar">음력</option></select>
+<label class="check" for="isLeapMonth"><input id="isLeapMonth" name="isLeapMonth" type="checkbox">음력 윤달 (음력 선택 시)</label>
+<label for="date">출생일 (YYYY-MM-DD)</label><input id="date" name="date" type="text" inputmode="numeric" placeholder="1996-01-09" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" required>
+<label for="sex">전통 계산용 성별</label><select id="sex" name="sex"><option value="unspecified">선택하지 않음</option><option value="male">남성</option><option value="female">여성</option></select>
 <label for="time">출생시간 (24시간제)</label><input id="time" name="time" type="time" value="12:00">
 <label class="check" for="timeUnknown"><input id="timeUnknown" name="timeUnknown" type="checkbox">출생시간을 모릅니다</label>
 <button type="submit">내 사주 결과 생성하기</button>
@@ -91,13 +116,13 @@ async function readPostBody(req) {
   return new URLSearchParams(body);
 }
 
-export async function renderLocalNatalReading(date, time) {
+export async function renderLocalNatalReading(date, time, calendarType = 'solar', isLeapMonth = false, sex = 'unspecified') {
   const folder = await mkdtemp(join(tmpdir(), 'myeongha-local-natal-'));
   const output = join(folder, 'private-reading.html');
   try {
     await runFile(process.execPath, [
       join(repoRoot, 'scripts', 'natal-personalized-preview.mjs'),
-      date, time, output,
+      date, time, output, calendarType, String(isLeapMonth), sex,
     ], { cwd: repoRoot, timeout: 120000, maxBuffer: 1024 * 1024 });
     const html = await readFile(output, 'utf8');
     if (!html.startsWith('<!doctype html>') ||
@@ -124,8 +149,8 @@ export function createLocalNatalReaderServer(render = renderLocalNatalReading) {
       return;
     }
     try {
-      const { date, time } = validateNatalBirthForm(await readPostBody(req));
-      const html = await render(date, time);
+      const { date, time, calendarType, isLeapMonth, sex } = validateNatalBirthForm(await readPostBody(req));
+      const html = await render(date, time, calendarType, isLeapMonth, sex);
       res.writeHead(200);
       res.end(html);
     } catch (error) {

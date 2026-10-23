@@ -9,11 +9,11 @@ import {
 test('birth form accepts a real solar birth date, clock time, or explicit unknown', () => {
   assert.deepEqual(
     validateNatalBirthForm(new URLSearchParams('date=2024-03-10&time=12%3A30')),
-    { date: '2024-03-10', time: '12:30' },
+    { date: '2024-03-10', time: '12:30', calendarType: 'solar', isLeapMonth: false, sex: 'unspecified' },
   );
   assert.deepEqual(
     validateNatalBirthForm(new URLSearchParams('date=2024-03-10&timeUnknown=on')),
-    { date: '2024-03-10', time: 'unknown' },
+    { date: '2024-03-10', time: 'unknown', calendarType: 'solar', isLeapMonth: false, sex: 'unspecified' },
   );
   for (const date of ['2024-02-30', '2025-02-29', 'garbage', '2999-01-01']) {
     assert.throws(
@@ -22,6 +22,13 @@ test('birth form accepts a real solar birth date, clock time, or explicit unknow
   }
   assert.throws(() => validateNatalBirthForm(
     new URLSearchParams('date=2024-03-10&time=25%3A00')));
+  assert.deepEqual(validateNatalBirthForm(new URLSearchParams(
+    'calendarType=lunar&isLeapMonth=on&date=2020-04-30&timeUnknown=on&sex=female')),
+    { date: '2020-04-30', time: 'unknown', calendarType: 'lunar', isLeapMonth: true, sex: 'female' });
+  assert.throws(() => validateNatalBirthForm(new URLSearchParams(
+    'calendarType=lunar&date=2020-04-31&time=12%3A00')));
+  assert.throws(() => validateNatalBirthForm(new URLSearchParams(
+    'calendarType=solar&isLeapMonth=on&date=2020-04-20&time=12%3A00')));
 });
 
 async function serve(render, run) {
@@ -39,13 +46,16 @@ async function serve(render, run) {
 
 test('browser GET → actual birth input POST → same generated HTML response', async () => {
   const captured = [];
-  await serve(async (date, time) => {
-    captured.push({ date, time });
+  await serve(async (date, time, calendarType, isLeapMonth, sex) => {
+    captured.push({ date, time, calendarType, isLeapMonth, sex });
     return '<!doctype html><html lang="ko"><body>실제 명식 기반 풀이</body></html>';
   }, async origin => {
     const landing = await globalThis.fetch(origin);
     assert.equal(landing.status, 200);
-    assert.match(await landing.text(), /내 사주 결과 생성하기/u);
+    const landingHtml = await landing.text();
+    assert.match(landingHtml, /내 사주 결과 생성하기/u);
+    assert.match(landingHtml, /value="lunar"/u);
+    assert.match(landingHtml, /name="isLeapMonth"/u);
     assert.match(landing.headers.get('cache-control'), /no-store/u);
     const response = await globalThis.fetch(origin + '/reading', {
       method: 'POST',
@@ -59,9 +69,18 @@ test('browser GET → actual birth input POST → same generated HTML response',
       body: new URLSearchParams({ date: '2024-03-10', timeUnknown: 'on' }),
     });
     assert.equal(unknown.status, 200);
+    const lunarResponse = await fetch(origin + '/reading', {
+      method: 'POST',
+      body: new URLSearchParams({
+        calendarType: 'lunar', date: '2020-04-30', time: '11:15',
+        isLeapMonth: 'on', sex: 'male',
+      }),
+    });
+    assert.equal(lunarResponse.status, 200);
     assert.deepEqual(captured, [
-      { date: '2024-03-10', time: '08:45' },
-      { date: '2024-03-10', time: 'unknown' },
+      { date: '2024-03-10', time: '08:45', calendarType: 'solar', isLeapMonth: false, sex: 'unspecified' },
+      { date: '2024-03-10', time: 'unknown', calendarType: 'solar', isLeapMonth: false, sex: 'unspecified' },
+      { date: '2020-04-30', time: '11:15', calendarType: 'lunar', isLeapMonth: true, sex: 'male' },
     ]);
   });
 });

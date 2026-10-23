@@ -575,7 +575,7 @@ function renderBusinessMultifactorInMainReport(report) {
     '</details></section>';
 }
 
-function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence, careerResearch, generalResearch, wealthResearch, businessResearch, relationshipResearch) {
+function renderPage(date, time, calendarType, isLeapMonth, sex, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence, careerResearch, generalResearch, wealthResearch, businessResearch, relationshipResearch) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -617,7 +617,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
   </style></head><body><main>
   <header><div class="eyebrow">MYEONGHA · INTERNAL NATAL EXPLORATION</div>
   <h1>나의 사주, 한 장의 흐름</h1>
-  <p>${escapeHtml(date)} · ${escapeHtml(time ?? '출생시간 미상')} 입력으로 현재 명하 엔진의 실제 Preview 해석을 조합한 내부 시제품입니다. 기존 공식 Preview 본문은 보존하고, 5개 분야의 다중 근거 해석은 각각 별도의 미승인 연구 카드로 구분합니다. 근거 없는 빈칸은 채우지 않습니다.</p>
+  <p>${escapeHtml(calendarType === 'lunar' ? (isLeapMonth ? '음력 윤달' : '음력') : '양력')} ${escapeHtml(date)} · ${escapeHtml(time ?? '출생시간 미상')} · ${escapeHtml(sex === 'male' ? '남성' : sex === 'female' ? '여성' : '성별 미지정')} 입력으로 현재 명하 엔진의 실제 Preview 해석을 조합한 내부 시제품입니다. 기존 공식 Preview 본문은 보존하고, 5개 분야의 다중 근거 해석은 각각 별도의 미승인 연구 카드로 구분합니다. 근거 없는 빈칸은 채우지 않습니다.</p>
   </header>
   ${renderPillars(general?.calculationSummary)}
   ${renderN30bVerifiedGeneral(verifiedFiveDomains)}
@@ -665,6 +665,15 @@ async function main() {
   const timeArg = process.argv[3] ?? '12:00';
   const time = timeArg === 'unknown' ? null : timeArg;
   const output = resolve(process.argv[4] ?? 'natal-personalized-preview.html');
+  const calendarType = process.argv[5] ?? 'solar';
+  const isLeapMonth = process.argv[6] === 'true';
+  const sex = process.argv[7] ?? 'unspecified';
+  if (!['solar', 'lunar'].includes(calendarType) ||
+      (isLeapMonth && calendarType !== 'lunar') ||
+      !['male', 'female', 'unspecified'].includes(sex) ||
+      (process.argv[6] !== undefined && !['true', 'false'].includes(process.argv[6]))) {
+    throw new TypeError('Invalid calendar, leap month or sex in natal Preview input');
+  }
   const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1({
     [PRODUCTION_CALCULATION_PROCESS_ENV_V1.serviceBearer]: bearer,
     [PRODUCTION_CALCULATION_PROCESS_ENV_V1.host]: '127.0.0.1',
@@ -678,7 +687,8 @@ async function main() {
         method: 'POST',
         headers: { authorization: `Bearer ${bearer}`, 'content-type': 'application/json' },
         body: JSON.stringify({
-          birth: { calendarType: 'solar', date, time, sex: 'unspecified' },
+          birth: { calendarType, date, time, sex,
+            ...(calendarType === 'lunar' ? { isLeapMonth } : {}) },
           reading: { text: domain.text },
         }),
       });
@@ -691,10 +701,11 @@ async function main() {
   const [year, month, day] = date.split('-').map(Number);
   const [hour, minute] = time === null ? [] : time.split(':').map(Number);
   const calculated = calculateAuthorizedMyeonghwaProductionSnapshot({
-    calendarType: 'solar',
+    calendarType,
+    ...(calendarType === 'lunar' ? { isLeapMonth } : {}),
     date: { year, month, day },
     time: time === null ? { known: false } : { known: true, hour, minute },
-    sexForTraditionalCalculation: 'unspecified',
+    sexForTraditionalCalculation: sex,
   });
   const evidence = buildNatalStructuralEvidence(calculated.snapshot);
   const domainKeys = ['general', 'career', 'wealth', 'business', 'relationship'];
@@ -764,7 +775,7 @@ async function main() {
   const relations = buildNatalN22ChartRelationGuide(
     calculated.snapshot, researchExecution, researchRegistry,
   );
-  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence, careerResearch, generalResearch, wealthResearch, businessResearch, relationshipResearch), 'utf8');
+  writeFileSync(output, renderPage(date, time, calendarType, isLeapMonth, sex, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence, careerResearch, generalResearch, wealthResearch, businessResearch, relationshipResearch), 'utf8');
   process.stdout.write('General multifactor research on SAME birth chart: MUR=' + generalResearch.state +
     ', source-bound composite claims shown=' + generalResearch.sections.length +
     ', publish=false, sell=false, usefulComplete=false\\n');
