@@ -33,13 +33,8 @@ export interface GeneralAnnualMonthlyExplorationReport {
   annual: GeneralAnnualExplorationReport;
   monthly: GeneralMonthlyExplorationReport;
   periodComparison: string;
-  /** Which source-owned Korean T9 reading actually applies at the requested instant. */
-  referenceReading: Readonly<{
-    referenceDateTime: string;
-    state: 'in_period' | 'insufficient_evidence' | 'outside_target_month';
-    segmentId?: MonthlySegmentId;
-    theme?: GeneralMonthlyExplorationSection;
-  }>;
+  /** Shared with the exact single-month research result. */
+  referenceReading: GeneralMonthlyExplorationReport['referenceReading'];
   caveats: readonly string[];
 }
 
@@ -112,38 +107,8 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       ? label + '의 개인별 해석 근거는 아직 충분하지 않습니다'
       : label + '에는 ' + found.tenGod + ' 십신에 근거한 별도 월별 관점이 있습니다';
   };
-  // One actual Jeol phase applies at the caller's exact reference instant.
-  // Do not silently call an arbitrary selected month "this month".
-  const instant = Date.parse(facts.referenceDateTime);
-  const matchingSegments = facts.segments.filter(segment =>
-    Number.isFinite(instant) &&
-    Date.parse(segment.startsAt) <= instant &&
-    instant < Date.parse(segment.endsAt));
-  requireLinkedPeriod(matchingSegments.length <= 1,
-    'reference instant overlaps more than one monthly segment');
-  const selectedSegment = matchingSegments[0];
-  const applicableThemes = selectedSegment === undefined ? [] :
-    themes.filter(theme =>
-      theme.segmentId === selectedSegment.segmentId &&
-      theme.calculatedInterval.startsAt === selectedSegment.startsAt &&
-      theme.calculatedInterval.endsAt === selectedSegment.endsAt);
-  requireLinkedPeriod(applicableThemes.length <= 1,
-    'more than one source-owned core theme for a monthly segment');
-  const referenceReading: GeneralAnnualMonthlyExplorationReport['referenceReading'] =
-    selectedSegment === undefined
-      ? { referenceDateTime: facts.referenceDateTime, state: 'outside_target_month' }
-      : applicableThemes.length === 0
-        ? {
-            referenceDateTime: facts.referenceDateTime,
-            state: 'insufficient_evidence',
-            segmentId: selectedSegment.segmentId,
-          }
-        : {
-            referenceDateTime: facts.referenceDateTime,
-            state: 'in_period',
-            segmentId: selectedSegment.segmentId,
-            theme: applicableThemes[0],
-          };
+  // Reuse the exact single-month selection; joining Annual never reinterprets it.
+  const referenceReading = monthly.referenceReading;
 
   const periodComparison =
     String(annual.targetYear) + '년 전체 미리보기는 ' + annual.annualStemTenGod +
