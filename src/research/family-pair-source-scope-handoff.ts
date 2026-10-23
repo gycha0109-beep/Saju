@@ -1785,6 +1785,16 @@ export interface R070FamilyResearchUnavailableExplanationKo {
   /** A precise, research-only pointer to the input and authority explanation. */
   unresolvedCanonicalFactPaths: readonly string[];
   missingCanonicalConceptSourceSurfaces: readonly string[];
+  /** Original-source-level Korean reasons, preserving their exact calculation paths. */
+  sourceReasons: readonly {
+    reasonCode: R070FamilyMenuUnsupportedReason['reasonCode'];
+    category: R070FamilyMenuUnsupportedReason['category'];
+    sourceSurfaces: readonly string[];
+    observedFactPaths: readonly string[];
+    unresolvedFactPaths: readonly string[];
+    missingPrerequisites: readonly string[];
+    koreanExplanation: string;
+  }[];
   readingMeaningAdmitted: false;
   officialReadingAuthorized: false;
   productMenuCanBeEnabled: false;
@@ -1855,6 +1865,15 @@ export function explainR070FamilyResearchUnavailabilityKo(
     authorityNotice,
     unresolvedCanonicalFactPaths: unresolved.map(item => item.factPath),
     missingCanonicalConceptSourceSurfaces: [...new Set(missingCanonicalConceptSourceSurfaces)],
+    sourceReasons: report.menuSupportHandoff.unsupportedReasons.map(reason => ({
+      reasonCode: reason.reasonCode,
+      category: reason.category,
+      sourceSurfaces: reason.sourceSurfaces,
+      observedFactPaths: reason.observedFactPaths,
+      unresolvedFactPaths: reason.unresolvedFactPaths,
+      missingPrerequisites: reason.missingPrerequisites,
+      koreanExplanation: r070KoreanFamilyUnavailabilityDetail(expected.scope, reason),
+    })),
     readingMeaningAdmitted: false,
     officialReadingAuthorized: false,
     productMenuCanBeEnabled: false,
@@ -1862,36 +1881,6 @@ export function explainR070FamilyResearchUnavailabilityKo(
     mayPublish: false,
     maySell: false,
   };
-}
-
-/**
- * Internal Korean insufficiency explanation for the exact family request.
- * This is not a Reading/Reader narrative or an executable interpretation.
- */
-export interface R070FamilyResearchUnavailableExplanation {
-  scope: FamilyResearchScope;
-  snapshotId: string;
-  calculationHash: string;
-  coverageStatus: 'unsupported';
-  headline: string;
-  details: readonly {
-    reasonCode: R070FamilyMenuUnsupportedReason['reasonCode'];
-    category: R070FamilyMenuUnsupportedReason['category'];
-    sourceSurfaces: readonly string[];
-    observedFactPaths: readonly string[];
-    unresolvedFactPaths: readonly string[];
-    missingPrerequisites: readonly string[];
-    koreanExplanation: string;
-  }[];
-  /** Excluded historical clauses never become unsupported-menu explanations. */
-  excludedHistoricalSources: readonly R070FamilyMenuScopeExclusion[];
-  lifecycle: 'RESEARCH_INTERNAL_ONLY';
-  isFamilyInterpretation: false;
-  mayDisplayAsOfficialReading: false;
-  mayEnableMenu: false;
-  mayPersist: false;
-  mayPublish: false;
-  maySell: false;
 }
 
 function r070KoreanFamilyUnavailabilityDetail(
@@ -1920,52 +1909,6 @@ function r070KoreanFamilyUnavailabilityDetail(
       return quoted + '에 나타난 ' + subject +
         ' 관련 역사적 방법의 선택·조정 규칙이 아직 확정되지 않았습니다.';
   }
-}
-
-/** Only research-owned hold reasons are translated, never invented family outcomes. */
-export function buildR070FamilyUnavailableResearchExplanation(
-  report: FamilySourceScopeHandoff,
-  expected: Readonly<{
-    scope: FamilyResearchScope;
-    snapshotId: string;
-    calculationHash: string;
-  }>,
-): R070FamilyResearchUnavailableExplanation {
-  selectR070FamilyResearchTransferForContext(report, expected);
-  const menu = report.menuSupportHandoff;
-  if (menu.requestedScope !== expected.scope ||
-      menu.supportState !== 'UNAVAILABLE_RESEARCH_ONLY' ||
-      menu.familyT8Admitted !== false ||
-      menu.mayDisplayFamilyInterpretation !== false ||
-      menu.mayEnableMenu !== false) {
-    throw new TypeError('R070 family insufficiency explanation requires the original research-only menu hold.');
-  }
-  return {
-    scope: expected.scope,
-    snapshotId: expected.snapshotId,
-    calculationHash: expected.calculationHash,
-    coverageStatus: 'unsupported',
-    headline: expected.scope === 'parents'
-      ? '부모 관련 가족 풀이를 제공할 근거가 아직 부족합니다.'
-      : '자녀 관련 가족 풀이를 제공할 근거가 아직 부족합니다.',
-    details: menu.unsupportedReasons.map(reason => ({
-      reasonCode: reason.reasonCode,
-      category: reason.category,
-      sourceSurfaces: reason.sourceSurfaces,
-      observedFactPaths: reason.observedFactPaths,
-      unresolvedFactPaths: reason.unresolvedFactPaths,
-      missingPrerequisites: reason.missingPrerequisites,
-      koreanExplanation: r070KoreanFamilyUnavailabilityDetail(expected.scope, reason),
-    })),
-    excludedHistoricalSources: menu.excludedHistoricalSources,
-    lifecycle: 'RESEARCH_INTERNAL_ONLY',
-    isFamilyInterpretation: false,
-    mayDisplayAsOfficialReading: false,
-    mayEnableMenu: false,
-    mayPersist: false,
-    mayPublish: false,
-    maySell: false,
-  };
 }
 
 export interface R069SingleChartScopeObservation {
