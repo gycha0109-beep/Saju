@@ -111,3 +111,93 @@ test('calculation failure produces safe error rather than exposing server intern
     assert.match(html, /공식 공개·보관·판매되는 결과가 아닙니다/u);
   });
 });
+
+import {
+  SAJU_READING_MENUS, validateSajuMenuForm,
+  renderLocalSelectedSajuMenuReading,
+} from './natal-browser-menu-reading.mjs';
+
+test('all twelve reading choices are real scoped entries and validate their specific inputs', () => {
+  assert.equal(SAJU_READING_MENUS.length, 12);
+  assert.equal(new Set(SAJU_READING_MENUS.map(item => item.id)).size, 12);
+  assert.equal(validateSajuMenuForm(
+    new URLSearchParams('readingMenu=general'), validateNatalBirthForm).menu, 'general');
+  assert.throws(() => validateSajuMenuForm(
+    new URLSearchParams('readingMenu=unknown'), validateNatalBirthForm), /열두 항목/u);
+  assert.throws(() => validateSajuMenuForm(
+    new URLSearchParams('readingMenu=monthly&targetPeriod=2026-13'),
+    validateNatalBirthForm), /조회할 연월/u);
+  assert.throws(() => validateSajuMenuForm(
+    new URLSearchParams('readingMenu=question&question= '),
+    validateNatalBirthForm), /질문/u);
+  assert.throws(() => validateSajuMenuForm(
+    new URLSearchParams('readingMenu=compatibility&partnerDate=1997-03-18'),
+    validateNatalBirthForm), /사용 권한/u);
+  assert.throws(() => validateSajuMenuForm(
+    new URLSearchParams('readingMenu=compatibility&partnerBirthAuthorized=on&partnerDate=1997-02-30&partnerTime=14%3A00'),
+    validateNatalBirthForm), /실제로 존재하는 출생일/u);
+  const couple = validateSajuMenuForm(
+    new URLSearchParams('readingMenu=compatibility&partnerBirthAuthorized=on&partnerDate=1997-03-18&partnerTime=14%3A00'),
+    validateNatalBirthForm);
+  assert.equal(couple.partner.date, '1997-03-18');
+  assert.equal(couple.partner.time, '14:00');
+});
+
+test('browser exposes all twelve choices without requiring unrelated partner or question inputs', async () => {
+  let rendered = 0;
+  await serve(async () => {
+    rendered++;
+    return '<!doctype html><html lang="ko"><body>개인별 원국 보고서</body></html>';
+  }, async origin => {
+    const response = await globalThis.fetch(origin);
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    for (const menu of SAJU_READING_MENUS) {
+      assert.match(html, new RegExp('value="' + menu.id + '"', 'u'));
+    }
+    const invalid = await globalThis.fetch(origin + '/reading', {
+      method: 'POST',
+      body: new URLSearchParams({
+        readingMenu: 'question', question: '', date: '1996-01-09', time: '09:30',
+      }),
+    });
+    assert.equal(invalid.status, 400);
+    assert.match(await invalid.text(), /질문/u);
+    assert.equal(rendered, 0);
+    const natal = await globalThis.fetch(origin + '/reading', {
+      method: 'POST',
+      body: new URLSearchParams({
+        readingMenu: 'career', date: '1996-01-09', time: '09:30',
+      }),
+    });
+    assert.equal(natal.status, 200);
+    assert.match(await natal.text(), /개인별 원국 보고서/u);
+    assert.equal(rendered, 1);
+  });
+});
+
+test('existing real source readings are accessible in the same local browser without new meaning', async () => {
+  const self = {
+    date: '1996-01-09', time: '09:30', calendarType: 'solar',
+    isLeapMonth: false, sex: 'unspecified',
+  };
+  const annual = await renderLocalSelectedSajuMenuReading(self, {
+    menu: 'annual', targetPeriod: '2026-09', question: '',
+  });
+  assert.match(annual, /id="year-reading"/u);
+  assert.match(annual, /id="monthly-reading"/u);
+  assert.match(annual, /항목 다시 선택/u);
+  const family = await renderLocalSelectedSajuMenuReading(self, {
+    menu: 'family', targetPeriod: '2026-09', question: '',
+  });
+  assert.match(family, /부모와 관련된 본인 명식/u);
+  assert.match(family, /자녀와 관련된 본인 명식/u);
+  assert.match(family, /공식/u);
+  const question = await renderLocalSelectedSajuMenuReading(self, {
+    menu: 'question', targetPeriod: '2026-09',
+    question: '제 재물운 관리가 궁금해요',
+  });
+  assert.match(question, /질문:/u);
+  assert.match(question, /제 재물운 관리가 궁금해요/u);
+  assert.match(question, /정식 질문풀이 아님/u);
+});
