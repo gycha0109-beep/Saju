@@ -61,6 +61,7 @@ describe('General Natal source-integrity closure audit', () => {
     expect(peer.frozenRegisteredGlyphs).toBe('兄弟者即劫財比肩');
     expect(peer.observedSourceGlyphs).not.toBe(peer.frozenRegisteredGlyphs);
     expect(peer.literalIdentityWithFrozenRecordEstablished).toBe(false);
+    expect(peer.fullSourceIntegrityEstablished).toBe(false);
     expect(peer.independentlyReviewedSourceReregistrationApproved).toBe(false);
     expect(peer.nextResearchAction).toBe('INDEPENDENT_REVIEW_OF_FROZEN_GLYPH_REGISTRATION');
     expect(audit.currentReentry.remainingResearchBlockers).toContain(
