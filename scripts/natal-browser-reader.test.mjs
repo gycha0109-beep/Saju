@@ -1,0 +1,93 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import {
+  createLocalNatalReaderServer,
+  validateNatalBirthForm,
+} from './natal-browser-reader.mjs';
+
+test('birth form accepts a real solar birth date, clock time, or explicit unknown', () => {
+  assert.deepEqual(
+    validateNatalBirthForm(new URLSearchParams('date=2024-03-10&time=12%3A30')),
+    { date: '2024-03-10', time: '12:30' },
+  );
+  assert.deepEqual(
+    validateNatalBirthForm(new URLSearchParams('date=2024-03-10&timeUnknown=on')),
+    { date: '2024-03-10', time: 'unknown' },
+  );
+  for (const date of ['2024-02-30', '2025-02-29', 'garbage', '2999-01-01']) {
+    assert.throws(
+      () => validateNatalBirthForm(new URLSearchParams({ date, time: '12:00' })),
+    );
+  }
+  assert.throws(() => validateNatalBirthForm(
+    new URLSearchParams('date=2024-03-10&time=25%3A00')));
+});
+
+async function serve(render, run) {
+  const server = createLocalNatalReaderServer(render);
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    assert.ok(address && typeof address !== 'string');
+    await run(`http://127.0.0.1:${address.port}`);
+  } finally {
+    await new Promise((resolve, reject) =>
+      server.close(error => error ? reject(error) : resolve()));
+  }
+}
+
+test('browser GET → actual birth input POST → same generated HTML response', async () => {
+  const captured = [];
+  await serve(async (date, time) => {
+    captured.push({ date, time });
+    return '<!doctype html><html lang="ko"><body>실제 명식 기반 풀이</body></html>';
+  }, async origin => {
+    const landing = await fetch(origin);
+    assert.equal(landing.status, 200);
+    assert.match(await landing.text(), /내 사주 결과 생성하기/u);
+    assert.match(landing.headers.get('cache-control'), /no-store/u);
+    const response = await fetch(origin + '/reading', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ date: '2024-03-10', time: '08:45' }),
+    });
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), /실제 명식 기반 풀이/u);
+    const unknown = await fetch(origin + '/reading', {
+      method: 'POST',
+      body: new URLSearchParams({ date: '2024-03-10', timeUnknown: 'on' }),
+    });
+    assert.equal(unknown.status, 200);
+    assert.deepEqual(captured, [
+      { date: '2024-03-10', time: '08:45' },
+      { date: '2024-03-10', time: 'unknown' },
+    ]);
+  });
+});
+
+test('malformed birth input cannot reach calculation and is explained on the form', async () => {
+  let calls = 0;
+  await serve(async () => { calls++; return ''; }, async origin => {
+    const response = await fetch(origin + '/reading', {
+      method: 'POST',
+      body: new URLSearchParams({ date: '2025-02-30', time: '12:00' }),
+    });
+    assert.equal(response.status, 400);
+    assert.match(await response.text(), /실제로 존재하는 출생일/u);
+    assert.equal(calls, 0);
+  });
+});
+
+test('calculation failure produces safe error rather than exposing server internals', async () => {
+  await serve(async () => { throw new Error('internal calculation secret'); }, async origin => {
+    const response = await fetch(origin + '/reading', {
+      method: 'POST',
+      body: new URLSearchParams({ date: '2024-03-10', time: '12:00' }),
+    });
+    assert.equal(response.status, 503);
+    const html = await response.text();
+    assert.match(html, /계산 또는 풀이를 완료하지 못했습니다/u);
+    assert.doesNotMatch(html, /internal calculation secret/u);
+    assert.match(html, /공식 공개·보관·판매되는 결과가 아닙니다/u);
+  });
+});
