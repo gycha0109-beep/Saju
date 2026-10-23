@@ -120,7 +120,10 @@ describe('E-3 held Korean source-exact Product Reading sections', () => {
         sectionType: 'career', title: '직업운', state: 'partial',
         blocks: [{ type: 'paragraph', text: HEADLINE + '\n' + SUMMARY }],
       }],
-      disclosures: [{ type: 'scope_limitation', text: SCOPE }],
+      disclosures: [
+        { type: 'scope_limitation', text: SCOPE },
+        { type: 'scope_limitation', text: '이 풀이는 내부 연구 미리보기이며 공식 공개·저장·판매용 Reading이 아닙니다.' },
+      ],
     });
     expect(view.disclosures).toHaveLength(2);
     const shown = JSON.stringify(view);
