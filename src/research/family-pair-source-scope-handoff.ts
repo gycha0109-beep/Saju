@@ -1864,6 +1864,110 @@ export function explainR070FamilyResearchUnavailabilityKo(
   };
 }
 
+/**
+ * Internal Korean insufficiency explanation for the exact family request.
+ * This is not a Reading/Reader narrative or an executable interpretation.
+ */
+export interface R070FamilyResearchUnavailableExplanation {
+  scope: FamilyResearchScope;
+  snapshotId: string;
+  calculationHash: string;
+  coverageStatus: 'unsupported';
+  headline: string;
+  details: readonly {
+    reasonCode: R070FamilyMenuUnsupportedReason['reasonCode'];
+    category: R070FamilyMenuUnsupportedReason['category'];
+    sourceSurfaces: readonly string[];
+    observedFactPaths: readonly string[];
+    unresolvedFactPaths: readonly string[];
+    missingPrerequisites: readonly string[];
+    koreanExplanation: string;
+  }[];
+  /** Excluded historical clauses never become unsupported-menu explanations. */
+  excludedHistoricalSources: readonly R070FamilyMenuScopeExclusion[];
+  lifecycle: 'RESEARCH_INTERNAL_ONLY';
+  isFamilyInterpretation: false;
+  mayDisplayAsOfficialReading: false;
+  mayEnableMenu: false;
+  mayPersist: false;
+  mayPublish: false;
+  maySell: false;
+}
+
+function r070KoreanFamilyUnavailabilityDetail(
+  scope: FamilyResearchScope,
+  reason: R070FamilyMenuUnsupportedReason,
+): string {
+  const subject = scope === 'parents' ? '부모' : '자녀';
+  const quoted = reason.sourceSurfaces.map(surface => '「' + surface + '」').join('·');
+  switch (reason.reasonCode) {
+    case 'R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED':
+      return subject + ' 풀이에 사용할 공식 가족 T8 해석 방법론이 아직 승인되지 않았습니다.';
+    case 'R070_MENU_PILLAR_POSITION_NOT_FAMILY_INTERPRETATION':
+      return quoted + '의 기둥 위치는 계산되지만 이를 ' + subject +
+        '의 상태·사건으로 해석할 규칙은 승인되지 않았습니다.';
+    case 'R070_MENU_SOURCE_CONTEXT_METHOD_NOT_SELECTED':
+      return quoted + '의 현대 십신 계산값을 관찰하더라도 역사적 ' + subject +
+        ' 역할 배속의 방법과 적용 문맥은 확정되지 않았습니다.' +
+        (reason.unresolvedFactPaths.length > 0
+          ? ' 미확정 계산 경로: ' + reason.unresolvedFactPaths.join(', ') + '.' : '');
+    case 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED':
+      return quoted + '에 필요한 기둥 계산 입력이 미확정입니다. 미확정 경로: ' +
+        reason.unresolvedFactPaths.join(', ') + '.';
+    case 'R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE':
+      return quoted + '에서 요구하는 계산 개념이 현재 Canonical 명식에 정의되지 않았습니다.';
+    case 'R070_MENU_HISTORICAL_METHODS_NOT_RECONCILED':
+      return quoted + '에 나타난 ' + subject +
+        ' 관련 역사적 방법의 선택·조정 규칙이 아직 확정되지 않았습니다.';
+  }
+}
+
+/** Only research-owned hold reasons are translated, never invented family outcomes. */
+export function buildR070FamilyUnavailableResearchExplanation(
+  report: FamilySourceScopeHandoff,
+  expected: Readonly<{
+    scope: FamilyResearchScope;
+    snapshotId: string;
+    calculationHash: string;
+  }>,
+): R070FamilyResearchUnavailableExplanation {
+  selectR070FamilyResearchTransferForContext(report, expected);
+  const menu = report.menuSupportHandoff;
+  if (menu.requestedScope !== expected.scope ||
+      menu.supportState !== 'UNAVAILABLE_RESEARCH_ONLY' ||
+      menu.familyT8Admitted !== false ||
+      menu.mayDisplayFamilyInterpretation !== false ||
+      menu.mayEnableMenu !== false) {
+    throw new TypeError('R070 family insufficiency explanation requires the original research-only menu hold.');
+  }
+  return {
+    scope: expected.scope,
+    snapshotId: expected.snapshotId,
+    calculationHash: expected.calculationHash,
+    coverageStatus: 'unsupported',
+    headline: expected.scope === 'parents'
+      ? '부모 관련 가족 풀이를 제공할 근거가 아직 부족합니다.'
+      : '자녀 관련 가족 풀이를 제공할 근거가 아직 부족합니다.',
+    details: menu.unsupportedReasons.map(reason => ({
+      reasonCode: reason.reasonCode,
+      category: reason.category,
+      sourceSurfaces: reason.sourceSurfaces,
+      observedFactPaths: reason.observedFactPaths,
+      unresolvedFactPaths: reason.unresolvedFactPaths,
+      missingPrerequisites: reason.missingPrerequisites,
+      koreanExplanation: r070KoreanFamilyUnavailabilityDetail(expected.scope, reason),
+    })),
+    excludedHistoricalSources: menu.excludedHistoricalSources,
+    lifecycle: 'RESEARCH_INTERNAL_ONLY',
+    isFamilyInterpretation: false,
+    mayDisplayAsOfficialReading: false,
+    mayEnableMenu: false,
+    mayPersist: false,
+    mayPublish: false,
+    maySell: false,
+  };
+}
+
 export interface R069SingleChartScopeObservation {
   personRole: 'subject' | 'target';
   originalHistoricalSexScope: string;
