@@ -10,6 +10,7 @@ import {
 } from '../src/reading/governed-reading-evidence.js';
 import {
   projectHeldKoreanReadingProductSectionsV1,
+  renderHeldKoreanReadingProductSectionsOnDemandV1,
 } from '../src/reading/held-korean-reading-product-sections.js';
 import {
   renderReadingOnDemandV1,
@@ -103,6 +104,33 @@ function fixture(headline = HEADLINE) {
 }
 
 describe('E-3 held Korean source-exact Product Reading sections', () => {
+  it('connects the real Korean renderer to held Reader section and disclosure blocks without delivery rights', async () => {
+    const view = await renderHeldKoreanReadingProductSectionsOnDemandV1(
+      fixture(), REQUEST_SCOPE,
+    );
+    expect(view.sections).toEqual([{
+      sectionType: 'career', title: '직업운', state: 'partial',
+      blocks: [{ type: 'paragraph', text: HEADLINE + '\n' + SUMMARY }],
+    }]);
+    expect(view.disclosures).toEqual([
+      { type: 'scope_limitation', text: SCOPE },
+      {
+        type: 'scope_limitation',
+        text: '이 풀이는 내부 연구 미리보기이며 공식 공개·저장·판매용 Reading이 아닙니다.',
+      },
+    ]);
+    expect(view).toMatchObject({
+      state: 'internal_preview_only',
+      canPersist: false, canDisclose: false, canPublish: false, canSell: false,
+    });
+    expect(JSON.stringify(view)).not.toContain(REQUEST_SCOPE);
+    for (const internalId of ['claim-career-exact', 'rule-career', 'source-career']) {
+      expect(JSON.stringify(view)).not.toContain(internalId);
+    }
+    expect('reading' in view).toBe(false);
+    expect('responseId' in view).toBe(false);
+  });
+
   it('shows exactly the existing Korean T8 content and every scope qualifier as preview-only Reading blocks', async () => {
     const semantics = fixture();
     const localized = await renderReadingOnDemandV1(
