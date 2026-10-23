@@ -33,6 +33,12 @@ export interface GeneralAnnualMonthlyExplorationReport {
   annual: GeneralAnnualExplorationReport;
   monthly: GeneralMonthlyExplorationReport;
   periodComparison: string;
+  /** The yearly profile is for a Seoul civil calendar year, not an Ipchun annual pillar. */
+  annualReference: {
+    referenceDateTime: string;
+    civilYearAtReference: number;
+    state: 'in_target_civil_year' | 'outside_target_civil_year';
+  };
   /** Shared with the exact single-month research result. */
   referenceReading: GeneralMonthlyExplorationReport['referenceReading'];
   caveats: readonly string[];
@@ -109,6 +115,19 @@ export function buildGeneralAnnualMonthlyExplorationReport(
   };
   // Reuse the exact single-month selection; joining Annual never reinterprets it.
   const referenceReading = monthly.referenceReading;
+  // Use the requested instant in Asia/Seoul, not the machine's timezone
+  // or the Ipchun effective year. This is applicability context, not T8/T9 meaning.
+  const atReference = Date.parse(referenceReading.referenceDateTime);
+  requireLinkedPeriod(Number.isFinite(atReference) &&
+    referenceReading.referenceDateTime === annual.referenceDateTime,
+  'year and month must use the exact same reference instant');
+  const civilYearAtReference = new Date(atReference + 9 * 60 * 60 * 1000).getUTCFullYear();
+  const annualReference = {
+    referenceDateTime: referenceReading.referenceDateTime,
+    civilYearAtReference,
+    state: civilYearAtReference === annual.targetYear
+      ? 'in_target_civil_year' as const : 'outside_target_civil_year' as const,
+  };
 
   const periodComparison =
     String(annual.targetYear) + '년 전체 미리보기는 ' + annual.annualStemTenGod +
@@ -123,7 +142,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     researchOnly: true, usefulComplete: false, mayPublish: false, maySell: false,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     targetYear: monthly.targetYear, targetMonth: monthly.targetMonth,
-    annual, monthly, periodComparison, referenceReading,
+    annual, monthly, periodComparison, annualReference, referenceReading,
     caveats: [
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
       '이 연결 화면은 별도 통합 운세 규칙이 아니라 기존 연운 연구 문구와 월운 T9 근거를 순서대로 보여줍니다.',
@@ -181,6 +200,20 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '</details></article>',
   ).join('\n');
   const selected = report.referenceReading;
+  const annualAt = report.annualReference;
+  if (annualAt.referenceDateTime !== selected.referenceDateTime ||
+      annualAt.civilYearAtReference !==
+        new Date(Date.parse(selected.referenceDateTime) + 9 * 60 * 60 * 1000).getUTCFullYear() ||
+      (annualAt.state === 'in_target_civil_year') !==
+        (annualAt.civilYearAtReference === report.targetYear)) {
+    throw new TypeError('Annual/monthly HTML requires matching civil-year reference context.');
+  }
+  const annualContext = annualAt.state === 'in_target_civil_year'
+    ? '조회 시각 ' + kst(annualAt.referenceDateTime) + '은 서울 달력 ' +
+      report.targetYear + '년에 속합니다. 이 연운은 해당 선택 연도의 연구용 풀이입니다.'
+    : '조회 시각 ' + kst(annualAt.referenceDateTime) + '은 서울 달력 ' +
+      annualAt.civilYearAtReference + '년입니다. 아래 ' + report.targetYear +
+      '년 연운은 현재 연도에 적용되는 풀이가 아니라 선택한 연도의 연구 비교 자료입니다.';
   const focus = selected.state === 'in_period' && selected.theme !== undefined
     ? '<p class="muted">해당 절입 구간: ' + e(SEGMENT_LABEL[selected.segmentId!]) +
       ' · ' + e(kst(selected.theme.calculatedInterval.startsAt)) + '부터 ' +
@@ -236,6 +269,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<p class="muted">조회 기준: ' + e(kst(selected.referenceDateTime)) +
     ' · 연구용 월별 적용 범위만 안내합니다.</p>' + focus + '</section>' +
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
+    '<p class="muted" id="reference-year-context">' + e(annualContext) + '</p>' +
     '<p class="muted">서울 달력 연도 기준 · 연간 ' + e(report.annual.annualPillarLabel) +
     ' · 십신 ' + e(report.annual.annualStemTenGod) + '</p>' + annual + '</section>' +
     '<section id="monthly-reading"><h2>' + e(report.monthly.headline) + '</h2>' +
