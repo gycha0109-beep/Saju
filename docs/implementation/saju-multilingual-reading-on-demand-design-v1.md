@@ -34,7 +34,7 @@
 
 | 작업 | 소유/범위 | 완료 증거 |
 | --- | --- | --- |
-| E-3 기존 한국어 출력 어댑터 | Saju + MyeongHa Reader 계약 | 동일 Claim·한계로 기존 한국어 사용자 문장과 동등성 유지, 공식/연구 상태 불변 |
+| E-3 기존 한국어 출력 어댑터 | Saju + MyeongHa Reader 계약 | **Saju 내부 어댑터 구현:** 기존 Canonical primary Claim의 한국어 원문(headline/summary)과 필수 qualifier 문구를 그대로 조합하여 on-demand 내부 결과로 생성한다. ProductReadingResponse 소비자 레닥션·MyeongHa 연결은 별도 미완료 |
 | E-4 locale별 용어·메시지 | Saju 용어/출처 + UX 제품 카피 | 승인 용어집/버전/로케일 및 독립적인 메뉴·오류·미지원 상태 |
 | E-5 최초 추가 언어(e.g. en-US) | Saju Renderer + 언어 품질 담당 | 실제 출생 입력/두 명식 대조, Claim 의미·Qualifier·HOLD 보존, 미지원 언어 정확한 처리 |
 | E-6 LLM 표현 어댑터 | Saju governance, 별도 승인 | LLM이 Rule/Claim/예측을 생성하지 않고 원본 의미와 한계를 재현, 의미 위반 시 fail-closed |
@@ -44,12 +44,20 @@
 
 **아직 기계적으로 보장되지 않는 것:** 생성된 자연어 자체의 논리적 의미 동등성, 현지 명리 용어 정확성, 문화적 적합성, 내부 텍스트의 consumer-safe 레닥션. 별도 로케일별 품질 심사/실제 출력 연동 전에는 외국어 풀이를 출시하지 않는다.
 
+### E-3 기존 한국어 Source-bound Renderer — 구현 (2026-10-23)
+
+- 코드: `src/reading/korean-source-bound-reading-renderer.ts`; 검증: `test/korean-source-bound-reading-renderer.test.ts`. `renderExistingKoreanReadingOnDemandV1(bundle, authorizedRequestScopeKey)`를 내부 서버에서 호출하여 기존 `renderReadingOnDemandV1`에 고정된 `ko-KR` Renderer를 제공한다.
+- `canonicalText.headline`·`summary`를 기존 순서 그대로 출력한다. 동일 문자열은 1회만 출력하고 새로운 뜻/표현·LLM 요약·빈 Claim 보충은 하지 않는다. source-owned qualifier 텍스트가 없는 경우, 다른 한정 문구로 임의 대체하지 않고 실패한다.
+- 각 primary Claim은 실제 `sourceRefs`, `ruleRefs`, `methodologyRef`가 있어야 한다. 미확정 scenario를 하나로 합치지 않으며 현재 단일 확정 Claim 본문만 처리한다. 별도 `semanticTextBindings`로 허용된 한국어 원문도 기존 provenance를 보존한 채 처리한다.
+- `state=internal_preview_only`, `mayRecalculate=false`, `mayGenerateClaims=false`, `mayPromoteResearchAuthority=false`, `mayExposeInternalIdsToConsumers=false`. 호출자가 **이미 승인된 요청/대상 범위**를 검증하고 불투명 `requestScopeKey`를 넘겨야 하며, 이 함수 자체는 Auth·저장·공개·판매 권한을 다루지 않는다.
+- **아직 E-3 전체 완료 아님:** 기존 Official/Research `ProductReadingResponse` 단락/레닥션과의 실제 제품 end-to-end 패리티 및 MyeongHa Host/Reader 연결은 미완료. 외국어 Renderer와 사용자 선택 UI도 아직 없음.
+
 ### E-3 한국어 Product Reading 섹션 미리보기 (2026-10-23)
 
 - `projectHeldKoreanReadingProductSectionsV1`은 기존 언어 중립 Semantic Bundle + `LocalizedReadingInternalV1`에서 **기존 `ProductReadingResponseSection`의 paragraph 및 `ProductReadingResponseDisclosure`의 필수 한정 문구**만 정확히 추출한다.
 - 한국어 원문과 각 qualifier 원문이 완전히 같고, 같은 서버 신뢰 Renderer policy·캐시 스코프·semanticHash/contentHash에 묶인 경우에만 반환한다. 다른 텍스트나 버전/출처/비밀 내부 ID가 섞이면 차단한다.
 - `state=internal_preview_only`와 `canPersist/canDisclose/canPublish/canSell=false` 고정. 완성 `ProductReadingResponse` / Reader API / S5 저장 객체를 만들지 않는다. 독립 Subject/Auth/Production Release 검증 없이 공개 또는 Reader에 전달하는 것이 금지된다.
-- Korean E-3 Renderer PR #2709와 파일 충돌 없는 별도 ProductSection 통합 어댑터이며, 실제 Auth/MyeongHa Reader 연결과 공개용 redaction 완료는 별도 작업이다.
+- #2709에서 병합된 한국어 Renderer와 연결 가능한 별도 ProductSection 어댑터이며, 실제 Auth/MyeongHa Reader 연결과 공개용 redaction 완료는 별도 작업이다.
 
 ## 4. 기존 Authority/HOLD 유지
 
