@@ -58,7 +58,9 @@ describe('one self chart and one authorized other chart → three separate relat
       for (const section of reading.sections) {
         expect(reading.coverage).toBe('bounded_natal_t8_research');
         expect(section.sourceIds.length).toBeGreaterThan(1);
-        expect(result.html).toContain(section.paragraph);
+        expect(result.html).toContain(section.paragraph.replace(/[&<>"']/gu, char => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+        })[char]!));
         expect(result.html).toContain(section.sourceIds[0]!);
       }
     }
