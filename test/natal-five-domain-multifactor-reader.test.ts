@@ -149,7 +149,9 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         expect(ownCard).toContain(section.ruleId);
         expect(ownCard).toContain(section.sourceIds[0]!);
       }
-      expect(ownCard).toContain('실제 사업·관계 결과를 예측하지 않습니다.');
+      expect(ownCard).toContain(report.state === 'complete'
+        ? '실제 사업·관계 결과를 예측하지 않습니다.'
+        : '보조 근거가 부족한 종합 결론은 보류합니다.');
     }
     const unknown = sample(3, 10, null);
     const unknownHtml = renderNatalFiveDomainMultifactorResearchHtml(unknown, reports(unknown));
