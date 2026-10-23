@@ -86,7 +86,7 @@ jobs:
 
       - name: Natal internal personalization and five-domain HTML smoke
         run: |
-          node --test scripts/natal-browser-reader.test.mjs
+          node --test scripts/natal-browser-reader.node-check.mjs
           node --test scripts/natal-reader-review-packet.check.mjs
           node --test test/natal-n29-autonomous-quality-gate.node.mjs
           node scripts/natal-personalization-audit.mjs "$RUNNER_TEMP/natal-baseline.json"

@@ -95,7 +95,7 @@
     "preview:monthly:demo": "npm run build && node scripts/monthly-exploration-demo.mjs",
     "preview:annual-monthly:demo": "npm run build && node scripts/annual-monthly-exploration-demo.mjs",
     "preview:natal:reader": "npm run build && node scripts/natal-browser-reader.mjs",
-    "test:preview:natal:reader": "node --test scripts/natal-browser-reader.test.mjs"
+    "test:preview:natal:reader": "node --test scripts/natal-browser-reader.node-check.mjs"
   },
   "dependencies": {
     "manseryeok": "2.0.0"
