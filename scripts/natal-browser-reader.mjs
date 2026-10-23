@@ -64,7 +64,29 @@ export function validateNatalBirthForm(form) {
   return { date, time, calendarType, isLeapMonth, sex };
 }
 
+export function validateYearMonthSelection(form) {
+  const mode = form.get('readingMode') ?? 'natal';
+  if (mode !== 'natal' && mode !== 'annual_monthly') {
+    throw new TypeError('지원되는 풀이 메뉴를 선택해 주세요.');
+  }
+  if (mode === 'natal') return { mode };
+  const yearValue = form.get('targetYear');
+  const monthValue = form.get('targetMonth');
+  if (typeof yearValue !== 'string' || !/^\d{4}$/u.test(yearValue) ||
+      typeof monthValue !== 'string' || !/^(?:0?[1-9]|1[0-2])$/u.test(monthValue)) {
+    throw new TypeError('조회할 연도와 월을 정확히 입력해 주세요.');
+  }
+  const year = Number(yearValue);
+  const month = Number(monthValue);
+  if (year < 1800 || year > 2300) {
+    throw new TypeError('연·월 연구 조회는 1800년부터 2300년까지 지원합니다.');
+  }
+  return { mode, year, month };
+}
 function page(message = '') {
+  const seoulDate = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const thisYear = seoulDate.getUTCFullYear();
+  const thisMonth = seoulDate.getUTCMonth() + 1;
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>명하 사주 · 내 명식으로 풀이 보기</title>
@@ -73,17 +95,22 @@ function page(message = '') {
   body{font:16px/1.65 system-ui,sans-serif;color:#ede9f8;background:#10121d;margin:0}
   main{max-width:680px;margin:5vh auto;padding:34px;background:#1d2031;border:1px solid #3e405d;border-radius:20px}
   h1{font-size:28px;margin:0 0 12px}p{color:#ccc8e0}label{display:block;margin:22px 0 8px;font-weight:600}
-  input[type=text],input[type=time],select{display:block;width:100%;padding:12px;border:1px solid #76748a;border-radius:9px;background:#121523;color:#fff;font:inherit}
+  input[type=text],input[type=time],input[type=number],select{display:block;width:100%;padding:12px;border:1px solid #76748a;border-radius:9px;background:#121523;color:#fff;font:inherit}
   .check{display:flex;align-items:center;gap:10px;font-weight:400}
   .check input{width:20px;height:20px}
   button{margin-top:24px;background:#cbc3fa;color:#171422;padding:14px 22px;border:0;border-radius:11px;font:700 16px system-ui;cursor:pointer;width:100%}
   .notice{border-left:3px solid #a99cd8;padding-left:15px;color:#c7c2d9;font-size:14px}
   .error{color:#ffb4b4;font-weight:600}
 </style></head><body><main><h1>내 명식으로 사주 풀이 보기</h1>
-<p>생년월일과 출생시간을 입력하면 기존 계산 엔진과 한국어 풀이 엔진을 실행해 원국 5개 분야의 결과를 이 브라우저에 표시합니다.</p>
+<p>생년월일과 출생시간을 입력하면 원국 5개 분야 또는 선택한 연도·월의 실제 명식 기반 연구용 풀이를 이 브라우저에서 읽을 수 있습니다.</p>
 <p class="notice">현재는 <strong>개발자용 로컬 연구 미리보기</strong>입니다. 양력·음력(윤달)을 선택할 수 있고 출생시각을 모르면 미상으로 선택할 수 있습니다. 근거가 부족한 풀이는 부족하다고 표시합니다. 공식 공개·보관·판매되는 결과가 아닙니다.</p>
 ${message ? `<p role="alert" class="error">${escapeHtml(message)}</p>` : ''}
 <form method="post" action="/reading">
+<label for="readingMode">풀이 선택</label>
+<select id="readingMode" name="readingMode"><option value="natal">나의 원국 5개 분야</option><option value="annual_monthly">올해·이번 달의 흐름 (연·월 연구용)</option></select>
+<label for="targetYear">연·월 조회 연도</label><input id="targetYear" name="targetYear" type="number" min="1800" max="2300" value="${thisYear}">
+<label for="targetMonth">연·월 조회 월</label><input id="targetMonth" name="targetMonth" type="number" min="1" max="12" value="${thisMonth}">
+<p class="notice">연·월 조회는 위에서 선택한 기간에만 적용되며, 기간 밖의 조회 시각은 미적용으로 표시합니다. 새 연운·월운 권한을 만들지 않습니다.</p>
 <label for="calendarType">달력 기준</label>
 <select id="calendarType" name="calendarType"><option value="solar">양력</option><option value="lunar">음력</option></select>
 <label class="check" for="isLeapMonth"><input id="isLeapMonth" name="isLeapMonth" type="checkbox">음력 윤달 (음력 선택 시)</label>
@@ -135,7 +162,35 @@ export async function renderLocalNatalReading(date, time, calendarType = 'solar'
   }
 }
 
-export function createLocalNatalReaderServer(render = renderLocalNatalReading) {
+export async function renderLocalYearMonthReading(
+  date, time, calendarType = 'solar', isLeapMonth = false,
+  sex = 'unspecified', year, month,
+) {
+  const folder = await mkdtemp(join(tmpdir(), 'myeongha-local-year-month-'));
+  const output = join(folder, 'private-year-month.html');
+  try {
+    // Reuse the existing Annual → Monthly Preview on this exact birth chart.
+    // The explicit reference instant prevents silently borrowing the selected
+    // month as the present when the user browses another period.
+    await runFile(process.execPath, [
+      join(repoRoot, 'scripts', 'annual-monthly-exploration-demo.mjs'),
+      String(year), String(month), output, date, time, new Date().toISOString(),
+      calendarType, String(isLeapMonth), sex,
+    ], { cwd: repoRoot, timeout: 120000, maxBuffer: 1024 * 1024 });
+    const html = await readFile(output, 'utf8');
+    if (!html.startsWith('<!doctype html>') ||
+        !html.includes('MYEONGHA · INTERNAL RESEARCH ONLY')) {
+      throw new Error('Year-month research Preview output was invalid.');
+    }
+    return html;
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
+}
+export function createLocalNatalReaderServer(
+  render = renderLocalNatalReading,
+  renderYearMonth = renderLocalYearMonthReading,
+) {
   return createServer(async (req, res) => {
     setPrivateHeaders(res);
     if (req.method === 'GET' && req.url === '/') {
@@ -149,8 +204,13 @@ export function createLocalNatalReaderServer(render = renderLocalNatalReading) {
       return;
     }
     try {
-      const { date, time, calendarType, isLeapMonth, sex } = validateNatalBirthForm(await readPostBody(req));
-      const html = await render(date, time, calendarType, isLeapMonth, sex);
+      const form = await readPostBody(req);
+      const { date, time, calendarType, isLeapMonth, sex } = validateNatalBirthForm(form);
+      const scope = validateYearMonthSelection(form);
+      const html = scope.mode === 'natal'
+        ? await render(date, time, calendarType, isLeapMonth, sex)
+        : await renderYearMonth(date, time, calendarType, isLeapMonth, sex,
+            scope.year, scope.month);
       res.writeHead(200);
       res.end(html);
     } catch (error) {
