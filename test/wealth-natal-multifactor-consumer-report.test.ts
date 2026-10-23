@@ -83,6 +83,54 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(run(3,10).report).toEqual(run(3,10).report);
   }, 30000);
 
+  it('introduces only actual source-owned Wealth T8 focus and independent chart positions in Korean', () => {
+    const { report } = run(3, 10);
+    expect(report.sections.length).toBeGreaterThan(0);
+    const first = report.sections[0]!;
+    expect(report.introduction).toContain(first.headline);
+    for (const location of first.observedPositions) {
+      expect(report.introduction).toContain(location);
+    }
+    expect(report.introduction).toContain('실제 연결된 계산 위치');
+    if (first.axis === 'tension') {
+      expect(report.state).toBe('partial');
+      expect(report.introduction).toContain('종합 결론을 내리지 않습니다');
+      expect(report.introduction).not.toContain('먼저 읽을 재물의 중심 연구 관점');
+    } else {
+      expect(report.introduction).toContain('먼저 읽을 재물의 중심 연구 관점');
+      if (report.sections.length === 1) {
+        expect(report.introduction).toContain('독립적인 실제 위치 근거를 가진 보조 해석은 아직 부족');
+      } else {
+        expect(report.introduction).toContain('이를 보조하는 서로 다른 실제 계산 위치의 연구 관점');
+        for (const support of report.sections.slice(1)) {
+          expect(report.introduction).toContain(support.headline);
+          for (const position of support.observedPositions) {
+            expect(report.introduction).toContain(position);
+          }
+        }
+      }
+    }
+    expect(report.introduction).toContain('수입이나 재산을 예측하는 판정이 아닌');
+    expect(report.researchOnly).toBe(true);
+    expect(report.usefulComplete).toBe(false);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+  });
+
+  it('changes the actual Wealth research focus when the selected T8 meaning changes by birth chart', () => {
+    const first = run(3, 10);
+    const samples = [run(4, 12), run(5, 17), run(6, 23), run(7, 11)];
+    const changed = samples.find(example =>
+      example.report.sections.length > 0 &&
+      example.report.sections[0]?.headline !== first.report.sections[0]?.headline);
+    expect(changed).toBeDefined();
+    if (!changed) return;
+    expect(changed.report.introduction).not.toBe(first.report.introduction);
+    expect(changed.report.introduction).toContain(changed.report.sections[0]!.headline);
+    expect(run(3, 10).report.introduction).toBe(first.report.introduction);
+    expect(changed.report.mayPublish).toBe(false);
+  });
+
   it('requires distinct actual Wealth interpretation axes for MUR complete', () => {
     const x = run(3,10);
     if(x.report.state === 'complete') {

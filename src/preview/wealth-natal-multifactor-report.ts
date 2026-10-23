@@ -252,6 +252,40 @@ function buildWealthNatalReadingGuide(
   };
 }
 
+/**
+ * A person-readable orientation derived only from the already selected,
+ * same-chart source-owned Wealth T8 paragraphs. A core is never invented
+ * from a tension-only observation; a distinct headline is not a distinct
+ * supporting observation without a newly calculated fact path.
+ */
+function wealthReadingFocus(
+  core: WealthNatalMultifactorSection | undefined,
+  chosen: readonly WealthNatalMultifactorSection[],
+): string {
+  if (chosen.length === 0) {
+    return '이 명식에서 출처와 연결된 재물 영역의 다중 근거 해석 문단은 아직 확인되지 않았습니다.';
+  }
+  if (core === undefined) {
+    const bounded = chosen[0]!;
+    return '이번 명식에서 확인된 재물의 부분 관점은 ‘' + bounded.headline +
+      '’입니다. 해당 해석이 사용한 실제 계산 위치는 ' +
+      bounded.observedPositions.join(' · ') +
+      '입니다. 중심 구조를 설명할 근거가 없으므로 이 긴장 관찰만으로 종합 결론을 내리지 않습니다.';
+  }
+  const supporting = chosen.slice(1);
+  const coreLine = '이번 명식에서 먼저 읽을 재물의 중심 연구 관점은 ‘' +
+    core.headline + '’입니다. 실제 연결된 계산 위치는 ' +
+    core.observedPositions.join(' · ') + '입니다.';
+  if (supporting.length === 0) {
+    return coreLine +
+      ' 중심 관점 이외에 독립적인 실제 위치 근거를 가진 보조 해석은 아직 부족합니다.';
+  }
+  return coreLine + ' 이를 보조하는 서로 다른 실제 계산 위치의 연구 관점은 ' +
+    supporting.map(section => '‘' + section.headline + '’ (' +
+      section.observedPositions.join(' · ') + ')').join(' / ') +
+    '입니다. 모두 기존 T8 해석의 범위에서만 읽으며, 실제 소득·재산·투자 결과를 뜻하지 않습니다.';
+}
+
 export function buildWealthNatalMultifactorReport(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
@@ -327,7 +361,9 @@ export function buildWealthNatalMultifactorReport(
     state,
     title: '나의 자원과 재물 주제를 읽는 구조적 출발점',
     introduction: '실제 명식의 십신 관계를 바탕으로 가치를 만들어 내는 과정, 자원을 다루는 기준, 준비와 배분 사이의 구조를 함께 살펴봅니다. 수입이나 재산을 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
-      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
+      (snapshot.completeness.birthTimeKnown
+        ? ' ' + wealthReadingFocus(core, chosen)
+        : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
