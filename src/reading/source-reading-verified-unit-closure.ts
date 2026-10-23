@@ -38,6 +38,11 @@ export interface VerifiedHeldSajuSourceUnitClosureV1 {
   readonly material: SourceReadingProofMaterialV1;
   readonly sourceUnitInventory: SajuReaderRecordsSourceInventoryV1;
   readonly sourceUnitInventoryHash: string;
+  /** Registry and profile version pins carried by the verified Source Owner proof. */
+  readonly interpretationPolicyVersionPins: Readonly<{
+    registrySnapshotId: string;
+    profileRef: SourceReadingProofMaterialV1['profileRef'];
+  }>;
   readonly canExecute: false;
   readonly canPersist: false;
   readonly canDisclose: false;
@@ -126,6 +131,10 @@ export async function verifyHeldSajuSourceUnitClosureV1(
       material: structuredClone(material),
       sourceUnitInventory: inventory,
       sourceUnitInventoryHash,
+      interpretationPolicyVersionPins: Object.freeze({
+        registrySnapshotId: material.registrySnapshotId,
+        profileRef: Object.freeze({ ...material.profileRef }),
+      }),
       canExecute: false as const,
       canPersist: false as const,
       canDisclose: false as const,
