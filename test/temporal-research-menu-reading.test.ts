@@ -151,6 +151,12 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     const inMonth = reports(true, 1990, '2030-06-02T12:00:00.000Z').annualMonthly;
     const original = inMonth.monthly.referenceReading;
     expect(original.state).toBe('in_period');
+    if (original.state !== 'in_period' || original.segmentId === undefined ||
+        original.theme === undefined) {
+      throw new Error('Expected a source-qualified T9 reference for the in-month fixture.');
+    }
+    const referenceSegmentId = original.segmentId;
+    const referenceTheme = original.theme;
     const blocked = buildTemporalResearchMenuReadings({
       annualMonthly: {
         ...inMonth,
@@ -159,8 +165,8 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
           referenceReading: {
             referenceDateTime: original.referenceDateTime,
             state: 'insufficient_evidence',
-            segmentId: original.segmentId,
-          },
+            segmentId: referenceSegmentId,
+          }
         },
       },
     })[1]!;
@@ -179,20 +185,18 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
         },
       },
     })).toThrow('Monthly reference');
-    if (original.theme !== undefined) {
-      expect(() => buildTemporalResearchMenuReadings({
+    expect(() => buildTemporalResearchMenuReadings({
         annualMonthly: {
           ...inMonth,
           monthly: {
             ...inMonth.monthly,
             referenceReading: {
               ...original,
-              theme: { ...original.theme, claimId: 'UNRELATED-T9' },
+              theme: { ...referenceTheme, claimId: 'UNRELATED-T9' },
             },
           },
         },
       })).toThrow('Monthly reference');
-    }
   });
 
   it('does not fabricate life-stage calculations for unknown birth time', () => {
