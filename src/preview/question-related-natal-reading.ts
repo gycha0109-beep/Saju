@@ -16,6 +16,50 @@ const TOPICS: readonly { key: Topic; title: string; words: readonly string[] }[]
   { key: 'relationship', title: '연애·관계', words: ['연애운', '연애', '관계운', '대인관계', '소통', '썸'] },
 ] as const;
 
+/**
+ * Question routing only: these labels match axes ALREADY issued in the
+ * five-domain research reports. This table cannot mint meaning or source
+ * evidence; a focused result contains exactly the source-owned T8 paragraphs
+ * whose original section.axis matches the requested axis.
+ */
+interface QuestionAxisFocus {
+  readonly axis: string;
+  readonly label: string;
+  readonly words: readonly string[];
+}
+const FOCUS_BY_TOPIC: Readonly<Partial<Record<Topic, readonly QuestionAxisFocus[]>>> = {
+  general: [
+    { axis: 'expression', label: '표현', words: ['표현 방식', '표현 성향'] },
+    { axis: 'response', label: '대응', words: ['대응 방식', '반응 방식'] },
+    { axis: 'responsibility', label: '역할·책임', words: ['책임', '역할'] },
+    { axis: 'tension', label: '구조적 조율', words: ['조율', '긴장'] },
+  ],
+  career: [
+    { axis: 'execution', label: '실행·산출', words: ['실행', '산출', '업무 수행'] },
+    { axis: 'preparation', label: '학습·준비', words: ['준비', '학습', '역량 개발'] },
+    { axis: 'responsibility', label: '역할·책임', words: ['책임', '역할'] },
+    { axis: 'tension', label: '기준 조율', words: ['조율', '기준 충돌'] },
+  ],
+  wealth: [
+    { axis: 'creation', label: '자원 형성', words: ['자원 형성', '자원 창출'] },
+    { axis: 'management', label: '자원 관리', words: ['관리', '저축', '지출', '운용'] },
+    { axis: 'planning', label: '자원 계획', words: ['계획', '예산', '준비'] },
+    { axis: 'tension', label: '자원 선택의 긴장', words: ['긴장', '조율'] },
+  ],
+  business: [
+    { axis: 'execution', label: '실행', words: ['실행', '산출'] },
+    { axis: 'governance', label: '운영 기준', words: ['운영', '기준', '관리'] },
+    { axis: 'preparation', label: '준비', words: ['준비', '학습'] },
+    { axis: 'coordination', label: '조율', words: ['조율', '협업', '협력'] },
+  ],
+  relationship: [
+    { axis: 'expression', label: '표현·소통', words: ['소통', '표현', '대화'] },
+    { axis: 'boundaries', label: '관계의 경계', words: ['경계', '거리감'] },
+    { axis: 'reception', label: '이해·수용', words: ['이해', '수용'] },
+    { axis: 'coordination', label: '조율', words: ['조율', '협의'] },
+  ],
+} as const;
+
 // Not an interpretation algorithm: any future-event/third-party topic needs
 // its OWN source-owned claim, scoped input, and reading admission.
 const OUT_OF_SCOPE = [
@@ -74,6 +118,9 @@ export interface QuestionRelatedNatalReading {
   question: string;
   topic?: Topic;
   topicLabel?: string;
+  /** An axis requested by this question, not an independently issued T11 claim. */
+  focusAxis?: string;
+  focusLabel?: string;
   reportState?: DomainReport['state'];
   headline: string;
   sections: readonly QuestionRelatedNatalSection[];
@@ -98,6 +145,8 @@ function base(
   details?: {
     topic: Topic;
     topicLabel: string;
+    focusAxis?: string;
+    focusLabel?: string;
     reportState: DomainReport['state'];
     sections: readonly QuestionRelatedNatalSection[];
   },
@@ -163,13 +212,33 @@ export function buildQuestionRelatedNatalReading(
   }
   const item = candidates[0]!;
   const report = reports[item.key];
-  if (!snapshot.completeness.birthTimeKnown || report.sections.length === 0 || report.state === 'insufficient') {
-    return base(snapshot, question, 'insufficient', '이 질문과 관련된 해석 근거가 부족합니다.',
-      [...report.missing, ...(!snapshot.completeness.birthTimeKnown
-        ? ['출생시각이 없어 전체 원국 해석을 생성할 수 없습니다.'] : [])],
-      { topic: item.key, topicLabel: item.title, reportState: report.state, sections: [] });
+  const axes = (FOCUS_BY_TOPIC[item.key] ?? []).filter(axis =>
+    axis.words.some(word => question.includes(word)));
+  if (axes.length > 1) {
+    return base(snapshot, question, 'ambiguous', '질문의 한 가지 관점을 선택해 주세요.',
+      ['하나의 분야에서 서로 다른 해석 관점이 감지됐습니다: ' +
+       axes.map(axis => axis.label).join(' · ') + '. 한 번에 한 관점씩 선택해 주세요.']);
   }
-  const sections = report.sections.map(section => {
+  const focus = axes[0];
+  const matchingSections = focus === undefined
+    ? report.sections
+    : report.sections.filter(section => section.axis === focus.axis);
+  const focusDetails = focus === undefined ? {} : {
+    focusAxis: focus.axis, focusLabel: focus.label,
+  };
+  if (!snapshot.completeness.birthTimeKnown || matchingSections.length === 0 ||
+      report.state === 'insufficient') {
+    return base(snapshot, question, 'insufficient', '이 질문과 관련된 해석 근거가 부족합니다.',
+      [...report.missing,
+        ...(focus !== undefined && matchingSections.length === 0
+          ? [focus.label + ' 관점의 명식별 해석 근거가 없어 다른 관점으로 답하지 않습니다.']
+          : []),
+        ...(!snapshot.completeness.birthTimeKnown
+          ? ['출생시각이 없어 전체 원국 해석을 생성할 수 없습니다.'] : [])],
+      { topic: item.key, topicLabel: item.title, ...focusDetails,
+        reportState: report.state, sections: [] });
+  }
+  const sections = matchingSections.map(section => {
     const factPaths = 'calculatedFactPaths' in section
       ? section.calculatedFactPaths : section.observedFactPaths;
     assert(section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
@@ -186,9 +255,12 @@ export function buildQuestionRelatedNatalReading(
     };
   });
   return base(snapshot, question, 'related_evidence',
-    `${item.title}에 관해 이 명식에서 확인된 기존 관점`,
+    focus === undefined
+      ? `${item.title}에 관해 이 명식에서 확인된 기존 관점`
+      : `${item.title} · ${focus.label}에 관해 이 명식에서 확인된 기존 관점`,
     report.missing,
-    { topic: item.key, topicLabel: item.title, reportState: report.state, sections });
+    { topic: item.key, topicLabel: item.title, ...focusDetails,
+      reportState: report.state, sections });
 }
 
 function escapeHtml(input: string): string {
