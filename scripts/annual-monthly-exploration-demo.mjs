@@ -19,6 +19,15 @@ if (!Number.isInteger(year) || year < 1800 || year > 2300 ||
   throw new RangeError('Usage: npm run preview:annual-monthly:demo -- [year 1800..2300] [month 1..12] [output.html] [birth YYYY-MM-DD] [time HH:mm|unknown] [reference ISO-8601]');
 }
 const output = resolve(process.argv[4] ?? 'annual-monthly-exploration-preview.html');
+const calendarType = process.argv[8] ?? 'solar';
+const isLeapMonth = process.argv[9] === 'true';
+const sex = process.argv[10] ?? 'unspecified';
+if (!['solar', 'lunar'].includes(calendarType) ||
+  (isLeapMonth && calendarType !== 'lunar') ||
+  !['male', 'female', 'unspecified'].includes(sex) ||
+  (process.argv[9] !== undefined && !['true', 'false'].includes(process.argv[9]))) {
+  throw new RangeError('Invalid birth calendar, leap-month, or calculation-sex scope');
+}
 const birthDate = process.argv[5] ?? '1996-01-09';
 const birthTime = process.argv[6] ?? '09:30';
 const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(birthDate);
@@ -29,7 +38,9 @@ const birthDay = Number(dateMatch?.[3]);
 const validBirthDate = dateMatch !== null &&
   birthYear >= 1800 && birthYear <= 2300 &&
   birthMonth >= 1 && birthMonth <= 12 &&
-  birthDay >= 1 && birthDay <= new Date(Date.UTC(birthYear, birthMonth, 0)).getUTCDate();
+  birthDay >= 1 && (calendarType === 'lunar'
+    ? birthDay <= 30
+    : birthDay <= new Date(Date.UTC(birthYear, birthMonth, 0)).getUTCDate());
 const validBirthTime = birthTime === 'unknown' ||
   (timeMatch !== null && Number(timeMatch[1]) <= 23 && Number(timeMatch[2]) <= 59);
 if (!validBirthDate || !validBirthTime) {
@@ -47,12 +58,13 @@ if (referenceInput !== undefined &&
 const referenceDateTime = referenceInput === undefined ? now.toISOString() :
   new Date(referenceInput).toISOString();
 const natal = calculateCanonicalSajuSnapshot({
-  calendarType: 'solar',
+  calendarType,
+  ...(calendarType === 'lunar' ? { isLeapMonth } : {}),
   date: { year: birthYear, month: birthMonth, day: birthDay },
   time: birthTime === 'unknown'
     ? { known: false }
     : { known: true, hour: Number(timeMatch[1]), minute: Number(timeMatch[2]) },
-  sexForTraditionalCalculation: 'unspecified',
+  sexForTraditionalCalculation: sex,
 }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now });
 const request = {
   requestId: 'joined-year-month-demo-' + year + '-' + month,

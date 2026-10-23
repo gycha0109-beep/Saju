@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import {
   createLocalNatalReaderServer,
   validateNatalBirthForm,
+  validateYearMonthSelection,
 } from './natal-browser-reader.mjs';
 
 test('birth form accepts a real solar birth date, clock time, or explicit unknown', () => {
@@ -31,8 +32,8 @@ test('birth form accepts a real solar birth date, clock time, or explicit unknow
     'calendarType=solar&isLeapMonth=on&date=2020-04-20&time=12%3A00')));
 });
 
-async function serve(render, run) {
-  const server = createLocalNatalReaderServer(render);
+async function serve(render, run, renderYearMonth) {
+  const server = createLocalNatalReaderServer(render, renderYearMonth);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   try {
     const address = server.address();
@@ -110,4 +111,51 @@ test('calculation failure produces safe error rather than exposing server intern
     assert.doesNotMatch(html, /internal calculation secret/u);
     assert.match(html, /공식 공개·보관·판매되는 결과가 아닙니다/u);
   });
+});
+
+test('a real birth input selects Year → Month Preview without changing natal output', async () => {
+  const seen = [];
+  const annualMonth = async (...args) => {
+    seen.push(args);
+    return '<!doctype html><html lang="ko">연·월 실제 연구용 풀이</html>';
+  };
+  await serve(async () => 'natal-default', async origin => {
+    const landing = await globalThis.fetch(origin);
+    const formHtml = await landing.text();
+    assert.match(formHtml, /value="annual_monthly"/u);
+    assert.match(formHtml, /name="targetYear"/u);
+    const response = await globalThis.fetch(origin + '/reading', {
+      method: 'POST',
+      body: new URLSearchParams({
+        readingMode: 'annual_monthly', targetYear: '2026', targetMonth: '10',
+        date: '2020-04-30', time: '11:15', calendarType: 'lunar',
+        isLeapMonth: 'on', sex: 'female',
+      }),
+    });
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), /연·월 실제 연구용 풀이/u);
+    const invalid = await globalThis.fetch(origin + '/reading', {
+      method: 'POST',
+      body: new URLSearchParams({
+        readingMode: 'annual_monthly', targetYear: '2026', targetMonth: '13',
+        date: '2024-03-10', time: '12:00',
+      }),
+    });
+    assert.equal(invalid.status, 400);
+    const natal = await globalThis.fetch(origin + '/reading', {
+      method: 'POST',
+      body: new URLSearchParams({ date: '2024-03-10', time: '12:00' }),
+    });
+    assert.equal(natal.status, 200);
+    assert.equal(await natal.text(), 'natal-default');
+  }, annualMonth);
+  assert.deepEqual(seen, [[
+    '2020-04-30', '11:15', 'lunar', true, 'female', 2026, 10,
+  ]]);
+  assert.deepEqual(validateYearMonthSelection(new URLSearchParams({
+    readingMode: 'annual_monthly', targetYear: '2026', targetMonth: '10',
+  })), { mode: 'annual_monthly', year: 2026, month: 10 });
+  assert.throws(() => validateYearMonthSelection(new URLSearchParams({
+    readingMode: 'unapproved', targetYear: '2026', targetMonth: '10',
+  })));
 });
