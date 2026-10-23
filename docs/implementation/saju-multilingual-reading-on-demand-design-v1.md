@@ -44,6 +44,13 @@
 
 **아직 기계적으로 보장되지 않는 것:** 생성된 자연어 자체의 논리적 의미 동등성, 현지 명리 용어 정확성, 문화적 적합성, 내부 텍스트의 consumer-safe 레닥션. 별도 로케일별 품질 심사/실제 출력 연동 전에는 외국어 풀이를 출시하지 않는다.
 
+### E-3 한국어 Product Reading 섹션 미리보기 (2026-10-23)
+
+- `projectHeldKoreanReadingProductSectionsV1`은 기존 언어 중립 Semantic Bundle + `LocalizedReadingInternalV1`에서 **기존 `ProductReadingResponseSection`의 paragraph 및 `ProductReadingResponseDisclosure`의 필수 한정 문구**만 정확히 추출한다.
+- 한국어 원문과 각 qualifier 원문이 완전히 같고, 같은 서버 신뢰 Renderer policy·캐시 스코프·semanticHash/contentHash에 묶인 경우에만 반환한다. 다른 텍스트나 버전/출처/비밀 내부 ID가 섞이면 차단한다.
+- `state=internal_preview_only`와 `canPersist/canDisclose/canPublish/canSell=false` 고정. 완성 `ProductReadingResponse` / Reader API / S5 저장 객체를 만들지 않는다. 독립 Subject/Auth/Production Release 검증 없이 공개 또는 Reader에 전달하는 것이 금지된다.
+- Korean E-3 Renderer PR #2709와 파일 충돌 없는 별도 ProductSection 통합 어댑터이며, 실제 Auth/MyeongHa Reader 연결과 공개용 redaction 완료는 별도 작업이다.
+
 ## 4. 기존 Authority/HOLD 유지
 
 A 원국, B 시간, C 관계, D 질문의 source-qualified T5/T6/T8/T9/T10/T11 및 MUR 기준은 변경하지 않는다. 특히 연구용 의미, 대운/연운/월운, 궁합, 배우자 등 scope 미승인 결과는 외국어로 표현해도 여전히 HOLD이다. `internal_preview_only` 출력은 Official/Production/Public/저장/판매 권한을 추가하지 않는다.
