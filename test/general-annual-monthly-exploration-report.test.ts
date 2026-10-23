@@ -141,6 +141,65 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).not.toContain(' · 조회 시각 구간');
   });
 
+  it('distinguishes a selected annual civil year from the reference instant across Seoul midnight', () => {
+    // 15:00 UTC is exactly midnight the following day in Asia/Seoul.
+    const inYear = run(9, 9, true, '2025-12-31T15:00:00.000Z');
+    const beforeYear = run(9, 9, true, '2025-12-31T14:59:59.999Z');
+    const nextYear = run(9, 9, true, '2026-12-31T15:00:00.000Z');
+    expect(inYear.report.annualReference).toEqual({
+      referenceDateTime: '2025-12-31T15:00:00.000Z',
+      civilYearAtReference: 2026,
+      state: 'in_target_civil_year',
+    });
+    expect(beforeYear.report.annualReference).toEqual({
+      referenceDateTime: '2025-12-31T14:59:59.999Z',
+      civilYearAtReference: 2025,
+      state: 'outside_target_civil_year',
+    });
+    expect(nextYear.report.annualReference).toEqual({
+      referenceDateTime: '2026-12-31T15:00:00.000Z',
+      civilYearAtReference: 2027,
+      state: 'outside_target_civil_year',
+    });
+    // Year-specific original Korean profile is not rewritten by the clock.
+    expect(inYear.report.annual.sections).toEqual(beforeYear.report.annual.sections);
+    expect(inYear.report.annual.sections).toEqual(nextYear.report.annual.sections);
+    for (const report of [inYear.report, beforeYear.report, nextYear.report]) {
+      expect(report.monthly.referenceReading.state).toBe('outside_target_month');
+      expect(report.researchOnly).toBe(true);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+    const insideHtml = renderGeneralAnnualMonthlyExplorationHtml(inYear.report);
+    expect(insideHtml).toContain('id="reference-year-context"');
+    expect(insideHtml).toContain('서울 달력 2026년에 속합니다');
+    expect(insideHtml).not.toContain('현재 연도에 적용되는 풀이가 아니라');
+    const outsideHtml = renderGeneralAnnualMonthlyExplorationHtml(nextYear.report);
+    expect(outsideHtml).toContain('서울 달력 2027년입니다');
+    expect(outsideHtml).toContain('2026년 연운은 현재 연도에 적용되는 풀이가 아니라');
+    expect(outsideHtml).toContain(nextYear.report.annual.sections[0]!.text);
+    expect(outsideHtml).toContain('월 밖에 있어 현재 적용 구간을 정하지 않았습니다.');
+  });
+
+  it('rejects a manipulated annual civil reference instead of mislabeling current year', () => {
+    const { report } = run(9);
+    expect(() => renderGeneralAnnualMonthlyExplorationHtml({
+      ...report,
+      annualReference: {
+        ...report.annualReference,
+        civilYearAtReference: 2040,
+        state: 'outside_target_civil_year',
+      },
+    })).toThrow('civil-year reference');
+    expect(() => renderGeneralAnnualMonthlyExplorationHtml({
+      ...report,
+      annualReference: {
+        ...report.annualReference,
+        state: 'outside_target_civil_year',
+      },
+    })).toThrow('civil-year reference');
+  });
+
   it('keeps genuine monthly phases but suppresses unsupported birth-hour relations', () => {
     const { report } = run(9, 9, false);
     expect(report.annual.unavailablePillars).toContain('hour');
