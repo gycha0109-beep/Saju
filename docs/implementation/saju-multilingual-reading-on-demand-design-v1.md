@@ -66,6 +66,13 @@
 - 현재 단계는 **E-4 일부 실제 구현**이지 외국어 용어·오류 메시지 품질 검증이나 Renderer 출시가 아니다. 제품 UI 전체의 로케일 소유권은 MyeongHa에 있고, `ReadingArtifact`·Reader/Records·Production/저장/판매/유료 상품 범위는 그대로다.
 - 회귀: `test/reading-reader-locale-resources.test.ts`; 기존 `test/twelve-menu-reader-cards.test.ts`와 함께 한국어 문구 및 권한 경계 보존을 확인한다.
 
+### E-4 Reader 요청 로케일 적용 및 한국어 암묵적 대체 차단 (2026-10-24)
+
+- `buildTwelveMenuEngineReadiness(executions, localePreferences?)`와 `buildTwelveMenuReaderCards(executions, localePreferences?)`의 **서버 내부** 렌더링 함수에서 `resolveReadingLocaleV1`을 먼저 호출하고, 해당 로케일의 Reader 리소스가 실제 등록되어 있는지 검사한다. `readingLocale → accountLocale → uiLocale → ko-KR`의 기존 명시적 우선순위를 보존한다.
+- `ko-KR`이 선택된 경우 기존 한국어 메뉴명·상태 안내 및 기존 한국어 Reading 문단을 변경하지 않는다. 외국어 로케일이 선택됐지만 등록된 리소스/Renderer가 없을 경우 한국어 해석이 혼합·대체되어 전달되지 않도록 즉시 거부한다. 오류는 호스트가 처리할 내부 오류이며, 새로운 ProductReadingResponse/public API를 만들지 않는다.
+- 이 구현은 **요청 인자 전달을 받을 수 있는 서버 함수의 fail-closed 경계**이며 MyeongHa 웹 화면의 언어 선택 UI 또는 계정 환경설정·Host 전달까지 연결한 것은 아니다. Preview/HOLD/독립 Reader 인가/공식 Reading DB·Grant 경계를 유지한다.
+- 테스트: `test/twelve-menu-engine-readiness.test.ts`, `test/twelve-menu-reader-cards.test.ts`. 독립 로케일 우선순위, 이전 한국어 출력 패리티 및 미지원 외국어 요청 거부를 고정한다.
+
 ## 4. 기존 Authority/HOLD 유지
 
 A 원국, B 시간, C 관계, D 질문의 source-qualified T5/T6/T8/T9/T10/T11 및 MUR 기준은 변경하지 않는다. 특히 연구용 의미, 대운/연운/월운, 궁합, 배우자 등 scope 미승인 결과는 외국어로 표현해도 여전히 HOLD이다. `internal_preview_only` 출력은 Official/Production/Public/저장/판매 권한을 추가하지 않는다.
