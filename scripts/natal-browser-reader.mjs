@@ -7,11 +7,15 @@ import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath, URLSearchParams } from 'node:url';
 import { promisify } from 'node:util';
 import process from 'node:process';
+import {
+  SAJU_READING_MENUS, validateSajuMenuForm,
+  renderLocalSelectedSajuMenuReading,
+} from './natal-browser-menu-reading.mjs';
 
 const scriptPath = fileURLToPath(import.meta.url);
 const repoRoot = resolve(dirname(scriptPath), '..');
 const runFile = promisify(execFile);
-const MAX_FORM_BYTES = 1024;
+const MAX_FORM_BYTES = 4096;
 const LOOPBACK_HOST = '127.0.0.1';
 
 function escapeHtml(input) {
@@ -65,6 +69,13 @@ export function validateNatalBirthForm(form) {
 }
 
 function page(message = '') {
+  const groups = [...new Set(SAJU_READING_MENUS.map(item => item.group))];
+  const menuOptions = groups.map(group =>
+    '<optgroup label="' + escapeHtml(group) + '">' +
+    SAJU_READING_MENUS.filter(item => item.group === group).map(item =>
+      '<option value="' + item.id + '">' + escapeHtml(item.label) + '</option>').join('') +
+    '</optgroup>').join('');
+  const todaySeoul = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 7);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>명하 사주 · 내 명식으로 풀이 보기</title>
@@ -73,17 +84,22 @@ function page(message = '') {
   body{font:16px/1.65 system-ui,sans-serif;color:#ede9f8;background:#10121d;margin:0}
   main{max-width:680px;margin:5vh auto;padding:34px;background:#1d2031;border:1px solid #3e405d;border-radius:20px}
   h1{font-size:28px;margin:0 0 12px}p{color:#ccc8e0}label{display:block;margin:22px 0 8px;font-weight:600}
-  input[type=text],input[type=time],select{display:block;width:100%;padding:12px;border:1px solid #76748a;border-radius:9px;background:#121523;color:#fff;font:inherit}
+  input[type=text],input[type=time],input[type=month],textarea,select{display:block;width:100%;padding:12px;border:1px solid #76748a;border-radius:9px;background:#121523;color:#fff;font:inherit}
+  textarea{min-height:86px;resize:vertical}fieldset{border:1px solid #53556d;border-radius:12px;padding:12px 20px;margin-top:22px}
+  legend{font-weight:700}fieldset label{margin-top:12px}
   .check{display:flex;align-items:center;gap:10px;font-weight:400}
   .check input{width:20px;height:20px}
   button{margin-top:24px;background:#cbc3fa;color:#171422;padding:14px 22px;border:0;border-radius:11px;font:700 16px system-ui;cursor:pointer;width:100%}
   .notice{border-left:3px solid #a99cd8;padding-left:15px;color:#c7c2d9;font-size:14px}
   .error{color:#ffb4b4;font-weight:600}
 </style></head><body><main><h1>내 명식으로 사주 풀이 보기</h1>
-<p>생년월일과 출생시간을 입력하면 기존 계산 엔진과 한국어 풀이 엔진을 실행해 원국 5개 분야의 결과를 이 브라우저에 표시합니다.</p>
+<p>생년월일과 출생시간을 입력하고 아래 12개 항목 중 하나를 선택하세요. 해당 명식의 근거가 허용된 한국어 풀이 또는 아직 해석하지 못하는 이유를 바로 보여줍니다.</p>
 <p class="notice">현재는 <strong>개발자용 로컬 연구 미리보기</strong>입니다. 양력·음력(윤달)을 선택할 수 있고 출생시각을 모르면 미상으로 선택할 수 있습니다. 근거가 부족한 풀이는 부족하다고 표시합니다. 공식 공개·보관·판매되는 결과가 아닙니다.</p>
 ${message ? `<p role="alert" class="error">${escapeHtml(message)}</p>` : ''}
 <form method="post" action="/reading">
+<label for="readingMenu">보고 싶은 사주 항목</label>
+<select id="readingMenu" name="readingMenu">${menuOptions}</select>
+<p class="notice">전체 사주·직업·재물·연애·사업을 고르면 동일 명식의 다섯 분야를 함께 보여줍니다. 다른 항목은 선택한 범위만 풀이합니다.</p>
 <label for="calendarType">달력 기준</label>
 <select id="calendarType" name="calendarType"><option value="solar">양력</option><option value="lunar">음력</option></select>
 <label class="check" for="isLeapMonth"><input id="isLeapMonth" name="isLeapMonth" type="checkbox">음력 윤달 (음력 선택 시)</label>
@@ -91,7 +107,26 @@ ${message ? `<p role="alert" class="error">${escapeHtml(message)}</p>` : ''}
 <label for="sex">전통 계산용 성별</label><select id="sex" name="sex"><option value="unspecified">선택하지 않음</option><option value="male">남성</option><option value="female">여성</option></select>
 <label for="time">출생시간 (24시간제)</label><input id="time" name="time" type="time" value="12:00">
 <label class="check" for="timeUnknown"><input id="timeUnknown" name="timeUnknown" type="checkbox">출생시간을 모릅니다</label>
-<button type="submit">내 사주 결과 생성하기</button>
+<fieldset><legend>올해·이번 달 — 조회 기간</legend>
+<label for="targetPeriod">선택 연월 (서울 달력)</label>
+<input type="month" id="targetPeriod" name="targetPeriod" value="${todaySeoul}">
+<p class="notice">연도·월이 현재와 다르면 지난달 또는 미래 달의 연구 비교로 표시하며 현재 적용 풀이로 착각하지 않도록 구분합니다.</p></fieldset>
+<fieldset><legend>지금 고민으로 보기 — 질문</legend>
+<label for="question">묻고 싶은 내용</label>
+<textarea id="question" name="question" maxlength="400" placeholder="예: 제 직업운에서 준비와 실행은 어떻게 읽나요?"></textarea>
+<p class="notice">확인된 명식 근거와 관련된 부분만 답합니다. 미래 사건·금액·결혼 결과를 임의로 예측하지 않습니다.</p></fieldset>
+<fieldset><legend>궁합 — 상대 출생정보 (궁합 선택 시에만 필요)</legend>
+<label for="partnerCalendarType">상대 달력 기준</label>
+<select id="partnerCalendarType" name="partnerCalendarType"><option value="solar">양력</option><option value="lunar">음력</option></select>
+<label class="check" for="partnerLeapMonth"><input id="partnerLeapMonth" name="partnerLeapMonth" type="checkbox">상대 음력 윤달</label>
+<label for="partnerDate">상대 출생일</label><input id="partnerDate" name="partnerDate" type="text" inputmode="numeric" placeholder="1997-03-18" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}">
+<label for="partnerTime">상대 출생시간</label><input id="partnerTime" name="partnerTime" type="time">
+<label class="check" for="partnerTimeUnknown"><input id="partnerTimeUnknown" name="partnerTimeUnknown" type="checkbox">상대 출생시간 미상</label>
+<label for="partnerSex">상대 전통 계산용 성별</label>
+<select id="partnerSex" name="partnerSex"><option value="unspecified">선택하지 않음</option><option value="male">남성</option><option value="female">여성</option></select>
+<label class="check" for="partnerBirthAuthorized"><input id="partnerBirthAuthorized" name="partnerBirthAuthorized" type="checkbox">상대 출생정보를 이 계산에 사용할 권한이 있습니다</label>
+<p class="notice">두 명식을 따로 계산하지만 실제 상호 궁합의 좋고 나쁨이나 결혼 결과는 제공하지 않습니다.</p></fieldset>
+<button type="submit">선택한 사주 풀이 보기</button>
 </form></main></body></html>`;
 }
 
@@ -148,16 +183,29 @@ export function createLocalNatalReaderServer(render = renderLocalNatalReading) {
       res.end(page('지원되지 않는 경로입니다.'));
       return;
     }
+    let birth, selection;
     try {
-      const { date, time, calendarType, isLeapMonth, sex } = validateNatalBirthForm(await readPostBody(req));
-      const html = await render(date, time, calendarType, isLeapMonth, sex);
+      const form = await readPostBody(req);
+      birth = validateNatalBirthForm(form);
+      selection = validateSajuMenuForm(form, validateNatalBirthForm);
+    } catch (error) {
+      res.writeHead(400);
+      res.end(page(error instanceof TypeError ? error.message :
+        '입력값을 확인해 주세요.'));
+      return;
+    }
+    try {
+      const html = SAJU_READING_MENUS.slice(0, 5).some(item => item.id === selection.menu)
+        ? await render(birth.date, birth.time, birth.calendarType,
+          birth.isLeapMonth, birth.sex)
+        : await renderLocalSelectedSajuMenuReading(birth, selection);
       res.writeHead(200);
       res.end(html);
-    } catch (error) {
-      const validationError = error instanceof TypeError;
-      res.writeHead(validationError ? 400 : 503);
-      res.end(page(validationError ? error.message :
-        '현재 계산 또는 풀이를 완료하지 못했습니다. 출생정보와 서버 실행 상태를 확인해 주세요.'));
+    } catch {
+      // A calculation's internal TypeError is not a safe form validation
+      // message. No private birth data or internal paths are leaked.
+      res.writeHead(503);
+      res.end(page('현재 계산 또는 풀이를 완료하지 못했습니다. 출생정보와 서버 실행 상태를 확인해 주세요.'));
     }
   });
 }
