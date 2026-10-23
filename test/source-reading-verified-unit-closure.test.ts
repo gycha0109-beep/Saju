@@ -158,9 +158,9 @@ describe('Saju 2B-3C Preview signed response and Reader S3 source-unit closure',
       verifier(response, handoff.source, { expectedRequestBody: {
         ...REQUEST, reading: { text: '재물운' },
       } }),
-      verifier(response, { expectedNonce: 'z'.repeat(30) }),
-      verifier(response, { trustedIssuer: 'another-source-owner' }),
-      verifier(response, { trustedKeyId: 'wrong-rotation-key' }),
+      verifier(response, handoff.source, { expectedNonce: 'z'.repeat(30) }),
+      verifier(response, handoff.source, { trustedIssuer: 'another-source-owner' }),
+      verifier(response, handoff.source, { trustedKeyId: 'wrong-rotation-key' }),
     ]) {
       const result = await verifyHeldSajuSourceUnitClosureV1(proof, options);
       expect(result).toEqual({
@@ -201,7 +201,7 @@ describe('Saju 2B-3C Preview signed response and Reader S3 source-unit closure',
   });
 
   it('allows only one atomic nonce claim and blocks ledger failure', async () => {
-    const { response, proof } = await actualReading();
+    const { response, proof, handoff } = await actualReading();
     const options = verifier(response, handoff.source);
     expect((await verifyHeldSajuSourceUnitClosureV1(proof, options)).state).toBe('held');
     expect((await verifyHeldSajuSourceUnitClosureV1(proof, options)).state).toBe('blocked');
