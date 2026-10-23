@@ -69,7 +69,7 @@ test('browser GET → actual birth input POST → same generated HTML response',
       body: new URLSearchParams({ date: '2024-03-10', timeUnknown: 'on' }),
     });
     assert.equal(unknown.status, 200);
-    const lunarResponse = await fetch(origin + '/reading', {
+    const lunarResponse = await globalThis.fetch(origin + '/reading', {
       method: 'POST',
       body: new URLSearchParams({
         calendarType: 'lunar', date: '2020-04-30', time: '11:15',
