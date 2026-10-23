@@ -51,7 +51,7 @@
     "lint": "eslint .",
     "format": "prettier --write src test package.json tsconfig.json tsconfig.build.json eslint.config.mjs .prettierrc.json .github/workflows/ci.yml",
     "format:check": "prettier --check src test package.json tsconfig.json tsconfig.build.json eslint.config.mjs .prettierrc.json .github/workflows/ci.yml",
-    "test": "vitest run",
+    "test": "vitest run && node --test scripts/natal-browser-reader.test.mjs",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run preview:research:smoke",
     "preview:natal:audit": "npm run build && node scripts/natal-personalization-audit.mjs",
     "preview:natal:demo": "npm run build && node scripts/natal-personalized-preview.mjs",
@@ -93,7 +93,9 @@
     "start:source-proof-staging": "node dist/source-reading-proof-server.js",
     "preview:annual:demo": "npm run build && node scripts/annual-exploration-demo.mjs",
     "preview:monthly:demo": "npm run build && node scripts/monthly-exploration-demo.mjs",
-    "preview:annual-monthly:demo": "npm run build && node scripts/annual-monthly-exploration-demo.mjs"
+    "preview:annual-monthly:demo": "npm run build && node scripts/annual-monthly-exploration-demo.mjs",
+    "preview:natal:reader": "npm run build && node scripts/natal-browser-reader.mjs",
+    "test:preview:natal:reader": "node --test scripts/natal-browser-reader.test.mjs"
   },
   "dependencies": {
     "manseryeok": "2.0.0"
