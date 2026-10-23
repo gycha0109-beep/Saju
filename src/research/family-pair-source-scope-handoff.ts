@@ -1032,6 +1032,27 @@ export interface R070FamilyMenuPrerequisiteTrace {
   familyMeaningAuthorized: false;
 }
 
+/** An unassigned configuration phrase remains its own, non-family rule source. */
+export interface R070FamilyConfigurationPrerequisiteTrace {
+  prerequisiteCode: string;
+  origins: readonly {
+    sourceLayerId: 'CONFIGURATION-OUTCOME';
+    sourceSurface: string;
+    canonicalObservationCoverage: R070FamilyConfigurationHold['canonicalObservationCoverage'];
+  }[];
+  configurationIsFamilyMeaningAuthorized: false;
+  repeatedSourceIsIndependentFamilyEvidence: false;
+}
+
+/** Exact code overlap across two separate lanes never selects or reconciles them. */
+export interface R070FamilyCrossLanePrerequisiteOverlap {
+  prerequisiteCode: string;
+  menuOrigins: R070FamilyMenuPrerequisiteTrace['origins'];
+  unassignedConfigurationOrigins: R070FamilyConfigurationPrerequisiteTrace['origins'];
+  menuAndConfigurationMethodsReconciled: false;
+  independentlyAdmittedFamilyClaims: 0;
+}
+
 export interface R070FamilyMenuSupportHandoff {
   requestedScope: FamilyResearchScope;
   historicalSex: 'male' | 'female' | 'unspecified';
@@ -1050,6 +1071,10 @@ export interface R070FamilyMenuSupportHandoff {
   menuBlockingPrerequisites: readonly string[];
   /** A separate provenance lane; not extra prerequisites to activate this menu. */
   unassignedConfigurationPrerequisites: readonly string[];
+  /** Same configuration gap may occur in several original, unassigned phrases. */
+  unassignedConfigurationPrerequisiteTrace: readonly R070FamilyConfigurationPrerequisiteTrace[];
+  /** A code shared across lanes retains both provenance sets, with no merger. */
+  crossLanePrerequisiteOverlaps: readonly R070FamilyCrossLanePrerequisiteOverlap[];
   /** Legacy aggregate for research consumers, not a list of menu activation gates. */
   missingPrerequisites: readonly string[];
   admittedFamilyClaimCount: 0;
@@ -1172,6 +1197,31 @@ function r070FamilyMenuSupportHandoff(
     [...new Set(unsupportedReasons.flatMap(item => item.missingPrerequisites))];
   const unassignedConfigurationPrerequisites =
     [...new Set(blockers.configurationHolds.flatMap(item => item.missingPrerequisites))];
+  const unassignedConfigurationPrerequisiteTrace: R070FamilyConfigurationPrerequisiteTrace[] =
+    unassignedConfigurationPrerequisites.map(prerequisiteCode => ({
+      prerequisiteCode,
+      origins: blockers.configurationHolds
+        .filter(source => source.missingPrerequisites.includes(prerequisiteCode))
+        .map(source => ({
+          sourceLayerId: source.sourceLayerId,
+          sourceSurface: source.sourceSurface,
+          canonicalObservationCoverage: source.canonicalObservationCoverage,
+        })),
+      configurationIsFamilyMeaningAuthorized: false,
+      repeatedSourceIsIndependentFamilyEvidence: false,
+    }));
+  const crossLanePrerequisiteOverlaps: R070FamilyCrossLanePrerequisiteOverlap[] =
+    prerequisiteTrace.flatMap(menuTrace => {
+      const configurationTrace = unassignedConfigurationPrerequisiteTrace.find(item =>
+        item.prerequisiteCode === menuTrace.prerequisiteCode);
+      return configurationTrace === undefined ? [] : [{
+        prerequisiteCode: menuTrace.prerequisiteCode,
+        menuOrigins: menuTrace.origins,
+        unassignedConfigurationOrigins: configurationTrace.origins,
+        menuAndConfigurationMethodsReconciled: false as const,
+        independentlyAdmittedFamilyClaims: 0 as const,
+      }];
+    });
   return {
     requestedScope: blockers.requestedScope,
     historicalSex: blockers.historicalSex,
@@ -1183,6 +1233,8 @@ function r070FamilyMenuSupportHandoff(
     unassignedConfigurationSources: blockers.configurationHolds,
     menuBlockingPrerequisites,
     unassignedConfigurationPrerequisites,
+    unassignedConfigurationPrerequisiteTrace,
+    crossLanePrerequisiteOverlaps,
     missingPrerequisites: [...new Set([
       ...menuBlockingPrerequisites,
       ...unassignedConfigurationPrerequisites,
@@ -1225,6 +1277,10 @@ export interface R070FamilyEngineTransferBoundary {
   menuBlockingPrerequisites: readonly string[];
   /** Unassigned configuration remains a different, non-menu research lane. */
   unassignedConfigurationPrerequisites: readonly string[];
+  /** Link each unassigned code to its exact configuration source surfaces. */
+  unassignedConfigurationPrerequisiteTrace: readonly R070FamilyConfigurationPrerequisiteTrace[];
+  /** Shared strings are recorded without combining the source methodologies. */
+  crossLanePrerequisiteOverlaps: readonly R070FamilyCrossLanePrerequisiteOverlap[];
   researchEvidenceMayBecomeFamilyClaim: false;
   canSelectHistoricalMethod: false;
   canGrantFamilyT8Authority: false;
@@ -1264,6 +1320,8 @@ function r070FamilyEngineTransferBoundary(
     prerequisiteTrace: menu.prerequisiteTrace,
     menuBlockingPrerequisites: menu.menuBlockingPrerequisites,
     unassignedConfigurationPrerequisites: menu.unassignedConfigurationPrerequisites,
+    unassignedConfigurationPrerequisiteTrace: menu.unassignedConfigurationPrerequisiteTrace,
+    crossLanePrerequisiteOverlaps: menu.crossLanePrerequisiteOverlaps,
     researchEvidenceMayBecomeFamilyClaim: false,
     canSelectHistoricalMethod: false,
     canGrantFamilyT8Authority: false,
