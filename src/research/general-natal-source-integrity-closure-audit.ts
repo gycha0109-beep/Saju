@@ -69,8 +69,8 @@ export function buildGeneralNatalSourceIntegrityClosureAudit() {
     peer.qualification.exactTranscriptionIdentityEstablished &&
     peer.qualification.fullSourceIntegrityQualificationEstablished &&
     peer.narrowTaxonomySupport.literalIdentityWithFrozenRecordEstablished &&
-    peer.narrowTaxonomySupport.observedSourceGlyphs ===
-      peer.narrowTaxonomySupport.frozenRecordedGlyphs;
+    String(peer.narrowTaxonomySupport.observedSourceGlyphs) ===
+      String(peer.narrowTaxonomySupport.frozenRecordedGlyphs);
 
   const material = Object.freeze({
     version: GENERAL_NATAL_SOURCE_INTEGRITY_CLOSURE_AUDIT_VERSION,
