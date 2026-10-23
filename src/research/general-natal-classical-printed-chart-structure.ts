@@ -21,8 +21,9 @@ import { prepareR083ClassicalReplayInput } from './general-natal-classical-repla
 export const R083_PRINTED_CHART_STRUCTURAL_OBSERVATION_VERSION = '0.1.0-research' as const;
 
 const STEM_HANJA = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'] as const;
-const STEM_HANGUL = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'] as const
-  satisfies readonly HeavenlyStem[];
+const STEM_HANGUL = [
+  '갑', '을', '병', '정', '무', '기', '경', '신', '임', '계',
+] as const satisfies readonly HeavenlyStem[];
 const BRANCH_HANJA = [
   '子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥',
 ] as const;
