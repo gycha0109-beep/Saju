@@ -253,7 +253,7 @@ export function buildTemporalResearchMenuReadings(
       statusMessage: monthlyHasMeaning
         ? (referenceFocus?.state === 'in_period'
           ? '조회 시각의 절입 구간별 기존 T9 풀이를 지정했습니다. 월운 Official 해석은 미승인입니다.'
-          : '선택한 월의 절입 구간별 T9 연구 풀이입니다. 조회 시각의 현재 풀이와 다를 수 있으며 Official 해석은 미승인입니다.')
+          : '선택한 월의 절입 구간별 T9 연구 풀이입니다. 조회 시각의 현재 풀이와 다를 수 있습니다. 월운 Official 해석은 미승인입니다.')
         : '해당 월의 출처에 연결된 개인별 풀이 근거가 충분하지 않습니다.',
       sections: monthly,
       ...(referenceFocus === undefined ? {} : { referenceFocus }),
