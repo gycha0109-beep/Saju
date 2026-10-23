@@ -3,6 +3,7 @@ import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-e
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import {
   evaluateFamilySourceScopeV1, evaluatePairwiseSourceScopeV1,
+  selectR070FamilyResearchTransferForContext,
   FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION,
 } from '../src/research/family-pair-source-scope-handoff.js';
 import {
@@ -725,6 +726,64 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
         expect(transfer.canGrantFamilyT8Authority).toBe(false);
         expect(transfer.canEnableMenu).toBe(false);
         expect(transfer.canPublishOrSell).toBe(false);
+      }
+    }
+  });
+
+  it('selects a family engine research transfer only for the exact requested menu and calculation identity', () => {
+    const cases = [
+      { year: 1990, day: 15, sex: 'male' as const, timeKnown: true },
+      { year: 1993, day: 15, sex: 'female' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'unspecified' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'female' as const, timeKnown: false },
+    ];
+    const differentSnapshot = chart({ year: 2001, day: 8, sex: 'male' });
+    for (const input of cases) {
+      const snapshot = chart(input);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const expected = {
+          scope,
+          snapshotId: snapshot.snapshotId,
+          calculationHash: snapshot.calculationHash,
+        };
+        const transfer = selectR070FamilyResearchTransferForContext(report, expected);
+        expect(transfer).toBe(report.engineTransferBoundary);
+        expect(transfer.route).toBe('R070_RESEARCH_ONLY_NOT_EXECUTABLE');
+        expect(transfer.menuBlockingPrerequisites).toEqual(
+          report.menuSupportHandoff.menuBlockingPrerequisites,
+        );
+        expect(transfer.unassignedConfigurationPrerequisites).toEqual(
+          report.menuSupportHandoff.unassignedConfigurationPrerequisites,
+        );
+        expect(transfer.canGrantFamilyT8Authority).toBe(false);
+        expect(transfer.canEnableMenu).toBe(false);
+        expect(() => selectR070FamilyResearchTransferForContext(report, {
+          ...expected, scope: scope === 'parents' ? 'children' : 'parents',
+        })).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext(report, {
+          ...expected, snapshotId: differentSnapshot.snapshotId,
+        })).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext(report, {
+          ...expected, calculationHash: differentSnapshot.calculationHash,
+        })).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext(report, {
+          ...expected, snapshotId: snapshot.snapshotId + '-different-person',
+        })).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext({
+          ...report, mayMarkMenuAvailable: true,
+        } as unknown as typeof report, expected)).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext({
+          ...report, researchOnly: false,
+        } as unknown as typeof report, expected)).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext({
+          ...report,
+          engineTransferBoundary: {
+            ...report.engineTransferBoundary, canGrantFamilyT8Authority: true,
+          },
+        } as unknown as typeof report, expected)).toThrow(TypeError);
+        expect(report.familyT8Admitted).toBe(false);
+        expect(report.mayMarkMenuAvailable).toBe(false);
       }
     }
   });
