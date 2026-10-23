@@ -23,7 +23,9 @@
 
 **Reader 표현 원칙:** 근거가 충족된 승인 범위 안에서는 자연스럽고 단호한 상담형 한국어를 허용한다. 다만 확신 있는 **화법**은 새로운 Claim, 미래 사건의 보장, 과장된 적용 범위나 출처 권한을 만들 수 없다. 기록 탭 상세 보고서에서는 짧은 한계 안내를 별도로 표시할 수 있다. 실제 Reader/Records UI 변경은 각 원래 소유 트랙에서 처리하며, 이 문서가 UI 배포를 승인하지 않는다.
 
-**구현된 최소 버전 핀:** `verifyHeldSajuSourceUnitClosureV1`은 검증된 서명 material에서 `registrySnapshotId` 및 `profileRef{id,version,contentHash}`를 `interpretationPolicyVersionPins`로 그대로 반환한다. 이는 검증된 실행의 **버전 식별자**일 뿐, 개별 Rule/Methodology/Source의 승인 여부나 명하가 채택한 규칙 묶음의 의미 권한을 검증했다는 뜻이 아니다. 그 판단은 별도 Source Owner scope 심사를 거쳐야 한다.
+**구현된 최소 버전 핀:** `verifyHeldSajuSourceUnitClosureV1`은 검증된 서명 material에서 `registrySnapshotId` 및 `profileRef{id,version,contentHash}`를 `interpretationPolicyVersionPins`로 반환한다. 호출자는 **신뢰할 수 있는 서버 소유 설정/DB 정책에서 독립적으로 얻은** `expectedInterpretationPolicy{registrySnapshotId,profileRef}`를 필수로 제공해야 하며, 오래되거나 다른 Registry/Profile ID·버전·해시인 경우 전역 nonce를 소비하기 전에 차단한다. 기대값을 호출자의 proof/request/response에서 다시 복사하면 이 검증은 의미가 없다. 이는 검증된 실행의 **버전 동일성**일 뿐, 개별 Rule/Methodology/Source의 승인 여부나 명하가 채택한 규칙 묶음의 의미 권한을 검증했다는 뜻이 아니다. 그 판단은 기존 Source Owner scope 심사를 거쳐야 한다.
+
+**nonce replay 일치:** Saju 검증기와 MyeongHa 서버 검증기는 `saju-proof-v2:` + `deterministicContentHash([issuer,audience,keyId,nonce])`를 같은 공유 nonce 원장 키로 사용한다. 콜론이 들어간 issuer/audience 경계 충돌이나 keyId 교체 후 재사용 오판을 막으며, 저장소의 원자 단발 claim과 장애 시 차단 규칙은 유지한다.
 
 **Production 권한 분리:** 이 사용자 승인은 **정책 원칙**에 한정된다. 구체적인 규칙 묶음, 해석 Claim, Source Owner Production lifecycle 발급, 검증키, MyeongHa Subject/Birth Revision·DB correlation, selected/co-present/disclosure 및 Privacy/Release/Commerce는 아직 별도 확인·승인이 필요하다. 따라서 #2410은 이 결정만으로 해제하지 않는다.
 
