@@ -171,7 +171,7 @@ export function buildTemporalResearchMenuReadings(
     }
     if (reference.state === 'in_period') {
       const theme = reference.theme;
-      const matched = monthly.filter(section => section.claimId === theme?.claimId &&
+      const matched = theme === undefined ? [] : monthly.filter(section => section.claimId === theme.claimId &&
         section.text === theme.text &&
         section.interval?.startsAt === theme.calculatedInterval.startsAt &&
         section.interval?.endsAtExclusive === theme.calculatedInterval.endsAt &&
