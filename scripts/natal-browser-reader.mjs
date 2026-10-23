@@ -126,7 +126,7 @@ ${message ? `<p role="alert" class="error">${escapeHtml(message)}</p>` : ''}
 <select id="partnerSex" name="partnerSex"><option value="unspecified">선택하지 않음</option><option value="male">남성</option><option value="female">여성</option></select>
 <label class="check" for="partnerBirthAuthorized"><input id="partnerBirthAuthorized" name="partnerBirthAuthorized" type="checkbox">상대 출생정보를 이 계산에 사용할 권한이 있습니다</label>
 <p class="notice">두 명식을 따로 계산하지만 실제 상호 궁합의 좋고 나쁨이나 결혼 결과는 제공하지 않습니다.</p></fieldset>
-<button type="submit">선택한 사주 풀이 보기</button>
+<button type="submit">내 사주 결과 생성하기</button>
 </form></main></body></html>`;
 }
 
