@@ -17,6 +17,38 @@ export const SAJU_READING_MENUS = Object.freeze([
 ]);
 
 const NATAL_MENU_IDS = Object.freeze(['general', 'career', 'wealth', 'relationship', 'business']);
+const NATAL_SOURCE_HEADINGS = Object.freeze({
+  general: '나의 총운: 서로 다른 명식 근거를 연결한 구조 풀이',
+  career: '나의 직업·일: 두 근거를 연결한 구조 해석',
+  wealth: '나의 재물·자원: 서로 다른 명식 근거를 연결한 구조 풀이',
+  relationship: '나의 관계·소통: 서로 다른 명식 근거를 연결한 구조 풀이',
+  business: '나의 사업·실행: 서로 다른 명식 근거를 연결한 구조 풀이',
+});
+
+/**
+ * Preserve the original five-domain report byte-for-byte except a navigation
+ * anchor on the exact already-rendered source-owned domain heading.
+ * No HTML substring becomes a new Claim or a synthesized interpretation.
+ */
+export function focusNatalReadingHtml(html, menu) {
+  if (!NATAL_MENU_IDS.includes(menu) || !html.includes('<body><main>')) return html;
+  const heading = NATAL_SOURCE_HEADINGS[menu];
+  const source = '<h2>' + heading + '</h2>';
+  const found = html.includes(source);
+  const linked = found
+    ? html.replace(source, '<h2 id="requested-saju-reading">' + heading + '</h2>') : html;
+  const label = SAJU_READING_MENUS.find(item => item.id === menu).label;
+  const nav = '<nav style="padding:16px;background:#242f38;border-radius:12px">' +
+    '<a href="/" style="color:#c8efd9">← 다른 항목 선택</a> · ' +
+    (found
+      ? '<a href="#requested-saju-reading" style="color:#c8efd9">' +
+        h(label) + ' 내 명식별 풀이로 바로가기</a>'
+      : '<span style="color:#c8efd9">' + h(label) +
+        '의 별도 연구 문단이 확인되지 않아 전체 원국 결과만 표시합니다.</span>') +
+    '</nav>';
+  return linked.replace('<body><main>', '<body><main>' + nav);
+}
+
 const h = text => String(text).replace(/[&<>"']/gu, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
