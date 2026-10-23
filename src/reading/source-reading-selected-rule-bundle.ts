@@ -89,7 +89,7 @@ export function inspectSajuSelectedRuleBundleV1(input: Readonly<{
     if (verifyResolvedRegistryContentIntegrity(registry).length > 0
       || !interpretation.integrity.valid
       || interpretation.run.registrySnapshotId !== registry.snapshot.registrySnapshotId
-      || interpretation.run.status !== 'completed'
+      || interpretation.run.status === 'failed'
       || interpretation.run.packRef.id !== registry.pack.packId
       || interpretation.run.packRef.version !== registry.pack.version) {
       return blocked('registry_or_run_mismatch');
