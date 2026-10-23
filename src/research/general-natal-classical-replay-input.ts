@@ -82,7 +82,7 @@ export function prepareR083ClassicalReplayInput(caseId: string): R083ClassicalRe
     'SOURCE_LOCAL_CONCLUSION_IS_NOT_ENGINE_GROUND_TRUTH',
     ...(!chart ? ['FOUR_PRINTED_PILLARS_NOT_AVAILABLE'] : []),
     ...(!reference ? ['R081_SOURCE_LOCAL_CONCLUSION_NOT_REGISTERED'] : []),
-    ...('modes' in normalized && normalized.modes.includes('PARTIAL_BIRTH_DATA')
+    ...(normalized.modes.some(mode => mode === 'PARTIAL_BIRTH_DATA')
       ? ['HISTORICAL_BIRTH_INPUT_AND_POLICY_INCOMPLETE'] : []),
   ];
   return {
