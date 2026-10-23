@@ -1,4 +1,5 @@
 import type { ProductReadingInternals } from './product-reading-service.js';
+import { readReaderMenuLabelV1 } from './reading-reader-locale-resources.js';
 import type {
   ProductReadingResponseBlock,
   ProductReadingResponseReading,
@@ -9,18 +10,18 @@ export const TWELVE_MENU_ENGINE_READINESS_VERSION =
   'myeongha-twelve-menu-engine-readiness-v1' as const;
 
 const MENU_DEFINITIONS = Object.freeze([
-  { menuId: 'general', label: '전체 사주', sections: ['general:natal'] },
-  { menuId: 'career', label: '직업·커리어', sections: ['career:natal'] },
-  { menuId: 'wealth', label: '재물', sections: ['wealth:natal'] },
-  { menuId: 'relationship', label: '연애·관계', sections: ['relationship:natal:general'] },
-  { menuId: 'business', label: '사업', sections: ['business:natal'] },
-  { menuId: 'family', label: '가족', sections: ['family:natal:parents', 'family:natal:children'] },
-  { menuId: 'life_stage', label: '삶의 단계', sections: ['life_stage:life_stage'] },
-  { menuId: 'annual', label: '올해', sections: ['general:annual'] },
-  { menuId: 'monthly', label: '이번 달', sections: ['general:monthly'] },
-  { menuId: 'spouse', label: '배우자·관계', sections: ['relationship:natal:spouse'] },
-  { menuId: 'compatibility', label: '궁합', sections: ['compatibility:natal'] },
-  { menuId: 'question', label: '지금 고민으로 보기', sections: ['question_specific:natal'] },
+  { menuId: 'general', sections: ['general:natal'] },
+  { menuId: 'career', sections: ['career:natal'] },
+  { menuId: 'wealth', sections: ['wealth:natal'] },
+  { menuId: 'relationship', sections: ['relationship:natal:general'] },
+  { menuId: 'business', sections: ['business:natal'] },
+  { menuId: 'family', sections: ['family:natal:parents', 'family:natal:children'] },
+  { menuId: 'life_stage', sections: ['life_stage:life_stage'] },
+  { menuId: 'annual', sections: ['general:annual'] },
+  { menuId: 'monthly', sections: ['general:monthly'] },
+  { menuId: 'spouse', sections: ['relationship:natal:spouse'] },
+  { menuId: 'compatibility', sections: ['compatibility:natal'] },
+  { menuId: 'question', sections: ['question_specific:natal'] },
 ] as const);
 
 export type TwelveMenuId = (typeof MENU_DEFINITIONS)[number]['menuId'];
@@ -204,7 +205,7 @@ export function buildTwelveMenuEngineReadiness(
       : anyEvidence ? 'partial' : 'unavailable';
     return {
       version: TWELVE_MENU_ENGINE_READINESS_VERSION,
-      menuId: menu.menuId, label: menu.label, state,
+      menuId: menu.menuId, label: readReaderMenuLabelV1('ko-KR', menu.menuId), state,
       sections,
       constraints: LIMITS,
     };

@@ -59,6 +59,13 @@
 - `state=internal_preview_only`와 `canPersist/canDisclose/canPublish/canSell=false` 고정. 완성 `ProductReadingResponse` / Reader API / S5 저장 객체를 만들지 않는다. 독립 Subject/Auth/Production Release 검증 없이 공개 또는 Reader에 전달하는 것이 금지된다.
 - #2709에서 병합된 한국어 Renderer와 연결 가능한 별도 ProductSection 어댑터이며, 실제 Auth/MyeongHa Reader 연결과 공개용 redaction 완료는 별도 작업이다.
 
+### E-4 한국어 Reader 메뉴·상태 리소스 첫 연결 (2026-10-24)
+
+- `src/reading/reading-reader-locale-resources.ts`는 기존 12개 Reader 카드의 **한국어 메뉴 이름 12개, 상태 안내 문구 5개, 가족 항목명 2개**를 원문 그대로 분리하고, 사용하던 `buildTwelveMenuEngineReadiness`와 `buildTwelveMenuReaderCards`를 실제 해당 리소스에 연결한다. 한국어 명리 표시 용어는 별도 복사본으로만 보존하며 새 명리 정의·해석·번역 승인으로 취급하지 않는다.
+- 리소스 카탈로그는 기존 8개 로케일 식별자를 각각 독립적으로 유지하지만, 이 단계에서 **실제 등록된 콘텐츠는 `ko-KR` 내부 원문 리소스뿐**이다. `zh-CN/zh-TW` 및 `ms-MY/id-ID`를 하나로 합치지 않으며 미등록 언어 요청은 자동 한국어/영어 폴백 없이 실패한다.
+- 현재 단계는 **E-4 일부 실제 구현**이지 외국어 용어·오류 메시지 품질 검증이나 Renderer 출시가 아니다. 제품 UI 전체의 로케일 소유권은 MyeongHa에 있고, `ReadingArtifact`·Reader/Records·Production/저장/판매/유료 상품 범위는 그대로다.
+- 회귀: `test/reading-reader-locale-resources.test.ts`; 기존 `test/twelve-menu-reader-cards.test.ts`와 함께 한국어 문구 및 권한 경계 보존을 확인한다.
+
 ## 4. 기존 Authority/HOLD 유지
 
 A 원국, B 시간, C 관계, D 질문의 source-qualified T5/T6/T8/T9/T10/T11 및 MUR 기준은 변경하지 않는다. 특히 연구용 의미, 대운/연운/월운, 궁합, 배우자 등 scope 미승인 결과는 외국어로 표현해도 여전히 HOLD이다. `internal_preview_only` 출력은 Official/Production/Public/저장/판매 권한을 추가하지 않는다.
