@@ -55,6 +55,13 @@ export interface GeneralMonthlyExplorationReport {
   sections: readonly GeneralMonthlyExplorationSection[];
   missing: readonly string[];
   caveats: readonly string[];
+  /** The exact monthly segment applicable to the request's reference instant. */
+  referenceReading: Readonly<{
+    referenceDateTime: string;
+    state: 'in_period' | 'insufficient_evidence' | 'outside_target_month';
+    segmentId?: MonthlySegmentId;
+    theme?: GeneralMonthlyExplorationSection;
+  }>;
 }
 
 function requireEvidence(value: unknown, detail: string): asserts value {
@@ -193,6 +200,34 @@ export function buildGeneralMonthlyExplorationReport(
   if (unavailable.length > 0) {
     missing.push(`미확정 원국 기둥(${unavailable.map(slot => SLOT_KO[slot]).join(', ')})의 월운 충 관계는 해석하지 않습니다.`);
   }
+  const instant = Date.parse(facts.referenceDateTime);
+  const atReference = facts.segments.filter(segment =>
+    Number.isFinite(instant) &&
+    Date.parse(segment.startsAt) <= instant &&
+    instant < Date.parse(segment.endsAt));
+  requireEvidence(atReference.length <= 1, 'reference instant overlaps monthly segments');
+  const segment = atReference[0];
+  const applicableThemes = segment === undefined ? [] : sections.filter(section =>
+    section.kind === 'theme' && section.segmentId === segment.segmentId &&
+    section.calculatedInterval.startsAt === segment.startsAt &&
+    section.calculatedInterval.endsAt === segment.endsAt);
+  requireEvidence(applicableThemes.length <= 1,
+    'only one source-qualified theme can apply at a reference instant');
+  const referenceReading: GeneralMonthlyExplorationReport['referenceReading'] =
+    segment === undefined
+      ? { referenceDateTime: facts.referenceDateTime, state: 'outside_target_month' }
+      : applicableThemes.length === 0
+        ? {
+            referenceDateTime: facts.referenceDateTime,
+            state: 'insufficient_evidence',
+            segmentId: segment.segmentId,
+          }
+        : {
+            referenceDateTime: facts.referenceDateTime,
+            state: 'in_period',
+            segmentId: segment.segmentId,
+            theme: applicableThemes[0],
+          };
   return {
     version: GENERAL_MONTHLY_EXPLORATION_VERSION,
     mode: 'internal_exploration', status: 'not_official_reading',
@@ -205,6 +240,7 @@ export function buildGeneralMonthlyExplorationReport(
     coverage: themeCount.size === 2 ? 'complete' : themeCount.size === 1 ? 'partial' : 'insufficient',
     sections,
     missing,
+    referenceReading,
     caveats: [
       '이번 달 내용은 기존 연구 T9 Claim과 한국어 프로필에 한정한 내부 시제품으로, 공식 해석이나 판매 가능한 결과가 아닙니다.',
       '월운은 서울 달력 월을 절입 시각 전후로 나누어 관찰하며, 올해의 민간 연도 표시와 같은 계산 정책으로 합쳐 단정하지 않습니다.',
