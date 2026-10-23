@@ -1,5 +1,5 @@
 import { READING_LOCALE_CATALOG_V1, type ReadingLocaleV1 } from './reading-localization.js';
-import type { EngineMenuReason } from './twelve-menu-engine-readiness.js';
+import type { EngineMenuReason, TwelveMenuId } from './twelve-menu-engine-readiness.js';
 
 /**
  * E-4: source-owned reader status copy, separate from Saju interpretation.
@@ -35,6 +35,22 @@ const KOREAN_READER_REASON_MESSAGES_V1: Readonly<Record<EngineMenuReason, string
       '허용된 근거로 생성한 풀이입니다. 전체 제품의 공개·보관·판매 권한과는 별개입니다.',
   });
 
+const KOREAN_READER_MENU_LABELS_V1: Readonly<Record<TwelveMenuId, string>> =
+  Object.freeze({
+    general: '전체 사주',
+    career: '직업·커리어',
+    wealth: '재물',
+    relationship: '연애·관계',
+    business: '사업',
+    family: '가족',
+    life_stage: '삶의 단계',
+    annual: '올해',
+    monthly: '이번 달',
+    spouse: '배우자·관계',
+    compatibility: '궁합',
+    question: '지금 고민으로 보기',
+  });
+
 const KOREAN_FAMILY_SECTION_TITLES_V1 = Object.freeze({
   'family:natal:parents': '부모와의 관계',
   'family:natal:children': '자녀와의 관계',
@@ -57,6 +73,7 @@ const KOREAN_RESOURCES_V1 = Object.freeze({
   locale: 'ko-KR' as const,
   state: 'internal_korean_copy' as const,
   reasonMessages: KOREAN_READER_REASON_MESSAGES_V1,
+  menuLabels: KOREAN_READER_MENU_LABELS_V1,
   familySectionTitles: KOREAN_FAMILY_SECTION_TITLES_V1,
   displayTerms: KOREAN_READING_DISPLAY_TERMS_V1,
   constraints: Object.freeze({
@@ -81,6 +98,19 @@ export function getReadingReaderLocaleResourcesV1(
     throw new RangeError('Reader locale resources are not registered: ' + locale);
   }
   return KOREAN_RESOURCES_V1;
+}
+
+export function readReaderMenuLabelV1(
+  locale: ReadingLocaleV1,
+  menuId: TwelveMenuId,
+): string {
+  const resources = getReadingReaderLocaleResourcesV1(locale);
+  const label: string | undefined =
+    (resources.menuLabels as Partial<Record<string, string>>)[menuId];
+  if (typeof label !== 'string' || label.trim().length === 0) {
+    throw new TypeError('Unknown Reader menu key: ' + menuId);
+  }
+  return label;
 }
 
 export function readReaderReasonMessageV1(
