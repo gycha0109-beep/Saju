@@ -161,6 +161,16 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 양력 1990-05-15 기준 남성·여성·성별 미지정 명식에서 부모/자녀 메뉴별 각 원전 미지원 사유 수·방법 쌍 수·성별 제외 목록·실제 경로를 대조한다. 여성 1997-05-15 출생시각 미상에서는 부모 월주 방법을 남겨 두고 자녀의 `時為子息` 필수 시주 경로만 `R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED`로 보고한다. 역사 남성 명식의 `胎為母`에는 별개 `R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE`을 표시한다. **연구용 미지원 설명은 가족운 출력이나 메뉴 지원 활성화로 변환하지 않는다.**
 
+### R070 미배속 구성 조건의 출처 색인 및 메뉴 조건과 겹치는 코드의 별도 인계
+
+앞선 두 분리 배열에서 이제 **구성 연구 조건의 원문별 출처**까지 보존한다. `menuSupportHandoff.unassignedConfigurationPrerequisiteTrace[]`는 `unassignedConfigurationPrerequisites`에 속한 각 코드를 **한 번씩** 반환하고, 그 코드가 원래 등록된 `CONFIGURATION-OUTCOME` 다섯 원문 중 어디에서 왔는지를 `origins[]`의 `sourceLayerId=CONFIGURATION-OUTCOME`, `sourceSurface`, `canonicalObservationCoverage`로 정확히 식별한다. `旺衰`·`生旺死絕`·`刑沖破害`·`官煞混雜`·`財印`의 중복 코드를 같은 메뉴의 독립 근거 여러 개로 세지 않는다. `configurationIsFamilyMeaningAuthorized=false`, `repeatedSourceIsIndependentFamilyEvidence=false`다.
+
+`crossLanePrerequisiteOverlaps[]`는 **문자열 코드가 동일한 경우에만** `menuBlockingPrerequisites`와 `unassignedConfigurationPrerequisites`의 교집합을 반환한다. 각 항목은 `prerequisiteCode`, 원래 메뉴 차단 사유에 딸린 `menuOrigins`, 그리고 미배속 구성 출처 `unassignedConfigurationOrigins`를 **별도 배열로** 보존한다. 특정 명식에서 교집합이 없다면 빈 배열을 그대로 반환한다. 동일한 결핍 코드가 나타난다는 사실은 두 역사 방법을 조정했다는 뜻도, 미배속 구성을 부모·자녀 메뉴에 배정했다는 뜻도 아니다. 따라서 `menuAndConfigurationMethodsReconciled=false`와 `independentlyAdmittedFamilyClaims=0`을 고정한다.
+
+`engineTransferBoundary`에도 이 두 출처 배열을 원형대로 연결한다. 기존 `prerequisiteTrace`는 계속 **메뉴 직접 차단 사유만** 인덱싱하고, `unassignedConfigurationPrerequisiteTrace`는 **미배속 구성 조건만** 인덱싱한다. `missingPrerequisites`의 옛 합집합 동작은 바꾸지 않는다. 새로운 R070 해석 방법론·우선순위·출처 승인 및 T8/제품/판매 권한을 생성하지 않는다.
+
+**실계산 회귀:** 1990년 남성·여성·성별 미지정 및 1997년 여성 시각 미상 명식의 부모/자녀에 대해 구성 원문별 참조와 원래 상태를 대조한다. 메뉴/구성 두 목록 간의 교집합 및 출처 2계층 분리, 허가 플래그의 불변 여부를 확인한다. 이 자료는 수신 엔진의 **연구용 미충족 조건 출처 추적**에만 사용한다.
+
 ### R070 메뉴 직접 차단 조건과 미배속 구성 연구 조건의 분리
 
 기존 `menuSupportHandoff.missingPrerequisites`는 과거 연구 수신 호환성을 위해 **원문·방법론·공식 권한 차단 조건과 가족 대상이 아직 정해지지 않은 구성 연구 조건을 합친 배열**이었다. 수신 측에서 이것을 모두 메뉴 활성화의 직접 선행조건으로 받아들이면 `CONFIGURATION-OUTCOME`의 `旺衰`·`生旺死絕`·`刑沖破害`·`官煞混雜`·`財印` 전체를 특정 부모/자녀 메뉴에 잘못 결속하게 된다. 그 해석을 막기 위해 다음 두 경로를 별도 반환한다.
