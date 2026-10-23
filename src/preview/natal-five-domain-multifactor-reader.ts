@@ -261,6 +261,43 @@ function renderRelationshipReadingGuide(report: RelationshipNatalMultifactorRepo
     '</p></section>';
 }
 
+/**
+ * Business and Relationship first-screen reading is the EXACT Korean text
+ * of their selected, source-qualified T8 Claims, not a headline-only
+ * explanation or a freshly inferred cross-Claim synthesis.
+ *
+ * The full per-Claim attribution remains available in the original details.
+ * Partial reports show only the actually selected claims, never a three-axis
+ * conclusion when their independent MUR supports are missing.
+ */
+function renderFirstScreenSelectedInterpretations(
+  domain: string,
+  report: ResearchReport,
+): string {
+  if (domain !== 'business' && domain !== 'relationship') return '';
+  const scoped = domain === 'business'
+    ? report as BusinessNatalMultifactorReport
+    : report as RelationshipNatalMultifactorReport;
+  if (scoped.readingGuide === undefined || scoped.sections.length === 0) return '';
+  const sections = scoped.sections;
+  guard(sections[0]?.claimType === scoped.readingGuide.coreClaimType &&
+    sections.every(section => section.sourceIds.length > 0 &&
+      section.upstreamClaimIds.length >= 2 && section.paragraph.trim().length > 0),
+    'first-screen interpretation must use exact selected sourced T8 paragraphs');
+  const items = sections.map((section, i) =>
+    '<section class="first-claim"><h4>' +
+    escapeHtml((i === 0 ? '중심 관점 · ' : '독립 보조 관점 · ') +
+      section.headline) + '</h4><p>' + escapeHtml(section.paragraph) +
+    '</p></section>').join('');
+  const scope = report.state === 'complete'
+    ? '이 명식에서 확인된 중심 1개와 독립 보조 2개의 기존 연구 풀이입니다. 실제 사업·관계 결과를 예측하지 않습니다.'
+    : '이 명식에서 출처가 확인된 부분 풀이만 보여줍니다. 보조 근거가 부족한 종합 결론은 보류합니다.';
+  return '<section class="first-meaning" aria-label="' +
+    (domain === 'business' ? '사업' : '관계') + ' 명식별 풀이 본문">' +
+    '<h3>이 명식에서 먼저 읽을 실제 풀이</h3>' + items +
+    '<p class="bounded-note">' + escapeHtml(scope) + '</p></section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -288,10 +325,14 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
         ? renderBusinessReadingGuide(report as BusinessNatalMultifactorReport)
         : domain === 'relationship'
           ? renderRelationshipReadingGuide(report as RelationshipNatalMultifactorReport) : '';
+  const firstMeaning = renderFirstScreenSelectedInterpretations(domain, report);
+  const details = firstMeaning === '' ? readingGuide + originalText
+    : '<details class="full-claim-evidence"><summary>원국 풀이의 상세 설명·명식 근거와 출처</summary>' +
+      readingGuide + originalText + '</details>';
   return '<article aria-labelledby="domain-' + domain + '" class="domain">' +
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
-    '<p>' + escapeHtml(report.introduction) + '</p>' + readingGuide + originalText + missing +
+    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning + details + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }
@@ -360,7 +401,12 @@ export function renderNatalFiveDomainMultifactorResearchHtml(
     'nav.overview{border:1px solid #ccc}ol.overview{padding-left:1.5em}' +
     'ol.overview li{border-bottom:1px solid #ddd;padding:.4em 0}' +
     'ol.overview li:last-child{border-bottom:none}' +
-    'ol.overview p{margin:.2em 0}</style></head>' +
+    'ol.overview p{margin:.2em 0}' +
+    '.first-meaning{padding:16px 18px;border-radius:12px;background:#eff3ed}' +
+    '.first-claim{border-bottom:1px solid #d3ddd2;padding:7px 0}' +
+    '.first-claim:last-of-type{border-bottom:none}' +
+    '.bounded-note{font-size:.9em;color:#536054}' +
+    '.full-claim-evidence{margin:14px 0}</style></head>' +
     '<body><header><h1>나의 원국을 다섯 관점에서 읽기</h1>' +
     '<p>하나의 실제 명식에서 계산되고, 기존 근거와 연결된 연구용 해석만 분야별로 모았습니다. ' +
     '부분 풀이와 풀이 보류는 종합풀이로 취급하지 않습니다.</p>' +

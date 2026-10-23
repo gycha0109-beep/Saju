@@ -125,6 +125,40 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(html).not.toContain('<script>');
   });
 
+  it('puts exact Business and Relationship T8 Korean meaning before collapsed attribution', () => {
+    const chart = sample(3, 10);
+    const original = reports(chart);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, original);
+    for (const domain of ['business', 'relationship'] as const) {
+      const report = original[domain];
+      expect(report.readingGuide).toBeDefined();
+      expect(report.sections.length).toBeGreaterThan(0);
+      const ownCard = html.split('<h2 id="domain-' + domain + '">')[1]!
+        .split('</article>')[0]!;
+      const firstMeaning = ownCard.indexOf('이 명식에서 먼저 읽을 실제 풀이');
+      const fullEvidence = ownCard.indexOf('<details class="full-claim-evidence">');
+      expect(firstMeaning).toBeGreaterThanOrEqual(0);
+      expect(fullEvidence).toBeGreaterThan(firstMeaning);
+      for (const section of report.sections) {
+        const originalParagraph = section.paragraph.replace(/&/gu, '&amp;')
+          .replace(/</gu, '&lt;').replace(/>/gu, '&gt;')
+          .replace(/"/gu, '&quot;').replace(/'/gu, '&#39;');
+        const first = ownCard.indexOf(originalParagraph);
+        expect(first).toBeGreaterThan(firstMeaning);
+        expect(first).toBeLessThan(fullEvidence);
+        expect(ownCard).toContain(section.ruleId);
+        expect(ownCard).toContain(section.sourceIds[0]!);
+      }
+      expect(ownCard).toContain(report.state === 'complete'
+        ? '실제 사업·관계 결과를 예측하지 않습니다.'
+        : '보조 근거가 부족한 종합 결론은 보류합니다.');
+    }
+    const unknown = sample(3, 10, null);
+    const unknownHtml = renderNatalFiveDomainMultifactorResearchHtml(unknown, reports(unknown));
+    expect(unknownHtml).not.toContain('class="first-meaning"');
+    expect(unknownHtml).toContain('출판 및 판매 불가');
+  });
+
   it('makes partial evidence and its unresolved gap visible together in the five-domain overview', () => {
     const chart = sample(3, 10);
     const original = reports(chart);
