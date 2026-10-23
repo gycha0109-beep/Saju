@@ -214,3 +214,34 @@ describe('twelve-menu visibility is not evidence-backed reading availability', (
     ])).toThrow('duplicate');
   });
 });
+
+describe('E-4 locale admission on readiness', () => {
+  it('keeps old output and explicit Korean output identical without granting new authority', () => {
+    const korean = buildTwelveMenuEngineReadiness([], { readingLocale: 'ko-KR' });
+    expect(korean).toEqual(buildTwelveMenuEngineReadiness([]));
+    expect(korean[0]?.label).toBe('전체 사주');
+    expect(korean.every(menu => !menu.constraints.mayAuthorizeSelling)).toBe(true);
+    expect(buildTwelveMenuEngineReadiness([], {
+      accountLocale: 'ko-KR', uiLocale: 'en-US',
+    })).toEqual(korean);
+    expect(buildTwelveMenuEngineReadiness([], {
+      readingLocale: 'ko-KR', accountLocale: 'en-US', uiLocale: 'ja-JP',
+    })).toEqual(korean);
+  });
+
+  it('rejects unsupported or unregistered locale before examining delivered evidence', () => {
+    const executions = [read('general', result(GENERAL, { official: true }))];
+    for (const locale of ['en-US', 'ja-JP', 'zh-CN', 'zh-TW', 'vi-VN', 'ms-MY', 'id-ID']) {
+      expect(() => buildTwelveMenuEngineReadiness(executions, { readingLocale: locale }))
+        .toThrow('not registered');
+      expect(() => buildTwelveMenuEngineReadiness([], { readingLocale: locale }))
+        .toThrow('not registered');
+    }
+    expect(() => buildTwelveMenuEngineReadiness(executions, {
+      accountLocale: 'en-US', uiLocale: 'ko-KR',
+    })).toThrow('not registered');
+    expect(() => buildTwelveMenuEngineReadiness(executions, {
+      readingLocale: 'xx-XX',
+    })).toThrow('Unsupported reading locale');
+  });
+});

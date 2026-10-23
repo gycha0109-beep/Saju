@@ -1,5 +1,13 @@
 import type { ProductReadingResponseReading, ProductReadingResponseState } from './product-reading-response.js';
-import { readReaderReasonMessageV1, readReaderSectionTitleV1 } from './reading-reader-locale-resources.js';
+import {
+  getReadingReaderLocaleResourcesV1,
+  readReaderReasonMessageV1,
+  readReaderSectionTitleV1,
+} from './reading-reader-locale-resources.js';
+import {
+  resolveReadingLocaleV1,
+  type ReadingLocalePreferencesV1,
+} from './reading-localization.js';
 import { readingSectionForIntentV1 } from './consumer-reading-authority.js';
 import {
   buildTwelveMenuEngineReadiness,
@@ -53,8 +61,13 @@ const CONSTRAINTS = Object.freeze({
  */
 export function buildTwelveMenuReaderCards(
   executions: readonly MenuReadingExecution[],
+  localePreferences: ReadingLocalePreferencesV1 = {},
 ): readonly TwelveMenuReaderCard[] {
-  const readiness = buildTwelveMenuEngineReadiness(executions);
+  // Reader status copy and delivered Korean paragraphs share one explicit
+  // reading locale. Unknown/undeployed locales must never receive ko-KR text.
+  const locale = resolveReadingLocaleV1(localePreferences);
+  getReadingReaderLocaleResourcesV1(locale);
+  const readiness = buildTwelveMenuEngineReadiness(executions, localePreferences);
   const bySection = new Map<string, MenuReadingExecution['internals']>();
   const unresolvedByMenu = new Map<TwelveMenuId, MenuReadingExecution['internals']>();
 
@@ -77,7 +90,7 @@ export function buildTwelveMenuReaderCards(
         ?? unresolvedByMenu.get(menu.menuId);
       const response = internals?.response;
       const extraExplanation = response?.coverage?.explanation;
-      const message = readReaderReasonMessageV1('ko-KR', section.reason) +
+      const message = readReaderReasonMessageV1(locale, section.reason) +
         (extraExplanation === undefined ? '' : ' ' + extraExplanation);
       const reading = section.state === 'unavailable' ||
         response?.reading === undefined ||
@@ -89,7 +102,7 @@ export function buildTwelveMenuReaderCards(
           };
       return {
         readingSection: section.readingSection,
-        title: readReaderSectionTitleV1('ko-KR', menu.label, section.readingSection),
+        title: readReaderSectionTitleV1(locale, menu.label, section.readingSection),
         state: section.state,
         message,
         ...(section.responseState === undefined

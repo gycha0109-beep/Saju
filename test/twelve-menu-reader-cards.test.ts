@@ -123,3 +123,59 @@ describe('twelve menu reader content projection', () => {
     })])).toThrow('different intent');
   });
 });
+
+describe('E-4 requested reading locale boundary for actual Reader cards', () => {
+  const delivered = () => [
+    entry('general', { domain: 'general', temporalScope: 'natal' }, {
+      official: true,
+      text: '원문 한국어 해석을 보존합니다.',
+    }),
+  ];
+
+  it('preserves exact Korean output for explicit ko-KR and legacy default', () => {
+    const legacy = buildTwelveMenuReaderCards(delivered());
+    const explicit = buildTwelveMenuReaderCards(delivered(), {
+      readingLocale: 'ko-KR', accountLocale: 'en-US', uiLocale: 'ja-JP',
+    });
+    expect(explicit).toEqual(legacy);
+    expect(explicit[0]?.sections[0]?.reading?.sections[0]?.blocks[0])
+      .toEqual({ type: 'paragraph', text: '원문 한국어 해석을 보존합니다.' });
+    expect(explicit[0]?.state).toBe('available');
+    expect(explicit[0]?.constraints.mayGrantPublicAvailability).toBe(false);
+  });
+
+  it('honors account over UI locale and never falls back from foreign readingLocale', () => {
+    const accountKorean = buildTwelveMenuReaderCards(delivered(), {
+      accountLocale: 'ko-KR', uiLocale: 'vi-VN',
+    });
+    expect(accountKorean[0]?.title).toBe('전체 사주');
+    for (const locale of ['en-US', 'ja-JP', 'zh-CN', 'zh-TW', 'vi-VN', 'ms-MY', 'id-ID']) {
+      expect(() => buildTwelveMenuReaderCards(delivered(), { readingLocale: locale }))
+        .toThrow('not registered');
+      expect(() => buildTwelveMenuReaderCards([], { readingLocale: locale }))
+        .toThrow('not registered');
+    }
+    expect(() => buildTwelveMenuReaderCards(delivered(), {
+      accountLocale: 'en-US', uiLocale: 'ko-KR',
+    })).toThrow('not registered');
+    expect(() => buildTwelveMenuReaderCards(delivered(), { uiLocale: 'en-US' }))
+      .toThrow('not registered');
+    expect(() => buildTwelveMenuReaderCards(delivered(), { readingLocale: 'xx-XX' }))
+      .toThrow('Unsupported reading locale');
+  });
+
+  it('does not expose Korean partial, preview, or source evidence on foreign-locale requests', () => {
+    const research = [
+      entry('career', { domain: 'career', temporalScope: 'natal' }, {
+        official: false, text: '공개되지 않은 내부 한국어 미리보기.',
+      }),
+    ];
+    expect(() => buildTwelveMenuReaderCards(research, {
+      readingLocale: 'ja-JP',
+    })).toThrow('not registered');
+    const korean = buildTwelveMenuReaderCards(research, { readingLocale: 'ko-KR' });
+    expect(korean[1]?.state).toBe('partial');
+    expect(korean[1]?.constraints.previewOnly).toBe(true);
+    expect(korean[1]?.constraints.maySell).toBe(false);
+  });
+});

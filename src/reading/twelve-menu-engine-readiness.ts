@@ -1,5 +1,12 @@
 import type { ProductReadingInternals } from './product-reading-service.js';
-import { readReaderMenuLabelV1 } from './reading-reader-locale-resources.js';
+import {
+  getReadingReaderLocaleResourcesV1,
+  readReaderMenuLabelV1,
+} from './reading-reader-locale-resources.js';
+import {
+  resolveReadingLocaleV1,
+  type ReadingLocalePreferencesV1,
+} from './reading-localization.js';
 import type {
   ProductReadingResponseBlock,
   ProductReadingResponseReading,
@@ -171,7 +178,12 @@ function sectionReadiness(
  */
 export function buildTwelveMenuEngineReadiness(
   executions: readonly MenuReadingExecution[],
+  localePreferences: ReadingLocalePreferencesV1 = {},
 ): readonly TwelveMenuEngineReadiness[] {
+  // Resolve and validate before examining any request content. No Korean
+  // fallback is allowed for an explicitly requested unregistered locale.
+  const locale = resolveReadingLocaleV1(localePreferences);
+  getReadingReaderLocaleResourcesV1(locale);
   const bySection = new Map<string, ProductReadingInternals>();
   const unresolvedByMenu = new Map<TwelveMenuId, ProductReadingInternals>();
   for (const { menuId, internals } of executions) {
@@ -205,7 +217,7 @@ export function buildTwelveMenuEngineReadiness(
       : anyEvidence ? 'partial' : 'unavailable';
     return {
       version: TWELVE_MENU_ENGINE_READINESS_VERSION,
-      menuId: menu.menuId, label: readReaderMenuLabelV1('ko-KR', menu.menuId), state,
+      menuId: menu.menuId, label: readReaderMenuLabelV1(locale, menu.menuId), state,
       sections,
       constraints: LIMITS,
     };
