@@ -815,8 +815,20 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
           scope === 'parents' ? '부모 풀이를 아직 제공할 수 없습니다.'
             : '자녀 풀이를 아직 제공할 수 없습니다.',
         );
+        const expectedOriginalSurfaces = [...new Set(
+          report.menuSupportHandoff.unsupportedReasons.flatMap(reason => reason.sourceSurfaces),
+        )];
+        expect(explanation.reviewedOriginalSourceSurfaces).toEqual(expectedOriginalSurfaces);
+        expect(explanation.sourceScopeNotice).toContain(
+          scope === 'parents' ? '부모 메뉴' : '자녀 메뉴',
+        );
+        expect(explanation.sourceScopeNotice).toContain('원문 검토 범위와 가족운 해석 승인');
+        for (const originalSurface of expectedOriginalSurfaces) {
+          expect(explanation.sourceScopeNotice).toContain('「' + originalSurface + '」');
+        }
         expect(explanation.explanation).toBe([
           explanation.heading,
+          explanation.sourceScopeNotice,
           ...explanation.inputNotices,
           explanation.methodNotice,
           explanation.authorityNotice,
@@ -851,6 +863,8 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
         expect(explanation.sourceReasons.every(reason =>
           reason.sourceSurfaces.every(surface => !excludedSourceSurfaces.has(surface))))
           .toBe(true);
+        expect(explanation.reviewedOriginalSourceSurfaces.every(surface =>
+          !excludedSourceSurfaces.has(surface))).toBe(true);
         expect(explanation.sourceReasons[0]?.reasonCode)
           .toBe('R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED');
         expect(explanation.unresolvedCanonicalFactPaths).toEqual(
@@ -960,11 +974,31 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
       scope: 'parents', snapshotId: female.snapshotId, calculationHash: female.calculationHash,
     });
     expect(maleNotice.missingCanonicalConceptSourceSurfaces).toContain('胎為母');
+    expect(maleNotice.reviewedOriginalSourceSurfaces).toContain('年為父');
+    expect(maleNotice.reviewedOriginalSourceSurfaces).toContain('胎為母');
+    expect(femaleNotice.reviewedOriginalSourceSurfaces).not.toContain('年為父');
+    expect(femaleNotice.reviewedOriginalSourceSurfaces).not.toContain('胎為母');
+    expect(maleNotice.sourceScopeNotice).not.toBe(femaleNotice.sourceScopeNotice);
     expect(maleNotice.inputRemediation.every(item =>
       !item.factPath.includes('fetus') && !item.factPath.includes('胎'))).toBe(true);
     expect(maleNotice.explanation).toContain('태주 계산 사실이 정의되지 않았습니다');
     expect(femaleNotice.missingCanonicalConceptSourceSurfaces).not.toContain('胎為母');
     expect(femaleNotice.explanation).not.toContain('태주 계산 사실이 정의되지 않았습니다');
+    const maleChildren = evaluateFamilySourceScopeV1(male, 'children');
+    const femaleChildren = evaluateFamilySourceScopeV1(female, 'children');
+    const maleChildNotice = explainR070FamilyResearchUnavailabilityKo(maleChildren, {
+      scope: 'children', snapshotId: male.snapshotId, calculationHash: male.calculationHash,
+    });
+    const femaleChildNotice = explainR070FamilyResearchUnavailabilityKo(femaleChildren, {
+      scope: 'children', snapshotId: female.snapshotId, calculationHash: female.calculationHash,
+    });
+    expect(maleChildNotice.reviewedOriginalSourceSurfaces).toContain('時為子孫');
+    expect(maleChildNotice.reviewedOriginalSourceSurfaces).not.toContain('我生者為子');
+    expect(femaleChildNotice.reviewedOriginalSourceSurfaces).toContain('我生者為子');
+    expect(femaleChildNotice.reviewedOriginalSourceSurfaces).not.toContain('時為子孫');
+    expect(maleChildNotice.sourceScopeNotice).not.toBe(femaleChildNotice.sourceScopeNotice);
+    expect(maleChildNotice.productMenuCanBeEnabled).toBe(false);
+    expect(femaleChildNotice.productMenuCanBeEnabled).toBe(false);
     expect(maleNotice.explanation).not.toContain('가족운 결론을 발행할 수 있습니다');
     expect(maleNotice.productMenuCanBeEnabled).toBe(false);
   });
