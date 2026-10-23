@@ -262,8 +262,8 @@ function renderRelationshipReadingGuide(report: RelationshipNatalMultifactorRepo
 }
 
 /**
- * Business and Relationship first-screen reading is the EXACT Korean text
- * of their selected, source-qualified T8 Claims, not a headline-only
+ * General, Business and Relationship first-screen reading is the EXACT Korean
+ * text of their selected, source-bounded T8 Claims, not a headline-only
  * explanation or a freshly inferred cross-Claim synthesis.
  *
  * The full per-Claim attribution remains available in the original details.
@@ -274,6 +274,31 @@ function renderFirstScreenSelectedInterpretations(
   domain: string,
   report: ResearchReport,
 ): string {
+  if (domain === 'general') {
+    const scoped = report as GeneralNatalMultifactorReport;
+    const guide = scoped.readingGuide;
+    if (guide === undefined || scoped.sections.length === 0) return '';
+    const sections = scoped.sections;
+    guard(sections[0]?.claimType === guide.sourceClaimType &&
+      sections.every(section => section.sourceIds.length > 0 &&
+        section.upstreamClaimIds.length >= 2 && section.paragraph.trim().length > 0 &&
+        guide.sourceIds.every(id => id.trim().length > 0)),
+      'General first-screen reading requires exact selected T8 evidence');
+    const tensionOnly = sections.every(section => section.axis === 'tension');
+    const items = sections.map((section, i) =>
+      '<section class="first-claim"><h4>' +
+      escapeHtml(tensionOnly ? '확인된 부분 관점 · ' + section.headline :
+        (i === 0 ? '중심 관점 · ' : '독립 보조 관점 · ') + section.headline) +
+      '</h4><p>' + escapeHtml(section.paragraph) + '</p></section>').join('');
+    const scope = tensionOnly
+      ? '이 명식에서는 구조적 긴장에 대한 제한된 근거만 확인됐습니다. 총운의 중심 결론은 보류합니다.'
+      : scoped.state === 'complete'
+        ? '중심과 독립된 보조 관점을 확인한 연구용 풀이입니다. 성격·미래 사건을 단정하지 않습니다.'
+        : '실제 확인된 부분 해석만 보여줍니다. 부족한 독립 보조 근거는 종합 결론으로 채우지 않습니다.';
+    return '<section class="first-meaning" aria-label="총운 명식별 풀이 본문">' +
+      '<h3>이 명식에서 먼저 읽을 실제 총운 풀이</h3>' + items +
+      '<p class="bounded-note">' + escapeHtml(scope) + '</p></section>';
+  }
   if (domain !== 'business' && domain !== 'relationship') return '';
   const scoped = domain === 'business'
     ? report as BusinessNatalMultifactorReport

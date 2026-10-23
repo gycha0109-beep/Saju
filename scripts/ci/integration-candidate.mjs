@@ -10,6 +10,31 @@ export const integrationLabel = 'ci-integration-ready';
 export const mergeabilityRetryCount = 3;
 export const mergeabilityRetryDelayMs = 1500;
 
+/**
+ * GitHub occasionally returns HTTP 5xx for the check-runs/statuses API.
+ * Retry only transient server failures; all other errors and missing or
+ * unsuccessful required checks must still fail closed.
+ */
+export const ghApiMaxAttempts = 3;
+export const ghApiRetryDelayMs = 1000;
+
+export function execGhApiWithTransientRetry(
+  args,
+  { run = execFileSync, wait = sleepForMergeability, maxAttempts = ghApiMaxAttempts } = {},
+) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return run('gh', ['api', ...args], { encoding: 'utf8' });
+    } catch (error) {
+      const stderr = String(error?.stderr ?? '');
+      const transientServerFailure = /gh: HTTP (?:500|502|503|504)\b/u.test(stderr);
+      if (!transientServerFailure || attempt >= maxAttempts) throw error;
+      wait(ghApiRetryDelayMs * attempt);
+    }
+  }
+  throw new Error('GitHub API retries exhausted');
+}
+
 const mergeabilityWaitBuffer = new Int32Array(new SharedArrayBuffer(4));
 
 export function sleepForMergeability(ms) {
@@ -93,7 +118,7 @@ export function assertPrerequisites(required, checks, statuses) {
 }
 
 export function api(path) {
-  return JSON.parse(execFileSync('gh', ['api', path], { encoding: 'utf8' }));
+  return JSON.parse(execGhApiWithTransientRetry([path]));
 }
 
 export function currentCandidate(repo, pr) {
@@ -112,11 +137,11 @@ export function assertRepositoryPrerequisites(repo, current) {
   const required = rules.filter(rule => rule.type === 'required_status_checks')
     .flatMap(rule => rule.parameters.required_status_checks);
   if (!required.length) throw new Error('No required-check policy found; do not infer a merge policy');
-  const checks = JSON.parse(execFileSync('gh', ['api', '--paginate', '--slurp',
-    `repos/${repo}/commits/${current.head.sha}/check-runs?per_page=100`], { encoding: 'utf8' }))
+  const checks = JSON.parse(execGhApiWithTransientRetry(['--paginate', '--slurp',
+    `repos/${repo}/commits/${current.head.sha}/check-runs?per_page=100`]))
     .flatMap(page => page.check_runs);
-  const statuses = JSON.parse(execFileSync('gh', ['api', '--paginate', '--slurp',
-    `repos/${repo}/commits/${current.head.sha}/statuses?per_page=100`], { encoding: 'utf8' })).flat();
+  const statuses = JSON.parse(execGhApiWithTransientRetry(['--paginate', '--slurp',
+    `repos/${repo}/commits/${current.head.sha}/statuses?per_page=100`])).flat();
   assertPrerequisites(required, checks, statuses);
 }
 
