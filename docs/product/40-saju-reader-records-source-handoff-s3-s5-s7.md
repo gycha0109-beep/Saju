@@ -29,7 +29,7 @@
 
 **권한 한계:** 이 내부 규칙 목록은 명하가 채택할 해석 체계의 특정 버전을 검토할 때 쓰는 **실제 사용 근거 목록**이다. 규칙의 의미가 승인된 것은 아니며, `inventoryHash` 자체를 기존 Source Proof의 MAC payload에 임의로 추가하지 않는다. 타 서버에 전달할 때는 현재의 별도 서명·검증 계약과 Source Owner Production 발급 조건을 충족해야 한다. 이 변경은 Preview HELD·미공개·미판매 범위 안에서만 동작한다.
 
-**nonce replay 일치:** Saju 검증기와 MyeongHa 서버 검증기는 `saju-proof-v2:` + `deterministicContentHash([issuer,audience,keyId,nonce])`를 같은 공유 nonce 원장 키로 사용한다. 콜론이 들어간 issuer/audience 경계 충돌이나 keyId 교체 후 재사용 오판을 막으며, 저장소의 원자 단발 claim과 장애 시 차단 규칙은 유지한다.
+**nonce replay 계약 및 배포 차이:** Saju 검증기는 `saju-proof-v2:` + `deterministicContentHash([issuer,audience,keyId,nonce])` 키를 사용한다. MyeongHa [#2301 Draft](https://github.com/gycha0109-beep/MyeongHa/pull/2301)의 서버 검증기에도 같은 방식이 있으나, **2026-10-23 확인한 MyeongHa `main`의 검증기는 아직 기존 `issuer:audience:nonce` 방식**이어서 공식 통합 완료/배포 일치를 주장하지 않는다. 실제 명하 런타임에서 새 서버 버전, 공유 원자 replay ledger, 신뢰 키·발급자 배포를 맞추기 전 Production은 HOLD다. 콜론을 허용하는 ID 경계 충돌과 keyId 교체를 분리하며, 저장소 장애 시 차단을 유지한다.
 
 **Production 권한 분리:** 이 사용자 승인은 **정책 원칙**에 한정된다. 구체적인 규칙 묶음, 해석 Claim, Source Owner Production lifecycle 발급, 검증키, MyeongHa Subject/Birth Revision·DB correlation, selected/co-present/disclosure 및 Privacy/Release/Commerce는 아직 별도 확인·승인이 필요하다. 따라서 #2410은 이 결정만으로 해제하지 않는다.
 
