@@ -192,7 +192,7 @@ test('existing real source readings are accessible in the same local browser wit
   });
   assert.match(family, /부모와 관련된 본인 명식/u);
   assert.match(family, /자녀와 관련된 본인 명식/u);
-  assert.match(family, /공식/u);
+  assert.match(family, /정식 서비스·공개·보관·판매 권한은 없습니다/u);
   const question = await renderLocalSelectedSajuMenuReading(self, {
     menu: 'question', targetPeriod: '2026-09',
     question: '제 재물운 관리가 궁금해요',
