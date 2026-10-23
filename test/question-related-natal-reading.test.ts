@@ -105,16 +105,27 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
     const cases = [
       { text: '이직을 고민하는데 제 성향은 어떤가요?', topic: 'career' },
       { text: '퇴사를 고민하는 제 성향이 궁금해요', topic: 'career' },
-      { text: '저축할 때 제 자원 관리 성향이 궁금해요', topic: 'wealth' },
-      { text: '썸에서 제 소통 성향은 어떤가요?', topic: 'relationship' },
+      { text: '저축할 때 제 자원 관리 성향이 궁금해요', topic: 'wealth',
+        focusAxis: 'management' },
+      { text: '썸에서 제 소통 성향은 어떤가요?', topic: 'relationship',
+        focusAxis: 'expression' },
     ] as const;
-    for (const { text, topic } of cases) {
+    for (const entry of cases) {
+      const { text, topic } = entry;
       const selected = buildQuestionRelatedNatalReading(snapshot, question(text), reports);
       expect(selected.topic, text).toBe(topic);
-      expect(selected.status, text).toBe('related_evidence');
+      const focusAxis = 'focusAxis' in entry ? entry.focusAxis : undefined;
+      const expected = focusAxis === undefined ? reports[topic].sections :
+        reports[topic].sections.filter(section => section.axis === focusAxis);
+      expect(selected.status, text).toBe(expected.length > 0
+        ? 'related_evidence' : 'insufficient');
+      expect(selected.focusAxis).toBe(focusAxis);
       expect(selected.sections.map(section => section.paragraph)).toEqual(
-        reports[topic].sections.map(section => section.paragraph),
+        expected.map(section => section.paragraph),
       );
+      if (focusAxis !== undefined && expected.length === 0) {
+        expect(selected.missing.join(' ')).toContain('다른 관점으로 답하지 않습니다');
+      }
       expect(selected.caveats.join(' ')).toContain('T11 풀이가 아닙니다');
       expect(selected.mayPublish).toBe(false);
       expect(selected.maySell).toBe(false);
@@ -127,6 +138,36 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
       snapshot, question('이직은 언제 하는 게 좋나요?'), reports);
     expect(timed.status).toBe('unsupported');
     expect(timed.sections).toHaveLength(0);
+  });
+
+  it('never substitutes an unrelated axis when the requested source-owned view is absent', () => {
+    const { snapshot, reports } = run();
+    const withoutManagement = {
+      ...reports,
+      wealth: {
+        ...reports.wealth,
+        sections: reports.wealth.sections.filter(section => section.axis !== 'management'),
+      },
+    };
+    const reading = buildQuestionRelatedNatalReading(
+      snapshot, question('재물운의 저축 관리 성향은 어떤가요?'), withoutManagement);
+    expect(reading).toMatchObject({
+      status: 'insufficient', topic: 'wealth', focusAxis: 'management',
+      mayPublish: false, maySell: false,
+    });
+    expect(reading.sections).toHaveLength(0);
+    expect(reading.missing.join(' ')).toContain('다른 관점으로 답하지 않습니다');
+  });
+
+  it('asks for a single evidence axis rather than mixing separate question lenses', () => {
+    const { snapshot, reports } = run();
+    const x = buildQuestionRelatedNatalReading(
+      snapshot, question('사업의 준비와 실행 관점은 어떤가요?'), reports);
+    expect(x.status).toBe('ambiguous');
+    expect(x.sections).toHaveLength(0);
+    expect(x.missing.join(' ')).toContain('준비');
+    expect(x.missing.join(' ')).toContain('실행');
+    expect(x.maySell).toBe(false);
   });
 
   it('preserves ambiguity and refuses unsupported future timing or third-party predictions', () => {
