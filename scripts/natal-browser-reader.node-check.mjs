@@ -200,4 +200,24 @@ test('existing real source readings are accessible in the same local browser wit
   assert.match(question, /질문:/u);
   assert.match(question, /제 재물운 관리가 궁금해요/u);
   assert.match(question, /정식 질문풀이 아님/u);
+  const month = await renderLocalSelectedSajuMenuReading(self, {
+    menu: 'monthly', targetPeriod: '2026-09', question: '',
+  });
+  assert.match(month, /id="monthly-reading"/u);
+  const stage = await renderLocalSelectedSajuMenuReading(self, {
+    menu: 'life-stage', targetPeriod: '2026-09', question: '',
+  });
+  assert.match(stage, /지금과 다음 삶의 단계/u);
+  const spouse = await renderLocalSelectedSajuMenuReading(self, {
+    menu: 'spouse', targetPeriod: '2026-09', question: '',
+  });
+  assert.match(spouse, /배우자궁/u);
+  const pair = await renderLocalSelectedSajuMenuReading(self, {
+    menu: 'compatibility', targetPeriod: '2026-09', question: '',
+    partner: {
+      ...self, date: '1997-03-18', time: '14:00',
+    },
+  });
+  assert.match(pair, /두 사람/u);
+  assert.match(pair, /궁합/u);
 });
