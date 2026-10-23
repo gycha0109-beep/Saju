@@ -108,20 +108,26 @@ export async function verifyHeldSajuSourceUnitClosureV1(
   // Compare against independently trusted version pins BEFORE replay ledger
   // consumption. A correctly signed but stale Registry/Profile is not a match.
   // This is only an identity check, never an authorization decision.
-  const expected = options?.expectedInterpretationPolicy;
-  const candidate = (proof as Partial<SourceReadingSignedTransportProofV1> | null)
-    ?.payload?.material;
-  if (typeof expected?.registrySnapshotId !== 'string'
-    || expected.registrySnapshotId.length === 0
-    || typeof expected.profileRef?.id !== 'string'
-    || expected.profileRef.id.length === 0
-    || typeof expected.profileRef.version !== 'string'
-    || expected.profileRef.version.length === 0
-    || !/^[a-f0-9]{64}$/u.test(expected.profileRef.contentHash ?? '')
-    || candidate?.registrySnapshotId !== expected.registrySnapshotId
-    || candidate?.profileRef?.id !== expected.profileRef.id
-    || candidate?.profileRef?.version !== expected.profileRef.version
-    || candidate?.profileRef?.contentHash !== expected.profileRef.contentHash) {
+  try {
+    const expected = options?.expectedInterpretationPolicy;
+    const candidate = (proof as Partial<SourceReadingSignedTransportProofV1> | null)
+      ?.payload?.material;
+    if (typeof expected?.registrySnapshotId !== 'string'
+      || expected.registrySnapshotId.length === 0
+      || typeof expected.profileRef?.id !== 'string'
+      || expected.profileRef.id.length === 0
+      || typeof expected.profileRef.version !== 'string'
+      || expected.profileRef.version.length === 0
+      || !/^[a-f0-9]{64}$/u.test(expected.profileRef.contentHash ?? '')
+      || candidate?.registrySnapshotId !== expected.registrySnapshotId
+      || candidate?.profileRef?.id !== expected.profileRef.id
+      || candidate?.profileRef?.version !== expected.profileRef.version
+      || candidate?.profileRef?.contentHash !== expected.profileRef.contentHash) {
+      return blocked('interpretation_policy_version_mismatch');
+    }
+  } catch {
+    // Never allow an untrusted proof or configuration getter to throw past
+    // the fail-closed version-pinning boundary.
     return blocked('interpretation_policy_version_mismatch');
   }
   const verification = await verifyHeldSourceReadingTransportProofV1(proof, options);
