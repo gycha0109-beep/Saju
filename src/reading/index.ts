@@ -2,6 +2,7 @@ export * from './reading-assembler.js';
 export * from './reading-artifact-shell.js';
 export * from './canonical-reading-semantics.js';
 export * from './reading-localization.js';
+export * from './reading-reader-locale-resources.js';
 export * from './korean-source-bound-reading-renderer.js';
 export * from './held-korean-reading-product-sections.js';
 export * from './governed-reading-evidence.js';
