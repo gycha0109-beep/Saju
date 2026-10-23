@@ -40,7 +40,18 @@ describe('life stage bounded Canonical Dayun fact reader', () => {
     expect(report.periods[0]?.text).toContain('명식');
     expect(report.periods[0]?.text).toContain('계산');
     expect(report.periods.some(p => p.kind === 'next')).toBe(true);
+    const current = report.periods.find(p => p.kind === 'current')!;
+    const next = report.periods.find(p => p.kind === 'next')!;
+    expect(next.startsAt).toBe(current.endsAtExclusive);
+    expect(next.cycleIndex).toBe(current.cycleIndex + 1);
+    expect(report.transitionSummary).toContain(current.pillar);
+    expect(report.transitionSummary).toContain(next.pillar);
+    expect(report.transitionSummary).toContain(current.endsAtExclusive);
+    expect(report.transitionSummary).toContain('계산 사실');
+    expect(report.transitionSummary).toContain('삶의 변화·길흉·사건 발생을 뜻하지 않습니다');
     const html = renderLifeStageDayunResearchHtml(report);
+    expect(html).toContain('aria-label="현재와 다음 대운의 계산 전환"');
+    expect(html).toContain(report.transitionSummary!);
     expect(html).toContain('지금의 계산 구간');
     expect(html).toContain('다음 계산 구간');
     expect(html).toContain(report.periods[0]!.pillar);
@@ -82,6 +93,9 @@ describe('life stage bounded Canonical Dayun fact reader', () => {
     );
     expect(unknown.coverage).toBe('unavailable');
     expect(unknown.periods).toHaveLength(0);
+    expect(unknown.transitionSummary).toBeUndefined();
+    expect(renderLifeStageDayunResearchHtml(unknown))
+      .not.toContain('현재와 다음 대운의 계산 전환');
     expect(unknown.missing.join(' ')).toContain('대운 계산');
     expect(unknown.researchOnly).toBe(true);
     expect(unknown.usefulComplete).toBe(false);

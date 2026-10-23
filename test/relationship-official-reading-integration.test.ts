@@ -13,6 +13,8 @@ import { buildReadingCompositionEvidence } from '../src/reading/reading-profile-
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
+import { buildApprovedRelationshipMultifactorOverviewV1 } from '../src/reading/approved-relationship-multifactor-overview.js';
+import { buildApprovedOfficialReadingDetailedRealizationV1 } from '../src/reading/official-reading-detailed-realization.js';
 import { buildOfficialReadingCharacterGroundingV1 } from '../src/reading/official-reading-reader-parity.js';
 import {
   PRODUCT_READING_RESPONSE_VERSION,
@@ -37,7 +39,7 @@ const PROHIBITED_EXTENSIONS = Object.freeze([
   'numericScoringAuthorized',
 ] as const);
 
-function snapshot(): CanonicalSajuSnapshot {
+function snapshot(tenGods: TenGodChartFact = FIVE_FAMILY_TEN_GODS): CanonicalSajuSnapshot {
   const base = calculateCanonicalSajuSnapshot(
     {
       calendarType: 'solar',
@@ -52,7 +54,7 @@ function snapshot(): CanonicalSajuSnapshot {
     ...base,
     derivedFacts: {
       ...base.derivedFacts,
-      tenGods: resolved(FIVE_FAMILY_TEN_GODS),
+      tenGods: resolved(tenGods),
     },
   };
 }
@@ -196,6 +198,104 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       expect(reportJson).not.toContain(internalKey);
     }
 
+    const detailedReport = renderOfficialReadingV1(semantics, plan, {
+      preferredDetail: 'detailed',
+    });
+    expect(detailedReport.detailPreferenceResolution?.resolvedDetail).toBe('detailed');
+    const focus = detailedReport.sections.find(section =>
+      section.blocks.some(block => block.type === 'insights' &&
+        block.items.some(item =>
+          item.summary?.includes('내 명식에서 함께 확인된 관계 주제'))),
+    );
+    expect(focus).toBeDefined();
+    expect(focus?.sectionType).toBe('relationship');
+    expect(focus?.state).toBe('complete');
+    expect(JSON.stringify(focus?.blocks)).toContain('최소 유효 해석 완료 판정과는 별개');
+    const focusedItems = detailedReport.sections
+      .filter(section => section.sectionType === 'relationship')
+      .flatMap(section => section.blocks)
+      .filter(block => block.type === 'insights')
+      .flatMap(block => block.items)
+      .filter(item => item.summary?.includes('실제 명식에서 함께 확인된 십신 계열:'));
+    expect(focusedItems.length).toBeGreaterThanOrEqual(2);
+    expect(focusedItems.length).toBeLessThanOrEqual(3);
+    const proofRefs = new Set(detailedReport.explainability.entries.map(x => x.explainabilityRef));
+    for (const item of focusedItems) {
+      expect(item.explainabilityRef).toBeDefined();
+      expect(proofRefs.has(item.explainabilityRef!)).toBe(true);
+      expect(item.summary).toContain('실제 명식에서 함께 확인된 십신 계열:');
+      expect(item.summary).toContain('관찰된 명식 위치:');
+      expect(item.summary).toMatch(/연주|월주|일주|시주/u);
+      expect(item.summary).not.toContain('TEN_GOD_FAMILY_');
+      expect(item.summary).not.toContain('궁합 점수:');
+    }
+    const standardReport = report;
+    expect(standardReport.sections[0]?.title).not.toBe('내 명식에서 함께 확인된 관계 주제');
+    expect(detailedReport.sourceSemanticHash).toBe(standardReport.sourceSemanticHash);
+    expect(detailedReport.sourcePlanHash).toBe(standardReport.sourcePlanHash);
+    expect(detailedReport.sections.map(x => x.sectionId)).toEqual(
+      standardReport.sections.map(x => x.sectionId),
+    );
+    expect(detailedReport.explainability).toEqual(standardReport.explainability);
+
+    const approvedDetailedMaterial =
+      buildApprovedOfficialReadingDetailedRealizationV1(semantics, plan);
+    expect(approvedDetailedMaterial).toBeDefined();
+    const focusEntry = detailedReport.explainability.entries.find(entry =>
+      entry.explainabilityRef === focusedItems[0]?.explainabilityRef,
+    );
+    const targetUnitId = focusEntry?.primaryUnitRefs?.[0];
+    const focusedUnit = semantics.units.find(unit => unit.unitId === targetUnitId);
+    expect(focusedUnit).toBeDefined();
+    if (targetUnitId !== undefined && focusedUnit !== undefined) {
+      const originalHeadline = focusedUnit.canonicalText?.headline;
+      const manipulated = {
+        ...semantics,
+        units: semantics.units.map(unit => unit.unitId === targetUnitId
+          ? { ...unit, canonicalText: {
+            headline: '승인되지 않은 관계 결론', summary: '검증 없는 부당한 주장',
+          } }
+          : unit),
+      };
+      const rejected = buildApprovedRelationshipMultifactorOverviewV1(
+        manipulated, plan, approvedDetailedMaterial, detailedReport.explainability.entries,
+      );
+      expect(JSON.stringify(rejected)).not.toContain('승인되지 않은 관계 결론');
+      expect(JSON.stringify(rejected)).not.toContain(originalHeadline);
+
+      const brokenBinding = {
+        ...plan,
+        sections: plan.sections.map(section => ({
+          ...section,
+          primaryEvidenceBindings: section.primaryEvidenceBindings.map(binding =>
+            binding.primaryUnitRef === targetUnitId
+              ? { ...binding, supportingUnitRefs: binding.supportingUnitRefs.slice(1) }
+              : binding,
+          ),
+        })),
+      };
+      const missingSource = buildApprovedRelationshipMultifactorOverviewV1(
+        semantics, brokenBinding, approvedDetailedMaterial,
+        detailedReport.explainability.entries,
+      );
+      expect(JSON.stringify(missingSource)).not.toContain(originalHeadline);
+    }
+    // The approved T8 claims alone do not license this positional paragraph.
+    // It must disappear when the actual Canonical T0/T5 source fact is absent.
+    const chartFactMissing = buildApprovedRelationshipMultifactorOverviewV1(
+      { ...semantics, canonicalFacts: [] },
+      plan, approvedDetailedMaterial, detailedReport.explainability.entries,
+    );
+    expect(chartFactMissing).toBeUndefined();
+
+    const spouseScope = buildApprovedRelationshipMultifactorOverviewV1(
+      { ...semantics, intent: {
+        domain: 'relationship', temporalScope: 'natal', relationshipScope: 'spouse',
+      } },
+      plan, approvedDetailedMaterial, detailedReport.explainability.entries,
+    );
+    expect(spouseScope).toBeUndefined();
+
     const reader = buildOfficialReadingCharacterGroundingV1({
       response: response(),
       semanticBundle: semantics,
@@ -212,4 +312,69 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     }
     expect(reader.parity.semanticHash).toBe(report.sourceSemanticHash);
   });
+  it('changes the approved multifactor summary when the real chart has only resource/output families', () => {
+    const limitedTenGods: TenGodChartFact = {
+      year: { stem: resolved('정인'), branch: resolved('비견') },
+      month: { stem: resolved('식신'), branch: resolved('편인') },
+      day: { stem: resolved('일간'), branch: resolved('상관') },
+      hour: { stem: resolved('비견'), branch: resolved('정인') },
+    };
+    const limitedSnapshot = snapshot(limitedTenGods);
+    const registry = createRelationshipNatalReadingCandidateRegistry(
+      '2026-09-23T05:00:00.000Z',
+    );
+    const result = runInterpretation(limitedSnapshot, registry, {
+      requestId: 'relationship-resource-output-limited-actual-chart',
+      now: new Date('2026-09-23T05:00:00.000Z'),
+    });
+    const request = {
+      requestId: 'relationship-resource-output-reading',
+      intent: {
+        domain: 'relationship' as const,
+        temporalScope: 'natal' as const,
+        relationshipScope: 'general' as const,
+      },
+    };
+    const evidence = buildReadingCompositionEvidence(
+      limitedSnapshot, result, registry, request,
+    );
+    expect(evidence.evidence).toBeDefined();
+    if (!evidence.evidence) return;
+    const semantics = buildCanonicalReadingSemanticBundleV1({
+      intent: request.intent,
+      evidence: evidence.evidence.bundle,
+      targetClaimIds: evidence.selection.targetClaimIds,
+    });
+    const plan = buildOfficialReadingPlanV1(semantics);
+    const report = renderOfficialReadingV1(semantics, plan, {
+      preferredDetail: 'detailed',
+    });
+    const focus = report.sections.find(section =>
+      section.blocks.some(block => block.type === 'insights' &&
+        block.items.some(item =>
+          item.summary?.includes('내 명식에서 함께 확인된 관계 주제'))),
+    );
+    expect(focus).toBeDefined();
+    const focusedItems = focus?.blocks
+      .filter(block => block.type === 'insights')
+      .flatMap(block => block.items)
+      .filter(item => item.summary?.includes('실제 명식에서 함께 확인된 십신 계열:')) ?? [];
+    expect(focusedItems).toHaveLength(1);
+    expect(focus?.state).toBe('complete');
+    expect(JSON.stringify(focus?.blocks)).toContain('관계 종합풀이의 완성을 뜻하지 않습니다.');
+    expect(focusedItems[0]?.summary).toContain('생각을 정리한 뒤');
+    expect(focusedItems[0]?.summary).toContain('대화');
+    expect(focusedItems[0]?.summary).toContain('인성');
+    expect(focusedItems[0]?.summary).toContain('식상');
+    expect(focusedItems[0]?.summary).not.toContain('관성');
+    expect(focusedItems[0]?.summary).not.toContain('재성');
+    expect(focusedItems[0]?.summary).toContain('연주 천간 정인');
+    expect(focusedItems[0]?.summary).toContain('월주 천간 식신');
+    expect(focusedItems[0]?.summary).not.toContain('월주 천간 편재');
+    expect(focusedItems.every(item =>
+      !item.summary?.includes('결혼 시기가 확정') &&
+      !item.summary?.includes('궁합 점수:'),
+    )).toBe(true);
+  });
+
 });

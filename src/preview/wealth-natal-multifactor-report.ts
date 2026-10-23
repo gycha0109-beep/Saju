@@ -27,6 +27,16 @@ export interface WealthNatalMultifactorSection {
   observedPositions: readonly string[];
   observedFactPaths: readonly string[];
 }
+export interface WealthNatalReadingGuide {
+  title: string;
+  paragraph: string;
+  coreClaimType: string;
+  supporting: readonly {
+    claimType: string;
+    distinctObservedFactPaths: readonly string[];
+    distinctObservedPositions: readonly string[];
+  }[];
+}
 export interface WealthNatalMultifactorReport {
   snapshotId: string;
   calculationHash: string;
@@ -35,6 +45,7 @@ export interface WealthNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly WealthNatalMultifactorSection[];
+  readingGuide?: WealthNatalReadingGuide;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -188,6 +199,59 @@ function toSection(
     observedFactPaths: locations.map(x => x.factPath),
   };
 }
+/**
+ * Reorganize only source-owned, selected Wealth T8 observations into a
+ * readable first-screen explanation. Not a new Claim or wealth prediction.
+ * Every supporting detail must contribute a previously unused exact T0 path.
+ */
+function buildWealthNatalReadingGuide(
+  core: WealthNatalMultifactorSection | undefined,
+  supports: readonly WealthNatalMultifactorSection[],
+  state: Status,
+): WealthNatalReadingGuide | undefined {
+  if (core === undefined || core.axis === 'tension') return undefined;
+  guard(core.sourceIds.length > 0 && core.upstreamClaimIds.length >= 2 &&
+    core.observedFactPaths.length === core.observedPositions.length &&
+    core.observedFactPaths.length >= 2,
+    'Wealth guide core requires source-qualified chart observations');
+
+  const usedPaths = new Set(core.observedFactPaths);
+  const supporting = supports.map(section => {
+    guard(section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
+      section.observedFactPaths.length === section.observedPositions.length,
+      'Wealth guide support requires its original T8 evidence');
+    const newlyObserved = section.observedFactPaths.flatMap((path, index) => {
+      if (usedPaths.has(path)) return [];
+      const position = section.observedPositions[index];
+      guard(position !== undefined && position.trim().length > 0,
+        'Wealth supporting path has no observed position');
+      usedPaths.add(path);
+      return [{ path, position }];
+    });
+    guard(newlyObserved.length > 0, 'Wealth supporting axis repeats previous evidence');
+    return {
+      claimType: section.claimType,
+      distinctObservedFactPaths: newlyObserved.map(item => item.path),
+      distinctObservedPositions: newlyObserved.map(item => item.position),
+    };
+  });
+
+  const paragraphs = [
+    `이 명식에서 재물과 자원을 읽는 중심 구조적 관점은 ‘${core.headline}’입니다. ${core.observedPositions.join(' · ')}에서 관측된 근거와 연결된 연구용 해석 후보입니다.`,
+    ...supports.map((section, index) =>
+      `별도 관점인 ‘${section.headline}’은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 추가로 확인된 계산 근거를 바탕으로 함께 살핍니다.`),
+    ...(state === 'complete'
+      ? ['중심 관점 하나와 독립적인 계산 근거를 더하는 보조 관점 두 가지를 구분해 읽을 수 있습니다. 다만 이 기준 충족은 실제 소득·재산·투자 성과의 판단이 아닙니다.']
+      : [`독립적인 보조 관점은 현재 ${supporting.length}개만 확인되어 필요한 두 가지를 모두 설명하지 못합니다. 재물운 전체 종합 판단은 보류합니다.`]),
+  ];
+  return {
+    title: '내 명식의 재물·자원 중심과 보조 관점',
+    paragraph: paragraphs.join(' '),
+    coreClaimType: core.claimType,
+    supporting,
+  };
+}
+
 export function buildWealthNatalMultifactorReport(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
@@ -250,6 +314,9 @@ export function buildWealthNatalMultifactorReport(
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly WealthNatalMultifactorSection[] = chosen;
+  const readingGuide = buildWealthNatalReadingGuide(
+    core, core === undefined ? [] : chosen.slice(1), state,
+  );
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 재물의 다중 근거 T8 해석은 보류합니다.');
   }
@@ -262,6 +329,7 @@ export function buildWealthNatalMultifactorReport(
     introduction: '실제 명식의 십신 관계를 바탕으로 가치를 만들어 내는 과정, 자원을 다루는 기준, 준비와 배분 사이의 구조를 함께 살펴봅니다. 수입이나 재산을 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],

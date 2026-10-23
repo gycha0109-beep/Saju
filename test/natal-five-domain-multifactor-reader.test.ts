@@ -59,6 +59,24 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     const sections = reports(chart);
     const html = renderNatalFiveDomainMultifactorResearchHtml(chart, sections);
     expect(html).toBe(renderNatalFiveDomainMultifactorResearchHtml(chart, sections));
+    expect(sections.career.readingGuide).toBeDefined();
+    expect(html).toContain('aria-label="직업운 읽기 요약"');
+    expect(html).toContain(sections.career.readingGuide!.paragraph);
+    expect(sections.wealth.readingGuide).toBeDefined();
+    expect(html).toContain('aria-label="재물운 읽기 요약"');
+    expect(html).toContain(sections.wealth.readingGuide!.paragraph);
+    expect(sections.business.readingGuide).toBeDefined();
+    expect(html).toContain('aria-label="사업운 읽기 요약"');
+    expect(html).toContain(sections.business.readingGuide!.paragraph);
+    const businessCard = html.split('<h2 id="domain-business">')[1]!;
+    expect(businessCard.indexOf(sections.business.readingGuide!.title))
+      .toBeLessThan(businessCard.indexOf('명식 근거와 출처 확인'));
+    const wealthCard = html.split('<h2 id="domain-wealth">')[1]!;
+    expect(wealthCard.indexOf(sections.wealth.readingGuide!.title))
+      .toBeLessThan(wealthCard.indexOf('명식 근거와 출처 확인'));
+    const careerCard = html.split('<h2 id="domain-career">')[1]!;
+    expect(careerCard.indexOf(sections.career.readingGuide!.title))
+      .toBeLessThan(careerCard.indexOf('명식 근거와 출처 확인'));
     expect(html).toContain('<html lang="ko">');
     expect(html).toContain('내부 연구용 미리보기 · 검토되지 않은 해석 · 출판 및 판매 불가');
     let prior = -1;
@@ -113,10 +131,12 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(original.career.sections.length).toBeGreaterThan(0);
     const first = original.career.sections[0]!;
     const gap = '다른 직업 해석 축을 뒷받침할 근거가 아직 부족합니다.';
+    const careerWithoutGuide = { ...original.career };
+    delete careerWithoutGuide.readingGuide;
     const partial: NatalFiveDomainMultifactorReports = {
       ...original,
       career: {
-        ...original.career,
+        ...careerWithoutGuide,
         state: 'partial',
         sections: [first],
         missing: [gap],
@@ -173,8 +193,111 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         sections: ra.career.sections,
       },
     } as unknown as NatalFiveDomainMultifactorReports)).toThrow(/bounded source-qualified/);
+    expect(ra.career.readingGuide).toBeDefined();
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
+      ...ra,
+      career: {
+        ...ra.career,
+        readingGuide: {
+          ...ra.career.readingGuide!,
+          coreClaimType: 'FORGED_T8_CLAIM',
+        },
+      },
+    })).toThrow(/reading guide must be derived/u);
+    expect(ra.business.readingGuide).toBeDefined();
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
+      ...ra,
+      business: {
+        ...ra.business,
+        readingGuide: {
+          ...ra.business.readingGuide!,
+          coreClaimType: 'FAKE_BUSINESS_T8',
+        },
+      },
+    })).toThrow(/Business guide must describe the selected/u);
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
+      ...ra,
+      business: {
+        ...ra.business,
+        readingGuide: {
+          ...ra.business.readingGuide!,
+          supporting: [{
+            claimType: 'FAKE_SUPPORT',
+            distinctObservedFactPaths: ['derivedFacts.tenGods.value.hour.stem.value'],
+            distinctObservedPositions: ['허위 명식'],
+          }],
+        },
+      },
+    })).toThrow();
+    expect(ra.wealth.readingGuide).toBeDefined();
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
+      ...ra,
+      wealth: {
+        ...ra.wealth,
+        readingGuide: {
+          ...ra.wealth.readingGuide!,
+          coreClaimType: 'FORGED_WEALTH_T8',
+        },
+      },
+    })).toThrow(/Wealth reading guide must follow/u);
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
+      ...ra,
+      wealth: {
+        ...ra.wealth,
+        readingGuide: {
+          ...ra.wealth.readingGuide!,
+          supporting: [{
+            claimType: 'FORGED_SUPPORT',
+            distinctObservedFactPaths: ['derivedFacts.tenGods.value.hour.stem.value'],
+            distinctObservedPositions: ['시간 조작'],
+          }],
+        },
+      },
+    })).toThrow();
     const unknown = sample(3, 10, null);
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(unknown, ra)).toThrow();
+  });
+
+  it('shows sourced relationship core before evidence and rejects forged supporting paths', () => {
+    const cases = [[3, 10], [4, 12], [5, 17], [6, 23]] as const;
+    const selected = cases.map(([month, day]) => {
+      const chart = sample(month, day);
+      return { chart, readings: reports(chart) };
+    }).find(item => item.readings.relationship.readingGuide !== undefined);
+    expect(selected).toBeDefined();
+    if (!selected) return;
+    const guide = selected.readings.relationship.readingGuide!;
+    const html = renderNatalFiveDomainMultifactorResearchHtml(
+      selected.chart, selected.readings);
+    expect(html).toContain('aria-label="관계운 읽기 요약"');
+    expect(html).toContain(guide.paragraph);
+    const relationCard = html.split('<h2 id="domain-relationship">')[1]!;
+    expect(relationCard.indexOf(guide.title))
+      .toBeLessThan(relationCard.indexOf('명식 근거와 출처 확인'));
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(selected.chart, {
+      ...selected.readings,
+      relationship: {
+        ...selected.readings.relationship,
+        readingGuide: { ...guide, coreClaimType: 'FORGED_RELATIONSHIP_T8' },
+      },
+    })).toThrow(/Relationship guide must follow/u);
+    if (guide.supporting.length > 0) {
+      expect(() => renderNatalFiveDomainMultifactorResearchHtml(selected.chart, {
+        ...selected.readings,
+        relationship: {
+          ...selected.readings.relationship,
+          readingGuide: {
+            ...guide,
+            supporting: [{ ...guide.supporting[0]!,
+              distinctObservedFactPaths: ['derivedFacts.tenGods.value.year.stem.value'],
+              distinctObservedPositions: ['허위 관계 증거'],
+            }, ...guide.supporting.slice(1)],
+          },
+        },
+      })).toThrow();
+    }
+    const unknown = sample(3, 10, null);
+    expect(reports(unknown).relationship.readingGuide).toBeUndefined();
   });
 
   it('escapes untrusted source text, evidence paths and labels in the reader HTML', () => {

@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 import type { BirthInput } from '../src/contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/production/production-calculation-runtime.js';
 import { buildLifeStageDayunResearchReport } from '../src/preview/life-stage-dayun-research-report.js';
+import { renderLifeStageDayunResearchHtml } from '../src/preview/life-stage-dayun-research-report.js';
 import { buildLifeStageBirthResearchReading } from '../src/preview/life-stage-birth-research-runtime.js';
+
+function escapedHtmlText(value: string): string {
+  return value.replace(/[&<>"']/gu, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char]!);
+}
 
 const REFERENCE = '2030-06-01T03:00:00.000Z';
 const BIRTH: BirthInput = {
@@ -32,6 +39,47 @@ describe('actual birth → exact current/next Dayun timeline without unsupported
     expect(result.html).toContain(result.report.periods[0]!.pillar);
     expect(result.html).toContain(result.report.policyHash);
     expect(result.html).toContain('공식 공개·저장·판매');
+  });
+
+  it('shows existing source-bound individual natal T8 meaning without pretending that it predicts Daeyun', () => {
+    const person: BirthInput = {
+      ...BIRTH,
+      date: { year: 2024, month: 3, day: 10 },
+      time: { known: true, hour: 12, minute: 0 },
+      sexForTraditionalCalculation: 'unspecified',
+    };
+    const read = buildLifeStageBirthResearchReading(person, REFERENCE);
+    expect(read.natalContext.snapshotId).toBe(read.report.snapshotId);
+    expect(read.natalContext.calculationHash).toBe(read.report.calculationHash);
+    expect(read.natalContext.availability).toBe('bounded_natal_t8_research');
+    expect(read.natalContext.sections.length).toBeGreaterThan(0);
+    expect(read.html).toContain('같은 명식의 원국 구조 해석');
+    expect(read.html).toContain('현재·다음 대운의 길흉이나 특정 시기 결과를 나타내지 않습니다');
+    for (const section of read.natalContext.sections) {
+      expect(section.sourceIds.length).toBeGreaterThanOrEqual(2);
+      expect(section.factPaths.length).toBeGreaterThanOrEqual(2);
+      expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
+      expect(read.html).toContain(escapedHtmlText(section.paragraph));
+    }
+    expect(read.interpretationStatus).toBe('source_authority_not_established');
+    expect(read.mayGrantOfficialAuthority).toBe(false);
+    expect(read.maySell).toBe(false);
+    expect(buildLifeStageBirthResearchReading(person, REFERENCE)).toEqual(read);
+    expect(() => renderLifeStageDayunResearchHtml(read.report, {
+      ...read.natalContext, calculationHash: 'forged-mixed-policy',
+    })).toThrow('identical canonical chart');
+  });
+
+  it('keeps unavailable natal T8 separate from actual or unavailable Dayun timing', () => {
+    const missing = buildLifeStageBirthResearchReading(
+      { ...BIRTH, time: { known: false } }, REFERENCE,
+    );
+    expect(missing.natalContext.availability).toBe('insufficient_evidence');
+    expect(missing.natalContext.sections).toHaveLength(0);
+    expect(missing.html).toContain('출처 있는 원국 구조 해석이 부족합니다');
+    expect(missing.report.periods).toHaveLength(0);
+    expect(missing.interpretationStatus).toBe('source_authority_not_established');
+    expect(missing.mayPublish).toBe(false);
   });
 
   it('follows the exact half-open Dayun boundary when the caller selects another instant', () => {

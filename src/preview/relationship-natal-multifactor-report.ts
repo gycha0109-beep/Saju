@@ -27,6 +27,16 @@ export interface RelationshipNatalMultifactorSection {
   observedPositions: readonly string[];
   observedFactPaths: readonly string[];
 }
+export interface RelationshipNatalReadingGuide {
+  title: string;
+  paragraph: string;
+  coreClaimType: string;
+  supporting: readonly {
+    claimType: string;
+    distinctObservedFactPaths: readonly string[];
+    distinctObservedPositions: readonly string[];
+  }[];
+}
 export interface RelationshipNatalMultifactorReport {
   snapshotId: string;
   calculationHash: string;
@@ -35,6 +45,7 @@ export interface RelationshipNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly RelationshipNatalMultifactorSection[];
+  readingGuide?: RelationshipNatalReadingGuide;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -195,6 +206,59 @@ function toSection(
     observedFactPaths: locations.map(x => x.factPath),
   };
 }
+/**
+ * Reader-first ordering of the exact selected source-bound Relationship T8
+ * Claims. Each extra axis must contribute an unused canonical fact path.
+ * No new relationship outcome, partner inference or T8 Claim is generated.
+ */
+function buildRelationshipNatalReadingGuide(
+  core: RelationshipNatalMultifactorSection | undefined,
+  supports: readonly RelationshipNatalMultifactorSection[],
+  state: Status,
+): RelationshipNatalReadingGuide | undefined {
+  if (core === undefined || core.axis === 'coordination') return undefined;
+  guard(core.sourceIds.length > 0 && core.upstreamClaimIds.length >= 2 &&
+    core.observedFactPaths.length >= 2 &&
+    core.observedFactPaths.length === core.observedPositions.length,
+    'Relationship reading core has no exact source-bound evidence');
+
+  const used = new Set(core.observedFactPaths);
+  const supporting = supports.map(section => {
+    guard(section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
+      section.observedFactPaths.length === section.observedPositions.length,
+      'Relationship reading support has no source-bound T8 evidence');
+    const newlyObserved = section.observedFactPaths.flatMap((path, index) => {
+      if (used.has(path)) return [];
+      const position = section.observedPositions[index];
+      guard(position !== undefined && position.trim().length > 0,
+        'Relationship source fact has no actual observed position');
+      used.add(path);
+      return [{ path, position }];
+    });
+    guard(newlyObserved.length > 0, 'Relationship support repeats the existing facts');
+    return {
+      claimType: section.claimType,
+      distinctObservedFactPaths: newlyObserved.map(item => item.path),
+      distinctObservedPositions: newlyObserved.map(item => item.position),
+    };
+  });
+
+  const sentences = [
+    `이 명식의 관계·소통 주제에서 먼저 읽을 출처 있는 중심 관점은 ‘${core.headline}’입니다. 실제 계산된 ${core.observedPositions.join(' · ')}의 십신 위치에서 확인된 연구 해석입니다.`,
+    ...supports.map((section, index) =>
+      `이와 별개로 ‘${section.headline}’ 관점은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 앞의 관점과 겹치지 않는 계산 위치를 추가합니다.`),
+    ...(state === 'complete'
+      ? ['중심 하나와 독립된 보조 관점 두 가지가 확인됩니다. 이는 본인의 관계 구조를 읽는 연구용 최소 근거이며, 상대의 성격이나 결혼·연애 결과를 판정하지 않습니다.']
+      : [`추가로 구별되는 보조 관점은 ${supporting.length}개이며, 필요한 두 가지에 미치지 못하므로 전체 관계운 종합 판단은 보류합니다.`]),
+  ];
+  return {
+    title: '이 명식에서 확인된 관계의 중심과 독립 보조 관점',
+    paragraph: sentences.join(' '),
+    coreClaimType: core.claimType,
+    supporting,
+  };
+}
+
 export function buildRelationshipNatalMultifactorReport(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
@@ -257,6 +321,9 @@ export function buildRelationshipNatalMultifactorReport(
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly RelationshipNatalMultifactorSection[] = chosen;
+  const readingGuide = buildRelationshipNatalReadingGuide(
+    core, core === undefined ? [] : chosen.slice(1), state,
+  );
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 관계의 다중 근거 T8 해석은 보류합니다.');
   }
@@ -269,6 +336,7 @@ export function buildRelationshipNatalMultifactorReport(
     introduction: '실제 명식의 십신 관계를 바탕으로 자기 관점과 표현, 서로의 역할, 받아들이는 태도의 구조적 관점을 함께 살펴봅니다. 실제 관계의 질이나 결혼 결과를 추론하지 않는 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],

@@ -1,10 +1,19 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
+import { runInterpretation } from '../interpretation/interpretation-engine.js';
+import { createRelationshipNatalMultifactorRegistry } from
+  '../research/relationship-natal-multifactor-candidate.js';
+import { buildRelationshipNatalMultifactorReport } from
+  './relationship-natal-multifactor-report.js';
+import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+
 import {
   buildCompatibilityTwoChartIntakePreview,
   renderCompatibilityTwoChartIntakeHtml,
   type CompatibilityTwoChartIntakePreview,
+  type CompatibilityPersonalRelationshipReading,
+  type CompatibilityPersonalRelationshipContext,
 } from './compatibility-two-chart-intake-preview.js';
 
 export const COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION =
@@ -30,6 +39,7 @@ export interface CompatibilityTwoBirthResearchReading {
   mayPersist: false;
   maySell: false;
   report: CompatibilityTwoChartIntakePreview;
+  personalRelationship: CompatibilityPersonalRelationshipContext;
   html: string;
 }
 
@@ -38,6 +48,43 @@ function identifier(value: string, field: string): string {
     throw new TypeError('Two-birth compatibility requires a bounded ' + field + '.');
   }
   return value.trim();
+}
+
+function individualRelationshipContext(
+  snapshot: CanonicalSajuSnapshot,
+  personRef: string,
+  now: Date,
+): CompatibilityPersonalRelationshipReading {
+  // Existing research T5→T8 selection, never a new dyadic T10 execution.
+  const registry = createRelationshipNatalMultifactorRegistry();
+  const execution = runInterpretation(snapshot, registry, { now });
+  const report = buildRelationshipNatalMultifactorReport(snapshot, execution, registry);
+  if (report.snapshotId !== snapshot.snapshotId ||
+      report.calculationHash !== snapshot.calculationHash ||
+      !report.researchOnly || report.mayPublish || report.maySell ||
+      report.usefulComplete ||
+      report.sections.some(section =>
+        section.sourceIds.length < 2 ||
+        section.observedFactPaths.length < 2 ||
+        section.upstreamClaimIds.length < 2 ||
+        section.paragraph.trim().length === 0)) {
+    throw new TypeError('Personal relationship research must retain each source-bound T8 chart.');
+  }
+  const sections = report.sections.map(section => ({
+    title: section.headline,
+    paragraph: section.paragraph,
+    sourceIds: [...section.sourceIds],
+    observedFactPaths: [...section.observedFactPaths],
+  }));
+  return {
+    personRef,
+    snapshotId: snapshot.snapshotId,
+    calculationHash: snapshot.calculationHash,
+    coverage: sections.length > 0
+      ? 'bounded_natal_t8_research' : 'insufficient_evidence',
+    introduction: report.readingGuide?.paragraph ?? report.introduction,
+    sections,
+  };
 }
 
 /**
@@ -100,6 +147,10 @@ export function buildCompatibilityTwoBirthResearchReading(
       report.target.calculationHash !== target.calculationHash) {
     throw new TypeError('Two-birth intake cannot admit an ungrounded compatibility meaning.');
   }
+  const personalRelationship: CompatibilityPersonalRelationshipContext = {
+    subject: individualRelationshipContext(subject, subjectRef, now),
+    target: individualRelationshipContext(target, targetRef, now),
+  };
   const bothHaveFacts = [report.subject, report.target].every(person =>
     person.pillars.some(pillar => pillar.status === 'resolved'));
   return {
@@ -114,6 +165,7 @@ export function buildCompatibilityTwoBirthResearchReading(
     mayPersist: false,
     maySell: false,
     report,
-    html: renderCompatibilityTwoChartIntakeHtml(report),
+    personalRelationship,
+    html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
 }

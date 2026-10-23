@@ -70,6 +70,65 @@ describe('source-bounded two-person compatibility calculation intake', () => {
     )).toEqual(x);
   });
 
+  it('renders each exact calculated overlap and difference as facts, not relational predictions', () => {
+    const first = chart(9);
+    const second = chart(11);
+    const result = buildCompatibilityTwoChartIntakePreview(
+      request, { personRef: 'subject-1', snapshot: first },
+      { personRef: 'target-1', snapshot: second });
+    expect(result.comparisons.map(item => item.slot)).toEqual([
+      'year', 'month', 'day', 'hour',
+    ]);
+    for (const [index, comparison] of result.comparisons.entries()) {
+      const left = result.subject.pillars[index]!;
+      const right = result.target.pillars[index]!;
+      expect(comparison.subjectFactPath).toBe(left.factPath);
+      expect(comparison.targetFactPath).toBe(right.factPath);
+      expect(comparison.subjectObserved).toBe(left.stemHanja! + left.branchHanja!);
+      expect(comparison.targetObserved).toBe(right.stemHanja! + right.branchHanja!);
+      expect(comparison.observation).toBe(
+        comparison.subjectObserved === comparison.targetObserved
+          ? 'same_calculated_pillar' : 'different_calculated_pillar',
+      );
+      expect(comparison.explanation).toContain('궁합의 좋고 나쁨을 뜻하지 않습니다');
+    }
+    expect(result.comparisons.some(x => x.observation === 'different_calculated_pillar'))
+      .toBe(true);
+    const html = renderCompatibilityTwoChartIntakeHtml(result);
+    expect(html).toContain('두 명식에서 계산된 차이');
+    expect(html).toContain('궁합 점수·관계 결과는 아닙니다');
+    for (const item of result.comparisons) expect(html).toContain(item.explanation);
+    expect(result.readingStatus).toBe('insufficient_interpersonal_meaning_authority');
+    expect(result.maySell).toBe(false);
+  });
+
+  it('keeps equal actual charts equal, and never compares an unknown hour', () => {
+    const first = chart(9);
+    const identical = buildCompatibilityTwoChartIntakePreview(
+      request, { personRef: 'subject-1', snapshot: first },
+      { personRef: 'target-1', snapshot: first });
+    expect(identical.comparisons.every(x =>
+      x.observation === 'same_calculated_pillar')).toBe(true);
+    expect(identical.comparisons).toHaveLength(4);
+    const unknown = buildCompatibilityTwoChartIntakePreview(
+      request, { personRef: 'subject-1', snapshot: first },
+      { personRef: 'target-1', snapshot: chart(11, false) });
+    expect(unknown.comparisons[3]!.observation).toBe('insufficient_input');
+    expect(unknown.comparisons[3]!.targetObserved).toBeUndefined();
+    expect(unknown.comparisons[3]!.explanation).toContain('비교하지 않습니다');
+    expect(renderCompatibilityTwoChartIntakeHtml(unknown))
+      .toContain(unknown.comparisons[3]!.explanation);
+    expect(() => renderCompatibilityTwoChartIntakeHtml({
+      ...unknown,
+      comparisons: unknown.comparisons.map((x, index) =>
+        index === 3 ? { ...x, observation: 'same_calculated_pillar' } : x),
+    })).toThrow('comparison must repeat exact two-person');
+    expect(buildCompatibilityTwoChartIntakePreview(
+      request, { personRef: 'subject-1', snapshot: first },
+      { personRef: 'target-1', snapshot: chart(11, false) }))
+      .toEqual(unknown);
+  });
+
   it('shows the second person\'s missing hour as unavailable without copying the first person\'s hour', () => {
     const x = buildCompatibilityTwoChartIntakePreview(
       request, { personRef: 'subject-1', snapshot: chart(9) },
