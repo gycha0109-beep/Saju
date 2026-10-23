@@ -1777,6 +1777,10 @@ export interface R070FamilyResearchUnavailableExplanationKo {
   heading: string;
   /** Human-readable status, not a T8 claim about any real relative. */
   explanation: string;
+  /** Reviewed historical wording after removing nonmatching sex-scoped sources. */
+  reviewedOriginalSourceSurfaces: readonly string[];
+  /** Explicit scope description, not an interpretation of a real family member. */
+  sourceScopeNotice: string;
   /** Only Canonical facts that are actually unresolved can cause this notice. */
   inputNotices: readonly string[];
   /** No input supplied later can itself select a historical family method. */
@@ -1848,6 +1852,18 @@ export function explainR070FamilyResearchUnavailabilityKo(
     '에 관한 역사적 기둥 배속과 십신 배속의 선택·조정 근거가 아직 확립되지 않았습니다.';
   const authorityNotice =
     '현재 공식 가족 T8 해석 권한이 없어 계산 입력을 모두 채우더라도 가족운 결론을 발행할 수 없습니다.';
+  const reviewedOriginalSourceSurfaces = [...new Set([
+    ...transfer.canonicalInputAndConceptHolds.flatMap(item => item.sourceSurfaces),
+    ...transfer.sourceAndMethodHolds.flatMap(item => item.sourceSurfaces),
+  ])];
+  const excludedSources = new Set(transfer.excludedHistoricalSources.map(
+    item => item.sourceSurface));
+  if (reviewedOriginalSourceSurfaces.some(surface => excludedSources.has(surface))) {
+    throw new TypeError('R070 source-scoped Korean notice included an excluded historical source.');
+  }
+  const sourceScopeNotice = '이 명식의 ' + topic + ' 메뉴에서 검토한 기존 원문은 ' +
+    reviewedOriginalSourceSurfaces.map(surface => '「' + surface + '」').join('·') +
+    '입니다. 원문 검토 범위와 가족운 해석 승인은 서로 다릅니다.';
   if (transfer.officialAuthorityHold.reasonCode !==
       'R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED') {
     throw new TypeError('R070 Korean research explanation requires the official family hold.');
@@ -1859,7 +1875,11 @@ export function explainR070FamilyResearchUnavailabilityKo(
     calculationHash: expected.calculationHash,
     availability: 'unsupported',
     heading,
-    explanation: [heading, ...inputNotices, methodNotice, authorityNotice].join(' '),
+    explanation: [
+      heading, sourceScopeNotice, ...inputNotices, methodNotice, authorityNotice,
+    ].join(' '),
+    reviewedOriginalSourceSurfaces,
+    sourceScopeNotice,
     inputNotices,
     methodNotice,
     authorityNotice,
