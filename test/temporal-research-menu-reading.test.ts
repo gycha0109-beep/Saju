@@ -23,7 +23,10 @@ function sample(known = true, year = 1990) {
   }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
 }
 
-function reports(known = true, birthYear = 1990) {
+function reports(
+  known = true, birthYear = 1990,
+  referenceDateTime = NOW.toISOString(),
+) {
   const snapshot = sample(known, birthYear);
   const request: ReadingRequest = {
     requestId: 'temporal-menu-scoped-2030-06',
@@ -31,18 +34,18 @@ function reports(known = true, birthYear = 1990) {
     targetPeriod: {
       scope: 'monthly', year: 2030, month: 6,
       timeZone: 'Asia/Seoul',
-      referenceDateTime: NOW.toISOString(),
+      referenceDateTime,
       resolution: 'relative_current',
     },
   };
   const context = buildTemporalReadingContext(request);
   if (context?.scope !== 'monthly') throw new TypeError('Expected monthly context.');
   const facts = buildMonthlyInterpretationFacts(snapshot, context);
-  const registry = createGeneralMonthlyReadingCandidateRegistry(NOW.toISOString());
+  const registry = createGeneralMonthlyReadingCandidateRegistry(referenceDateTime);
   const execution = runInterpretation(snapshot, registry, {
     requestId: request.requestId,
     temporalFacts: { ...facts },
-    now: NOW,
+    now: new Date(referenceDateTime),
   });
   const annualMonthly = buildGeneralAnnualMonthlyExplorationReport(
     snapshot, facts, execution, registry, request,
@@ -114,6 +117,82 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     expect(annual.sections.every(s => s.claimId === undefined)).toBe(true);
     expect(annual.statusMessage).toContain('연운 Official 해석은 미승인');
     expect(monthly.statusMessage).toContain('월운 Official 해석은 미승인');
+  });
+
+  it('selects only the exact T9 theme for the real reference instant inside the requested month', () => {
+    const { annualMonthly } = reports(true, 1990, '2030-06-02T12:00:00.000Z');
+    const actual = annualMonthly.monthly.referenceReading;
+    expect(actual.state).toBe('in_period');
+    expect(actual.theme).toBeDefined();
+    const menu = buildTemporalResearchMenuReadings({ annualMonthly })[1]!;
+    const focus = menu.referenceFocus;
+    expect(focus?.state).toBe('in_period');
+    expect(focus?.referenceDateTime).toBe(actual.referenceDateTime);
+    expect(focus?.segmentId).toBe(actual.segmentId);
+    expect(focus?.currentSection?.text).toBe(actual.theme?.text);
+    expect(focus?.currentSection?.claimId).toBe(actual.theme?.claimId);
+    expect(focus?.currentSection?.sourceIds).toEqual(actual.theme?.sourceIds);
+    expect(focus?.currentSection?.factPaths).toEqual(actual.theme?.factPaths);
+    expect(focus?.currentSection?.interval).toEqual({
+      startsAt: actual.theme?.calculatedInterval.startsAt,
+      endsAtExclusive: actual.theme?.calculatedInterval.endsAt,
+    });
+    expect(menu.sections).toHaveLength(annualMonthly.monthly.sections.length);
+    expect(menu.statusMessage).toContain('조회 시각');
+    expect(menu.authority.mayMarkMenuAvailable).toBe(false);
+  });
+
+  it('never borrows a theme when the reference time is outside or its current T9 is unavailable', () => {
+    const { annualMonthly } = reports();
+    const menu = buildTemporalResearchMenuReadings({ annualMonthly })[1]!;
+    expect(menu.referenceFocus?.state).toBe('outside_target_month');
+    expect(menu.referenceFocus?.currentSection).toBeUndefined();
+    expect(menu.sections.length).toBeGreaterThan(0);
+    const inMonth = reports(true, 1990, '2030-06-02T12:00:00.000Z').annualMonthly;
+    const original = inMonth.monthly.referenceReading;
+    expect(original.state).toBe('in_period');
+    const blocked = buildTemporalResearchMenuReadings({
+      annualMonthly: {
+        ...inMonth,
+        monthly: {
+          ...inMonth.monthly,
+          referenceReading: {
+            referenceDateTime: original.referenceDateTime,
+            state: 'insufficient_evidence',
+            segmentId: original.segmentId,
+          },
+        },
+      },
+    })[1]!;
+    expect(blocked.referenceFocus?.state).toBe('insufficient_evidence');
+    expect(blocked.referenceFocus?.currentSection).toBeUndefined();
+    expect(blocked.referenceFocus?.message).toContain('보류');
+    expect(() => buildTemporalResearchMenuReadings({
+      annualMonthly: {
+        ...inMonth,
+        monthly: {
+          ...inMonth.monthly,
+          referenceReading: {
+            ...original,
+            referenceDateTime: '2030-06-03T12:00:00.000Z',
+          },
+        },
+      },
+    })).toThrow('Monthly reference');
+    if (original.theme !== undefined) {
+      expect(() => buildTemporalResearchMenuReadings({
+        annualMonthly: {
+          ...inMonth,
+          monthly: {
+            ...inMonth.monthly,
+            referenceReading: {
+              ...original,
+              theme: { ...original.theme, claimId: 'UNRELATED-T9' },
+            },
+          },
+        },
+      })).toThrow('Monthly reference');
+    }
   });
 
   it('does not fabricate life-stage calculations for unknown birth time', () => {
