@@ -12,6 +12,20 @@
 - `APPLICABLE_BOUNDED`: 해당 역사적 **문구의 원국 위치 관찰**에 한해서만 적용 가능한 조건이다. `INCONCLUSIVE`: 실제 관측값/방법론 선택/원전 적용조건이 부족하다. `NARROW_OR_REPLACE`: 현재 요청 범위나 역사 성별과 맞지 않아 별도 범위 한정이 필요하다. `REJECTED`: 해당 문구를 T10 상호관계 주장으로 변환할 수 없다.
 - 반환 결과는 항상 `familyT8Admitted=false` 또는 `pairwiseT10Admitted=false`, `researchOnly=true`, `mayGrantOfficialAuthority=false`, `mayMarkMenuAvailable=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`. Source Authority 또는 Production/Commerce 허가가 아니다.
 
+### 2026-10-23 동시 세션 작업 정리 — 현행 main과의 연결 및 유지 범위
+
+**기준:** 현행 `main`의 `src/preview/family-birth-research-runtime.ts`·`src/preview/family-parents-children-observation-preview.ts`와 가족 메뉴/가족 구성원 내부 읽기 기능([#2688], [#2692], [#2696])을 먼저 재사용한다. PR #2681은 최신 `main`을 통합한 뒤 이 **기존 내부 연구 런타임**에만 R070 출처·미충족 사유를 결속했다. 기존 Saju Official/Production/HTTP·Reader·Commerce는 수정하지 않았다.
+
+| 구분 | 명시적 판단·범위 |
+| --- | --- |
+| **핵심 유지·실제 소비** | `evaluateFamilySourceScopeV1`의 원전별 성별·메뉴 적용/Canonical 관측 경계, `menuSupportHandoff`의 정확한 부족 입력·원전·권한 HOLD, `selectR070FamilyResearchTransferForContext`의 명식·계산 해시 검사, `explainR070FamilyResearchUnavailabilityKo`의 계산 경로별 비지원/입력 보완. 기존 `buildFamilyBirthResearchReading`에서 **같은 snapshot에 대해 실행**한 뒤 `researchUnavailability`로만 별도 반환한다 |
+| **기존 main 기능과 역할 중복 — 교체하지 않음** | 사용자에게 보이는 부모 연·월주/자녀 시주 한국어 계산 관찰, 단독 가족 구성원 자신의 출처 있는 natal 연구 풀이, 가족 메뉴 부모·자녀 카드/응답 연결은 기존 Preview/Host가 소유한다. PR의 연구용 `explanation`/원전 문구는 해당 한국어 본문이나 기존 HTML·고객 응답을 **덮어쓰지 않는다** |
+| **연구용 보조/미소비 — 제품 진척 제외** | `branchClashPillarObservations`, `pillarStarClashOverlaps`, `tripleLayerFactReuse`, `unassignedConfigurationPrerequisiteTrace`, `crossLanePrerequisiteOverlaps`의 세부 구조는 R070 내부 연구 분석 자료다. 현재 기존 사용자 출력이나 ClaimGraph/EvidenceSelector에 직접 반영되지 않고, 가족 T8 승인 근거로 세지 않는다 |
+| **별도 T10 HOLD — 제품 연결 없음** | `evaluatePairwiseSourceScopeV1`의 R068/R069 한 명식별 출처·두 명식의 위치 동일/차이 비교는 **T10 궁합 해석이 아니다**. 기존 궁합 Preview/Reading을 교체·호출하지 않으며 pairwise source 연구로만 남긴다 |
+| **비허가 경계** | `researchUnavailability.availability=unsupported`가 기존 `FamilyBirthResearchReading.availability=partial|unavailable`의 계산값 상태를 덮어쓰지 않는다. `officialReadingAuthorized=false`, `productMenuCanBeEnabled=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`는 그대로 유지한다 |
+
+**통합 회귀:** 실제 출생값으로 부모/자녀와 역사 남/여/미지정, 확정 시각/미상을 내부 런타임까지 실행한다. 신규 연구 반환은 같은 `snapshotId`/`calculationHash`의 원문·부족 경로와 일치해야 하며, 기존 `html`, 계산 `report`, 가족 구성원별 독립 입력·권한은 그대로여야 한다. 기존 Product Reading의 Source-owned T8과 연구만 있는 가족 T8을 합치거나, 연구 계약의 크기를 사용자 기능 완료로 계산하지 않는다.
+
 ## 부모와 자녀의 차이: 정확한 기존 R070 원문
 
 | 메뉴 | 정확한 현행 원문·층위 | 계산 입력과 적용 가능 범위 | 미충족·금지된 확대 |
