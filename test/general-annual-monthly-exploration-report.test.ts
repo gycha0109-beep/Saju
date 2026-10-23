@@ -19,14 +19,14 @@ function sample(day = 9, known = true) {
     sexForTraditionalCalculation: 'unspecified',
   }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
 }
-function run(month: number, day = 9, known = true) {
+function run(month: number, day = 9, known = true, referenceDateTime = NOW.toISOString()) {
   const natal = sample(day, known);
   const request: ReadingRequest = {
     requestId: 'joined-year-month-' + month + '-' + day + '-' + known,
     intent: { domain: 'general', temporalScope: 'monthly' },
     targetPeriod: {
       scope: 'monthly', year: 2026, month, timeZone: 'Asia/Seoul',
-      referenceDateTime: NOW.toISOString(), resolution: 'relative_current',
+      referenceDateTime, resolution: 'relative_current',
     },
   };
   const context = buildTemporalReadingContext(request);
@@ -52,6 +52,8 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(report.monthly.coverage).toBe('complete');
     expect(report.periodComparison).toContain('절입 전');
     expect(report.periodComparison).toContain('절입 이후');
+    expect(report.referenceReading.state).toBe('in_period');
+    expect(report.referenceReading.segmentId).toBe('before_jeol');
     const themes = report.monthly.sections.filter(x => x.kind === 'theme');
     expect(themes.map(x => x.segmentId)).toEqual(['before_jeol', 'after_jeol']);
     const html = renderGeneralAnnualMonthlyExplorationHtml(report);
@@ -68,6 +70,10 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).toContain('id="year-reading"');
     expect(html).toContain('id="monthly-reading"');
     expect(html).toContain('href="#monthly-reading"');
+    expect(html).toContain('id="reference-month-reading"');
+    expect(html).toContain('조회 시각에 해당하는 이번 달의 풀이');
+    expect(html).toContain(report.referenceReading.theme!.text);
+    expect(html).toContain(report.referenceReading.theme!.claimId);
     expect(html).toContain(report.annual.sections[0]!.text);
     expect(html).toContain('올해 문구의 계산 근거와 연구 출처');
     expect(html).toContain('내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)');
@@ -98,6 +104,41 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(oct.report.monthly.jeolBoundary.at).not.toBe(sep.report.monthly.jeolBoundary.at);
     expect(oct.report.monthly.sections.filter(x => x.kind === 'theme').map(x => x.title))
       .not.toEqual(sep.report.monthly.sections.filter(x => x.kind === 'theme').map(x => x.title));
+  });
+
+  it('selects the exact source-owned Korean reading across the real Jeol instant', () => {
+    const jeolAt = run(9).facts.jeolBoundary.at;
+    const before = run(9, 9, true, new Date(Date.parse(jeolAt) - 1).toISOString());
+    const after = run(9, 9, true, jeolAt);
+    expect(before.report.referenceReading).toMatchObject({
+      state: 'in_period', segmentId: 'before_jeol',
+    });
+    expect(after.report.referenceReading).toMatchObject({
+      state: 'in_period', segmentId: 'after_jeol',
+    });
+    const selected = after.report.referenceReading.theme!;
+    expect(selected.kind).toBe('theme');
+    expect(selected.claimId).toBe(
+      after.report.monthly.sections.find(section =>
+        section.kind === 'theme' && section.segmentId === 'after_jeol')!.claimId,
+    );
+    const html = renderGeneralAnnualMonthlyExplorationHtml(after.report);
+    expect(html).toContain(selected.text);
+    expect(html).toContain('절입 이후 · 조회 시각 구간');
+    expect(html).toContain(selected.sourceIds[0]!);
+    expect(after.report.mayPublish).toBe(false);
+    expect(after.report.maySell).toBe(false);
+  });
+
+  it('does not mislabel a different calendar month as the current segment', () => {
+    const { report } = run(10);
+    expect(report.referenceReading).toEqual({
+      state: 'outside_target_month', referenceDateTime: NOW.toISOString(),
+    });
+    const html = renderGeneralAnnualMonthlyExplorationHtml(report);
+    expect(html).toContain('월 밖에 있어 현재 적용 구간을 정하지 않았습니다.');
+    expect(html).toContain('10월 절입 전·후');
+    expect(html).not.toContain(' · 조회 시각 구간');
   });
 
   it('keeps genuine monthly phases but suppresses unsupported birth-hour relations', () => {

@@ -33,6 +33,8 @@ export interface GeneralAnnualMonthlyExplorationReport {
   annual: GeneralAnnualExplorationReport;
   monthly: GeneralMonthlyExplorationReport;
   periodComparison: string;
+  /** Shared with the exact single-month research result. */
+  referenceReading: GeneralMonthlyExplorationReport['referenceReading'];
   caveats: readonly string[];
 }
 
@@ -105,6 +107,9 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       ? label + '의 개인별 해석 근거는 아직 충분하지 않습니다'
       : label + '에는 ' + found.tenGod + ' 십신에 근거한 별도 월별 관점이 있습니다';
   };
+  // Reuse the exact single-month selection; joining Annual never reinterprets it.
+  const referenceReading = monthly.referenceReading;
+
   const periodComparison =
     String(annual.targetYear) + '년 전체 미리보기는 ' + annual.annualStemTenGod +
     '을(를) 기준으로 읽습니다. ' + String(monthly.targetMonth) + '월은 ' +
@@ -118,7 +123,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     researchOnly: true, usefulComplete: false, mayPublish: false, maySell: false,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     targetYear: monthly.targetYear, targetMonth: monthly.targetMonth,
-    annual, monthly, periodComparison,
+    annual, monthly, periodComparison, referenceReading,
     caveats: [
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
       '이 연결 화면은 별도 통합 운세 규칙이 아니라 기존 연운 연구 문구와 월운 T9 근거를 순서대로 보여줍니다.',
@@ -175,6 +180,18 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<p>출처: ' + e(section.policySourceId) + ' (명하 내부 연구 정책, 독립 고전 근거 아님)</p>' +
     '</details></article>',
   ).join('\n');
+  const selected = report.referenceReading;
+  const focus = selected.state === 'in_period' && selected.theme !== undefined
+    ? '<p class="muted">해당 절입 구간: ' + e(SEGMENT_LABEL[selected.segmentId!]) +
+      ' · ' + e(kst(selected.theme.calculatedInterval.startsAt)) + '부터 ' +
+      e(kst(selected.theme.calculatedInterval.endsAt)) + ' 전까지</p>' +
+      monthlyCard(selected.theme)
+    : selected.state === 'insufficient_evidence'
+      ? '<p>이 조회 시각에 적용되는 ' + e(SEGMENT_LABEL[selected.segmentId!]) +
+        ' 구간의 개인별 연구 해석 근거는 아직 충분하지 않습니다.</p>'
+      : '<p>조회 기준 시각이 선택한 ' + report.targetYear + '년 ' +
+        report.targetMonth + '월 밖에 있어 현재 적용 구간을 정하지 않았습니다. ' +
+        '아래의 월별 두 구간을 비교할 수 있습니다.</p>';
   const monthly = SEGMENTS.map(id => {
     const sections = report.monthly.sections.filter(section => section.segmentId === id);
     const interval = sections[0]?.calculatedInterval;
@@ -182,7 +199,9 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       '<p class="muted">실제 계산 적용 기간: ' +
       escapeHtml(kst(interval.startsAt)) + '부터 ' +
       escapeHtml(kst(interval.endsAt)) + ' 전까지</p>';
-    return '<section class="phase"><h3>' + SEGMENT_LABEL[id] + '</h3>' +
+    return '<section class="phase" id="phase-' + id + '"><h3>' +
+      SEGMENT_LABEL[id] + (selected.segmentId === id ? ' · 조회 시각 구간' : '') +
+      '</h3>' +
       visiblePeriod +
       (sections.length === 0
         ? '<p>이 구간의 해석 근거가 충분하지 않습니다.</p>'
@@ -203,13 +222,19 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     'nav a{color:#235c65;font-weight:bold}.reading-card{background:#fff;border:1px solid #e4dfd6;border-radius:16px;padding:20px 24px;margin:12px 0}' +
     '.reading-card small{color:#8e6337;font-weight:bold}.reading-card h3,.reading-card h4{margin:8px 0}' +
     '.phase{padding-top:8px}.phase h3{font-size:20px}.muted{font-size:13px;color:#64625f}' +
+    '.current-reading{background:#e9f2ed;border-radius:16px;padding:16px 20px;margin-top:22px}' +
     'details{font-size:12px;overflow-wrap:anywhere;color:#625d58}' +
     'aside{background:#eae5dc;border-radius:14px;padding:20px;margin-top:26px;font-size:13px}' +
     '</style></head><body><main><header><small>MYEONGHA · INTERNAL RESEARCH ONLY</small>' +
     '<h1>' + report.targetYear + '년 전체 흐름 → ' + report.targetMonth + '월의 흐름</h1>' +
     '<p class="lead">한 사람의 실제 명식에서 계산된 연간·월간 사실을, 각각 허용된 연구 해석 범위 안에서 함께 읽습니다.</p></header>' +
     '<nav aria-label="풀이 기간 바로가기"><a href="#year-reading">올해의 흐름</a>' +
-    '<a href="#monthly-reading">' + report.targetMonth + '월 절입 전·후</a></nav>' +
+    '<a href="#monthly-reading">' + report.targetMonth + '월 절입 전·후</a>' +
+    '<a href="#reference-month-reading">조회 시각의 풀이</a></nav>' +
+    '<section class="current-reading" id="reference-month-reading">' +
+    '<h2>조회 시각에 해당하는 이번 달의 풀이</h2>' +
+    '<p class="muted">조회 기준: ' + e(kst(selected.referenceDateTime)) +
+    ' · 연구용 월별 적용 범위만 안내합니다.</p>' + focus + '</section>' +
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
     '<p class="muted">서울 달력 연도 기준 · 연간 ' + e(report.annual.annualPillarLabel) +
     ' · 십신 ' + e(report.annual.annualStemTenGod) + '</p>' + annual + '</section>' +

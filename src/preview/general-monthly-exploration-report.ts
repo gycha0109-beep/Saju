@@ -55,6 +55,13 @@ export interface GeneralMonthlyExplorationReport {
   sections: readonly GeneralMonthlyExplorationSection[];
   missing: readonly string[];
   caveats: readonly string[];
+  /** The exact monthly segment applicable to the request's reference instant. */
+  referenceReading: Readonly<{
+    referenceDateTime: string;
+    state: 'in_period' | 'insufficient_evidence' | 'outside_target_month';
+    segmentId?: MonthlySegmentId;
+    theme?: GeneralMonthlyExplorationSection;
+  }>;
 }
 
 function requireEvidence(value: unknown, detail: string): asserts value {
@@ -193,6 +200,34 @@ export function buildGeneralMonthlyExplorationReport(
   if (unavailable.length > 0) {
     missing.push(`미확정 원국 기둥(${unavailable.map(slot => SLOT_KO[slot]).join(', ')})의 월운 충 관계는 해석하지 않습니다.`);
   }
+  const instant = Date.parse(facts.referenceDateTime);
+  const atReference = facts.segments.filter(segment =>
+    Number.isFinite(instant) &&
+    Date.parse(segment.startsAt) <= instant &&
+    instant < Date.parse(segment.endsAt));
+  requireEvidence(atReference.length <= 1, 'reference instant overlaps monthly segments');
+  const segment = atReference[0];
+  const applicableThemes = segment === undefined ? [] : sections.filter(section =>
+    section.kind === 'theme' && section.segmentId === segment.segmentId &&
+    section.calculatedInterval.startsAt === segment.startsAt &&
+    section.calculatedInterval.endsAt === segment.endsAt);
+  requireEvidence(applicableThemes.length <= 1,
+    'only one source-qualified theme can apply at a reference instant');
+  const referenceReading: GeneralMonthlyExplorationReport['referenceReading'] =
+    segment === undefined
+      ? { referenceDateTime: facts.referenceDateTime, state: 'outside_target_month' }
+      : applicableThemes.length === 0
+        ? {
+            referenceDateTime: facts.referenceDateTime,
+            state: 'insufficient_evidence',
+            segmentId: segment.segmentId,
+          }
+        : {
+            referenceDateTime: facts.referenceDateTime,
+            state: 'in_period',
+            segmentId: segment.segmentId,
+            theme: applicableThemes[0]!,
+          };
   return {
     version: GENERAL_MONTHLY_EXPLORATION_VERSION,
     mode: 'internal_exploration', status: 'not_official_reading',
@@ -205,6 +240,7 @@ export function buildGeneralMonthlyExplorationReport(
     coverage: themeCount.size === 2 ? 'complete' : themeCount.size === 1 ? 'partial' : 'insufficient',
     sections,
     missing,
+    referenceReading,
     caveats: [
       '이번 달 내용은 기존 연구 T9 Claim과 한국어 프로필에 한정한 내부 시제품으로, 공식 해석이나 판매 가능한 결과가 아닙니다.',
       '월운은 서울 달력 월을 절입 시각 전후로 나누어 관찰하며, 올해의 민간 연도 표시와 같은 계산 정책으로 합쳐 단정하지 않습니다.',
@@ -226,6 +262,24 @@ function kst(instant: string): string {
 
 /** Internal-only HTML: every displayed interpretive sentence is original profile copy. */
 export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplorationReport): string {
+  const reference = report.referenceReading;
+  const theme = reference.state === 'in_period' ? reference.theme : undefined;
+  const focus = theme !== undefined
+    ? '<p class="muted">실제 적용 구간: ' + escapeHtml(SEGMENT_KO[theme.segmentId]) +
+      ' · ' + kst(theme.calculatedInterval.startsAt) + '부터 ' +
+      kst(theme.calculatedInterval.endsAt) + ' 전까지</p>' +
+      '<h3>' + escapeHtml(theme.title) + '</h3><p>' + escapeHtml(theme.text) + '</p>' +
+      '<details><summary>이 구간의 기존 Claim·규칙·출처</summary>' +
+      '<p>Claim: ' + escapeHtml(theme.claimId) + '</p>' +
+      '<p>규칙: ' + escapeHtml(theme.ruleIds.join(' · ')) +
+      ' / 방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
+      '<p>출처: ' + escapeHtml(theme.sourceIds.join(' · ')) +
+      '</p></details>'
+    : reference.state === 'insufficient_evidence'
+      ? '<p>' + escapeHtml(SEGMENT_KO[reference.segmentId!]) +
+        '의 한국어 해석 근거가 아직 충분하지 않습니다.</p>'
+      : '<p>조회 시각이 선택한 달 밖에 있습니다. 실제 적용 중인 월운으로 표시하지 않고, ' +
+        '선택한 달의 절입 전·후 구간만 아래에 보여줍니다.</p>';
   const sections = SEGMENTS.map(id => {
     const items = report.sections.filter(section => section.segmentId === id);
     const cards = items.map(section => `
@@ -257,10 +311,10 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
   .card h3{margin:6px 0}.card p{margin:6px 0 16px}
   .label{font-size:12px;font-weight:bold;color:#976943}
   details{font-size:12px;color:#6b6259;overflow-wrap:anywhere}
-  .muted{font-size:13px;color:#71695e}.limits{background:#eee6d9;padding:20px;border-radius:14px;margin-top:30px;font-size:13px}
+  .muted{font-size:13px;color:#71695e}.focus{background:#e9f2ed;padding:20px 24px;border-radius:16px;margin-top:22px}.focus h3{margin:8px 0}.limits{background:#eee6d9;padding:20px;border-radius:14px;margin-top:30px;font-size:13px}
   </style></head><body><main><header><small>MYEONGHA · INTERNAL RESEARCH PREVIEW</small>
   <h1>${escapeHtml(report.headline)}</h1><p>서울 시간 기준 · ${escapeHtml(report.jeolBoundary.name)} 절입 ${kst(report.jeolBoundary.at)}</p>
-  </header>${sections}<aside class="limits"><strong>해석 범위와 아직 모르는 부분</strong>
+  </header><section class="focus" id="reference-month-reading"><h2>조회 시각에 해당하는 월별 풀이</h2><p class="muted">기준: ${kst(reference.referenceDateTime)} · 내부 연구 미리보기</p>${focus}</section>${sections}<aside class="limits"><strong>해석 범위와 아직 모르는 부분</strong>
   <ul>${[...report.missing, ...report.caveats].map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>
   </aside></main></body></html>`;
 }
