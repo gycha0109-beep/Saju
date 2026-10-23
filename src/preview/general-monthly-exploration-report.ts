@@ -226,7 +226,7 @@ export function buildGeneralMonthlyExplorationReport(
             referenceDateTime: facts.referenceDateTime,
             state: 'in_period',
             segmentId: segment.segmentId,
-            theme: applicableThemes[0],
+            theme: applicableThemes[0]!,
           };
   return {
     version: GENERAL_MONTHLY_EXPLORATION_VERSION,
