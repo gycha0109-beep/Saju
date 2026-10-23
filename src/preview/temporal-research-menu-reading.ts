@@ -26,6 +26,15 @@ export interface TemporalResearchMenuSection {
   };
 }
 
+export interface TemporalMonthlyReferenceFocus {
+  referenceDateTime: string;
+  state: 'in_period' | 'insufficient_evidence' | 'outside_target_month';
+  /** Only the actually selected Jeol interval can have a current claim. */
+  segmentId?: 'before_jeol' | 'after_jeol';
+  currentSection?: TemporalResearchMenuSection;
+  message: string;
+}
+
 export interface TemporalResearchMenuReading {
   version: typeof TEMPORAL_RESEARCH_MENU_READING_VERSION;
   menuId: TemporalResearchMenuId;
@@ -34,6 +43,8 @@ export interface TemporalResearchMenuReading {
   meaning: TemporalResearchMeaning;
   statusMessage: string;
   sections: readonly TemporalResearchMenuSection[];
+  /** Reference-time projection applies to the monthly menu only. */
+  referenceFocus?: TemporalMonthlyReferenceFocus;
   missing: readonly string[];
   provenance: {
     snapshotId?: string;
@@ -149,6 +160,58 @@ export function buildTemporalResearchMenuReadings(
         endsAtExclusive: section.calculatedInterval.endsAt,
       },
     })) ?? [];
+  // Reuse the exact T9 theme selected by the existing Monthly EvidenceSelector.
+  // The other Jeol phase is comparison material, never a current prediction.
+  const reference = joined?.monthly.referenceReading;
+  let referenceFocus: TemporalMonthlyReferenceFocus | undefined;
+  if (reference !== undefined && joined !== undefined) {
+    if (reference.referenceDateTime !== joined.annual.referenceDateTime ||
+        !Number.isFinite(Date.parse(reference.referenceDateTime))) {
+      throw new TypeError('Monthly reference must belong to the original joined research request.');
+    }
+    if (reference.state === 'in_period') {
+      const theme = reference.theme;
+      const matched = theme === undefined ? [] : monthly.filter(section => section.claimId === theme.claimId &&
+        section.text === theme.text &&
+        section.interval?.startsAt === theme.calculatedInterval.startsAt &&
+        section.interval?.endsAtExclusive === theme.calculatedInterval.endsAt &&
+        section.sourceIds.join('|') === theme.sourceIds.join('|') &&
+        section.factPaths.join('|') === theme.factPaths.join('|'));
+      const at = Date.parse(reference.referenceDateTime);
+      if (theme?.kind !== 'theme' || theme.segmentId !== reference.segmentId ||
+          matched.length !== 1 ||
+          !(Date.parse(theme.calculatedInterval.startsAt) <= at &&
+            at < Date.parse(theme.calculatedInterval.endsAt))) {
+        throw new TypeError('Monthly reference must match one original source-qualified T9 theme and interval.');
+      }
+      referenceFocus = {
+        referenceDateTime: reference.referenceDateTime,
+        state: 'in_period',
+        segmentId: reference.segmentId,
+        currentSection: matched[0]!,
+        message: '조회 시각에 해당하는 절입 구간의 기존 T9 연구 풀이입니다. 다른 구간의 문구는 현재 풀이가 아닙니다.',
+      };
+    } else if (reference.state === 'insufficient_evidence') {
+      if (!reference.segmentId || reference.theme !== undefined) {
+        throw new TypeError('Monthly unavailable reference cannot carry a current claim.');
+      }
+      referenceFocus = {
+        referenceDateTime: reference.referenceDateTime,
+        state: 'insufficient_evidence',
+        segmentId: reference.segmentId,
+        message: '조회 시각의 절입 구간에는 근거 있는 T9 해석 문단이 없어 현재 풀이를 보류합니다.',
+      };
+    } else {
+      if (reference.segmentId !== undefined || reference.theme !== undefined) {
+        throw new TypeError('An outside-month reference cannot carry a current Jeol interval or claim.');
+      }
+      referenceFocus = {
+        referenceDateTime: reference.referenceDateTime,
+        state: 'outside_target_month',
+        message: '조회 시각이 선택한 연·월 밖이므로 현재 적용할 월운 문단을 지정하지 않습니다.',
+      };
+    }
+  }
   const lifeSections = life?.periods.map(period => ({
     title: period.kind === 'current' ? '현재 대운 계산 구간' : '다음 대운 계산 구간',
     text: period.text,
@@ -188,9 +251,12 @@ export function buildTemporalResearchMenuReadings(
       availability: monthlyHasMeaning ? 'partial' : 'unavailable',
       meaning: monthlyHasMeaning ? 'bounded_research_interpretation' : 'none',
       statusMessage: monthlyHasMeaning
-        ? '실제 절입 구간별 T9 연구 풀이입니다. 월운 Official 해석은 미승인입니다.'
+        ? (referenceFocus?.state === 'in_period'
+          ? '조회 시각의 절입 구간별 기존 T9 풀이를 지정했습니다. 월운 Official 해석은 미승인입니다.'
+          : '선택한 월의 절입 구간별 T9 연구 풀이입니다. 조회 시각의 현재 풀이와 다를 수 있습니다. 월운 Official 해석은 미승인입니다.')
         : '해당 월의 출처에 연결된 개인별 풀이 근거가 충분하지 않습니다.',
       sections: monthly,
+      ...(referenceFocus === undefined ? {} : { referenceFocus }),
       missing: joined === undefined
         ? ['연도·월·출생정보를 입력하고 월운 연구 풀이를 실행해야 합니다.']
         : [...joined.monthly.missing, ...joined.monthly.caveats],
