@@ -21,7 +21,7 @@
 | **핵심 유지·실제 소비** | `evaluateFamilySourceScopeV1`의 원전별 성별·메뉴 적용/Canonical 관측 경계, `menuSupportHandoff`의 정확한 부족 입력·원전·권한 HOLD, `selectR070FamilyResearchTransferForContext`의 명식·계산 해시 검사, `explainR070FamilyResearchUnavailabilityKo`의 계산 경로별 비지원/입력 보완. 기존 `buildFamilyBirthResearchReading`에서 **같은 snapshot에 대해 실행**한 뒤 `researchUnavailability`로만 별도 반환한다 |
 | **기존 main 기능과 역할 중복 — 교체하지 않음** | 사용자에게 보이는 부모 연·월주/자녀 시주 한국어 계산 관찰, 단독 가족 구성원 자신의 출처 있는 natal 연구 풀이, 가족 메뉴 부모·자녀 카드/응답 연결은 기존 Preview/Host가 소유한다. PR의 연구용 `explanation`/원전 문구는 해당 한국어 본문이나 기존 HTML·고객 응답을 **덮어쓰지 않는다** |
 | **연구용 보조/미소비 — 제품 진척 제외** | `branchClashPillarObservations`, `pillarStarClashOverlaps`, `tripleLayerFactReuse`, `unassignedConfigurationPrerequisiteTrace`, `crossLanePrerequisiteOverlaps`의 세부 구조는 R070 내부 연구 분석 자료다. 현재 기존 사용자 출력이나 ClaimGraph/EvidenceSelector에 직접 반영되지 않고, 가족 T8 승인 근거로 세지 않는다 |
-| **별도 T10 HOLD — 제품 연결 없음** | `evaluatePairwiseSourceScopeV1`의 R068/R069 한 명식별 출처·두 명식의 위치 동일/차이 비교는 **T10 궁합 해석이 아니다**. 기존 궁합 Preview/Reading을 교체·호출하지 않으며 pairwise source 연구로만 남긴다 |
+| **별도 T10 HOLD — 내부 연구 수신만** | `evaluatePairwiseSourceScopeV1`의 R068/R069 한 명식별 출처·두 명식의 위치 동일/차이 비교는 **T10 궁합 해석이 아니다**. 기존 `buildCompatibilityTwoBirthResearchReading`에 같은 두 Canonical 명식으로 만든 `sourceScopeHandoff`를 연결하되 기존 궁합 Preview/Reading의 HTML·개별 관계풀이·고객 API는 교체하지 않는다. 공식 T10/판매 권한은 계속 보류한다 |
 | **비허가 경계** | `researchUnavailability.availability=unsupported`가 기존 `FamilyBirthResearchReading.availability=partial|unavailable`의 계산값 상태를 덮어쓰지 않는다. `officialReadingAuthorized=false`, `productMenuCanBeEnabled=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`는 그대로 유지한다 |
 
 **통합 회귀:** 실제 출생값으로 부모/자녀와 역사 남/여/미지정, 확정 시각/미상을 내부 런타임까지 실행한다. 신규 연구 반환은 같은 `snapshotId`/`calculationHash`의 원문·부족 경로와 일치해야 하며, 기존 `html`, 계산 `report`, 가족 구성원별 독립 입력·권한은 그대로여야 한다. 기존 Product Reading의 Source-owned T8과 연구만 있는 가족 T8을 합치거나, 연구 계약의 크기를 사용자 기능 완료로 계산하지 않는다.
@@ -400,6 +400,16 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 **엔진에서 사용할 수 있는 것:** 요청 범위별 위의 조건부 원문 대응, 정확한 원국 사실 경로, 시각 미상·남성/여성/미지정 스코프별 부적합 사유. 계산 위치와 원문을 소비자에게 설명하더라도 **연구용 배속 관찰**이라는 경계만 유지한다.
 
 **추가 근거가 없으면 보류할 것:** R070 `FAMILY_METHOD_SELECTION`, `SEX_SCOPE_SELECTION`, `PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION`, `HIDDEN_VS_VISIBLE_STAR_HANDLING`, `CONFIGURATION_OUTCOME_SETTLEMENT`, `HISTORICAL_TO_MODERN_FAMILY_TRANSLATION`. 이 조건들을 충족하는 직접 소스·조건부 적용 규칙·충돌 해결 근거가 없으면 `family:parents`와 `family:children`의 **의미 T8는 각 범위에서 INCONCLUSIVE/HOLD**다. 한 범위의 사실을 다른 가족 구성원의 풀이로 전용하지 않는다.
+
+### R068/R069 실제 두 명식 내부 런타임 인계 — T10 HOLD 유지
+
+현행 `main`에서 이미 존재하는 `buildCompatibilityTwoBirthResearchReading(subjectBirth, targetBirth, input)`가 **동일한 두 Canonical 명식**으로 `evaluatePairwiseSourceScopeV1`을 실행하도록 연결했다. 내부 반환값 `sourceScopeHandoff`는 `R068_R069` 원문·원래의 한 명식 적용 조건·각자 실제 계산된 위치별 동일/차이·시각 미상 여부·T10 부적용 이유를 보존한다. 이 전달은 기존 `CompatibilityTwoChartIntakePreview`의 두 사람 식별자, 독립 snapshot/hash, 계산 정책과 함께 이루어진다.
+
+수신 경계는 두 사람 `personRef`, 각자의 `snapshotId` 및 `calculationHash`가 정확히 일치해야 하며, `pairwiseDisposition=INCONCLUSIVE`, `pairwiseT10Admitted=false`, `researchOnly=true`, `eligiblePairwiseClaim=false`, `pairwiseMeaningAuthorized=false` 및 공식·메뉴·저장·공개·판매 권한 모두 `false`를 확인한다. 결과가 누락되거나 다른 사람의 연구 결과로 혼합되면 실패한다. 서로 다른 사람의 Canonical 값·해시가 우연히 동일해도 신원을 합치지 않으며 두 `personRef`의 구별을 유지한다.
+
+**유지할 기존 기능:** `report`의 계산 사실, `personalRelationship`의 **각 개인별** 기존 T8 연구 문단, `html`의 두 명식 Preview, 기존 `availability=partial|unavailable` 및 `meaning=two_person_calculation_only|none`는 변경하지 않았다. R068/R069의 연구 자료가 궁합의 좋고 나쁨을 설명하는 T10 합성 Claim으로 바뀌거나 기존 개별 T8 문단의 source authority가 변경되지는 않는다. 실제 새 상호작용 해석과 MUR는 로드맵 `C-COMPATIBILITY`에서 별도의 직접 원전·방법론 근거를 확보할 때만 구현할 수 있다.
+
+**실계산 회귀:** 서로 다른 두 명식, 두 사람 입력의 교환, 서로 다른 두 사람이 같은 명식 값을 가진 경우, 각 사람 출생시각 미상 2방향에 대해 원전 연구 인계의 출처·본래 순서·명식 해시와 기존 Preview의 기둥 동일/차이/미확정 상태를 대조한다. 기존 HTML의 변경 없음, 연구 결과 리플레이, T10/Official/저장·판매 제한을 확인한다.
 
 ## 두 명식 T10: 현재 R068/R069로 가능한 것과 불가능한 것
 
