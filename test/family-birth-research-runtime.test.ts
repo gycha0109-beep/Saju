@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { BirthInput } from '../src/contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/production/production-calculation-runtime.js';
-import { buildFamilyCanonicalObservationPreview } from '../src/preview/family-parents-children-observation-preview.js';
+import {
+  buildFamilyCanonicalObservationPreview,
+  renderFamilyCanonicalObservationHtml,
+} from '../src/preview/family-parents-children-observation-preview.js';
 import { buildFamilyBirthResearchReading, buildFamilyMemberBirthResearchReading } from '../src/preview/family-birth-research-runtime.js';
 import {
   evaluateFamilySourceScopeV1,
