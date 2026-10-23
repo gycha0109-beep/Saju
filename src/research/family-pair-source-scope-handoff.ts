@@ -1768,6 +1768,17 @@ export function selectR070FamilyResearchTransferForContext(
  * reading cannot be supplied. This is not a family interpretation narrative
  * and may not be forwarded as an Official Reading or product availability.
  */
+/** A computed fact gap is not necessarily a user-correctable input error. */
+export interface R070FamilyResearchInputRemediationKo {
+  factPath: string;
+  canonicalInputKind: R070FamilyMenuUnresolvedCanonicalInput['canonicalInputKind'];
+  sourceSurfaces: readonly string[];
+  nextStep: 'CHECK_BIRTH_TIME_AND_RECALCULATE' | 'REQUIRES_CANONICAL_FACT_RESOLUTION';
+  koreanNotice: string;
+  correctionAloneEnablesFamilyInterpretation: false;
+  correctionAloneGrantsOfficialAuthority: false;
+}
+
 export interface R070FamilyResearchUnavailableExplanationKo {
   locale: 'ko';
   scope: FamilyResearchScope;
@@ -1788,6 +1799,8 @@ export interface R070FamilyResearchUnavailableExplanationKo {
   authorityNotice: string;
   /** A precise, research-only pointer to the input and authority explanation. */
   unresolvedCanonicalFactPaths: readonly string[];
+  /** Exact unresolved paths and who must act: user birth input vs engine facts. */
+  inputRemediation: readonly R070FamilyResearchInputRemediationKo[];
   missingCanonicalConceptSourceSurfaces: readonly string[];
   /** Original-source-level Korean reasons, preserving their exact calculation paths. */
   sourceReasons: readonly {
@@ -1822,6 +1835,23 @@ export function explainR070FamilyResearchUnavailabilityKo(
 ): R070FamilyResearchUnavailableExplanationKo {
   const transfer = selectR070FamilyResearchTransferForContext(report, expected);
   const unresolved = transfer.unresolvedCanonicalInputs;
+  const inputRemediation: R070FamilyResearchInputRemediationKo[] = unresolved.map(item => ({
+    factPath: item.factPath,
+    canonicalInputKind: item.canonicalInputKind,
+    sourceSurfaces: item.affectedOriginalSources.map(source => source.sourceSurface),
+    nextStep: item.canonicalInputKind === 'pillar' && item.factPath === 'pillars.hour'
+      ? 'CHECK_BIRTH_TIME_AND_RECALCULATE'
+      : 'REQUIRES_CANONICAL_FACT_RESOLUTION',
+    koreanNotice: item.canonicalInputKind === 'pillar' && item.factPath === 'pillars.hour'
+      ? '본인 출생시각을 확인한 뒤 명식을 다시 계산해야 시주 미확정 상태를 다시 판정할 수 있습니다. 가족 풀이 허가와는 별개입니다.'
+      : item.canonicalInputKind === 'pillar'
+        ? '미확정 기둥 계산은 Canonical 계산 경로에서 다시 확인해야 하며 다른 기둥으로 대신할 수 없습니다.'
+        : item.canonicalInputKind === 'visible_t5'
+          ? '미확정 십신 위치는 계산 엔진의 Canonical 사실을 다시 확인해야 하며 임의 값을 입력할 수 없습니다.'
+          : '미확정 지장간 소속은 계산 엔진의 Canonical 사실을 다시 확인해야 하며 현대 십신으로 자동 치환할 수 없습니다.',
+    correctionAloneEnablesFamilyInterpretation: false,
+    correctionAloneGrantsOfficialAuthority: false,
+  }));
   const inputNotices: string[] = [];
   if (unresolved.some(item => item.canonicalInputKind === 'pillar')) {
     inputNotices.push(
@@ -1884,6 +1914,7 @@ export function explainR070FamilyResearchUnavailabilityKo(
     methodNotice,
     authorityNotice,
     unresolvedCanonicalFactPaths: unresolved.map(item => item.factPath),
+    inputRemediation,
     missingCanonicalConceptSourceSurfaces: [...new Set(missingCanonicalConceptSourceSurfaces)],
     sourceReasons: report.menuSupportHandoff.unsupportedReasons.map(reason => ({
       reasonCode: reason.reasonCode,
