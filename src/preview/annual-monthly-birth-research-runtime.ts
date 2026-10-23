@@ -6,6 +6,10 @@ import { buildMonthlyInterpretationFacts } from '../reading/monthly-interpretati
 import { buildTemporalReadingContext } from '../reading/temporal-reading-context.js';
 import { createGeneralMonthlyReadingCandidateRegistry } from '../research/general-monthly-reading-candidate.js';
 import {
+  buildTemporalResearchMenuReadings,
+  type TemporalResearchMenuReading,
+} from './temporal-research-menu-reading.js';
+import {
   buildGeneralAnnualMonthlyExplorationReport,
   renderGeneralAnnualMonthlyExplorationHtml,
   type GeneralAnnualMonthlyExplorationReport,
@@ -29,6 +33,8 @@ export interface AnnualMonthlyBirthResearchReading {
   maySell: false;
   mayGrantOfficialAuthority: false;
   report: GeneralAnnualMonthlyExplorationReport;
+  /** Monthly 12-menu consumer slice with exact current Jeol T9 evidence. */
+  monthlyMenu: TemporalResearchMenuReading;
   html: string;
 }
 
@@ -99,6 +105,14 @@ export function buildAnnualMonthlyBirthResearchReading(
     throw new TypeError('Annual/monthly internal preview cannot become an official reading.');
   }
 
+  const monthlyMenu = buildTemporalResearchMenuReadings({ annualMonthly: report })[1];
+  if (monthlyMenu?.menuId !== 'monthly' ||
+      monthlyMenu.provenance.snapshotId !== snapshot.snapshotId ||
+      monthlyMenu.provenance.calculationHash !== snapshot.calculationHash ||
+      monthlyMenu.authority.mayCallOfficial || monthlyMenu.authority.mayMarkMenuAvailable) {
+    throw new TypeError('Real-birth monthly menu projection must preserve chart and restricted authority.');
+  }
+
   return {
     version: ANNUAL_MONTHLY_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
@@ -106,6 +120,7 @@ export function buildAnnualMonthlyBirthResearchReading(
     maySell: false,
     mayGrantOfficialAuthority: false,
     report,
+    monthlyMenu,
     html: renderGeneralAnnualMonthlyExplorationHtml(report),
   };
 }
