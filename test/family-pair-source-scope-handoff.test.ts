@@ -789,6 +789,87 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     }
   });
 
+  it('rejects inconsistent source or authority lanes even when R070 snapshot and hash match', () => {
+    for (const sex of ['male', 'female', 'unspecified'] as const) {
+      for (const scope of ['parents', 'children'] as const) {
+        const snapshot = chart({ year: 1997, day: 15, sex, timeKnown: false });
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const expected = {
+          scope, snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
+        };
+        // Engine ingress must also accept an ordinary JSON-transferred research artifact.
+        const serialized = JSON.parse(JSON.stringify(report)) as typeof report;
+        expect(selectR070FamilyResearchTransferForContext(serialized, expected))
+          .toEqual(report.engineTransferBoundary);
+        const expectBlocked = (tampered: typeof report) => {
+          expect(() => selectR070FamilyResearchTransferForContext(tampered, expected))
+            .toThrow(TypeError);
+          expect(() => explainR070FamilyResearchUnavailabilityKo(tampered, expected))
+            .toThrow(TypeError);
+        };
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff, requestedScope:
+              scope === 'parents' ? 'children' : 'parents',
+          },
+        });
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff, supportState: 'AVAILABLE',
+          },
+        } as unknown as typeof report);
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff, mayEnableMenu: true,
+          },
+        } as unknown as typeof report);
+        expectBlocked({
+          ...report, engineTransferBoundary: {
+            ...report.engineTransferBoundary, researchEvidenceMayBecomeFamilyClaim: true,
+          },
+        } as unknown as typeof report);
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff,
+            unsupportedReasons: report.menuSupportHandoff.unsupportedReasons.slice(1),
+          },
+        });
+        expectBlocked({
+          ...report, engineTransferBoundary: {
+            ...report.engineTransferBoundary,
+            sourceAndMethodHolds: [],
+          },
+        });
+        expectBlocked({
+          ...report, engineTransferBoundary: {
+            ...report.engineTransferBoundary,
+            unresolvedCanonicalInputs: [],
+          },
+        });
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff, menuBlockingPrerequisites: [],
+          },
+        });
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff, unassignedConfigurationPrerequisites: [],
+          },
+        });
+        expectBlocked({
+          ...report, engineTransferBoundary: {
+            ...report.engineTransferBoundary, officialAuthorityHold: {
+              ...report.engineTransferBoundary.officialAuthorityHold,
+              sourceSurfaces: ['父以偏財論'],
+            },
+          },
+        });
+        expect(report.familyT8Admitted).toBe(false);
+        expect(report.mayMarkMenuAvailable).toBe(false);
+      }
+    }
+  });
+
   it('renders distinct Korean R070 unsupported notices without creating parent or child interpretations', () => {
     const samples = [
       { year: 1990, day: 15, sex: 'male' as const, timeKnown: true },
