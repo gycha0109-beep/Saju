@@ -5,6 +5,7 @@ const frameReady = import('./parsing-frame.mjs');
 const qualityReady = import('./region-quality.mjs');
 const profileReady = import('./profile-metrics.mjs');
 const eyeDirectionReady = import('./eye-direction.mjs');
+const morphologyReady = import('./morphology-geometry.mjs');
 let session, localizer, FaceLandmarker, ort;
 async function localizationModel() {
   if (!localizer) {
@@ -60,6 +61,7 @@ self.onmessage = async ({ data }) => {
     const { measureProfile, unavailableProfile, sourceFaceClipped } = await profileReady;
     const { computeEyeDirection, unavailableEyeDirection, eyeClassAgreement } =
       await eyeDirectionReady;
+    const { computeMorphology, unavailableMorphology } = await morphologyReady;
     const engine = await model(),
       size = PARSING_PIN.size;
     const canvas = new OffscreenCanvas(size, size),
@@ -89,12 +91,19 @@ self.onmessage = async ({ data }) => {
     let eyeDirection = unavailableEyeDirection(
       viewRole === 'profile' ? 'PROFILE_VIEW' : 'NO_SINGLE_FACE',
     );
+    let morphology = unavailableMorphology(
+      viewRole === 'profile' ? 'PROFILE_VIEW' : 'NO_SINGLE_FACE',
+    );
     const skipped = (reason) => {
       earRefinement = { status: 'unavailable', reason, pixels: 0 };
     };
     try {
       const detected = (await localizationModel()).detect(bitmap);
       if (detected.faceLandmarks.length !== 1) {
+        if (viewRole === 'frontal')
+          morphology = unavailableMorphology(
+            detected.faceLandmarks.length ? 'MULTIPLE_FACES' : 'NO_SINGLE_FACE',
+          );
         skipped(detected.faceLandmarks.length ? 'MULTIPLE_FACES' : 'NO_SINGLE_FACE');
         if (viewRole === 'frontal')
           eyeDirection = unavailableEyeDirection(
@@ -105,6 +114,7 @@ self.onmessage = async ({ data }) => {
           eyeDirection = unavailableEyeDirection('EYE_CLASS_DISAGREEMENT');
         if (viewRole === 'profile') profile = unavailableProfile('FRAME_UNAVAILABLE');
         const points = detected.faceLandmarks[0];
+        if (viewRole === 'frontal') morphology = unavailableMorphology('FRAME_UNAVAILABLE');
         let frame;
         try {
           frame = faceFrame(points, bitmap.width, bitmap.height);
@@ -171,6 +181,74 @@ self.onmessage = async ({ data }) => {
             });
           const topologyPoints = (edges) =>
             [...new Set(edges.flatMap((e) => [e.start, e.end]))].map((i) => points[i]);
+          if (viewRole === 'frontal') {
+            try {
+              const topology = {
+                eyeA: FaceLandmarker.FACE_LANDMARKS_LEFT_EYE,
+                eyeB: FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE,
+                browA: FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW,
+                browB: FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW,
+                mouth: FaceLandmarker.FACE_LANDMARKS_LIPS,
+              };
+              const nosePoints = [];
+              for (let p = 0; p < crop.length; p++)
+                if (crop[p] === 10) {
+                  const x = frame.left + (((p % size) + 0.5) * frame.side) / size,
+                    y = frame.top + ((Math.floor(p / size) + 0.5) * frame.side) / size;
+                  nosePoints.push({
+                    x,
+                    y,
+                    clipped:
+                      p % size === 0 ||
+                      p % size === size - 1 ||
+                      p < size ||
+                      p >= size * (size - 1) ||
+                      x <= 0 ||
+                      x >= bitmap.width ||
+                      y <= 0 ||
+                      y >= bitmap.height,
+                  });
+                }
+              morphology = computeMorphology({
+                landmarks: points,
+                width: bitmap.width,
+                height: bitmap.height,
+                topology,
+                viewRole,
+                nosePoints,
+                checks: {
+                  eyes: eyeClassAgreement(
+                    crop,
+                    size,
+                    points,
+                    topology,
+                    frame,
+                    bitmap.width,
+                    bitmap.height,
+                  ),
+                  brows: [topology.browA, topology.browB].every((edges) =>
+                    supportedAnchors(
+                      crop,
+                      size,
+                      points,
+                      edges,
+                      [2, 3],
+                      frame,
+                      bitmap.width,
+                      bitmap.height,
+                    ),
+                  ),
+                  lips: lipsAligned && crop.includes(12) && crop.includes(13),
+                  // The pinned provider exports no nose topology. This is only
+                  // a class extent in a face crop supported by eyes and lips,
+                  // never an assertion of nose landmark agreement.
+                  nose: lipsAligned,
+                },
+              });
+            } catch {
+              morphology = unavailableMorphology('FRAME_UNAVAILABLE');
+            }
+          }
           const sourceSets = {
             brows: topologyPoints([
               ...FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW,
@@ -314,6 +392,7 @@ self.onmessage = async ({ data }) => {
         regionScreening: { backgroundRemoved, regions: screened.quality },
         profile,
         eyeDirection,
+        morphology,
       },
     });
   } catch {

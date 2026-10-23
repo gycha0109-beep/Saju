@@ -1,6 +1,6 @@
 # Local two-view job and visible metric preview
 
-Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local experiment), #2606 (full-frame preservation), #2607 (instance routing), #2608 (region screening/profile ratios), #2698 (source-linked eye observation). Watchtower-Track: face-observation-engine.
+Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local experiment), #2606 (full-frame preservation), #2607 (instance routing), #2608 (region screening/profile ratios), #2698 (source-linked eye observation), #2729 (multi-region morphology assessment). Watchtower-Track: face-observation-engine.
 
 This implements P0/P1 and the P2 parsing comparison of the two-view design. Users can select a frontal and a
 profile image, execute the supported jobs together, cancel work, and inspect
@@ -78,12 +78,13 @@ They do not remove perspective, yaw/pitch, expression or occlusion effects.
 The batch's frontal role is a requested engineering input role, not automatic
 pose admission.
 
-Disconnected lips cycles stay unordered. The combined envelope does not assign
+In these original eight values, disconnected lips cycles stay unordered. The combined envelope does not assign
 outer/inner lip roles, visible upper/lower bands or thickness. Model oval width
 is not forehead width, bone width or a verified skin outline. The lower-band
 intersection is a defined interpolation on the model oval, not completion of a
 hidden subject boundary. Eyebrow curves can be drawn, but no brow semantic
-measurement is issued in this stage.
+measurement is issued by this original calculator. Revision 0.7's separate
+visible-morphology observation below adds paired brow spans and a lip section.
 
 Malformed topology, collapsed references and clipped relevant boundaries return
 unavailable or reject the input. Per-feature dependencies preserve independent
@@ -409,19 +410,32 @@ role binding, historical isolation and safe scalar-only persistence.
 
 ## Architecture Check
 
-Revision 0.6 adds a source-morphology review card before the raw values. See
+Revision 0.6 added a source-morphology review card before the raw values. See
 [READING-PLAN.md](./READING-PLAN.md) for the item-first roadmap, source owner,
 formula, endpoint-role gap and actual completion criteria. Current writer method
-is `engineering.face-parsing.yakhyo-resnet18@0.6.0`; 0.1–0.5 remain read-only.
+is now `engineering.face-parsing.yakhyo-resnet18@0.7.0`; 0.1–0.6 remain read-only.
 The eye direction field contains scalar ratios/angles, image-position labels,
 source term identity and status only. Its shared image-pair frame preserves the
 original eight frontal metrics. Existing masks/profile ratios are unchanged.
 Node24 directly imports the existing source morphology term server-side; the UI
 does not maintain a copied traditional meaning catalogue or apply historical
 outcome rules to a supplied person. No source binding or claim flag is promoted.
-The 0.5 revision section above describes that historical schema; current 0.6
-requires its screened/profile fields plus eye direction. A profile input receives
+The 0.5 revision section above describes that historical schema; 0.6
+requires its screened/profile fields plus eye direction; 0.7 also requires
+allowlisted morphology evidence. A profile input receives
 `PROFILE_VIEW`; multi-face inputs cannot generate a combined eye explanation.
+
+Revision 0.7 adds `morphology-geometry.mjs` → scalar-only private summary →
+`morphology-assessment.mjs` → eight item cards. See the current contracts in
+[READING-PLAN.md](./READING-PLAN.md). It preserves the full-image parser and
+ear/instance/region/profile outputs. Model boundaries and class agreement supply
+paired brow spans, a nested-lip central section, and the nose class's extent in
+the existing shared eye frame. No new detector, package or source-image storage
+is introduced. All derived card classifications are recalculated, never saved
+as source-condition matches. Source imports project neutral FR311/FR311F/FR311I/
+FR311L morphology/region records only; missing forehead/cheek/chin definitions
+are explicit. No copied traditional outcome rules, named-form thresholds or
+new canonical/semantic authority path is added.
 
 - Docs updated: yes, local engine entry point and coordinate/authority contracts.
 - Ghost-code risk: new CLI → loopback server → UI → worker → calculator has direct

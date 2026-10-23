@@ -3,7 +3,7 @@ import { PreviewJobs } from './jobs.mjs';
 import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
 import { PARSING_GROUPS, PARSING_VERSION, containSize } from './parsing-contract.mjs';
 import { PROFILE_DEFINITIONS } from './profile-metrics.mjs';
-import { describeEyeDirection } from './eye-direction.mjs';
+import { assessMorphology } from './morphology-assessment.mjs';
 const $ = (id) => document.getElementById(id);
 const reasons = {
   profile_method_not_implemented: '정면용 수치는 측면 사진에 적용하지 않습니다',
@@ -123,48 +123,49 @@ function render() {
   const previous = $('previous-parsing').checked && Boolean(result?.previousParsing);
   const parsing = previous ? result?.previousParsing : result?.parsing;
   $('reading-evidence').replaceChildren();
-  const item = state.readingCatalogue?.items?.[0];
-  if (item) {
+  const cards = state.readingCatalogue
+    ? assessMorphology({ record, result, catalogue: state.readingCatalogue, previous })
+    : [];
+  for (const card of cards) {
+    const node = document.createElement('article');
+    node.className = 'morphology-card';
+    node.dataset.item = card.id;
+    node.dataset.status = card.status;
     const title = document.createElement('h3'),
+      status = document.createElement('strong'),
       source = document.createElement('p'),
       observation = document.createElement('p'),
       detail = document.createElement('p'),
       basis = document.createElement('small');
-    title.textContent = item.title;
-    source.textContent = `문헌에서 보는 형태: ${item.sourceExpression} — ${item.sourceDescription}`;
-    const evidence = parsing?.eyeDirection;
-    observation.textContent = evidence
-      ? describeEyeDirection(evidence).text
-      : parsing?.status === 'failed'
-        ? '눈 방향 관찰을 완료하지 못했습니다. 다시 실행할 수 있습니다.'
-        : previous
-          ? '이전 분할 결과에는 눈 방향 관찰이 포함되지 않았습니다.'
-          : '새 분석을 실행하면 이 사진의 눈 경계 방향을 설명합니다.';
-    if (evidence?.status === 'available')
-      detail.textContent = evidence.eyes
-        .map((e) => {
-          const label = e.imageSide === 'left' ? '사진 왼쪽' : '사진 오른쪽',
-            angle = e.angleDegrees,
-            amount =
-              Math.abs(angle) > 0 && Math.abs(angle) < 0.1
-                ? '0.1° 미만'
-                : `${Math.abs(angle).toFixed(1)}°`;
-          return `${label} 모델 눈: 바깥쪽 끝이 ${angle > 0 ? '아래로' : angle < 0 ? '위로' : '같은 높이로'} ${amount}`;
-        })
-        .join(' · ');
-    basis.textContent = item.evidenceMeaning;
-    $('reading-evidence').append(title, source, observation, detail, basis);
-    const review = item.sourceRefs.find((ref) => /^github:issue\/[0-9]+$/.test(ref));
+    title.textContent = card.title;
+    status.textContent = { observed: '형태 관찰', partial: '일부 관찰', unavailable: '판정 보류' }[
+      card.status
+    ];
+    source.textContent = card.sourceExpression
+      ? '문헌의 형태·부위: ' + card.sourceExpression + ' — ' + card.sourceDescription
+      : card.sourceDescription;
+    observation.textContent = card.observation;
+    detail.textContent = card.measurements.join(' · ');
+    basis.textContent = card.evidenceMeaning;
+    node.append(title, status, source, observation, detail, basis);
+    if (card.missing.length) {
+      const gap = document.createElement('p');
+      gap.className = 'note';
+      gap.textContent = '추가로 필요한 근거: ' + card.missing.join(' · ');
+      node.append(gap);
+    }
+    const review = card.sourceRefs.find((ref) => /^github:issue\/[0-9]+$/.test(ref));
     if (review) {
-      const link = document.createElement('a');
-      link.href = `https://github.com/gycha0109-beep/Saju/issues/${review.split('/')[1]}`;
+      const link = document.createElement('a'),
+        paragraph = document.createElement('p');
+      link.href = 'https://github.com/gycha0109-beep/Saju/issues/' + review.split('/')[1];
       link.textContent = '문헌 검토 기록';
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
-      const paragraph = document.createElement('p');
       paragraph.append(link);
-      $('reading-evidence').append(paragraph);
+      node.append(paragraph);
     }
+    $('reading-evidence').append(node);
   }
   const quality = parsing?.regionScreening?.regions;
   const regionNames = { skin: '피부', nose: '코', lips: '입술', brows: '눈썹', ears: '귀 후보' };

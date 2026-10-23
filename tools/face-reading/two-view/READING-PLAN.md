@@ -1,6 +1,6 @@
 # Item-first local face observation work
 
-Issue #2698. Watchtower-Track: face-observation-engine.
+Issues #2698, #2729. Watchtower-Track: face-observation-engine.
 
 The implementation order is source morphology condition → required observation →
 photo evidence → an explanation of what the evidence establishes. A mask or a
@@ -76,3 +76,79 @@ condition or produce an admitted traditional reading.
 Next substantive seam is endpoint-role review for this item, with exact source
 condition support kept intact. Do not select arbitrary thresholds to turn a
 model slope into a traditional named form.
+
+## Current multi-region assessment (revision 0.7)
+
+The per-photo assessment now enumerates eight stable UI items: eyes, brows,
+lips, nose, ears, forehead/Three Divisions, cheeks, and jaw/lower face. A source
+term or region is imported directly when present. Forehead references remain
+incomplete; cheek and jaw morphology source conditions remain unselected.
+An empty source identity is explicit and never borrowed from another region.
+
+`morphology-geometry.mjs` runs in the existing worker after single-face location,
+in decoded-image pixels using the shared eye-pair frame. New observations do
+not replace, change, or strengthen any original measurements or masks:
+
+- Brows: require independent class support at both brow paths and both eyes,
+  no clipping and positive spans. Divide each brow X span by its corresponding
+  model eye X span, sorted by image position. Compare to one as an intra-photo
+  arithmetic relation, without a population threshold. A wider span does not
+  assert that both brow ends cover both eye ends or satisfy `眉過眼`.
+- Lips: require eye support, lip class agreement and both upper/lower classes.
+  Validate exactly two closed model cycles. Choose the wider envelope as the
+  outer candidate, require nested extents, and intersect each cycle at the
+  outer X-span midpoint. Require exactly two intersections and ordered inner
+  and outer heights. Upper thickness, lower thickness and opening are separate
+  differences divided by outer width. Compare upper/lower thickness only at
+  this section; do not classify the whole lip as thick/thin or source-balanced.
+- Nose: in a face crop with independent eye support and lip support, project
+  nose-class pixel centres into the
+  same frame. Report X/Y extents divided by eye-centre spacing. This is partial
+  evidence for the region, not bridge elevation, root depth or tip protrusion.
+  The pinned provider exports no nose topology; no nose landmark alignment
+  is asserted. Detached/incorrect class pixels can still affect this extent.
+
+The three geometry results have independent unavailable reasons. Profile slots
+withhold all three and use only existing visible-profile evidence where
+available. The assessment reuses source-bound eye direction, validated profile
+ratios and capture/view/method-bound original lower-face rows. An ear candidate
+is partial evidence; its completeness, roots and lobes are not inferred.
+
+Assessment states are deliberately distinct: `observed` means a defined model
+geometry comparison ran; `partial` means a region has bounded measurements but
+not its requested morphology; `unavailable` carries exact missing requirements.
+They are local presentation states, not source admission or accuracy scores.
+The only new classification identifiers describe within-photo model-span or
+central-lip comparisons. No named-form alias, arbitrary tolerance, personality
+or personal outcome rule is generated. The epsilon guard is arithmetic roundoff
+only. Classification/explanation is pure and rebuilt from each capture's
+evidence rather than stored as a second source of truth.
+
+Writer 0.7 adds allowlisted `morphology` scalars and missing reasons; 0.6 eye
+history remains read-only and retains its fields. Raw points, pixel centres,
+ROIs and original pixels stay in worker memory. Profile/authority forgeries
+are rejected; previous-result comparison never reuses current geometry.
+
+Completion requires direct geometry invariants and rejection tests, source-to-
+card tests, all-23 real local execution, old mask/scalar equality, fresh restore
+and failure/retry checks. This revision completes the multi-region assessment
+flow, with the listed unavailable morphology measurements still unimplemented.
+
+### Local execution evidence (2026-10-24)
+
+All 23 private captures executed under writer 0.7. Brow spans were available
+on 13, central lip measurements on 18, and nose class extents on 18; eye
+direction remained available on 18. The UI rendered eight items on all 23
+captures at three viewport widths (552 cards, 69 alignment checks). All 161
+masks and original scalar/profile/count fields were unchanged from preserved
+0.6 history. Nineteen comparisons with the original frontal implementation had
+zero mismatches; legacy mask bytes and source metadata were unchanged.
+
+56 direct tests, typecheck, scoped lint and formatting passed. Fresh live
+restoration, rejected forged morphology authority/profile evidence, historical
+writer rejection, unchanged pointer on invalid saves, previous comparison,
+failure/retry/cancel-retry and browser-local upload checks passed. Aggregate
+evidence remains in the ignored intake under `morphology-2729-verification.json`
+and `morphology-2729-recovery.json`; source paths and pixels are not published.
+These are local runtime/preservation results, not human accuracy validation,
+source-role admission or completed traditional named-form classification.

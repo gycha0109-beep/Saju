@@ -4,6 +4,7 @@ export const PARSING_CROP_VERSION: string;
 export const PARSING_EAR_VERSION: string;
 export const PARSING_INSTANCE_VERSION: string;
 export const PARSING_SCREENED_VERSION: string;
+export const PARSING_EYE_VERSION: string;
 export const PARSING_PIN: {
   repository: string;
   sourceRevision: string;
@@ -36,6 +37,7 @@ export type ParsingSummary =
       };
       profile?: import('./profile-metrics.mjs').ProfileSummary;
       eyeDirection?: import('./eye-direction.mjs').EyeDirection;
+      morphology?: import('./morphology-geometry.mjs').Morphology;
       instanceRefinement?:
         | { status: 'not_requested' }
         | { status: 'unavailable'; reason: string }

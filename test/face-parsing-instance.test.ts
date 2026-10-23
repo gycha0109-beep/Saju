@@ -1,3 +1,4 @@
+import { unavailableMorphology } from '../tools/face-reading/two-view/morphology-geometry.mjs';
 import { describe, expect, it } from 'vitest';
 import { unavailableEyeDirection } from '../tools/face-reading/two-view/eye-direction.mjs';
 import {
@@ -134,6 +135,7 @@ describe('bounded local instance routing', () => {
       },
       profile: { status: 'not_requested' },
       eyeDirection: unavailableEyeDirection('NO_SINGLE_FACE'),
+      morphology: unavailableMorphology('NO_SINGLE_FACE'),
       instanceRefinement: {
         status: 'applied',
         faces: 1,

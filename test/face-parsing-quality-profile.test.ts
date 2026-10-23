@@ -1,3 +1,4 @@
+import { unavailableMorphology } from '../tools/face-reading/two-view/morphology-geometry.mjs';
 import { describe, it, expect } from 'vitest';
 import { unavailableEyeDirection } from '../tools/face-reading/two-view/eye-direction.mjs';
 import { screenRegions, screenEarOverlay } from '../tools/face-reading/two-view/region-quality.mjs';
@@ -192,6 +193,7 @@ describe('region screening and visible profile class ratios', () => {
         },
         profile: measureProfile(mask, size, { referenceSupported: true, lipsAligned: true }),
         eyeDirection: unavailableEyeDirection('PROFILE_VIEW'),
+        morphology: unavailableMorphology('PROFILE_VIEW'),
         rawPoints: 'must be discarded',
       };
     expect(() => validateParsingSummary(current, { viewRole: 'frontal' })).toThrow();

@@ -118,6 +118,24 @@
         display: block;
         font-size: 21px;
       }
+      #reading-evidence {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+        gap: 12px;
+      }
+      .morphology-card {
+        background: #192331;
+        border: 1px solid #344156;
+        border-radius: 9px;
+        padding: 12px;
+        overflow-wrap: anywhere;
+      }
+      .morphology-card h3 {
+        margin-top: 0;
+      }
+      .morphology-card > strong {
+        color: #99d9c9;
+      }
       .metric small,
       .note {
         color: #b0bfd2;
@@ -227,7 +245,7 @@
       </div>
       <nav id="strip" class="strip" aria-label="전체 사진 목록"></nav>
       <section aria-labelledby="reading-heading">
-        <h2 id="reading-heading">관상 항목별 관찰</h2>
+        <h2 id="reading-heading">관상 형태 항목별 결과</h2>
         <div id="reading-evidence"></div>
       </section>
       <div id="metrics" class="metrics"></div>

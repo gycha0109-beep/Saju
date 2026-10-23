@@ -1,7 +1,8 @@
 export function readingCatalogue(): {
   version: string;
   items: {
-    termKey: string;
+    id: string;
+    termKey: string | null;
     title: string;
     sourceExpression: string;
     sourceDescription: string;

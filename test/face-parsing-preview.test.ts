@@ -1,3 +1,4 @@
+import { unavailableMorphology } from '../tools/face-reading/two-view/morphology-geometry.mjs';
 import { describe, it, expect } from 'vitest';
 import { Buffer } from 'node:buffer';
 import { deflateSync, crc32 } from 'node:zlib';
@@ -35,6 +36,7 @@ const summary = () => ({
   },
   profile: { status: 'not_requested' },
   eyeDirection: unavailableEyeDirection('NO_SINGLE_FACE'),
+  morphology: unavailableMorphology('NO_SINGLE_FACE'),
 });
 function chunk(kind: string, bytes: Buffer) {
   const output = Buffer.alloc(bytes.length + 12);

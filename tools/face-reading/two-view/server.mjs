@@ -13,6 +13,7 @@ import {
   PARSING_EAR_VERSION,
   PARSING_INSTANCE_VERSION,
   PARSING_SCREENED_VERSION,
+  PARSING_EYE_VERSION,
   PARSING_PIN,
   PARSING_GROUPS,
   validateParsingSummary,
@@ -252,6 +253,7 @@ export async function createLocalReviewServer({
         PARSING_EAR_VERSION,
         PARSING_INSTANCE_VERSION,
         PARSING_SCREENED_VERSION,
+        PARSING_EYE_VERSION,
       ].includes(saved.methodVersion) ||
       !Array.isArray(saved.records)
     )
@@ -319,6 +321,8 @@ export async function createLocalReviewServer({
       'region-quality.mjs',
       'profile-metrics.mjs',
       'eye-direction.mjs',
+      'morphology-geometry.mjs',
+      'morphology-assessment.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const name of [
