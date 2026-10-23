@@ -142,9 +142,9 @@ describe('Saju 2B-3C Preview signed response and Reader S3 source-unit closure',
   it('rejects response mutation, wrong caller request, nonce or issuer and never discloses units', async () => {
     const { response, proof } = await actualReading();
     const mutated = structuredClone(response);
-    if (mutated.reading?.sections[0]?.blocks[0]?.type === 'paragraph') {
-      mutated.reading.sections[0].blocks[0].text += ' 위조';
-    } else throw new Error('Expected full delivered paragraph');
+    // Tamper with an unconditional v2 response field: the fixture's first
+    // block can legitimately be a non-paragraph while still being delivered.
+    mutated.responseId = mutated.responseId + '-tampered';
     for (const options of [
       verifier(mutated),
       verifier(response, { expectedRequestBody: {
