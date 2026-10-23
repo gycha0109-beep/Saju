@@ -244,6 +244,21 @@ describe('2B-3C Source Owner versioned Rule/Methodology/Source lineage', () => {
     expect(JSON.stringify(manifest)).not.toContain('저장된 사용자');
   });
 
+  it('does not hold a selected complete domain for unrelated partial interpreter groups', async () => {
+    const input = structuredClone(await fixture());
+    input.interpretation.run.status = 'partial';
+    input.interpretation.run.completeness.state = 'partial';
+    const selectedClaimIds =
+      input.execution.preparation.composition?.selection.selectedClaimIds ?? [];
+    expect(inspectSajuSelectedRuleBundleV1({
+      registry: input.registry, interpretation: input.interpretation,
+      selectedClaimIds,
+    }).state).toBe('held');
+    // Only the selected Claim lineage is required; unrelated research
+    // groups must not become a global gate on complete domain coverage.
+    expect(inspectSourceReadingProofReadinessV1(input).state).toBe('held');
+  });
+
   it('blocks modified Registry rule content with a stale snapshot ID', async () => {
     const input = structuredClone(await fixture());
     const rule = input.registry.rules[0];
