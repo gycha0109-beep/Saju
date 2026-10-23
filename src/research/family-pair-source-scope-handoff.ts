@@ -1738,11 +1738,36 @@ export function selectR070FamilyResearchTransferForContext(
   }>,
 ): R070FamilyEngineTransferBoundary {
   const transfer = report.engineTransferBoundary;
+  const menu = report.menuSupportHandoff;
+  // This guard also applies when a research handoff crosses a JSON boundary.
+  // A matching snapshot ID alone cannot authenticate source/method data.
+  const matches = (left: unknown, right: unknown): boolean =>
+    JSON.stringify(left) === JSON.stringify(right);
+  const originalReasons = menu.unsupportedReasons;
+  const officialReasons = originalReasons.filter(reason =>
+    reason.category === 'OFFICIAL_AUTHORITY' &&
+    reason.reasonCode === 'R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED');
+  const canonicalHolds = originalReasons.filter(reason =>
+    reason.category === 'CANONICAL_INPUT');
+  const sourceAndMethodHolds = originalReasons.filter(reason =>
+    reason.category === 'SOURCE_APPLICABILITY' ||
+    reason.category === 'SOURCE_CONTEXT' ||
+    reason.category === 'METHOD_SELECTION');
   if (report.version !== FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION ||
       report.owner !== 'R070' ||
       report.scope !== expected.scope ||
       report.snapshotId !== expected.snapshotId ||
       report.calculationHash !== expected.calculationHash ||
+      menu.requestedScope !== expected.scope ||
+      menu.historicalSex !== report.historicalSex ||
+      menu.supportState !== 'UNAVAILABLE_RESEARCH_ONLY' ||
+      menu.admittedFamilyClaimCount !== 0 ||
+      menu.familyT8Admitted !== false ||
+      menu.mayEnableMenu !== false ||
+      menu.mayDisplayFamilyInterpretation !== false ||
+      menu.mayPersist !== false ||
+      menu.mayPublish !== false ||
+      menu.maySell !== false ||
       transfer.route !== 'R070_RESEARCH_ONLY_NOT_EXECUTABLE' ||
       transfer.requestedScope !== expected.scope ||
       transfer.sourceSnapshotId !== expected.snapshotId ||
@@ -1754,6 +1779,28 @@ export function selectR070FamilyResearchTransferForContext(
       report.mayPersist !== false ||
       report.mayPublish !== false ||
       report.maySell !== false ||
+      transfer.researchEvidenceMayBecomeFamilyClaim !== false ||
+      officialReasons.length !== 1 ||
+      !matches(transfer.officialAuthorityHold, officialReasons[0]) ||
+      !matches(transfer.canonicalInputAndConceptHolds, canonicalHolds) ||
+      !matches(transfer.sourceAndMethodHolds, sourceAndMethodHolds) ||
+      !matches(transfer.unresolvedCanonicalInputs, menu.unresolvedCanonicalInputs) ||
+      !matches(transfer.excludedHistoricalSources, menu.excludedHistoricalSources) ||
+      !matches(transfer.unassignedConfigurationSources, menu.unassignedConfigurationSources) ||
+      !matches(transfer.prerequisiteTrace, menu.prerequisiteTrace) ||
+      !matches(transfer.menuBlockingPrerequisites, menu.menuBlockingPrerequisites) ||
+      !matches(transfer.unassignedConfigurationPrerequisites,
+        menu.unassignedConfigurationPrerequisites) ||
+      !matches(transfer.unassignedConfigurationPrerequisiteTrace,
+        menu.unassignedConfigurationPrerequisiteTrace) ||
+      !matches(transfer.crossLanePrerequisiteOverlaps, menu.crossLanePrerequisiteOverlaps) ||
+      !matches(menu.menuBlockingPrerequisites, [...new Set(originalReasons.flatMap(
+        reason => reason.missingPrerequisites))]) ||
+      !matches(menu.unassignedConfigurationPrerequisites, [...new Set(
+        menu.unassignedConfigurationSources.flatMap(item => item.missingPrerequisites))]) ||
+      !matches(menu.missingPrerequisites, [...new Set([
+        ...menu.menuBlockingPrerequisites, ...menu.unassignedConfigurationPrerequisites,
+      ])]) ||
       transfer.canSelectHistoricalMethod !== false ||
       transfer.canGrantFamilyT8Authority !== false ||
       transfer.canEnableMenu !== false ||
