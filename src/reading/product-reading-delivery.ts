@@ -159,6 +159,13 @@ function consumerMissingEvidenceLabel(requirement: string): string {
   return '이 주제를 해석하는 데 필요한 일부 근거';
 }
 
+// These are exact, already-governed topic routes, not promises of evidence
+// availability. Never substitute a natal reading for an open T11 question.
+const QUESTION_SPECIFIC_RETRY_GUIDANCE =
+  ' 해당 질문에 직접 답할 근거는 부족합니다. 기존 주제 풀이를 확인하려면 ' +
+  '“질문: 직업운” 또는 “질문: 재물운”처럼 정확한 주제를 선택할 수 있습니다. ' +
+  '해당 주제 역시 실제 해석 근거가 확인된 범위에서만 제공됩니다.';
+
 function coverageSummary(
   execution: GovernedReadingExecutionResult,
   state: ProductReadingCoverageSummary['state'],
@@ -177,11 +184,15 @@ function coverageSummary(
       : state === 'partial'
         ? '일부 풀이 근거만 확인돼 전체 내용을 제공하기 어렵습니다.'
         : '현재 명식에서 이 주제에 대한 풀이 근거가 확인되지 않았습니다.';
+  const isUnansweredOpenQuestion =
+    state === 'insufficient' &&
+    execution.preparation.normalization.request?.intent.domain === 'question_specific';
   return {
     state,
     hasAvailableEvidence: (selection?.selectedClaimIds.length ?? 0) > 0,
     missingRequirementCount: selection?.missingRequirements.length ?? 0,
-    explanation,
+    explanation: explanation +
+      (isUnansweredOpenQuestion ? QUESTION_SPECIFIC_RETRY_GUIDANCE : ''),
   };
 }
 
