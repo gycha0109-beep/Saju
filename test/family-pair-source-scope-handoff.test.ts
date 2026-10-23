@@ -660,6 +660,75 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     }
   });
 
+  it('retains unassigned R070 configuration prerequisite provenance separately from family menu blockers', () => {
+    const samples = [
+      { year: 1990, day: 15, sex: 'male' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'female' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'unspecified' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'female' as const, timeKnown: false },
+    ];
+    for (const sample of samples) {
+      const snapshot = chart(sample);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const menu = report.menuSupportHandoff;
+        const transfer = report.engineTransferBoundary;
+        const configHolds = menu.unassignedConfigurationSources;
+        const expectedCodes = [...new Set(configHolds.flatMap(item =>
+          item.missingPrerequisites))];
+        expect(menu.unassignedConfigurationPrerequisites).toEqual(expectedCodes);
+        expect(menu.unassignedConfigurationPrerequisiteTrace.map(item =>
+          item.prerequisiteCode)).toEqual(expectedCodes);
+        for (const item of menu.unassignedConfigurationPrerequisiteTrace) {
+          expect(item.origins).toEqual(configHolds
+            .filter(source => source.missingPrerequisites.includes(item.prerequisiteCode))
+            .map(source => ({
+              sourceLayerId: source.sourceLayerId,
+              sourceSurface: source.sourceSurface,
+              canonicalObservationCoverage: source.canonicalObservationCoverage,
+            })));
+          expect(item.origins.length).toBeGreaterThan(0);
+          expect(item.origins.every(origin =>
+            origin.sourceLayerId === 'CONFIGURATION-OUTCOME')).toBe(true);
+          expect(item.configurationIsFamilyMeaningAuthorized).toBe(false);
+          expect(item.repeatedSourceIsIndependentFamilyEvidence).toBe(false);
+        }
+        const sharedCodes = menu.menuBlockingPrerequisites.filter(code =>
+          menu.unassignedConfigurationPrerequisites.includes(code));
+        expect(menu.crossLanePrerequisiteOverlaps.map(item => item.prerequisiteCode))
+          .toEqual(sharedCodes);
+        for (const item of menu.crossLanePrerequisiteOverlaps) {
+          const menuTrace = menu.prerequisiteTrace.find(trace =>
+            trace.prerequisiteCode === item.prerequisiteCode);
+          const configTrace = menu.unassignedConfigurationPrerequisiteTrace.find(trace =>
+            trace.prerequisiteCode === item.prerequisiteCode);
+          expect(item.menuOrigins).toEqual(menuTrace?.origins);
+          expect(item.unassignedConfigurationOrigins).toEqual(configTrace?.origins);
+          expect(item.menuOrigins.length).toBeGreaterThan(0);
+          expect(item.unassignedConfigurationOrigins.length).toBeGreaterThan(0);
+          expect(item.menuAndConfigurationMethodsReconciled).toBe(false);
+          expect(item.independentlyAdmittedFamilyClaims).toBe(0);
+        }
+        expect(transfer.unassignedConfigurationPrerequisiteTrace)
+          .toEqual(menu.unassignedConfigurationPrerequisiteTrace);
+        expect(transfer.crossLanePrerequisiteOverlaps)
+          .toEqual(menu.crossLanePrerequisiteOverlaps);
+        expect(menu.prerequisiteTrace.map(item => item.prerequisiteCode))
+          .toEqual(menu.menuBlockingPrerequisites);
+        expect(menu.missingPrerequisites).toEqual([...new Set([
+          ...menu.menuBlockingPrerequisites,
+          ...menu.unassignedConfigurationPrerequisites,
+        ])]);
+        expect(menu.admittedFamilyClaimCount).toBe(0);
+        expect(transfer.researchEvidenceMayBecomeFamilyClaim).toBe(false);
+        expect(transfer.canSelectHistoricalMethod).toBe(false);
+        expect(transfer.canGrantFamilyT8Authority).toBe(false);
+        expect(transfer.canEnableMenu).toBe(false);
+        expect(transfer.canPublishOrSell).toBe(false);
+      }
+    }
+  });
+
   it('keeps R070 research engine transfer separated by Canonical input, source-method and authority hold', () => {
     const cases = [
       { year: 1988, day: 8, sex: 'male' as const, timeKnown: true },
