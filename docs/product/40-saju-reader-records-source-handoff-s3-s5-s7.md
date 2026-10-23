@@ -15,6 +15,16 @@
 - `sameSajuReadingForReaderAndRecordsV1`는 Reader/Records 참조가 **동일 Saju Reading과 완전 동일한 콘텐츠·원본 버전·인벤토리**를 가리키는지 비교한다. 결과 `matched`는 **동일 참조 검사만 통과**했다는 뜻이며 반환은 항상 `canDisclose=false, canPersist=false`. 앱이 이 구조체를 브라우저에 보내거나 구매권 대용으로 사용해서는 안 된다.
 - `state=held`, `lifecycle=preview`, `sourceAuthority/productionInterpretationAuthority/releaseAuthorization=NOT_EVALUATED`, `mayIssueS3OfficialCoverageCandidate=false`, `subjectBinding/s5AtomicStorage/s7Delivery=DB_OWNER_REQUIRED`를 고정한다. Reviewer의 화면 텍스트·DB Owner 소유 Ref를 Saju가 생산했다고 주장하지 않는다.
 
+## 명하 해석 체계 버전 채택 원칙 — 2026-10-23 사용자 승인
+
+**승인된 운영 원칙(해석 내용/Production 출처 권한 자체의 승인이 아님):** 명리학 전체의 객관적 참을 증명하는 대신, 명하가 실제로 채택한 **해석 규칙 묶음과 그 버전**을 공식 기준으로 고정한다. 사람·문장·요청별 수동 승인 대신 **버전별 재사용 가능한 규칙 단위**로 출처/적용 조건/예외/표현 허용 범위를 검증한다. 동일 버전의 승인된 규칙이 개별 Canonical 명식에 맞는지는 엔진이 자동 판단한다. 규칙이 바뀌면 기존 승인을 다른 버전에 자동 상속하지 않는다.
+
+**기존 계약에 매핑:** 기존 Registry Snapshot, Rule/Claim/Methodology/Source의 ID·version·contentHash, 실제 Canonical 입력과 Fact/Claim Graph, Interpretation Run, Evidence Selection, Product Reading Response, 서명된 Source Proof 및 SourceUnit ref/hash를 그대로 이용한다. 새로운 승인 시스템이나 별도 단계를 추가하지 않는다. Source Owner가 실제로 승인한 **특정 scope와 version/hash**만 운영 후보이며, 등록되지 않은 규칙·필요 근거 누락·충돌·불명확한 시각·허용되지 않은 기간/관계/미래 사건 의미는 기존 HOLD/partial/insufficient 경계를 유지한다.
+
+**Reader 표현 원칙:** 근거가 충족된 승인 범위 안에서는 자연스럽고 단호한 상담형 한국어를 허용한다. 다만 확신 있는 **화법**은 새로운 Claim, 미래 사건의 보장, 과장된 적용 범위나 출처 권한을 만들 수 없다. 기록 탭 상세 보고서에서는 짧은 한계 안내를 별도로 표시할 수 있다. 실제 Reader/Records UI 변경은 각 원래 소유 트랙에서 처리하며, 이 문서가 UI 배포를 승인하지 않는다.
+
+**Production 권한 분리:** 이 사용자 승인은 **정책 원칙**에 한정된다. 구체적인 규칙 묶음, 해석 Claim, Source Owner Production lifecycle 발급, 검증키, MyeongHa Subject/Birth Revision·DB correlation, selected/co-present/disclosure 및 Privacy/Release/Commerce는 아직 별도 확인·승인이 필요하다. 따라서 #2410은 이 결정만으로 해제하지 않는다.
+
 ## #2410의 기존 2B-3C-4 Source Unit 검증 연결
 
 서버 전용 `verifyHeldSajuSourceUnitClosureV1`은 기존 Preview HMAC 검증에 성공한 **정확한 ProductReadingResponse v2**에서만 기존 `projectSajuReaderRecordsSourceInventoryV1`로 SourceUnit ref/hash, disclosure, ambiguity 및 inventoryHash를 재생성한다. caller 제공 인벤토리나 출처 판정은 신뢰하지 않는다.
