@@ -274,10 +274,13 @@ function renderFirstScreenSelectedInterpretations(
   domain: string,
   report: ResearchReport,
 ): string {
-  if ((domain !== 'business' && domain !== 'relationship') ||
-    report.readingGuide === undefined || report.sections.length === 0) return '';
-  const sections = report.sections;
-  guard(sections[0]?.claimType === report.readingGuide.coreClaimType &&
+  if (domain !== 'business' && domain !== 'relationship') return '';
+  const scoped = domain === 'business'
+    ? report as BusinessNatalMultifactorReport
+    : report as RelationshipNatalMultifactorReport;
+  if (scoped.readingGuide === undefined || scoped.sections.length === 0) return '';
+  const sections = scoped.sections;
+  guard(sections[0]?.claimType === scoped.readingGuide.coreClaimType &&
     sections.every(section => section.sourceIds.length > 0 &&
       section.upstreamClaimIds.length >= 2 && section.paragraph.trim().length > 0),
     'first-screen interpretation must use exact selected sourced T8 paragraphs');
