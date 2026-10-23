@@ -26,13 +26,13 @@ function snapshot(day = 9, timeKnown = true): CanonicalSajuSnapshot {
   );
 }
 
-function run(month: number, natal: CanonicalSajuSnapshot = snapshot()) {
+function run(month: number, natal: CanonicalSajuSnapshot = snapshot(), referenceDateTime = NOW.toISOString()) {
   const request: ReadingRequest = {
     requestId: `monthly-research-preview-${month}`,
     intent: { domain: 'general', temporalScope: 'monthly' },
     targetPeriod: {
       scope: 'monthly', year: 2026, month, timeZone: 'Asia/Seoul',
-      referenceDateTime: NOW.toISOString(), resolution: 'relative_current',
+      referenceDateTime, resolution: 'relative_current',
     },
   };
   const context = buildTemporalReadingContext(request);
@@ -54,6 +54,12 @@ describe('real-calculated monthly Korean research consumer preview', () => {
     expect(report.calculationHash).toBe(natal.calculationHash);
     expect(report.jeolBoundary.at).toBe(facts.jeolBoundary.at);
     expect(report.coverage).toBe('complete');
+    expect(report.referenceReading.state).toBe('in_period');
+    expect(report.referenceReading.segmentId).toBe('before_jeol');
+    expect(report.referenceReading.theme?.claimId).toBe(
+      report.sections.find(section => section.kind === 'theme' &&
+        section.segmentId === 'before_jeol')?.claimId,
+    );
     const themes = report.sections.filter(x => x.kind === 'theme');
     expect(themes.map(x => x.segmentId)).toEqual(['before_jeol', 'after_jeol']);
     expect(themes.map(x => x.tenGod)).toEqual(
@@ -82,6 +88,33 @@ describe('real-calculated monthly Korean research consumer preview', () => {
       expect(html).toContain(section.text);
     });
     expect(html).toContain('공식 해석이나 판매 가능한 결과가 아닙니다');
+  });
+
+  it('shows the actually applicable Korean theme just before and at Jeol while keeping preview HOLD', () => {
+    const jeol = run(9).facts.jeolBoundary.at;
+    const before = run(9, snapshot(), new Date(Date.parse(jeol) - 1).toISOString());
+    const after = run(9, snapshot(), jeol);
+    expect(before.report.referenceReading.segmentId).toBe('before_jeol');
+    expect(after.report.referenceReading.segmentId).toBe('after_jeol');
+    expect(before.report.referenceReading.theme?.claimId)
+      .not.toBe(after.report.referenceReading.theme?.claimId);
+    const html = renderGeneralMonthlyExplorationHtml(after.report);
+    expect(html).toContain('id="reference-month-reading"');
+    expect(html).toContain(after.report.referenceReading.theme!.text);
+    expect(html).toContain(after.report.referenceReading.theme!.sourceIds[0]!);
+    expect(after.report.mayPublish).toBe(false);
+    expect(after.report.maySell).toBe(false);
+  });
+
+  it('does not claim an active monthly theme when the reference instant belongs to another month', () => {
+    const { report } = run(10);
+    expect(report.referenceReading).toEqual({
+      state: 'outside_target_month', referenceDateTime: NOW.toISOString(),
+    });
+    const html = renderGeneralMonthlyExplorationHtml(report);
+    expect(html).toContain('선택한 달 밖에 있습니다');
+    expect(html).toContain('절입 전');
+    expect(html).toContain('절입 이후');
   });
 
   it('changes source-linked Korean phase interpretations across different actual months and is deterministic for the same month', () => {
