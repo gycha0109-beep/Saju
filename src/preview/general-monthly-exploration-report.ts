@@ -262,6 +262,24 @@ function kst(instant: string): string {
 
 /** Internal-only HTML: every displayed interpretive sentence is original profile copy. */
 export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplorationReport): string {
+  const reference = report.referenceReading;
+  const theme = reference.state === 'in_period' ? reference.theme : undefined;
+  const focus = theme !== undefined
+    ? '<p class="muted">실제 적용 구간: ' + escapeHtml(SEGMENT_KO[theme.segmentId]) +
+      ' · ' + kst(theme.calculatedInterval.startsAt) + '부터 ' +
+      kst(theme.calculatedInterval.endsAt) + ' 전까지</p>' +
+      '<h3>' + escapeHtml(theme.title) + '</h3><p>' + escapeHtml(theme.text) + '</p>' +
+      '<details><summary>이 구간의 기존 Claim·규칙·출처</summary>' +
+      '<p>Claim: ' + escapeHtml(theme.claimId) + '</p>' +
+      '<p>규칙: ' + escapeHtml(theme.ruleIds.join(' · ')) +
+      ' / 방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
+      '<p>출처: ' + escapeHtml(theme.sourceIds.join(' · ')) +
+      '</p></details>'
+    : reference.state === 'insufficient_evidence'
+      ? '<p>' + escapeHtml(SEGMENT_KO[reference.segmentId!]) +
+        '의 한국어 해석 근거가 아직 충분하지 않습니다.</p>'
+      : '<p>조회 시각이 선택한 달 밖에 있습니다. 실제 적용 중인 월운으로 표시하지 않고, ' +
+        '선택한 달의 절입 전·후 구간만 아래에 보여줍니다.</p>';
   const sections = SEGMENTS.map(id => {
     const items = report.sections.filter(section => section.segmentId === id);
     const cards = items.map(section => `
@@ -293,10 +311,10 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
   .card h3{margin:6px 0}.card p{margin:6px 0 16px}
   .label{font-size:12px;font-weight:bold;color:#976943}
   details{font-size:12px;color:#6b6259;overflow-wrap:anywhere}
-  .muted{font-size:13px;color:#71695e}.limits{background:#eee6d9;padding:20px;border-radius:14px;margin-top:30px;font-size:13px}
+  .muted{font-size:13px;color:#71695e}.focus{background:#e9f2ed;padding:20px 24px;border-radius:16px;margin-top:22px}.focus h3{margin:8px 0}.limits{background:#eee6d9;padding:20px;border-radius:14px;margin-top:30px;font-size:13px}
   </style></head><body><main><header><small>MYEONGHA · INTERNAL RESEARCH PREVIEW</small>
   <h1>${escapeHtml(report.headline)}</h1><p>서울 시간 기준 · ${escapeHtml(report.jeolBoundary.name)} 절입 ${kst(report.jeolBoundary.at)}</p>
-  </header>${sections}<aside class="limits"><strong>해석 범위와 아직 모르는 부분</strong>
+  </header><section class="focus" id="reference-month-reading"><h2>조회 시각에 해당하는 월별 풀이</h2><p class="muted">기준: ${kst(reference.referenceDateTime)} · 내부 연구 미리보기</p>${focus}</section>${sections}<aside class="limits"><strong>해석 범위와 아직 모르는 부분</strong>
   <ul>${[...report.missing, ...report.caveats].map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>
   </aside></main></body></html>`;
 }
