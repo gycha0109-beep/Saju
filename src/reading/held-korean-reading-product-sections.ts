@@ -1,4 +1,8 @@
 import type { ReadingDomain } from '../contracts/reading.js';
+import {
+  KOREAN_SOURCE_BOUND_READING_RENDERER_V1,
+  renderExistingKoreanReadingOnDemandV1,
+} from './korean-source-bound-reading-renderer.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import {
   type CanonicalReadingSemanticBundleV1,
@@ -178,5 +182,31 @@ export function projectHeldKoreanReadingProductSectionsV1(input: Readonly<{
     canDisclose: false as const,
     canPublish: false as const,
     canSell: false as const,
+  });
+}
+
+
+/**
+ * E-3 server-internal Reader preparation: run the real source-owned Korean
+ * renderer and project its exact sections/disclosures in a single call.
+ *
+ * The caller must first independently authenticate subject, birth revision
+ * and request scope. This is NOT a ProductReadingResponse, a DB Reading, or
+ * an authorization to send preview copy to a user/Reader/Records endpoint.
+ * Public Reader delivery must continue through separately admitted Official
+ * ProductReadingResponse and MyeongHa's existing DB/Grant authorization.
+ */
+export async function renderHeldKoreanReadingProductSectionsOnDemandV1(
+  semantics: CanonicalReadingSemanticBundleV1,
+  authorizedRequestScopeKey: string,
+): Promise<HeldKoreanReadingProductSectionsV1> {
+  const localized = await renderExistingKoreanReadingOnDemandV1(
+    semantics, authorizedRequestScopeKey,
+  );
+  return projectHeldKoreanReadingProductSectionsV1({
+    semantics,
+    localized,
+    authorizedRequestScopeKey,
+    rendererPolicy: KOREAN_SOURCE_BOUND_READING_RENDERER_V1,
   });
 }
