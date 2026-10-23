@@ -25,6 +25,10 @@
 
 **구현된 최소 버전 핀:** `verifyHeldSajuSourceUnitClosureV1`은 검증된 서명 material에서 `registrySnapshotId` 및 `profileRef{id,version,contentHash}`를 `interpretationPolicyVersionPins`로 반환한다. 호출자는 **신뢰할 수 있는 서버 소유 설정/DB 정책에서 독립적으로 얻은** `expectedInterpretationPolicy{registrySnapshotId,profileRef}`를 필수로 제공해야 하며, 오래되거나 다른 Registry/Profile ID·버전·해시인 경우 전역 nonce를 소비하기 전에 차단한다. 기대값을 호출자의 proof/request/response에서 다시 복사하면 이 검증은 의미가 없다. 이는 검증된 실행의 **버전 동일성**일 뿐, 개별 Rule/Methodology/Source의 승인 여부나 명하가 채택한 규칙 묶음의 의미 권한을 검증했다는 뜻이 아니다. 그 판단은 기존 Source Owner scope 심사를 거쳐야 한다.
 
+**실행된 규칙 묶음의 실제 근거 결속:** Saju Source Owner `inspectSajuSelectedRuleBundleV1`은 동일 Interpretation Execution의 `selectedClaimIds`에서 `upstreamClaimRefs`를 추적하여 실행된 Claim → matched Rule Evaluation → 활성화된 Registry Rule → Methodology → Source의 정확한 ID/version/contentHash를 추출하고, 결정적 `inventoryHash`를 만든다. `verifyResolvedRegistryContentIntegrity`로 Registry 전체의 규칙·방법론·출처·Pack의 실제 내용과 Snapshot 해시를 재대조한다. `inspectSourceReadingProofReadinessV1`에서는 불일치·누락·비활성 규칙·위조 선택 Claim을 차단하여 잘못된 선택에 대해 Source Proof가 발급되지 않도록 한다.
+
+**권한 한계:** 이 내부 규칙 목록은 명하가 채택할 해석 체계의 특정 버전을 검토할 때 쓰는 **실제 사용 근거 목록**이다. 규칙의 의미가 승인된 것은 아니며, `inventoryHash` 자체를 기존 Source Proof의 MAC payload에 임의로 추가하지 않는다. 타 서버에 전달할 때는 현재의 별도 서명·검증 계약과 Source Owner Production 발급 조건을 충족해야 한다. 이 변경은 Preview HELD·미공개·미판매 범위 안에서만 동작한다.
+
 **nonce replay 일치:** Saju 검증기와 MyeongHa 서버 검증기는 `saju-proof-v2:` + `deterministicContentHash([issuer,audience,keyId,nonce])`를 같은 공유 nonce 원장 키로 사용한다. 콜론이 들어간 issuer/audience 경계 충돌이나 keyId 교체 후 재사용 오판을 막으며, 저장소의 원자 단발 claim과 장애 시 차단 규칙은 유지한다.
 
 **Production 권한 분리:** 이 사용자 승인은 **정책 원칙**에 한정된다. 구체적인 규칙 묶음, 해석 Claim, Source Owner Production lifecycle 발급, 검증키, MyeongHa Subject/Birth Revision·DB correlation, selected/co-present/disclosure 및 Privacy/Release/Commerce는 아직 별도 확인·승인이 필요하다. 따라서 #2410은 이 결정만으로 해제하지 않는다.
