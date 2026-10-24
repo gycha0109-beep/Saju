@@ -221,3 +221,6 @@ test('existing real source readings are accessible in the same local browser wit
   assert.match(pair, /두 사람/u);
   assert.match(pair, /궁합/u);
 });
+
+// Actual birth-date/hour/minute differentiation for the eight self-reading menus.
+import './saju-eight-menu-random-differentiation.node-check.mjs';
