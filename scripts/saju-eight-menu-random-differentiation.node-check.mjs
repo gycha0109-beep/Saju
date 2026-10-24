@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import process from 'node:process';
 import { test } from 'node:test';
 import { calculateCanonicalSajuSnapshot } from '../dist/calculation/calculation-engine.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
@@ -113,7 +114,7 @@ test('seeded random birth minute inputs: inspect substantive differences in eigh
       state => [state, records.filter(r => r.menu[menu].state === state).length])),
   }]));
   for (const record of records) {
-    console.log('SAJU_RANDOM_CASE ' + JSON.stringify({
+    process.stdout.write('SAJU_RANDOM_CASE ' + JSON.stringify({
       index: record.index, birth: record.birth, sex: record.sex,
       hash: record.calculationHash.slice(0, 14),
       menus: Object.fromEntries(MENUS.map(menu => [menu, {
@@ -123,9 +124,9 @@ test('seeded random birth minute inputs: inspect substantive differences in eigh
         preview: record.menu[menu].preview,
         missing: record.menu[menu].missing,
       }])),
-    }));
+    }) + '\n');
   }
-  console.log('SAJU_RANDOM_SUMMARY ' + JSON.stringify({
+  process.stdout.write('SAJU_RANDOM_SUMMARY ' + JSON.stringify({
     seed: '0x5a1a2026', sampleCount: records.length,
     target: '2026-10', referenceDateTime: NOW.toISOString(),
     exactRepeatIdentical: true,
@@ -134,5 +135,5 @@ test('seeded random birth minute inputs: inspect substantive differences in eigh
     lifeStageIsOnlyPeriodCalculation: records.every(r =>
       r.menu['life-stage'].state === 'source_authority_not_established'),
     annualMonthlyUseSameHtmlSource: true,
-  }));
+  }) + '\n');
 });
