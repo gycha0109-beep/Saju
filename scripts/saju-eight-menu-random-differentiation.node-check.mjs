@@ -36,7 +36,7 @@ function seededBirths() {
   let seed = 0x5a1a2026;
   const next = max => {
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-    return seed % max;
+    return Math.floor((seed / 0x100000000) * max);
   };
   return Array.from({ length: 10 }, () => ({
     calendarType: 'solar',
