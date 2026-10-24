@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import process from 'node:process';
 import { writeFileSync } from 'node:fs';
 import { calculateCanonicalSajuSnapshot } from '../dist/calculation/calculation-engine.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
