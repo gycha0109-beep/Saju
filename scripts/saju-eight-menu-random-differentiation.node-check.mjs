@@ -106,6 +106,8 @@ test('seeded random birth minute inputs: inspect substantive differences in eigh
   const summary = Object.fromEntries(MENUS.map(menu => [menu, {
     differentSemanticPatterns: countDistinct(records, menu, 'patterns'),
     differentActualParagraphs: countDistinct(records, menu, 'texts'),
+    pairwiseDifferentPatterns: records.reduce((total, left, i) => total + records.slice(i + 1).filter(right =>
+      JSON.stringify(left.menu[menu].patterns) !== JSON.stringify(right.menu[menu].patterns)).length, 0),
     casesWithReadingParagraphs: records.filter(r => r.menu[menu].texts.length > 0).length,
     casesWithAtLeastOneSection: records.filter(r => r.menu[menu].count > 0).length,
     outputStates: Object.fromEntries([...new Set(records.map(r => r.menu[menu].state))].map(
