@@ -11,7 +11,7 @@ import {
 } from '../research/wealth-natal-multifactor-candidate.js';
 
 export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
-type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension';
+type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension' | 'context';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
 export interface WealthNatalMultifactorSection {
@@ -53,7 +53,7 @@ export interface WealthNatalMultifactorReport {
   maySell: false;
   usefulComplete: false;
 }
-const AXES: readonly Axis[] = ['core', 'creation', 'management', 'planning', 'tension'];
+const AXES: readonly Axis[] = ['core', 'creation', 'management', 'planning', 'tension', 'context'];
 const SLOT_NAMES: Readonly<Record<PillarSlot, string>> = {
   year: '연주', month: '월주', day: '일주', hour: '시주',
 };
@@ -191,7 +191,9 @@ function toSection(
     (value.channel === 'visible_stems' || value.channel === 'branches') &&
     Array.isArray(value.families) &&
     value.realLifeOutcomeAuthorized === false && value.futureTimingAuthorized === false &&
-    value.healthOrMoneyOutcomeAuthorized === false && value.numericScoringAuthorized === false,
+    value.healthOrMoneyOutcomeAuthorized === false && value.numericScoringAuthorized === false &&
+    (value.axis !== 'context' || (value.directWealthReadingAuthorized === false &&
+      !(value.families as string[]).includes('wealth'))),
     'invalid or overclaiming structured T8 meaning');
   const upstream = claim.upstreamClaimRefs.map(id => execution.claims.find(c => c.claimId === id));
   guard(claim.scenarioRef === undefined && claim.methodologyRef.id ===
@@ -349,23 +351,31 @@ export function buildWealthNatalMultifactorReport(
     result.find(s => s.axis === 'creation') ??
     result.find(s => s.axis === 'management') ??
     result.find(s => s.axis === 'planning');
-  // Show a real source-qualified tension-only observation as a bounded partial,
-  // without treating it as the missing overall MUR core.
+  // Actual Wealth relations take priority. Context-only T8 may fill an otherwise
+  // empty research page, but never establishes the missing Wealth synthesis.
   const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
+  const tensionOnly = result.filter(section => section.axis === 'tension').slice(0, 1);
+  const contextOnly = result.filter(section => section.axis === 'context').slice(0, 1);
   const chosen: WealthNatalMultifactorSection[] = core
     ? [core, ...(supportSelection?.supporting ?? [])]
-    : result.filter(section => section.axis === 'tension').slice(0, 1);
+    : tensionOnly.length ? tensionOnly : contextOnly;
   const missing: string[] = [];
-  if (snapshot.completeness.birthTimeKnown && chosen.length === 0) {
+  if (snapshot.completeness.birthTimeKnown &&
+    (chosen.length === 0 || chosen[0]?.axis === 'context')) {
     const sourceBoundReason = explainMissingWealthT8(snapshot, execution);
     if (sourceBoundReason) missing.push(sourceBoundReason);
   }
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
-  if(!core && chosen.length > 0) missing.push('중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.');
+  if(!core && chosen[0]?.axis === 'tension') {
+    missing.push('중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.');
+  }
+  if(!core && chosen[0]?.axis === 'context') {
+    missing.push('관성·인성 또는 관성·비겁의 간접적인 구조 설명만 확인됩니다. 이것은 재성 중심 재물운 종합 해석이 아니며 결과를 부분 연구 관점으로 제한합니다.');
+  }
   if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
     missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
   }
-  const missingSupportingAxes = 2 - (core ? chosen.length - 1 : chosen.length);
+  const missingSupportingAxes = 2 - (core ? chosen.length - 1 : chosen.filter(s => s.axis === 'tension').length);
   if(missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
   const state: Status = snapshot.completeness.birthTimeKnown &&
