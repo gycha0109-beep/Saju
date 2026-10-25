@@ -101,6 +101,26 @@ describe('N21 readable source-owned natal storyline',()=>{
     expect(buildNatalN21ReaderFirstStory(snapshot,[...sources].reverse())).toEqual(result);
   });
 
+  it('keeps exact source paragraphs while offering reader-only delivery text for downstream character guard', () => {
+    const snapshot = chart(10);
+    const sources = [{
+      domain: 'general' as const,
+      response: boundedResponse(snapshot, 'g', [
+        '이 명식에서 확인된 근거는 식상과 재성입니다. 실제 수익을 단정하지 않습니다.',
+      ]),
+    }];
+    const result = buildNatalN21ReaderFirstStory(snapshot, sources);
+    const original = result.sections[0]!.excerpts[0]!;
+    expect(original.text).toBe(
+      '이 명식에서 확인된 근거는 식상과 재성입니다. 실제 수익을 단정하지 않습니다.',
+    );
+    expect(original.readerDelivery.originalText).toBe(original.text);
+    expect(original.readerDelivery.displayText).toContain('근거를 살펴보면, 식상과 재성');
+    expect(original.readerDelivery.requiresCharacterGuard).toBe(true);
+    expect(result.createsNewInterpretation).toBe(false);
+    expect(result.maySell).toBe(false);
+  });
+
   it('prioritizes the actual unique career reading even if common copy fills the first slots',()=>{
     const snap=chart(10);
     const shared='여러 분야에서 공유한 원래 풀이';

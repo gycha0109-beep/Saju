@@ -1,4 +1,5 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import { presentSourcedKoreanProse } from './korean-prose-surface.js';
 import { findSharedNatalFactLinks } from './natal-five-domain-shared-evidence.js';
 import type { GeneralNatalMultifactorReport, GeneralNatalMultifactorSection } from './general-natal-multifactor-report.js';
 import type { CareerMultifactorReport, CareerMultifactorReportSection } from './career-natal-multifactor-report.js';
@@ -42,6 +43,13 @@ const FACT_PATH = /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|b
 function guard(value: unknown, reason: string): asserts value {
   if (!value) throw new TypeError('Five-domain multifactor research reader: ' + reason);
 }
+function renderReportParagraph(original: string): string {
+  const presentation = presentSourcedKoreanProse(original, 'detailed_report');
+  const edited = '<p>' + escapeHtml(presentation.displayText) + '</p>';
+  return presentation.appliedRuleIds.length === 0 ? edited : edited +
+    '<details class="source-original"><summary>윤문 전 원문 확인</summary><p>' +
+    escapeHtml(presentation.originalText) + '</p></details>';
+}
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/gu, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -62,7 +70,7 @@ function renderSection(section: ResearchSection): string {
     positions.every(position => section.paragraph.includes(position)),
     'section has no exact calculated positions, upstream claims, or sources');
   return '<section class="meaning"><h3>' + escapeHtml(section.headline) + '</h3>' +
-    '<p>' + escapeHtml(section.paragraph) + '</p>' +
+    renderReportParagraph(section.paragraph) +
     '<details><summary>명식 근거와 출처 확인</summary><p>확인 위치</p>' +
     renderList(positions) + '<p>계산 근거 경로</p>' + renderList(paths) +
     '<p>상위 십신 근거</p>' + renderList(section.upstreamClaimIds) +
@@ -289,7 +297,7 @@ function renderFirstScreenSelectedInterpretations(
       '<section class="first-claim"><h4>' +
       escapeHtml(tensionOnly ? '확인된 부분 관점 · ' + section.headline :
         (i === 0 ? '중심 관점 · ' : '독립 보조 관점 · ') + section.headline) +
-      '</h4><p>' + escapeHtml(section.paragraph) + '</p></section>').join('');
+      '</h4>' + renderReportParagraph(section.paragraph) + '</section>').join('');
     const scope = tensionOnly
       ? '이 명식에서는 구조적 긴장에 대한 제한된 근거만 확인됐습니다. 총운의 중심 결론은 보류합니다.'
       : scoped.state === 'complete'
@@ -312,8 +320,8 @@ function renderFirstScreenSelectedInterpretations(
   const items = sections.map((section, i) =>
     '<section class="first-claim"><h4>' +
     escapeHtml((i === 0 ? '중심 관점 · ' : '독립 보조 관점 · ') +
-      section.headline) + '</h4><p>' + escapeHtml(section.paragraph) +
-    '</p></section>').join('');
+      section.headline) + '</h4>' + renderReportParagraph(section.paragraph) +
+    '</section>').join('');
   const scope = report.state === 'complete'
     ? '이 명식에서 확인된 중심 1개와 독립 보조 2개의 기존 연구 풀이입니다. 실제 사업·관계 결과를 예측하지 않습니다.'
     : '이 명식에서 출처가 확인된 부분 풀이만 보여줍니다. 보조 근거가 부족한 종합 결론은 보류합니다.';

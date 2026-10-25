@@ -125,6 +125,26 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(html).not.toContain('<script>');
   });
 
+  it('renders a conservative report-style punctuation cleanup while retaining source claims', () => {
+    const chart = sample(3, 10);
+    const originals = reports(chart);
+    const core = originals.general.sections[0]!;
+    const source = core.paragraph + ' 이 근거가 확인되므로, 실제 결과를 단정하지 않습니다.';
+    const modified = { ...originals, general: {
+      ...originals.general,
+      sections: [{ ...core, paragraph: source }, ...originals.general.sections.slice(1)],
+    }};
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, modified);
+    expect(source).toContain('확인되므로, 실제');
+    expect(html).toContain('확인되므로 실제');
+    expect(html).toContain('윤문 전 원문 확인');
+    expect(html).toContain('확인되므로, 실제');
+    expect(modified.general.sections[0]?.paragraph).toBe(source);
+    expect(originals.general.sections[0]?.paragraph).toBe(core.paragraph);
+    expect(originals.general.researchOnly).toBe(true);
+    expect(originals.general.mayPublish).toBe(false);
+  });
+
   it('puts exact source-bound General Korean interpretation first without granting new meaning', () => {
     const chart = sample(3, 10);
     const original = reports(chart);

@@ -1,5 +1,6 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import { presentSourcedKoreanProse, type SourcedKoreanProsePresentation } from './korean-prose-surface.js';
 import {
   buildNatalN16GroundedReaderBrief,
   type NatalN16TextProvenance,
@@ -18,6 +19,8 @@ export const NATAL_N23_DOMAIN_DISTINCTIVE_SELECTION_VERSION =
 export interface NatalN21ReadingExcerpt {
   unitId: string;
   text: string;
+  /** Optional plain-spoken candidate; Persona and final Output Guard run downstream. */
+  readerDelivery: SourcedKoreanProsePresentation;
   provenance: readonly NatalN16TextProvenance[];
   repeatedInOtherDomains: readonly NatalSynthesisDomain[];
   selectionBasis: 'domain_distinctive' | 'cross_domain_shared';
@@ -121,6 +124,7 @@ export function buildNatalN21ReaderFirstStory(
       excerpts.push({
         unitId: unit.unitId,
         text: unit.text,
+        readerDelivery: presentSourcedKoreanProse(unit.text, 'character_reader'),
         provenance: unit.sources.filter((source) => source.domain === domain.domain),
         repeatedInOtherDomains: unit.appearingInDomains.filter((entry) => entry !== domain.domain),
         selectionBasis: unit.appearingInDomains.length === 1
