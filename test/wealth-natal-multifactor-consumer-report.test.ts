@@ -63,6 +63,9 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(first.report.sections.map(x=>x.headline)).not.toEqual(
       second.report.sections.map(x=>x.headline));
     for(const x of [first,second]) {
+      if (x.report.sections.some(section => section.axis !== 'context')) {
+        expect(x.report.sections.every(section => section.axis !== 'context')).toBe(true);
+      }
       for(const s of x.report.sections) {
         expect(s.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(s.observedPositions.length).toBeGreaterThanOrEqual(2);
