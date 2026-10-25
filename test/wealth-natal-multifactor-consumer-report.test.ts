@@ -31,9 +31,9 @@ function run(month: number, day: number, known = true, hour = 12) {
 describe('actual-source Wealth natal T5→T8→Korean five-domain report', () => {
   it('is Wealth-only, research-only, and every T8 has 2/3 exact T5 inputs', () => {
     expect(registry.pack.packId).toBe(WEALTH_NATAL_MULTIFACTOR_PACK.packId);
-    expect(WEALTH_NATAL_MULTIFACTOR_RULES).toHaveLength(12);
+    expect(WEALTH_NATAL_MULTIFACTOR_RULES).toHaveLength(18);
     expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(12);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(18);
     expect(registry.rules.filter(r => r.taxonomy.subcategory === 'self_baseline')).toHaveLength(0);
     for(const rule of WEALTH_NATAL_MULTIFACTOR_RULES) {
       expect(rule.taxonomy.category).toBe('wealth');
@@ -43,6 +43,23 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
       expect(rule.sourceRefs).toHaveLength(2);
       expect(rule.status).toBe('research');
     }
+    const resourceCore = WEALTH_NATAL_MULTIFACTOR_RULES.filter(rule =>
+      (rule.output.value as { pattern?: string }).pattern === 'WEALTH_OFFICER_RESOURCE');
+    expect(resourceCore).toHaveLength(2);
+    for (const rule of resourceCore) {
+      const families = rule.inputs.map(input => input.pathOrClaimType);
+      expect(families.some(type => type.includes('_WEALTH_'))).toBe(true);
+      expect(families.some(type => type.includes('_OFFICER_'))).toBe(true);
+      expect(families.some(type => type.includes('_RESOURCE_'))).toBe(true);
+      expect(rule.output.emphasis).toBe('major');
+      expect(rule.sourceRefs).toHaveLength(2);
+    }
+    const indirect = WEALTH_NATAL_MULTIFACTOR_RULES.filter(rule =>
+      (rule.output.value as { axis?: string }).axis === 'context');
+    expect(indirect).toHaveLength(4);
+    expect(indirect.every(rule =>
+      (rule.output.value as { directWealthReadingAuthorized?: boolean })
+        .directWealthReadingAuthorized === false)).toBe(true);
     expect(inspectMyeonghwaProductionComposition({registry}).status).toBe('blocked');
   });
 
@@ -63,6 +80,9 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(first.report.sections.map(x=>x.headline)).not.toEqual(
       second.report.sections.map(x=>x.headline));
     for(const x of [first,second]) {
+      if (x.report.sections.some(section => section.axis !== 'context')) {
+        expect(x.report.sections.every(section => section.axis !== 'context')).toBe(true);
+      }
       for(const s of x.report.sections) {
         expect(s.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(s.observedPositions.length).toBeGreaterThanOrEqual(2);

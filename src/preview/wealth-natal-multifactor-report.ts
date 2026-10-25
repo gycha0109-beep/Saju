@@ -11,7 +11,7 @@ import {
 } from '../research/wealth-natal-multifactor-candidate.js';
 
 export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
-type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension';
+type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension' | 'context';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
 export interface WealthNatalMultifactorSection {
@@ -53,7 +53,7 @@ export interface WealthNatalMultifactorReport {
   maySell: false;
   usefulComplete: false;
 }
-const AXES: readonly Axis[] = ['core', 'creation', 'management', 'planning', 'tension'];
+const AXES: readonly Axis[] = ['core', 'creation', 'management', 'planning', 'tension', 'context'];
 const SLOT_NAMES: Readonly<Record<PillarSlot, string>> = {
   year: '연주', month: '월주', day: '일주', hour: '시주',
 };
@@ -94,6 +94,60 @@ function unknownHourCalculatedContext(snapshot: CanonicalSajuSnapshot): string {
 function guard(v: unknown, message: string): asserts v {
   if (!v) throw new TypeError('Wealth multifactor: ' + message);
 }
+/**
+ * Explain an insufficient *existing* Wealth reading using the already emitted
+ * same-chart T5 themes, without converting those themes to new T8 meanings.
+ * This is a coverage explanation, never a substitute for a Wealth section.
+ */
+function explainMissingWealthT8(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+): string | undefined {
+  if (!snapshot.completeness.birthTimeKnown) return undefined;
+  const activeFamilies = new Map<Channel, Set<string>>([
+    ['visible_stems', new Set<string>()],
+    ['branches', new Set<string>()],
+  ]);
+  const names: Readonly<Record<string, string>> = {
+    peer: '비겁',
+    resource: '인성',
+    output: '식상',
+    wealth: '재성',
+    officer: '관성',
+  };
+  const types: readonly string[] = ['peer', 'resource', 'output', 'wealth', 'officer'];
+  for (const claim of execution.claims) {
+    if (claim.state !== 'active' || claim.taxonomy.tier !== 'T5' ||
+        claim.snapshotId !== snapshot.snapshotId || claim.sourceRefs.length === 0) continue;
+    const match = /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+      .exec(claim.claimType);
+    if (!match) continue;
+    const family = match[1]!.toLowerCase();
+    const channel = match[2]!.toLowerCase() as Channel;
+    activeFamilies.get(channel)!.add(family);
+  }
+
+  const observed = ([
+    ['visible_stems', '천간'],
+    ['branches', '지지 대표 십신'],
+  ] as const).flatMap(([channel, label]) => {
+    const observedTypes = types.filter(family => activeFamilies.get(channel)?.has(family));
+    return observedTypes.length
+      ? [label + ': ' + observedTypes.map(family => names[family]).join('·')]
+      : [];
+  });
+  const sourceNote = observed.length
+    ? '현재 실제로 확인된 출처 연결 십신 관점은 ' + observed.join(' / ') + '입니다. '
+    : '현재 적용 가능한 출처 연결 십신 관점이 확인되지 않습니다. ';
+  const hasWealth = activeFamilies.get('visible_stems')!.has('wealth') ||
+    activeFamilies.get('branches')!.has('wealth');
+  const reason = hasWealth
+    ? '재성 관련 십신 관점은 있지만 기존 재물 종합 규칙이 요구하는 같은 관측 범위 안의 다른 십신 계열과 결합되지 않아, 출처가 있는 재물 종합 결론을 만들 수 없습니다. '
+    : '기존 십신 관점 규칙에서 재성 계열의 활성 근거가 확인되지 않아, 등록된 재물 복합 해석 규칙을 적용할 수 없습니다. ';
+  return sourceNote + reason +
+    '이는 재성이 없거나 돈이 없다는 판정이 아니며, 실제 소득·재산·재물운의 좋고 나쁨을 뜻하지 않습니다.';
+}
+
 function textFor(claimType: string, key: 'headline'|'summary') {
   const profile = WEALTH_NATAL_MULTIFACTOR_NARRATIVES.find(p => p.claimType === claimType);
   guard(profile, 'ClaimNarrativeProfile missing: ' + claimType);
@@ -137,7 +191,9 @@ function toSection(
     (value.channel === 'visible_stems' || value.channel === 'branches') &&
     Array.isArray(value.families) &&
     value.realLifeOutcomeAuthorized === false && value.futureTimingAuthorized === false &&
-    value.healthOrMoneyOutcomeAuthorized === false && value.numericScoringAuthorized === false,
+    value.healthOrMoneyOutcomeAuthorized === false && value.numericScoringAuthorized === false &&
+    (value.axis !== 'context' || (value.directWealthReadingAuthorized === false &&
+      !(value.families as string[]).includes('wealth'))),
     'invalid or overclaiming structured T8 meaning');
   const upstream = claim.upstreamClaimRefs.map(id => execution.claims.find(c => c.claimId === id));
   guard(claim.scenarioRef === undefined && claim.methodologyRef.id ===
@@ -295,19 +351,33 @@ export function buildWealthNatalMultifactorReport(
     result.find(s => s.axis === 'creation') ??
     result.find(s => s.axis === 'management') ??
     result.find(s => s.axis === 'planning');
-  // Show a real source-qualified tension-only observation as a bounded partial,
-  // without treating it as the missing overall MUR core.
-  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
+  // Actual Wealth relations take priority. Context-only T8 may fill an otherwise
+  // empty research page, but never establishes the missing Wealth synthesis.
+  const supportSelection = core
+    ? selectIndependentNatalSupportingAxes(core, result.filter(section => section.axis !== 'context'))
+    : undefined;
+  const tensionOnly = result.filter(section => section.axis === 'tension').slice(0, 1);
+  const contextOnly = result.filter(section => section.axis === 'context').slice(0, 1);
   const chosen: WealthNatalMultifactorSection[] = core
     ? [core, ...(supportSelection?.supporting ?? [])]
-    : result.filter(section => section.axis === 'tension').slice(0, 1);
+    : tensionOnly.length ? tensionOnly : contextOnly;
   const missing: string[] = [];
+  if (snapshot.completeness.birthTimeKnown &&
+    (chosen.length === 0 || chosen[0]?.axis === 'context')) {
+    const sourceBoundReason = explainMissingWealthT8(snapshot, execution);
+    if (sourceBoundReason) missing.push(sourceBoundReason);
+  }
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
-  if(!core && chosen.length > 0) missing.push('중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.');
+  if(!core && chosen[0]?.axis === 'tension') {
+    missing.push('중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.');
+  }
+  if(!core && chosen[0]?.axis === 'context') {
+    missing.push('관성·인성 또는 관성·비겁의 간접적인 구조 설명만 확인됩니다. 이것은 재성 중심 재물운 종합 해석이 아니며 결과를 부분 연구 관점으로 제한합니다.');
+  }
   if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
     missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
   }
-  const missingSupportingAxes = 2 - (core ? chosen.length - 1 : chosen.length);
+  const missingSupportingAxes = 2 - (core ? chosen.length - 1 : chosen.filter(s => s.axis === 'tension').length);
   if(missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
   const state: Status = snapshot.completeness.birthTimeKnown &&
