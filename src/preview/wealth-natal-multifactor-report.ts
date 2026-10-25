@@ -356,9 +356,7 @@ export function buildWealthNatalMultifactorReport(
     ? [core, ...(supportSelection?.supporting ?? [])]
     : result.filter(section => section.axis === 'tension').slice(0, 1);
   const missing: string[] = [];
-  if (!snapshot.completeness.birthTimeKnown) {
-    // Unknown-hour scenarios retain their existing strict interpretation block.
-  } else if (chosen.length === 0) {
+  if (snapshot.completeness.birthTimeKnown && chosen.length === 0) {
     const sourceBoundReason = explainMissingWealthT8(snapshot, execution);
     if (sourceBoundReason) missing.push(sourceBoundReason);
   }
