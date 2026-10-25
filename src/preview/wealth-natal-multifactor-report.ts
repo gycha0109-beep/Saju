@@ -347,10 +347,21 @@ export function buildWealthNatalMultifactorReport(
     : [];
   // Prefer the 3-input core. When not observed, a narrower two-input core can
   // still be rendered, but completion needs two OTHER independently grounded axes.
-  const core = result.find(s => s.axis === 'core') ??
-    result.find(s => s.axis === 'creation') ??
-    result.find(s => s.axis === 'management') ??
-    result.find(s => s.axis === 'planning');
+  // Select a core that preserves the most independently evidenced supporting
+  // axes. A newly admitted three-family pattern must not silently reduce the
+  // coverage of an already-supported reading merely because it sorts first.
+  const coreCandidates = result.filter(section =>
+    section.axis === 'core' || section.axis === 'creation' ||
+    section.axis === 'management' || section.axis === 'planning');
+  const core = [...coreCandidates].sort((a, b) => {
+    const countA = selectIndependentNatalSupportingAxes(a,
+      result.filter(section => section.axis !== 'context')).supporting.length;
+    const countB = selectIndependentNatalSupportingAxes(b,
+      result.filter(section => section.axis !== 'context')).supporting.length;
+    return countB - countA ||
+      AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
+      a.claimType.localeCompare(b.claimType);
+  })[0];
   // Actual Wealth relations take priority. Context-only T8 may fill an otherwise
   // empty research page, but never establishes the missing Wealth synthesis.
   const supportSelection = core
