@@ -19,7 +19,8 @@ export interface SharedNatalStructuralSection {
   family: ObservedFamily;
   channel: ObservedChannel;
   context: 'season' | 'intrinsic_root' | 'hidden_challenge' |
-    'hidden_support_peer' | 'hidden_support_resource';
+    'hidden_support_peer' | 'hidden_support_resource' |
+    'visible_challenge' | 'visible_support';
   title: string;
   paragraph: string;
   monthRelation: string;
@@ -34,6 +35,8 @@ export interface SharedNatalStructuralSection {
   hiddenChallengeEffect: 'not_determined';
   hiddenSupportMembership: readonly { position: string; kind: string; element: string }[];
   hiddenSupportEffect: 'not_determined';
+  visibleContrastMembership: readonly { position: string; relation: string; direction: string }[];
+  visibleContrastEffect: 'not_determined';
   interpretedOutcomes: false;
 }
 
@@ -86,6 +89,7 @@ function section(
     data.strength === 'not_determined' && data.monthRelationMatchesThemeFamily === true &&
     data.hiddenChallengeEffect === 'not_determined' &&
     data.hiddenSupportEffect === 'not_determined' &&
+    data.visibleContrastEffect === 'not_determined' &&
     data.interactionPrecedence === 'not_determined' &&
     data.gyeokguk === 'not_determined' &&
     data.yongshin === 'not_determined', 'structural observation was promoted to outcome');
@@ -94,7 +98,8 @@ function section(
   const context = data.context as SharedNatalStructuralSection['context'];
   assert(FAMILY_LABEL[family] && ['visible_stems','branches'].includes(channel) &&
     ['season','intrinsic_root','hidden_challenge',
-      'hidden_support_peer','hidden_support_resource'].includes(context) &&
+      'hidden_support_peer','hidden_support_resource',
+      'visible_challenge','visible_support'].includes(context) &&
     claim.snapshotId === snapshot.snapshotId && claim.scenarioRef === undefined,
   'unsupported family, context or scenario');
   const upstream = claim.upstreamClaimRefs.map(id =>
@@ -113,6 +118,8 @@ function section(
     (item.value as {evidenceKind?: string}).evidenceKind === 'hidden_challenge_membership');
   const challengeScope = upstream.find(item => item?.claimType === 'DAY_MASTER_HIDDEN_CHALLENGE_SCOPE_GUARD');
   const supportScope = upstream.find(item => item?.claimType === 'DAY_MASTER_STRENGTH_SCOPE_GUARD');
+  const visible = upstream.filter(item => item?.claimType === 'DAY_MASTER_STRENGTH_EVIDENCE' &&
+    (item.value as {evidenceKind?: string}).evidenceKind === 'visible_stem_relation');
   const supports = upstream.filter(item => item?.claimType === 'DAY_MASTER_STRENGTH_EVIDENCE' &&
     ['hidden_peer_root','hidden_resource_support'].includes(String(
       (item.value as {evidenceKind?: string}).evidenceKind)));
@@ -120,6 +127,7 @@ function section(
     (context === 'intrinsic_root' ? roots.length > 0 : roots.length === 0) &&
     (context === 'hidden_challenge' ? challenges.length > 0 && challengeScope : challenges.length === 0) &&
     (context.startsWith('hidden_support_') ? supports.length > 0 && supportScope : supports.length === 0) &&
+    (context.startsWith('visible_') ? visible.length > 0 && supportScope : visible.length === 0) &&
     month.taxonomy.tier === 'T2' && scope.taxonomy.tier === 'T2' &&
     theme.taxonomy.tier === 'T5', 'missing required exact source T2/T5');
   const m = valueOf(month);
@@ -172,6 +180,27 @@ function section(
       valueOf(supportScope!).balancingUse === 'not_authorized',
     'challenge-vs-hidden support requires the governed I13 guard');
   }
+  const visibleContrastMembership = visible.map(observation => {
+    const value = valueOf(observation!);
+    const requiredDirection = context === 'visible_challenge' ? 'challenging' : 'supporting';
+    const allowedRelations = requiredDirection === 'challenging' ?
+      ['output','wealth','officer'] : ['peer','resource'];
+    assert(value.evidenceKind === 'visible_stem_relation' &&
+      value.direction === requiredDirection &&
+      allowedRelations.includes(String(value.relation)) &&
+      ['year','month','hour'].includes(String(value.position)) &&
+      value.weight === 'not_assigned' && value.overallStrength === 'not_determined',
+    'visible-stem evidence was mixed with hidden evidence or promoted to strength');
+    return {position: String(value.position),relation: String(value.relation),
+      direction: String(value.direction)};
+  });
+  if(context.startsWith('visible_')) {
+    assert((context === 'visible_challenge' ?
+      ['peer','resource'] : ['output','wealth','officer']).includes(String(m.relation)) &&
+      valueOf(supportScope!).status === 'undetermined' &&
+      valueOf(supportScope!).balancingUse === 'not_authorized',
+    'visible relation context requires I13 non-final classification guard');
+  }
   const ruleRef = claim.ruleRefs[0];
   const rule = registry.rules.find(r => r.ruleId === ruleRef?.ruleId &&
     r.version === ruleRef?.version);
@@ -208,14 +237,23 @@ function section(
       '(' + value.element + ')가 관측됐습니다.'
     ).join(' ') +
     ' 월령의 도전 방향과 지장간의 지원 방향이 공존하지만, 실제 뿌리 효력이나 강약의 우열을 결정하지 않습니다.' : '';
+  const visibleEvidence = context.startsWith('visible_')
+    ? ' 동시에 ' + visibleContrastMembership.map(value =>
+      (POSITION[value.position] ?? value.position) + ' 천간에는 ' +
+      (FAMILY_LABEL[value.relation as ObservedFamily] ?? value.relation) +
+      ' 계열의 ' + (value.direction === 'supporting' ? '지원' : '도전') +
+      ' 방향이 관측됩니다.'
+    ).join(' ') +
+    ' 월령 오행 관계와 천간의 별도 구조적 신호를 함께 기록한 것이며 실제 영향력의 크기·우열을 확정하지 않습니다.' : '';
   const title = '원국 ' + FAMILY_LABEL[family] + '의 ' +
     (channel === 'visible_stems' ? '천간' : '지지') +
     ' 관측과 ' + (context === 'season' ? '월령 환경' :
       context === 'intrinsic_root' ? '뿌리 후보' :
-      context === 'hidden_challenge' ? '지장간 도전 관계' : '지장간 지원 관계') + '의 공통 맥락';
+      context === 'hidden_challenge' ? '지장간 도전 관계' :
+      context.startsWith('visible_') ? '천간의 반대 방향 관계' : '지장간 지원 관계') + '의 공통 맥락';
   const paragraph = '같은 명식에서 ' + FAMILY_LABEL[family] +
     ' 십신 계열이 확인됐습니다. ' + monthEvidence + rootEvidence +
-    challengeEvidence + supportEvidence +
+    challengeEvidence + supportEvidence + visibleEvidence +
     ' 두 사실을 함께 볼 수는 있지만, 어느 요소가 강하거나 유리한지, 사람의 행동·재물·직업 또는 미래 사건이 어떻게 된다고 결론 내리지 않습니다.';
   return {
     claimId: claim.claimId, claimType: claim.claimType, ruleId: rule.ruleId,
@@ -225,7 +263,8 @@ function section(
     sourceIds: [...claim.sourceRefs], observedFactPaths: observed,
     intrinsicRootCandidates: rootClasses, hiddenChallengeMembership,
     hiddenChallengeEffect: 'not_determined', hiddenSupportMembership,
-    hiddenSupportEffect: 'not_determined', interpretedOutcomes: false,
+    hiddenSupportEffect: 'not_determined', visibleContrastMembership,
+    visibleContrastEffect: 'not_determined', interpretedOutcomes: false,
   };
 }
 

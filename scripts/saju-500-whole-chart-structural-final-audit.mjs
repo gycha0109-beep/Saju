@@ -29,6 +29,8 @@ const metric={
   hiddenChallengeWithMultipleObservedPositions:0,
   hiddenSupportSections:0,hiddenSupportBirths:0,
   hiddenPeerSupportSections:0,hiddenResourceSupportSections:0,
+  visibleContrastingSections:0,visibleContrastingBirths:0,
+  visibleSupportSections:0,visibleChallengeSections:0,
   familyChannelMeaningProfiles:new Set(),rootContextMeaningProfiles:new Set(),
   domainContextBirths:Object.fromEntries(DOMAINS.map(x=>[x,0])),
   domainContextLinks:Object.fromEntries(DOMAINS.map(x=>[x,0])),
@@ -62,6 +64,12 @@ for(let i=0;i<500;i++){
     const support=s.sections.filter(x=>x.context.startsWith('hidden_support_'));
     if(support.length)metric.hiddenSupportBirths++;
     metric.hiddenSupportSections+=support.length;
+    const visible=s.sections.filter(x=>x.context==='visible_challenge'||
+      x.context==='visible_support');
+    if(visible.length)metric.visibleContrastingBirths++;
+    metric.visibleContrastingSections+=visible.length;
+    metric.visibleSupportSections+=visible.filter(x=>x.context==='visible_support').length;
+    metric.visibleChallengeSections+=visible.filter(x=>x.context==='visible_challenge').length;
     metric.hiddenPeerSupportSections+=support.filter(x=>x.context==='hidden_support_peer').length;
     metric.hiddenResourceSupportSections+=support.filter(x=>x.context==='hidden_support_resource').length;
     if(hidden.some(x=>new Set(x.hiddenChallengeMembership.map(y=>y.position)).size>1))
@@ -89,6 +97,16 @@ for(let i=0;i<500;i++){
           x.hiddenSupportMembership.some(y=>
             y.kind!==(x.context==='hidden_support_peer' ?
               'hidden_peer_root':'hidden_resource_support'))))
+        metric.provenanceErrors++;
+      if(x.context.startsWith('visible_') &&
+        (!x.visibleContrastMembership.length || x.monthRelation!==x.family ||
+        x.hiddenChallengeMembership.length || x.hiddenSupportMembership.length ||
+        x.intrinsicRootCandidates.length || x.visibleContrastEffect!=='not_determined' ||
+        x.visibleContrastMembership.some(v=>
+          !['year','month','hour'].includes(v.position) ||
+          (x.context==='visible_challenge' ?
+            v.direction!=='challenging' || !['output','wealth','officer'].includes(v.relation) :
+            v.direction!=='supporting' || !['peer','resource'].includes(v.relation)))))
         metric.provenanceErrors++;
       metric.familyChannelMeaningProfiles.add(x.family+':'+x.channel+':'+x.context+':'+x.monthRelation);
       metric.rootContextMeaningProfiles.add(JSON.stringify([x.family,x.channel,x.context,
@@ -137,6 +155,8 @@ const errors=[
   ...(metric.sourceBoundT8Births===0?['No structural T8 was consumed']:[]),
   ...(metric.hiddenChallengeBirths===0?['No source-bound support/challenge co-presence was consumed']:[]),
   ...(metric.hiddenSupportBirths===0?['No source-bound challenge/support co-presence was consumed']:[]),
+  ...(metric.visibleSupportSections===0 || metric.visibleChallengeSections===0 ?
+    ['No independently sourced I13 visible stem contrast in both month directions']:[]),
   ...(metric.monthlyConnectedBirths===0?['No temporal/natal structural source correspondence']:[]),
 ];
 const status=errors.length?'FAIL':'IMPLEMENTATION_EXECUTABLE_WITH_EXPLICIT_SEMANTIC_GAPS';
@@ -165,6 +185,8 @@ process.stdout.write('SAJU_STRUCTURAL_FINAL '+JSON.stringify({
  rootBirths:metric.rootCandidateBirths,hiddenBirths:metric.hiddenChallengeBirths,
  hiddenSections:metric.hiddenChallengeSections,
  hiddenSupportBirths:metric.hiddenSupportBirths,hiddenSupportSections:metric.hiddenSupportSections,
+ visibleBirths:metric.visibleContrastingBirths,
+ visibleSupport:metric.visibleSupportSections,visibleChallenge:metric.visibleChallengeSections,
  yearly:metric.yearlyConnectedBirths,
  monthly:metric.monthlyConnectedBirths,
  familyProfiles:metric.familyChannelMeaningProfiles.size,
