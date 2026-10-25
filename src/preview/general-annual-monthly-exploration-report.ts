@@ -3,6 +3,11 @@ import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import { buildAnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
+import { runInterpretation } from '../interpretation/interpretation-engine.js';
+import { buildReadingCompositionEvidence } from '../reading/reading-intent-composition.js';
+import { createGeneralAnnualReadingCandidateRegistry } from '../research/general-annual-reading-candidate.js';
+import { buildSelectedNatalTemporalCorrespondence } from './temporal-natal-correspondence.js';
+import type { TemporalNatalCorrespondence } from './temporal-natal-correspondence.js';
 import type { MonthlyInterpretationFacts, MonthlySegmentId } from '../reading/monthly-interpretation-facts.js';
 import { buildTemporalReadingContext } from '../reading/temporal-reading-context.js';
 import {
@@ -72,9 +77,22 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     facts.scope === 'monthly',
     'the requested month must match the exact calculation period',
   );
-  const monthly = buildGeneralMonthlyExplorationReport(
+  const monthlyPreview = buildGeneralMonthlyExplorationReport(
     snapshot, facts, execution, registry, request,
   );
+  const monthlyThemeIds = new Set(monthlyPreview.sections
+    .filter(section => section.kind === 'theme').map(section => section.claimId));
+  const monthlyThemeClaims = execution.claims.filter(claim =>
+    claim.state === 'active' &&
+    monthlyThemeIds.has(claim.claimId) &&
+    claim.claimType === 'GENERAL_MONTHLY_SEGMENT_THEME_ACTIVATION');
+  requireLinkedPeriod(monthlyThemeClaims.length === monthlyThemeIds.size,
+    'natal correspondence must consume exactly selected monthly T9 themes');
+  const monthly = {
+    ...monthlyPreview,
+    natalCorrespondences: buildSelectedNatalTemporalCorrespondence(
+      snapshot, monthlyThemeClaims, new Date(facts.referenceDateTime)),
+  };
   requireLinkedPeriod(
     monthly.snapshotId === snapshot.snapshotId &&
     monthly.calculationHash === snapshot.calculationHash &&
@@ -94,9 +112,58 @@ export function buildGeneralAnnualMonthlyExplorationReport(
   };
   const annualContext = buildTemporalReadingContext(annualRequest);
   requireLinkedPeriod(annualContext?.scope === 'annual', 'annual context unavailable');
-  const annual = buildGeneralAnnualExplorationReport(
-    buildAnnualInterpretationFacts(snapshot, annualContext),
+  const annualFacts = buildAnnualInterpretationFacts(snapshot, annualContext);
+  const annualPreview = buildGeneralAnnualExplorationReport(annualFacts);
+  // Execute the same source-governed T9 rules and EvidenceSelector used by the
+  // monthly reader. A static research profile is never called an executed claim.
+  const annualRegistry = createGeneralAnnualReadingCandidateRegistry(facts.referenceDateTime);
+  const annualExecution = runInterpretation(snapshot, annualRegistry, {
+    requestId: annualRequest.requestId,
+    temporalFacts: { ...annualFacts },
+    now: new Date(facts.referenceDateTime),
+  });
+  requireLinkedPeriod(annualExecution.integrity.valid &&
+    annualExecution.run.status !== 'failed', 'annual research execution failed');
+  const annualSelection = buildReadingCompositionEvidence(
+    snapshot, annualExecution, annualRegistry, annualRequest,
   );
+  const selectedAnnualIds = new Set(annualSelection.selection.selectedClaimIds);
+  const annualClaims = annualExecution.claims.filter(claim =>
+    claim.state === 'active' && claim.taxonomy.tier === 'T9' &&
+    claim.taxonomy.category === 'general' &&
+    claim.taxonomy.subcategory === 'annual' &&
+    selectedAnnualIds.has(claim.claimId));
+  const enrichedAnnualSections = annualPreview.sections.map(section => {
+    const matching = annualClaims.filter(claim =>
+      (claim.value as { semanticKey?: string }).semanticKey === section.id &&
+      claim.claimType === section.candidateClaimType &&
+      claim.snapshotId === snapshot.snapshotId);
+    requireLinkedPeriod(matching.length === 1 &&
+      matching[0]!.sourceRefs.includes(section.policySourceId) &&
+      matching[0]!.methodologyRef.id === section.methodologyId &&
+      matching[0]!.ruleRefs.length > 0 &&
+      matching[0]!.factRefs.length > 0,
+    'annual projection must match one selected executed source-bound T9 claim');
+    const claim = matching[0]!;
+    return {
+      ...section,
+      evidenceStatus: 'executed_research_claim_not_official' as const,
+      claimId: claim.claimId,
+      ruleIds: claim.ruleRefs.map(ref => ref.ruleId),
+      sourceIds: [...claim.sourceRefs],
+      calculationFactPaths: [...claim.factRefs],
+    };
+  });
+  requireLinkedPeriod(annualClaims.length === enrichedAnnualSections.length,
+    'annual evidence selection and research output have different claim coverage');
+  const annualThemeClaims = annualClaims.filter(claim =>
+    claim.claimType === 'GENERAL_ANNUAL_THEME_ACTIVATION');
+  const annual = {
+    ...annualPreview,
+    sections: enrichedAnnualSections,
+    natalCorrespondences: buildSelectedNatalTemporalCorrespondence(
+      snapshot, annualThemeClaims, new Date(facts.referenceDateTime)),
+  };
   requireLinkedPeriod(
     annual.targetYear === monthly.targetYear &&
     annual.referenceDateTime === facts.referenceDateTime &&
@@ -186,6 +253,18 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   report: GeneralAnnualMonthlyExplorationReport,
 ): string {
   const e = escapeHtml;
+  const natalCards = (items: readonly TemporalNatalCorrespondence[] | undefined) =>
+    (items ?? []).map(item =>
+      '<article class="reading-card"><small>같은 명식에서 별도로 확인된 원국 구조</small>' +
+      '<h4>' + e(item.natalHeadline) + '</h4><p>' + e(item.natalParagraph) + '</p>' +
+      '<p class="muted">' + e(item.limitation) + '</p>' +
+      '<details><summary>연결된 연구 근거</summary><p>T9 Claim: ' + e(item.temporalClaimId) +
+      '</p><p>원국 Claim 유형: ' + e(item.natalClaimType) +
+      '</p><p>원국 규칙: ' + e(item.natalRuleId) +
+      '</p><p>원국 계산 경로: ' + e(item.natalFactPaths.join(' · ')) +
+      '</p><p>시기 출처: ' + e(item.temporalSourceIds.join(' · ')) +
+      '</p><p>원국 출처: ' + e(item.natalSourceIds.join(' · ')) +
+      '</p></details></article>').join('');
   const annual = report.annual.sections.map(section =>
     '<article class="reading-card"><small>' +
     (section.kind === 'core' ? '올해의 중심 관점' : '연운의 조건부 충 관계') +
@@ -267,11 +346,12 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<section class="current-reading" id="reference-month-reading">' +
     '<h2>조회 시각에 해당하는 이번 달의 풀이</h2>' +
     '<p class="muted">조회 기준: ' + e(kst(selected.referenceDateTime)) +
-    ' · 연구용 월별 적용 범위만 안내합니다.</p>' + focus + '</section>' +
+    ' · 연구용 월별 적용 범위만 안내합니다.</p>' + focus + natalCards(report.monthly.natalCorrespondences?.filter(item =>
+      selected.theme?.claimId === item.temporalClaimId)) + '</section>' +
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
     '<p class="muted" id="reference-year-context">' + e(annualContext) + '</p>' +
     '<p class="muted">서울 달력 연도 기준 · 연간 ' + e(report.annual.annualPillarLabel) +
-    ' · 십신 ' + e(report.annual.annualStemTenGod) + '</p>' + annual + '</section>' +
+    ' · 십신 ' + e(report.annual.annualStemTenGod) + '</p>' + annual + natalCards(report.annual.natalCorrespondences) + '</section>' +
     '<section id="monthly-reading"><h2>' + e(report.monthly.headline) + '</h2>' +
     '<p>' + e(report.periodComparison) + '</p>' +
     '<p class="muted">' + e(report.monthly.jeolBoundary.name) + ' 절입: ' +

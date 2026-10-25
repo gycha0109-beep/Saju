@@ -1,4 +1,5 @@
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
+import type { TemporalNatalCorrespondence } from './temporal-natal-correspondence.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -53,6 +54,7 @@ export interface GeneralMonthlyExplorationReport {
   jeolBoundary: MonthlyInterpretationFacts['jeolBoundary'];
   coverage: 'complete' | 'partial' | 'insufficient';
   sections: readonly GeneralMonthlyExplorationSection[];
+  natalCorrespondences?: readonly TemporalNatalCorrespondence[];
   missing: readonly string[];
   caveats: readonly string[];
   /** The exact monthly segment applicable to the request's reference instant. */

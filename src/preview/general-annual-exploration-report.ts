@@ -1,4 +1,5 @@
 import type { PillarSlot, TenGod } from '../contracts/calculation.js';
+import type { TemporalNatalCorrespondence } from './temporal-natal-correspondence.js';
 import type { AnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
 import { GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES } from '../research/general-annual-narrative-profiles.js';
 import {
@@ -38,7 +39,10 @@ export interface GeneralAnnualExplorationSection {
   title: string;
   text: string;
   interpretationStatus: 'internal_research';
-  evidenceStatus: 'research_profile_projection_not_an_executed_official_claim';
+  evidenceStatus: 'research_profile_projection_not_an_executed_official_claim' | 'executed_research_claim_not_official';
+  claimId?: string;
+  ruleIds?: readonly string[];
+  sourceIds?: readonly string[];
   researchProfileId: string;
   candidateClaimType: string;
   calculationFactPaths: readonly string[];
@@ -60,6 +64,7 @@ export interface GeneralAnnualExplorationReport {
   headline: string;
   sections: readonly GeneralAnnualExplorationSection[];
   unavailablePillars: readonly PillarSlot[];
+  natalCorrespondences?: readonly TemporalNatalCorrespondence[];
   caveats: readonly string[];
   permissions: {
     mayClaimOfficialAuthority: false;

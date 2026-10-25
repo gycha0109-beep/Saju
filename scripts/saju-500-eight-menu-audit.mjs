@@ -86,7 +86,7 @@ function natalEntry(report) {
     claimType: section.claimType, pattern: section.pattern, axis: section.axis,
     channel: section.channel, ruleId: section.ruleId,
     upstreamClaimIds: section.upstreamClaimIds, sourceIds: section.sourceIds,
-    observedFactPaths: section.observedFactPaths,
+    observedFactPaths: section.observedFactPaths ?? section.calculatedFactPaths,
   })) };
 }
 function temporalEntries(result) {
@@ -95,16 +95,19 @@ function temporalEntries(result) {
   const monthly = report.monthly.sections;
   const focus = report.monthly.referenceReading;
   const life = result.lifeStage.report;
+  const annualNatal = report.annual.natalCorrespondences ?? [];
+  const monthNatal = (report.monthly.natalCorrespondences ?? []).filter(item =>
+    focus.state === 'in_period' && item.temporalClaimId === focus.theme?.claimId);
   const a = entry(
-    annual.map(s => s.title + '\n' + s.text).join('\n\n'),
-    annual.map(s => [s.researchProfileId, s.title]),
+    [...annual.map(s => s.title + '\n' + s.text), ...annualNatal.map(x => x.natalHeadline + '\n' + x.natalParagraph + '\n' + x.limitation)].join('\n\n'),
+    [...annual.map(s => [s.researchProfileId, s.title]), ...annualNatal.map(x => [x.natalClaimType, x.natalPattern, x.natalAxis, x.sharedFamily])],
     report.annualReference.state, annual.length, 'annual_research',
   );
   const current = focus.state === 'in_period' && focus.theme
     ? focus.theme.title + '\n' + focus.theme.text : '';
   const m = entry(
-    [current, ...monthly.map(s => s.title + '\n' + s.text)].filter(Boolean).join('\n\n'),
-    [focus.state, focus.theme?.title ?? '', ...monthly.map(s => [s.segmentId, s.title])],
+    [current, ...monthly.map(s => s.title + '\n' + s.text), ...monthNatal.map(x => x.natalHeadline + '\n' + x.natalParagraph + '\n' + x.limitation)].filter(Boolean).join('\n\n'),
+    [focus.state, focus.theme?.title ?? '', ...monthly.map(s => [s.segmentId, s.title]), ...monthNatal.map(x => [x.natalClaimType, x.natalPattern, x.natalAxis, x.sharedFamily])],
     focus.state, monthly.length + (current ? 1 : 0), 'monthly_research',
   );
   // IMPORTANT: Dayun periods describe calendar/pillar facts, not supported
@@ -113,8 +116,12 @@ function temporalEntries(result) {
   a.sourceEvidence = {
     annualStemTenGod: report.annual.annualStemTenGod,
     annualCalendarPolicy: report.annual.calendarPolicy,
+    natalCorrespondences: annualNatal,
     sections: annual.map(s => ({
       kind: s.kind,
+      claimId: s.claimId ?? null,
+      ruleIds: s.ruleIds ?? [],
+      sourceIds: s.sourceIds ?? [],
       sourceProfileId: s.researchProfileId,
       candidateClaimType: s.candidateClaimType,
       calculatedFactPaths: [...s.calculationFactPaths],
@@ -124,6 +131,7 @@ function temporalEntries(result) {
   m.sourceEvidence = {
     referenceState: focus.state,
     referenceSegment: focus.segmentId ?? null,
+    natalCorrespondences: monthNatal,
     sections: monthly.map(s => ({
       kind: s.kind,
       segmentId: s.segmentId,

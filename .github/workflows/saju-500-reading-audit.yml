@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'scripts/saju-500-eight-menu-audit.mjs'
+      - 'scripts/saju-500-root-cause.mjs'
+      - 'scripts/saju-500-meaning-diff.mjs'
+      - 'scripts/saju-500-quality-gate.mjs'
       - '.github/workflows/saju-500-reading-audit.yml'
   workflow_dispatch:
 
@@ -27,13 +30,19 @@ jobs:
         run: npm ci --no-audit --no-fund --ignore-scripts
       - name: Build the real Saju engine
         run: npm run build
-      - name: Run deterministic 500-case audit with eight actual menu engines
+      - name: Run deterministic 500-case audit with per-chart source evidence
+        env:
+          SAJU_500_INCLUDE_CASE_ROWS: '1'
         run: node scripts/saju-500-eight-menu-audit.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json"
-      - name: Upload audit results
+      - name: Verify per-menu coverage and exact source/rule provenance
+        run: node scripts/saju-500-quality-gate.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json" "$RUNNER_TEMP/saju-500-quality-report.json"
+      - name: Upload audit and semantic-quality evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: saju-500-eight-menu-report
-          path: ${{ runner.temp }}/saju-500-eight-menu-report.json
+          path: |
+            ${{ runner.temp }}/saju-500-eight-menu-report.json
+            ${{ runner.temp }}/saju-500-quality-report.json
           if-no-files-found: warn
           retention-days: 30
