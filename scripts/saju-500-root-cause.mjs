@@ -59,7 +59,10 @@ export function diagnoseMissingWealthReading(snapshot, execution, registry, repo
   } else if (t5.length === 0) {
     cause = 'no_active_upstream_t5_theme';
   } else if (inputEligibleRules.length === 0 && activeT8.length === 0) {
-    cause = 'no_registered_wealth_pair_or_triple_in_observed_t5';
+    const hasWealthTheme = t5.some(claim => claim.claimType.startsWith('TEN_GOD_WEALTH_'));
+    cause = hasWealthTheme
+      ? 'wealth_t5_exists_but_no_registered_same_channel_combination'
+      : 'no_active_wealth_t5_in_either_observation_channel';
   } else if (activeT8.length === 0) {
     cause = 'eligible_rule_did_not_emit_wealth_claim';
   } else if (selectedT8.length === 0) {
