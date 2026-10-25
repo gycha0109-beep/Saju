@@ -27,6 +27,21 @@ export interface WealthNatalMultifactorSection {
   observedPositions: readonly string[];
   observedFactPaths: readonly string[];
 }
+/** A directly observed single T5 wealth family, not a synthetic T8 interpretation. */
+export interface WealthSingleT5Observation {
+  kind: 'isolated_wealth_t5_observation_not_synthesis';
+  claimId: string;
+  claimType: string;
+  channel: 'visible_stems' | 'branches';
+  headline: string;
+  paragraph: string;
+  sourceIds: readonly string[];
+  ruleIds: readonly string[];
+  observedPositions: readonly string[];
+  observedFactPaths: readonly string[];
+  claimFactPaths: readonly string[];
+}
+
 export interface WealthNatalReadingGuide {
   title: string;
   paragraph: string;
@@ -46,6 +61,7 @@ export interface WealthNatalMultifactorReport {
   introduction: string;
   sections: readonly WealthNatalMultifactorSection[];
   readingGuide?: WealthNatalReadingGuide;
+  singleWealthT5Observation?: WealthSingleT5Observation;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -146,6 +162,66 @@ function explainMissingWealthT8(
     : '기존 십신 관점 규칙에서 재성 계열의 활성 근거가 확인되지 않아, 등록된 재물 복합 해석 규칙을 적용할 수 없습니다. ';
   return sourceNote + reason +
     '이는 재성이 없거나 돈이 없다는 판정이 아니며, 실제 소득·재산·재물운의 좋고 나쁨을 뜻하지 않습니다.';
+}
+
+function isolatedWealthObservation(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+): WealthSingleT5Observation | undefined {
+  if (!snapshot.completeness.birthTimeKnown ||
+      snapshot.derivedFacts.tenGods.status !== 'resolved') return undefined;
+  const matches = execution.claims.filter(claim =>
+    claim.state === 'active' && claim.snapshotId === snapshot.snapshotId &&
+    claim.taxonomy.tier === 'T5' && claim.scenarioRef === undefined &&
+    /^TEN_GOD_WEALTH_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(claim.claimType));
+  for (const claim of matches) {
+    const channel: Channel = claim.claimType.includes('VISIBLE_STEMS')
+      ? 'visible_stems' : 'branches';
+    const ruleRef = claim.ruleRefs[0];
+    const rule = registry.rules.find(rule =>
+      rule.ruleId === ruleRef?.ruleId && rule.version === ruleRef.version &&
+      rule.output.claimType === claim.claimType &&
+      rule.status === 'research');
+    const evaluation = execution.evaluations.find(item =>
+      item.evaluationId === ruleRef?.evaluationId);
+    guard(rule && claim.ruleRefs.length === 1 &&
+      rule.taxonomy.tier === 'T5' && evaluation?.status === 'matched' &&
+      evaluation.emittedClaimIds.includes(claim.claimId) &&
+      claim.sourceRefs.length > 0 &&
+      claim.sourceRefs.every(id => registry.sources.some(source => source.sourceId === id)) &&
+      claim.factRefs.length > 0, 'single T5 observation must be an actual emitted source-bound claim');
+    const tenGods = snapshot.derivedFacts.tenGods.value;
+    const slots: readonly PillarSlot[] = channel === 'visible_stems'
+      ? ['year', 'month', 'hour'] : ['year', 'month', 'day', 'hour'];
+    const key = channel === 'visible_stems' ? 'stem' : 'branch';
+    const places = slots.flatMap(slot => {
+      const value = tenGods[slot][key];
+      if (value?.status !== 'resolved' || !FAMILIES.wealth!.includes(value.value)) return [];
+      return [{
+        label: SLOT_NAMES[slot] + ' ' + (key === 'stem' ? '천간 ' : '지지 대표 십신 ') + value.value,
+        factPath: 'derivedFacts.tenGods.value.' + slot + '.' + key + '.value',
+      }];
+    });
+    guard(places.length > 0, 'T5 wealth family is not present in its exact chart/channel');
+    const observed = channel === 'visible_stems' ? '천간' : '지지 대표 십신';
+    return {
+      kind: 'isolated_wealth_t5_observation_not_synthesis',
+      claimId: claim.claimId,
+      claimType: claim.claimType,
+      channel,
+      headline: '재성의 단일 관측 — 재물 종합해석 아님',
+      paragraph: '이 원국의 ' + observed + '에서 ' +
+        places.map(position => position.label).join(' · ') +
+        '이 실제 계산된 재성 관련 십신 근거로 확인됩니다. 그러나 동일 관측 채널에서 기존 출처가 요구하는 다른 계열의 독립 근거가 확보되지 않아 재물의 중심·보조 종합해석은 보류합니다. 이 관측은 소득·자산·재물운의 좋고 나쁨을 뜻하지 않습니다.',
+      sourceIds: [...claim.sourceRefs],
+      ruleIds: claim.ruleRefs.map(ref => ref.ruleId),
+      observedPositions: places.map(position => position.label),
+      observedFactPaths: places.map(position => position.factPath),
+      claimFactPaths: [...claim.factRefs],
+    };
+  }
+  return undefined;
 }
 
 function textFor(claimType: string, key: 'headline'|'summary') {
@@ -395,6 +471,8 @@ export function buildWealthNatalMultifactorReport(
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly WealthNatalMultifactorSection[] = chosen;
+  const singleWealthT5Observation = chosen.length === 0
+    ? isolatedWealthObservation(snapshot, execution, registry) : undefined;
   const readingGuide = buildWealthNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
@@ -410,6 +488,7 @@ export function buildWealthNatalMultifactorReport(
     introduction: '실제 명식의 십신 관계를 바탕으로 가치를 만들어 내는 과정, 자원을 다루는 기준, 준비와 배분 사이의 구조를 함께 살펴봅니다. 수입이나 재산을 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    ...(singleWealthT5Observation === undefined ? {} : { singleWealthT5Observation }),
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :

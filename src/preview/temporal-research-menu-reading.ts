@@ -26,12 +26,29 @@ export interface TemporalResearchMenuSection {
   };
 }
 
+/** Existing T8 observation, never a synthesized T9 outcome. */
+export interface TemporalResearchNatalContextSection {
+  title: string;
+  text: string;
+  evidenceKind: 'selected_natal_t8_context';
+  relatedTemporalClaimId: string;
+  natalClaimType: string;
+  natalRuleId: string;
+  sourceIds: readonly string[];
+  factPaths: readonly string[];
+  temporalSourceIds: readonly string[];
+  temporalFactPaths: readonly string[];
+  limitation: string;
+}
+
+
 export interface TemporalMonthlyReferenceFocus {
   referenceDateTime: string;
   state: 'in_period' | 'insufficient_evidence' | 'outside_target_month';
   /** Only the actually selected Jeol interval can have a current claim. */
   segmentId?: 'before_jeol' | 'after_jeol';
   currentSection?: TemporalResearchMenuSection;
+  natalContextSections?: readonly TemporalResearchNatalContextSection[];
   message: string;
 }
 
@@ -43,6 +60,8 @@ export interface TemporalResearchMenuReading {
   meaning: TemporalResearchMeaning;
   statusMessage: string;
   sections: readonly TemporalResearchMenuSection[];
+  /** Independent, source-verified natal T8 context, not a temporal claim. */
+  natalContextSections?: readonly TemporalResearchNatalContextSection[];
   /** Reference-time projection applies to the monthly menu only. */
   referenceFocus?: TemporalMonthlyReferenceFocus;
   missing: readonly string[];
@@ -139,10 +158,9 @@ export function buildTemporalResearchMenuReadings(
       evidenceKind: 'annual_research_profile' as const,
       // The annual section ID is a research semantic key, not a source ID.
       researchProfileKey: section.id,
-      sourceIds: [],
-      factPaths: section.relatedPillar === undefined
-        ? ['temporal.annualStemTenGod']
-        : ['temporal.annualBranchRelations.' + section.relatedPillar],
+      ...(section.claimId === undefined ? {} : { claimId: section.claimId }),
+      sourceIds: section.sourceIds === undefined ? [] : [...section.sourceIds],
+      factPaths: [...section.calculationFactPaths],
     })) ?? [];
   const monthly = joined?.monthly.sections.filter(section =>
     section.text.trim().length > 0 &&
@@ -160,6 +178,42 @@ export function buildTemporalResearchMenuReadings(
         endsAtExclusive: section.calculatedInterval.endsAt,
       },
     })) ?? [];
+  function mapNatalContext(
+    relations: NonNullable<NonNullable<typeof joined>['annual']['natalCorrespondences']>,
+    allowedClaims: readonly TemporalResearchMenuSection[],
+  ): readonly TemporalResearchNatalContextSection[] {
+    const allowed = new Map(allowedClaims.filter(section => section.claimId)
+      .map(section => [section.claimId, section]));
+    return relations.map(relation => {
+      const source = allowed.get(relation.temporalClaimId);
+      if (!source ||
+          relation.authority !== 'observed_natal_context_not_temporal_outcome' ||
+          !relation.natalSourceIds.length || !relation.temporalSourceIds.length ||
+          !relation.natalFactPaths.length || !relation.temporalFactPaths.length ||
+          !relation.natalRuleId || !relation.natalClaimType ||
+          relation.temporalSourceIds.some(id => !source.sourceIds.includes(id)) ||
+          relation.temporalFactPaths.some(path => !source.factPaths.includes(path))) {
+        throw new TypeError('Temporal menu rejects unselected or ungrounded natal context');
+      }
+      return {
+        title: relation.natalHeadline,
+        text: relation.natalParagraph + ' ' + relation.limitation,
+        evidenceKind: 'selected_natal_t8_context' as const,
+        relatedTemporalClaimId: relation.temporalClaimId,
+        natalClaimType: relation.natalClaimType,
+        natalRuleId: relation.natalRuleId,
+        sourceIds: [...relation.natalSourceIds],
+        factPaths: [...relation.natalFactPaths],
+        temporalSourceIds: [...relation.temporalSourceIds],
+        temporalFactPaths: [...relation.temporalFactPaths],
+        limitation: relation.limitation,
+      };
+    });
+  }
+  const annualNatalContext = mapNatalContext(
+    joined?.annual.natalCorrespondences ?? [], annual);
+  const monthlyNatalContext = mapNatalContext(
+    joined?.monthly.natalCorrespondences ?? [], monthly);
   // Reuse the exact T9 theme selected by the existing Monthly EvidenceSelector.
   // The other Jeol phase is comparison material, never a current prediction.
   const reference = joined?.monthly.referenceReading;
@@ -189,6 +243,8 @@ export function buildTemporalResearchMenuReadings(
         state: 'in_period',
         segmentId: reference.segmentId,
         currentSection: matched[0]!,
+        natalContextSections: monthlyNatalContext.filter(section =>
+          section.relatedTemporalClaimId === theme.claimId),
         message: '조회 시각에 해당하는 절입 구간의 기존 T9 연구 풀이입니다. 다른 구간의 문구는 현재 풀이가 아닙니다.',
       };
     } else if (reference.state === 'insufficient_evidence') {
@@ -239,6 +295,7 @@ export function buildTemporalResearchMenuReadings(
         ? '개인별 연간 연구 문구만 제공됩니다. 연운 Official 해석은 미승인입니다.'
         : '올해의 개인별 연구 풀이가 아직 실행되지 않았습니다.',
       sections: annual,
+      ...(annualNatalContext.length ? { natalContextSections: annualNatalContext } : {}),
       missing: joined === undefined
         ? ['연도 및 출생정보를 입력하고 연운 연구 풀이를 실행해야 합니다.']
         : [...joined.annual.caveats],
@@ -256,6 +313,7 @@ export function buildTemporalResearchMenuReadings(
           : '선택한 월의 절입 구간별 T9 연구 풀이입니다. 조회 시각의 현재 풀이와 다를 수 있습니다. 월운 Official 해석은 미승인입니다.')
         : '해당 월의 출처에 연결된 개인별 풀이 근거가 충분하지 않습니다.',
       sections: monthly,
+      ...(monthlyNatalContext.length ? { natalContextSections: monthlyNatalContext } : {}),
       ...(referenceFocus === undefined ? {} : { referenceFocus }),
       missing: joined === undefined
         ? ['연도·월·출생정보를 입력하고 월운 연구 풀이를 실행해야 합니다.']

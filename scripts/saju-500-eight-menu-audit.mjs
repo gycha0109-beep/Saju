@@ -72,17 +72,28 @@ function entry(text, meaning, state, sectionCount, kind) {
 function natalEntry(report) {
   const sections = report.sections ?? [];
   const prose = sections.map(s => s.headline + '\n' + s.paragraph);
+  if (report.singleWealthT5Observation) {
+    prose.push(report.singleWealthT5Observation.headline + '\n' +
+      report.singleWealthT5Observation.paragraph);
+  }
   if (report.readingGuide?.paragraph) prose.push(report.readingGuide.paragraph);
   // Narrative and selected source-backed claim types are counted separately:
   // different stems/dates inside the text do not automatically prove different meaning.
   const observation = entry(
     prose.join('\n\n'),
-    sections.map(s => [s.claimType, s.pattern, s.axis, s.channel]),
+    [...sections.map(s => [s.claimType, s.pattern, s.axis, s.channel]),
+      ...(report.singleWealthT5Observation ? [[
+        report.singleWealthT5Observation.claimType, 'ISOLATED_WEALTH_T5',
+        'single_t5_observation', report.singleWealthT5Observation.channel,
+      ]] : [])],
     report.state,
     sections.length,
     'sourced_natal_research',
   );
-  return { ...observation, sourceEvidence: sections.map(section => ({
+  return { ...observation,
+    ...(report.singleWealthT5Observation ?
+      { singleWealthT5Observation: report.singleWealthT5Observation } : {}),
+    sourceEvidence: sections.map(section => ({
     claimType: section.claimType, pattern: section.pattern, axis: section.axis,
     channel: section.channel, ruleId: section.ruleId,
     upstreamClaimIds: section.upstreamClaimIds, sourceIds: section.sourceIds,
@@ -284,7 +295,7 @@ export function runFiveHundredSajuAudit() {
   if(inputs.size!==COUNT || failures.length || DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
       !result.rootCauseDiagnostics.wealth.allCasesHaveExplicitCause ||
       result.rootCauseDiagnostics.wealth.missingCaseCount !==
-        result.menuResults['재물'].withoutReadableText ||
+        rows['재물'].filter(row => row.sectionCount === 0).length ||
       result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups !==
         result.menuResults['올해'].exactText.casesInRepeatedGroups ||
       result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups !==

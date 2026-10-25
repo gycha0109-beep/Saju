@@ -337,6 +337,25 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
       section.ruleId === 'RULE-' + section.claimType) &&
     (birthTimeKnown || report.state === 'insufficient' && report.sections.length === 0),
     'a domain is not a bounded source-qualified research reading');
+  const isolated = domain === 'wealth'
+    ? (report as WealthNatalMultifactorReport).singleWealthT5Observation
+    : undefined;
+  if (isolated !== undefined) {
+    guard(report.state === 'insufficient' && report.sections.length === 0 &&
+      isolated.kind === 'isolated_wealth_t5_observation_not_synthesis' &&
+      isolated.sourceIds.length > 0 && isolated.ruleIds.length > 0 &&
+      isolated.claimFactPaths.length > 0 && isolated.observedFactPaths.length > 0,
+    'single Wealth T5 observation may not be promoted into complete T8');
+  }
+  const isolatedHtml = isolated === undefined ? '' :
+    '<section aria-label="재성 단일 계산 관측 — 종합 아님"><h3>' +
+    escapeHtml(isolated.headline) + '</h3><p>' +
+    escapeHtml(isolated.paragraph) +
+    '</p><details><summary>실제 T5 관측과 출처</summary><p>Claim: ' +
+    escapeHtml(isolated.claimId) + '</p><p>원국 경로: ' +
+    escapeHtml(isolated.observedFactPaths.join(' · ')) + '</p><p>규칙: ' +
+    escapeHtml(isolated.ruleIds.join(' · ')) + '</p><p>출처: ' +
+    escapeHtml(isolated.sourceIds.join(' · ')) + '</p></details></section>';
   const originalText = report.sections.map(renderSection).join('') ||
     '<p>현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.</p>';
   const missing = report.missing.length > 0
@@ -357,7 +376,7 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
   return '<article aria-labelledby="domain-' + domain + '" class="domain">' +
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
-    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning + details + missing +
+    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning + details + isolatedHtml + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }

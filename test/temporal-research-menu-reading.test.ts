@@ -114,7 +114,8 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     }
     const annual = buildTemporalResearchMenuReadings({ annualMonthly })[0]!;
     expect(annual.sections.every(s => s.evidenceKind === 'annual_research_profile')).toBe(true);
-    expect(annual.sections.every(s => s.claimId === undefined)).toBe(true);
+    expect(annual.sections.every(s =>
+      s.claimId !== undefined && s.sourceIds.length > 0 && s.factPaths.length > 0)).toBe(true);
     expect(annual.statusMessage).toContain('연운 Official 해석은 미승인');
     expect(monthly.statusMessage).toContain('월운 Official 해석은 미승인');
   });

@@ -397,4 +397,27 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(html).not.toContain(malicious);
     expect(html).not.toContain('<script>');
   });
+  it('shows isolated actual wealth T5 with source, never as a complete multifactor reading', () => {
+    const chart = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 1955, month: 10, day: 31 },
+      time: { known: true, hour: 19, minute: 35 },
+      sexForTraditionalCalculation: 'female',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const original = reports(chart);
+    expect(original.wealth.sections).toHaveLength(0);
+    expect(original.wealth.state).toBe('insufficient');
+    const observation = original.wealth.singleWealthT5Observation!;
+    expect(observation).toBeDefined();
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, original);
+    expect(html).toContain('재성 단일 계산 관측 — 종합 아님');
+    expect(html).toContain(observation.paragraph);
+    expect(html).toContain(observation.claimId);
+    expect(html).toContain(observation.ruleIds[0]!);
+    expect(html).toContain(observation.sourceIds[0]!);
+    expect(html).toContain('풀이 보류 · 근거 부족');
+    expect(original.wealth.mayPublish).toBe(false);
+    expect(original.wealth.usefulComplete).toBe(false);
+  });
+
 });

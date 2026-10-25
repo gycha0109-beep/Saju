@@ -1,6 +1,7 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
+import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
 import { createGeneralNatalMultifactorRegistry } from '../research/general-natal-multifactor-candidate.js';
 import { buildGeneralNatalMultifactorReport } from './general-natal-multifactor-report.js';
 
@@ -56,11 +57,13 @@ export function buildSelectedNatalTemporalCorrespondence(
       return v?.families?.includes(family as string) === true &&
         section.sourceIds.length > 0 && section.observedFactPaths.length > 0;
     });
-    // Fixed first eligible source-qualified section. This is not comparative
-    // strength, favourable outcome, or ranking among natal interpretations.
-    const section = matches[0];
-    if (!section) return [];
-    return [{
+    // Preserve at most two independently grounded axes. Different headlines
+    // alone do not justify a second interpretation if their T0 paths overlap.
+    const independent = matches.length === 0 ? [] :
+      [matches[0]!, ...selectIndependentNatalSupportingAxes(
+        matches[0]!, matches.slice(1), 1,
+      ).supporting];
+    return independent.map(section => ({
       authority: 'observed_natal_context_not_temporal_outcome' as const,
       temporalClaimId: claim.claimId,
       temporalSourceIds: [...claim.sourceRefs],
@@ -75,6 +78,6 @@ export function buildSelectedNatalTemporalCorrespondence(
       natalFactPaths: [...section.observedFactPaths],
       sharedFamily: family as Family,
       limitation: '이것은 해당 시기 십신 주제와 원국에서 독립적으로 확인된 구조의 관찰상 접점입니다. 두 근거를 결합한 새로운 운세 판정, 유불리 또는 실제 사건 예측이 아닙니다.',
-    }];
+    }));
   });
 }

@@ -17,6 +17,39 @@ function assertAudit(report) {
 }
 assertAudit(before);
 assertAudit(after);
+function hasExecutedSourceTrace(row, menu) {
+  const evidence = row.sourceEvidence;
+  if (menu === '올해' || menu === '이번 달') {
+    const sections = evidence?.sections;
+    if (!Array.isArray(sections) || !sections.length ||
+        !sections.every(section =>
+          section.claimId && section.sourceIds?.length > 0 &&
+          section.ruleIds?.length > 0 &&
+          (section.calculatedFactPaths ?? section.factPaths)?.length > 0)) return false;
+    const relations = evidence.natalCorrespondences ?? [];
+    return relations.every(relation =>
+      relation.authority === 'observed_natal_context_not_temporal_outcome' &&
+      sections.some(section => section.claimId === relation.temporalClaimId) &&
+      relation.temporalSourceIds?.length > 0 &&
+      relation.temporalFactPaths?.length > 0 &&
+      relation.natalSourceIds?.length > 0 &&
+      relation.natalFactPaths?.length > 0 &&
+      relation.natalRuleId);
+  }
+  if (!Array.isArray(evidence)) return false;
+  const sectionsGrounded = evidence.every(section =>
+    section.claimType && section.ruleId &&
+    section.sourceIds?.length > 0 &&
+    section.upstreamClaimIds?.length > 0 &&
+    section.observedFactPaths?.length > 0);
+  const isolated = row.singleWealthT5Observation;
+  const singleGrounded = isolated === undefined ||
+    menu === '재물' && isolated.kind === 'isolated_wealth_t5_observation_not_synthesis' &&
+    isolated.ruleIds?.length > 0 && isolated.sourceIds?.length > 0 &&
+    isolated.observedFactPaths?.length > 0 && isolated.claimFactPaths?.length > 0;
+  return sectionsGrounded && singleGrounded &&
+    (evidence.length > 0 || isolated !== undefined);
+}
 const byMenu = {};
 for (const menu of expectedMenus) {
   const oldRows = (before.caseRows ?? before.auditCaseRows)[menu];
@@ -41,10 +74,7 @@ for (const menu of expectedMenus) {
     if (old.meaningKey !== next.meaningKey) {
       counts.meaningProfileChanged++;
       if (previouslyReadable) counts.changedWithPriorReading++;
-      const sources = next.sourceEvidence;
-      const hasSourceTrace = Array.isArray(sources) && sources.some(evidence =>
-        Array.isArray(evidence.sourceIds) && evidence.sourceIds.length > 0 &&
-        (Array.isArray(evidence.observedFactPaths) || Array.isArray(evidence.factPaths)));
+      const hasSourceTrace = hasExecutedSourceTrace(next, menu);
       if (hasSourceTrace) counts.changedMeaningWithSourceTrace++;
       else counts.changedMeaningWithoutSourceTrace++;
       counts.changedCases.push({

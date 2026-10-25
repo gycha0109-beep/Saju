@@ -29,6 +29,7 @@ for (const menu of menus) {
   let sectionsWithExactSource = 0;
   let sectionsWithoutSource = 0;
   let observedCorrespondences = 0;
+  let singleWealthT5Observations = 0;
   const textKeys = new Set();
   const meaningKeys = new Set();
   for (const row of cases) {
@@ -38,6 +39,24 @@ for (const menu of menus) {
     }
     textKeys.add(row.exactKey);
     meaningKeys.add(row.meaningKey);
+    const observation = row.singleWealthT5Observation;
+    if (observation !== undefined) {
+      const valid = menu === '재물' &&
+        row.state === 'insufficient' && row.sectionCount === 0 &&
+        observation.kind === 'isolated_wealth_t5_observation_not_synthesis' &&
+        /^TEN_GOD_WEALTH_(BRANCHES|VISIBLE_STEMS)_THEME$/u.test(observation.claimType) &&
+        observation.claimId && observation.ruleIds?.length > 0 &&
+        observation.sourceIds?.length > 0 &&
+        observation.claimFactPaths?.length > 0 &&
+        observation.observedFactPaths?.length > 0;
+      if (!valid) errors.push(menu + ': single T5 observation incorrectly promoted or ungrounded');
+      else {
+        singleWealthT5Observations++;
+        groundedPatterns.add(JSON.stringify([menu, 'T5_only_not_synthesis',
+          observation.claimType, observation.channel,
+          observation.ruleIds, observation.sourceIds]));
+      }
+    }
     const evidence = row.sourceEvidence;
     if (natal.has(menu)) {
       for (const section of Array.isArray(evidence) ? evidence : []) {
@@ -91,6 +110,7 @@ for (const menu of menus) {
     sourceTracedSections: sectionsWithExactSource,
     ungroundedSections: sectionsWithoutSource,
     observedNatalTemporalCorrespondences: observedCorrespondences,
+    observedSingleT5WealthWithoutSynthesis: singleWealthT5Observations,
     emptyTexts: cases.filter(row => !row.text?.trim()).length,
   };
 }

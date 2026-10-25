@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { BirthInput } from '../src/contracts/calculation.js';
 import { buildAnnualMonthlyBirthResearchReading } from '../src/preview/annual-monthly-birth-research-runtime.js';
+import { buildTemporalResearchMenuReadings } from '../src/preview/temporal-research-menu-reading.js';
 
 const birth = (year: number, month: number, day: number): BirthInput => ({
   calendarType: 'solar',
@@ -84,6 +85,57 @@ describe('selected T9 plus independent same-chart natal T8 contextual grounding'
     expect(second.natalCorrespondences?.length).toBeGreaterThan(0);
     expect(first.natalCorrespondences?.[0]?.natalPattern)
       .not.toBe(second.natalCorrespondences?.[0]?.natalPattern);
+  });
+
+  it('delivers selected T9 and separately traced T8 context to the actual time-menu consumer', () => {
+    const result = buildAnnualMonthlyBirthResearchReading({
+      ...birth(1971, 2, 24), time: { known: true, hour: 21, minute: 59 },
+    }, {
+      requestId: 'exact-annual-monthly-menu-projection',
+      targetYear: 2026, targetMonth: 10,
+      referenceDateTime: '2026-10-25T00:00:00.000Z',
+    });
+    const annual = buildTemporalResearchMenuReadings({ annualMonthly: result.report })[0]!;
+    const monthly = result.monthlyMenu;
+    expect(annual.sections.every(section => section.claimId &&
+      section.sourceIds.length > 0 && section.factPaths.length > 0)).toBe(true);
+    for (const [menu, sourceRelations] of [
+      [annual, result.report.annual.natalCorrespondences ?? []],
+      [monthly, result.report.monthly.natalCorrespondences ?? []],
+    ] as const) {
+      expect(menu.natalContextSections?.length ?? 0).toBe(sourceRelations.length);
+      for (const context of menu.natalContextSections ?? []) {
+        const original = sourceRelations.find(item =>
+          item.temporalClaimId === context.relatedTemporalClaimId &&
+          item.natalClaimType === context.natalClaimType &&
+          item.natalRuleId === context.natalRuleId);
+        expect(original).toBeDefined();
+        expect(context.evidenceKind).toBe('selected_natal_t8_context');
+        expect(context.sourceIds).toEqual(original?.natalSourceIds);
+        expect(context.temporalSourceIds).toEqual(original?.temporalSourceIds);
+        expect(context.temporalFactPaths).toEqual(original?.temporalFactPaths);
+        expect(context.limitation).toContain('새로운 운세 판정');
+      }
+      expect(menu.authority.mayCallOfficial).toBe(false);
+      expect(menu.authority.maySell).toBe(false);
+    }
+    const focus = monthly.referenceFocus;
+    expect(focus?.state).toBe('in_period');
+    expect(focus?.natalContextSections?.every(section =>
+      section.relatedTemporalClaimId === focus.currentSection?.claimId)).toBe(true);
+  });
+
+  it('rejects unrelated source references as time-menu natal evidence', () => {
+    const result = reading(birth(1971, 2, 24)).report;
+    const known = result.annual.natalCorrespondences?.[0];
+    if (!known) return;
+    const fake = { ...known, temporalClaimId: 'UNSELECTED-T9' };
+    expect(() => buildTemporalResearchMenuReadings({
+      annualMonthly: {
+        ...result,
+        annual: { ...result.annual, natalCorrespondences: [fake] },
+      },
+    })).toThrow('unselected or ungrounded');
   });
 
   it('does not upgrade unknown birth hour into an invented complete natal context', () => {
