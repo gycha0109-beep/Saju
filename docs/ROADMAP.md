@@ -1,439 +1,244 @@
-# Saju Engine — 실행 로드맵
+# 사주 엔진 실행 로드맵 — 500명 실측 기반 개인화 종합해석 개선
+
+> **개정일:** 2026-10-25  
+> **대상:** 명하 Saju 엔진의 기존 계산·해석 경로  
+> **목표:** 누락된 재물 풀이, 반복적인 올해·이번 달 풀이, 개인화 의미 검증의 공백 해결  
+> **기준:** 실제 무작위 생년월일시분 500건 × 지정 8개 메뉴 실행 결과  
+> **상태:** 개선 설계 확정. 설계 확정·테스트 통과를 해석 품질 완료로 간주하지 않는다.
+
+이 문서는 **사주 엔진의 단일 활성 실행 로드맵**이다. 종전 실행 백로그와 12메뉴 확장 단계, 기술 이력을 나열한 작업 순서는 폐기하고 **아래 7개 실행 작업만** 현행 백로그로 유지한다. 기존 계산·해석 코드 및 출처·권한의 역사적 기록은 삭제하지 않는다.
+
+## 0. 짧은 요약
+
+1. **재물:** 500명 중 111명에게 풀이 문단이 없었다. 누락 원인을 실제 계산 → 해석 규칙 → 근거 선택 → 출력의 각 지점으로 분리하고, 출처가 뒷받침하는 조합만 확장한다.
+2. **올해:** 500명에게서 서로 다른 풀이 원문은 56종이었다. 10가지 연간 십신 주제와 제한된 지지 관계 중심의 풀이를, 실제 원국 맥락과 연운의 근거 있는 관계를 소비하는 종합해석으로 개선한다.
+3. **이번 달:** 500명에게서 서로 다른 풀이 원문은 131종이었다. 절입 전·후 십신 주제와 일부 관계에 원국 맥락을 연결하되, 연운에서 월운으로 근거 없는 의미를 상속하지 않는다.
+4. **공통:** 문자만 달라지는 가짜 개인화는 금지한다. 각 결론이 **실제로 사용한 명리 근거·규칙·의미·한계**에 따라 달라지는지 확인한다.
+5. **검증:** 고정된 500건 재실행, 의도적 명식 대조, 의미를 사용한 입력 100종 이상의 점검을 구분한다. 동일 의미의 합리적인 반복은 오류로 취급하지 않는다.
+
+**완료 판정:** 사람마다 500개의 서로 다른 문장을 강제하는 것이 아니라, **의미 있는 차이는 반영하고, 충분하지 않은 해석은 이유를 명시하며, 근거 없는 주장은 생성하지 않는 것**이다.
+
+## 1. 검증된 출발점
+
+### 1.1 검사 범위
+
+- 결정론적 난수 시드 **0x5a1a2026**으로 양력 생년월일과 **시·분**을 포함한 입력 **500건**을 생성했다. 출생 연도 범위는 1950–2005년이다.
+- 검증 대상은 **전체 사주 / 직업·커리어 / 재물 / 연애·관계 / 사업 / 올해 / 이번 달 / 삶의 단계**의 **8개 메뉴**다.
+- **궁합 / 배우자 / 가족 / 지금 고민으로 보기** 4개 메뉴는 이번 검사 및 본 개선 로드맵의 구현 범위에서 제외한다. 기존 코드의 삭제나 미지원 선언을 뜻하지 않는다.
+- 연·월 비교는 **2026년 10월**, 조회시각 **2026-10-25T00:00:00.000Z**에 고정했다. 성별은 난수로 남/여를 배정했고 시각 미상·음력·윤달은 이번 무작위 표본에 포함하지 않았다.
+- **고유 입력 500 / 계산 성공 500 / 계산 해시 고유 500 / 실행 오류 0**이었다.
+- 실제 풀이 실행은 독립 CI **40122318503**에서 완료됐다. 검사 전용 PR **#2732**는 본 문서 작성 당시 별도 병합 상태 확인이 필요한 변경이다.
+- 검사 결과: https://github.com/gycha0109-beep/Saju/actions/runs/40122318503
+
+### 1.2 메뉴별 실제 수치
+
+| 메뉴 | 풀이 본문이 있는 명식 | 비어 있는 명식 | 정확히 다른 원문 | 서로 다른 해석 규칙·주제 프로필 |
+| --- | ---: | ---: | ---: | ---: |
+| 전체 사주 | 478 | 22 | 459 | 83 |
+| 직업·커리어 | 478 | 22 | 459 | 70 |
+| 재물 | 389 | **111** | 367 | 77 |
+| 연애·관계 | 496 | 4 | 493 | 152 |
+| 사업 | 494 | 6 | 492 | 198 |
+| 올해 | 500 | 0 | **56** | **56** |
+| 이번 달 | 500 | 0 | **131** | **131** |
+| 삶의 단계 | 500 | 0 | 500 | **1(시기별 운세 의미가 아닌 계산 구간)** |
+
+- **정확히 다른 원문**은 문장 전체가 동일하지 않은 결과의 수다. 문장에 날짜나 기둥 위치만 달라도 다른 원문으로 세어질 수 있다.
+- **해석 프로필**은 적용된 주장 유형·해석 축·주제의 조합을 비교한 1차 대용 지표다. 이것만으로 의미의 깊이 또는 정확성을 입증하지 않는다.
+- **삶의 단계 500개 원문**은 대운 간지·날짜가 달라서 모두 달라진 것이다. **500개의 독립적인 삶의 단계 운세 해석은 없다.** 기존 코드는 대운 기간의 계산 사실과 제한된 원국 맥락만 표시한다.
+- 원국 5개 메뉴의 개별 보고서에 표시된 **complete**는 연구 보고서 내부의 충족 상태일 수 있으며, 실제 제품 전체 완료 또는 Official/판매 승격을 뜻하지 않는다.
+
+### 1.3 기존 원인 가설과 확인된 코드 경계
+
+- **재물:** 재성·식상·관성·인성·비겁 관련 **6개 등록 조합**을 두 관측 채널(천간/지지)에 적용한다. 최소 두 독립적인 관련 근거가 없거나 조합·선택 경로가 충족되지 않으면 문단 없이 insufficient가 가능하다. **111건 각각의 원인**은 아직 미분류다.
+- **올해:** 연간의 **10가지 십신 주제**와 원국 지지 충돌별 후보 등을 선택하는 연구용 문단 경로다. 일반 연운 연구 문구의 제공이 곧 실행된 공식 연운 종합 주장인 것은 아니다.
+- **이번 달:** 절입 전·후 월간 십신 주제와 일부 지지 충돌 관계를 연결하는 연구용 경로다. 계산 구간과 월운 의미의 완성도는 별도다.
+- **공통:** 계산 값이 다르다는 사실, 원문이 달라진 사실, **해석의 실제 의미가 달라진 사실**은 서로 다른 세 기준이다.
 
-> 범위: 이 저장소의 **사주 계산 → 명식 → 해석 → Official Reading → 제품 실행**. 관상/캐릭터/결제 트랙의 자체 로드맵을 대체하지 않는다.  
-> 개정 기준: **2026-10-21 KST**, 편집 출발점 `main` = `09fac242524699b45f4d242fb22be0d0ababbb0e`. 본 문서는 12개 메뉴를 한 제품 목표로 묶고 **동시 실행 순서와 scope별 선행조건**을 정한다. 최신 `main`은 매 작업 시작 시 재확인하며, 과거 PR/CI 이력은 보존한다. **문서 개정은 구현·해석 품질·가용성의 완료가 아니다.**  
-> 상태: **작업 우선순위 문서**. 새로운 명리 의미·Production·공개·저장·판매 권한을 발행하지 않는다.
-> 다국어 출력 설계 보완(2026-10-22): A/B/C/D의 12메뉴 병렬 개발을 유지하며 **공통 E 언어 중립 해석/On-Demand Renderer** 계약을 병행한다. 상세 계약: [다국어 Reading 설계 v1](./implementation/saju-multilingual-reading-on-demand-design-v1.md). 언어 식별자 등록은 해당 언어 풀이 제공·판매 승인과 별개다.  
-> 담당 트랙: `saju`; 의미 판정/독립 review는 기존 Research / Bridge의 소유권을 존중한다.
-
-## 최상위 제품 목표 — 2026-10-21 12메뉴 통합 제품 목표
-
-**사용자는 생년월일·출생시각 등 허용된 입력으로 계산된 동일 Canonical 명식 기반에서, 화면의 12개 주제(원국 5개·가족·삶의 단계·올해·이번 달·배우자·궁합·질문형)에 접근하며, 메뉴마다 실제 근거가 허용하는 범위 안에서 읽을 만한 서로 다른 풀이 또는 구체적인 미지원/부분 지원 사유를 받는다. **현행 소비자 결과의 기준 언어는 한국어**이며, 이후 사용자가 요청한 한 로케일로 같은 해석 의미를 표현한다. 궁합은 두 사람의 독립 명식, 흐름·삶의 단계는 정확한 시간 정책, 질문형은 질문별 scope를 추가로 요구한다.**
-
-- 핵심 성공 기준은 **사용자에게 전달된 개인별 해석의 실제 내용·차별성·근거·일관성**이다. CI 통과, 계산 분류 수, 연구 규칙 수, PR 병합 수, 승인 문서 수는 필요할 수 있으나 목표 달성의 대체 지표가 아니다.
-- 현재 진실: **입력/Canonical 명식 계산 = 구현**, **범위가 제한된 General/Career/Wealth/Business/Relationship Natal Preview/Official Reading 경로 = 구현**, **다양한 명식에서 깊이 있고 다층적인 원국 종합해석의 품질·일관성 = 미완료**. 단일 통합 샘플의 `delivered` 성공만으로 완성을 주장하지 않는다.
-- 출생일이 다르더라도 동일한 명식·근거 조합이면 같거나 유사한 해석은 자연스럽다. **억지로 모든 사용자에게 서로 다른 문장을 찍는 것이 아니라, 의미 있는 명식 차이가 실제 해석 차이로 연결돼야 한다.**
-- **현재의 핵심 미완료는 P0-NATAL 원국 5분야의 해석 품질**이지만, **사주 트랙 최종 완료 조건은 화면 12개 메뉴 전체**다. P0-NATAL을 끝내야 다른 메뉴를 시작하는 `P0 → P1 → P3 → P7…` 방식의 직렬 계획은 폐지한다. 원국/시간/관계/질문형을 기존 하나의 계산·해석 기반으로 **병렬 기능 수직 확장**한다. P3-B 이후의 개별 Official/Production 승격은 원래의 해당 scope별 HOLD를 따른다.
-- 연구 미비는 관련 Research/Bridge 작업으로 분리하고, **연구가 필요한 해석 주장만** 제한한다. 확보된 계산 사실과 기존 범위의 근거를 활용한 **내부 개인화 해석 시제품·품질 검증 전체를 중단하지 않는다**. 반대로 미승인 연구 주장을 Official/Production/판매 권한으로 포장하지 않는다.
-
-## 12개 사용자 메뉴 동시 완성 로드맵 — 2026-10-21 실행 구조 재편
-
-> **제품 범위 결정:** 명하의 「나를 읽기 / 지금의 흐름 / 사람과의 관계 / 고민이 있다면」 화면에 보이는 **12개 메뉴 모두**를 장기 구현 완료 대상으로 삼는다. **P0-NATAL 다섯 분야만 끝내고 사주 트랙 전체를 완료했다고 선언하지 않는다.** `전체 보기`는 탐색 UI이며 13번째 해석 상품이 아니다.
->
-> **직렬 대기 폐지:** `P0-NATAL` 다섯 분야가 끝날 때까지 가족·삶의 단계·올해·이번 달·배우자·궁합·질문형 구현을 기다리지 않는다. **오늘부터 아래 4개 작업선에서 12개 메뉴를 병렬로 전진**시킨다. 우선순위는 사용자 가치 및 이미 작동하는 공통 기반의 재사용 순서이고, 전체 도메인 간 완료 대기 게이트가 아니다. 실제 선행조건은 **해당 메뉴의 입력/Canonical/Claim/출처/기간/권한**에만 둔다. `P3-B/P4/P5/P6`의 Official·Production source/Bridge HOLD는 유지하지만 다른 메뉴의 연구용 내부 구현을 막지 않는다.
+## 2. 변경하지 않을 엔진 원칙
+
+1. **기존 엔진 재사용:** Canonical Snapshot → 기존 T5/T6/T8/T9 Claim·Rule·Methodology → Claim Graph → ReadingIntent/DomainReadingProfile → EvidenceSelector → Narrative → Reading Response의 **단일 경로**를 사용한다. 별도 명리 엔진, 독립적 의미 판단 로직, 병렬 Product Mapper를 만들지 않는다.
+2. **근거 없는 개인화 금지:** 해석 내용·해석 축·결론의 변화는 실제 입력·규칙·출처·의미 계약으로 입증한다. 성별, 이름, 출생 분 또는 해시를 장식적으로 문장에 끼워 차별화 지표를 높이지 않는다.
+3. **허용된 근거만 사용:** 십신·오행·절기·합충 등 계산 가능한 사실의 존재는 그 사실을 현대인의 성격, 돈, 결혼, 직업 적성, 성공, 특정 사건으로 예측할 수 있는 권한이 아니다. 특히 미확립 최종 신강·신약, 왕쇠, 격국, 용신이나 사건 예측을 무단 추가하지 않는다.
+4. **명식별 정확한 근거:** 실제 소비한 입력 경로, Claim/Rule/Methodology/Source, 시간·시나리오, 충돌·부족한 입력이 결과에 연결돼야 한다. 시각 미상·다중 시나리오의 사실을 확정 시각의 결론으로 조용히 승격하지 않는다.
+5. **근거 부족은 정직하게:** complete / partial / insufficient / unsupported를 해당 메뉴에서 가능한 실제 결론 범위에 맞춰 구분한다. 근거가 없으면 빈 문장을 무근거 운세로 채우지 않는다.
+6. **연·월 시간 정책 분리:** 사용자에게 표시한 서울 달력연도, 입춘 효력 연주, 절입 전·후 월간 구간은 다르다. 해당 방법론의 정확한 기준과 계산 경계로만 적용한다.
+7. **공식 제공과 내부 품질은 별개:** 본 개선은 기존 출처 권한과 연구용 상태를 변경하지 않는다. Official/Production/공개/저장/판매/결제 권한을 발행하지 않으며, 관련 기존 제한이 유지된다.
+8. **검증은 구현을 위한 도구:** 코드로 결과가 달라지지 않은 감사·문서·CI 통과·PR 개수만으로 제품 품질 진척을 올리지 않는다.
 
-### 전체 화면 12개 메뉴와 엔진 책임 매핑
+## 3. 실행 로드맵
 
-| 화면 메뉴 | 기존 Reading 계약/엔진 범위 | 2026-10-21 확인된 상태·결핍 | 목표 완료 기준 / 후속 작업 |
-| --- | --- | --- | --- |
-| **전체 사주** | `general:natal` | 제한된 Preview/보고서 존재; 다중 근거 종합 품질 미완료 | P0-NATAL S5~S6: 원국 구조를 종합한 source-qualified T8, MUR, 한국어 보고서 |
-| **직업·커리어** | `career:natal` | Career 다중 근거·MUR 품질 개선 중; P0 미완료 | P0-NATAL S1~S4: core + 독립 보조 축 2개, 근거/한계, 명식 차이 재현 |
-| **재물** | `wealth:natal` | 제한된 Preview/보고서 존재; 별도 깊이 미검증 | P0-NATAL S5~S6: 재물·자원 관점의 근거 있는 T8 종합, 결과/금액 예측 금지 |
-| **연애·관계** | `relationship:natal:general` | 제한된 Preview/보고서 존재; 별도 깊이 미검증 | P0-NATAL S5~S6: 본인 관계의 구조·맥락 종합; 배우자/궁합과 구별 |
-| **사업** | `business:natal` | 제한된 Preview/보고서 존재; 별도 깊이 미검증 | P0-NATAL S5~S6: 사업 맥락에서 독립된 근거 기반 T8, 성공 보장 금지 |
-| **가족** | `family:parents`, `family:children` | 프로필/선택 계약 존재만으로 해석 완성 아님 | P7-FAMILY: 관계 대상을 명시하고 부모/자녀 각 주장·근거·부족한 입력에 맞춘 독립 결과 |
-| **삶의 단계** | `life-stage:general` 및 근거가 허용하는 natal/luck-cycle 맥락 | 선택 프로필과 계산 자료 ≠ 시기별 의미가 있는 완성 풀이 | P8-LIFE-STAGE: 현재·이후의 구조적 맥락, 기간 경계·적용 범위; 미승인 대운 결과 예측 금지 |
-| **올해** | `general:annual` (후속 도메인별 annual) | P3-A 내부 연구 미리보기 존재; General Annual Official Production HOLD | P3-A 이용 경험 → P3-B 근거 승인 후 공식 연운 → P4 상세; 달력연도/입춘 연주 구분 |
-| **이번 달** | `general:monthly` (후속 도메인별 monthly) | 계산·시간 사실/프로필 존재; 월운 고유 Official 해석 미완료 | P5 월운 공식 근거/절기 경계 → P6 상세; 연운 자동 상속 금지 |
-| **배우자·관계** | `relationship:natal:spouse` | P2에서 **일지 배우자궁 위치만** `ACTIVE_BOUNDED`; 일반적 배우자 풀이 미완료 | P9-SPOUSE-DEPTH: 허가된 추가 해석 주장과 MUR; 기존 position-only는 유지 |
-| **궁합** | `compatibility:natal` / T10 | 선택 프로필 존재 ≠ 두 사람의 source-qualified 궁합 해석 완성 | P10-COMPATIBILITY: 두 명식 입력·시나리오·근거 관계에 따른 실제 한국어 상호작용 풀이 |
-| **지금 고민으로 보기** | `question-specific:natal` / T11 | 질문 프로필 존재 ≠ 어떤 질문이든 근거 있는 답변 가능 | P11-QUESTION: 질문 범위·필요 입력·근거 있는 T8/T9/T10 선택 및 T11 종합, 범위 밖은 설명/보류 |
+### 단계 1 — 500건의 실제 누락·반복 원인 분류
 
-### 12개 메뉴의 공통 완료 정의
+**목적:** 해석이 비거나 똑같아지는 정확한 지점을 찾는다. 임의의 규칙 수 증가를 먼저 결정하지 않는다.
+
+**대상 코드:** 기존 500건 검사 스크립트, 계산 결과·InterpretationExecutionResult, 분야별 보고서, EvidenceSelector 및 선택·전달 경로.
+
+**구현 작업**
+1. 동일한 고정 시드·500건에 대해 각 메뉴별 **입력 → 계산 명식 → 사용 가능한 구조적 근거 → 규칙 평가 → 활성 Claim → EvidenceSelector 선택 → 최종 소비자 문단**을 추적한다.
+2. 특히 **재물 111건** 각각을 다음 중 실제 해당하는 원인으로 분류한다.
+   - 계산/입력의 미확정 또는 필요한 구조 사실의 부재
+   - 필요한 십신 조합을 다루는 등록 규칙이 없음
+   - 규칙이 존재하나 필요한 근거·계약·허용 범위를 충족하지 못함
+   - 실행된 Claim은 있으나 EvidenceSelector/프로필에서 누락
+   - 선택된 근거가 보고서 구성/표현 단계에서 누락
+3. 올해 56종, 이번 달 131종의 **동일 원문·동일 의미 프로필 집단**과 최대 반복 집단에 사용된 입력 경로를 표시한다.
+4. 원문이 다른데 의미 프로필이 같은 사례와, 의미 프로필은 다른데 소비자 결론을 구분하기 어려운 사례를 구분한다.
+5. 시각 미상·음력·윤달 및 근거 부족 사례는 500건 기존 표본과 혼합해 비율을 왜곡하지 않고 **별도 회귀 입력**으로 추가한다.
 
-> **의미 품질과 언어별 표현 품질은 별도 완료 축이다.** 아래 한국어 본문 조건은 현재 작동하는 기준 언어의 수락 조건으로 유지하되, 12개 메뉴의 Claim·Evidence·MUR·권한과 향후 특정 로케일의 Renderer/용어/표현 품질을 혼동하지 않는다. 모든 언어 동시 생성·전 언어 출시를 12메뉴 엔진 구현의 전역 선행조건으로 만들지 않는다.
-
-
-1. **메뉴 노출과 엔진 완성은 구분**한다. 화면 카드·ReadingIntent·DomainReadingProfile·HTML·`delivered`·PR/CI PASS만으로 해당 메뉴 완료가 아니다. 각 메뉴에 실제 입력→Canonical/관련 시나리오→source-bound Claim/Methodology/Rule→Evidence→사용자에게 읽히는 **서로 다른 한국어 결론**의 작동 경로가 있어야 한다.
-2. 메뉴마다 **최소 유효 풀이(MUR)**를 별도로 정의·검증한다. Career의 core 1 + 독립 보조 2개 기준을 가족·연운·궁합 등 다른 도메인에 근거 없이 복사하지 않는다. `complete / partial / insufficient / unsupported`는 실제 결손 이유와 함께 반환한다.
-3. 공통 출생 사실은 동일 계산 version/scenario의 Canonical snapshot/hash로 공유한다. 연운·월운에는 정확한 시간 범위와 정책, 궁합에는 **서로 다른 두 대상의 출생정보 및 각자의 snapshot**, 질문형에는 읽기 범위와 해당 대상의 근거 연결을 별도로 관리한다.
-4. 한 메뉴에 충분한 출처가 없어도 나머지 메뉴 개발을 일괄 중단하지 않는다. **불충분한 주장만 HOLD**하고 정직한 부분 풀이/미지원 상태를 제공한다. 미승인 강약·격국·용신·재물·결혼·합격·질병·미래 사건을 LLM이나 화면에서 만들어내지 않는다.
-5. **엔진 내부 유용성 완료**와 **Official/Production/Public/저장/판매 가능**은 각각 별도 판정이다. Saju 저장소는 계산·해석·공식 response/grounding 근거를 소유한다. 명하 Web/Mobile 화면 연결, Reader, 접근권한, 결제, 보관은 MyeongHa 제품 트랙이 소유한다. 메뉴에 `정식 읽기 준비 중`인 상태를 완성 기능처럼 홍보하지 않는다.
-6. 최종 **사주 트랙의 12메뉴 범위 완료**는 12개 **모두**에 source-qualified 의미, 명식 차이를 반영한 재현 가능한 소비자용 결과, 제한·실패 처리, 해당 의미의 권한 판정이 확인될 때만 선언한다. `P0-NATAL 완료`는 이 전역 완료와 **다르다**. 외부 연락·문의나 검증만을 위한 중복 감사 문서를 필수 작업으로 만들지 않는다.
-
-### 12개 메뉴 병렬 개발 운영 — 별도 50개 순차 트랙 금지
-
-**분리 기준은 화면 메뉴와 source-owned Claim/ReadingIntent 경계다.** 아래 작업선은 신규 4단계 승인 게이트가 아니라 **동시에 구현 가능한 기존 작업 묶음**이다. 모든 작업선은 공유 Canonical → Registry/T5/T6/T8/T9/T10/T11 → EvidenceSelector → Narrative/Reading Response를 재사용하고 병렬 의미 엔진이나 무근거 LLM 판단을 만들지 않는다.
-
-| 동시 작업선(즉시 착수 가능) | 포함 화면 메뉴 | 기존 기반·최소 다음 실제 기능 | 다른 작업선 전체 완료를 기다리는가? |
-| --- | --- | --- | --- |
-| **A. 원국 종합** | 전체 사주 / 직업·커리어 / 재물 / 연애·관계 / 사업 (5) | 진행 중 Career T8+MUR를 본보기로 다른 4개 메뉴의 고유 근거·실제 소비자 한국어 보고서를 **각각 독립 수직 슬라이스**로 구현. Career 완전 종료를 4개 영역 착수 조건으로 만들지 않음 | **아니오**. 각 Claim의 출처·입력·MUR만 확인 |
-| **B. 시간 해석** | 올해 / 이번 달 / 삶의 단계 (3) | 기존 Annual Preview와 Temporal Facts·프로필 재사용. **올해→월별 UX 연결, 월별 부분 해석의 근거 상태, 현재/이후 시간 맥락**을 내부 읽기에서 동시에 구현. 입춘/기간·대운 scope 미확립 해석만 HOLD | **아니오**. Annual Official/Monthly Official의 정확한 승격은 **해당 범위의 source gate**를 따름 |
-| **C. 사람·관계** | 배우자·관계 / 가족 / 궁합 (3) | 기존 배우자궁 position-only, 가족 프로필, 궁합 의도/T10 계약 기반 **배우자 한정 읽기·부모/자녀 구분·두 명식 입력/상호 근거**를 병렬 구현. 서로를 단순 원국 문구로 대체하지 않음 | **아니오**. 해당 의미 미승인 시 그 주장만 partial/HOLD |
-| **D. 질문/메뉴 연결** | 지금 고민으로 보기 (1) 및 전 메뉴 공통 진입 | 실제 지원되는 도메인으로 질문 라우팅→기존 Claim 근거 선택→근거 안에서 답/보류. MyeongHa UX의 **Topic visibility ≠ Reading availability** 규칙으로 12개 카드의 `available/partial/unavailable`를 연결. 질문형은 없는 T11 결과를 지어내지 않음 | **아니오**. 개별 메뉴가 준비된 순서대로 연결하고 미지원은 표시 |
-
-### E. 공통 다국어 해석 표현 기반 — A/B/C/D 병렬 지원 (2026-10-22 추가)
-
-> **E는 다섯 번째 해석 주제나 A/B/C/D의 전역 선행 게이트가 아니다.** 사주 해석의 실제 Claim·Evidence·Rule·MUR·scope authorization을 언어 중립적으로 고정하고, 사용자 요청 언어 **하나**에서만 문장을 생성하기 위한 공통 인프라다. 한국어도 여러 표시 로케일 중 하나이며, 한국어 원문을 다른 모든 언어의 의미 원본으로 삼지 않는다. 실제 상세 계약은 [다국어 Reading On-Demand 설계 v1](./implementation/saju-multilingual-reading-on-demand-design-v1.md).
-
-- [x] **E-1 기존 IR 재사용 계약 첫 구현:** `CanonicalReadingSemanticBundleV1`을 독립 중간 의미 모델로 재사용한다. 별도 병렬 사주 엔진을 만들지 않고 `src/reading/reading-localization.ts`에서 source-owned Claim/Qualifier/prohibitedExtensions/semanticHash 무결성을 확인한다. *기존 사용자 한국어 경로 통합은 후속 작업*이다.
-- [x] **E-2 로케일/요청별 On-Demand 계약 첫 구현:** `readingLocale > accountLocale > uiLocale > ko-KR` 우선순위로 하나를 선택하고, 선택된 renderer만 호출한다. 미등록 renderer/알 수 없는 로케일의 자동 대체 출력 금지. `ko-KR/en-US/ja-JP/zh-CN/zh-TW/vi-VN/ms-MY/id-ID`는 **설계상 로케일 카탈로그**이지 이미 출시된 언어 목록이 아니다.
-- [x] **E-2a 버전/캐시·구조적 의미 경계:** `semanticHash`·snapshot/interpretation/registry·권한 범위 `requestScopeKey`·로케일·Renderer/용어집 버전으로 scoped 캐시 키를 만든다. 신규 Claim, 필수 qualifier 누락, 응답 텍스트 누락을 거절한다. 내부용 계약이며 저장·언어 출력 제공·새 명리 authority는 없음.
-- [ ] **E-3 한국어 Renderer 호환 연결:** 기존 한국어 Official/Preview/ProductReadingResponse의 실제 문단·근거·내부 ID 레닥션·부분/미지원 처리 보존. 현재 경로를 무단 변경하지 않는다.
-- [ ] **E-4 언어별 용어/메시지 리소스:** 명리 용어집, 로케일별 UI·오류·미지원 사유, 간체/번체·말레이어/인도네시아어 독립 정책. UI 언어/풀이 언어/지역/출생 시간대/계산 정책은 각각 분리한다.
-- [ ] **E-5 첫 외국어 Renderer 및 품질 기준:** 영어 등 한 언어부터 개인별 실제 결과와 원본 의미·Qualifier·HOLD 보존을 확인해 단계적으로 확대한다. 한국어만 가능한 의미를 자동 번역으로 채우지 않는다.
-- [ ] **E-6 LLM 표현/사용권한·운영 통합:** LLM은 기존 승인 범위의 문장 표현에만 사용하며 새 명리 판단 금지. 문장 수준 의미 동등성은 기계적 claim-id 검사의 대체물이 아니며 별도 로케일 품질 심사 필요. Saju는 의미/출력 계약, 명하 UX·Reader·저장·Commerce는 화면/권한/보관/삭제/상품화를 담당한다.
-
-**공통 수락 기준:** 동일한 Canonical 의미 결과를 언어별로 재해석하지 않음; 한 요청에 한 Renderer 호출; 불명 로케일은 거절; Claim·Qualifier·HOLD·source 범위를 누락/승격하지 않음; 캐시 키에 locale/renderer/glossary와 사용자·요청 범위 포함. **현재 완료 표시된 E-1/E-2는 내부 계약 구현만 의미하며 한국어 이외 언어의 실제 풀이·공개는 미완료다.**
-
-**동시 착수/의존성 규칙**
-
-- [ ] **오늘부터 12개 메뉴를 한 제품 백로그로 관리:** 위 4개 작업선의 실제 사용자용 수직 변경을 병행한다. A 완료 → B 착수 → C 착수 → D 착수라는 단계형 대기는 금지한다. 현재의 `P0-NATAL`은 A의 고우선 부분이지 **B/C/D의 전역 선행조건이 아니다**.
-- [ ] **이미 있는 기반부터 재사용:** A의 5분야 원국 경로, B의 Annual 내부 HTML 및 Annual/Monthly 계산 기초, C의 Spouse bounded position-only, D의 ReadingIntent/프로필·EvidenceSelector를 재활용한다. 기능별로 **출처가 없는 의미만** HOLD한다. 가족/궁합/삶의 단계/질문형의 프로필 존재만으로 구현됐다고 표시하지 않는다.
-- [ ] **각 메뉴의 첫 통과 산출물은 실제 사용자 문단:** 화면 카드 1개마다 정확한 출생 입력/필요 시 추가 인물·시간·질문 → 입력 시나리오 → 관측된 source-owned 의미 → 한국어 실제 본문 → `complete/partial/insufficient/unsupported`와 근거/한계 → 재현 가능한 명식 대조를 연결한다. 단순 연구표·CI/PR·문단 수만 추가한 작업을 진척으로 세지 않는다.
-- [ ] **UI 연결을 마지막에 몰지 않음:** Saju는 12개 ReadingAvailability/근거·응답 계약을 책임지고, MyeongHa UX/Reader는 제품 카드 상태·상세 화면·입력 이어가기·기존 auth continuation·권한·결제를 책임진다. 각 메뉴의 내부 수직 경로가 생기는 즉시 해당 카드를 `available/partial/unavailable`에 결합한다. 단, **별도 UX 트랙 구현을 사주 트랙 완료로 허위 선언하지 않는다**.
-- [ ] **개별 메뉴별 종료만 인정:** `구조/계산 존재` → `연구용 의미·한국어 읽기 존재` → `메뉴별 MUR/실제 차별 품질 통과` → `해당 사용 경로의 Official/Production/제품 권한 통과`를 각각 기록한다. **12/12 전 메뉴가 실제 완료 조건을 충족하기 전 사주 제품 전체 완료 선언 금지**. 상태가 확인되지 않으면 `미확인`으로 기록하고 퍼센트 추정 금지.
-
-**수용 증거 최소 단위:** 각 메뉴마다 ① 실제 계산된 의미 다른 입력 2개(궁합은 서로 다른 2인 조합), ② 같은 입력 재실행 1개, ③ 입력 누락·시각 미상·근거 부족과 허위 사건 예측 금지, ④ Claim/Rule/Source/fact-path, ⑤ 사용자가 읽는 실제 한국어 결과, ⑥ 해당 메뉴 가용 범위 및 독립 권한. 특정 관계의 source가 미확립이면 **그 관계만 보류한 상태를 노출**하고 다른 메뉴를 계속 만든다. 이것은 12개의 중복 사전 감사 PR을 만들라는 뜻이 아니라 **각 기능 PR 자체의 수락 기준**이다.
-
----
-
-## 0. 진실의 우선순위와 문서 참조
-
-작업 시작 때마다 **GitHub의 현재 `main`, 열린 PR, 실제 CI 결과를 먼저 조회**한다. 아래 SHA와 PR은 이 문서 작성 당시의 스냅샷이지 항상 최신이라는 보증이 아니다. 완료 판정은 병합된 코드와 해당 커밋의 통과한 검사에 근거한다.
-
-| 문서 | 역할 |
-| --- | --- |
-| `README.md` | 코어 원칙 및 초기 엔진 범위. 일부 '현재 상태' 숫자는 과거 스냅샷이다. |
-| `docs/implementation/12-mvp-scope-and-implementation-plan.md` | I0–I10 Engine MVP 기초 구현 순서. 현행 우선순위와 구분한다. |
-| `docs/implementation/saju-engine-capability-inventory-v1.md` | 21 capability의 최초 증거/권한 분류; 오래된 행은 이후 결정을 우선한다. |
-| `docs/implementation/saju-engine-capability-frontier-g2b.md` | `ADMITTED` 아닌 Research를 Engine 실행 권한으로 오해하지 않기 위한 frontier. |
-| `docs/implementation/sa7a-official-reading-detailed-expansion-roadmap-audit-v1.md` | spouse → annual → monthly 상세 확장 순서의 근거. SA-7B 이후 상태가 일부 갱신됐다. |
-| `docs/implementation/sa7b-spouse-standard-official-reading-authority-closure-v1.md` | 배우자 position-only `ACTIVE_BOUNDED` Production 허용의 정확한 범위. |
-| `docs/implementation/sa7c-spouse-position-only-detailed-official-reading-pilot-v1.md` | 승인된 spouse position-only 상세 material/표현 파일럿; 새 의미 추가 불가. |
-| `docs/implementation/sa7d-annual-standard-official-reading-authority-audit-v1.md` | 연운은 계산 경로가 있으나 **연운 고유 semantic source authority 부족(Case C)**. |
-| `docs/implementation/saju-refresh-post-r37-product-boundary-audit-2026-10-09.md` | 강약·support-source 효과/경쟁 정산의 미해결 경계. |
-| `docs/product/22-production-interpretation-authority-audit.md` | 일반 Production 내용 승인과 Runtime 가능성의 분리; 과거 감사이므로 최신 bounded spouse 판정과 혼동 금지. |
-| `docs/ops/MAIN_BRANCH_PROTECTION_EVIDENCE.md` | 병합·보호·CI 근거. |
-| 프로젝트 첨부 `Myeonghwa_Personalized_Interpretation_Architecture_v1.3_THIRD_REVIEW` | T0/T5/T6/T8 의미 계층, schema·input contract, MUR, deterministic Narrative, 실제 개인화 테스트의 설계 기준. 저장소 main의 별도 구현 완료 증거는 아님. |
-| 프로젝트 첨부 `MyeongHa_Saju_Product_Interpretation_Architecture_v1.2_FINAL_REVIEWED` | 기존 ReadingIntent/DomainReadingProfile/EvidenceSelector/Narrative 재사용 및 제품별 authority 경계. |
-
-## 1. 기준 제품/엔진 상태 — 검증 사실과 허용 경계
-
-- 계산 계층: Governed Production 계산 정책, Canonical Saju Snapshot, 음력/윤달, 절기, 출생시간 미상 시나리오, 버전/식별자/출처 보존 경로가 존재한다. 계산 결과 자체는 명리 해석 authority가 아니다.
-- Preview Natal: `general:natal`, `career:natal`, `wealth:natal`, `business:natal`, `relationship:natal:general` 다섯 영역에 bounded Official Reading/Preview 경로가 존재한다. 이를 **전체 Production 해석 허가**로 표현하지 않는다.
-- Spouse Natal: `relationship:natal:spouse`는 **일지의 전통적 배우자궁 위치(position-only)**라는 정확한 의미 범위에서 SA-7B의 `ACTIVE_BOUNDED` Production Official Reading 경로가 존재한다. 배우자의 성격·외모·직업·결혼 결과는 허용되지 않는다. 공개 일반 제공·persistence·commerce는 별도 허가가 필요하다.
-- SA-7C 배우자 detailed 파일럿은 별도 문서와 실행 코드/테스트 증거를 기준으로 확인한다. 상세 문구 존재 자체가 새 semantic authority나 public GA를 뜻하지 않는다.
-- Annual/Monthly: 연간/월간 계산·temporal facts·Research 후보 및 일부 E2E가 존재하지만 **Official Reading의 해당 도메인별 Production semantic authority는 일반화되지 않았다**. 특히 General Annual은 SA-7D 기준 `RETURN_TO_RESEARCH` / `Production HOLD`다.
-- 형상·강약/용신 확장: `saju-r*` 연구 결과는 해당 범위에서만 유효하다. partial structural support/합충 연구를 최종 강약·用神 또는 일상적 개인 예측에 바로 연결하지 않는다.
-
-## 2. 실행 백로그 — A/B/C/D 동시 개발, 기능별 source gate만 유지
-
-### P0-NATAL — **의미 있는 개인별 원국 종합풀이 완성** (ACTIVE · 제품 최우선)
-
-**판정 원칙:** 사용자가 실제 출생정보를 입력했을 때 자기 명식의 다중 근거를 반영한 한국어 종합풀이를 받아야 한다. **계산 사실·기둥 위치·연구 문장 단순 나열, Claim/원문 대조표, CI/PR 개수, `delivered` 응답 자체는 제품 완성의 대체물이 아니다.** 구조는 전통 명리의 근거가 허용하는 *해석 후보*로만 설명하며 실제 삶의 성격·금전·사건을 단정하지 않는다.
-
-**2026-10-18 실제 기준선(제품 미완료):**
-- Canonical 계산, 십신·기둥 근거, 다섯 Natal Preview/Official 경로, 기존 Claim/Source/Rule 위치 연결, 내부 HTML은 존재한다. 일반 HTTP 35건 중 33건 `delivered`, 2건 부분 근거 사례이며 이는 **응답 전달 사실**이지 유효 종합풀이 합격률이 아니다.
-- `src/preview/natal-n30b-five-domain-verified-reader.ts`는 `createsNewInterpretation:false`, `usefulComplete:false`; `src/preview/natal-n32-expanded-domain-research-reading.ts`도 `researchOnly:true`, `createsNewMeaning:false`다. **기존 문장 표시는 종합 해석 생산과 다르다.**
-- 새로 근거·범위가 검증되어 제품의 개인별 다중 근거 종합을 충족한 T8 Claim **0개(현행 감사 기준)**. 따라서 `usefulComplete=false`; 제품 전체 완성률을 근거 없이 퍼센트로 주장하지 않는다.
-- 이전 N0~N6, N28/N29/N30의 미체크 상태는 소비자 품질 미완료를 뜻한다. 아래 **S1~S6가 앞으로의 실제 실행 순서와 완료 판정 기준**이며 기존 N25~N35 기술 이력은 바로 다음 절에 보존한다.
-
-**구현 기준 아키텍처:** 프로젝트 `Myeonghwa_Personalized_Interpretation_Architecture_v1.3_THIRD_REVIEW` 및 `MyeongHa_Saju_Product_Interpretation_Architecture_v1.2_FINAL_REVIEWED`. 기존 `Canonical Snapshot → Registry T5/T6/T8 → Claim Graph → ReadingIntent/DomainReadingProfile → EvidenceSelector → Narrative → ProductReadingResponse`를 사용한다. 별도 해석 엔진/병렬 Product Mapper/숨은 LLM 의미 권한은 만들지 않는다.
-
-#### S1 — 실제 의미 재료·빠진 조합 관계 확인 (첫 구현 PR의 출발점)
-
-- [ ] **S1-1 재사용 가능 범위 전수 목록:** 다섯 분야의 실행되는 Claim/Rule/Methodology/Source/Production 또는 Preview 권한을 `T0 계산 사실 / T5 맥락 십신 / T6 관계·상호작용 / T8 분야별 다중 근거 종합 / 소비자용 원문`으로 분리한다. 정확한 원국·경로, 입력 누락, 시각 미상, conflicting/blocked 상태를 기록한다.
-- [ ] **S1-2 결핍 판정:** Career의 단일 십신 T8 또는 동일-family 표현을 진정한 다중 근거 T8로 잘못 세지 않는다. 재사용할 T5/T6, source-qualified 다중 근거 조합, 빠진 구조 의미와 판단 불가 범위를 산출한다. 기존 `src/research/career-natal-reading-candidate.ts`의 exact Ten-God 규칙은 **legacy research**로 분리한다.
-- **완료 산출물:** *실행 가능한* 입력→실제 근거→가능/보류되는 결론 목록과 **다음 구현에 사용할 최소 1개 근거 있는 Career 결합 사례**. 새 감사 표만 만들고 멈추는 것을 S1 완료로 계산하지 않는다.
-
-#### S2 — T5/T6 개인화 기반과 의미 계약 확립
-
-- [ ] 구조적 주장과 계산값을 분리한다. 단순 위치는 T0, 위치·맥락의 제한된 해석은 T5, source-qualified 관계는 T6, 여러 근거를 합성한 직업 결론은 T8에만 둔다. 미확립 강약·용신·격국·결과 예측을 도출하지 않는다.
-- [ ] 개인화용 `ClaimTypeDefinition` 및 구조화된 value 계약, `MethodologyDefinition.inputContract` 또는 동등한 실제 스키마 검증을 갖춘다. RuleOutputTemplate↔Claim 타입, Rule 입력↔Methodology 입력을 검증한다. 정확한 사실 경로·필요 시 결정론적 입력 selector와 cardinality를 사용한다.
-- [ ] 출생시각 미상/복수 계산 시나리오에서 `missing`, `not_applicable`, `insufficient`를 구분한다. 한 시나리오의 Claim으로 다른 시나리오까지 유효하다고 판정하지 않는다.
-- **완료 산출물:** 실제 계산 명식 두 개에서 서로 다른 **구조적 입력 근거가 재현되는 테스트**와, 이를 실제 T8 규칙에 안전하게 전달할 수 있는 계약. '규칙 개수 증가'만으로 완료 선언 금지.
-
-#### S3 — 첫 번째 **진짜 다중 근거 Career T8** 구현 (현재 가장 중요한 기능 작업)
-
-- [ ] 기존 Career 단일 십신 T8 규칙을 별도 legacy pack에 격리하고, **개인화 Career 연구 pack**에서 혼용하지 않는다.
-- [ ] 출처와 Methodology가 실제로 뒷받침하는 **서로 다른 2개 이상 정밀 근거(T5/T6 또는 명시적 방법론의 T0 복수 사실)**를 소비하는 구조화된 T8 claim을 구현한다. `upstreamClaimRefs`/의존·모순 관계를 기존 Claim Graph로 보존한다. 단순 동시 존재에서 인과·직업 적성·성공을 창작하지 않는다.
-- [ ] `core`와 실행·의사결정·환경·책임·협업 등의 **적용 가능한 보조 해석 축**을 분리한다. 동일 원국/동일 semantic signature는 같은 결론, 다른 근거 패턴은 뒷받침되는 범위에서 다른 의미를 도출한다. 충돌은 순서/숫자 가중치로 임의 승패를 정하지 않는다.
-- **완료 산출물:** 실제 서로 다른 두 명식에서 **서로 다른 근거→서로 다른 T8 의미 결론**이 실행되고, 동일 원국 대조에서는 같으며, 실제 Claim provenance가 모두 연결된다. 이 조건을 충족하지 못하면 S3는 미완료다.
-
-#### S4 — Career 최소 유효 풀이(MUR) + 한국어 보고서
-
-- [ ] 한 개의 얕은 T8이나 단어만 바꾼 문장으로 `complete`를 반환하지 못하게 **Domain Minimum Useful Reading**을 도입한다. Career 첫 목표: **핵심 종합 패턴 1개 + 서로 구별되는 실질적 보조 해석 축 2개 + 적용 근거/범위·한계**(정확한 Evidence 정책은 source coverage와 함께 고정); 충분한 근거가 없으면 **partial / insufficient**로 분류한다. tension은 모든 사람에게 강제하지 않는다.
-- [ ] 기존 `ClaimNarrativeProfile` 개념과 결정론적 renderer를 활용한다. `핵심 결론 → 근거와 연결 이유 → 보조·상충 요인 → 실용적 해석 범위 → 모르는 부분`을 **읽을 만한 한국어 문단**으로 구성한다. headline은 claimId/hash/Registry 순서가 아니라 narrative policy가 선택한다.
-- [ ] **실제 birth input → canonical → Career interpretation → Evidence → HTML/Preview 응답** 한 경로에서 생성된 결과를 열람·대조한다. LLM/Presentation은 T8 의미를 만들어내거나 보강하지 않는다.
-- **완료 산출물:** 실제 명식별 한국어 Career 보고서 최소 두 건 및 MUR complete/partial/insufficient 테스트. '긴 글'이나 '문장 개수' 자체는 합격 조건이 아니다.
-
-- **S4 실제 소비자 독해 보완 (2026-10-24, 연구용):** 기존 `career-natal-multifactor-report.ts`에서 Core 1개·독립 보조 2개를 고르는 MUR 첫 화면은 그대로 보존하면서, 이미 동일 명식의 Rule/T5/Source/계산 경로를 검증했으나 대표 3개에서 빠졌고 실제 다른 계산 사실 경로를 추가하는 T8 구조 관찰을 `additionalVerifiedSections`로 분리해 내부 HTML에서 열람 가능하게 한다. 이 추가 관찰은 MUR 완성 카운트·새 인과관계·새 직업 적성 의미로 세지 않는다. 완료 증거는 실제 명식 회귀와 별도 HTML 본문이며, `researchOnly/mayPublish=false/maySell=false/usefulComplete=false`는 유지한다. Career S3~S6 전체 품질 완료 아님.\n\n#### S5 — 동일 원국 기반 5개 분야의 깊이 있는 종합 확장
-
-- [ ] Career의 source-qualified T8·MUR·한국어 보고서 계약을 **이미 구현된 범위만** 재사용해 General / Wealth / Business / Relationship (general) 각 분야를 **지금부터 병렬 착수**한다. Career 최종 품질 합격은 4개 분야의 **전체 착수 선행조건이 아니다**. 각 분야는 1개 실제 명식 입력부터 소비자 문장까지 독립 수직 슬라이스를 사용하고, 자체 Claim/source 미확립 주장은 해당 영역에서만 HOLD한다.
-- [ ] 다섯 결과가 정확히 같은 Canonical snapshot/hash를 공유하며, 동일 근거가 어떤 분야에 쓰이는지 설명하되 General 주제를 다른 분야의 새 성격/금전/결혼 결과로 무단 전환하지 않는다. 분야별 얕은 claim, 내용 충돌, 원문 재탕을 표시한다.
-- **완료 산출물:** **다섯 분야 모두** 내부 소비자 보고서에서 출처가 있는 별도의 의미 있는 설명과 적정 fallback을 제공한다. Career 한 분야만 합격했다면 P0 전체 완료 아님.
-
-#### S6 — 개인별 해석의 **실제 가치** 회귀 및 제품 완료 판정
-
-- [ ] synthetic 또는 비개인 출처의 **30개 이상** 명식(십신·계절/절기·출생시간 확정/미상·양음력/윤달·관계 신호·근거 부족 포함)과 **10쌍 이상** 차별 판정 사례를 검사한다. 기존 35개 HTTP / 고유 19쌍 비교를 재사용하되 서로 다른 세트의 수치를 섞어 성공률을 조작하지 않는다. 아키텍처 v1.3의 **100 consumed fingerprint** 확대 검증은 Core 종합풀이가 실행된 후 별도의 성숙도 검사로 수행한다.
-- [ ] 판정: ① 같은 사실/semantic signature→같은 결정론적 결론, ② 달라야 할 입력/의미→실제 의미 차이, ③ 근거 없는 다변화 0, ④ 근거 없는 결과·출생시각 미상 오판 0, ⑤ 설명 불가 의미 충돌 0, ⑥ 5개 분야 MUR complete/partial/insufficient와 근거·원인 정확.
-- [ ] 각 단계의 사용자에게 보이는 실제 한국어 출력 파일(내부 HTML/HTTP), Claim source/Rule/Methodology/정확한 fact-path, 여러 사례의 결과·실패 이유를 함께 기록한다. **외부 전문가 승인/사람 검수 10건을 무조건적인 선행조건으로 재도입하지 않는다.** 필요하면 별도 사용자 조사로 취급한다.
-- **완료 산출물:** 5분야 결과 샘플과 재현 가능한 품질 평가. 위 요건을 충족해야만 내부 제품의 `usefulComplete`를 **검증된 범위에서** true로 판단한다. 이 플래그는 Production/Public/Persistence/Commerce 허가와 별도다.
-
-#### 모든 PR에 적용할 제품 진척 규약 (P0-NATAL)
-
-- **보고 항목:** `실제 사용자용 한국어 결과가 전보다 무엇이 달라졌는가 / 새로운 다중 근거 T8의 정확한 출처·입력은 무엇인가 / 어떤 명식에서 달라졌는가 / MUR complete·partial·insufficient 및 미해결 의미 공백 / 다음 최소 제품 기능`.
-- **진척 인정 금지:** 문서·출처 표기·Claim 복사문·비교 HTML·감사 로그·추가 fixture 수·CI PASS·PR 병합만으로 P0 제품 완성도를 올리지 않는다. 검증은 필요하나 **이미 검증할 해석 의미가 생긴 뒤** 이를 입증하는 수단이다.
-- **권한·품질 분리:** 내부 연구 Preview에서 새 source-qualified 후보를 실험하는 것은 가능하지만 `researchOnly`, `mayPublish=false`, `maySell=false`를 유지한다. Production/Official/공개·저장·결제 전환은 해당 체계의 별도 권한이다.
-- **완료 조건:** 실제 출생입력→명식→다중 근거 T8→일관된 한국어 풀이→5개 분야→차별/안전 품질 회귀의 전체 체인이 증명되어야 한다. S1~S6 체크는 **제품 산출물이 존재할 때만** 완료한다.
-
-#### 즉시 착수할 첫 **기능 PR**의 Definition of Done
-
-**목적:** 기존 분석 코드를 또 감사하는 것이 아니라 **첫 source-qualified Career 다중 근거 T8 → 한국어 소비자 보고서의 얇지만 완전한 수직 경로**를 실제 구현한다. 필요한 claim/input 계약과 T5/T6는 **같은 목표에 필요한 최소 범위로** 포함한다.
-
-1. `src/research/career-natal-reading-candidate.ts`의 단일 심볼/채널 관찰을 legacy research로 고정하고, 기존 Canonical/Registry/T5/T6/Claim Graph/ReadingProfile/EvidenceSelector를 사용한다. 새 병렬 runtime 금지.
-2. 실제 출처가 받쳐주는 다중 입력 Career 결합 패턴을 **최소 1개 구현**하고, 그 패턴과 다른 구조를 보이는 명식 대조 사례를 만든다. 근거가 부족하면 무단 발명하지 말고 정확한 source gap·해당 Claim HOLD를 기록한 뒤 다른 source-qualified 패턴으로 진행한다.
-3. **실제 계산된 차별 명식 두 개 + 동일 입력 대조 하나**에서 종합 Claim의 내용/근거 차이, 무근거/미상시각 fail-closed, 한국어 보고서가 소비자에게 어떻게 보이는지 검증한다. Career MUR는 부족하면 partial로 정확히 표시한다.
-4. **PR 결과에 실제 보고서 본문 예시와 비교 근거를 첨부**한다. 구조만 구현하고 사용자가 읽을 결과가 없는 PR은 이 첫 기능 목표 미달이다.
-5. 일반 CI 18/18 + PIE/Container → 정확한 HEAD pinned Integration 20/20 → squash merge → 새 main CI/Container 검증은 기존 규정 그대로 준수한다. CI/PR 완료는 제품 의미 품질의 대체물이 아니다.
-
-### 기존 N25–N35 근거·전달 무결성 작업 이력 (제품 완료와 별개 · 새 실행 순서 아님)
-
-**실제 품질 한계:** General Natal 실제 HTTP 35건 중 33건 delivered, 2건 partial evidence. 20개 중복 해석 사례조합은 동일 표시 명식 대조군 1개를 제거하면 고유 표시 명식 쌍 **19개**다. 새 승인된 개인별 다중 근거 종합 T8 Claim = **0개**; N12 `usefulComplete:false`, P0-NATAL은 **미완료**다. 문장 수·계산 사실 표시·검사 통과는 품질 달성 지표가 아니다.
-
-**운영 권한:** Engine은 기존 Canonical → Registry/T5/T6/T8 → Canonical Semantics → Official Plan/Renderer → Product/HTTP 실행·근거 보존 책임이다. Research는 명식·Claim·출처·반례 기반 의미 재료를 제공한다. **외부 전문가·TrustGrant 필수 승인 정책은 P0-NATAL 일반 독해에서 폐지한다.** 기존 허용 의미의 결정론적 재배열 및 계산 위치 연결은 자율 CI 검증 경로로 진행하고, 경합·불충분 주장만 범위별 HOLD 처리한다. 일반 Preview 실험 권한과 Production·Commerce 배포 권한은 구분한다.
-
-- [x] **N25/N25b — 전체 반복 사례의 Claim/Consumer 원인 분류 및 추적 (감사 구현 완료, 의미 해소 아님):**
-  - [N25 #2554](https://github.com/gycha0109-beep/Saju/pull/2554): 실제 내부 Service 5개 입력 → Official Explainability → Product 원문 35 atom(25 unique, 10 ambiguous, 0 unproven). 반복 원문에 가짜 단일 Claim 정체성을 부여하지 않는다.
-  - [N25b #2555](https://github.com/gycha0109-beep/Saju/pull/2555): 고유 19쌍에 해당하는 **25개 실제 내부 서비스 실행 / 187 atom** 확인; 19쌍의 Consumer 원문 추적 불가 atom이 포함된 쌍은 0. 차이 원인 후보는 `동일 matched 규칙 3 / 상이한 Research Claim의 같은 원문 6 / 서로 다른 Claim 원문인데 HTTP 의미 동일 5 / 한쪽에만 테마 차분 5`.
-  - **중요 분류 제한:** 위 Research 테마의 차분은 *전체 원국의 십신 family 부재*가 아니다. 19/19쌍의 전체 5-family 존재 집합은 동일. 각 타입·채널 차이의 인간적 의미를 새로 승인한 것 아님.
-- [x] **N26 — 실제 HTTP 의미 전달 보존 검증 완료 (승인 의미 누락 버그 재현 없음):**
-  - [N26 #2556](https://github.com/gycha0109-beep/Saju/pull/2556): 별개 요청의 reading ID 동일성은 주장하지 않고, **동일 출생·표시 명식 기준** 내부 Product와 live HTTP Preview를 대조. N5/N7 규격의 계산 사실 제거 및 정확한 N9 same-block 중복 압축(33건에서 49개 literal key-point copy 제거)만 허용했을 때 **33/33 의미 본문 exact parity**, 미확인/변형 0. 2개 partial evidence 사례는 동일 해석 성공으로 세지 않았다.
-  - 이 결과는 *허용된 본문 전달 무결성*의 증거다. 의미 자체가 얕고 범용적이라는 제품 문제는 미해결. 신규 의미 문구, Admission, Product 계약, Production 권한은 변경하지 않는다.
-- [x] **N27 — 전문가 없는 자동 증거 기반 명식별 독해(Preview 단계 구현 및 출처 회귀 완료):**
-  - **운영 결정: 외부 명리 전문가, ReviewerTrustGrant, 사람 검수 10건을 P0-NATAL 완료의 필수 선행조건에서 제거한다.** 대신 계산 정확성, 각 실제 Claim/rule/source version/hash, 반례, 명식별 재현성, 미상시각 fail-closed, 자동 CI 및 과잉 추론 금지를 코드로 강제한다. 사람이 실제로 검토하지 않았는데 리뷰를 완료했다고 기재하지 않는다.
-  - **N27a 구현 [#2563](https://github.com/gycha0109-beep/Saju/pull/2563) 병합·main 사후 CI/Container PASS:** `src/preview/natal-n27-self-service-evidence-reading.ts` / `createGeneralNatalIntegratedPreviewProductHost({enableAutonomousEvidenceReading:true})`. 정확히 동일한 Canonical 명식에서 발행된 기존 T8 테마 Claim + 계산된 십신 정/편/천간·지지 대표 위치 + **기존 Official Detailed Source Profile 문장**을 선택·결합한 전통적 주제 연결을 Preview 실험 화면에서 제공한다. 외부 검수자 없이 작동하고 기존 Preview 응답 기본값은 회귀를 위해 유지한다. 부의 규모·운세 사건·강약·격국 등 신규 원인/결과 주장을 추가하지 않는다.
-  - [x] **N27b 자율 검증 확대 [#2564](https://github.com/gycha0109-beep/Saju/pull/2564) 병합·SHA 고정 통합 20/20 PASS:** 실제 35개 HTTP 명식 / 19개 고유 동일 원문 쌍에 대해 기존 Claim 증거와 실행된 실험 독해의 출생시간·십신 위치 차이를 재현하고, **문장의 다양성이 아니라 실제 위치·subtype 근거가 설명되는지** 자동 채점한다. 서로 다른 정/편관, 겁재/비견의 차이는 *구조*로 설명할 수 있으나 신분·돈·성격 결과를 추정하지 않는다.
-  - **경합 중인 고전 결론 별도 격리:** Research [PR #2553](https://github.com/gycha0109-beep/Saju/pull/2553)의 `GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE@0.2.0-research`는 劫財/敗財·比肩分奪 해석·출처 무결성 충돌 중이다. 이 특정 관계의 결과 해석을 자동 채택하지 않는다. [#2557](https://github.com/gycha0109-beep/Saju/issues/2557)과 [#2560](https://github.com/gycha0109-beep/Saju/pull/2560)은 **선택적 고위험/경합 Claim 재검토 기록**, General Natal 전체 개발의 전역 차단기가 아니다. 전문가 없는 사실 기반 기본 독해의 출시 가능성을 심사 완료와 연결하지 않는다.
-  - **자율 릴리스 원칙:** 검증된 구조·기존 허용 주제·보수적 전통적 해석 표현은 코드 리뷰/CI/소스 버전 고정으로 운영한다. 새 인과관계·결과 예측은 출처 및 독립 반례 검증을 추가로 통과해야 하며, 통과 불가 시 해당 *문장만 제외*한다. 사용자 Preview/Production/Commerce 배포 권한은 별도 기존 배포 계약을 따른다.
-- [ ] **N28 — 실제 General Natal 종합 보고서 연결:**
-  - [x] **N28a — 사용자 보고서 우선 배치 ([#2565](https://github.com/gycha0109-beep/Saju/pull/2565) 병합 완료):** `enableAutonomousReportComposition:true`인 일반 명식 Preview에서 실제 Canonical→Official→Product의 원래 읽기 섹션과 명식 값은 그대로 두고, N27b에서 확인된 기존 T8 Claim·정편 십신 위치·기존 상세 출처 문장을 하나의 `내 명식에서 먼저 읽을 핵심 구조` 섹션으로 묶어 **`주요 해석` 직전**에 표시. 35건 실제 HTTP 사례 중 확정시각 33건, 미상시각 2건, 서로 다른 원국 반복 쌍 20개를 자동 검증. 원래 풀이 원문 변조, 출처 결박 실패, 허위 예측을 차단한다. 기본 Preview 동작은 그대로 유지한다.
-  - [x] **N28b — Canonical Semantic Bundle → Official Plan/Renderer/Artifact의 계산 사실 Qualifier 연결 ([#2566](https://github.com/gycha0109-beep/Saju/pull/2566) 병합·HEAD 고정 Integration 20/20 PASS):** N28a는 **Official 렌더링 후 Preview Product 표시 구성 단계**이지 새 Canonical Primary Unit을 허가하거나 Official Artifact에 의미를 추가한 상태가 아니다. 실제 단위 결박을 통해 원본 계획/설명가능성 체계 내부에 출처를 노출하려면 별도 내부 모델 편입 및 전 구간 회귀가 필요하다.
-  - 소스 판본 충돌이 있는 개별 관계만 보류하고 다른 유효 구조 풀이의 개발을 막지 않는다. `usefulComplete`는 실제 다중 근거 의미와 소비자 독해 조건 충족 전까지 false이다. 실험 Preview와 Production/Commerce의 배포 승인은 구별한다.
-- [ ] **N29 — 사용자 가치 자동 품질 판정 (외부 전문가 의존 제거):**
-  - [x] N29a [#2567](https://github.com/gycha0109-beep/Saju/pull/2567) 실제 35건 HTTP·고유 19쌍의 Claim/원국/보고서 간 자동 교차 검증: 정확한 HEAD `4f8744e7a1aa2949ad76a933a993602c022c8931`의 [통합 20/20](https://github.com/gycha0109-beep/Saju/actions/runs/39045628181) PASS 뒤 squash merge `81091389b2db95f49bd1a210d0e806c0b94376fe` 완료. 명식/출처/소비자 전달 결박을 검증했으나 실제 개인화 의미의 충분성은 아직 미입증.
-  - [x] N29 검수 자료 PR [#2559](https://github.com/gycha0109-beep/Saju/pull/2559) 병합 / main 검증 완료: 35개 HTTP 명식, 19개 반복 쌍, 실제 5쌍/10명식 비교 패킷.
-  - [ ] N27의 실행 가능한 두 출생시각 이상 대조 실험으로 **근거 누락, 잘못된 구조 구분, 근거 없는 개인적 행동/금전 단정, 같은 chart의 불안정 문구, 미상시각 과신** 여부를 CI에서 판정한다. 제품 적합성은 실제 회귀 지표와 UX 기준으로 판단한다.
-  - 독립 사람 검수는 원하면 추가할 수 있는 **선택적 사용자 조사**이고 출시 또는 의미 실험의 필수 승인이 아니다. 과거 [#2562](https://github.com/gycha0109-beep/Saju/issues/2562)는 종전 필수 승인 계획을 보관하는 기록으로 취급한다.
-- [ ] **N30 — 5개 Natal 영역 개인화 종합 확장:**
-  - [x] **N30a — 도메인 종합 독해의 동일 원국 표시 무결성 ([#2568](https://github.com/gycha0109-beep/Saju/pull/2568) 병합):** HEAD `0a38fb9b47677bf01ed8368309887bb4818de88c`의 SHA 고정 Integration 20/20 PASS 뒤 squash merge `b9264e66f596ac3fb720cc6a26b4c30e381fe00b`. 확정 기둥 누락/미확정 강등, 미상시각의 허위 시각, delivered 본문 누락을 fail-closed. 새 의미/Production 권한 없음.
-  - [x] **N30b — General의 출처 검증 핵심 구조를 5분야 Preview에 연결 ([#2569](https://github.com/gycha0109-beep/Saju/pull/2569) 병합):** HEAD `476c7822ad16375f52e44d63267b5cf4da202737` 통합 20/20 통과 → squash main `5fea3ab3d7120bd8957996e70de141c53f6b594e`, 새 main CI 18/18 및 Container PASS. 새 도메인 의미/Production 승인 아님.
-  - [x] **N31 — 4분야 기존 T8 해석·명식 자리 출처 결박 ([#2570](https://github.com/gycha0109-beep/Saju/pull/2570) 병합):** 내부 HTML 상단에 Career/Wealth/Business/Relationship 기존 연구 Claim 복사문과 Rule/Source/Canonical 자리를 표시. `main` SHA `25e46d65f342ec8fa0401f96b2c7074517e9d7a4`의 CI·Container PASS. 소비자 승인 아님.
-  - [x] **N32 — 4분야 기존 T8 원문 전체 펼쳐보기 및 동일 채널 witness ([#2571](https://github.com/gycha0109-beep/Saju/pull/2571) 병합):** 해당 구현이 `main` SHA `55bc5b502ccb14eb26b073dfee6ba9008ec4a243`에 포함된 것을 확인했다. 기존 연구 원문을 새 의미로 승격하지 않으며, Production/Commerce 및 P0 완료는 여전히 HOLD.
-  - [x] **N33 — 기존 4분야 연구 해석의 정확한 Claim/실행 원국·계산 근거 연결 ([#2573](https://github.com/gycha0109-beep/Saju/pull/2573) 병합):** PR HEAD `05d89259b706cb2ebc76849de6acc2c5f0ceb0d0`에서 일반 CI 18/18, PIE·Container PASS, SHA 고정 [Integration 20/20](https://github.com/gycha0109-beep/Saju/actions/runs/39117218635) PASS, squash main `7d139297c27bea5aec6c17890ccf90cf4a62d507`. 새 main [CI 18/18](https://github.com/gycha0109-beep/Saju/actions/runs/39118140743) + [Container](https://github.com/gycha0109-beep/Saju/actions/runs/39118140742) PASS 확인. Claim별 실제 matched evaluation·출처·정확한 사실 경로와 버전을 확인하며 새 의미·Production/Commerce 승인 없음.
-  - [x] **N34 — 실제 35건 HTTP 근거와 네 분야 기존 원문 차이 독립 판정 ([#2574](https://github.com/gycha0109-beep/Saju/pull/2574) 병합):** 동일 Canonical 명식에 연결한 네 분야의 연구 T8 원문을 35개 실제 General HTTP 입력 및 N10의 서로 다른 명식 비교 20건(고유 명식쌍 19개)과 별도의 동일입력 대조군 1쌍에서 재실행한다. 원래 한국어 ClaimNarrativeProfile 문장 변경/같은 문장의 서로 다른 Claim 근거/같은 근거의 계산 위치 차이/근거 부족을 분리 집계하고, 위치만 달라진 결과를 독립적인 사주적 의미 차이로 과장하지 않는다. 결과 JSON과 테스트로 결정성, 출처·원국 지문, 미상시각 및 원본 5분야 HTTP 보존을 검증한다. 이 작업은 개인화 품질 문제의 정량적 *분류*이지 별도 전통 의미, 행동 결과, 체감 가치, Production/Commerce 승인이 아니다. **해석 의미 자체는 개선하지 않은 분류 결과이며 제품 완료로 세지 않는다.**
-  - [ ] **N35 — 기존 연구 원문 나란히 표시 ([#2575](https://github.com/gycha0109-beep/Saju/pull/2575) 열린 PR, 2026-10-18 확인):** 내부 감사 화면/아티팩트 개선이며 **S1~S6의 의미 있는 새 T8·MUR·보고서 수직 구현에 해당하지 않음**. 기존 PR은 별도 CI 정책대로 판정하고 유사 비교 UI 작업을 신규 P0 우선순위로 복제하지 않는다.
-  - General에서 검증된 원국 근거·분야별 의미 사용 범위만 일반/직업/재물/사업/관계로 확장. 도메인 의미 권한과 temporal scope를 혼합하지 않는다.
-
-**지속 통합 계약:** PR별 `Watchtower-Track: saju` → CI Quality + 16개 샤드 + CI Verify, PIE, Production Container → **정확한 HEAD SHA 고정** Integration 20/20 → `expected_head_sha` squash merge → 새 `main` CI/Container 검증. 이 실험은 외부 전문가 승인을 요구하지 않는다. 다만 불확실·충돌 관계의 결과 예측, 부정확한 출처·계산, 별도 Production/Commerce 권한 우회는 허용하지 않는다.
-
-### P1-NATAL-QUALITY — 개인화 품질 심화 및 도메인 확장 (각 완성된 수직 슬라이스와 동시 진행)
-
-- [ ] 독립 도메인 문장들의 충돌/반복/추론 범위를 줄이고, 같은 핵심 사실이 직업·재물·관계에서 어떻게 다른 해석으로 투영되는지 확인한다.
-- [ ] 구조적 관찰만으로는 판단할 수 없는 최종 신강·신약/왕쇠·격국·용신은 **별도 연구 결과가 source-qualified 되어 돌아오는 경우에만** 해당 rule/fact 범위로 연결한다.
-- [ ] 개인화 리포트 설명력, 사용자 피드백, 오해하기 쉬운 결정론적 표현과 과도한 반복을 실제 샘플 기준으로 개선한다. 템플릿 개수나 섹션 길이를 품질의 대체 지표로 삼지 않는다.
-
-### 기존 완료 이력 — P0/P1/P2 (제품 목표 완료와 다름)
-
-다음 과거 P0/P1/P2는 요청 시각·경로 무결성·bounded spouse 파일럿의 **제한된 완료 이력**이다. **P0-NATAL 제품 종합해석이 완성되었다는 뜻이 아니다.** 아래 원래 기술 검증 기록과 SHA/CI 증거는 보존한다.
-
-### P0 — Production spouse 요청 시각 문제 정리 (완료)
-
-**병합 완료: PR #2517** — `fix/saju/production-spouse-request-provenance`, SHA `114ed409db77ef86f0ce33e4476d9c2ec281d047`.
-
-- [x] 최신 PR HEAD·base·mergeability·표준 CI·PIE·Production Container를 **실시간 재확인**한다.
-- [x] 제출 HEAD의 일반 CI Quality + full regression 16/16 + CI Verify가 성공했고 컨테이너/PIE도 성공했다면 `ci-integration-ready`로 **해당 HEAD에 고정된 Integration 실행**을 요청한다. 다른 SHA의 결과를 재사용하지 않는다.
-- [x] integration admission / full Quality / 16개 full test / full Verify / CI Integration Verify가 전부 성공하면 exact expected HEAD로 **squash merge**한다.
-- [x] 병합 후 `main` SHA와 `main` CI Quality / 16개 테스트 / CI Verify / Production Container를 검증한다.
-- [x] PR #2517의 의도: bounded **Production 배우자운**의 명식 `createdAt`·공식 해석 결과물 `generatedAt`·Narrative clock을 **각 요청 시각**에 맞추되, 기존 semantic/consumer authority resolver와 spouse-only scope를 유지한다.
-- 실패 시 원칙: 정확한 샤드 로그를 분석해 최소 수정 → 새 SHA에서 처음부터 검증한다. 16-shard 워커 부하로 인한 장시간 Full Interpretation 테스트를 새 단위 테스트에 중복 생성하지 않는다.
-
-PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현재 결과에 맞게 갱신하고 **미완료 선행 PR부터** 처리한다.
-
-**2026-10-13 실제 실행 근거**
-
-- 로드맵 선행 PR [#2518](https://github.com/gycha0109-beep/Saju/pull/2518): SHA `62f2e0d803a2748d6ceb156c477de6894ef68df9` 통합 20개 job PASS, squash merge `e53556e3cfd2e2d53a1104acb2fcb8162a854b92`. 해당 `main`의 CI Quality + 16/16 + Verify + Production Container PASS.
-- Production spouse 요청 시각 수정 [#2517](https://github.com/gycha0109-beep/Saju/pull/2517): 정확한 HEAD `114ed409db77ef86f0ce33e4476d9c2ec281d047`, 일반 CI / PIE / Production Container 및 [SHA-pinned Integration](https://github.com/gycha0109-beep/Saju/actions/runs/38354513635) admission + Quality + 16/16 + Verify + Integration Verify PASS; squash merge `257a7d0caa59f0f86847ef21e614ca2de40533a3`.
-- #2517 병합 후 `main` 검증: [CI](https://github.com/gycha0109-beep/Saju/actions/runs/38355835988)의 Quality + 16/16 + CI Verify **모두 PASS**, [Production Container](https://github.com/gycha0109-beep/Saju/actions/runs/38355836024) **PASS**. P0 완료.
-
-### P1 — 현행 Natal/Spouse 제품 경로의 실행 무결성 (완료 — 기존 승인 범위)
-
-**목표:** ONE PERSON → ONE CANONICAL NATAL BASIS → MANY BOUNDED READINGS의 런타임 불일치 없이 소비자 응답까지 전달.
-
-- [x] 5개 Natal Preview + spouse position-only Production/Preview + Source Proof의 **같은 출생정보·같은 계산 정책에 대한 명식 ID/시간 미상 처리/증거/해석 범위**를 확인한다. (5개 Preview HTTP는 출생시간 확정 사례; spouse Production·Preview·Source Proof 간 출생시간 확정/미상은 별도 Host regression)
-- [x] 일반 Natal과 spouse의 정확한 registry/admission을 유지한다. Source Proof가 더 넓은 Research registry 의미로 조용히 이동하지 않도록 regression을 유지한다. (Preview admission / official reading fidelity / Source Proof mismatch 차단 tests)
-- [x] 각 요청의 `requestedAt`, snapshot `createdAt`, report `generatedAt`, 재현성·도메인 격리·HOLD/no-sell을 검증한다. (Preview + Production request-clock / Source Proof HOLD tests)
-- [x] **검증에서 실제 관측된 결함만** 작은 PR로 보완한다. #2519/#2520은 검증 증거만 추가했고 계산·캐시·의미·권한 구현은 변경하지 않는다.
-- 완료 기준: 허용된 범위의 HTTP/Host E2E 및 실패/unknown-time 사례 PASS, unadmitted cross-domain 의미 없음, 기존 Production/Preview/Source Proof 권한 변경 없음.
-
-**P1 완료 근거 / 검증 범위 (2026-10-14)**
-
-- `test/preview-e2e-runtime.test.ts`는 5개 Natal Preview 실제 HTTP 요청의 pillars / fiveElements / tenGods 표시값 동등성에 더해, #2520에서 **실제 governed 계산 함수가 반환한 내부 `snapshotId`의 5개 도메인 간 동일성(출생시간 확정)**을 검증한다. 소비자 응답에 내부 ID를 노출하거나 새로운 계산·권한 경로를 추가하지 않는다.
-- `test/preview-calculation-request-clock.test.ts`와 `test/preview-reading-artifact-request-clock.test.ts`는 Preview 시각 정합성, `test/production-spouse-official-request-clock.test.ts`는 bounded Production spouse의 snapshot / narrative / artifact 요청 시각 및 spouse-only gate를 검증한다.
-- `test/source-reading-proof-readiness.test.ts`는 snapshot/registry/interpretation/evidence/artifact identity mismatch 차단을 검증한다. Source Proof는 **HOLD**이고 `canExecute / canPublish / canSell = false`; Proof metadata 또는 transport 무결성은 의미 승인이나 판매 허가가 아니다.
-- 새 경량 테스트 [#2519](https://github.com/gycha0109-beep/Saju/pull/2519)는 출생시간 확정/미상에서 Production spouse, Preview spouse, Source Proof 계산 경계의 내부 `snapshotId` 직접 일치를 검증한다. HEAD `b45662ef5b3224382d2f7f2194709592c55e948b`는 일반 CI / 16개 샤드 / PIE / Container 및 [SHA 고정 Integration 20/20](https://github.com/gycha0109-beep/Saju/actions/runs/38491557892) PASS, squash merge `7fa4a3bd1d2a2d5cadde8c725f6ef6fe919ee6ad`. 병합 후 [`main` CI](https://github.com/gycha0109-beep/Saju/actions/runs/38494172239)의 Quality / 16개 회귀 샤드 / CI Verify PASS, [Container](https://github.com/gycha0109-beep/Saju/actions/runs/38494172274) PASS.
-- [#2520](https://github.com/gycha0109-beep/Saju/pull/2520)은 기존 5개 Natal Preview HTTP E2E에서 실제 governed 계산 경계의 내부 `snapshotId`를 관측·비교하는 추가 regression이다. HEAD `320960ec0686f546b9c0d7f1d61b952ed986744e` 일반 CI/16개 샤드/PIE/Container, [SHA 고정 Integration 20/20](https://github.com/gycha0109-beep/Saju/actions/runs/38496226631) PASS; squash merge `4da989a58b9409b4e8d6d38f6f6c4877a1b3daf8`. 병합 후 [`main` CI](https://github.com/gycha0109-beep/Saju/actions/runs/38497642814) Quality / 16개 회귀 샤드 / CI Verify PASS, [Container](https://github.com/gycha0109-beep/Saju/actions/runs/38497642811) PASS.
-- **P1 종료 판정 B:** 확인된 중요 불일치 없음. 다만 이 판정은 위에서 실행한 고정 입력의 승인된 Natal/Spouse 경로에 대한 회귀 증거이고, 모든 생년월일 조합의 정확성·Research 의미 승인·public GA/persistence/commerce 허가를 뜻하지 않는다.
-- 기존 승인된 registry/semantic/authority 경로에서 결함 확정 전까지 해석 의미, 캐시, 계산 방식, public/persistence/commerce를 변경하지 않는다.
-
-### P2 — Spouse standard/detailed 파일럿의 현재 상태 확정
-
-- [x] SA-7B가 승인한 **bounded Production standard**와 SA-7C **position-only detailed** 코드를 실제 Production host/renderer/contract test로 확인한다.
-- [x] standard/detailed canonical meaning, source semantic hash, plan/evidence/disclosure 보존과 `modelCalls=0`, 미허용 의미 표현 0건, material mismatch 전체 standard fallback을 확인한다.
-- [x] 이미 입증된 구현은 중복 구현하지 않는다. 결함이 확인될 때만 보완한다.
-- **금지:** 배우자 외모·성격·특정 인물·혼인 결과 예측, public GA/persistence/commerce 자동 승인.
-
-**P2 기존 증거 확인 — 감사 완료, 재구현 없음 (2026-10-14)**
-
-- `docs/implementation/sa7b-spouse-standard-official-reading-authority-closure-v1.md`는 Production standard의 `ACTIVE_BOUNDED`(position-only)를 명시한다.
-- `test/official-reading-detailed-spouse-pilot.test.ts`는 standard/detailed 동일 canonical semantic hash·plan hash·disclosures·explainability, `modelCalls=0`, 제한 문구 미노출 및 stale material의 **whole-response standard fallback**을 검증한다. 해당 파일럿은 기존 통합 회귀에서 PASS됐지만 새 공개·판매 권한을 뜻하지 않는다.
-- `test/relationship-spouse-t8-day-branch-palace-production-delivery-activation-implementation.test.ts`는 실제 `/api/readings` HTTP 활성화, 비허용 Production 요청 10건 차단, bounded 의미와 `modelCalls=0`, broader authority false를 검증한다. #2519의 일반/통합 16개 샤드에서 회귀 성공을 확인했다.
-- P2는 **기존 bounded 구현 감사 기준 완료**다. 추가 구현은 실제 위반이 재현될 때만 별도 작업으로 연다. SA-7D의 General Annual은 `RETURN_TO_RESEARCH`, `Production HOLD`를 유지한다.
-
-### P3-A — General Annual 소비자 경험 **내부 미리보기 개발** (기반 구현 완료 · B 작업선에서 지금 병행)
-
-**우선순위(2026-10-21):** #2525의 내부 연운 데모·리포트는 병합되었다. 이 UX 실험과 올해/이번 달 연결은 **P0-NATAL 완료를 기다리지 않고 B 작업선에서 지금 병행**한다. P0-NATAL의 의미 품질은 여전히 중요한 구현 우선순위이나 시간 도메인의 별도 source gate와 혼동하지 않는다.
-
-**실행 원칙 변경(2026-10-14):** 고전 원문 직접 판독·독립 심사는 **Official Reading의 주장/승격 승인에만** 필요하다. 내부 상품 UX 시제품의 작성, 개인화 문구 조합, 사용자 테스트, 품질 실험은 그 완료를 기다릴 필요가 없다. 새로운 문헌 연구를 이 트랙의 선행 작업으로 요청하지 않는다.
-
-- [x] 기존 `buildAnnualInterpretationFacts`와 연운 테마/충 관계 14개 연구 문구를 **별도 내부 소비자 미리보기 보고서**에서 재사용한다. 십신별 중심 메시지와 실제 관측된 충 신호만 출력하며, 미상 기둥은 억지로 해석하지 않는다.
-- [x] `src/preview/general-annual-exploration-report.ts`와 `src/preview/index.ts`에 **독립 리포트 조합 경로**를 둔다. `test/general-annual-exploration-report.test.ts`는 10십신, 연도 변화, 출생시간 미상, 충 관계 및 권한 차단을 검증한다.
-- [x] `npm run preview:annual:demo -- 2026 annual-exploration-preview.html`로 **실제 계산 샘플→연운 해석 문구→열 수 있는 HTML 리포트**를 작성하는 로컬 명령을 추가한다. 테스트 결과가 아닌 구현 항목 체크이며, 이 브랜치의 CI 결과는 해당 PR에서 별도 확인한다.
-- [ ] 다음 제품 작업: 연운 허브→세부 문구→월별 연결의 UX 및 카피 비교, 실제 샘플 품질평가, 내부 데모의 사용자 피드백 반영. HTTP·회원/저장·공개/판매 경로는 별도 검토한다.
-- **입력 사실 구분:** 현재 `annualSexagenaryPillar(year)`는 서울 **달력 연도**에 따른 연주이다. 입춘 순간 기준 年柱 효력이라고 주장하지 않는다. 세부 예측·금액·질병·확정 사건 등 검증되지 않은 내용은 만들지 않는다.
-- **권한 구분:** `internal_exploration` / `not_official_reading` / `mayPublish=false` / `maySell=false`; 현재 Official/Bridge/Production 경로 및 그 권한을 바꾸지 않는다.
-
-**P3-A 완료 판단은 내부 미리보기 품질 및 기능 사용성으로 한다.** 원전 수집 건수, #2462 종료, Bridge ADMITTED를 이 시제품의 선행조건이나 완료 지표로 다시 추가하지 않는다.
-
-### P3-B — SA-7D: Annual standard **Official Reading 승격 전용** (BLOCKED: Research/Bridge)
-
-**선후관계:** 연운 Engine/렌더러 신규 제작보다 **연운 고유 source-qualified semantic prerequisite**가 먼저다. [독립 근거 심사 #2462](https://github.com/gycha0109-beep/Saju/issues/2462)는 10개 현대 십신 연운 테마 및 4개 지지충돌 tension 규칙의 직접 source authority가 미확립됐음을 기록한다. 이는 이미 승인됐다는 증거가 아니며 Research/Bridge HOLD를 유지한다.
-
-1. [ ] General Annual의 출처 원문, 정확한 locator, 명제, exception/counterexample, scope, provenance, domain review와 bridge disposition을 확보한다.
-2. [ ] 실제 Bridge decision이 `ADMITTED`를 명시할 때에만 exact annual semantic producer의 Engine 경로·해당 scope/rule/claim 테스트를 연다.
-3. [ ] 이후 승인 가능한 범위에서 `general:annual` Official Reading authority resolver + semantic projection + model-free default product cutover를 검증한다(`modelCalls=0`).
-4. [ ] **각각 독립 판정**: `career:annual` → `wealth:annual` → `relationship:annual:general` → `business:annual`.
-
-기존 R194–R200 annual temporal calculation, impact bundle, timing renderer 및 R199 자동 연결은 **재사용**한다. fallback 성공·Profile 선택·Research 후보 실행을 semantic authority라고 부르지 않는다.
-
-**P3 진입 전 검증·결함 수리 완료 증거 (2026-10-14, 의미 승인과 분리)**
-
-- [#2521](https://github.com/gycha0109-beep/Saju/pull/2521): P1 natal parity·P2 bounded spouse audit의 완료/차단 범위를 로드맵에 확정. exact HEAD `662e212f7087a79bc8ea6d50da451667d2c4e29c` [Integration 20/20 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38503930370), squash `36c1ff08230d4008a526bdcf57d127b138a434ec`; [main CI 18/18 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38507050469), [Container PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38507050570).
-- [#2522](https://github.com/gycha0109-beep/Saju/pull/2522): `deriveAnnualStemTenGod`의 **일간 10 × 비교 연간 10 = 100개 현대 계산 분류**에 독립 리터럴 기대값 회귀를 추가. `internal_research / unreviewed` 14개 Annual 규칙과 `RETURN_TO_RESEARCH / Production HOLD` 차단 회귀 유지. exact HEAD `43d65efc3cadf672beb2e597b5486385407ea95f` [Integration 20/20 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38509324549), squash `feefd74fb6e2112e52e33cade2e42e6ef1c42b8f`; [main CI 18/18 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38510473839), [Container PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38510473809).
-- [#2523](https://github.com/gycha0109-beep/Saju/pull/2523): 상대 Annual/Monthly `referenceDateTime`에서 존재하지 않는 그레고리력 날짜를 `Date`가 조용히 보정하던 입력 결함을 수정. UTC/수치 offset 명시·윤년·월말/시간/오프셋 음성 검증 추가; **입춘 효력 年柱 정책 및 기존 의미·권한은 미변경**. exact HEAD `721f423b61cc46ad8a3f07792e583a3bba451d3a` [Integration 20/20 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38514827639), squash `225728a0ab2017b3218bb0a03ee46c734c18e702`; [main CI 18/18 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38516557294), [Container PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38516557310).
-- **경계:** 계산 분류 100쌍 PASS / 입력 오류 수정 PASS는 **역사 십신 표기 직접 증거, 연운 10개 현대 해석 테마 + 지지충돌 4개 tension의 Annual-specific semantic authority, D2 공적 입춘 원문/초 정밀도, 실재 reviewer attestation/Bridge ADMITTED**를 생성하지 않는다. #2462는 Open, 연구 Draft #2441·#2461·#2468과 후속 쌓인 Draft는 미병합 유지. P3 `RETURN_TO_RESEARCH`, Production `HOLD`; P4~P6 자동 승격 금지.
-
-### P4 — SA-7E: Annual detailed 확대 (P3의 개별 도메인 승인 후)
-
-- [ ] **Standard Official Reading이 승인·실행되는 정확한 annual domain만** detailed material, source semantic hash/plan/evidence parity 및 fail-closed fallback을 구현한다.
-- [ ] 단순 더 긴 문구 또는 LLM 출력을 근거 없이 승인된 material로 승격하지 않는다.
-
-### P5 — SA-7F: Monthly standard Official Reading (P3 선행)
-
-- [ ] Annual context/temporal layer precedence, 절기 전후 구간, 도메인별 source/authority를 확정한다.
-- [ ] Annual 승인 상태의 해당 context를 상속한다고 해서 월운 자체가 자동 승인되지는 않는다.
-- [ ] General부터 도메인별 별도 admission/Official reading cutover/0-model 검증.
-- **금지:** annual 맥락 부재 시 standalone monthly oracle.
-
-### P6 — SA-7G: Monthly detailed (P5 도메인별 승인 후)
-
-- [ ] 각 monthly standard 권한이 닫힌 domain에 한해 detailed material/표현/검증을 별도 승인한다.
-- [ ] 기존 natal/annual 상세 material을 근거 없이 재사용하지 않는다.
-
-### C-FAMILY — 가족 풀이 (부모/자녀, 관계 작업선 병렬 착수 · 미완료)
-
-- [ ] 현재 `family:parents` / `family:children`의 실행 가능한 사실·Claim·방법론·source 및 근거가 없는 문장을 구분한다. 부모와 자녀를 하나의 generic 템플릿으로 처리하지 않는다.
-- [ ] 해당 관계의 입력 주체·명식 사실이 구체적으로 무엇을 의미하는지 명시하고, **당사자가 입력하지 않은 가족 구성원의 성격·삶·운명을 사실처럼 예측하지 않는다.** 추가 인물의 출생정보가 필요한 설명은 별도 입력/관계 범위로 구분한다.
-- [ ] 재사용 가능한 source-qualified T5/T6→T8 및 근거/부족 범위를 사용하여 부모/자녀 별 한국어 읽기와 `complete/partial/insufficient`를 구현한다.
-- **완료:** 실제 명식 사례별로 부모·자녀가 다른 의미를 갖는 이유가 결과 문단/정확한 source/fact-path로 설명됨.
-
-### B-LIFE-STAGE — 삶의 단계 풀이 (시간 작업선 병렬 착수 · 미완료)
-
-- [ ] `life-stage:general`에서 지금/이후라는 UX 문구가 **원국 구조 설명**인지 **대운/연·월 동적 시기 해석**인지를 분리한다.
-- [ ] 계산 가능한 대운·연월 사실과 그 의미를 해석할 authority를 구분하고, source/Methodology가 인정하는 stage transition·기간 경계가 있을 때에만 시간별 의미를 만든다.
-- [ ] 동일 원국의 단계/시기 근거가 다르면 읽기 차이를 보여주며, 시각 미상·입춘·대운 policy 불확실성은 그대로 보존한다. **근거 없는 다음 전환점·시기 예측은 HOLD.**
-- **완료:** 명시된 계산/해석 정책의 범위 내 현재/다음 단계 한국어 결과와 오류·부분 지원 처리; 독자적 Stage oracle 금지.
-
-### C-SPOUSE-DEPTH — 배우자·관계의 실제 읽기 확장 (P2 bounded 기초 재사용 · 병렬 착수)
-
-- [ ] 현재 SA-7B/SA-7C의 `relationship:natal:spouse` **일지 배우자궁 위치만** 다루는 `ACTIVE_BOUNDED` 경로를 재사용하고 변경하지 않는다.
-- [ ] spouse 전용으로 새로 허가된 T5/T6/T8 조합이 있으면 그 **정확한 범위**만 소비자 문단에 반영한다. 전통적 위치 관찰을 배우자 성격·외모·결혼 시기·관계 결과의 확정 설명으로 확대하지 않는다.
-- [ ] 허가 범위에서 배우자·관계 풀이의 최소 유효 구성과 fallback을 정하고, general relationship·compatibility와 혼동하지 않는 결과를 만든다.
-- **완료:** 기존 position-only 결과보다 더 많은 실제 source-qualified 의미가 존재할 때만 상세 진척을 인정; 근거가 없다면 P9 미완료/HOLD로 남는다.
-
-### C-COMPATIBILITY — 두 사람 궁합 (T10, 관계 작업선 병렬 착수 · 미완료)
-
-- [ ] `compatibility:natal` 요청에 **두 대상의 출생입력·각각의 Canonical snapshot/hash 및 시각 미상 시나리오**를 바르게 연결한다. 관계정보 접근/공유·동의는 MyeongHa 제품 트랙의 기존 권한 설계를 따른다.
-- [ ] 단순 두 원국의 개별 성격 문장 병치가 아니라 **두 명식 사이** source-qualified 구조·해석 상호작용을 T10으로 구성한다. 점수·확률·운명적 결과를 무단 산출하지 않는다.
-- [ ] 관계 유형/근거 부족/서로 다른 시나리오에서 판정을 보수적으로 분리하며, 궁합용 한국어 합성 읽기·증거·한계를 함께 제공한다.
-- **완료:** 실제 서로 다른 두 사람 조합과 입력 순서/미상시각 사례에서 근거 있는 상호작용 차이, 대칭성(방법론 적용 시), 정직한 부족 처리가 검증됨.
-
-### D-QUESTION — 현재 고민으로 보는 질문형 풀이 (T11, 질문 작업선 병렬 착수 · 미완료)
-
-**첫 기능(2026-10-21, 실행 이슈 #2622):** 질문 메뉴에 정확한 기존 주제명(`질문: 직업운`, `질문: 재물운`, `질문: 올해 사업운` 등)을 입력하면 새 T11 해석을 지어내지 않고 **같은 profile authorization을 가진 기존 원국/연월 풀이**로 연결한다. 메뉴 밖의 자유 질문은 기존 T11 입력으로 유지하고, 해당 증거가 없으면 부분/미지원으로 처리한다. 기간 기준시각·궁합 상대방 요구를 우회하지 않는다. **실제 새 의미 Claim이나 서비스 판매 권한을 승인하는 변경은 아니다.**
-
-- **D 단계별 실제 기능 (2026-10-24):** 자유 질문 `question_specific:natal`의 T11 근거가 부족한 경우 기존 `ProductReadingResponse.coverage.explanation`에서 왜 직접 답하지 못하는지 안내하고, `질문: 직업운`·`질문: 재물운`이라는 **이미 구현된 정확한 기존 주제 경로**를 사용자가 직접 선택할 수 있음을 설명한다. 이는 해당 원국 분야의 출처가 충분하다는 약속이 아니며, 기존 각 분야의 EvidenceSelector·ProfileAuthorization·부분/불충분 판정이 그대로 적용된다. 질문형 전체/새 T11 Claim/Official/판매 완료로 계산하지 않는다. 테스트: `test/product-reading-delivery.test.ts`의 실제 실행→소비자 응답 경로.\n- [ ] 사용자 질문을 허용된 `question-specific:natal` 및 연운·월운·관계 등 **실제로 근거가 존재하는 범위**에만 연결한다. 자유 질문이 새 명리 권한이 되지 않는다.
-- [ ] 질문에 필요한 주체·시간·대상·도메인을 결정론적으로 식별하거나 필요한 정보만 요청하고, 기존 ReadingIntent→EvidenceSelector→source-bound T11 합성으로 구성한다.
-- [ ] 실존 T8/T9/T10의 명시된 근거를 재사용하되, 없는 결과를 LLM이 메우지 않는다. 질문별 unsupported/insufficient 이유와 사용자가 선택할 수 있는 지원 범위를 설명한다.
-- **완료:** 대표 질문 유형별 실제 계산/Claim 경로에서 질문 의도에 맞는 한국어 답, 출처·한계·부분 지원 처리까지 작동; 모든 질문에 무조건 답할 필요는 없다.
-
-### 전역 12개 메뉴 완주 — 병렬 진행 및 통합 종료 판정
-
-- **A 원국:** P0-NATAL Career와 General/Wealth/Business/Relationship을 동일 기반의 서로 다른 메뉴 수직 기능으로 **동시 확장**한다. S1~S6의 품질 기준은 축소하지 않는다.
-- **B 시간:** P3-A 연운 내부 미리보기·월별 연결, 삶의 단계의 기간·근거 설명을 **지금 구현**한다. `P3-B` Annual Official, `P4` Annual Detailed, `P5` Monthly Official, `P6` Monthly Detailed의 **서로 필요한 정확한 출처 승인에 한해서만** 직렬 선행이 적용된다.
-- **C 관계:** 가족·배우자 제한 해석 확대·궁합의 **각 소비자 결과와 결핍 처리**를 병렬 진행한다. 기존 배우자 position-only 기반은 재사용하되 새 의미로 자동 승격하지 않는다.
-- **D 질문/화면:** 질문형의 의도→가능 범위 Claim→한국어 결과를 기존 엔진으로 구성하며, 12개 카드 가용성·현재 정보 유지·Reader 이동을 UX 담당 트랙과 **각 메뉴 구현 시점에 함께** 연결한다.
-- **합류 지점은 메뉴별 사용자 결과:** A 전체 완료 → B 착수 → C 착수 → D 착수와 같은 단계는 없다. PR 하나에 모든 메뉴를 억지로 묶지도 않는다. **각 PR은 실제로 사용자에게 전달되는 한 메뉴 이상의 기능 변화**와 정확한 출처/미지원 처리에 집중한다.
-- **최종 종료 판정:** P0 다섯 분야 완료와 별개로 12개 메뉴 각각의 의미 품질·입력/시나리오 실패 처리·근거·해당 권한과 UX 연동 책임이 판정됐을 때만 사주 제품 12메뉴 종료를 선언한다. 별도 트랙 결과는 Saju에서 임의 완료 처리하지 않는다.
-
-### 병렬 Research handoff — 엔진 개발 중단과 분리
-
-연구 미비를 발견한 엔진 담당은 해당 범위에 대해 **부족한 판정 조건 / 기존 원문·rule / 반례·테스트 / 반환 계약 / 관련 이슈**를 기록하고 Research 소유 이슈로 이관한다. Research 답변은 `APPLICABLE_BOUNDED / NARROW_OR_REPLACE / INCONCLUSIVE / REJECTED` 등 근거가 있는 결과와 적용 범위를 반환한다. **연구 미해결 = 해당 의미 주장 HOLD이지 P0-NATAL 내부 구현 전체 HOLD가 아니다.**
-
-| 공백 | 연구/Bridge 원장 | P0-NATAL에서의 처리 |
+**완료 증거:** 재물 111건 전부의 누락 원인과 해당 실제 사실/Claim/선택 상태, 올해·월별 중복의 근거 그룹이 재현 가능한 결과 파일에 기록된다. 상세 근거가 확인되지 않은 건은 **원인 미확인**으로 남기고 억지 분류하지 않는다.
+
+### 단계 2 — 재물 풀이 누락과 독립 종합근거 개선
+
+**대상 코드**
+- **src/research/wealth-natal-multifactor-candidate.ts**
+- **src/preview/wealth-natal-multifactor-report.ts**
+- 기존 T5/T6 출처 및 Claim Graph, EvidenceSelector, Narrative 경로
+
+**기존 기준:** 재물 중심 후보는 식상+재성+관성 / 식상+재성 / 재성+관성 / 재성+인성 / 비겁+재성 / 비겁+재성+인성의 6개 기본 패턴이다. 패턴 존재와 독립적으로 충분한 한국어 종합풀이가 가능한지는 별도다.
+
+**구현 작업**
+1. 단계 1에서 확인한 **실제 빈 결과 유형**부터 순서대로 개선한다. 근거 선택·렌더링 누락이면 해당 결함을 수정하고, 등록 해석 규칙이 부족하면 출처가 지지하는 새 조합 후보를 확인한다.
+2. 재물과 관련된 **가치 생산 / 자원·교환 / 관리·책임 / 준비·지원 / 배분·협력 / 구조적 긴장** 관점을 기존 명리 근거가 지지하는 범위에서 구분한다. 관점을 열거한 것만으로 새 의미 규칙이 생긴 것으로 취급하지 않는다.
+3. 재물의 핵심 결론과 독립적인 보조 해석 축을 구분한다. 같은 계산 위치·동일 근거의 문장만 재서술하면 독립 보조 축으로 계산하지 않는다.
+4. 동일 명식의 **근거 있는 핵심 결론 → 사용한 근거와 연결 이유 → 구별되는 보조 요인 → 상충 또는 제한 조건 → 실제로 알 수 없는 부분**을 한국어로 구성한다.
+5. 근거가 충분하지 않아도 해당 명식에서 확인된 범위의 **정확한 부분 풀이**와 부족한 이유를 보여 준다. 출처 없는 재물 성향·소득·투자 성공·재산 규모 주장은 금지한다.
+6. **규칙 추가 후 검증:** 기존 500건 중 누락 대상과 정상 대상의 해석 내용을 함께 비교한다. 새 Claim은 해당 source·Rule·Methodology·입력 계약과 실제 명식 차이로 입증한다.
+
+**완료 증거**
+- 기존 111건 중 변경된 각 사례에서 **왜 달라졌는지**가 입력·근거·주장·한국어 문단으로 추적된다.
+- 여전히 근거가 부족한 사례는 **명확한 불충분 사유**를 표시한다. 무근거 문구를 채워 단순히 공백을 0으로 만드는 방식은 불합격이다.
+- 충분히 서로 다른 두 명식에서 실제 해석 내용이 다르고, 같은 명식을 다시 실행하면 의미가 일관된다.
+- 완전/부분/불충분 분류와 실제 설명의 범위가 일치한다.
+
+### 단계 3 — 올해 운세의 원국 맥락 결합
+
+**대상 코드**
+- **src/research/general-annual-reading-candidate.ts**
+- **src/preview/general-annual-exploration-report.ts**
+- 기존 연간 계산 사실·시간 정책·실행된 Interpretation/Evidence 경로
+
+**현 상태:** 10가지 연간 십신 주제와 일부 지지 충돌 후보 중심이어서 고정 연도 500명에서 원문 56종에 머물렀다.
+
+**구현 작업**
+1. 기존 **해당 연도의 기본 십신 주제**를 유지하고, 해당 명식의 **허용된 원국 구조·관련 근거**를 정확한 Claim과 source 범위에서 추가 입력으로 사용한다.
+2. **연운과 원국의 관계**는 실제 시간 정책·관측된 합충 등 관계 규칙과 그 의미 방법론이 모두 확보된 경우에만 해석한다. 관측값만으로 유리/불리·사건·성공을 창작하지 않는다.
+3. 연운의 단일 키워드와 별개로 **핵심 해석 / 보조 맥락 / 실제 충돌이나 제한 / 보류할 주장**을 구분하고, 실제 관계가 허용하는 범위에서 종합한다.
+4. 서울 **달력연도와 입춘 효력 연주**의 기준을 구조적으로 분리한다. 연도 경계 전후를 잘못 하나의 효력 간지로 뭉치지 않는다.
+5. 기존 정적 Research 프로필 투영은 **실행된 개인별 공식 Claim**과 구분한다. 새로운 source-qualified 의미가 아직 없다면 자동으로 Official로 승격하지 않는다.
+6. 같은 연운 십신이지만 원국의 관련 구조가 다른 명식 쌍, 반대로 결과에 영향 없는 입력만 다른 명식 쌍을 대조한다.
+
+**완료 증거:** 실제 결론을 바꾸는 연운-원국 근거가 있는 사례에서 그 이유와 변화가 드러나며, 근거가 동일한 사례는 의미가 불필요하게 흔들리지 않는다. **원문 56종보다 많아졌다는 사실 자체는 합격 기준이 아니다.**
+
+### 단계 4 — 이번 달 운세의 절입·원국 상호작용 결합
+
+**대상 코드**
+- **src/research/general-monthly-reading-candidate.ts**
+- **src/preview/general-monthly-exploration-report.ts**
+- 기존 월별 사실·절입 경계·기존 시간 해석 경로
+
+**현 상태:** 절입 전·후 십신 주제와 일부 충돌 후보를 출력하며, 고정 2026년 10월에 131종의 서로 다른 원문이 나왔다.
+
+**구현 작업**
+1. 기존 **절입 전후 구간과 정확한 월간·월지 사실**을 동일한 계산 스냅샷에 결박한다.
+2. 각 구간의 **월간 십신 주제**와 원국의 관련 구조를, 해당 월운 Claim/Methodology가 실제로 요구하는 경우에만 함께 사용한다.
+3. 실제 출처가 허용하는 **원국과 월운의 상호작용**을 해석 결론에 반영하고, 구간별 독립 근거·상충·불확실성을 별도로 표시한다.
+4. 연운 맥락을 사용한다면 **연운 결과를 월운에 자동 상속하지 않는다.** 복수 시기 간 관계를 해석하는 독립적인 근거·방법론이 있는 경우에만 Claim Graph로 연결한다.
+5. 현재 구간이 아닌 월의 결과를 **현재 월운**으로 표시하지 않으며, 절입 경계 전후와 시간대·시각 정확성을 확인한다.
+6. 동일 월간 십신이지만 명식 구조가 다른 입력과 실제로 같은 의미를 공유하는 입력을 각각 비교한다.
+
+**완료 증거:** 기준 월·절입 구간이 정확하고, 원국·월운의 근거 있는 차이가 소비자 한국어 해석의 실제 의미를 바꾸며, 해석되지 않은 시간 관계를 지어내지 않는다. **131종 증가 자체는 합격 기준이 아니다.**
+
+### 단계 5 — 공통 Evidence·Narrative 품질 연결
+
+**대상 코드:** 기존 EvidenceSelector, Claim Graph/Interpretation, ClaimNarrativeProfile, 분야별 Narrative 및 Reading Response 경로. 신규 병렬 해석 엔진 금지.
+
+**구현 작업**
+1. 모든 종합 문단에 실제 선택된 **Claim 유형·의미 값·Rule/Methodology/Source·명식 사실 경로·시간/시나리오·제한 조건**을 추적할 수 있도록 유지한다.
+2. 각 메뉴에서 **핵심 결론 1개를 만들 수 있는지, 독립 보조 축이 충분한지, 그 메뉴에 필요한 최소 유효 풀이가 충족되는지** 실제 의미 기준으로 판정한다. 직업의 근거 개수를 다른 모든 메뉴에 무조건 복사하지 않는다.
+3. **근거 중복 문단·키워드만 바뀐 문장·다른 영역을 그대로 재탕한 주장**을 식별하고, 실제 근거 경로와 주장 의미가 같으면 중복을 해소한다.
+4. 다른 분야에서 같은 명식을 사용하더라도 **재물의 의미를 연운·월운에 무단 재해석하거나** 관계·사업 결론으로 전용하지 않는다.
+5. 의미 선택과 한국어 표현을 분리한다. LLM 또는 문장 생성이 새로운 명리 사실·판단·예측을 생산하지 못하게 한다.
+6. partial/insufficient/unsupported 응답은 해당 분야의 **구체적 부족 입력·출처·충돌·지원 범위**를 한국어로 설명한다.
+
+**완료 증거:** 실제 출력의 핵심·보조 결론이 근거와 연결되고, 동일 근거의 무의미한 반복과 근거 없는 추가 주장은 확인 가능한 기준에서 0건이다.
+
+### 단계 6 — 의미 차별화 검증 기준 정밀화
+
+**문제:** 실제 원문 500종은 개인별 의미 500종을 뜻하지 않는다. 삶의 단계에서는 대운 날짜만 달라도 500종으로 집계됐다.
+
+**구현 작업**
+1. **계산 차이:** 계산 해시, 명식 구성, 적용된 연·월 구간 등의 순수 사실을 기록한다.
+2. **의미 차이:** 실제 실행·선택된 Claim의 **유형, 의미 있는 value, 적용된 규칙·방법론, 필수 독립 근거, 한계, 실제 시간/시나리오**를 정규화한 의미 서명을 비교한다.
+3. **문장 차이:** 한국어 본문·제목의 정확한 동일성은 별도 비교한다. 표시 날짜, ID, 출생 분, 순서 변경만으로 **의미 다양성**을 높이지 않는다.
+4. 의미 서명을 만들 때는 **실제로 소비된 해석 근거**와 규칙 의미를 포함하되, 계산 해시나 출생일 문자열 그 자체를 넣어 모든 사용자를 강제로 고유하게 만들지 않는다.
+5. **의도적인 차별 명식 쌍:** 결론에 영향을 주어야 하는 정확한 구조 차이와, 영향을 주면 안 되는 비본질적 입력 차이를 별도로 만든다.
+6. **100종 이상의 실제 사용 근거 패턴**을 수집하여 동일 근거 → 동일 결론 / 중요한 근거 차이 → 설명 가능한 의미 차이 / 상충한 Claim의 보류를 비교한다. 100종 수집이 확보되지 않으면 미달로 명시하고 수치를 꾸미지 않는다.
+7. 의도한 의미가 동일한 명식 간 **동일한 결론은 허용**한다. 서로 달라야 하는 명식에 똑같은 결론을 낸 경우만 근거 선택/해석 누락인지 원인 분석한다.
+
+**완료 증거:** 재현 가능한 입력 쌍과 실제 한국어 풀이, 의미 서명, 계산 근거 및 설명 가능한 동일·차별 판정이 연결된다.
+
+### 단계 7 — 500건 재실행 및 최종 개선 판정
+
+**검증 묶음 A: 고정 500건 재실행**
+- 동일 시드 **0x5a1a2026**, 동일 비교 연월·시각, 동일 8개 메뉴로 개선 전후를 비교한다.
+- 오류, 본문 누락, 반복 원문, 반복 의미 서명, 보고서 상태, 실제 소비한 규칙/근거를 분야별로 기록한다.
+- 기존 수치를 다시 같은 정의로 계산하되, 데이터셋이나 기준을 조용히 변경해 성공률을 높이지 않는다.
+
+**검증 묶음 B: 대조 명식**
+- 원국의 의미 차이, 동일 구조의 재실행, 합충·절입·연도 경계, 복수 시나리오, 불충분/미지원 사례를 포함한다.
+- 동일 근거와 동일 계산 정책에서 **결정론적 결과**가 보존된다.
+- 다른 근거에서 설명 가능한 차이가 실제 소비자 문장에 나타난다.
+
+**검증 묶음 C: 사용 근거·출처**
+- 기존 Rule/Methodology/Source와 실제 fact path의 불일치가 없어야 한다.
+- 개인의 자산 규모·투자 수익·직업 성공·결혼·질병·미래 사건을 새로운 근거 없이 단정하지 않아야 한다.
+- 내부 연구의 성공이 공식/공개/판매 허가로 자동 전환되지 않는다.
+
+**최종 합격 기준**
+- **유효한 500건에서 계산·해석 실행 오류 0건.**
+- **본문이 없는 모든 사례에 실제 원인과 사용자에게 전달 가능한 정직한 지원 상태가 존재.** 해석이 미확립된 사건 예측으로 빈 화면을 채워서는 안 된다.
+- **근거 있는 명식 차이가 결과 의미에 반영**되고, 같은 의미의 입력은 불필요하게 다르게 꾸미지 않는다.
+- **근거 설명 불가 종합주장 0건, 미확립 내용의 무단 공식 승격 0건.**
+- 원국 5개 및 시간 3개 메뉴의 실제 한국어 결과·부분 지원 사유가 근거 및 상태와 일치한다.
+- 결과 지표·실패 사례·원문·의미 서명·권한 상태를 실행된 코드와 동일 커밋에서 재현할 수 있다.
+
+**최종 출력물:** 개선 전후 500건 비교 파일과 실제 소비자 한국어 결과 예시, 누락·중복 원인, 분야별 품질 판정. 단순히 CI가 통과하거나 문장 수가 늘었다는 이유로 완료 선언하지 않는다.
+
+## 4. 구현 순서 및 작업 경계
+
+| 순서 | 대상 | 결과물 |
 | --- | --- | --- |
-| General Natal T8 원문 무결성 및 종합 결론 | [#1518](https://github.com/gycha0109-beep/Saju/issues/1518) | 검증된 bounded claim만 사용; T8 근거 누락 시 부분 출력을 명시 |
-| 최종 强弱/旺衰·格局·用神/喜忌: support-source activation, contest settlement, 다학파 충돌 | [R37 감사](./implementation/saju-refresh-post-r37-product-boundary-audit-2026-10-09.md), [#908](https://github.com/gycha0109-beep/Saju/issues/908) | 아직 미승인 판단을 가상 수치/강약/용신 결론으로 채우지 않음 |
-| 연운 십신 10+지지충 4 의미 검증 | [#2462](https://github.com/gycha0109-beep/Saju/issues/2462) | P3-B Official HOLD, P3-A 내부 exploration 유지 |
-| 입춘 원본/절입시각 및 월운 독립 의미 | [#2460](https://github.com/gycha0109-beep/Saju/issues/2460), [#2466](https://github.com/gycha0109-beep/Saju/issues/2466), [#1531](https://github.com/gycha0109-beep/Saju/issues/1531) | civil-year 결과와 입춘 유효 年柱 구분, 미확립 temporal 판단 금지 |
-| Family / Compatibility / Life-stage / Question-specific | [#908](https://github.com/gycha0109-beep/Saju/issues/908), [capability inventory](./implementation/saju-engine-capability-inventory-v1.md) | 미확립 도메인은 추가 구현/공식 지원으로 선언하지 않음 |
+| **1** | 기존 500건 감사 스크립트와 명식→Claim→선택→본문 추적 | 재물 111건 분류·연/월 중복 원인 |
+| **2** | 재물 연구 규칙과 재물 보고서 | 출처 있는 재물 조합·부분/종합 한국어 풀이 |
+| **3** | 연운 연구 규칙과 연운 출력 | 원국-연운 근거 연결, 실제 의미 차이 |
+| **4** | 월운 연구 규칙과 월운 출력 | 원국-월운 근거 연결, 절입·구간 정합성 |
+| **5** | 공통 EvidenceSelector·Narrative | 중복/충돌/부분 지원 설명 정합성 |
+| **6** | 의미 서명 및 차별 명식 회귀 | 의미 차이와 단순 문자열 차이 분리 |
+| **7** | 동일 500건 재실행 | 개선 수치 및 실제 품질 판정 |
 
-**Bridge/Production 조건 불변:** 연구 결과·단위테스트 통과는 자동 `ADMITTED`가 아니다. 기존 Preview/Research/Production scope, content hash, independent review, public GA/저장/판매 권한은 엄격히 구분한다. 다만 그 승인 절차를 **내부 제품 사용성 개발의 선행 단계로 잘못 요구하지 않는다**.
+- 단계 1의 실제 원인 분류는 각 분야 수정의 출발 근거다. 이후 **재물·연운·월운은 독립적으로 가능한 부분을 병렬 구현**해도 된다.
+- 출처가 미확립된 결론만 해당 범위에서 중단한다. 다른 분야의 연구용·부분 풀이 구현 전체를 중단하지 않는다.
+- 각 작업의 완료는 **코드·실제 한국어 문단·적용 근거·대조 사례**가 함께 확인될 때만 인정한다.
+- 본 로드맵은 **해석 개선 실행 계획**이다. 화면 확장, 사용자 인증, 결제, 저장, 다국어 판매, 관상·캐릭터 연동이나 제외한 4개 메뉴의 기능 확장을 이번 백로그에 추가하지 않는다.
 
-### 연구 트랙 구현 연동 로드맵 — 상품 사용성 공백이 우선 (2026-10-21)
+## 5. 진행 현황 표시 규칙
 
-연구는 중단하지 않는다. 다만 **각 연구의 목적은 실제 사용자용 해석의 특정 결핍을 닫는 것**이며, 문헌 수집·CI·심사 코멘트 수 자체를 완료로 세지 않는다.
+| 단계 | 상태 | 확인된 사실 |
+| --- | --- | --- |
+| 1. 원인 분류 | **착수 가능 / 상세 분류 미완료** | 500건 최초 비교는 완료, 111건 원인별 확정은 미완료 |
+| 2. 재물 풀이 | **미완료** | 제한된 조합·본문 누락 확인 |
+| 3. 올해 풀이 | **미완료** | 서로 다른 원문 56종 확인 |
+| 4. 이번 달 풀이 | **미완료** | 서로 다른 원문 131종 확인 |
+| 5. 근거·한국어 출력 정합성 | **미완료** | 현재 원국/시간 연구용 경로 존재 |
+| 6. 의미 차이 정밀 검증 | **미완료** | 기존 500건 검사에서 1차 대용 지표만 사용 |
+| 7. 개선 후 재검사 | **미완료** | 개선 전 기준 500건 검사만 완료 |
 
-1. **원국 핵심 결합 의미:** 5분야의 실제 명식에서 빠진 다중 근거 T8·강약/격국 등 *현재 사용자가 답을 못 받는 구체적 Claim*을 먼저 식별한다. 이미 있는 source-owned T5/T6와 계산 사실로 가능한 최소 의미를 구현하고, 미승인 판단만 Research에 남긴다. 반환 산출물은 *적용 조건·반례·권한 범위가 있는 실제 claim 후보*다.
-2. **시간·관계·질문의 최소 근거:** 연/월 경계, 삶의 단계, 가족·배우자·궁합, 질문형에서 *입력→정확한 대상/기간→실제 Claim* 연결을 막는 필수 근거만 순서대로 연구한다. 기존 profile/Canonical/Preview로 연결 가능한 동작은 승인을 기다리지 않고 **보수적으로 구현**한다. 출처 부족인 T9/T10/T11 의미만 해당 메뉴에서 보류한다.
-3. **충돌하는 고전 규칙의 조건부 정리:** 『淵海子平』의 `敗財/劫財` 같은 N27 좁은 충돌은 자료·정확한 용어 층위를 보존한다. 기존 연구용 replay는 유지하되, 새 원전 이미지가 현재 상품 의미를 바꿀 때만 추가 연구를 연다. 독립 reviewer 권한이나 TrustGrant는 연구자가 임의 발급하지 않는다.
-4. **작동하는 결과를 다음 구현으로 전달:** 연구가 실제 source-bound 원문·적용범위·계산 입력·명식별 반례·승인 상태를 반환하면, 엔진이 기존 Registry/ClaimGraph/EvidenceSelector에 연결하고 **한글 결과의 변경**을 기록한다. 미승인인 규칙만 배제하고 나머지 메뉴를 중단시키지 않는다.
+퍼센트를 임의로 계산하지 않는다. 개발 보고에는 **한 것 / 남은 것 / 다음에 할 것 / 블로커 및 승인사항**을 쉬운 한국어로 각각 한 줄로 기록하고, 단계별 상태 막대를 함께 표시한다. CI 상태는 **현재 작업과 실제로 연결된 커밋·PR만** 판단하며 완료되지 않은 검사를 성공으로 주장하지 않는다.
 
-### 병렬 Research frontier — 의미 권한이 생기기 전까지 HOLD
+## 6. 실행 바로가기
 
-- `docs/implementation/saju-refresh-post-r37-product-boundary-audit-2026-10-09.md`의 **support-source activation / contest settlement** 등 미충족 source-backed 조건을 연구한다.
-- `saju-r38`–`r41`처럼 source-exact 구조 연구는 정해진 사례/범위 내에서만 평가한다. 구조적 관찰을 최종 強弱/旺衰/用神, 격국, 상대 강도, 연운 결과에 자동 연결하지 않는다.
-- Family/Compatibility/Life-stage/Question-specific는 별도 source authority/Engine intake가 생길 때까지 임의로 제품 지원 선언하지 않는다.
-- 증거·review가 추가되지 않으면 판정을 `HOLD_RESEARCH` 또는 `HOLD_AUTHORITY`로 기록하고 **억지 구현하지 않는다**.
-
-## 3. PR 작업 규약 / Definition of Done
-
-1. **현황:** `main` SHA, 열린 PR, 정확한 files/contracts, test/GitHub Actions 상태를 읽는다. 과거 채팅이나 README 상태 숫자만으로 완료 판단 금지.
-2. **범위:** A(원국 5메뉴), B(올해/월/삶의 단계), C(가족/배우자/궁합), D(질문형·전 메뉴 연결)의 **병렬 실행 중 사용자의 실제 풀이 차별성과 품질을 진전시키는 수직 기능 하나**를 선정한다. P0-NATAL은 A의 핵심 우선순위지만 B/C/D의 전역 착수 게이트가 아니다. 단순 권한 문서·CI 증거 갱신만으로 제품 진척을 선언하지 않는다. Research/Bridge/Production admission과 내부 제품 UX는 분리한다.
-3. **구현:** 코드+경량 focused regression+필요한 문서. fixture와 실제 source provenance는 구분. 스냅샷/Rule/Plan 식별자 불변성 확인. 다국어 관련 변경은 E의 언어 중립 IR/단일 로케일/Claim·Qualifier/HOLD/캐시 경계를 따르며 **번역 문구만 추가한 PR을 명리 해석 품질 완료로 세지 않는다**.
-4. **일반 검증:** lockfile install, lint, typecheck, build, full regression 16/16, CI Verify, Production Container, PIE. 이름만 비슷한 다른 run은 혼동 금지.
-5. **통합 검증:** SHA 고정 admission → full Quality → full regression 16/16 → full Verify → CI Integration Verify. 모두 성공해야 HEAD SHA를 지정하여 squash merge.
-6. **병합 후 검증:** 해당 `main` SHA에서 CI Quality, full regression 16/16, CI Verify, Production Container 확인.
-7. **검증 대기:** 3–5분 내 끝나는 정상 CI는 한 차례 확인하고 진행; 장기 실행/이상은 중단 보고. **진행 중 CI를 성공으로 선언하거나 미검증 PR을 병합하지 않는다.**
-8. **기록:** 각 phase/PR마다 목적, 변경 파일, 일반 CI, SHA 고정 CI, 병합 SHA, 남은 blocker와 다음 작업을 PR/관련 docs에 기록. 문서의 날짜·상태도 갱신.
-
-종료 판정: **A** 실질 수정 없음 / **B** 중요 이슈 없음(선택적 개선만 잔존) / **C** 새 원자료·review·외부 실행 또는 장기 CI 필요. 각 종료 시 해당 원인과 남은 리스크를 명시한다.
-
-## 4. 다음 세션 시작 위치 — **12메뉴 병렬 수직 개발** (2026-10-21 개정)
-
-1. 최신 `main`·열린 PR(#2614 Career partial, #2615 Career preparation, #2616 로드맵 포함)·각 HEAD CI를 확인한다. **동시 작업 파일 충돌 회피**와 각 PR의 source/권한 경계를 우선한다. 여기 적힌 SHA·PR은 작성 시점 참고이며 계속 갱신한다.
-2. **A 원국**은 기존 Career T8/MUR 연구 경로의 사용자 한국어 결과를 개선하되, General/Wealth/Business/Relationship 4개 수직 도메인도 **Career 최종 완료까지 대기하지 말고** 각각 확보된 source-owned Claim로 구현한다. 의미 없는 Claim 수·일반 문장 증가를 진척으로 세지 않는다.
-3. **B 시간**은 기존 Annual 내부 미리보기→이번 달 연결 및 Life-stage 분리 결과, **C 관계**는 Spouse bounded 기능→Family/Compatibility 입력·근거 부분 읽기, **D 질문**은 허용 근거 기반 주제 라우팅·가용성 표시를 **A와 병행**한다. 연운/월운 Official의 승인 미달 부분만 개별 HOLD한다. 존재하지 않는 의미·권한을 만들어내지 않는다.
-4. 각 작업선은 **실제 사용자용 한글 본문/명식별 차이/근거 경로/MUR/미상 입력 대응**을 해당 변경 PR에서 제시하고, 12개 화면 카드의 사용 가능/부분/준비 중 상태 및 MyeongHa UX 책임과 연결한다. 단순 감사표 추가만으로 종료하지 않는다.
-5. **사주 제품 완료는 12개 메뉴 전체의 실제 기능 결과**로 판단한다. E 공통 다국어 계약과 언어별 표현 품질의 완료를 별도로 관리하며, E-1/E-2 구현을 해외 로케일 서비스 준비 완료로 선언하지 않는다. P0-NATAL 5분야 또는 CI 20/20 통과만으로 종합 제품 완료를 선언하지 않는다. 기존 SHA 고정 CI·통합 CI·병합 후 main 검증, Research/Bridge/HOLD, Production/Public/Commerce 분리는 유지한다.
+- **실제 개선 전 500건 결과:** https://github.com/gycha0109-beep/Saju/actions/runs/40122318503
+- **검사 코드 변경 PR:** https://github.com/gycha0109-beep/Saju/pull/2732
+- **핵심 소스:** src/research/wealth-natal-multifactor-candidate.ts, src/preview/wealth-natal-multifactor-report.ts, src/research/general-annual-reading-candidate.ts, src/preview/general-annual-exploration-report.ts, src/research/general-monthly-reading-candidate.ts, src/preview/general-monthly-exploration-report.ts
+- **기존 사주 해석 설계 근거:** Myeonghwa Personalized Interpretation Architecture v1.3 및 MyeongHa Saju Product Interpretation Architecture v1.2. 이 문서들은 **별도의 실행 로드맵이 아니라 구현·의미·권한을 판단하는 설계 근거**다.
