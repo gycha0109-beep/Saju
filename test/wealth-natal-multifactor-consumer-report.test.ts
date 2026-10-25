@@ -31,9 +31,9 @@ function run(month: number, day: number, known = true, hour = 12) {
 describe('actual-source Wealth natal T5→T8→Korean five-domain report', () => {
   it('is Wealth-only, research-only, and every T8 has 2/3 exact T5 inputs', () => {
     expect(registry.pack.packId).toBe(WEALTH_NATAL_MULTIFACTOR_PACK.packId);
-    expect(WEALTH_NATAL_MULTIFACTOR_RULES).toHaveLength(16);
+    expect(WEALTH_NATAL_MULTIFACTOR_RULES).toHaveLength(18);
     expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(16);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(18);
     expect(registry.rules.filter(r => r.taxonomy.subcategory === 'self_baseline')).toHaveLength(0);
     for(const rule of WEALTH_NATAL_MULTIFACTOR_RULES) {
       expect(rule.taxonomy.category).toBe('wealth');
