@@ -42,6 +42,21 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(wealthReading(1964,11,14,14,59).report).toEqual(report);
   });
 
+  it('uses the officer-peer context when officer-resource does not match the same channel', () => {
+    const { execution, report } = wealthReading(1962, 5, 5, 0, 3);
+    expect(execution.claims.some(c => c.state === 'active' &&
+      c.claimType.startsWith('TEN_GOD_WEALTH_'))).toBe(false);
+    expect(report.sections).toHaveLength(1);
+    expect(report.sections[0]?.axis).toBe('context');
+    expect(report.sections[0]?.pattern).toBe('OFFICER_PEER_CONTEXT');
+    expect(report.sections[0]?.observedPositions.length).toBeGreaterThanOrEqual(2);
+    expect(report.state).toBe('partial');
+    expect(report.missing.join(' ')).toContain('재성 중심 재물운 종합 해석이 아니며');
+    expect(report.usefulComplete).toBe(false);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+  });
+
   it('distinguishes a present wealth T5 with no eligible same-channel combination', () => {
     const { execution, report } = wealthReading(1955, 10, 31, 19, 35);
     expect(execution.claims.some(c => c.state === 'active' &&
