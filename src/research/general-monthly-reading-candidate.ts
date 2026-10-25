@@ -1,3 +1,4 @@
+import { createTemporalSixCombinationObservations } from './temporal-branch-six-observation.js';
 import type { TenGod } from '../contracts/calculation.js';
 import type {
   ClaimTypeDefinition,
@@ -427,12 +428,14 @@ export const GENERAL_MONTHLY_TENSION_RULES: readonly RuleDefinition[] = Object.f
   ),
 );
 
+const monthlySix = createTemporalSixCombinationObservations('monthly');
 export const GENERAL_MONTHLY_READING_PACK = Object.freeze({
   packId: 'PACK-GENERAL-MONTHLY-READING-CANDIDATE',
   version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION,
   name: 'General Monthly Reading Research Candidate',
-  methodologyRefs: [{ id: METHOD_ID, version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION }],
-  enabledRuleSets: [ACTIVATION_RULE_SET, TENSION_RULE_SET],
+  methodologyRefs: [{ id: METHOD_ID, version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION },
+    { id: monthlySix.methodology.methodologyId, version: monthlySix.methodology.version }],
+  enabledRuleSets: [ACTIVATION_RULE_SET, TENSION_RULE_SET, monthlySix.ruleSetId],
   conflictPolicy: 'preserve_all',
   ambiguityPolicy: 'propagate',
   compositionPolicyRef: {
@@ -443,16 +446,20 @@ export const GENERAL_MONTHLY_READING_PACK = Object.freeze({
   status: 'research',
 } satisfies InterpretationPack);
 
+export const GENERAL_MONTHLY_SIX_COMBINATION_CLAIM_TYPE = monthlySix.claimType;
+export const GENERAL_MONTHLY_SIX_COMBINATION_METHODOLOGY_ID = monthlySix.methodology.methodologyId;
+export const GENERAL_MONTHLY_SIX_COMBINATION_SOURCE_IDS = monthlySix.sources.map(source => source.sourceId);
+
 export function createGeneralMonthlyReadingCandidateRegistry(
   createdAt = '1970-01-01T00:00:00.000Z',
 ) {
   return createRuleRegistrySnapshot(
     {
-      rules: [...GENERAL_MONTHLY_ACTIVATION_RULES, ...GENERAL_MONTHLY_TENSION_RULES],
-      methodologies: [GENERAL_MONTHLY_READING_METHODOLOGY],
-      sources: [GENERAL_MONTHLY_POLICY_SOURCE],
-      claimTypeDefinitions: [GENERAL_MONTHLY_THEME_CLAIM_TYPE, GENERAL_MONTHLY_TENSION_CLAIM_TYPE],
-      claimValueSchemas: [GENERAL_MONTHLY_THEME_SCHEMA, GENERAL_MONTHLY_TENSION_SCHEMA],
+      rules: [...GENERAL_MONTHLY_ACTIVATION_RULES, ...GENERAL_MONTHLY_TENSION_RULES, ...monthlySix.rules],
+      methodologies: [GENERAL_MONTHLY_READING_METHODOLOGY, monthlySix.methodology],
+      sources: [GENERAL_MONTHLY_POLICY_SOURCE, ...monthlySix.sources],
+      claimTypeDefinitions: [GENERAL_MONTHLY_THEME_CLAIM_TYPE, GENERAL_MONTHLY_TENSION_CLAIM_TYPE, monthlySix.claimType],
+      claimValueSchemas: [GENERAL_MONTHLY_THEME_SCHEMA, GENERAL_MONTHLY_TENSION_SCHEMA, monthlySix.schema],
     },
     GENERAL_MONTHLY_READING_PACK,
     createdAt,

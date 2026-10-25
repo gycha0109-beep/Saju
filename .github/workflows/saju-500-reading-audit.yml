@@ -8,6 +8,12 @@ on:
       - 'scripts/saju-500-meaning-diff.mjs'
       - 'scripts/saju-500-quality-gate.mjs'
       - 'scripts/saju-500-contrast-audit.mjs'
+      - 'scripts/saju-500-research-closeout.mjs'
+      - 'src/research/general-annual-reading-candidate.ts'
+      - 'src/research/general-monthly-reading-candidate.ts'
+      - 'src/research/temporal-branch-six-observation.ts'
+      - 'src/reading/annual-interpretation-facts.ts'
+      - 'src/reading/monthly-interpretation-facts.ts'
       - '.github/workflows/saju-500-reading-audit.yml'
   workflow_dispatch:
 
@@ -39,6 +45,8 @@ jobs:
         run: node scripts/saju-500-quality-gate.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json" "$RUNNER_TEMP/saju-500-quality-report.json"
       - name: Check same-theme different-natal intentional contrasts
         run: node scripts/saju-500-contrast-audit.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json" "$RUNNER_TEMP/saju-500-contrast-report.json"
+      - name: Adjudicate research quality and distinguish product readiness
+        run: node scripts/saju-500-research-closeout.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json" "$RUNNER_TEMP/saju-500-quality-report.json" "$RUNNER_TEMP/saju-500-contrast-report.json" "$RUNNER_TEMP/saju-500-closeout-report.json"
       - name: Upload audit and semantic-quality evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -48,5 +56,6 @@ jobs:
             ${{ runner.temp }}/saju-500-eight-menu-report.json
             ${{ runner.temp }}/saju-500-quality-report.json
             ${{ runner.temp }}/saju-500-contrast-report.json
+            ${{ runner.temp }}/saju-500-closeout-report.json
           if-no-files-found: warn
           retention-days: 30

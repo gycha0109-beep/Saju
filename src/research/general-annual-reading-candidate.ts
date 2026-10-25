@@ -1,3 +1,4 @@
+import { createTemporalSixCombinationObservations } from './temporal-branch-six-observation.js';
 import type { TenGod } from '../contracts/calculation.js';
 import type {
   ClaimTypeDefinition,
@@ -327,12 +328,14 @@ export const GENERAL_ANNUAL_TENSION_RULES: readonly RuleDefinition[] = Object.fr
   PILLAR_SLOTS.map(branchClashRule),
 );
 
+const annualSix = createTemporalSixCombinationObservations('annual');
 export const GENERAL_ANNUAL_READING_PACK = Object.freeze({
   packId: 'PACK-GENERAL-ANNUAL-READING-CANDIDATE',
   version: GENERAL_ANNUAL_READING_CANDIDATE_VERSION,
   name: 'General Annual Reading Research Candidate',
-  methodologyRefs: [{ id: METHOD_ID, version: GENERAL_ANNUAL_READING_CANDIDATE_VERSION }],
-  enabledRuleSets: [ACTIVATION_RULE_SET, TENSION_RULE_SET],
+  methodologyRefs: [{ id: METHOD_ID, version: GENERAL_ANNUAL_READING_CANDIDATE_VERSION },
+    { id: annualSix.methodology.methodologyId, version: annualSix.methodology.version }],
+  enabledRuleSets: [ACTIVATION_RULE_SET, TENSION_RULE_SET, annualSix.ruleSetId],
   conflictPolicy: 'preserve_all',
   ambiguityPolicy: 'propagate',
   compositionPolicyRef: {
@@ -343,16 +346,20 @@ export const GENERAL_ANNUAL_READING_PACK = Object.freeze({
   status: 'research',
 } satisfies InterpretationPack);
 
+export const GENERAL_ANNUAL_SIX_COMBINATION_CLAIM_TYPE = annualSix.claimType;
+export const GENERAL_ANNUAL_SIX_COMBINATION_METHODOLOGY_ID = annualSix.methodology.methodologyId;
+export const GENERAL_ANNUAL_SIX_COMBINATION_SOURCE_IDS = annualSix.sources.map(source => source.sourceId);
+
 export function createGeneralAnnualReadingCandidateRegistry(
   createdAt = '1970-01-01T00:00:00.000Z',
 ) {
   return createRuleRegistrySnapshot(
     {
-      rules: [...GENERAL_ANNUAL_ACTIVATION_RULES, ...GENERAL_ANNUAL_TENSION_RULES],
-      methodologies: [GENERAL_ANNUAL_READING_METHODOLOGY],
-      sources: [GENERAL_ANNUAL_POLICY_SOURCE],
-      claimTypeDefinitions: [GENERAL_ANNUAL_THEME_CLAIM_TYPE, GENERAL_ANNUAL_TENSION_CLAIM_TYPE],
-      claimValueSchemas: [GENERAL_ANNUAL_THEME_SCHEMA, GENERAL_ANNUAL_TENSION_SCHEMA],
+      rules: [...GENERAL_ANNUAL_ACTIVATION_RULES, ...GENERAL_ANNUAL_TENSION_RULES, ...annualSix.rules],
+      methodologies: [GENERAL_ANNUAL_READING_METHODOLOGY, annualSix.methodology],
+      sources: [GENERAL_ANNUAL_POLICY_SOURCE, ...annualSix.sources],
+      claimTypeDefinitions: [GENERAL_ANNUAL_THEME_CLAIM_TYPE, GENERAL_ANNUAL_TENSION_CLAIM_TYPE, annualSix.claimType],
+      claimValueSchemas: [GENERAL_ANNUAL_THEME_SCHEMA, GENERAL_ANNUAL_TENSION_SCHEMA, annualSix.schema],
     },
     GENERAL_ANNUAL_READING_PACK,
     createdAt,

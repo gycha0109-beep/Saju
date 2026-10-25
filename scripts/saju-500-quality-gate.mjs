@@ -30,6 +30,9 @@ for (const menu of menus) {
   let sectionsWithoutSource = 0;
   let observedCorrespondences = 0;
   let singleWealthT5Observations = 0;
+  let realPeriodNatalSixPairObservations = 0;
+  let indirectWealthOnlyCases = 0;
+  let sourceBoundWealthCoreCases = 0;
   const textKeys = new Set();
   const meaningKeys = new Set();
   for (const row of cases) {
@@ -39,6 +42,13 @@ for (const menu of menus) {
     }
     textKeys.add(row.exactKey);
     meaningKeys.add(row.meaningKey);
+    if (menu === '재물') {
+      const axes = row.meaningComponents.map(item => item[2]);
+      if (axes.length > 0 && axes.every(axis => axis === 'context')) indirectWealthOnlyCases++;
+      if (axes.some(axis => ['core', 'creation', 'management', 'planning'].includes(axis))) {
+        sourceBoundWealthCoreCases++;
+      }
+    }
     const observation = row.singleWealthT5Observation;
     if (observation !== undefined) {
       const valid = menu === '재물' &&
@@ -60,7 +70,8 @@ for (const menu of menus) {
     const evidence = row.sourceEvidence;
     if (natal.has(menu)) {
       for (const section of Array.isArray(evidence) ? evidence : []) {
-        const grounded = section.claimType && section.ruleId &&
+        const grounded = section.claimId && section.claimType && section.ruleId &&
+          section.methodologyId && section.methodologyVersion &&
           section.sourceIds?.length && section.upstreamClaimIds?.length &&
           section.observedFactPaths?.length;
         if (grounded) {
@@ -77,7 +88,19 @@ for (const menu of menus) {
         const sources = section.sourceIds ?? [];
         const rules = section.ruleIds ?? [];
         const paths = section.factPaths ?? section.calculatedFactPaths ?? [];
-        if (sources.length && rules.length && paths.length) {
+        const authorizedPeriodSix = section.kind !== 'structural_context' ||
+          (section.claimId &&
+            section.methodologyId?.includes('CLASSICAL-SIX-PAIR-OBSERVATION') &&
+            sources.includes('SRC-T0-XUANZE-YAOLUE-UPPER') &&
+            sources.includes('SRC-T0-YISI-ZHAN-10') &&
+            rules.some(id => id.includes('BRANCH_SIX_COMBINATION_OBSERVATION')) &&
+            paths.some(path => menu === '올해'
+              ? path.startsWith('temporal.annualBranchRelations.')
+              : path.startsWith('temporal.segmentsById.') &&
+                path.includes('monthlyBranchRelations.')));
+        if (sources.length && rules.length && paths.length &&
+            section.claimId && section.methodologyId && authorizedPeriodSix) {
+          if (section.kind === 'structural_context') realPeriodNatalSixPairObservations++;
           sectionsWithExactSource++;
           groundedPatterns.add(JSON.stringify([menu, section.candidateClaimType ?? section.kind,
             section.sourceProfileId ?? section.segmentId ?? null, rules, sources]));
@@ -111,6 +134,9 @@ for (const menu of menus) {
     ungroundedSections: sectionsWithoutSource,
     observedNatalTemporalCorrespondences: observedCorrespondences,
     observedSingleT5WealthWithoutSynthesis: singleWealthT5Observations,
+    observedClassicalPeriodNatalSixPairSections: realPeriodNatalSixPairObservations,
+    indirectWealthContextOnlyCases: indirectWealthOnlyCases,
+    sourceBoundDirectWealthCoreCases: sourceBoundWealthCoreCases,
     emptyTexts: cases.filter(row => !row.text?.trim()).length,
   };
 }
@@ -123,6 +149,16 @@ const result = {
   distinctMenuMeaningProfiles: meaningPatterns.size,
   distinctGroundedRuleAndSourceProfiles: groundedPatterns.size,
   menuChecks: stats,
+  finalInterpretationReadiness: {
+    productReady: false,
+    officialReleaseAuthorized: false,
+    reasons: [
+      'Annual/monthly six-branch pairing is a cited structural match, not proof of specific life outcomes.',
+      'An isolated Wealth T5 observation and indirect context cannot be counted as complete Wealth T8 synthesis.',
+      'The five natal reading domains and three time menus have not passed validated real-world predictive-quality review.',
+      'Dayun/life-stage intervals are calendar calculations, not licensed independent phase interpretations.',
+    ],
+  },
   limitations: [
     'An exact text difference or distinct rule/source combination is not a proven difference in life outcomes.',
     'Natal/temporal correspondences are independently grounded research observations, not a new T9 combined predictive claim.',

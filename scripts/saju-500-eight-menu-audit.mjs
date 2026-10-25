@@ -69,7 +69,7 @@ function entry(text, meaning, state, sectionCount, kind) {
     kind,
   };
 }
-function natalEntry(report) {
+function natalEntry(report, execution, registry) {
   const sections = report.sections ?? [];
   const prose = sections.map(s => s.headline + '\n' + s.paragraph);
   if (report.singleWealthT5Observation) {
@@ -93,12 +93,35 @@ function natalEntry(report) {
   return { ...observation,
     ...(report.singleWealthT5Observation ?
       { singleWealthT5Observation: report.singleWealthT5Observation } : {}),
-    sourceEvidence: sections.map(section => ({
-    claimType: section.claimType, pattern: section.pattern, axis: section.axis,
-    channel: section.channel, ruleId: section.ruleId,
-    upstreamClaimIds: section.upstreamClaimIds, sourceIds: section.sourceIds,
-    observedFactPaths: section.observedFactPaths ?? section.calculatedFactPaths,
-  })) };
+    sourceEvidence: sections.map(section => {
+      const claim = execution.claims.filter(item =>
+        item.state === 'active' && item.snapshotId === report.snapshotId &&
+        item.claimType === section.claimType &&
+        item.ruleRefs.some(ref => ref.ruleId === section.ruleId));
+      const rule = registry.rules.find(item =>
+        item.ruleId === section.ruleId &&
+        item.output.claimType === section.claimType);
+      const methodology = registry.methodologies.find(item =>
+        item.methodologyId === rule?.methodologyRef.id &&
+        item.version === rule.methodologyRef.version);
+      if (claim.length !== 1 || !rule || !methodology ||
+          !claim[0].sourceRefs.every(id => section.sourceIds.includes(id)) ||
+          !section.sourceIds.every(id => methodology.sourceIds.includes(id)) ||
+          JSON.stringify([...claim[0].upstreamClaimRefs].sort()) !==
+            JSON.stringify([...section.upstreamClaimIds].sort())) {
+        throw new TypeError('Saju 500: consumed natal T8 has no single exact Claim/Rule/Methodology/Source chain');
+      }
+      return {
+        claimId: claim[0].claimId,
+        claimType: section.claimType, pattern: section.pattern, axis: section.axis,
+        channel: section.channel, ruleId: section.ruleId,
+        methodologyId: methodology.methodologyId,
+        methodologyVersion: methodology.version,
+        upstreamClaimIds: section.upstreamClaimIds, sourceIds: section.sourceIds,
+        observedFactPaths: section.observedFactPaths ?? section.calculatedFactPaths,
+      };
+    }) };
+
 }
 function temporalEntries(result) {
   const report = result.annualMonthly.report;
@@ -131,6 +154,7 @@ function temporalEntries(result) {
     sections: annual.map(s => ({
       kind: s.kind,
       claimId: s.claimId ?? null,
+      methodologyId: s.methodologyId,
       ruleIds: s.ruleIds ?? [],
       sourceIds: s.sourceIds ?? [],
       sourceProfileId: s.researchProfileId,
@@ -148,6 +172,7 @@ function temporalEntries(result) {
       segmentId: s.segmentId,
       tenGod: s.tenGod,
       claimId: s.claimId,
+      methodologyId: s.methodologyId,
       sourceIds: [...s.sourceIds],
       ruleIds: [...s.ruleIds],
       factPaths: [...s.factPaths],
@@ -237,7 +262,7 @@ export function runFiveHundredSajuAudit() {
         rows[({
           general:'전체 사주', career:'직업·커리어', wealth:'재물',
           relationship:'연애·관계', business:'사업',
-        })[domain]].push({...natalEntry(report),birth:stamp,calculationHash:chartKey});
+        })[domain]].push({...natalEntry(report, interpretation, registry),birth:stamp,calculationHash:chartKey});
         if (domain === 'wealth' && report.sections.length === 0) {
           wealthMissingCases.push(
             diagnoseMissingWealthReading(snapshot, interpretation, registry, report, stamp),

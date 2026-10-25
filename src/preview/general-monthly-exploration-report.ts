@@ -10,6 +10,7 @@ import { GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES } from '../research/general-mo
 import {
   GENERAL_MONTHLY_TENSION_CLAIM_TYPE,
   GENERAL_MONTHLY_THEME_CLAIM_TYPE,
+  GENERAL_MONTHLY_SIX_COMBINATION_CLAIM_TYPE,
 } from '../research/general-monthly-reading-candidate.js';
 
 export const GENERAL_MONTHLY_EXPLORATION_VERSION = 'myeongha-monthly-exploration-v1' as const;
@@ -23,7 +24,7 @@ const SEGMENT_KO: Readonly<Record<MonthlySegmentId, string>> = {
 };
 
 export interface GeneralMonthlyExplorationSection {
-  kind: 'theme' | 'tension';
+  kind: 'theme' | 'tension' | 'structural_context';
   segmentId: MonthlySegmentId;
   title: string;
   text: string;
@@ -93,7 +94,9 @@ function researchCopy(claim: InterpretationClaim): { title: string; text: string
   const summary = profile.templates?.find(x => x.templateKey === 'summary' && x.language === 'ko')?.text;
   requireEvidence(title && summary && profile.requiredMethodAttribution &&
     profile.allowedEpistemicTypes.length === 1 &&
-    profile.allowedEpistemicTypes[0] === 'future_tendency',
+    (profile.allowedEpistemicTypes[0] === 'future_tendency' ||
+      (claim.claimType === GENERAL_MONTHLY_SIX_COMBINATION_CLAIM_TYPE.claimType &&
+        profile.allowedEpistemicTypes[0] === 'deterministic_fact')),
   'consumer copy must be bounded by the registered research profile');
   return {
     title,
@@ -132,7 +135,8 @@ export function buildGeneralMonthlyExplorationReport(
     claim.taxonomy.tier === 'T9' && claim.taxonomy.category === 'general' &&
     claim.taxonomy.subcategory === 'monthly' &&
     (claim.claimType === GENERAL_MONTHLY_THEME_CLAIM_TYPE.claimType ||
-      claim.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType));
+      claim.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType ||
+      claim.claimType === GENERAL_MONTHLY_SIX_COMBINATION_CLAIM_TYPE.claimType));
   const sections: GeneralMonthlyExplorationSection[] = [];
   const missing: string[] = [];
   const themeCount = new Set<MonthlySegmentId>();
@@ -171,20 +175,23 @@ export function buildGeneralMonthlyExplorationReport(
     });
   }
 
-  for (const claim of claims.filter(x => x.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType)) {
+  for (const claim of claims.filter(x =>
+    x.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType ||
+    x.claimType === GENERAL_MONTHLY_SIX_COMBINATION_CLAIM_TYPE.claimType)) {
     const value = claimValue(claim);
     const segment = facts.segmentsById[value.segmentId];
     const slot = value.natalPillar;
     requireEvidence(slot !== undefined && SLOTS.includes(slot),
       'monthly tension must refer to an actual natal pillar');
     const relation = segment.monthlyBranchRelations[slot];
+    const isSix = claim.claimType === GENERAL_MONTHLY_SIX_COMBINATION_CLAIM_TYPE.claimType;
     requireEvidence(relation.status === 'resolved' &&
-      relation.value.relation === 'clash' &&
+      relation.value.relation === (isSix ? 'six_combination' : 'clash') &&
       claim.factRefs.includes(`temporal.segmentsById.${value.segmentId}.monthlyBranchRelations.${slot}.relation`) &&
       claim.sourceRefs.length > 0, 'unresolved or foreign monthly tension');
     const copy = researchCopy(claim);
     sections.push({
-      kind: 'tension', segmentId: value.segmentId,
+      kind: isSix ? 'structural_context' : 'tension', segmentId: value.segmentId,
       title: copy.title, text: copy.text,
       calculatedInterval: { startsAt: segment.startsAt, endsAt: segment.endsAt },
       tenGod: segment.monthlyStemTenGod,

@@ -5,6 +5,9 @@ import { GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES } from '../research/general-ann
 import {
   GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
   GENERAL_ANNUAL_THEME_CLAIM_TYPE,
+  GENERAL_ANNUAL_SIX_COMBINATION_CLAIM_TYPE,
+  GENERAL_ANNUAL_SIX_COMBINATION_SOURCE_IDS,
+  GENERAL_ANNUAL_SIX_COMBINATION_METHODOLOGY_ID,
   GENERAL_ANNUAL_POLICY_SOURCE,
   GENERAL_ANNUAL_READING_METHODOLOGY,
 } from '../research/general-annual-reading-candidate.js';
@@ -34,7 +37,7 @@ const SLOT_LABELS: Readonly<Record<PillarSlot, string>> = {
 const SLOTS = ['year', 'month', 'day', 'hour'] as const satisfies readonly PillarSlot[];
 
 export interface GeneralAnnualExplorationSection {
-  kind: 'core' | 'tension';
+  kind: 'core' | 'tension' | 'structural_context';
   id: string;
   title: string;
   text: string;
@@ -46,8 +49,8 @@ export interface GeneralAnnualExplorationSection {
   researchProfileId: string;
   candidateClaimType: string;
   calculationFactPaths: readonly string[];
-  policySourceId: typeof GENERAL_ANNUAL_POLICY_SOURCE.sourceId;
-  methodologyId: typeof GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId;
+  policySourceId: string;
+  methodologyId: string;
   relatedPillar?: PillarSlot;
 }
 
@@ -88,7 +91,11 @@ function profileCopy(claimType: string, key: string): { headline: string; summar
   if (!headline || !summary) {
     throw new Error(`Annual narrative profile ${key} is missing consumer copy.`);
   }
-  return { headline, summary, profileId: profiles[0]!.profileId };
+  return {
+    headline,
+    summary: profiles[0]!.mandatoryQualifier ? summary + ' ' + profiles[0]!.mandatoryQualifier : summary,
+    profileId: profiles[0]!.profileId,
+  };
 }
 
 /**
@@ -134,6 +141,25 @@ export function buildGeneralAnnualExplorationReport(
     }
     if (state.value.pillar !== slot || state.value.annualBranch !== facts.annualPillar.branch) {
       throw new Error(`Contradictory annual branch relation for ${slot}.`);
+    }
+    if (state.value.relation === 'six_combination') {
+      const key = 'ANNUAL_BRANCH_SIX_COMBINATION_' + slot.toUpperCase();
+      const copy = profileCopy(GENERAL_ANNUAL_SIX_COMBINATION_CLAIM_TYPE.claimType, key);
+      sections.push({
+        kind: 'structural_context', id: key, title: copy.headline, text: copy.summary,
+        interpretationStatus: 'internal_research',
+        evidenceStatus: 'research_profile_projection_not_an_executed_official_claim',
+        researchProfileId: copy.profileId,
+        candidateClaimType: GENERAL_ANNUAL_SIX_COMBINATION_CLAIM_TYPE.claimType,
+        calculationFactPaths: [
+          'temporal.targetYear', 'temporal.annualPillar',
+          'temporal.annualBranchRelations.' + slot,
+        ],
+        policySourceId: GENERAL_ANNUAL_SIX_COMBINATION_SOURCE_IDS[0]!,
+        methodologyId: GENERAL_ANNUAL_SIX_COMBINATION_METHODOLOGY_ID,
+        relatedPillar: slot,
+      });
+      continue;
     }
     if (state.value.relation !== 'clash') continue;
     const key = `ANNUAL_BRANCH_CLASH_${slot.toUpperCase()}`;

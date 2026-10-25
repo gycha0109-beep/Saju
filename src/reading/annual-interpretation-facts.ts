@@ -68,7 +68,7 @@ const CONTROLS: Readonly<Record<FiveElement, FiveElement>> = {
 
 const PILLAR_SLOTS = ['year', 'month', 'day', 'hour'] as const satisfies readonly PillarSlot[];
 
-export type AnnualBranchRelationKind = 'clash' | 'none';
+export type AnnualBranchRelationKind = 'clash' | 'six_combination' | 'none';
 
 export interface AnnualBranchRelationValue {
   pillar: PillarSlot;
@@ -136,12 +136,14 @@ function branchRelation(
   natalPillar: PillarFact,
   annualPillar: PillarFact,
 ): AnnualBranchRelationValue {
-  const relation = deriveStructuralRelationCandidates({
+  const observed = deriveStructuralRelationCandidates({
     year: annualPillar,
     month: natalPillar,
-  }).some((candidate) => candidate.kind === 'branch_clash')
+  });
+  const relation = observed.some(candidate => candidate.kind === 'branch_clash')
     ? 'clash'
-    : 'none';
+    : observed.some(candidate => candidate.kind === 'branch_six_combination')
+      ? 'six_combination' : 'none';
 
   return {
     pillar: slot,

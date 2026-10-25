@@ -2,6 +2,7 @@ import type { ClaimNarrativeProfile } from '../contracts/narrative.js';
 import {
   GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
   GENERAL_ANNUAL_THEME_CLAIM_TYPE,
+  GENERAL_ANNUAL_SIX_COMBINATION_CLAIM_TYPE,
 } from './general-annual-reading-candidate.js';
 
 export const GENERAL_ANNUAL_NARRATIVE_PROFILE_VERSION = '0.1.0-research' as const;
@@ -194,5 +195,27 @@ function tensionProfile(copy: AnnualTensionCopy): ClaimNarrativeProfile {
   };
 }
 
+function sixPairProfile(slot: 'year' | 'month' | 'day' | 'hour', label: string): ClaimNarrativeProfile {
+  return {
+    profileId: 'PROFILE-GENERAL-ANNUAL-BRANCH-SIX-PAIR-' + slot.toUpperCase(),
+    version: GENERAL_ANNUAL_NARRATIVE_PROFILE_VERSION,
+    claimType: GENERAL_ANNUAL_SIX_COMBINATION_CLAIM_TYPE.claimType,
+    semanticKeys: ['ANNUAL_BRANCH_SIX_COMBINATION_' + slot.toUpperCase()],
+    allowedEpistemicTypes: ['deterministic_fact'],
+    requiredMethodAttribution: true,
+    mandatoryQualifier: '짝의 존재만 확인했으며 합화, 세력, 길흉, 재물·관계·사건 결과를 판단하지 않습니다.',
+    prohibitedPhrases: PROHIBITED_FUTURE_PHRASES,
+    renderingHints: ['axis:structural_observation', 'order:90'],
+    templates: [
+      { templateKey: 'headline', language: 'ko',
+        text: '연운 지지와 원국 ' + label + ' 사이에 고전 육합 짝이 확인됩니다' },
+      { templateKey: 'summary', language: 'ko',
+        text: '해당 연도의 지지와 원국 ' + label +
+          '의 지지가 고전 육합 짝에 해당한다는 구조적 관측입니다. 둘이 실제로 합화하거나 유리한 일이 생긴다고 해석하지 않습니다.' },
+    ],
+  };
+}
+const SIX_PAIR_SLOTS = [['year','연주'],['month','월주'],['day','일주'],['hour','시주']] as const;
 export const GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES: readonly ClaimNarrativeProfile[] =
-  Object.freeze([...THEME_COPY.map(themeProfile), ...TENSION_COPY.map(tensionProfile)]);
+  Object.freeze([...THEME_COPY.map(themeProfile), ...TENSION_COPY.map(tensionProfile),
+    ...SIX_PAIR_SLOTS.map(([slot,label]) => sixPairProfile(slot,label))]);

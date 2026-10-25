@@ -2,6 +2,7 @@ import type { ClaimNarrativeProfile } from '../contracts/narrative.js';
 import {
   GENERAL_MONTHLY_TENSION_CLAIM_TYPE,
   GENERAL_MONTHLY_THEME_CLAIM_TYPE,
+  GENERAL_MONTHLY_SIX_COMBINATION_CLAIM_TYPE,
   type GeneralMonthlySegmentId,
 } from './general-monthly-reading-candidate.js';
 
@@ -196,6 +197,31 @@ function tensionProfile(
   };
 }
 
+function sixPairProfile(
+  segmentId: GeneralMonthlySegmentId,
+  slot: (typeof PILLAR_COPY)[number][0],
+  label: string,
+): ClaimNarrativeProfile {
+  const segment = SEGMENT_COPY[segmentId];
+  return {
+    profileId: 'PROFILE-GENERAL-MONTHLY-' + segment.id + '-BRANCH-SIX-PAIR-' + slot.toUpperCase(),
+    version: GENERAL_MONTHLY_NARRATIVE_PROFILE_VERSION,
+    claimType: GENERAL_MONTHLY_SIX_COMBINATION_CLAIM_TYPE.claimType,
+    semanticKeys: ['MONTHLY_' + segmentId.toUpperCase() + '_BRANCH_SIX_COMBINATION_' + slot.toUpperCase()],
+    allowedEpistemicTypes: ['deterministic_fact'],
+    requiredMethodAttribution: true,
+    mandatoryQualifier: '짝의 일치만 확인되며 합화, 세력, 길흉, 수입, 사건 시기나 결과를 추정하지 않습니다. 특정 사건이나 결과를 확정하지 않습니다.',
+    prohibitedPhrases: PROHIBITED_FUTURE_PHRASES,
+    renderingHints: ['axis:structural_observation', 'order:90'],
+    templates: [
+      { templateKey: 'headline', language: 'ko',
+        text: segment.label + '의 지지와 원국 ' + label + '에서 육합 짝이 관측됩니다' },
+      { templateKey: 'summary', language: 'ko',
+        text: segment.label + '의 월운 지지와 원국 ' + label +
+        '의 지지가 고전 육합 짝에 해당한다는 구조적 관측입니다. 합화나 좋은 운, 구체적인 사건을 뜻하지 않습니다.' },
+    ],
+  };
+}
 export const GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES: readonly ClaimNarrativeProfile[] =
   Object.freeze([
     ...(['before_jeol', 'after_jeol'] as const).flatMap((segmentId) =>
@@ -203,5 +229,8 @@ export const GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES: readonly ClaimNarrativePr
     ),
     ...(['before_jeol', 'after_jeol'] as const).flatMap((segmentId) =>
       PILLAR_COPY.map(([slot, label], index) => tensionProfile(segmentId, slot, label, index)),
+    ),
+    ...(['before_jeol', 'after_jeol'] as const).flatMap(segmentId =>
+      PILLAR_COPY.map(([slot,label]) => sixPairProfile(segmentId, slot, label)),
     ),
   ]);

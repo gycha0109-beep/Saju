@@ -237,7 +237,8 @@ function kst(instant: string): string {
 function monthlyCard(section: GeneralMonthlyExplorationSection): string {
   const e = escapeHtml;
   return '<article class="reading-card">' +
-    '<small>' + (section.kind === 'theme' ? '이 구간의 중심 관점' : '충 관계에 대한 보조 관점') + '</small>' +
+    '<small>' + (section.kind === 'theme' ? '이 구간의 중심 관점' :
+      section.kind === 'structural_context' ? '고전 육합 짝에 대한 구조 관측(길흉 아님)' : '충 관계에 대한 보조 관점') + '</small>' +
     '<h4>' + e(section.title) + '</h4><p>' + e(section.text) + '</p>' +
     '<details><summary>이 풀이의 계산 근거와 출처</summary>' +
     '<p>기간: ' + e(kst(section.calculatedInterval.startsAt)) + '부터 ' +
@@ -267,15 +268,19 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       '</p></details></article>').join('');
   const annual = report.annual.sections.map(section =>
     '<article class="reading-card"><small>' +
-    (section.kind === 'core' ? '올해의 중심 관점' : '연운의 조건부 충 관계') +
+    (section.kind === 'core' ? '올해의 중심 관점' :
+      section.kind === 'structural_context' ? '고전 육합 짝의 구조 관측(길흉 아님)' : '연운의 조건부 충 관계') +
     '</small><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
     '<details><summary>올해 문구의 계산 근거와 연구 출처</summary>' +
-    '<p>해석 범위: 내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)</p>' +
+    '<p>해석 범위: 출처 연결 T9 연구 Claim 실행 결과이며 Official 승인·판매 권한 없음</p>' +
     '<p>문구 프로필: ' + e(section.researchProfileId) + '</p>' +
     '<p>후보 Claim 유형: ' + e(section.candidateClaimType) + '</p>' +
     '<p>계산 경로: ' + e(section.calculationFactPaths.join(' · ')) + '</p>' +
     '<p>연구 방법론: ' + e(section.methodologyId) + '</p>' +
-    '<p>출처: ' + e(section.policySourceId) + ' (명하 내부 연구 정책, 독립 고전 근거 아님)</p>' +
+    '<p>출처: ' + e((section.sourceIds ?? [section.policySourceId]).join(' · ')) + '</p>' +
+    '<p>' + (section.kind === 'structural_context' ?
+      '고전 문헌에 기록된 지지 짝의 관측만 허용하며 길흉·합화 판단은 불가합니다.' :
+      '명하 내부 연구 정책에 제한된 해석 가설이며 독립적인 미래 예측 근거가 아닙니다.') + '</p>' +
     '</details></article>',
   ).join('\n');
   const selected = report.referenceReading;

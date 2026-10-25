@@ -80,7 +80,10 @@ function render(
     e(section.researchProfileId) + '</p><p>계산 경로: ' +
     e(section.calculationFactPaths.join(' · ')) + '</p><p>정책: ' +
     e(section.policySourceId) + ' · 방법론: ' + e(section.methodologyId) +
-    '</p><p>독립 고전 근거가 아닌 내부 연구 정책입니다.</p></details></article>',
+    '</p><p>' + (section.kind === 'structural_context'
+      ? '고전 육합 짝의 관측에 한정하며 합화·길흉을 단정하지 않습니다.'
+      : '내부 연구 정책의 해석 가설이며 미래 결과의 독립 근거는 아닙니다.') +
+    '</p></details></article>',
   ).join('') || '<p>이 연도에 적용할 개인별 연운 연구 문구가 없습니다.</p>';
   const theme = monthlyFocus.state === 'in_period' ? monthlyFocus.theme : undefined;
   const currentMonth = theme === undefined
