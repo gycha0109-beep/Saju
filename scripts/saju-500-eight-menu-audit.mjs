@@ -75,13 +75,19 @@ function natalEntry(report) {
   if (report.readingGuide?.paragraph) prose.push(report.readingGuide.paragraph);
   // Narrative and selected source-backed claim types are counted separately:
   // different stems/dates inside the text do not automatically prove different meaning.
-  return entry(
+  const observation = entry(
     prose.join('\n\n'),
     sections.map(s => [s.claimType, s.pattern, s.axis, s.channel]),
     report.state,
     sections.length,
     'sourced_natal_research',
   );
+  return { ...observation, sourceEvidence: sections.map(section => ({
+    claimType: section.claimType, pattern: section.pattern, axis: section.axis,
+    channel: section.channel, ruleId: section.ruleId,
+    upstreamClaimIds: section.upstreamClaimIds, sourceIds: section.sourceIds,
+    observedFactPaths: section.observedFactPaths,
+  })) };
 }
 function temporalEntries(result) {
   const report = result.annualMonthly.report;
@@ -254,6 +260,7 @@ export function runFiveHundredSajuAudit() {
       annualRepetition: analyzeTemporalRepetition(rows['올해']),
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
     },
+    ...(process.env.SAJU_500_INCLUDE_CASE_ROWS === '1' ? {caseRows:rows} : {}),
     interpretationCaveat:'Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
     permissions:{mayPublish:false,maySell:false,mayCallOfficial:false},
   };
