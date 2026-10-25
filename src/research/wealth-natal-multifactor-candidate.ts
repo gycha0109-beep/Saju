@@ -24,6 +24,11 @@ interface Pattern {
 }
 const PATTERNS: readonly Pattern[] = Object.freeze([
   {
+    id: 'WEALTH_OFFICER_RESOURCE', families: ['wealth','officer','resource'],
+    axis: 'core', headline: '자원의 관리 기준과 준비가 이어지는 구조',
+    summary: '재성(현실 자원)·관성(기준과 책임)·인성(준비와 수용)이 하나의 실제 관측 채널에 함께 있습니다. 재성에서 관성, 관성에서 인성으로 이어지는 고전의 생조 관계를 토대로 자원을 다루는 기준과 필요한 준비를 함께 살피는 제한된 구조 해석입니다. 개인의 실제 재산·경제적 결과·투자 능력과 미래 재물운을 예측하는 결론은 아닙니다.',
+  },
+  {
     id: 'OUTPUT_WEALTH_OFFICER', families: ['output','wealth','officer'],
     axis: 'core', headline: '만들어 낸 가치와 자원, 관리 기준이 이어지는 구조',
     summary: '식상(산출·표현), 재성(자원·교환), 관성(규범·책임)이 하나의 관측 채널에서 연결됩니다. 재물 영역에서는 무엇을 가치로 만들고, 어떤 자원으로 옮기며, 어떤 관리 원칙에 둘 것인지 세 질문을 함께 살피는 전통적 구조 해석입니다. 개인의 수입·성과를 예상하는 뜻은 아닙니다.',
