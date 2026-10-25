@@ -353,7 +353,9 @@ export function buildWealthNatalMultifactorReport(
     result.find(s => s.axis === 'planning');
   // Actual Wealth relations take priority. Context-only T8 may fill an otherwise
   // empty research page, but never establishes the missing Wealth synthesis.
-  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
+  const supportSelection = core
+    ? selectIndependentNatalSupportingAxes(core, result.filter(section => section.axis !== 'context'))
+    : undefined;
   const tensionOnly = result.filter(section => section.axis === 'tension').slice(0, 1);
   const contextOnly = result.filter(section => section.axis === 'context').slice(0, 1);
   const chosen: WealthNatalMultifactorSection[] = core
