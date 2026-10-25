@@ -13,7 +13,7 @@ export const WEALTH_NATAL_MULTIFACTOR_VERSION = '0.1.0-research' as const;
 const METHOD_ID = 'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1';
 const RULE_SET = 'wealth-natal-source-bounded-multifactor';
 type Family = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
-type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension';
+type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension' | 'context';
 type Channel = 'visible_stems' | 'branches';
 interface Pattern {
   id: string;
@@ -53,6 +53,16 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     axis: 'tension', headline: '주도권, 현실 자원, 준비의 세 기준이 교차하는 구조',
     summary: '비겁의 자기 결정, 재성의 자원, 인성의 준비라는 세 축이 함께 관측됩니다. 서로 다른 목적 사이의 배분이라는 제한된 전통적 구조를 보여 줄 뿐, 실제 선택 충돌이나 자산 규모를 추론하지 않습니다.',
   },
+  {
+    id: 'OFFICER_RESOURCE_CONTEXT', families: ['officer','resource'],
+    axis: 'context', headline: '책임과 준비가 만나는 주변 구조',
+    summary: '관성(규범·책임)과 인성(수용·학습)이 같은 관측 채널에서 함께 확인됩니다. 고전의 관인 관계를 바탕으로 자원을 다루는 주제에 앞서 역할과 준비의 연결을 설명할 수 있는 제한된 주변 맥락입니다. 재성 자체의 관측이나 재물의 규모·흐름·유불리를 뜻하지 않으며, 재물운의 핵심 판단을 대신할 수 없습니다.',
+  },
+  {
+    id: 'OFFICER_PEER_CONTEXT', families: ['officer','peer'],
+    axis: 'context', headline: '책임과 자기 기준이 마주하는 주변 구조',
+    summary: '관성(규범·역할)과 비겁(자기 기준·동료)이 같은 관측 채널에 함께 확인됩니다. 전통적인 관성과 비겁의 견제 관계를 바탕으로 외부 요구와 자기 기준을 나란히 살피는 제한된 주변 맥락입니다. 재성에 관한 직접 해석이나 개인의 실제 재정 행동·성공·실패를 판단할 근거가 아닙니다.',
+  },
 ]);
 const CHANNELS: readonly Channel[] = ['visible_stems', 'branches'];
 const SOURCE_REFS: RuleDefinition['sourceRefs'] = [
@@ -73,11 +83,12 @@ export const WEALTH_NATAL_MULTIFACTOR_METHODOLOGY: MethodologyDefinition = Objec
   version: WEALTH_NATAL_MULTIFACTOR_VERSION,
   family: 'domain_synthesis',
   name: 'Wealth natal synthesis of multiple source-bounded Ten-God family channels (research)',
-  description: 'Research-only natal wealth/resource-choice interpretation from 2–3 same-channel T5 claims, without financial outcomes.',
+  description: 'Research-only natal wealth/resource-choice interpretation from 2–3 same-channel T5 claims; explicitly distinguish indirect contextual structure from direct wealth themes, without financial outcomes.',
   assumptions: [
     'Different T5 Claim inputs must be from the exact same canonical snapshot and channel.',
     'A family presence is not a dominance or strength measure. No favourable/unfavourable polarity.',
     'The core three-family relation is a source-qualified structural chain only, not causation in real life.',
+    'Officer-resource and officer-peer T5 relations may provide indirect background context only; no Wealth family is inferred from either relation and neither can satisfy the core wealth requirement.',
     'The relation can frame resource choices but cannot determine income, personal spending habits, investments, spouse, health or future events.',
     'This methodology is an unreviewed internal research candidate and is not admitted to Product/Commerce.',
   ],
@@ -97,7 +108,9 @@ function rule(pattern: Pattern, channel: Channel): RuleDefinition {
     taxonomy: { tier: 'T8', category: 'wealth', subcategory: 'multifactor_structure' },
     methodologyRef: { id: METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION },
     title: `${pattern.headline} — ${channel}`,
-    description: 'Wealth natal research synthesis of exact channel-bound upstream T5 themes.',
+    description: pattern.axis === 'context'
+      ? 'Indirect source-bounded resource-context structure; cannot determine wealth direction or fulfill a wealth synthesis core.'
+      : 'Wealth natal research synthesis of exact channel-bound upstream T5 themes.',
     inputs: pattern.families.map((family, i) => ({
       key: `family${i + 1}`,
       source: 'interpretation_claim' as const,
@@ -122,13 +135,14 @@ function rule(pattern: Pattern, channel: Channel): RuleDefinition {
         families: [...pattern.families],
         channel,
         axis: pattern.axis,
+        ...(pattern.axis === 'context' ? { directWealthReadingAuthorized: false } : {}),
         realLifeOutcomeAuthorized: false,
         futureTimingAuthorized: false,
         healthOrMoneyOutcomeAuthorized: false,
         numericScoringAuthorized: false,
       },
       polarity: 'neutral',
-      emphasis: pattern.axis === 'core' ? 'major' : 'moderate',
+      emphasis: pattern.axis === 'core' ? 'major' : pattern.axis === 'context' ? 'minor' : 'moderate',
       tags: ['research', 'wealth-natal', 'source-bound-multifactor', pattern.axis, channel],
     },
     sourceRefs: SOURCE_REFS,
