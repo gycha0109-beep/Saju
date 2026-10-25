@@ -7,6 +7,7 @@ on:
       - 'scripts/saju-500-root-cause.mjs'
       - 'scripts/saju-500-meaning-diff.mjs'
       - 'scripts/saju-500-quality-gate.mjs'
+      - 'scripts/saju-500-contrast-audit.mjs'
       - '.github/workflows/saju-500-reading-audit.yml'
   workflow_dispatch:
 
@@ -36,6 +37,8 @@ jobs:
         run: node scripts/saju-500-eight-menu-audit.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json"
       - name: Verify per-menu coverage and exact source/rule provenance
         run: node scripts/saju-500-quality-gate.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json" "$RUNNER_TEMP/saju-500-quality-report.json"
+      - name: Check same-theme different-natal intentional contrasts
+        run: node scripts/saju-500-contrast-audit.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json" "$RUNNER_TEMP/saju-500-contrast-report.json"
       - name: Upload audit and semantic-quality evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -44,5 +47,6 @@ jobs:
           path: |
             ${{ runner.temp }}/saju-500-eight-menu-report.json
             ${{ runner.temp }}/saju-500-quality-report.json
+            ${{ runner.temp }}/saju-500-contrast-report.json
           if-no-files-found: warn
           retention-days: 30
