@@ -37,6 +37,25 @@ export interface DomainStructuralReference {
   paragraph: string;
   authorizesDomainOutcome: false;
 }
+export interface SharedChartStructuralDomainEvidence {
+  /** One actually executed shared T8; not a new cross-domain semantic verdict. */
+  sharedStructuralT8ClaimId: string;
+  sharedStructuralT8RuleId: string;
+  sharedStructuralSourceIds: readonly string[];
+  family: SharedNatalStructuralSection['family'];
+  channel: SharedNatalStructuralSection['channel'];
+  context: SharedNatalStructuralSection['context'];
+  title: string;
+  paragraph: string;
+  /** Actual selected domain T8 Claims referring to this same chart context. */
+  domainEvidence: readonly {
+    domain: NatalDomainKey;
+    domainT8ClaimIds: readonly string[];
+    domainT8SourceIds: readonly string[];
+  }[];
+  authorizesNewDomainMeaning: false;
+}
+
 export interface NatalStructuralIntegratedResearch {
   version: typeof NATAL_STRUCTURAL_INTEGRATION_VERSION;
   snapshotId: string;
@@ -44,6 +63,7 @@ export interface NatalStructuralIntegratedResearch {
   structural: SharedNatalStructuralReading;
   domainReports: NatalFiveDomainMultifactorReports;
   domainSharedContexts: Readonly<Record<NatalDomainKey, readonly DomainStructuralReference[]>>;
+  sharedChartEvidence: readonly SharedChartStructuralDomainEvidence[];
   html: string;
   researchOnly: true;
   mayPublish: false;
@@ -160,22 +180,72 @@ export function buildNatalStructuralIntegratedResearch(
     general: general.links, career: career.links, wealth: wealth.links,
     relationship: relationship.links, business: business.links,
   };
+  // Reverse the exact selected T8 domain-to-shared graph, preserving all
+  // source references while rendering each shared observation only once.
+  const grouped = new Map<string, Map<NatalDomainKey, DomainStructuralReference[]>>();
+  for (const [key, links] of Object.entries(domainSharedContexts) as
+    [NatalDomainKey, readonly DomainStructuralReference[]][]) {
+    for (const link of links) {
+      const byDomain = grouped.get(link.sharedStructuralT8ClaimId) ??
+        new Map<NatalDomainKey, DomainStructuralReference[]>();
+      const bucket = byDomain.get(key) ?? [];
+      bucket.push(link);
+      byDomain.set(key, bucket);
+      grouped.set(link.sharedStructuralT8ClaimId, byDomain);
+    }
+  }
+  const sharedChartEvidence: SharedChartStructuralDomainEvidence[] =
+    shared.sections.map(section => {
+      const linksByDomain = grouped.get(section.claimId);
+      const domainEvidence = (Object.keys(domainSharedContexts) as NatalDomainKey[])
+        .filter(key => linksByDomain?.has(key))
+        .map(key => {
+          const links = linksByDomain?.get(key) ?? [];
+          assert(links.length > 0 && links.every(link =>
+            link.sharedStructuralT8RuleId === section.ruleId &&
+            link.family === section.family && link.channel === section.channel &&
+            link.context === section.context &&
+            link.sharedStructuralT8SourceIds.every(id => section.sourceIds.includes(id))),
+          'shared-structural domain provenance does not match selected source Claim');
+          return {
+            domain: key,
+            domainT8ClaimIds: [...new Set(links.map(x=>x.domainT8ClaimId))],
+            domainT8SourceIds: [...new Set(links.flatMap(x=>x.domainT8SourceIds))],
+          };
+        });
+      return {
+        sharedStructuralT8ClaimId: section.claimId,
+        sharedStructuralT8RuleId: section.ruleId,
+        sharedStructuralSourceIds: [...section.sourceIds],
+        family: section.family, channel: section.channel, context: section.context,
+        title: section.title, paragraph: section.paragraph,
+        domainEvidence, authorizesNewDomainMeaning: false,
+      };
+    });
+  assert(sharedChartEvidence.length === shared.sections.length &&
+    new Set(sharedChartEvidence.map(x=>x.sharedStructuralT8ClaimId)).size === shared.sections.length,
+  'duplicate or missing shared structural source Claim');
   const originalHtml = renderNatalFiveDomainMultifactorResearchHtml(snapshot, reports);
-  const additions = (Object.entries(domainSharedContexts) as
-    [NatalDomainKey, readonly DomainStructuralReference[]][]).map(([key, links]) =>
-    '<section><h2>' + escapeHtml(key) + ' — 원국 구조 참고 근거</h2>' +
-    (links.length ? links.map(link =>
-      '<article><p>' + escapeHtml(link.paragraph) + '</p><details><summary>실제 해석 Claim 근거</summary>' +
-      '<p>해당 분야 T8: ' + escapeHtml(link.domainT8ClaimId) +
-      ' / 공유 구조 T8: ' + escapeHtml(link.sharedStructuralT8ClaimId) + '</p>' +
-      '<p>공유 규칙: ' + escapeHtml(link.sharedStructuralT8RuleId) + '</p>' +
-      '<p>출처: ' + escapeHtml(link.sharedStructuralT8SourceIds.join(' · ')) +
-      '</p></details></article>').join('') :
-      '<p>해당 주제에서 같은 십신 경로에 대응하는 공유 구조 관측이 없습니다.</p>') +
-    '</section>').join('');
-  const appendix = '<section aria-label="원국 구조와 분야별 공통 근거"><h2>공유 명식 구조의 조건부 참고</h2>' +
-    '<p>연구용 월령·뿌리 관측만 연결합니다. 신강·격국·용신이나 미래 결과를 판정하지 않습니다.</p>' +
-    additions + '</section>';
+  const evidenceHtml = sharedChartEvidence.map(evidence =>
+    '<article><h3>' + escapeHtml(evidence.title) + '</h3>' +
+    '<p>' + escapeHtml(evidence.paragraph) + '</p>' +
+    (evidence.domainEvidence.length ?
+      '<p>실제 선택된 분야별 T8 참고: ' +
+      escapeHtml(evidence.domainEvidence.map(x=>x.domain).join(' · ')) + '</p>' :
+      '<p>현재 분야별 T8에 대응하는 참고 근거는 없습니다.</p>') +
+    '<details><summary>실제 원국·분야별 Claim 근거</summary>' +
+    '<p>원국 공유 T8: ' + escapeHtml(evidence.sharedStructuralT8ClaimId) +
+    ' / 규칙: ' + escapeHtml(evidence.sharedStructuralT8RuleId) + '</p>' +
+    '<p>원국 출처: ' + escapeHtml(evidence.sharedStructuralSourceIds.join(' · ')) + '</p>' +
+    evidence.domainEvidence.map(x =>
+      '<p>' + escapeHtml(x.domain) + ' T8: ' +
+      escapeHtml(x.domainT8ClaimIds.join(' · ')) +
+      ' / 출처: ' + escapeHtml(x.domainT8SourceIds.join(' · ')) + '</p>').join('') +
+    '</details></article>').join('');
+  const appendix = '<section aria-label="원국 구조와 분야별 공통 근거"><h2>같은 명식의 공유 구조 근거</h2>' +
+    '<p>구조 관측은 한 번만 설명하며 실제 분야별 T8의 출처 연결을 보존합니다. ' +
+    '신강·격국·용신·사건·길흉·수입을 새로 판단하지 않습니다.</p>' +
+    evidenceHtml + '</section>';
   const html = originalHtml.includes('</main>')
     ? originalHtml.replace('</main>', appendix + '</main>')
     : originalHtml.replace('</body>', appendix + '</body>');
@@ -183,7 +253,7 @@ export function buildNatalStructuralIntegratedResearch(
     version: NATAL_STRUCTURAL_INTEGRATION_VERSION,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     structural: shared, domainReports: reports, domainSharedContexts,
-    html,
+    sharedChartEvidence, html,
     researchOnly: true, mayPublish: false, maySell: false, mayGrantOfficialAuthority: false,
   };
 }

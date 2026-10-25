@@ -1,0 +1,114 @@
+{
+  "version": "saju-500-whole-chart-structural-integration-final-2026-10-26",
+  "status": "IMPLEMENTATION_EXECUTABLE_WITH_EXPLICIT_SEMANTIC_GAPS",
+  "seed": "0x5a1a2026",
+  "reference": "2026-10-25T00:00:00.000Z",
+  "attempted": 500,
+  "elapsedMs": 106235,
+  "result": {
+    "executed": 500,
+    "errors": [],
+    "sameChartHashFailures": 0,
+    "structuralT8Count": 3038,
+    "sourceBoundT8Births": 500,
+    "rootCandidateBirths": 448,
+    "hiddenChallengeSections": 307,
+    "hiddenChallengeBirths": 211,
+    "hiddenChallengeWithMultipleObservedPositions": 205,
+    "hiddenSupportSections": 741,
+    "hiddenSupportBirths": 286,
+    "hiddenPeerSupportSections": 366,
+    "hiddenResourceSupportSections": 375,
+    "visibleContrastingSections": 604,
+    "visibleContrastingBirths": 422,
+    "visibleSupportSections": 321,
+    "visibleChallengeSections": 283,
+    "renderedSourceGroups": 3038,
+    "crossDomainEvidenceGroups": 2561,
+    "familyChannelMeaningProfiles": 46,
+    "rootContextMeaningProfiles": 453,
+    "domainContextBirths": {
+      "general": 377,
+      "career": 374,
+      "wealth": 365,
+      "business": 453,
+      "relationship": 437
+    },
+    "domainContextLinks": {
+      "general": 2125,
+      "career": 2128,
+      "wealth": 2118,
+      "business": 2702,
+      "relationship": 2496
+    },
+    "annualLinks": 531,
+    "monthlyLinks": 981,
+    "yearlyConnectedBirths": 89,
+    "monthlyConnectedBirths": 162,
+    "dayunStillUninterpretedBirths": 500,
+    "withoutAnyNewSourceBoundContext": 0,
+    "provenanceErrors": 0,
+    "maySellOrOfficialViolations": 0
+  },
+  "examples": [
+    {
+      "birth": "1998-03-28 22:19",
+      "hash": "dd1c6cd1e706bbfbb7e62ce72f23169bc0fe2862f6362bc26ba7acd95ee670f6",
+      "T8": 8,
+      "rootCandidates": 2,
+      "general": 0,
+      "wealth": 4,
+      "annual": 0,
+      "monthly": 0
+    },
+    {
+      "birth": "1971-02-24 21:59",
+      "hash": "cb87404fcef2054651467f2ccf726724ab447cbadbf53ef94fdf7a33bd3878f5",
+      "T8": 3,
+      "rootCandidates": 0,
+      "general": 3,
+      "wealth": 6,
+      "annual": 0,
+      "monthly": 0
+    },
+    {
+      "birth": "1992-02-09 05:23",
+      "hash": "3fc64c3513107ac8199ac80880f73158363a370270f4c5c937f58c6e129aac0f",
+      "T8": 4,
+      "rootCandidates": 1,
+      "general": 0,
+      "wealth": 0,
+      "annual": 0,
+      "monthly": 0
+    },
+    {
+      "birth": "1964-11-14 14:59",
+      "hash": "382fcde8266c6c9c8e13f98c85bc49a41a5539c9bb13137fc9b837535b55e7f9",
+      "T8": 5,
+      "rootCandidates": 1,
+      "general": 5,
+      "wealth": 5,
+      "annual": 0,
+      "monthly": 0
+    },
+    {
+      "birth": "1992-10-21 11:08",
+      "hash": "119fa55439ec1bc6222b5754b5232ad751214db417862b4e055c98fbacc84b48",
+      "T8": 4,
+      "rootCandidates": 1,
+      "general": 4,
+      "wealth": 0,
+      "annual": 0,
+      "monthly": 4
+    }
+  ],
+  "errors": [],
+  "remainingSemanticBlockers": [
+    "R011/R121/R150 prevent global negative root and unconstrained Tonggen settlement.",
+    "Strength, Gyeokguk, Tiaohou, Yongshin source conditions do not authorize universal final chart judgments.",
+    "Season/root contextual T8 and five domain T8 are linked by actual same-chart observed family but are not a new causal domain verdict.",
+    "R072 Dayun interaction classes are explicitly non-executable; only computed periods and independent natal context exist.",
+    "Annual/monthly exact selected T9 themes and T8 contexts are linked by observed family; no event/polarity is inferred.",
+    "No Production/Official/Sell/Publish promotion is granted."
+  ]
+}

@@ -31,6 +31,7 @@ const metric={
   hiddenPeerSupportSections:0,hiddenResourceSupportSections:0,
   visibleContrastingSections:0,visibleContrastingBirths:0,
   visibleSupportSections:0,visibleChallengeSections:0,
+  renderedSourceGroups:0,crossDomainEvidenceGroups:0,
   familyChannelMeaningProfiles:new Set(),rootContextMeaningProfiles:new Set(),
   domainContextBirths:Object.fromEntries(DOMAINS.map(x=>[x,0])),
   domainContextLinks:Object.fromEntries(DOMAINS.map(x=>[x,0])),
@@ -112,6 +113,31 @@ for(let i=0;i<500;i++){
       metric.rootContextMeaningProfiles.add(JSON.stringify([x.family,x.channel,x.context,
         x.monthRelation,x.intrinsicRootCandidates.map(y=>[y.position,y.rootClass])]));
     }
+    const groups = result.natal.sharedChartEvidence;
+    metric.renderedSourceGroups += groups.length;
+    if(groups.length !== s.sections.length ||
+      new Set(groups.map(x=>x.sharedStructuralT8ClaimId)).size !== groups.length)
+      metric.provenanceErrors++;
+    for(const group of groups){
+      const original=s.sections.find(x=>x.claimId===group.sharedStructuralT8ClaimId);
+      if(!original || group.sharedStructuralT8RuleId!==original.ruleId ||
+        group.authorizesNewDomainMeaning!==false ||
+        group.sharedStructuralSourceIds.join('|')!==original.sourceIds.join('|') ||
+        group.family!==original.family || group.channel!==original.channel ||
+        group.context!==original.context || group.paragraph!==original.paragraph)
+        metric.provenanceErrors++;
+      if(group.domainEvidence.length>1)metric.crossDomainEvidenceGroups++;
+      for(const d of group.domainEvidence){
+        const matches=result.natal.domainSharedContexts[d.domain].filter(x=>
+          x.sharedStructuralT8ClaimId===group.sharedStructuralT8ClaimId);
+        const expectedClaims=[...new Set(matches.map(x=>x.domainT8ClaimId))];
+        const expectedSources=[...new Set(matches.flatMap(x=>x.domainT8SourceIds))];
+        if(!matches.length ||
+          JSON.stringify(expectedClaims)!==JSON.stringify(d.domainT8ClaimIds) ||
+          JSON.stringify(expectedSources)!==JSON.stringify(d.domainT8SourceIds))
+            metric.provenanceErrors++;
+      }
+    }
     for(const domain of DOMAINS){
       const links=result.natal.domainSharedContexts[domain];
       if(links.length)metric.domainContextBirths[domain]++;
@@ -155,6 +181,9 @@ const errors=[
   ...(metric.sourceBoundT8Births===0?['No structural T8 was consumed']:[]),
   ...(metric.hiddenChallengeBirths===0?['No source-bound support/challenge co-presence was consumed']:[]),
   ...(metric.hiddenSupportBirths===0?['No source-bound challenge/support co-presence was consumed']:[]),
+  ...(metric.renderedSourceGroups!==metric.structuralT8Count ||
+    metric.crossDomainEvidenceGroups===0 ?
+      ['Consolidated cross-domain chart source evidence was missing or duplicated']:[]),
   ...(metric.visibleSupportSections===0 || metric.visibleChallengeSections===0 ?
     ['No independently sourced I13 visible stem contrast in both month directions']:[]),
   ...(metric.monthlyConnectedBirths===0?['No temporal/natal structural source correspondence']:[]),
@@ -187,6 +216,7 @@ process.stdout.write('SAJU_STRUCTURAL_FINAL '+JSON.stringify({
  hiddenSupportBirths:metric.hiddenSupportBirths,hiddenSupportSections:metric.hiddenSupportSections,
  visibleBirths:metric.visibleContrastingBirths,
  visibleSupport:metric.visibleSupportSections,visibleChallenge:metric.visibleChallengeSections,
+ sharedGroups:metric.renderedSourceGroups,crossDomainGroups:metric.crossDomainEvidenceGroups,
  yearly:metric.yearlyConnectedBirths,
  monthly:metric.monthlyConnectedBirths,
  familyProfiles:metric.familyChannelMeaningProfiles.size,
