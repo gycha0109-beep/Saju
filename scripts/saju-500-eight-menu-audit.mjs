@@ -15,6 +15,12 @@ import { buildWealthNatalMultifactorReport } from '../dist/preview/wealth-natal-
 import { buildBusinessNatalMultifactorReport } from '../dist/preview/business-natal-multifactor-report.js';
 import { buildRelationshipNatalMultifactorReport } from '../dist/preview/relationship-natal-multifactor-report.js';
 import { buildThreeTemporalMenusBirthReading } from '../dist/preview/three-temporal-menus-birth-reading.js';
+import {
+  diagnoseMissingWealthReading,
+  analyzeTemporalRepetition,
+  summarizeMissingWealthCauses,
+  ROOT_CAUSE_AUDIT_VERSION,
+} from './saju-500-root-cause.mjs';
 
 const REFERENCE = '2026-10-25T00:00:00.000Z';
 const COUNT = 500;
@@ -98,6 +104,31 @@ function temporalEntries(result) {
   // IMPORTANT: Dayun periods describe calendar/pillar facts, not supported
   // forecasts; report life-stage's structural uniqueness but DO NOT count it
   // as distinct life-stage interpretations.
+  a.sourceEvidence = {
+    annualStemTenGod: report.annual.annualStemTenGod,
+    annualCalendarPolicy: report.annual.calendarPolicy,
+    sections: annual.map(s => ({
+      kind: s.kind,
+      sourceProfileId: s.researchProfileId,
+      candidateClaimType: s.candidateClaimType,
+      calculatedFactPaths: [...s.calculationFactPaths],
+      relatedPillar: s.relatedPillar ?? null,
+    })),
+  };
+  m.sourceEvidence = {
+    referenceState: focus.state,
+    referenceSegment: focus.segmentId ?? null,
+    sections: monthly.map(s => ({
+      kind: s.kind,
+      segmentId: s.segmentId,
+      tenGod: s.tenGod,
+      claimId: s.claimId,
+      sourceIds: [...s.sourceIds],
+      ruleIds: [...s.ruleIds],
+      factPaths: [...s.factPaths],
+      relatedPillar: s.relatedPillar ?? null,
+    })),
+  };
   const l = entry(
     life.periods.map(p => p.text).join('\n\n'),
     [life.interpretationStatus, ...life.periods.map(p => p.kind)],
@@ -161,6 +192,7 @@ export function runFiveHundredSajuAudit() {
   const inputs = new Set();
   const chartHashGroups = new Map();
   const failures = [];
+  const wealthMissingCases = [];
   const startedAt = Date.now();
   for (let i=0; i<COUNT; i++) {
     const {stamp, birth} = sampleBirth(inputs);
@@ -180,7 +212,12 @@ export function runFiveHundredSajuAudit() {
         rows[({
           general:'전체 사주', career:'직업·커리어', wealth:'재물',
           relationship:'연애·관계', business:'사업',
-        })[domain]].push({...natalEntry(report),birth:stamp});
+        })[domain]].push({...natalEntry(report),birth:stamp,calculationHash:chartKey});
+        if (domain === 'wealth' && report.sections.length === 0) {
+          wealthMissingCases.push(
+            diagnoseMissingWealthReading(snapshot, interpretation, registry, report, stamp),
+          );
+        }
       }
       const temporal = buildThreeTemporalMenusBirthReading(birth,{
         requestId:'500-sample-audit-' + i,
@@ -192,7 +229,7 @@ export function runFiveHundredSajuAudit() {
         throw new Error('Time menus did not preserve canonical calculation hash');
       }
       const three = temporalEntries(temporal);
-      for (let t=0;t<3;t++) rows[DOMAIN_NAMES[5+t]].push({...three[t],birth:stamp});
+      for (let t=0;t<3;t++) rows[DOMAIN_NAMES[5+t]].push({...three[t],birth:stamp,calculationHash:chartKey});
     } catch(error) {
       failures.push({birth:stamp,error:String(error?.stack ?? error).slice(0,1200)});
     }
@@ -211,13 +248,32 @@ export function runFiveHundredSajuAudit() {
     sameCalculationHashGroups:sameChart.slice(0,10),
     elapsedMs:Date.now()-startedAt,
     menuResults:Object.fromEntries(DOMAIN_NAMES.map(name=>[name,summarize(rows[name])])),
+    rootCauseDiagnostics: {
+      version: ROOT_CAUSE_AUDIT_VERSION,
+      wealth: summarizeMissingWealthCauses(wealthMissingCases),
+      annualRepetition: analyzeTemporalRepetition(rows['올해']),
+      monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
+    },
     interpretationCaveat:'Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
     permissions:{mayPublish:false,maySell:false,mayCallOfficial:false},
   };
   const outfile=process.argv[2];
   if(outfile) writeFileSync(outfile,JSON.stringify(result,null,2)+'\n','utf8');
+  process.stdout.write('SAJU500_ROOT_CAUSE_SUMMARY '+JSON.stringify({
+    wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
+    missingCauses: result.rootCauseDiagnostics.wealth.byCause,
+    annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
+    monthlyRepeated: result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups,
+  })+'\n');
   process.stdout.write('SAJU500_RESULT_JSON '+JSON.stringify(result)+'\n');
-  if(inputs.size!==COUNT || failures.length || DOMAIN_NAMES.some(name=>rows[name].length!==COUNT)) {
+  if(inputs.size!==COUNT || failures.length || DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
+      !result.rootCauseDiagnostics.wealth.allCasesHaveExplicitCause ||
+      result.rootCauseDiagnostics.wealth.missingCaseCount !==
+        result.menuResults['재물'].withoutReadableText ||
+      result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups !==
+        result.menuResults['올해'].exactText.casesInRepeatedGroups ||
+      result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups !==
+        result.menuResults['이번 달'].exactText.casesInRepeatedGroups) {
     process.exitCode=1;
   }
   return result;
