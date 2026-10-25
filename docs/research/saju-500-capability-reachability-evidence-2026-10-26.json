@@ -1,0 +1,862 @@
+{
+  "version": "saju-500-four-stage-capability-reachability-v1",
+  "status": "FOUR_STAGE_EVIDENCE_INVENTORY_COMPLETE_NOT_PRODUCT_APPROVED",
+  "source": {
+    "seed": "0x5a1a2026",
+    "sampledBirths": 500,
+    "menus": 8,
+    "reference": "2026-10-25T00:00:00.000Z",
+    "calculationHashVerifiedPerBirth": 500
+  },
+  "structuralCalculation": {
+    "four_pillars": {
+      "label": "사주 네 기둥",
+      "resolvedBirths": 500
+    },
+    "day_master": {
+      "label": "일간",
+      "resolvedBirths": 500
+    },
+    "ten_god_mapping": {
+      "label": "십신 배치",
+      "resolvedBirths": 500
+    },
+    "five_element_counts": {
+      "label": "오행 분포",
+      "resolvedBirths": 500
+    },
+    "hidden_stems": {
+      "label": "지장간",
+      "resolvedBirths": 500
+    },
+    "solar_term_context": {
+      "label": "절기",
+      "resolvedBirths": 500
+    },
+    "natal_relations": {
+      "label": "천간·지지 구조관계",
+      "resolvedBirths": 500
+    },
+    "stem_settlement": {
+      "label": "천간 상호작용 관측",
+      "resolvedBirths": 500
+    },
+    "branch_clash_context": {
+      "label": "지지 충 관측 맥락",
+      "resolvedBirths": 500
+    },
+    "void_branches": {
+      "label": "공망 계산 사실",
+      "resolvedBirths": 500
+    },
+    "luck_cycle": {
+      "label": "대운 계산",
+      "resolvedBirths": 500
+    }
+  },
+  "observedStructuralRelationOccurrences": {
+    "branch_six_combination": 240,
+    "branch_clash": 235,
+    "branch_three_combination": 34,
+    "stem_five_combination": 287
+  },
+  "registeredAndReachedRules": {
+    "전체 사주": {
+      "registeredT5": 10,
+      "registeredT8": 17,
+      "observedUniqueT8RuleIds": 12
+    },
+    "직업·커리어": {
+      "registeredT5": 10,
+      "registeredT8": 10,
+      "observedUniqueT8RuleIds": 10
+    },
+    "재물": {
+      "registeredT5": 10,
+      "registeredT8": 18,
+      "observedUniqueT8RuleIds": 18
+    },
+    "연애·관계": {
+      "registeredT5": 10,
+      "registeredT8": 20,
+      "observedUniqueT8RuleIds": 19
+    },
+    "사업": {
+      "registeredT5": 10,
+      "registeredT8": 20,
+      "observedUniqueT8RuleIds": 20
+    }
+  },
+  "natalReadingConsumption": {
+    "전체 사주": {
+      "selectedT8Births": 478,
+      "selectedT8Sections": 935,
+      "birthCasesWithTwoOrMoreT8Sections": 336,
+      "birthCasesWithBothVisibleAndBranchChannels": 231,
+      "birthCasesWithOneOrMoreT8FromTwoPlusT5": 478,
+      "deliveredReadableBirths": 478,
+      "researchCompleteFlaggedBirths": 121
+    },
+    "직업·커리어": {
+      "selectedT8Births": 478,
+      "selectedT8Sections": 998,
+      "birthCasesWithTwoOrMoreT8Sections": 350,
+      "birthCasesWithBothVisibleAndBranchChannels": 229,
+      "birthCasesWithOneOrMoreT8FromTwoPlusT5": 478,
+      "deliveredReadableBirths": 478,
+      "researchCompleteFlaggedBirths": 114
+    },
+    "재물": {
+      "selectedT8Births": 483,
+      "selectedT8Sections": 930,
+      "birthCasesWithTwoOrMoreT8Sections": 323,
+      "birthCasesWithBothVisibleAndBranchChannels": 108,
+      "birthCasesWithOneOrMoreT8FromTwoPlusT5": 483,
+      "deliveredReadableBirths": 484,
+      "researchCompleteFlaggedBirths": 124
+    },
+    "연애·관계": {
+      "selectedT8Births": 496,
+      "selectedT8Sections": 1055,
+      "birthCasesWithTwoOrMoreT8Sections": 397,
+      "birthCasesWithBothVisibleAndBranchChannels": 331,
+      "birthCasesWithOneOrMoreT8FromTwoPlusT5": 496,
+      "deliveredReadableBirths": 496,
+      "researchCompleteFlaggedBirths": 162
+    },
+    "사업": {
+      "selectedT8Births": 494,
+      "selectedT8Sections": 1195,
+      "birthCasesWithTwoOrMoreT8Sections": 444,
+      "birthCasesWithBothVisibleAndBranchChannels": 337,
+      "birthCasesWithOneOrMoreT8FromTwoPlusT5": 494,
+      "deliveredReadableBirths": 494,
+      "researchCompleteFlaggedBirths": 257
+    }
+  },
+  "temporalReadingConsumption": {
+    "올해": {
+      "sourceBoundT9Births": 500,
+      "sourceBoundT9Sections": 818,
+      "natalContextBirths": 293,
+      "observedClassicalSixPairBirths": 146,
+      "observedClassicalSixPairSections": 169,
+      "actuallySelectedPrimaryT9Births": 500,
+      "deliveredReadableBirths": 500
+    },
+    "이번 달": {
+      "sourceBoundT9Births": 500,
+      "sourceBoundT9Sections": 1660,
+      "natalContextBirths": 322,
+      "observedClassicalSixPairBirths": 260,
+      "observedClassicalSixPairSections": 330,
+      "actuallySelectedPrimaryT9Births": 500,
+      "deliveredReadableBirths": 500
+    }
+  },
+  "lifeStage": {
+    "calculatedLuckCycleBirths": 500,
+    "authorizedLifeStageMeaningBirths": 0,
+    "consumerProjectionState": "source_authority_not_established_for_all_500"
+  },
+  "selectedT8CalculatedFactPathFamilies": {
+    "root": 0,
+    "tonggen": 0,
+    "wang": 0,
+    "shuai": 0,
+    "qiang": 0,
+    "gyeok": 0,
+    "tiaohou": 0,
+    "yong": 0,
+    "xi": 0,
+    "ji": 0,
+    "strength": 0,
+    "climate": 0,
+    "season": 0,
+    "interaction": 0
+  },
+  "provenance": {
+    "distinctSelectedT8Rules": 79,
+    "distinctSelectedT8Methodologies": 5,
+    "selectedT8FactPaths": [
+      {
+        "path": "derivedFacts.tenGods.value.year.stem.value",
+        "count": 1970
+      },
+      {
+        "path": "derivedFacts.tenGods.value.hour.stem.value",
+        "count": 1950
+      },
+      {
+        "path": "derivedFacts.tenGods.value.month.stem.value",
+        "count": 1934
+      },
+      {
+        "path": "derivedFacts.tenGods.value.hour.branch.value",
+        "count": 1842
+      },
+      {
+        "path": "derivedFacts.tenGods.value.day.branch.value",
+        "count": 1841
+      },
+      {
+        "path": "derivedFacts.tenGods.value.year.branch.value",
+        "count": 1821
+      },
+      {
+        "path": "derivedFacts.tenGods.value.month.branch.value",
+        "count": 1793
+      }
+    ]
+  },
+  "fourStageCapabilityMatrix": [
+    {
+      "id": "day_master_month_season",
+      "label": "일간·월령·계절 환경",
+      "historicalReference": "Month / Season Semantics",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "NEEDS_INTEGRATION",
+        "oldGap": "Season/month evidence exists but chart-level synthesis is not a single governed shared claim surface."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/i18a-month-branch-strength-evidence.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "related_T0_facts_verified_not_full_structural_verdict",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": [
+        "월령·계절의 구조적 의미가 전체 종합 판단으로 연결됐는지 확인"
+      ]
+    },
+    {
+      "id": "root_tonggen",
+      "label": "통근·뿌리",
+      "historicalReference": "Root / Tonggen",
+      "priorAudit": {
+        "oldRuntimeState": "RESEARCH_ONLY",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Large bounded research substrate exists, but no single governed executable root/Tonggen synthesis is proven."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-natal-root-strength-dependency-map.ts",
+          "present": true
+        },
+        {
+          "path": "src/research/general-natal-root-term-binding-authority.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "strength",
+      "label": "왕쇠·강약",
+      "historicalReference": "旺衰 / 強弱",
+      "priorAudit": {
+        "oldRuntimeState": "RESEARCH_ONLY",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Research primitives and readiness work exist, but a governed chart-level strength conclusion is not proven reachable."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/i23-strength-decision-readiness-v2.ts",
+          "present": true
+        },
+        {
+          "path": "src/research/general-natal-wang-shuai-qiang-ruo-semantic-axis-authority.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "support_constituents",
+      "label": "당중·조과",
+      "historicalReference": "黨眾 / 助寡",
+      "priorAudit": {
+        "oldRuntimeState": "RESEARCH_ONLY",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Constituent authority evidence exists without a shared executable chart-level synthesis."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-natal-tonggen-dang-zhong-support-constituent-authority.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "gyeokguk",
+      "label": "격국",
+      "historicalReference": "格局",
+      "priorAudit": {
+        "oldRuntimeState": "RESEARCH_ONLY",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Pattern conditions/counterexamples exist, but no governed shared Gyeokguk resolver is proven."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-natal-pattern-candidate-establishment-formal-boundary-audit.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "tiaohou",
+      "label": "조후",
+      "historicalReference": "調候",
+      "priorAudit": {
+        "oldRuntimeState": "RESEARCH_ONLY",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Research methodology exists but is not a shared governed runtime claim."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-natal-tiaohou-priority-conditions.ts",
+          "present": true
+        },
+        {
+          "path": "src/research/general-natal-tiaohou-structure-conflict-preservation.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "yongxi",
+      "label": "용신·희신·기신",
+      "historicalReference": "喜神 / 用神 / 忌神",
+      "priorAudit": {
+        "oldRuntimeState": "RESEARCH_ONLY",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Method-specific evidence exists; no single global element preference may be inferred."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-natal-xi-yong-ji-shen-scope-observation-authority.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "ten_god_context",
+      "label": "십신의 구조적 의미",
+      "historicalReference": "Ten-God Contextual Meaning",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Exact relation authorities exist, but broad contextual meaning is not a shared executable synthesis."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-natal-bing-yi-zhengyin-exact-relation-authority.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "related_T0_facts_verified_not_full_structural_verdict",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "qualified_interactions",
+      "label": "합·충과 조건·효력",
+      "historicalReference": "Stem / Branch Interactions",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Base relations are executable; qualification/precedence/effect synthesis remains fragmented."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/calculation/structural-relations.ts",
+          "present": true
+        },
+        {
+          "path": "src/research/general-natal-minimal-interaction-predicate-set-executable-claims.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "related_T0_facts_verified_not_full_structural_verdict",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "position_semantics",
+      "label": "궁위·일지 배우자궁",
+      "historicalReference": "Palace / Position Semantics",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "NEEDS_INTEGRATION",
+        "oldGap": "Exact day-branch spouse-palace position_only semantic is bounded; wider palace meaning remains unauthorized."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/relationship-spouse-t8-day-branch-palace-project-governed-materiality-decision.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "method_conflicts",
+      "label": "방법론 간 상충 보존",
+      "historicalReference": "Conflict Preservation",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Research proves disagreement must survive, but shared governed conflict representation is not yet a general runtime surface."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-natal-tiaohou-structure-conflict-preservation.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "whole_chart",
+      "label": "전체 명식의 종합 판단",
+      "historicalReference": "General Natal",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "ALREADY_USABLE",
+        "oldGap": "Bounded Preview path is usable; this does not establish Production interpretation authority."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-natal-multifactor-candidate.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "shared_T0_substrate_verified_500",
+      "individualInterpretation": "observed_in_current_500_research_consumer",
+      "synthesis": "bounded_T8_multi_input_not_proof_of_complete_chart_synthesis",
+      "output": "observed_in_research_menu_only",
+      "observed": {
+        "sourceBoundIndividualInterpretationBirths": 478,
+        "boundedMultiInputT8Births": 478,
+        "deliveredInActualResearchReadingBirths": 478,
+        "resultScope": "same-channel T5 to T8 candidates, not complete whole-chart judgment"
+      },
+      "limitation": []
+    },
+    {
+      "id": "career",
+      "label": "직업 종합 판단",
+      "historicalReference": "Career Natal",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "ALREADY_USABLE",
+        "oldGap": "Bounded Preview consumer route exists while producer semantics remain research-origin."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/career-natal-multifactor-candidate.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "shared_T0_substrate_verified_500",
+      "individualInterpretation": "observed_in_current_500_research_consumer",
+      "synthesis": "bounded_T8_multi_input_not_proof_of_complete_chart_synthesis",
+      "output": "observed_in_research_menu_only",
+      "observed": {
+        "sourceBoundIndividualInterpretationBirths": 478,
+        "boundedMultiInputT8Births": 478,
+        "deliveredInActualResearchReadingBirths": 478,
+        "resultScope": "same-channel T5 to T8 candidates, not complete whole-chart judgment"
+      },
+      "limitation": []
+    },
+    {
+      "id": "wealth",
+      "label": "재물 종합 판단",
+      "historicalReference": "Wealth Natal",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "ALREADY_USABLE",
+        "oldGap": "Bounded Preview consumer route exists while producer semantics remain research-origin."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/wealth-natal-multifactor-candidate.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "shared_T0_substrate_verified_500",
+      "individualInterpretation": "observed_in_current_500_research_consumer",
+      "synthesis": "bounded_T8_multi_input_not_proof_of_complete_chart_synthesis",
+      "output": "observed_in_research_menu_only",
+      "observed": {
+        "sourceBoundIndividualInterpretationBirths": 483,
+        "boundedMultiInputT8Births": 483,
+        "deliveredInActualResearchReadingBirths": 484,
+        "resultScope": "same-channel T5 to T8 candidates, not complete whole-chart judgment"
+      },
+      "limitation": []
+    },
+    {
+      "id": "relationship",
+      "label": "연애·관계 종합 판단",
+      "historicalReference": "Relationship Natal General",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "ALREADY_USABLE",
+        "oldGap": "Current bounded Preview remains usable, but new Engine intake is terminally closed with no current semantic candidate."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/relationship-natal-multifactor-candidate.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "shared_T0_substrate_verified_500",
+      "individualInterpretation": "observed_in_current_500_research_consumer",
+      "synthesis": "bounded_T8_multi_input_not_proof_of_complete_chart_synthesis",
+      "output": "observed_in_research_menu_only",
+      "observed": {
+        "sourceBoundIndividualInterpretationBirths": 496,
+        "boundedMultiInputT8Births": 496,
+        "deliveredInActualResearchReadingBirths": 496,
+        "resultScope": "same-channel T5 to T8 candidates, not complete whole-chart judgment"
+      },
+      "limitation": []
+    },
+    {
+      "id": "business",
+      "label": "사업 종합 판단",
+      "historicalReference": "Business Natal",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "ALREADY_USABLE",
+        "oldGap": "Bounded Preview consumer route exists while producer semantics remain research-origin."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/business-natal-multifactor-candidate.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "shared_T0_substrate_verified_500",
+      "individualInterpretation": "observed_in_current_500_research_consumer",
+      "synthesis": "bounded_T8_multi_input_not_proof_of_complete_chart_synthesis",
+      "output": "observed_in_research_menu_only",
+      "observed": {
+        "sourceBoundIndividualInterpretationBirths": 494,
+        "boundedMultiInputT8Births": 494,
+        "deliveredInActualResearchReadingBirths": 494,
+        "resultScope": "same-channel T5 to T8 candidates, not complete whole-chart judgment"
+      },
+      "limitation": []
+    },
+    {
+      "id": "spouse",
+      "label": "배우자 세부 판단",
+      "historicalReference": "Relationship Spouse",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "NEEDS_INTEGRATION",
+        "oldGap": "Engine P0-P2 exists and project-governed position_only materiality is established, but narrative/delivery/Preview/Production are not thereby granted."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/interpretation/relationship-spouse-t8-engine-producer.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "not_executed_by_this_eight_menu_audit",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_in_eight_menu_scope",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "annual",
+      "label": "올해 운세와 원국의 관계",
+      "historicalReference": "T9 Annual",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Executable candidate paths exist but shared admitted temporal semantics/coherence are incomplete."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-annual-reading-candidate.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "observed_in_current_500_research_consumer",
+      "synthesis": "limited_branch_pair_and_independent_natal_context",
+      "output": "observed_in_research_menu_only",
+      "observed": {
+        "sourceBoundIndividualInterpretationBirths": 500,
+        "boundedStructuralPeriodNatalBirths": 146,
+        "deliveredInActualResearchReadingBirths": 500,
+        "resultScope": "T9 research theme plus source-bounded classical branch pairing, no validated events"
+      },
+      "limitation": []
+    },
+    {
+      "id": "monthly",
+      "label": "이번 달 운세와 원국의 관계",
+      "historicalReference": "T9 Monthly",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Executable candidate paths exist but monthly composition remains Research/legacy bounded."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-monthly-reading-candidate.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "observed_in_current_500_research_consumer",
+      "synthesis": "limited_branch_pair_and_independent_natal_context",
+      "output": "observed_in_research_menu_only",
+      "observed": {
+        "sourceBoundIndividualInterpretationBirths": 500,
+        "boundedStructuralPeriodNatalBirths": 260,
+        "deliveredInActualResearchReadingBirths": 500,
+        "resultScope": "T9 research theme plus source-bounded classical branch pairing, no validated events"
+      },
+      "limitation": []
+    },
+    {
+      "id": "daewoon",
+      "label": "대운·삶의 단계 해석",
+      "historicalReference": "Daewoon Interpretation",
+      "priorAudit": {
+        "oldRuntimeState": "RESEARCH_ONLY",
+        "oldDisposition": "NEEDS_RULE_SYNTHESIS",
+        "oldGap": "Substantial Dayun research/replay corpus exists without a governed end-to-end Daewoon reading producer."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-natal-dayun-natal-interaction.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "luck_cycle_facts_verified_500",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "date_and_pillar_facts_only",
+      "observed": {
+        "calculatedBirths": 500,
+        "authorizedLifeStageMeaningBirths": 0,
+        "resultScope": "computed intervals are not life-stage interpretations"
+      },
+      "limitation": []
+    },
+    {
+      "id": "cross_domain_coherence",
+      "label": "주제 간 일관성",
+      "historicalReference": "Cross-Domain Coherence",
+      "priorAudit": {
+        "oldRuntimeState": "PARTIAL",
+        "oldDisposition": "NEEDS_INTEGRATION",
+        "oldGap": "Current domains route independently; no dedicated whole multi-reading coherence gate is proven."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/reading/product-reading-integration.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "research_code_exists_or_historical_review_only_not_verified_in_selected_500_claim_chain",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_independently_observed_as_authorized_synthesis",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "family",
+      "label": "가족·자녀",
+      "historicalReference": "Family Natal",
+      "priorAudit": {
+        "oldRuntimeState": "RESEARCH_ONLY",
+        "oldDisposition": "NEEDS_BOUNDED_RESEARCH",
+        "oldGap": "Corpus exists but executable family classifier is explicitly unauthorized."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/general-natal-family-domain-claim-corpus.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "not_executed_by_this_eight_menu_audit",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_in_eight_menu_scope",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "compatibility",
+      "label": "궁합",
+      "historicalReference": "T10 Compatibility",
+      "priorAudit": {
+        "oldRuntimeState": "MISSING",
+        "oldDisposition": "NEEDS_BOUNDED_RESEARCH",
+        "oldGap": "No dedicated governed T10 producer is proven; spouse research explicitly keeps pairwise compatibility separate."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/research/relationship-spouse-t8-dyadic-compatibility-boundary-evidence.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "not_executed_by_this_eight_menu_audit",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_in_eight_menu_scope",
+      "observed": {},
+      "limitation": []
+    },
+    {
+      "id": "question_specific",
+      "label": "질문 맞춤 해석",
+      "historicalReference": "T11 Question-Specific",
+      "priorAudit": {
+        "oldRuntimeState": "MISSING",
+        "oldDisposition": "NEEDS_BOUNDED_RESEARCH",
+        "oldGap": "Profile exists but no dedicated governed T11 producer is proven."
+      },
+      "codeEvidence": [
+        {
+          "path": "src/reading/reading-intent-composition.ts",
+          "present": true
+        }
+      ],
+      "calculationState": "not_a_separately_verified_T0_fact",
+      "individualInterpretation": "not_executed_by_this_eight_menu_audit",
+      "synthesis": "no_full_500_chart_synthesis_proof",
+      "output": "not_in_eight_menu_scope",
+      "observed": {},
+      "limitation": []
+    }
+  ],
+  "priorityBacklog": [
+    {
+      "priority": "P0",
+      "task": "Share admissible root/strength/season/pattern/climate evidence as governed chart-level claims without forced verdicts",
+      "blocking": "research witnesses exist, actual 500 consumer chain cannot prove unified shared structural synthesis",
+      "references": [
+        "src/research/general-natal-root-strength-dependency-map.ts",
+        "src/research/general-natal-wang-shuai-qiang-ruo-semantic-axis-authority.ts",
+        "src/research/general-natal-pattern-candidate-establishment-formal-boundary-audit.ts"
+      ]
+    },
+    {
+      "priority": "P0",
+      "task": "Use the governed shared chart context in General Natal T8 before extending domain-local rules",
+      "blocking": "same-channel ten-god combinations do not establish one complete whole-chart meaning",
+      "references": [
+        "src/research/general-natal-multifactor-candidate.ts",
+        "src/preview/general-natal-multifactor-report.ts"
+      ]
+    },
+    {
+      "priority": "P1",
+      "task": "Connect admitted shared structures to Wealth/Career/Business/Relationship T8",
+      "blocking": "wealth direct T8 core missing for 118/500; other domains also have unreadable/partial cases",
+      "references": [
+        "src/research/wealth-natal-multifactor-candidate.ts",
+        "src/preview/natal-five-domain-multifactor-reader.ts"
+      ]
+    },
+    {
+      "priority": "P1",
+      "task": "Check coherence of independently produced five natal menus for the same canonical person",
+      "blocking": "multiple selected sections are not evidence that their meanings are compatible",
+      "references": [
+        "src/reading/product-reading-integration.ts"
+      ]
+    },
+    {
+      "priority": "P2",
+      "task": "Deepen authorized Annual/Monthly/Dayun overlays only from established natal structure and admitted temporal semantics",
+      "blocking": "classical six pairing is structural-only; Dayun is currently intervals-only",
+      "references": [
+        "src/preview/temporal-natal-correspondence.ts",
+        "src/research/general-natal-dayun-natal-interaction.ts"
+      ]
+    },
+    {
+      "priority": "P2",
+      "task": "Evaluate report and Reader delivery only after source-bounded meaning is verified",
+      "blocking": "prose polish cannot invent missing semantic Claim",
+      "references": [
+        "src/preview/natal-reader-first-story.ts",
+        "src/preview/korean-prose-surface.ts"
+      ]
+    }
+  ],
+  "guardrails": [
+    "Research and Preview execution are not Production/Official permission.",
+    "Missing independent chart-wide semantic conclusions must not be inferred from file presence or rule registration.",
+    "This 500-person corpus uses known birth hours; unknown-hour and leap-birth cases require separate targeted tests.",
+    "Only eight audited menus are included; spouse/family/compatibility/question-specific are not proved absent merely because omitted."
+  ],
+  "errors": []
+}
