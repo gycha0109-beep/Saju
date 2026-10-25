@@ -25,9 +25,14 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     const { execution, report } = wealthReading(1964, 11, 14, 14, 59);
     expect(execution.claims.some(c => c.state === 'active' &&
       c.claimType.startsWith('TEN_GOD_WEALTH_'))).toBe(false);
-    expect(report.sections).toHaveLength(0);
-    expect(report.state).toBe('insufficient');
+    expect(report.sections).toHaveLength(1);
+    expect(report.sections[0]?.axis).toBe('context');
+    expect(report.sections[0]?.claimType).toContain('OFFICER_RESOURCE_CONTEXT');
+    expect(report.sections[0]?.upstreamClaimIds.length).toBe(2);
+    expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
+    expect(report.state).toBe('partial');
     const reason = report.missing.join(' ');
+    expect(reason).toContain('재성 중심 재물운 종합 해석이 아니며');
     expect(reason).toContain('현재 실제로 확인된 출처 연결 십신 관점');
     expect(reason).toContain('재성 계열의 활성 근거가 확인되지 않아');
     expect(reason).toContain('돈이 없다는 판정이 아니며');
