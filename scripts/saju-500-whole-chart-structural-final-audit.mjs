@@ -25,6 +25,10 @@ function nextBirth(){
 const metric={
   executed:0,errors:[],sameChartHashFailures:0,structuralT8Count:0,
   sourceBoundT8Births:0,rootCandidateBirths:0,
+  hiddenChallengeSections:0,hiddenChallengeBirths:0,
+  hiddenChallengeWithMultipleObservedPositions:0,
+  hiddenSupportSections:0,hiddenSupportBirths:0,
+  hiddenPeerSupportSections:0,hiddenResourceSupportSections:0,
   familyChannelMeaningProfiles:new Set(),rootContextMeaningProfiles:new Set(),
   domainContextBirths:Object.fromEntries(DOMAINS.map(x=>[x,0])),
   domainContextLinks:Object.fromEntries(DOMAINS.map(x=>[x,0])),
@@ -52,10 +56,40 @@ for(let i=0;i<500;i++){
     else metric.withoutAnyNewSourceBoundContext++;
     metric.structuralT8Count+=s.sections.length;
     if(s.sections.some(x=>x.intrinsicRootCandidates.length>0))metric.rootCandidateBirths++;
+    const hidden = s.sections.filter(x=>x.context==='hidden_challenge');
+    if(hidden.length)metric.hiddenChallengeBirths++;
+    metric.hiddenChallengeSections+=hidden.length;
+    const support=s.sections.filter(x=>x.context.startsWith('hidden_support_'));
+    if(support.length)metric.hiddenSupportBirths++;
+    metric.hiddenSupportSections+=support.length;
+    metric.hiddenPeerSupportSections+=support.filter(x=>x.context==='hidden_support_peer').length;
+    metric.hiddenResourceSupportSections+=support.filter(x=>x.context==='hidden_support_resource').length;
+    if(hidden.some(x=>new Set(x.hiddenChallengeMembership.map(y=>y.position)).size>1))
+      metric.hiddenChallengeWithMultipleObservedPositions++;
     for(const x of s.sections){
       if(!x.claimId||!x.ruleId||!x.methodologyId||!x.sourceIds.length||
         x.upstreamClaimIds.length<3||!x.observedFactPaths.length||
         x.interpretedOutcomes!==false)metric.provenanceErrors++;
+      if(x.context==='hidden_challenge' &&
+        (!['peer','resource'].includes(x.monthRelation) ||
+        x.monthRelation!==x.family ||
+        !x.hiddenChallengeMembership.length ||
+        x.intrinsicRootCandidates.length ||
+        x.hiddenChallengeEffect!=='not_determined' ||
+        x.hiddenChallengeMembership.some(y=>
+          !['output','wealth','officer'].includes(y.relation))))
+        metric.provenanceErrors++;
+      if(x.context.startsWith('hidden_support_') &&
+        (!['output','wealth','officer'].includes(x.monthRelation) ||
+          x.monthRelation!==x.family ||
+          !x.hiddenSupportMembership.length ||
+          x.hiddenChallengeMembership.length ||
+          x.intrinsicRootCandidates.length ||
+          x.hiddenSupportEffect!=='not_determined' ||
+          x.hiddenSupportMembership.some(y=>
+            y.kind!==(x.context==='hidden_support_peer' ?
+              'hidden_peer_root':'hidden_resource_support'))))
+        metric.provenanceErrors++;
       metric.familyChannelMeaningProfiles.add(x.family+':'+x.channel+':'+x.context+':'+x.monthRelation);
       metric.rootContextMeaningProfiles.add(JSON.stringify([x.family,x.channel,x.context,
         x.monthRelation,x.intrinsicRootCandidates.map(y=>[y.position,y.rootClass])]));
@@ -101,6 +135,8 @@ const errors=[
   ...(metric.maySellOrOfficialViolations?['Research was promoted to Product']:[]),
   ...(metric.dayunStillUninterpretedBirths!==500?['Unlicensed dayun interpretation emitted']:[]),
   ...(metric.sourceBoundT8Births===0?['No structural T8 was consumed']:[]),
+  ...(metric.hiddenChallengeBirths===0?['No source-bound support/challenge co-presence was consumed']:[]),
+  ...(metric.hiddenSupportBirths===0?['No source-bound challenge/support co-presence was consumed']:[]),
   ...(metric.monthlyConnectedBirths===0?['No temporal/natal structural source correspondence']:[]),
 ];
 const status=errors.length?'FAIL':'IMPLEMENTATION_EXECUTABLE_WITH_EXPLICIT_SEMANTIC_GAPS';
@@ -126,7 +162,10 @@ if(output)writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 process.stdout.write('SAJU_STRUCTURAL_FINAL '+JSON.stringify({
  status,attempted:500,errors:errors.length,failedCases:metric.errors.length,
  T8Births:metric.sourceBoundT8Births,T8Count:metric.structuralT8Count,
- rootBirths:metric.rootCandidateBirths,yearly:metric.yearlyConnectedBirths,
+ rootBirths:metric.rootCandidateBirths,hiddenBirths:metric.hiddenChallengeBirths,
+ hiddenSections:metric.hiddenChallengeSections,
+ hiddenSupportBirths:metric.hiddenSupportBirths,hiddenSupportSections:metric.hiddenSupportSections,
+ yearly:metric.yearlyConnectedBirths,
  monthly:metric.monthlyConnectedBirths,
  familyProfiles:metric.familyChannelMeaningProfiles.size,
  rootProfiles:metric.rootContextMeaningProfiles.size,

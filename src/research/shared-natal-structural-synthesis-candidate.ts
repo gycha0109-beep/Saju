@@ -4,10 +4,18 @@ import type {
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import { createGeneralNatalMultifactorRegistry } from './general-natal-multifactor-candidate.js';
 import {
+  I13_STRENGTH_EVIDENCE_RULES, I13_STRENGTH_EVIDENCE_METHODOLOGY,
+  I13_STRENGTH_EVIDENCE_SOURCES,
+} from './i13-strength-evidence-pack.js';
+import {
   I18A_MONTH_BRANCH_STRENGTH_RULES,
   I18A_MONTH_BRANCH_STRENGTH_METHODOLOGY,
   I18A_MONTH_BRANCH_STRENGTH_SOURCES,
 } from './i18a-month-branch-strength-evidence.js';
+import {
+  I18B_HIDDEN_CHALLENGE_RULES, I18B_HIDDEN_CHALLENGE_METHODOLOGY,
+  I18B_HIDDEN_CHALLENGE_SOURCES,
+} from './i18b-hidden-challenge-strength-evidence.js';
 import {
   I18C_ROOT_CLASS_RULES, I18C_ROOT_CLASS_METHODOLOGY,
   I18C_ROOT_CLASS_SOURCES,
@@ -29,7 +37,9 @@ const base = createGeneralNatalMultifactorRegistry();
 const sources: readonly SourceReference[] = Object.freeze(
   [...new Map([
     ...base.sources,
+    ...I13_STRENGTH_EVIDENCE_SOURCES,
     ...I18A_MONTH_BRANCH_STRENGTH_SOURCES,
+    ...I18B_HIDDEN_CHALLENGE_SOURCES,
     ...I18C_ROOT_CLASS_SOURCES,
   ].map(item => [item.sourceId, item])).values()],
 );
@@ -44,6 +54,10 @@ export const SHARED_NATAL_STRUCTURAL_METHODOLOGY: MethodologyDefinition = {
     'Season is the exact month-branch element, not the effective hidden-stem command or final strength.',
     'Only a T5 family equal to the actual month-branch element relation may be linked as a structural theme. This is not a strength score.',
     'An intrinsic root-class candidate is pre-interaction and may not settle positive effective Tonggen, strength, auspiciousness or the lack of roots.',
+    'An observed peer/resource month context may coexist with hidden output/wealth/officer membership elsewhere in the same chart; no support-versus-challenge precedence or scalar is inferred.',
+    'Hidden-stem challenge membership is not actual activation, effective strength, personal difficulty or an adverse outcome.',
+    'A challenging-direction month context may coexist with hidden peer-root or hidden resource membership; neither positive effectiveness nor balancing dominance is settled.',
+    'I13 hidden peer-root and hidden resource-support observations must remain separate, and never become a universal Tonggen, strength score or favorable-period prediction.',
     'Different upstream claims are bound to one snapshot and the same scenario. No ranking across schools or methods is authorized.',
     'A structural observation alongside a Ten-God family does not establish causation, strength, quality, domain outcomes or future timing.',
     'All outputs are Research only. Production/Official/Publish/Sell are prohibited.',
@@ -56,10 +70,15 @@ export const SHARED_NATAL_STRUCTURAL_METHODOLOGY: MethodologyDefinition = {
 
 type Family = (typeof FAMILIES)[number];
 type Channel = (typeof CHANNELS)[number];
-type Context = 'season' | 'intrinsic_root';
+type Context = 'season' | 'intrinsic_root' | 'hidden_challenge' |
+  'hidden_support_peer' | 'hidden_support_resource';
 
 function rule(family: Family, channel: Channel, context: Context): RuleDefinition {
-  const kind = context === 'season' ? 'SEASONAL_RELATION' : 'INTRINSIC_ROOT_CONTEXT';
+  const kind = context === 'season' ? 'SEASONAL_RELATION' : context === 'intrinsic_root' ?
+    'INTRINSIC_ROOT_CONTEXT' : context === 'hidden_challenge' ?
+    'SUPPORT_AND_HIDDEN_CHALLENGE_CONTEXT' :
+    context === 'hidden_support_peer' ? 'CHALLENGE_AND_HIDDEN_PEER_CONTEXT' :
+    'CHALLENGE_AND_HIDDEN_RESOURCE_CONTEXT';
   const claimType = SHARED_NATAL_STRUCTURAL_CLAIM_PREFIX +
     kind + '_' + family.toUpperCase() + '_' + channel.toUpperCase();
   const t5 = 'TEN_GOD_' + family.toUpperCase() + '_' + channel.toUpperCase() + '_THEME';
@@ -71,7 +90,44 @@ function rule(family: Family, channel: Channel, context: Context): RuleDefinitio
       required: true,
       cardinality: 'one_or_more' as const,
       ambiguityBehavior: 'scenario_preserving' as const,
-    }] : [];
+    }] : context === 'hidden_challenge' ? [
+      {
+        key: 'hiddenChallenge',
+        source: 'interpretation_claim' as const,
+        pathOrClaimType: 'DAY_MASTER_STRENGTH_EVIDENCE',
+        claimSelector: {valueEquals:[{path:'evidenceKind',value:'hidden_challenge_membership'}]},
+        required: true,
+        cardinality: 'one_or_more' as const,
+        ambiguityBehavior: 'scenario_preserving' as const,
+      },
+      {
+        key: 'challengeScope',
+        source: 'interpretation_claim' as const,
+        pathOrClaimType: 'DAY_MASTER_HIDDEN_CHALLENGE_SCOPE_GUARD',
+        required: true,
+        cardinality: 'exactly_one' as const,
+        ambiguityBehavior: 'scenario_preserving' as const,
+      },
+    ] : context === 'hidden_support_peer' || context === 'hidden_support_resource' ? [
+      {
+        key: 'hiddenSupport',
+        source: 'interpretation_claim' as const,
+        pathOrClaimType: 'DAY_MASTER_STRENGTH_EVIDENCE',
+        claimSelector: {valueEquals:[{path:'evidenceKind',
+          value: context === 'hidden_support_peer' ? 'hidden_peer_root' : 'hidden_resource_support'}]},
+        required: true,
+        cardinality: 'one_or_more' as const,
+        ambiguityBehavior: 'scenario_preserving' as const,
+      },
+      {
+        key: 'supportScope',
+        source: 'interpretation_claim' as const,
+        pathOrClaimType: 'DAY_MASTER_STRENGTH_SCOPE_GUARD',
+        required: true,
+        cardinality: 'exactly_one' as const,
+        ambiguityBehavior: 'scenario_preserving' as const,
+      },
+    ] : [];
   return {
     ruleId: 'RULE-' + claimType,
     version: SHARED_NATAL_STRUCTURAL_SYNTHESIS_VERSION,
@@ -79,7 +135,10 @@ function rule(family: Family, channel: Channel, context: Context): RuleDefinitio
     taxonomy: { tier: 'T8', category: 'general', subcategory: 'structural_context' },
     methodologyRef: { id: METHOD_ID, version: SHARED_NATAL_STRUCTURAL_SYNTHESIS_VERSION },
     title: context === 'season' ? 'Source-limited month/season context with Ten-God family' :
-      'Source-limited intrinsic root observations with month and Ten-God family',
+      context === 'intrinsic_root' ? 'Source-limited intrinsic root observations with month and Ten-God family' :
+      context === 'hidden_challenge' ?
+      'Observed support-oriented month relation alongside non-effective hidden challenge membership' :
+      'Observed challenging month relation alongside hidden peer/root or resource support membership',
     description: 'Only a same-chart qualified contextual relationship, not an overall life or strength judgment.',
     inputs: [
       {
@@ -109,7 +168,17 @@ function rule(family: Family, channel: Channel, context: Context): RuleDefinitio
           right: { kind: 'literal', value: family } },
         ...(context === 'intrinsic_root'
           ? [{ op: 'exists' as const, value: { kind: 'input' as const, key: 'intrinsicRoot' } }]
-          : []),
+          : context === 'hidden_challenge' ? [
+            { op: 'in' as const, value: { kind: 'input' as const, key: 'month', path: 'relation' },
+              set: ['peer', 'resource'] },
+            { op: 'exists' as const, value: { kind: 'input' as const, key: 'hiddenChallenge' } },
+            { op: 'exists' as const, value: { kind: 'input' as const, key: 'challengeScope' } },
+          ] : context === 'hidden_support_peer' || context === 'hidden_support_resource' ? [
+            { op: 'in' as const, value: { kind: 'input' as const, key: 'month', path: 'relation' },
+              set: ['output','wealth','officer'] },
+            { op: 'exists' as const, value: { kind: 'input' as const, key: 'hiddenSupport' } },
+            { op: 'exists' as const, value: { kind: 'input' as const, key: 'supportScope' } },
+          ] : []),
       ],
     },
     output: {
@@ -122,6 +191,9 @@ function rule(family: Family, channel: Channel, context: Context): RuleDefinitio
         monthContext: 'branch_element_only',
         monthRelationMatchesThemeFamily: true,
         rootEffect: 'not_determined',
+        hiddenChallengeEffect: 'not_determined',
+        hiddenSupportEffect: 'not_determined',
+        interactionPrecedence: 'not_determined',
         strength: 'not_determined',
         gyeokguk: 'not_determined',
         yongshin: 'not_determined',
@@ -138,6 +210,16 @@ function rule(family: Family, channel: Channel, context: Context): RuleDefinitio
         sourceId: x.sourceId, supportType: 'interpretive_basis' as const,
         notes: 'Only the month-branch/element relation, not total strength.',
       })),
+      ...(['hidden_support_peer','hidden_support_resource'].includes(context)
+        ? I13_STRENGTH_EVIDENCE_SOURCES.map(x => ({
+          sourceId: x.sourceId, supportType: 'interpretive_basis' as const,
+          notes: 'Only hidden peer/root or resource membership; not effective strength or total support.',
+        })) : []),
+      ...(context === 'hidden_challenge'
+        ? I18B_HIDDEN_CHALLENGE_SOURCES.map(x => ({
+          sourceId: x.sourceId, supportType: 'interpretive_basis' as const,
+          notes: 'Only hidden challenge membership, not activation or actual effective strength.',
+        })) : []),
       ...(context === 'intrinsic_root'
         ? I18C_ROOT_CLASS_SOURCES.map(x => ({
           sourceId: x.sourceId, supportType: 'implementation_reference' as const,
@@ -155,7 +237,10 @@ function rule(family: Family, channel: Channel, context: Context): RuleDefinitio
 
 export const SHARED_NATAL_STRUCTURAL_T8_RULES: readonly RuleDefinition[] = Object.freeze(
   FAMILIES.flatMap(family => CHANNELS.flatMap(channel =>
-    (['season', 'intrinsic_root'] as const).map(context => rule(family, channel, context)))),
+    (family === 'peer' || family === 'resource' ?
+      (['season', 'intrinsic_root', 'hidden_challenge'] as const) :
+      (['season', 'intrinsic_root', 'hidden_support_peer', 'hidden_support_resource'] as const))
+      .map(context => rule(family, channel, context)))),
 );
 
 export const SHARED_NATAL_STRUCTURAL_PACK: InterpretationPack = Object.freeze({
@@ -164,16 +249,21 @@ export const SHARED_NATAL_STRUCTURAL_PACK: InterpretationPack = Object.freeze({
   name: 'Shared chart-limited structural context, Research only',
   methodologyRefs: [
     ...base.pack.methodologyRefs,
+    { id: I13_STRENGTH_EVIDENCE_METHODOLOGY.methodologyId,
+      version: I13_STRENGTH_EVIDENCE_METHODOLOGY.version },
     { id: I18A_MONTH_BRANCH_STRENGTH_METHODOLOGY.methodologyId,
       version: I18A_MONTH_BRANCH_STRENGTH_METHODOLOGY.version },
+    { id: I18B_HIDDEN_CHALLENGE_METHODOLOGY.methodologyId,
+      version: I18B_HIDDEN_CHALLENGE_METHODOLOGY.version },
     { id: I18C_ROOT_CLASS_METHODOLOGY.methodologyId,
       version: I18C_ROOT_CLASS_METHODOLOGY.version },
     { id: METHOD_ID, version: SHARED_NATAL_STRUCTURAL_SYNTHESIS_VERSION },
   ],
   enabledRuleSets: [
     ...base.pack.enabledRuleSets,
-    ...new Set([...I18A_MONTH_BRANCH_STRENGTH_RULES,
-      ...I18C_ROOT_CLASS_RULES, ...SHARED_NATAL_STRUCTURAL_T8_RULES]
+    ...new Set([...I13_STRENGTH_EVIDENCE_RULES, ...I18A_MONTH_BRANCH_STRENGTH_RULES,
+      ...I18B_HIDDEN_CHALLENGE_RULES, ...I18C_ROOT_CLASS_RULES,
+      ...SHARED_NATAL_STRUCTURAL_T8_RULES]
       .map(x => x.ruleSetId)),
   ],
   conflictPolicy: 'preserve_all',
@@ -190,10 +280,13 @@ export function createSharedNatalStructuralSynthesisRegistry(
   createdAt = '1970-01-01T00:00:00.000Z',
 ) {
   return createRuleRegistrySnapshot({
-    rules: [...base.rules, ...I18A_MONTH_BRANCH_STRENGTH_RULES,
-      ...I18C_ROOT_CLASS_RULES, ...SHARED_NATAL_STRUCTURAL_T8_RULES],
+    rules: [...base.rules, ...I13_STRENGTH_EVIDENCE_RULES, ...I18A_MONTH_BRANCH_STRENGTH_RULES,
+      ...I18B_HIDDEN_CHALLENGE_RULES, ...I18C_ROOT_CLASS_RULES,
+      ...SHARED_NATAL_STRUCTURAL_T8_RULES],
     methodologies: [...base.methodologies,
+      I13_STRENGTH_EVIDENCE_METHODOLOGY,
       I18A_MONTH_BRANCH_STRENGTH_METHODOLOGY,
+      I18B_HIDDEN_CHALLENGE_METHODOLOGY,
       I18C_ROOT_CLASS_METHODOLOGY,
       SHARED_NATAL_STRUCTURAL_METHODOLOGY],
     sources,
