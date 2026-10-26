@@ -43,6 +43,9 @@ const metric={
   domainContextLinks:Object.fromEntries(DOMAINS.map(x=>[x,0])),
   annualLinks:0,monthlyLinks:0,yearlyConnectedBirths:0,monthlyConnectedBirths:0,
   temporalScopeViolations:0,
+  annualCoreDomainContextLinks:0,monthlyCoreDomainContextLinks:0,
+  annualCoreDomainContextBirths:0,monthlyCoreDomainContextBirths:0,
+  temporalCoreDomainErrors:0,
   dayunStillUninterpretedBirths:0,withoutAnyNewSourceBoundContext:0,
   provenanceErrors:0,maySellOrOfficialViolations:0,
 };
@@ -265,6 +268,51 @@ for(let i=0;i<500;i++){
           Date.parse(REFERENCE)<Date.parse(bounds.endsAt))))
           metric.temporalScopeViolations++;
     }
+    for(const [scope, coreLinks, baseLinks] of [
+      ['annual',result.annualDomainCoreContexts,result.annualLinks],
+      ['monthly',result.monthlyDomainCoreContexts,result.monthlyLinks],
+    ]){
+      if(scope==='annual'){
+        metric.annualCoreDomainContextLinks+=coreLinks.length;
+        if(coreLinks.length)metric.annualCoreDomainContextBirths++;
+      }else{
+        metric.monthlyCoreDomainContextLinks+=coreLinks.length;
+        if(coreLinks.length)metric.monthlyCoreDomainContextBirths++;
+      }
+      const identities=new Set();
+      for(const x of coreLinks){
+        const guide=result.natal.domainStructuralGuides[x.domain];
+        const actual=result.natal.domainSharedContexts[x.domain].find(c=>
+          c.domainT8ClaimId===x.domainCoreT8ClaimId &&
+          c.sharedStructuralT8ClaimId===x.sharedNatalStructuralT8ClaimId);
+        const temporal=baseLinks.find(link=>
+          link.temporalT9ClaimId===x.temporalT9ClaimId &&
+          link.sharedNatalStructuralT8ClaimId===x.sharedNatalStructuralT8ClaimId);
+        const key=x.temporalT9ClaimId+'|'+x.domain+'|'+x.domainCoreT8ClaimId+
+          '|'+x.sharedNatalStructuralT8ClaimId;
+        if(identities.has(key))metric.temporalCoreDomainErrors++;
+        identities.add(key);
+        if(!guide||!guide.core||!actual||!temporal ||
+          x.temporalScope!==scope ||
+          x.domainCoreT8RuleId!==guide.core.ruleId ||
+          x.domainCoreT8RuleId!==actual.domainT8RuleId ||
+          !guide.contextualClaims.some(c=>c.claimId===x.sharedNatalStructuralT8ClaimId) ||
+          x.relation!=='same_selected_natal_structural_claim' ||
+          x.temporalDomainOutcomeAuthorized!==false ||
+          JSON.stringify(x.domainCoreT8SourceIds)!==JSON.stringify(actual.domainT8SourceIds) ||
+          JSON.stringify(x.temporalT9SourceIds)!==JSON.stringify(temporal.temporalT9SourceIds) ||
+          JSON.stringify(x.sharedNatalStructuralSourceIds)!==
+            JSON.stringify(actual.sharedStructuralT8SourceIds) ||
+          x.temporalScopePolicy!==temporal.temporalScopePolicy ||
+          JSON.stringify(x.temporalInterval??null)!==
+            JSON.stringify(temporal.temporalInterval??null))
+          metric.temporalCoreDomainErrors++;
+      }
+    }
+    if(result.temporalApplicability.annual!=='in_target_civil_year' &&
+      result.annualDomainCoreContexts.length)metric.temporalCoreDomainErrors++;
+    if(result.temporalApplicability.monthly!=='in_period' &&
+      result.monthlyDomainCoreContexts.length)metric.temporalCoreDomainErrors++;
     metric.annualLinks+=result.annualLinks.length;
     metric.monthlyLinks+=result.monthlyLinks.length;
     if(result.annualLinks.length)metric.yearlyConnectedBirths++;
@@ -334,6 +382,7 @@ const errors=[
   ...(metric.errors.length?['Execution exceptions in '+metric.errors.length+' of 500 cases']:[]),
   ...(metric.sameChartHashFailures?['Mixed canonical snapshots']:[]),
   ...(metric.temporalScopeViolations?['Incorrect annual/monthly effective reference period']:[]),
+  ...(metric.temporalCoreDomainErrors?['Annual/monthly T9 was incorrectly attached to a selected natal domain core']:[]),
   ...(metric.provenanceErrors?['Invalid Claim/Rule/Source chain']:[]),
   ...(metric.sourceBoundDomainGuideFailures?['Selected four-domain center/context guides failed to preserve source T8 authority']:[]),
   ...(metric.maySellOrOfficialViolations?['Research was promoted to Product']:[]),
@@ -385,6 +434,11 @@ process.stdout.write('SAJU_STRUCTURAL_FINAL '+JSON.stringify({
  domainCoreBirths:metric.sourceBoundDomainCoreBirths,
  domainContextBirths:metric.sourceBoundDomainContextBirths,
  temporalScopeViolations:metric.temporalScopeViolations,
+ annualDomainCorePeople:metric.annualCoreDomainContextBirths,
+ monthlyDomainCorePeople:metric.monthlyCoreDomainContextBirths,
+ annualDomainCoreLinks:metric.annualCoreDomainContextLinks,
+ monthlyDomainCoreLinks:metric.monthlyCoreDomainContextLinks,
+ domainTemporalErrors:metric.temporalCoreDomainErrors,
  yearly:metric.yearlyConnectedBirths,
  monthly:metric.monthlyConnectedBirths,
  familyProfiles:metric.familyChannelMeaningProfiles.size,

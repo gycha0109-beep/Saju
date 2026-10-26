@@ -32,6 +32,23 @@ export interface WholeChartTemporalStructuralLink {
   outcomeAuthorized: false;
 }
 
+export interface WholeChartTemporalDomainCoreReference {
+  temporalScope: 'annual' | 'monthly';
+  temporalT9ClaimId: string;
+  temporalT9SourceIds: readonly string[];
+  temporalScopePolicy: WholeChartTemporalStructuralLink['temporalScopePolicy'];
+  temporalInterval?: {startsAt:string;endsAt:string};
+  domain: 'career' | 'wealth' | 'relationship' | 'business';
+  domainCoreT8ClaimId: string;
+  domainCoreT8RuleId: string;
+  domainCoreT8SourceIds: readonly string[];
+  sharedNatalStructuralT8ClaimId: string;
+  sharedNatalStructuralSourceIds: readonly string[];
+  /** The same independently selected source-bound structural Claim underlies both references. */
+  relation: 'same_selected_natal_structural_claim';
+  temporalDomainOutcomeAuthorized: false;
+}
+
 export interface WholeChartStructuralResearchResult {
   version: typeof WHOLE_CHART_STRUCTURAL_RESEARCH_RUNTIME_VERSION;
   snapshotId: string;
@@ -40,6 +57,8 @@ export interface WholeChartStructuralResearchResult {
   temporal: ThreeTemporalMenusBirthReading;
   annualLinks: readonly WholeChartTemporalStructuralLink[];
   monthlyLinks: readonly WholeChartTemporalStructuralLink[];
+  annualDomainCoreContexts: readonly WholeChartTemporalDomainCoreReference[];
+  monthlyDomainCoreContexts: readonly WholeChartTemporalDomainCoreReference[];
   temporalApplicability: {
     annual: 'in_target_civil_year' | 'outside_target_civil_year';
     monthly: 'in_period' | 'insufficient_evidence' | 'outside_target_month';
@@ -167,6 +186,56 @@ export function buildWholeChartStructuralResearchResult(
     segment: active.segmentId,
     interval: active.calculatedInterval,
   }) : [];
+  function domainCoreContexts(
+    links: readonly WholeChartTemporalStructuralLink[],
+  ): readonly WholeChartTemporalDomainCoreReference[] {
+    const references: WholeChartTemporalDomainCoreReference[] = [];
+    const seen = new Set<string>();
+    for(const temporalLink of links){
+      for(const domain of ['career','wealth','relationship','business'] as const){
+        const guide=natal.domainStructuralGuides[domain];
+        if(guide.core===null || guide.authorizesNewDomainOutcome!==false)continue;
+        const coreConditions=new Set(guide.contextualClaims.map(x=>x.claimId));
+        if(!coreConditions.has(temporalLink.sharedNatalStructuralT8ClaimId))continue;
+        const actualCoreLinks=natal.domainSharedContexts[domain].filter(x=>
+          x.sharedStructuralT8ClaimId===temporalLink.sharedNatalStructuralT8ClaimId &&
+          x.domainT8ClaimType===guide.core!.claimType &&
+          x.domainT8RuleId===guide.core!.ruleId);
+        for(const actual of actualCoreLinks){
+          assert(actual.domainT8SourceIds.length>0 &&
+            actual.authorizesDomainOutcome===false &&
+            actual.sharedStructuralT8SourceIds.length>0 &&
+            actual.sharedStructuralT8RuleId===temporalLink.sharedNatalStructuralRuleId &&
+            actual.sharedStructuralT8SourceIds.every(x=>
+              temporalLink.sharedNatalStructuralSourceIds.includes(x)) &&
+            actual.domainT8SourceIds.every(x=>guide.core!.sourceIds.includes(x)),
+          'temporal-to-domain reference did not descend from selected same-chart core T8');
+          const identity=temporalLink.temporalT9ClaimId+'|'+domain+'|'+
+            actual.domainT8ClaimId+'|'+actual.sharedStructuralT8ClaimId;
+          if(seen.has(identity))continue;
+          seen.add(identity);
+          references.push({
+            temporalScope:temporalLink.temporalScope,
+            temporalT9ClaimId:temporalLink.temporalT9ClaimId,
+            temporalT9SourceIds:[...temporalLink.temporalT9SourceIds],
+            temporalScopePolicy:temporalLink.temporalScopePolicy,
+            ...(temporalLink.temporalInterval===undefined?{}:
+              {temporalInterval:{...temporalLink.temporalInterval}}),
+            domain, domainCoreT8ClaimId:actual.domainT8ClaimId,
+            domainCoreT8RuleId:actual.domainT8RuleId,
+            domainCoreT8SourceIds:[...actual.domainT8SourceIds],
+            sharedNatalStructuralT8ClaimId:actual.sharedStructuralT8ClaimId,
+            sharedNatalStructuralSourceIds:[...actual.sharedStructuralT8SourceIds],
+            relation:'same_selected_natal_structural_claim',
+            temporalDomainOutcomeAuthorized:false,
+          });
+        }
+      }
+    }
+    return references;
+  }
+  const annualDomainCoreContexts=domainCoreContexts(annualLinks);
+  const monthlyDomainCoreContexts=domainCoreContexts(monthlyLinks);
   const temporalApplicability = {
     annual: annualApplicability,
     monthly: focus.state,
@@ -193,16 +262,38 @@ export function buildWholeChartStructuralResearchResult(
             : '현재 출처 조건에서 해당 시기와 같은 계열의 원국 구조 연결이 확인되지 않았습니다.') + '</p>') +
       '</section>';
   }
+  function renderDomainCoreReferences(
+    label: string,
+    links: readonly WholeChartTemporalDomainCoreReference[],
+  ): string {
+    return '<section><h2>'+escapeHtml(label)+' · 분야 중심 근거의 교집합</h2>' +
+      '<p>이미 선택된 원국 중심 T8과 실제 시기 T9가 같은 원국 구조 관측을 참조하는 경우만 보여줍니다. '+
+      '분야별 성공·실패 또는 시기별 사건은 추가 판단하지 않습니다.</p>' +
+      (links.length?links.map(x=>
+        '<article><p>'+escapeHtml(x.domain)+' 분야에 공통으로 관측된 원국 구조 참고 근거가 있습니다.</p>'+
+        '<details><summary>실제 시기 T9 · 분야 중심 T8 · 공유 구조 T8</summary>'+
+        '<p>시기 T9 '+escapeHtml(x.temporalT9ClaimId)+' / 원국 중심 T8 '+
+        escapeHtml(x.domainCoreT8ClaimId)+' / 공유 구조 T8 '+
+        escapeHtml(x.sharedNatalStructuralT8ClaimId)+'</p>'+
+        '<p>시기 출처 '+escapeHtml(x.temporalT9SourceIds.join(' · '))+
+        ' / 중심 출처 '+escapeHtml(x.domainCoreT8SourceIds.join(' · '))+'</p>'+
+        '</details></article>').join('') :
+        '<p>현재 기간의 시기 T9와 직접 연결되는 분야별 중심 T8 근거가 확인되지 않았습니다.</p>')+
+      '</section>';
+  }
   const appendix = '<section aria-label="명식 전체와 시기별 연구용 구조 참고">' +
     '<h2>같은 명식의 시기별 출처 근거</h2>' +
     renderLinks('올해',annualLinks) + renderLinks('이번 달',monthlyLinks) +
+    renderDomainCoreReferences('올해',annualDomainCoreContexts) +
+    renderDomainCoreReferences('이번 달',monthlyDomainCoreContexts) +
     '<section><h2>대운과 원국 — 계산 사실·독립 해석 분리</h2><p>' +
     escapeHtml(dayunStructuralReference.explanation) + '</p></section></section>';
   const html = natal.html.replace('</body>', appendix + '</body>');
   return {
     version: WHOLE_CHART_STRUCTURAL_RESEARCH_RUNTIME_VERSION,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
-    natal, temporal, annualLinks, monthlyLinks, temporalApplicability,
+    natal, temporal, annualLinks, monthlyLinks,
+    annualDomainCoreContexts, monthlyDomainCoreContexts, temporalApplicability,
     dayunStructuralReference, html,
     researchOnly: true, mayPublish: false, maySell: false, mayCallOfficial: false,
   };
