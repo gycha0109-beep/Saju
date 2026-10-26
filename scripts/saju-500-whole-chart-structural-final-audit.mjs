@@ -1,6 +1,32 @@
 import process from 'node:process';
 import { writeFileSync } from 'node:fs';
 import { buildWholeChartStructuralResearchResult } from '../dist/preview/whole-chart-structural-research-runtime.js';
+import {
+  GENERAL_NATAL_JIA_YI_WOOD_BOUNDED_ROOT_PRESENCE_SOURCE as JIA_YI_SOURCE,
+  GENERAL_NATAL_JIA_YI_WOOD_BOUNDED_ROOT_PRESENCE_DEFINITION_HASH as JIA_YI_HASH,
+} from '../dist/research/general-natal-jia-yi-wood-bounded-root-presence-authority.js';
+import {
+  GENERAL_NATAL_BOUNDED_SIZHU_ROOT_PRESENCE_SOURCE as BASE_ROOT_SOURCE,
+  GENERAL_NATAL_BOUNDED_SIZHU_ROOT_PRESENCE_DEFINITION_HASH as BASE_ROOT_HASH,
+} from '../dist/research/general-natal-bounded-sizhu-root-presence-evidence-authority.js';
+import {
+  GENERAL_NATAL_BOUNDED_SIZHU_YANG_CHANGSHENG_ROOT_PRESENCE_SOURCE as YANG_CS_SOURCE,
+  GENERAL_NATAL_BOUNDED_SIZHU_YANG_CHANGSHENG_ROOT_PRESENCE_DEFINITION_HASH as YANG_CS_HASH,
+} from '../dist/research/general-natal-bounded-sizhu-yang-changsheng-root-presence-authority.js';
+import {
+  GENERAL_NATAL_BOUNDED_SIZHU_FOUR_YANG_LU_ROOT_PRESENCE_SOURCE as FOUR_LU_SOURCE,
+  GENERAL_NATAL_BOUNDED_SIZHU_FOUR_YANG_LU_ROOT_PRESENCE_DEFINITION_HASH as FOUR_LU_HASH,
+} from '../dist/research/general-natal-bounded-sizhu-four-yang-lu-root-presence-authority.js';
+const EXPECTED_ROOT_SOURCE={
+  '旺':['R121_BASE_ROOT',BASE_ROOT_SOURCE.url,BASE_ROOT_HASH],
+  '墓庫':['R121_BASE_ROOT',BASE_ROOT_SOURCE.url,BASE_ROOT_HASH],
+  '餘氣':['R121_BASE_ROOT',BASE_ROOT_SOURCE.url,BASE_ROOT_HASH],
+  '長生':['R121_YANG_CHANGSHENG',YANG_CS_SOURCE.url,YANG_CS_HASH],
+  '祿':['R121_FOUR_YANG_LU',FOUR_LU_SOURCE.url,FOUR_LU_HASH],
+  'selected_source_explicit_wood_root_presence':
+    ['R121_JIA_YI_WOOD',JIA_YI_SOURCE.url,JIA_YI_HASH],
+};
+
 
 const REFERENCE='2026-10-25T00:00:00.000Z';
 const DOMAINS=['general','career','wealth','business','relationship'];
@@ -225,7 +251,12 @@ for(let i=0;i<500;i++){
       metric.boundedPositiveRootAuthorityViolations++;
     const expectedRootSlots=new Set();
     for(const witness of roots.witnesses){
-      if(!['year','month','day','hour'].includes(witness.pillar) ||
+      const expectedRootSource=EXPECTED_ROOT_SOURCE[witness.sourceRootKind];
+      if(!expectedRootSource ||
+        witness.sourceAuthorityId!==expectedRootSource[0] ||
+        witness.sourceId!==expectedRootSource[1] ||
+        witness.methodologyDefinitionHash!==expectedRootSource[2] ||
+        !['year','month','day','hour'].includes(witness.pillar) ||
         !witness.branch ||
         witness.observedFactPath!==
           'pillars.'+witness.pillar+'.value.branch.value' ||

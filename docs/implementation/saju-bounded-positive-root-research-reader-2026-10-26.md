@@ -32,3 +32,16 @@
 | 빌드·린트·타입·500명 실제 통합 검사 | **통과** |
 
 기계 판독 가능 실행 결과: `saju-bounded-positive-root-500-evidence-2026-10-26.json`. 이 관측은 **통근 최종 분류나 명식 신강**을 뜻하지 않는다.
+
+## 원본 출처 계보별 매핑
+
+처음 연결 코드에서는 갑·을목을 추가로 평가하는 바깥 평가기의 출처를 모든 업스트림 관측에 공통으로 붙였다. 이를 원래 평가기의 근거 계보로 수정했다. 각 관측의 `sourceAuthorityId`·`sourceId`·`methodologyDefinitionHash`는 다음과 같이 구분된다.
+
+| 원래 양성 관측 종류 | 출처 권한 ID | 출처 파일 |
+| --- | --- | --- |
+| 旺·墓庫·餘氣 | R121_BASE_ROOT | `general-natal-bounded-sizhu-root-presence-evidence-authority.ts` |
+| 長生 | R121_YANG_CHANGSHENG | `general-natal-bounded-sizhu-yang-changsheng-root-presence-authority.ts` |
+| 祿 | R121_FOUR_YANG_LU | `general-natal-bounded-sizhu-four-yang-lu-root-presence-authority.ts` |
+| 甲乙木의 명시적 양성 집합 | R121_JIA_YI_WOOD | `general-natal-jia-yi-wood-bounded-root-presence-authority.ts` |
+
+원문 출처 URL과 정의 해시는 해당 원본 연구 상수에서 그대로 읽으며, 최종 500명 통합 검사는 관측 유형별 URL·정의 해시·권한 ID가 각각 정확하게 일치하도록 판정한다.

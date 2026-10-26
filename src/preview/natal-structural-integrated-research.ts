@@ -622,7 +622,7 @@ export function buildNatalStructuralIntegratedResearch(
         '<details><summary>실제 계산 경로·고전 출처·권한</summary>' +
         '<p>'+escapeHtml(item.observedFactPath)+' / '+
         escapeHtml(item.dayMasterFactPath)+'</p><p>'+
-        escapeHtml(item.sourceId)+'</p><p>'+
+        escapeHtml(item.sourceAuthorityId)+' / '+escapeHtml(item.sourceId)+'</p><p>'+
         escapeHtml(item.methodologyDefinitionHash)+'</p></details></article>').join('') :
       '<p>이 연구에서 허용한 양성 관측을 확인하지 못했습니다. '+
       '음성 통근 판정이나 무근 결론은 내리지 않습니다.</p>') +
