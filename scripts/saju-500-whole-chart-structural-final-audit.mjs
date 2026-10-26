@@ -34,6 +34,10 @@ const metric={
   renderedSourceGroups:0,crossDomainEvidenceGroups:0,
   sourceBoundGeneralCoreBirths:0,generalCoreWithStructuralContextBirths:0,
   admittedGeneralCoreContextLinks:0,
+  sourceBoundDomainCoreBirths:Object.fromEntries(['career','wealth','relationship','business'].map(k=>[k,0])),
+  sourceBoundDomainContextBirths:Object.fromEntries(['career','wealth','relationship','business'].map(k=>[k,0])),
+  sourceBoundDomainStructuralLinks:Object.fromEntries(['career','wealth','relationship','business'].map(k=>[k,0])),
+  isolatedWealthT5NoCoreBirths:0,sourceBoundDomainGuideFailures:0,
   familyChannelMeaningProfiles:new Set(),rootContextMeaningProfiles:new Set(),
   domainContextBirths:Object.fromEntries(DOMAINS.map(x=>[x,0])),
   domainContextLinks:Object.fromEntries(DOMAINS.map(x=>[x,0])),
@@ -179,6 +183,55 @@ for(let i=0;i<500;i++){
       if(guide.contextualClaims.length)metric.generalCoreWithStructuralContextBirths++;
       metric.admittedGeneralCoreContextLinks+=guide.contextualClaims.length;
     }
+    for(const domain of ['career','wealth','relationship','business']){
+      const guide=result.natal.domainStructuralGuides[domain];
+      const report=result.natal.domainReports[domain];
+      if(guide.domain!==domain||guide.authorizesNewDomainOutcome!==false)
+        metric.sourceBoundDomainGuideFailures++;
+      const coreType=report.readingGuide?.coreClaimType;
+      const sourceCore=coreType===undefined?undefined:report.sections.find(s=>
+        s.claimType===coreType&&s.axis!=='context'&&s.axis!=='tension');
+      if(sourceCore===undefined){
+        const isolated=domain==='wealth' && report.singleWealthT5Observation!==undefined;
+        if(guide.core!==null||guide.contextualClaims.length||guide.supporting.length||
+          guide.state!==(isolated?'isolated_wealth_t5_not_synthesis':'no_source_bound_core'))
+          metric.sourceBoundDomainGuideFailures++;
+        if(isolated)metric.isolatedWealthT5NoCoreBirths++;
+      }else{
+        metric.sourceBoundDomainCoreBirths[domain]++;
+        if(!guide.core||guide.core.claimType!==sourceCore.claimType||
+          guide.core.ruleId!==sourceCore.ruleId||
+          JSON.stringify(guide.core.sourceIds)!==JSON.stringify(sourceCore.sourceIds)||
+          guide.core.paragraph!==report.readingGuide?.paragraph)
+          metric.sourceBoundDomainGuideFailures++;
+        const linkedIds=new Set(result.natal.domainSharedContexts[domain].filter(x=>
+          x.domainT8ClaimType===sourceCore.claimType&&
+          x.domainT8RuleId===sourceCore.ruleId).map(x=>x.domainT8ClaimId));
+        const actual=result.natal.sharedChartEvidence.filter(x=>
+          x.domainEvidence.some(d=>d.domain===domain &&
+            d.domainT8ClaimIds.some(id=>linkedIds.has(id))));
+        if(JSON.stringify(actual.map(x=>x.sharedStructuralT8ClaimId))!==
+          JSON.stringify(guide.contextualClaims.map(x=>x.claimId))||
+          guide.state!==(actual.length?'core_with_structural_context':'core_without_structural_context'))
+          metric.sourceBoundDomainGuideFailures++;
+        const chosenSupport=report.readingGuide?.supporting??[];
+        if(guide.supporting.length!==chosenSupport.length||
+          guide.supporting.some((x,i)=>
+            x.claimType!==chosenSupport[i]?.claimType ||
+            !report.sections.some(s=>s.claimType===x.claimType &&
+              s.ruleId===x.ruleId &&
+              JSON.stringify(s.sourceIds)===JSON.stringify(x.sourceIds))))
+          metric.sourceBoundDomainGuideFailures++;
+        for(const context of guide.contextualClaims){
+          const original=actual.find(x=>x.sharedStructuralT8ClaimId===context.claimId);
+          if(!original || original.sharedStructuralT8RuleId!==context.ruleId ||
+            JSON.stringify(original.sharedStructuralSourceIds)!==JSON.stringify(context.sourceIds))
+            metric.sourceBoundDomainGuideFailures++;
+        }
+        if(guide.contextualClaims.length)metric.sourceBoundDomainContextBirths[domain]++;
+        metric.sourceBoundDomainStructuralLinks[domain]+=guide.contextualClaims.length;
+      }
+    }
     for(const domain of DOMAINS){
       const links=result.natal.domainSharedContexts[domain];
       if(links.length)metric.domainContextBirths[domain]++;
@@ -282,6 +335,7 @@ const errors=[
   ...(metric.sameChartHashFailures?['Mixed canonical snapshots']:[]),
   ...(metric.temporalScopeViolations?['Incorrect annual/monthly effective reference period']:[]),
   ...(metric.provenanceErrors?['Invalid Claim/Rule/Source chain']:[]),
+  ...(metric.sourceBoundDomainGuideFailures?['Selected four-domain center/context guides failed to preserve source T8 authority']:[]),
   ...(metric.maySellOrOfficialViolations?['Research was promoted to Product']:[]),
   ...(metric.dayunStillUninterpretedBirths!==500?['Unlicensed dayun interpretation emitted']:[]),
   ...(metric.sourceBoundT8Births===0?['No structural T8 was consumed']:[]),
@@ -326,6 +380,10 @@ process.stdout.write('SAJU_STRUCTURAL_FINAL '+JSON.stringify({
  generalCoreBirths:metric.sourceBoundGeneralCoreBirths,
  generalCoreContextBirths:metric.generalCoreWithStructuralContextBirths,
  coreContextLinks:metric.admittedGeneralCoreContextLinks,
+ domainGuideFailures:metric.sourceBoundDomainGuideFailures,
+ wealthIsolatedT5Births:metric.isolatedWealthT5NoCoreBirths,
+ domainCoreBirths:metric.sourceBoundDomainCoreBirths,
+ domainContextBirths:metric.sourceBoundDomainContextBirths,
  temporalScopeViolations:metric.temporalScopeViolations,
  yearly:metric.yearlyConnectedBirths,
  monthly:metric.monthlyConnectedBirths,

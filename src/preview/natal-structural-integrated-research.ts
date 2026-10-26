@@ -80,6 +80,38 @@ export interface GeneralNatalStructuralReadingGuide {
   authorizesNewConclusion: false;
 }
 
+export type SourceBoundedNatalDomain = Exclude<NatalDomainKey, 'general'>;
+
+export interface DomainSourceBoundedStructuralGuide {
+  domain: SourceBoundedNatalDomain;
+  state: 'core_with_structural_context' | 'core_without_structural_context' |
+    'isolated_wealth_t5_not_synthesis' | 'no_source_bound_core';
+  core: {
+    claimType: string;
+    ruleId: string;
+    sourceIds: readonly string[];
+    headline: string;
+    paragraph: string;
+  } | null;
+  /** Independently selected domain T8 supporting axes, not inferred from a T5. */
+  supporting: readonly {
+    claimType: string;
+    ruleId: string;
+    sourceIds: readonly string[];
+  }[];
+  /** Only source-bounded shared T8s reachable from the independently selected domain core. */
+  contextualClaims: readonly {
+    claimId: string;
+    ruleId: string;
+    sourceIds: readonly string[];
+    family: SharedNatalStructuralSection['family'];
+    channel: SharedNatalStructuralSection['channel'];
+    context: SharedNatalStructuralSection['context'];
+    title: string;
+  }[];
+  limitation: string;
+  authorizesNewDomainOutcome: false;
+}
 export interface NatalStructuralIntegratedResearch {
   version: typeof NATAL_STRUCTURAL_INTEGRATION_VERSION;
   snapshotId: string;
@@ -89,6 +121,7 @@ export interface NatalStructuralIntegratedResearch {
   domainSharedContexts: Readonly<Record<NatalDomainKey, readonly DomainStructuralReference[]>>;
   sharedChartEvidence: readonly SharedChartStructuralDomainEvidence[];
   generalStructuralGuide: GeneralNatalStructuralReadingGuide;
+  domainStructuralGuides: Readonly<Record<SourceBoundedNatalDomain, DomainSourceBoundedStructuralGuide>>;
   html: string;
   researchOnly: true;
   mayPublish: false;
@@ -298,6 +331,70 @@ export function buildNatalStructuralIntegratedResearch(
     limitation: '원국 중심 해석에 같은 계산 명식의 구조 관측 근거를 연결한 연구용 보기입니다. 강약·격국·용신·인생 사건의 결론과 학파 간 우열은 판정하지 않습니다.',
     authorizesNewConclusion: false,
   };
+  const domainStructuralGuides = {} as Record<
+    SourceBoundedNatalDomain, DomainSourceBoundedStructuralGuide>;
+  for (const key of ['career', 'wealth', 'relationship', 'business'] as const) {
+    const report = reports[key];
+    const guide = report.readingGuide;
+    const sourceCore = guide === undefined ? undefined :
+      report.sections.find(section =>
+        section.claimType === guide.coreClaimType &&
+        section.axis !== 'tension' && section.axis !== 'context');
+    assert(guide === undefined || sourceCore !== undefined,
+      'selected domain center must exist as an independently executed T8');
+    const coreLinkIds = sourceCore === undefined ? new Set<string>() :
+      new Set(domainSharedContexts[key]
+        .filter(link => link.domainT8ClaimType === sourceCore.claimType &&
+          link.domainT8RuleId === sourceCore.ruleId)
+        .map(link => link.domainT8ClaimId));
+    const contexts = sourceCore === undefined ? [] :
+      sharedChartEvidence.filter(evidence => evidence.domainEvidence.some(domain =>
+        domain.domain === key &&
+        domain.domainT8ClaimIds.some(id => coreLinkIds.has(id))));
+    const supporting = guide === undefined ? [] : guide.supporting.map(support => {
+      const selected = report.sections.find(section => section.claimType === support.claimType);
+      assert(selected !== undefined && selected.claimType !== sourceCore?.claimType &&
+        selected.sourceIds.length > 0 &&
+        selected.upstreamClaimIds.length >= 2,
+      'domain supporting T8 was not actually selected by the existing report');
+      return {claimType: selected.claimType, ruleId: selected.ruleId,
+        sourceIds: [...selected.sourceIds]};
+    });
+    assert(sourceCore === undefined || (sourceCore.sourceIds.length > 0 &&
+      sourceCore.upstreamClaimIds.length >= 2 && contexts.every(context =>
+        context.domainEvidence.some(entry => entry.domain === key &&
+          entry.domainT8ClaimIds.some(id => coreLinkIds.has(id))))),
+    'domain center lacked original source-bound T8 evidence');
+    const isolatedWealth = key === 'wealth' && sourceCore === undefined &&
+      reports.wealth.singleWealthT5Observation !== undefined;
+    domainStructuralGuides[key] = {
+      domain: key,
+      state: sourceCore === undefined ?
+        (isolatedWealth ? 'isolated_wealth_t5_not_synthesis' : 'no_source_bound_core') :
+        contexts.length ? 'core_with_structural_context' :
+          'core_without_structural_context',
+      core: sourceCore === undefined ? null : {
+        claimType: sourceCore.claimType, ruleId: sourceCore.ruleId,
+        sourceIds: [...sourceCore.sourceIds],
+        headline: sourceCore.headline,
+        paragraph: guide!.paragraph,
+      },
+      supporting,
+      contextualClaims: contexts.map(context => ({
+        claimId: context.sharedStructuralT8ClaimId,
+        ruleId: context.sharedStructuralT8RuleId,
+        sourceIds: [...context.sharedStructuralSourceIds],
+        family: context.family, channel: context.channel,
+        context: context.context, title: context.title,
+      })),
+      limitation: sourceCore === undefined ?
+        (isolatedWealth ?
+          '독립적인 재물 중심 T8이 없고 단일 재성 T5 관측만 있습니다. 이를 재물 종합 결론으로 승격하지 않습니다.' :
+          '선택된 출처 기반 중심 T8이 없어 공유 구조 관측만으로 해당 분야의 결과를 만들지 않습니다.') :
+        '기존 분야별 중심 T8과 같은 십신·채널의 공통 구조만 참고하며 직업·재물·관계·사업의 실제 결과를 추가 판정하지 않습니다.',
+      authorizesNewDomainOutcome: false,
+    };
+  }
   const originalHtml = renderNatalFiveDomainMultifactorResearchHtml(snapshot, reports);
   const evidenceHtml = sharedChartEvidence.map(evidence =>
     '<article><h3>' + escapeHtml(evidence.title) + '</h3>' +
@@ -329,10 +426,34 @@ export function buildNatalStructuralIntegratedResearch(
         '</p>')) +
     '<p>' + escapeHtml(generalStructuralGuide.limitation) + '</p>' +
     '</section>';
+  const sourceBoundedDomainHtml = (Object.entries(domainStructuralGuides) as
+    [SourceBoundedNatalDomain, DomainSourceBoundedStructuralGuide][])
+    .map(([key, guide]) =>
+      '<section aria-label="' + escapeHtml(key) + ' 원국 중심 근거">' +
+      '<h3>' + escapeHtml(key) + ' 분야의 독립 중심 해석과 구조 조건</h3>' +
+      (guide.core === null ?
+        '<p>' + escapeHtml(guide.limitation) + '</p>' :
+        '<p>기존 선택된 중심 해석: ' + escapeHtml(guide.core.headline) + '</p>' +
+        '<p>' + escapeHtml(guide.core.paragraph) + '</p>' +
+        '<p>실제 선택된 독립 보조 T8: ' +
+        escapeHtml(guide.supporting.length ?
+          guide.supporting.map(x => x.claimType).join(' · ') : '없음') + '</p>' +
+        '<p>중심 해석과 같은 십신·채널의 추가 원국 관측: ' +
+        escapeHtml(guide.contextualClaims.length ?
+          guide.contextualClaims.map(x => x.title).join(' · ') : '없음') + '</p>' +
+        '<details><summary>중심/보조/공통 구조 출처</summary>' +
+        '<p>중심 T8: ' + escapeHtml(guide.core.claimType) +
+        ' · ' + escapeHtml(guide.core.ruleId) + '</p>' +
+        '<p>중심 출처: ' + escapeHtml(guide.core.sourceIds.join(' · ')) + '</p>' +
+        guide.contextualClaims.map(item => '<p>구조 T8: ' +
+          escapeHtml(item.claimId) + ' · ' +
+          escapeHtml(item.sourceIds.join(' · ')) + '</p>').join('') +
+        '</details><p>' + escapeHtml(guide.limitation) + '</p>') +
+      '</section>').join('');
   const appendix = '<section aria-label="원국 구조와 분야별 공통 근거"><h2>같은 명식의 공유 구조 근거</h2>' +
     '<p>구조 관측은 한 번만 설명하며 실제 분야별 T8의 출처 연결을 보존합니다. ' +
     '신강·격국·용신·사건·길흉·수입을 새로 판단하지 않습니다.</p>' +
-    generalGuideHtml + evidenceHtml + '</section>';
+    generalGuideHtml + sourceBoundedDomainHtml + evidenceHtml + '</section>';
   const html = originalHtml.includes('</main>')
     ? originalHtml.replace('</main>', appendix + '</main>')
     : originalHtml.replace('</body>', appendix + '</body>');
@@ -340,7 +461,7 @@ export function buildNatalStructuralIntegratedResearch(
     version: NATAL_STRUCTURAL_INTEGRATION_VERSION,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     structural: shared, domainReports: reports, domainSharedContexts,
-    sharedChartEvidence, generalStructuralGuide, html,
+    sharedChartEvidence, generalStructuralGuide, domainStructuralGuides, html,
     researchOnly: true, mayPublish: false, maySell: false, mayGrantOfficialAuthority: false,
   };
 }
