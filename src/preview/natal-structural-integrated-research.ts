@@ -116,6 +116,22 @@ export interface DomainSourceBoundedStructuralGuide {
   limitation: string;
   authorizesNewDomainOutcome: false;
 }
+export interface NatalSourceEvidenceCoverage {
+  domain: NatalDomainKey;
+  state: 'source_bound_multifactor_core' |
+    'source_bound_direct_research_only' |
+    'no_source_bound_direct_or_multifactor_core';
+  coreClaimType: string | null;
+  coreRuleId: string | null;
+  coreSourceIds: readonly string[];
+  independentlySelectedDirectT8ClaimIds: readonly string[];
+  independentlySelectedDirectT8SourceIds: readonly string[];
+  /** Already matched structural T8 reference only, never a center replacement. */
+  structuralObservationT8ClaimIds: readonly string[];
+  narrative: string;
+  actualPersonalOutcomeAuthorized: false;
+  mayPublish: false;
+}
 export interface NatalStructuralIntegratedResearch {
   version: typeof NATAL_STRUCTURAL_INTEGRATION_VERSION;
   snapshotId: string;
@@ -127,6 +143,7 @@ export interface NatalStructuralIntegratedResearch {
   sharedChartEvidence: readonly SharedChartStructuralDomainEvidence[];
   generalStructuralGuide: GeneralNatalStructuralReadingGuide;
   domainStructuralGuides: Readonly<Record<SourceBoundedNatalDomain, DomainSourceBoundedStructuralGuide>>;
+  sourceEvidenceCoverage: readonly NatalSourceEvidenceCoverage[];
   html: string;
   researchOnly: true;
   mayPublish: false;
@@ -408,6 +425,47 @@ export function buildNatalStructuralIntegratedResearch(
     !sourceOwnedDirectCareerT8.mayPublish &&
     !sourceOwnedDirectCareerT8.mayConcludeCareerOutcome,
   'selected direct career research crossed authority or snapshot boundary');
+  const directEvidenceByDomain = {
+    general: [] as readonly {claimId:string;sourceIds:readonly string[]}[],
+    career: sourceOwnedDirectCareerT8.directVisibleStemT8,
+    wealth: reports.wealth.sourceOwnedDirectWealthT8,
+    relationship: reports.relationship.directGeneralRelationshipT8,
+    business: reports.business.sourceBoundedDirectBusinessT8,
+  };
+  const sourceEvidenceCoverage = ([
+    'general','career','wealth','relationship','business',
+  ] as const).map((domain):NatalSourceEvidenceCoverage => {
+    const core = domain === 'general'
+      ? generalStructuralGuide.core
+      : domainStructuralGuides[domain].core;
+    const direct = directEvidenceByDomain[domain];
+    const structureIds = domainSharedContexts[domain]
+      .map(link=>link.sharedStructuralT8ClaimId);
+    const uniqueStructureIds = [...new Set(structureIds)];
+    const state:NatalSourceEvidenceCoverage['state'] = core !== null ?
+      'source_bound_multifactor_core' : direct.length ?
+      'source_bound_direct_research_only' :
+      'no_source_bound_direct_or_multifactor_core';
+    assert(direct.every(item=>item.claimId&&item.sourceIds.length>0) &&
+      new Set(direct.map(item=>item.claimId)).size===direct.length &&
+      (state==='source_bound_multifactor_core') === (core!==null) &&
+      (core===null || core.sourceIds.length>0),
+    'selected direct/core evidence was duplicated or promoted without source');
+    const narrative = core!==null
+      ? '기존 원국 중심 T8 근거가 선택됐습니다. 추가 관측은 중심 해석의 출처를 보완하지만 개인 결과·상품 권한을 확정하지 않습니다.'
+      : direct.length
+        ? '독립 연구용 직접 T8은 선택됐지만 다중 근거 중심 T8은 없습니다. 직접 근거를 중심 결론이나 미래 결과로 승격하지 않습니다.'
+        : '해당 메뉴에서 직접 T8 또는 다중 근거 중심 T8을 확인하지 못했습니다. 공통 명식 구조가 있더라도 이 분야의 결과로 대체하지 않습니다.';
+    return {
+      domain, state, coreClaimType:core?.claimType??null,
+      coreRuleId:core?.ruleId??null,coreSourceIds:core===null?[]:[...core.sourceIds],
+      independentlySelectedDirectT8ClaimIds:direct.map(item=>item.claimId),
+      independentlySelectedDirectT8SourceIds:[
+        ...new Set(direct.flatMap(item=>item.sourceIds))],
+      structuralObservationT8ClaimIds:uniqueStructureIds,
+      narrative,actualPersonalOutcomeAuthorized:false,mayPublish:false,
+    };
+  });
   const originalHtml = renderNatalFiveDomainMultifactorResearchHtml(snapshot, reports);
   const evidenceHtml = sharedChartEvidence.map(evidence =>
     '<article><h3>' + escapeHtml(evidence.title) + '</h3>' +
@@ -521,10 +579,25 @@ export function buildNatalStructuralIntegratedResearch(
       '<p>'+escapeHtml(x.sourceIds.join(' · '))+'</p>'+
       '<p>'+escapeHtml(x.observedFactPaths.join(' · '))+'</p>'+
       '</details></article>').join('')+'</section>':'';
+  const evidenceCoverageHtml =
+    '<section aria-label="원국 5개 메뉴의 실제 해석 근거 도달 단계">' +
+    '<h2>분야별 직접 해석 근거 도달 상태</h2>' +
+    '<p>중심 T8 / 독립 연구 T8 / 직접 해석 근거 부재를 구분합니다. ' +
+    '원국 구조 관측만으로 분야별 해석을 완성 처리하지 않습니다.</p>' +
+    sourceEvidenceCoverage.map(coverage=>
+      '<article><h3>'+escapeHtml(coverage.domain)+'</h3>' +
+      '<p>'+escapeHtml(coverage.narrative)+'</p>' +
+      '<details><summary>기존 실제 선택 Claim·출처</summary>' +
+      '<p>현재 근거 상태 '+escapeHtml(coverage.state)+'</p>' +
+      '<p>중심 T8 '+escapeHtml(coverage.coreClaimType??'없음')+
+      ' · '+escapeHtml(coverage.coreRuleId??'없음')+'</p>' +
+      '<p>독립 연구 T8 '+escapeHtml(coverage.independentlySelectedDirectT8ClaimIds.join(' · ')||'없음')+'</p>' +
+      '<p>원국 구조 관측 T8 '+escapeHtml(coverage.structuralObservationT8ClaimIds.join(' · ')||'없음')+'</p>' +
+      '</details></article>').join('')+'</section>';
   const appendix = '<section aria-label="원국 구조와 분야별 공통 근거"><h2>같은 명식의 공유 구조 근거</h2>' +
     '<p>구조 관측은 한 번만 설명하며 실제 분야별 T8의 출처 연결을 보존합니다. ' +
     '신강·격국·용신·사건·길흉·수입을 새로 판단하지 않습니다.</p>' +
-    generalGuideHtml + sourceBoundedDomainHtml + boundedDirectCareerHtml + boundedDirectWealthHtml + boundedGeneralRelationshipHtml + boundedDirectBusinessHtml + evidenceHtml + '</section>';
+    evidenceCoverageHtml + generalGuideHtml + sourceBoundedDomainHtml + boundedDirectCareerHtml + boundedDirectWealthHtml + boundedGeneralRelationshipHtml + boundedDirectBusinessHtml + evidenceHtml + '</section>';
   const html = originalHtml.includes('</main>')
     ? originalHtml.replace('</main>', appendix + '</main>')
     : originalHtml.replace('</body>', appendix + '</body>');
@@ -532,7 +605,7 @@ export function buildNatalStructuralIntegratedResearch(
     version: NATAL_STRUCTURAL_INTEGRATION_VERSION,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     structural: shared, domainReports: reports, sourceOwnedDirectCareerT8, domainSharedContexts,
-    sharedChartEvidence, generalStructuralGuide, domainStructuralGuides, html,
+    sharedChartEvidence, generalStructuralGuide, domainStructuralGuides, sourceEvidenceCoverage, html,
     researchOnly: true, mayPublish: false, maySell: false, mayGrantOfficialAuthority: false,
   };
 }
