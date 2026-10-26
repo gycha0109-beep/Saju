@@ -32,6 +32,8 @@ const metric={
   visibleContrastingSections:0,visibleContrastingBirths:0,
   visibleSupportSections:0,visibleChallengeSections:0,
   renderedSourceGroups:0,crossDomainEvidenceGroups:0,
+  sourceBoundGeneralCoreBirths:0,generalCoreWithStructuralContextBirths:0,
+  admittedGeneralCoreContextLinks:0,
   familyChannelMeaningProfiles:new Set(),rootContextMeaningProfiles:new Set(),
   domainContextBirths:Object.fromEntries(DOMAINS.map(x=>[x,0])),
   domainContextLinks:Object.fromEntries(DOMAINS.map(x=>[x,0])),
@@ -138,6 +140,44 @@ for(let i=0;i<500;i++){
             metric.provenanceErrors++;
       }
     }
+    // A structural observation can qualify an independently selected General core,
+    // but must never manufacture a core for a tension-only or empty General report.
+    const guide=result.natal.generalStructuralGuide;
+    const generalReport=result.natal.domainReports.general;
+    const sourceCore=generalReport.readingGuide?.sourceClaimType === undefined ?
+      undefined : generalReport.sections.find(section =>
+        section.claimType===generalReport.readingGuide.sourceClaimType &&
+        section.axis!=='tension');
+    if(guide.authorizesNewConclusion!==false)metric.provenanceErrors++;
+    if(sourceCore===undefined){
+      if(guide.state!=='no_source_bound_core'||guide.core!==null||
+        guide.contextualClaims.length)metric.provenanceErrors++;
+    }else{
+      metric.sourceBoundGeneralCoreBirths++;
+      if(guide.core===null||guide.core.claimType!==sourceCore.claimType||
+        guide.core.ruleId!==sourceCore.ruleId||
+        JSON.stringify(guide.core.sourceIds)!==JSON.stringify(sourceCore.sourceIds)||
+        guide.core.paragraph!==generalReport.readingGuide.paragraph)
+        metric.provenanceErrors++;
+      const coreIds=new Set(result.natal.domainSharedContexts.general
+        .filter(link=>link.domainT8ClaimType===sourceCore.claimType &&
+          link.domainT8RuleId===sourceCore.ruleId)
+        .map(link=>link.domainT8ClaimId));
+      const expectedGroups=groups.filter(item=>item.domainEvidence.some(domain=>
+        domain.domain==='general'&&domain.domainT8ClaimIds.some(id=>coreIds.has(id))));
+      if(JSON.stringify(expectedGroups.map(x=>x.sharedStructuralT8ClaimId))!==
+        JSON.stringify(guide.contextualClaims.map(x=>x.claimId))||
+        (expectedGroups.length>0)!==(guide.state==='source_bound_core_with_context'))
+          metric.provenanceErrors++;
+      for(const item of guide.contextualClaims){
+        const original=expectedGroups.find(group=>group.sharedStructuralT8ClaimId===item.claimId);
+        if(!original||item.ruleId!==original.sharedStructuralT8RuleId||
+          JSON.stringify(item.sourceIds)!==JSON.stringify(original.sharedStructuralSourceIds))
+          metric.provenanceErrors++;
+      }
+      if(guide.contextualClaims.length)metric.generalCoreWithStructuralContextBirths++;
+      metric.admittedGeneralCoreContextLinks+=guide.contextualClaims.length;
+    }
     for(const domain of DOMAINS){
       const links=result.natal.domainSharedContexts[domain];
       if(links.length)metric.domainContextBirths[domain]++;
@@ -217,6 +257,9 @@ process.stdout.write('SAJU_STRUCTURAL_FINAL '+JSON.stringify({
  visibleBirths:metric.visibleContrastingBirths,
  visibleSupport:metric.visibleSupportSections,visibleChallenge:metric.visibleChallengeSections,
  sharedGroups:metric.renderedSourceGroups,crossDomainGroups:metric.crossDomainEvidenceGroups,
+ generalCoreBirths:metric.sourceBoundGeneralCoreBirths,
+ generalCoreContextBirths:metric.generalCoreWithStructuralContextBirths,
+ coreContextLinks:metric.admittedGeneralCoreContextLinks,
  yearly:metric.yearlyConnectedBirths,
  monthly:metric.monthlyConnectedBirths,
  familyProfiles:metric.familyChannelMeaningProfiles.size,
