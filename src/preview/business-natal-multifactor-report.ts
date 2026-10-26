@@ -1,4 +1,8 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
+import {
+  selectSourceBoundedDirectBusinessT8,
+  type SourceBoundedBusinessDirectT8,
+} from './source-bound-direct-business-reading.js';
 import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -46,6 +50,7 @@ export interface BusinessNatalMultifactorReport {
   introduction: string;
   sections: readonly BusinessNatalMultifactorSection[];
   readingGuide?: BusinessNatalReadingGuide;
+  sourceBoundedDirectBusinessT8: readonly SourceBoundedBusinessDirectT8[];
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -324,6 +329,8 @@ export function buildBusinessNatalMultifactorReport(
   const readingGuide = buildBusinessNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
+  const sourceBoundedDirectBusinessT8=selectSourceBoundedDirectBusinessT8(
+    snapshot,execution,registry,selected);
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 사업의 다중 근거 T8 해석은 보류합니다.');
   }
@@ -336,6 +343,7 @@ export function buildBusinessNatalMultifactorReport(
     introduction: '실제 명식의 십신 관계를 바탕으로 산출과 실행, 운영 기준, 준비와 협업의 관계를 함께 살펴봅니다. 창업 적성이나 사업 성과를 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    sourceBoundedDirectBusinessT8,
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :

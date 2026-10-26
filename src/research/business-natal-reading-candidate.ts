@@ -363,6 +363,11 @@ const CHANNEL_SENSITIVE_SPECIALIST_RULES: readonly RuleDefinition[] = Object.fre
   ].map(channelSensitiveSpecialistRule),
 );
 
+/** Only original specialist business T8 rules with their unchanged same-channel evidence gate. */
+export const BUSINESS_SOURCE_OWNED_CHANNEL_SENSITIVE_RULES: readonly RuleDefinition[] =
+  Object.freeze(CHANNEL_SENSITIVE_SPECIALIST_RULES.filter(rule =>
+    rule.taxonomy.tier==='T8' && rule.taxonomy.category==='business'));
+
 const ALL_RULES: readonly RuleDefinition[] = Object.freeze([
   ...I18A_MONTH_BRANCH_STRENGTH_RULES,
   ...GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_RULES,

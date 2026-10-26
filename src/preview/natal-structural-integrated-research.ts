@@ -509,10 +509,22 @@ export function buildNatalStructuralIntegratedResearch(
       '<p>' + escapeHtml(item.observedFactPaths.join(' · ')) +
       '</p></details></article>').join('') +
     '</section>' : '';
+  const boundedDirectBusinessHtml=reports.business.sourceBoundedDirectBusinessT8.length?
+    '<section aria-label="사업 분야 동일 채널 출처 한정 연구 T8">' +
+    '<h3>사업 운영 주제의 독립 T8 연구 관측</h3>' +
+    '<p>기존 규칙이 요구하는 동일 채널의 십신 근거를 만족하는 제한적 연구 결과입니다. ' +
+    '다중 근거 사업 중심 풀이 또는 창업·매출·성공 결과를 대체하지 않습니다.</p>' +
+    reports.business.sourceBoundedDirectBusinessT8.map(x=>
+      '<article><p>'+escapeHtml(x.paragraph)+'</p>'+
+      '<details><summary>실제 Claim·규칙·출처·계산 위치</summary>'+
+      '<p>'+escapeHtml(x.claimId)+' · '+escapeHtml(x.ruleId)+'</p>'+
+      '<p>'+escapeHtml(x.sourceIds.join(' · '))+'</p>'+
+      '<p>'+escapeHtml(x.observedFactPaths.join(' · '))+'</p>'+
+      '</details></article>').join('')+'</section>':'';
   const appendix = '<section aria-label="원국 구조와 분야별 공통 근거"><h2>같은 명식의 공유 구조 근거</h2>' +
     '<p>구조 관측은 한 번만 설명하며 실제 분야별 T8의 출처 연결을 보존합니다. ' +
     '신강·격국·용신·사건·길흉·수입을 새로 판단하지 않습니다.</p>' +
-    generalGuideHtml + sourceBoundedDomainHtml + boundedDirectCareerHtml + boundedDirectWealthHtml + boundedGeneralRelationshipHtml + evidenceHtml + '</section>';
+    generalGuideHtml + sourceBoundedDomainHtml + boundedDirectCareerHtml + boundedDirectWealthHtml + boundedGeneralRelationshipHtml + boundedDirectBusinessHtml + evidenceHtml + '</section>';
   const html = originalHtml.includes('</main>')
     ? originalHtml.replace('</main>', appendix + '</main>')
     : originalHtml.replace('</body>', appendix + '</body>');

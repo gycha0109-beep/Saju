@@ -39,6 +39,8 @@ const metric={
   sourceBoundDomainStructuralLinks:Object.fromEntries(['career','wealth','relationship','business'].map(k=>[k,0])),
   isolatedWealthT5NoCoreBirths:0,sourceBoundDomainGuideFailures:0,
   directWealthResearchT8Births:0,  directWealthResearchT8Count:0,
+  directBusinessBirths:0,directBusinessT8:0,
+  directBusinessWithoutCore:0,directBusinessErrors:0,
   directRelationshipBirths:0,directRelationshipT8:0,
   directRelationshipWithoutCore:0,directRelationshipErrors:0,
   directCareerBirths:0,directCareerVisibleT8:0,directCareerBranchT8:0,
@@ -191,6 +193,23 @@ for(let i=0;i<500;i++){
       }
       if(guide.contextualClaims.length)metric.generalCoreWithStructuralContextBirths++;
       metric.admittedGeneralCoreContextLinks+=guide.contextualClaims.length;
+    }
+    const directBusiness=result.natal.domainReports.business.sourceBoundedDirectBusinessT8;
+    if(directBusiness.length)metric.directBusinessBirths++;
+    metric.directBusinessT8+=directBusiness.length;
+    if(directBusiness.length&&result.natal.domainStructuralGuides.business.core===null)
+      metric.directBusinessWithoutCore++;
+    if(new Set(directBusiness.map(x=>x.claimId)).size!==directBusiness.length)
+      metric.directBusinessErrors++;
+    for(const x of directBusiness){
+      if(x.replacesMultifactorCore!==false||
+        x.authorizesFounderOrRevenueOutcome!==false ||
+        !x.claimId||!x.ruleId||!x.sourceIds.length||!x.families.length||
+        !x.observedFactPaths.length||
+        x.observedFactPaths.length!==x.observedPositions.length ||
+        !['visible_stems','branches'].includes(x.sharedChannel) ||
+        !x.claimType.startsWith('BUSINESS_NATAL_CONCLUSION_'))
+        metric.directBusinessErrors++;
     }
     const directRelationship=result.natal.domainReports.relationship.directGeneralRelationshipT8;
     if(directRelationship.length)metric.directRelationshipBirths++;
@@ -448,6 +467,8 @@ const errors=[
   ...(metric.temporalCoreDomainErrors?['Annual/monthly T9 was incorrectly attached to a selected natal domain core']:[]),
   ...(metric.provenanceErrors?['Invalid Claim/Rule/Source chain']:[]),
   ...(metric.sourceBoundDomainGuideFailures?['Selected four-domain center/context guides failed to preserve source T8 authority']:[]),
+  ...(metric.directBusinessErrors?['Direct business research T8 lacked source gated evidence']:[]),
+  ...(metric.directBusinessT8===0?['No selected bounded business direct T8']:[]),
   ...(metric.directRelationshipErrors?['Selected general relationship T8 exceeded spouse/compatibility authority']:[]),
   ...(metric.directRelationshipT8===0?['No selected general relationship source-owned T8']:[]),
   ...(metric.directCareerErrors?['Selected career subtype research T8 provenance/authority mismatch']:[]),
@@ -513,6 +534,10 @@ process.stdout.write('SAJU_STRUCTURAL_FINAL '+JSON.stringify({
  directRelationshipT8:metric.directRelationshipT8,
  directRelationshipNoCore:metric.directRelationshipWithoutCore,
  directRelationshipErrors:metric.directRelationshipErrors,
+ directBusinessBirths:metric.directBusinessBirths,
+ directBusinessT8:metric.directBusinessT8,
+ directBusinessNoCore:metric.directBusinessWithoutCore,
+ directBusinessErrors:metric.directBusinessErrors,
  domainCoreBirths:metric.sourceBoundDomainCoreBirths,
  domainContextBirths:metric.sourceBoundDomainContextBirths,
  temporalScopeViolations:metric.temporalScopeViolations,
