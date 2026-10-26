@@ -42,6 +42,10 @@ const metric={
     business:{core:0,directOnly:0,none:0},
   },
   evidenceCoverageErrors:0,
+  boundedPositiveRootBirths:0,
+  boundedPositiveRootWitnesses:0,
+  boundedPositiveJiaYiWoodBirths:0,
+  boundedPositiveRootAuthorityViolations:0,
   sourceBoundDomainCoreBirths:Object.fromEntries(['career','wealth','relationship','business'].map(k=>[k,0])),
   sourceBoundDomainContextBirths:Object.fromEntries(['career','wealth','relationship','business'].map(k=>[k,0])),
   sourceBoundDomainStructuralLinks:Object.fromEntries(['career','wealth','relationship','business'].map(k=>[k,0])),
@@ -201,6 +205,46 @@ for(let i=0;i<500;i++){
       }
       if(guide.contextualClaims.length)metric.generalCoreWithStructuralContextBirths++;
       metric.admittedGeneralCoreContextLinks+=guide.contextualClaims.length;
+    }
+    const roots=result.natal.boundedPositiveRoots;
+    if(roots.witnesses.length)metric.boundedPositiveRootBirths++;
+    metric.boundedPositiveRootWitnesses+=roots.witnesses.length;
+    if(roots.witnesses.some(x=>x.sourceRootKind===
+      'selected_source_explicit_wood_root_presence'))
+      metric.boundedPositiveJiaYiWoodBirths++;
+    if(roots.snapshotId!==result.natal.snapshotId ||
+      roots.calculationHash!==result.natal.calculationHash ||
+      roots.researchOnly!==true ||
+      roots.mayInferNegativeRoot!==false ||
+      roots.mayCallStrongWeak!==false ||
+      roots.maySetYongshin!==false ||
+      roots.mayEstablishPattern!==false ||
+      roots.mayPublish!==false || roots.maySell!==false ||
+      (roots.witnesses.length>0 && roots.state!=='bounded_positive_observed') ||
+      (roots.witnesses.length===0 && roots.state==='bounded_positive_observed'))
+      metric.boundedPositiveRootAuthorityViolations++;
+    const expectedRootSlots=new Set();
+    for(const witness of roots.witnesses){
+      if(!['year','month','day','hour'].includes(witness.pillar) ||
+        !witness.branch ||
+        witness.observedFactPath!==
+          'pillars.'+witness.pillar+'.value.branch.value' ||
+        witness.dayMasterFactPath!=='derivedFacts.dayMaster' ||
+        !witness.sourceId.includes('ncc.com.tw/fate/') ||
+        !witness.methodologyDefinitionHash ||
+        witness.claimEmissionAuthorized!==false ||
+        witness.fullRootSettlementAuthorized!==false ||
+        witness.strengthVerdictAuthorized!==false)
+        metric.boundedPositiveRootAuthorityViolations++;
+      const id=witness.pillar+'|'+witness.sourceRootKind;
+      if(expectedRootSlots.has(id))metric.boundedPositiveRootAuthorityViolations++;
+      expectedRootSlots.add(id);
+      if(witness.sourceRootKind==='selected_source_explicit_wood_root_presence'){
+        if(!['인','묘','해','진','미'].includes(witness.branch) ||
+          !['source_describes_shen_wang','source_describes_you_gen']
+            .includes(witness.sourceDisposition))
+          metric.boundedPositiveRootAuthorityViolations++;
+      }
     }
     const coverage=result.natal.sourceEvidenceCoverage;
     const directActual={
@@ -519,6 +563,8 @@ const errors=[
   ...(metric.temporalCoreDomainErrors?['Annual/monthly T9 was incorrectly attached to a selected natal domain core']:[]),
   ...(metric.provenanceErrors?['Invalid Claim/Rule/Source chain']:[]),
   ...(metric.sourceBoundDomainGuideFailures?['Selected four-domain center/context guides failed to preserve source T8 authority']:[]),
+  ...(metric.boundedPositiveRootAuthorityViolations?['R121 bounded positive root became negative/full strength or lost canonical evidence']:[]),
+  ...(metric.boundedPositiveRootWitnesses===0?['Source-approved bounded positive root evidence never reached the sample']:[]),
   ...(metric.evidenceCoverageErrors?['Five-domain selected evidence coverage incorrectly promoted or lost source Claims']:[]),
   ...(metric.directBusinessErrors?['Direct business research T8 lacked source gated evidence']:[]),
   ...(metric.directBusinessT8===0?['No selected bounded business direct T8']:[]),
@@ -593,6 +639,10 @@ process.stdout.write('SAJU_STRUCTURAL_FINAL '+JSON.stringify({
  directBusinessErrors:metric.directBusinessErrors,
  coverageMatrix:metric.evidenceCoverage,
  coverageErrors:metric.evidenceCoverageErrors,
+ boundedRootBirths:metric.boundedPositiveRootBirths,
+ boundedRootWitnesses:metric.boundedPositiveRootWitnesses,
+ jiaYiWoodPositiveBirths:metric.boundedPositiveJiaYiWoodBirths,
+ rootAuthorityErrors:metric.boundedPositiveRootAuthorityViolations,
  domainCoreBirths:metric.sourceBoundDomainCoreBirths,
  domainContextBirths:metric.sourceBoundDomainContextBirths,
  temporalScopeViolations:metric.temporalScopeViolations,

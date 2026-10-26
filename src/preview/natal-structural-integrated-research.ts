@@ -4,6 +4,10 @@ import { runInterpretation } from '../interpretation/interpretation-engine.js';
 import { createGeneralNatalMultifactorRegistry } from '../research/general-natal-multifactor-candidate.js';
 import { createCareerMultifactorResearchRegistry } from '../research/career-natal-multifactor-candidate.js';
 import {
+  buildBoundedPositiveRootResearchReading,
+  type BoundedPositiveRootResearchReading,
+} from './source-bound-positive-root-presence.js';
+import {
   buildSourceBoundedCareerResearchReading,
   type SourceBoundedCareerResearchReading,
 } from './source-bound-direct-career-reading.js';
@@ -144,6 +148,7 @@ export interface NatalStructuralIntegratedResearch {
   generalStructuralGuide: GeneralNatalStructuralReadingGuide;
   domainStructuralGuides: Readonly<Record<SourceBoundedNatalDomain, DomainSourceBoundedStructuralGuide>>;
   sourceEvidenceCoverage: readonly NatalSourceEvidenceCoverage[];
+  boundedPositiveRoots: BoundedPositiveRootResearchReading;
   html: string;
   researchOnly: true;
   mayPublish: false;
@@ -466,6 +471,17 @@ export function buildNatalStructuralIntegratedResearch(
       narrative,actualPersonalOutcomeAuthorized:false,mayPublish:false,
     };
   });
+  const boundedPositiveRoots=buildBoundedPositiveRootResearchReading(snapshot);
+  assert(boundedPositiveRoots.snapshotId===snapshot.snapshotId &&
+    boundedPositiveRoots.calculationHash===snapshot.calculationHash &&
+    boundedPositiveRoots.researchOnly &&
+    boundedPositiveRoots.mayInferNegativeRoot===false &&
+    boundedPositiveRoots.mayCallStrongWeak===false &&
+    boundedPositiveRoots.maySetYongshin===false &&
+    boundedPositiveRoots.mayEstablishPattern===false &&
+    boundedPositiveRoots.mayPublish===false &&
+    boundedPositiveRoots.maySell===false,
+  'R121 positive Tonggen evidence was promoted beyond bounded observation');
   const originalHtml = renderNatalFiveDomainMultifactorResearchHtml(snapshot, reports);
   const evidenceHtml = sharedChartEvidence.map(evidence =>
     '<article><h3>' + escapeHtml(evidence.title) + '</h3>' +
@@ -594,10 +610,27 @@ export function buildNatalStructuralIntegratedResearch(
       '<p>독립 연구 T8 '+escapeHtml(coverage.independentlySelectedDirectT8ClaimIds.join(' · ')||'없음')+'</p>' +
       '<p>원국 구조 관측 T8 '+escapeHtml(coverage.structuralObservationT8ClaimIds.join(' · ')||'없음')+'</p>' +
       '</details></article>').join('')+'</section>';
+  const positiveRootHtml =
+    '<section aria-label="고전 근거가 있는 양성 뿌리 관측">' +
+    '<h3>원국의 출처 한정 뿌리 양성 관측</h3>' +
+    '<p>기존 R121·갑을목 고전 근거가 허용하는 원국의 양성 관측만 기록합니다. ' +
+    '미관측은 무근을 뜻하지 않고, 뿌리 수나 지지 위치를 신강·격국·용신으로 환산하지 않습니다.</p>' +
+    (boundedPositiveRoots.witnesses.length ?
+      boundedPositiveRoots.witnesses.map(item=>
+        '<article><p>'+escapeHtml(item.pillar)+' 지지 '+
+        escapeHtml(item.branch)+' · '+escapeHtml(item.sourceRootKind)+'</p>' +
+        '<details><summary>실제 계산 경로·고전 출처·권한</summary>' +
+        '<p>'+escapeHtml(item.observedFactPath)+' / '+
+        escapeHtml(item.dayMasterFactPath)+'</p><p>'+
+        escapeHtml(item.sourceId)+'</p><p>'+
+        escapeHtml(item.methodologyDefinitionHash)+'</p></details></article>').join('') :
+      '<p>이 연구에서 허용한 양성 관측을 확인하지 못했습니다. '+
+      '음성 통근 판정이나 무근 결론은 내리지 않습니다.</p>') +
+    '</section>';
   const appendix = '<section aria-label="원국 구조와 분야별 공통 근거"><h2>같은 명식의 공유 구조 근거</h2>' +
     '<p>구조 관측은 한 번만 설명하며 실제 분야별 T8의 출처 연결을 보존합니다. ' +
     '신강·격국·용신·사건·길흉·수입을 새로 판단하지 않습니다.</p>' +
-    evidenceCoverageHtml + generalGuideHtml + sourceBoundedDomainHtml + boundedDirectCareerHtml + boundedDirectWealthHtml + boundedGeneralRelationshipHtml + boundedDirectBusinessHtml + evidenceHtml + '</section>';
+    positiveRootHtml + evidenceCoverageHtml + generalGuideHtml + sourceBoundedDomainHtml + boundedDirectCareerHtml + boundedDirectWealthHtml + boundedGeneralRelationshipHtml + boundedDirectBusinessHtml + evidenceHtml + '</section>';
   const html = originalHtml.includes('</main>')
     ? originalHtml.replace('</main>', appendix + '</main>')
     : originalHtml.replace('</body>', appendix + '</body>');
@@ -605,7 +638,7 @@ export function buildNatalStructuralIntegratedResearch(
     version: NATAL_STRUCTURAL_INTEGRATION_VERSION,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     structural: shared, domainReports: reports, sourceOwnedDirectCareerT8, domainSharedContexts,
-    sharedChartEvidence, generalStructuralGuide, domainStructuralGuides, sourceEvidenceCoverage, html,
+    sharedChartEvidence, generalStructuralGuide, domainStructuralGuides, sourceEvidenceCoverage, boundedPositiveRoots, html,
     researchOnly: true, mayPublish: false, maySell: false, mayGrantOfficialAuthority: false,
   };
 }
