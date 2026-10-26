@@ -3,6 +3,10 @@ import type { InterpretationClaim } from '../contracts/interpretation.js';
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
 import { createGeneralNatalMultifactorRegistry } from '../research/general-natal-multifactor-candidate.js';
 import { createCareerMultifactorResearchRegistry } from '../research/career-natal-multifactor-candidate.js';
+import {
+  buildSourceBoundedCareerResearchReading,
+  type SourceBoundedCareerResearchReading,
+} from './source-bound-direct-career-reading.js';
 import { createWealthNatalMultifactorRegistry } from '../research/wealth-natal-multifactor-candidate.js';
 import { createRelationshipNatalMultifactorRegistry } from '../research/relationship-natal-multifactor-candidate.js';
 import { createBusinessNatalMultifactorRegistry } from '../research/business-natal-multifactor-candidate.js';
@@ -118,6 +122,7 @@ export interface NatalStructuralIntegratedResearch {
   calculationHash: string;
   structural: SharedNatalStructuralReading;
   domainReports: NatalFiveDomainMultifactorReports;
+  sourceOwnedDirectCareerT8: SourceBoundedCareerResearchReading;
   domainSharedContexts: Readonly<Record<NatalDomainKey, readonly DomainStructuralReference[]>>;
   sharedChartEvidence: readonly SharedChartStructuralDomainEvidence[];
   generalStructuralGuide: GeneralNatalStructuralReadingGuide;
@@ -395,6 +400,14 @@ export function buildNatalStructuralIntegratedResearch(
       authorizesNewDomainOutcome: false,
     };
   }
+  const sourceOwnedDirectCareerT8 = buildSourceBoundedCareerResearchReading(snapshot,options);
+  assert(sourceOwnedDirectCareerT8.snapshotId===snapshot.snapshotId &&
+    sourceOwnedDirectCareerT8.calculationHash===snapshot.calculationHash &&
+    sourceOwnedDirectCareerT8.researchOnly &&
+    !sourceOwnedDirectCareerT8.maySell &&
+    !sourceOwnedDirectCareerT8.mayPublish &&
+    !sourceOwnedDirectCareerT8.mayConcludeCareerOutcome,
+  'selected direct career research crossed authority or snapshot boundary');
   const originalHtml = renderNatalFiveDomainMultifactorResearchHtml(snapshot, reports);
   const evidenceHtml = sharedChartEvidence.map(evidence =>
     '<article><h3>' + escapeHtml(evidence.title) + '</h3>' +
@@ -463,17 +476,36 @@ export function buildNatalStructuralIntegratedResearch(
       '<p>'+escapeHtml(item.observedFactPaths.join(' · '))+'</p>' +
       '</details></article>').join('') +
     '</section>' : '';
+  const boundedDirectCareerHtml =
+    '<section aria-label="직업 분야 세부 십신 출처 T8 연구 관측">' +
+    '<h3>천간의 직업 관련 세부 십신 연구</h3>' +
+    '<p>같은 고전 출처를 가진 기존 세부 십신 T8을 실제 계산 위치에만 연결합니다. ' +
+    '이 관측은 천간 중심 다중 근거 직업 종합해석이나 실제 직업·승진·소득을 뜻하지 않습니다.</p>' +
+    (sourceOwnedDirectCareerT8.directVisibleStemT8.length ?
+      sourceOwnedDirectCareerT8.directVisibleStemT8.map(item =>
+        '<article><p>' + escapeHtml(item.tenGod) +
+        ' 천간 관측 — ' + escapeHtml(item.positions.join(' · ')) + '</p>' +
+        '<details><summary>기존 직업 T8·규칙·출처·계산 위치</summary>' +
+        '<p>' + escapeHtml(item.claimId) + ' · ' +
+        escapeHtml(item.ruleId) + '</p><p>' +
+        escapeHtml(item.sourceIds.join(' · ')) + '</p><p>' +
+        escapeHtml(item.factPaths.join(' · ')) + '</p></details></article>').join('') :
+      '<p>실제 천간에 선택된 직업 세부 십신 T8이 없습니다.</p>') +
+    '<details><summary>지지에서 별도로 관측된 보조 근거</summary><p>' +
+    escapeHtml(sourceOwnedDirectCareerT8.supportingBranchT8.map(item =>
+      item.tenGod + ': ' + item.positions.join(' · ')).join(' / ')) +
+    '</p></details></section>';
   const appendix = '<section aria-label="원국 구조와 분야별 공통 근거"><h2>같은 명식의 공유 구조 근거</h2>' +
     '<p>구조 관측은 한 번만 설명하며 실제 분야별 T8의 출처 연결을 보존합니다. ' +
     '신강·격국·용신·사건·길흉·수입을 새로 판단하지 않습니다.</p>' +
-    generalGuideHtml + sourceBoundedDomainHtml + boundedDirectWealthHtml + evidenceHtml + '</section>';
+    generalGuideHtml + sourceBoundedDomainHtml + boundedDirectCareerHtml + boundedDirectWealthHtml + evidenceHtml + '</section>';
   const html = originalHtml.includes('</main>')
     ? originalHtml.replace('</main>', appendix + '</main>')
     : originalHtml.replace('</body>', appendix + '</body>');
   return {
     version: NATAL_STRUCTURAL_INTEGRATION_VERSION,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
-    structural: shared, domainReports: reports, domainSharedContexts,
+    structural: shared, domainReports: reports, sourceOwnedDirectCareerT8, domainSharedContexts,
     sharedChartEvidence, generalStructuralGuide, domainStructuralGuides, html,
     researchOnly: true, mayPublish: false, maySell: false, mayGrantOfficialAuthority: false,
   };

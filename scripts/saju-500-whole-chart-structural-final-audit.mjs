@@ -38,7 +38,9 @@ const metric={
   sourceBoundDomainContextBirths:Object.fromEntries(['career','wealth','relationship','business'].map(k=>[k,0])),
   sourceBoundDomainStructuralLinks:Object.fromEntries(['career','wealth','relationship','business'].map(k=>[k,0])),
   isolatedWealthT5NoCoreBirths:0,sourceBoundDomainGuideFailures:0,
-  directWealthResearchT8Births:0,directWealthResearchT8Count:0,
+  directWealthResearchT8Births:0,  directWealthResearchT8Count:0,
+  directCareerBirths:0,directCareerVisibleT8:0,directCareerBranchT8:0,
+  directCareerWithoutCore:0,directCareerErrors:0,
   directWealthWithoutMultifactorCoreBirths:0,directWealthResearchT8Violations:0,
   familyChannelMeaningProfiles:new Set(),rootContextMeaningProfiles:new Set(),
   domainContextBirths:Object.fromEntries(DOMAINS.map(x=>[x,0])),
@@ -187,6 +189,28 @@ for(let i=0;i<500;i++){
       }
       if(guide.contextualClaims.length)metric.generalCoreWithStructuralContextBirths++;
       metric.admittedGeneralCoreContextLinks+=guide.contextualClaims.length;
+    }
+    const directCareer=result.natal.sourceOwnedDirectCareerT8;
+    if(directCareer.directVisibleStemT8.length)metric.directCareerBirths++;
+    metric.directCareerVisibleT8+=directCareer.directVisibleStemT8.length;
+    metric.directCareerBranchT8+=directCareer.supportingBranchT8.length;
+    if(directCareer.directVisibleStemT8.length &&
+      result.natal.domainStructuralGuides.career.core===null)
+      metric.directCareerWithoutCore++;
+    if(!directCareer.researchOnly||directCareer.maySell||
+      directCareer.mayPublish||directCareer.mayConcludeCareerOutcome)
+      metric.directCareerErrors++;
+    const allCareer=[...directCareer.directVisibleStemT8,
+      ...directCareer.supportingBranchT8];
+    if(new Set(allCareer.map(x=>x.claimId)).size!==allCareer.length)
+      metric.directCareerErrors++;
+    for(const x of allCareer){
+      if(x.replacesMultifactorCore!==false||
+        x.authorizesOccupationOrIncomeOutcome!==false||!x.claimId||
+        !x.ruleId||!x.sourceIds.length||!x.factPaths.length||
+        x.positions.length!==x.factPaths.length||
+        x.factPaths.some(path=>!path.startsWith('derivedFacts.tenGods.value.')))
+        metric.directCareerErrors++;
     }
     const directWealth=result.natal.domainReports.wealth.sourceOwnedDirectWealthT8;
     if(directWealth.length)metric.directWealthResearchT8Births++;
@@ -406,6 +430,8 @@ const errors=[
   ...(metric.temporalCoreDomainErrors?['Annual/monthly T9 was incorrectly attached to a selected natal domain core']:[]),
   ...(metric.provenanceErrors?['Invalid Claim/Rule/Source chain']:[]),
   ...(metric.sourceBoundDomainGuideFailures?['Selected four-domain center/context guides failed to preserve source T8 authority']:[]),
+  ...(metric.directCareerErrors?['Selected career subtype research T8 provenance/authority mismatch']:[]),
+  ...(metric.directCareerVisibleT8===0?['No selected direct career research T8']:[]),
   ...(metric.directWealthResearchT8Violations?['Selected direct wealth research T8 violated exact source or scope']:[]),
   ...(metric.directWealthResearchT8Count===0?['Registered direct wealth T8 rules did not reach any real chart']:[]),
   ...(metric.maySellOrOfficialViolations?['Research was promoted to Product']:[]),
@@ -458,6 +484,11 @@ process.stdout.write('SAJU_STRUCTURAL_FINAL '+JSON.stringify({
  directWealthT8:metric.directWealthResearchT8Count,
  directWealthNoCoreBirths:metric.directWealthWithoutMultifactorCoreBirths,
  directWealthErrors:metric.directWealthResearchT8Violations,
+ directCareerBirths:metric.directCareerBirths,
+ directCareerVisibleT8:metric.directCareerVisibleT8,
+ directCareerBranchT8:metric.directCareerBranchT8,
+ directCareerNoCore:metric.directCareerWithoutCore,
+ directCareerErrors:metric.directCareerErrors,
  domainCoreBirths:metric.sourceBoundDomainCoreBirths,
  domainContextBirths:metric.sourceBoundDomainContextBirths,
  temporalScopeViolations:metric.temporalScopeViolations,
