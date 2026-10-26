@@ -495,10 +495,24 @@ export function buildNatalStructuralIntegratedResearch(
     escapeHtml(sourceOwnedDirectCareerT8.supportingBranchT8.map(item =>
       item.tenGod + ': ' + item.positions.join(' · ')).join(' / ')) +
     '</p></details></section>';
+  const boundedGeneralRelationshipHtml = reports.relationship.directGeneralRelationshipT8.length ?
+    '<section aria-label="일반 관계 영역의 독립 연구 T8">' +
+    '<h3>일반 대인관계의 출처 기반 구조 연구</h3>' +
+    '<p>명식 전체 십신에서 독립적으로 선택된 연구용 관계 T8입니다. ' +
+    '중심 다중 근거 관계 해석이나 배우자·궁합 예측을 대신하지 않습니다.</p>' +
+    reports.relationship.directGeneralRelationshipT8.map(item =>
+      '<article><p>' + escapeHtml(item.paragraph) + '</p>' +
+      '<details><summary>관계 T8 Claim·규칙·출처·명식 위치</summary>' +
+      '<p>' + escapeHtml(item.claimId) + ' · ' +
+      escapeHtml(item.ruleId) + '</p>' +
+      '<p>' + escapeHtml(item.sourceIds.join(' · ')) + '</p>' +
+      '<p>' + escapeHtml(item.observedFactPaths.join(' · ')) +
+      '</p></details></article>').join('') +
+    '</section>' : '';
   const appendix = '<section aria-label="원국 구조와 분야별 공통 근거"><h2>같은 명식의 공유 구조 근거</h2>' +
     '<p>구조 관측은 한 번만 설명하며 실제 분야별 T8의 출처 연결을 보존합니다. ' +
     '신강·격국·용신·사건·길흉·수입을 새로 판단하지 않습니다.</p>' +
-    generalGuideHtml + sourceBoundedDomainHtml + boundedDirectCareerHtml + boundedDirectWealthHtml + evidenceHtml + '</section>';
+    generalGuideHtml + sourceBoundedDomainHtml + boundedDirectCareerHtml + boundedDirectWealthHtml + boundedGeneralRelationshipHtml + evidenceHtml + '</section>';
   const html = originalHtml.includes('</main>')
     ? originalHtml.replace('</main>', appendix + '</main>')
     : originalHtml.replace('</body>', appendix + '</body>');

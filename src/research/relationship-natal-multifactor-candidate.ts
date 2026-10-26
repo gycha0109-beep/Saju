@@ -6,7 +6,15 @@ import {
   GENERAL_NATAL_USEFUL_READING_SOURCE,
   GENERAL_NATAL_USEFUL_TEN_GOD_RULES,
 } from './general-natal-useful-reading-candidate.js';
-import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
+import {
+  GENERAL_NATAL_CONCLUSION_SOURCE,
+  GENERAL_NATAL_CONCLUSION_FAMILY_RULES,
+  GENERAL_NATAL_CONCLUSION_METHODOLOGY,
+} from './general-natal-conclusion-synthesis-candidate.js';
+import {
+  RELATIONSHIP_NATAL_READING_RULES,
+  RELATIONSHIP_NATAL_READING_METHODOLOGY,
+} from './relationship-natal-reading-candidate.js';
 
 /** Canonical T5 -> source-qualified relationship-general T8; no parallel product interpretation. */
 export const RELATIONSHIP_NATAL_MULTIFACTOR_VERSION = '0.2.0-research' as const;
@@ -75,6 +83,11 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
   },
 ]);
 const CHANNELS: readonly Channel[] = ['visible_stems', 'branches'];
+const DIRECT_RELATIONSHIP_FAMILY_RULES = Object.freeze(
+  GENERAL_NATAL_CONCLUSION_FAMILY_RULES.filter(rule =>
+    RELATIONSHIP_NATAL_READING_RULES.some(direct =>
+      direct.inputs.some(input => input.pathOrClaimType === rule.output.claimType))),
+);
 const SOURCE_REFS: RuleDefinition['sourceRefs'] = [
   { sourceId: GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, supportType: 'interpretive_basis',
     notes: 'Bounded Ten-God structural language only.' },
@@ -185,9 +198,15 @@ export const RELATIONSHIP_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.fr
     { id: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.methodologyId,
       version: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.version },
     { id: METHOD_ID, version: RELATIONSHIP_NATAL_MULTIFACTOR_VERSION },
+    { id: GENERAL_NATAL_CONCLUSION_METHODOLOGY.methodologyId,
+      version: GENERAL_NATAL_CONCLUSION_METHODOLOGY.version },
+    { id: RELATIONSHIP_NATAL_READING_METHODOLOGY.methodologyId,
+      version: RELATIONSHIP_NATAL_READING_METHODOLOGY.version },
   ],
   enabledRuleSets: [...new Set([
     ...GENERAL_NATAL_USEFUL_TEN_GOD_RULES.map(x => x.ruleSetId),
+    ...DIRECT_RELATIONSHIP_FAMILY_RULES.map(x => x.ruleSetId),
+    ...RELATIONSHIP_NATAL_READING_RULES.map(x => x.ruleSetId),
     RULE_SET,
   ])],
   conflictPolicy: 'preserve_all',
@@ -200,9 +219,14 @@ export const RELATIONSHIP_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.fr
 });
 export function createRelationshipNatalMultifactorRegistry(createdAt = '1970-01-01T00:00:00.000Z') {
   return createRuleRegistrySnapshot({
-    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...RELATIONSHIP_NATAL_MULTIFACTOR_RULES],
+    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES,
+      ...DIRECT_RELATIONSHIP_FAMILY_RULES,
+      ...RELATIONSHIP_NATAL_MULTIFACTOR_RULES,
+      ...RELATIONSHIP_NATAL_READING_RULES],
     methodologies: [GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
-      RELATIONSHIP_NATAL_MULTIFACTOR_METHODOLOGY],
+      RELATIONSHIP_NATAL_MULTIFACTOR_METHODOLOGY,
+      GENERAL_NATAL_CONCLUSION_METHODOLOGY,
+      RELATIONSHIP_NATAL_READING_METHODOLOGY],
     sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE],
   }, RELATIONSHIP_NATAL_MULTIFACTOR_PACK, createdAt);
 }
