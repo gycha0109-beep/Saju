@@ -38,6 +38,7 @@ const metric={
   domainContextBirths:Object.fromEntries(DOMAINS.map(x=>[x,0])),
   domainContextLinks:Object.fromEntries(DOMAINS.map(x=>[x,0])),
   annualLinks:0,monthlyLinks:0,yearlyConnectedBirths:0,monthlyConnectedBirths:0,
+  temporalScopeViolations:0,
   dayunStillUninterpretedBirths:0,withoutAnyNewSourceBoundContext:0,
   provenanceErrors:0,maySellOrOfficialViolations:0,
 };
@@ -188,6 +189,29 @@ for(let i=0;i<500;i++){
             metric.provenanceErrors++;
       }
     }
+    const period=result.temporalApplicability;
+    if(period.referenceDateTime!==REFERENCE ||
+      period.annual!==result.temporal.annualMonthly.report.annualReference.state ||
+      period.monthly!==result.temporal.annualMonthly.report.monthly.referenceReading.state)
+        metric.temporalScopeViolations++;
+    if(period.annual!=='in_target_civil_year' && result.annualLinks.length)
+      metric.temporalScopeViolations++;
+    if(period.monthly!=='in_period' && result.monthlyLinks.length)
+      metric.temporalScopeViolations++;
+    for(const link of result.annualLinks) {
+      if(link.temporalScopePolicy!=='seoul_civil_year' ||
+        link.temporalInterval!==undefined || link.temporalSegment!==undefined)
+          metric.temporalScopeViolations++;
+    }
+    for(const link of result.monthlyLinks) {
+      const bounds=link.temporalInterval;
+      if(link.temporalScopePolicy!=='jeol_bounded_month_segment' || !bounds ||
+        !link.temporalSegment || link.temporalSegment!==
+        result.temporal.annualMonthly.report.monthly.referenceReading.segmentId ||
+        (bounds && !(Date.parse(bounds.startsAt)<=Date.parse(REFERENCE) &&
+          Date.parse(REFERENCE)<Date.parse(bounds.endsAt))))
+          metric.temporalScopeViolations++;
+    }
     metric.annualLinks+=result.annualLinks.length;
     metric.monthlyLinks+=result.monthlyLinks.length;
     if(result.annualLinks.length)metric.yearlyConnectedBirths++;
@@ -215,6 +239,7 @@ const errors=[
   ...(metric.executed!==500?['Not all 500 exact charts executed']:[]),
   ...(metric.errors.length?['Execution exceptions in '+metric.errors.length+' of 500 cases']:[]),
   ...(metric.sameChartHashFailures?['Mixed canonical snapshots']:[]),
+  ...(metric.temporalScopeViolations?['Incorrect annual/monthly effective reference period']:[]),
   ...(metric.provenanceErrors?['Invalid Claim/Rule/Source chain']:[]),
   ...(metric.maySellOrOfficialViolations?['Research was promoted to Product']:[]),
   ...(metric.dayunStillUninterpretedBirths!==500?['Unlicensed dayun interpretation emitted']:[]),
@@ -260,6 +285,7 @@ process.stdout.write('SAJU_STRUCTURAL_FINAL '+JSON.stringify({
  generalCoreBirths:metric.sourceBoundGeneralCoreBirths,
  generalCoreContextBirths:metric.generalCoreWithStructuralContextBirths,
  coreContextLinks:metric.admittedGeneralCoreContextLinks,
+ temporalScopeViolations:metric.temporalScopeViolations,
  yearly:metric.yearlyConnectedBirths,
  monthly:metric.monthlyConnectedBirths,
  familyProfiles:metric.familyChannelMeaningProfiles.size,
