@@ -235,6 +235,47 @@ for(let i=0;i<500;i++){
   }
   if((i+1)%100===0)process.stdout.write('SAJU_STRUCTURAL_FINAL_PROGRESS '+(i+1)+'/500\n');
 }
+// Final-stage boundary cases complement, but do not alter, the fixed 500-person corpus.
+const temporalBoundaryResults=[];
+const boundaryBirth={
+  calendarType:'solar',
+  date:{year:1998,month:3,day:28},
+  time:{known:true,hour:22,minute:19},
+  sexForTraditionalCalculation:'female',
+};
+for(const item of [
+  {name:'other_civil_year',year:2025,month:10,reference:REFERENCE,
+    annual:'outside_target_civil_year',monthly:'outside_target_month'},
+  {name:'other_month_same_civil_year',year:2026,month:9,reference:REFERENCE,
+    annual:'in_target_civil_year',monthly:'outside_target_month'},
+  {name:'seoul_new_year_boundary',year:2026,month:12,
+    reference:'2026-12-31T15:30:00.000Z',
+    annual:'outside_target_civil_year',monthly:'outside_target_month'},
+]){
+  try{
+    const result=buildWholeChartStructuralResearchResult(boundaryBirth,{
+      requestId:'whole-chart-final-boundary-'+item.name,
+      targetYear:item.year,targetMonth:item.month,
+      referenceDateTime:item.reference,
+    });
+    const observed=result.temporalApplicability;
+    const pass=observed.annual===item.annual &&
+      observed.monthly===item.monthly &&
+      observed.referenceDateTime===item.reference &&
+      (observed.annual==='in_target_civil_year'||result.annualLinks.length===0) &&
+      (observed.monthly==='in_period'||result.monthlyLinks.length===0) &&
+      result.researchOnly && !result.mayPublish && !result.maySell;
+    if(!pass)metric.temporalScopeViolations++;
+    temporalBoundaryResults.push({
+      name:item.name,passed:pass,annual:observed.annual,monthly:observed.monthly,
+      annualLinkCount:result.annualLinks.length,
+      monthlyLinkCount:result.monthlyLinks.length,
+    });
+  }catch(error){
+    metric.temporalScopeViolations++;
+    temporalBoundaryResults.push({name:item.name,passed:false,error:String(error)});
+  }
+}
 const errors=[
   ...(metric.executed!==500?['Not all 500 exact charts executed']:[]),
   ...(metric.errors.length?['Execution exceptions in '+metric.errors.length+' of 500 cases']:[]),
@@ -261,7 +302,7 @@ const report={
   result:{...metric,
     familyChannelMeaningProfiles:metric.familyChannelMeaningProfiles.size,
     rootContextMeaningProfiles:metric.rootContextMeaningProfiles.size},
-  examples,errors,
+  examples,temporalBoundaryResults,errors,
   remainingSemanticBlockers:[
     'R011/R121/R150 prevent global negative root and unconstrained Tonggen settlement.',
     'Strength, Gyeokguk, Tiaohou, Yongshin source conditions do not authorize universal final chart judgments.',
