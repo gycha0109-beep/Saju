@@ -6,7 +6,15 @@ import {
   GENERAL_NATAL_USEFUL_READING_SOURCE,
   GENERAL_NATAL_USEFUL_TEN_GOD_RULES,
 } from './general-natal-useful-reading-candidate.js';
-import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
+import {
+  GENERAL_NATAL_CONCLUSION_SOURCE,
+  GENERAL_NATAL_CONCLUSION_FAMILY_RULES,
+  GENERAL_NATAL_CONCLUSION_METHODOLOGY,
+} from './general-natal-conclusion-synthesis-candidate.js';
+import {
+  WEALTH_NATAL_READING_RULES,
+  WEALTH_NATAL_READING_METHODOLOGY,
+} from './wealth-natal-reading-candidate.js';
 
 /** Canonical T5 -> source-qualified Wealth T8; no parallel product interpretation. */
 export const WEALTH_NATAL_MULTIFACTOR_VERSION = '0.1.0-research' as const;
@@ -70,6 +78,18 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
   },
 ]);
 const CHANNELS: readonly Channel[] = ['visible_stems', 'branches'];
+/** Existing source-owned research T8s admitting explicit wealth-family presence.
+ * These are cross-channel bounded readings, never multifactor core evidence. */
+export const WEALTH_SOURCE_BOUND_DIRECT_RESEARCH_RULES = Object.freeze(
+  WEALTH_NATAL_READING_RULES.filter(rule =>
+    Array.isArray((rule.output.value as {families?: readonly Family[]}).families) &&
+    (rule.output.value as {families: readonly Family[]}).families.includes('wealth')),
+);
+const WEALTH_SOURCE_BOUND_FAMILY_RULES = Object.freeze(
+  GENERAL_NATAL_CONCLUSION_FAMILY_RULES.filter(rule =>
+    WEALTH_SOURCE_BOUND_DIRECT_RESEARCH_RULES.some(direct =>
+      direct.inputs.some(input => input.pathOrClaimType===rule.output.claimType))),
+);
 const SOURCE_REFS: RuleDefinition['sourceRefs'] = [
   { sourceId: GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, supportType: 'interpretive_basis',
     notes: 'Bounded Ten-God structural language only.' },
@@ -184,9 +204,15 @@ export const WEALTH_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
     { id: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.methodologyId,
       version: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.version },
     { id: METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION },
+    { id: GENERAL_NATAL_CONCLUSION_METHODOLOGY.methodologyId,
+      version: GENERAL_NATAL_CONCLUSION_METHODOLOGY.version },
+    { id: WEALTH_NATAL_READING_METHODOLOGY.methodologyId,
+      version: WEALTH_NATAL_READING_METHODOLOGY.version },
   ],
   enabledRuleSets: [...new Set([
     ...GENERAL_NATAL_USEFUL_TEN_GOD_RULES.map(x => x.ruleSetId),
+    ...WEALTH_SOURCE_BOUND_FAMILY_RULES.map(x=>x.ruleSetId),
+    ...WEALTH_SOURCE_BOUND_DIRECT_RESEARCH_RULES.map(x=>x.ruleSetId),
     RULE_SET,
   ])],
   conflictPolicy: 'preserve_all',
@@ -199,9 +225,13 @@ export const WEALTH_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
 });
 export function createWealthNatalMultifactorRegistry(createdAt = '1970-01-01T00:00:00.000Z') {
   return createRuleRegistrySnapshot({
-    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...WEALTH_NATAL_MULTIFACTOR_RULES],
+    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES,
+      ...WEALTH_SOURCE_BOUND_FAMILY_RULES,
+      ...WEALTH_NATAL_MULTIFACTOR_RULES, ...WEALTH_SOURCE_BOUND_DIRECT_RESEARCH_RULES],
     methodologies: [GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
-      WEALTH_NATAL_MULTIFACTOR_METHODOLOGY],
+      WEALTH_NATAL_MULTIFACTOR_METHODOLOGY,
+      GENERAL_NATAL_CONCLUSION_METHODOLOGY,
+      WEALTH_NATAL_READING_METHODOLOGY],
     sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE],
   }, WEALTH_NATAL_MULTIFACTOR_PACK, createdAt);
 }

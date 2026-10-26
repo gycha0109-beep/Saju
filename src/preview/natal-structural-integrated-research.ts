@@ -450,10 +450,23 @@ export function buildNatalStructuralIntegratedResearch(
           escapeHtml(item.sourceIds.join(' · ')) + '</p>').join('') +
         '</details><p>' + escapeHtml(guide.limitation) + '</p>') +
       '</section>').join('');
+  const boundedDirectWealthHtml = reports.wealth.sourceOwnedDirectWealthT8.length ?
+    '<section aria-label="재물 분야 독립 고전 구조 T8 연구 근거">' +
+    '<h3>재성 관련 출처 한정 직접 T8 연구</h3>' +
+    '<p>기존 명식 전체 재성·관련 십신 관측에서 실제 선택된 별도 연구 규칙입니다. ' +
+    '같은 관측 채널의 다중 근거 중심 재물 해석을 대신하지 않습니다.</p>' +
+    reports.wealth.sourceOwnedDirectWealthT8.map(item =>
+      '<article><p>'+escapeHtml(item.paragraph)+'</p>' +
+      '<details><summary>실제 재물 T8 Claim · 규칙 · 출처 · 위치</summary>' +
+      '<p>'+escapeHtml(item.claimId)+' · '+escapeHtml(item.ruleId)+'</p>' +
+      '<p>'+escapeHtml(item.sourceIds.join(' · '))+'</p>' +
+      '<p>'+escapeHtml(item.observedFactPaths.join(' · '))+'</p>' +
+      '</details></article>').join('') +
+    '</section>' : '';
   const appendix = '<section aria-label="원국 구조와 분야별 공통 근거"><h2>같은 명식의 공유 구조 근거</h2>' +
     '<p>구조 관측은 한 번만 설명하며 실제 분야별 T8의 출처 연결을 보존합니다. ' +
     '신강·격국·용신·사건·길흉·수입을 새로 판단하지 않습니다.</p>' +
-    generalGuideHtml + sourceBoundedDomainHtml + evidenceHtml + '</section>';
+    generalGuideHtml + sourceBoundedDomainHtml + boundedDirectWealthHtml + evidenceHtml + '</section>';
   const html = originalHtml.includes('</main>')
     ? originalHtml.replace('</main>', appendix + '</main>')
     : originalHtml.replace('</body>', appendix + '</body>');

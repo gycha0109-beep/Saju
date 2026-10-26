@@ -73,7 +73,7 @@ jobs:
         run: node scripts/saju-500-capability-reachability-audit.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json" "$RUNNER_TEMP/saju-500-capability-report.json"
       - name: Fail closed on invented code, missing cases or broken provenance
         run: node scripts/saju-500-capability-reachability-check.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json"
-      - name: Validate 500 charts across domain T8 cores and correctly scoped annual/monthly T9 links
+      - name: Validate 500 charts across bounded direct wealth T8, domain cores and annual/monthly links
         run: node scripts/saju-500-whole-chart-structural-final-audit.mjs "$RUNNER_TEMP/saju-500-whole-chart-structural-report.json"
       - name: Execute source-bounded N13 N14 N20 N22 research graph on the same 500 births
         run: node scripts/saju-500-source-bounded-relation-graph-audit.mjs "$RUNNER_TEMP/saju-500-source-bounded-relations-report.json"

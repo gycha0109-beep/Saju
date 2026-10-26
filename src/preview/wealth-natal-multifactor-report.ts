@@ -52,6 +52,21 @@ export interface WealthNatalReadingGuide {
     distinctObservedPositions: readonly string[];
   }[];
 }
+export interface WealthSourceOwnedDirectT8Observation {
+  kind: 'source_owned_direct_wealth_t8_not_multifactor_core';
+  claimId: string;
+  claimType: string;
+  ruleId: string;
+  methodologyId: string;
+  sourceIds: readonly string[];
+  /** Family predicates resolved across the chart; not a same-channel T8 core. */
+  families: readonly string[];
+  observedPositions: readonly string[];
+  observedFactPaths: readonly string[];
+  paragraph: string;
+  authorizesMultifactorCore: false;
+  authorizesMoneyOutcome: false;
+}
 export interface WealthNatalMultifactorReport {
   snapshotId: string;
   calculationHash: string;
@@ -62,6 +77,7 @@ export interface WealthNatalMultifactorReport {
   sections: readonly WealthNatalMultifactorSection[];
   readingGuide?: WealthNatalReadingGuide;
   singleWealthT5Observation?: WealthSingleT5Observation;
+  sourceOwnedDirectWealthT8: readonly WealthSourceOwnedDirectT8Observation[];
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -224,6 +240,91 @@ function isolatedWealthObservation(
   return undefined;
 }
 
+function selectedDirectWealthObservations(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+  selected: ReadonlySet<string>,
+): readonly WealthSourceOwnedDirectT8Observation[] {
+  const directTenGods = snapshot.derivedFacts.tenGods;
+  if(!snapshot.completeness.birthTimeKnown ||
+    directTenGods.status !== 'resolved')return [];
+  const slots: readonly PillarSlot[]=['year','month','day','hour'];
+  return execution.claims.filter(claim=>
+    selected.has(claim.claimId) && claim.state==='active' &&
+    claim.snapshotId===snapshot.snapshotId && claim.scenarioRef===undefined &&
+    claim.taxonomy.tier==='T8' && claim.taxonomy.category==='wealth' &&
+    claim.predicate==='wealth_conclusion' &&
+    claim.methodologyRef.id==='M-WEALTH-NATAL-READING-TEN-GOD-SYNTHESIS-V1')
+    .map(claim=>{
+      const value=claim.value as Record<string,unknown>;
+      const families=value.families as string[];
+      guard(Array.isArray(families)&&families.length>=1 &&
+        families.includes('wealth') &&
+        new Set(families).size===families.length &&
+        families.every(x=>FAMILIES[x]!==undefined) &&
+        value.netWorthAuthorized===false &&
+        value.investmentReturnAuthorized===false &&
+        value.windfallAuthorized===false &&
+        value.financialAdviceAuthorized===false &&
+        value.futureMoneyTimingAuthorized===false &&
+        value.numericScoringAuthorized===false,
+      'direct wealth research T8 exceeded its source-owned evidence limits');
+      const ref=claim.ruleRefs[0];
+      const rule=registry.rules.find(r=>r.ruleId===ref?.ruleId&&
+        r.version===ref.version&&r.output.claimType===claim.claimType&&
+        r.status==='research'&&r.taxonomy.tier==='T8'&&
+        r.taxonomy.category==='wealth');
+      const matched=execution.evaluations.find(x=>x.evaluationId===ref?.evaluationId);
+      const upstream=claim.upstreamClaimRefs.map(id=>execution.claims.find(x=>x.claimId===id));
+      guard(claim.ruleRefs.length===1&&rule&&
+        rule.methodologyRef.id===claim.methodologyRef.id &&
+        deterministicContentHash(rule.output.value)===deterministicContentHash(claim.value) &&
+        matched?.status==='matched'&&matched.emittedClaimIds.includes(claim.claimId)&&
+        upstream.length===families.length&&
+        upstream.every(x=>x&&x.state==='active'&&x.snapshotId===snapshot.snapshotId&&
+          x.taxonomy.tier==='T5'&&x.claimType.startsWith('TEN_GOD_FAMILY_'))&&
+        rule.inputs.length===families.length&&
+        rule.inputs.every(x=>x.required&&x.source==='interpretation_claim')&&
+        JSON.stringify([...upstream.map(x=>x!.claimType)].sort())===
+          JSON.stringify(rule.inputs.map(x=>x.pathOrClaimType).sort())&&
+        claim.sourceRefs.length>0&&
+        claim.sourceRefs.every(id=>registry.sources.some(source=>source.sourceId===id)),
+      'direct wealth T8 must be actually matched through current research T5/Rule/Source chain');
+      const observed=slots.flatMap(slot=>
+        (['stem','branch'] as const).flatMap(channel=>{
+          if(slot==='day'&&channel==='stem')return [];
+          const actual=directTenGods.value[slot][channel];
+          if(actual?.status!=='resolved')return [];
+          const family=families.find(name=>FAMILIES[name]!.includes(actual.value));
+          return family?[{
+            label:SLOT_NAMES[slot]+(channel==='stem'?' 천간 ':' 지지 대표 십신 ')+actual.value,
+            path:'derivedFacts.tenGods.value.'+slot+'.'+channel+'.value',
+            family,
+          }]:[];
+        }));
+      guard(families.every(x=>observed.some(place=>place.family===x)) &&
+        observed.length>0,'direct wealth T8 without source-matching Ten-God chart positions');
+      return {
+        kind:'source_owned_direct_wealth_t8_not_multifactor_core' as const,
+        claimId:claim.claimId,
+        claimType:claim.claimType,
+        ruleId:rule.ruleId,
+        methodologyId:claim.methodologyRef.id,
+        sourceIds:[...claim.sourceRefs],
+        families:[...families],
+        observedPositions:observed.map(x=>x.label),
+        observedFactPaths:observed.map(x=>x.path),
+        paragraph:'이 명식의 '+observed.map(x=>x.label).join(' · ')+
+          '에서 기존 고전 근거를 활용한 재성 관련 구조 해석 후보가 실제 선택됐습니다. '+
+          '이 관계는 명식 전체의 십신 계열 존재를 읽는 제한된 연구용 T8이며, '+
+          '같은 채널에서 독립 보조 축까지 입증된 재물 종합 중심 T8을 대신하지 않습니다. '+
+          '실제 소득·성향·자산·투자 성과·미래 사건을 판단하지 않습니다.',
+        authorizesMultifactorCore:false as const,
+        authorizesMoneyOutcome:false as const,
+      };
+    });
+}
 function textFor(claimType: string, key: 'headline'|'summary') {
   const profile = WEALTH_NATAL_MULTIFACTOR_NARRATIVES.find(p => p.claimType === claimType);
   guard(profile, 'ClaimNarrativeProfile missing: ' + claimType);
@@ -476,6 +577,8 @@ export function buildWealthNatalMultifactorReport(
   const readingGuide = buildWealthNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
+  const sourceOwnedDirectWealthT8=selectedDirectWealthObservations(
+    snapshot,execution,registry,selected);
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 재물의 다중 근거 T8 해석은 보류합니다.');
   }
@@ -488,6 +591,7 @@ export function buildWealthNatalMultifactorReport(
     introduction: '실제 명식의 십신 관계를 바탕으로 가치를 만들어 내는 과정, 자원을 다루는 기준, 준비와 배분 사이의 구조를 함께 살펴봅니다. 수입이나 재산을 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    sourceOwnedDirectWealthT8,
     ...(singleWealthT5Observation === undefined ? {} : { singleWealthT5Observation }),
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,

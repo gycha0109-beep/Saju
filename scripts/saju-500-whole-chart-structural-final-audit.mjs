@@ -38,6 +38,8 @@ const metric={
   sourceBoundDomainContextBirths:Object.fromEntries(['career','wealth','relationship','business'].map(k=>[k,0])),
   sourceBoundDomainStructuralLinks:Object.fromEntries(['career','wealth','relationship','business'].map(k=>[k,0])),
   isolatedWealthT5NoCoreBirths:0,sourceBoundDomainGuideFailures:0,
+  directWealthResearchT8Births:0,directWealthResearchT8Count:0,
+  directWealthWithoutMultifactorCoreBirths:0,directWealthResearchT8Violations:0,
   familyChannelMeaningProfiles:new Set(),rootContextMeaningProfiles:new Set(),
   domainContextBirths:Object.fromEntries(DOMAINS.map(x=>[x,0])),
   domainContextLinks:Object.fromEntries(DOMAINS.map(x=>[x,0])),
@@ -185,6 +187,25 @@ for(let i=0;i<500;i++){
       }
       if(guide.contextualClaims.length)metric.generalCoreWithStructuralContextBirths++;
       metric.admittedGeneralCoreContextLinks+=guide.contextualClaims.length;
+    }
+    const directWealth=result.natal.domainReports.wealth.sourceOwnedDirectWealthT8;
+    if(directWealth.length)metric.directWealthResearchT8Births++;
+    metric.directWealthResearchT8Count+=directWealth.length;
+    if(directWealth.length && result.natal.domainStructuralGuides.wealth.core===null)
+      metric.directWealthWithoutMultifactorCoreBirths++;
+    if(new Set(directWealth.map(x=>x.claimId)).size!==directWealth.length)
+      metric.directWealthResearchT8Violations++;
+    for(const x of directWealth){
+      if(x.kind!=='source_owned_direct_wealth_t8_not_multifactor_core' ||
+        x.authorizesMultifactorCore!==false || x.authorizesMoneyOutcome!==false ||
+        !x.claimId || !x.claimType.startsWith('WEALTH_NATAL_CONCLUSION_') ||
+        !x.methodologyId.includes('WEALTH-NATAL-READING') ||
+        !x.ruleId || !x.sourceIds.length || !x.families.includes('wealth') ||
+        x.observedFactPaths.length!==x.observedPositions.length ||
+        !x.observedFactPaths.length ||
+        x.observedFactPaths.some(path=>
+          !/^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path)))
+          metric.directWealthResearchT8Violations++;
     }
     for(const domain of ['career','wealth','relationship','business']){
       const guide=result.natal.domainStructuralGuides[domain];
@@ -385,6 +406,8 @@ const errors=[
   ...(metric.temporalCoreDomainErrors?['Annual/monthly T9 was incorrectly attached to a selected natal domain core']:[]),
   ...(metric.provenanceErrors?['Invalid Claim/Rule/Source chain']:[]),
   ...(metric.sourceBoundDomainGuideFailures?['Selected four-domain center/context guides failed to preserve source T8 authority']:[]),
+  ...(metric.directWealthResearchT8Violations?['Selected direct wealth research T8 violated exact source or scope']:[]),
+  ...(metric.directWealthResearchT8Count===0?['Registered direct wealth T8 rules did not reach any real chart']:[]),
   ...(metric.maySellOrOfficialViolations?['Research was promoted to Product']:[]),
   ...(metric.dayunStillUninterpretedBirths!==500?['Unlicensed dayun interpretation emitted']:[]),
   ...(metric.sourceBoundT8Births===0?['No structural T8 was consumed']:[]),
@@ -431,6 +454,10 @@ process.stdout.write('SAJU_STRUCTURAL_FINAL '+JSON.stringify({
  coreContextLinks:metric.admittedGeneralCoreContextLinks,
  domainGuideFailures:metric.sourceBoundDomainGuideFailures,
  wealthIsolatedT5Births:metric.isolatedWealthT5NoCoreBirths,
+ directWealthBirths:metric.directWealthResearchT8Births,
+ directWealthT8:metric.directWealthResearchT8Count,
+ directWealthNoCoreBirths:metric.directWealthWithoutMultifactorCoreBirths,
+ directWealthErrors:metric.directWealthResearchT8Violations,
  domainCoreBirths:metric.sourceBoundDomainCoreBirths,
  domainContextBirths:metric.sourceBoundDomainContextBirths,
  temporalScopeViolations:metric.temporalScopeViolations,
