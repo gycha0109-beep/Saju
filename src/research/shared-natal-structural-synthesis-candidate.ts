@@ -4,6 +4,14 @@ import type {
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import { createGeneralNatalMultifactorRegistry } from './general-natal-multifactor-candidate.js';
 import {
+  GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES,
+  GENERAL_NATAL_SOURCE_BOUNDED_RELATION_RULES,
+  GENERAL_NATAL_SOURCE_BOUNDED_METHODOLOGY,
+  GENERAL_NATAL_PEER_TAXONOMY_SOURCE,
+} from './general-natal-conclusion-source-bounded-candidate.js';
+import { GENERAL_NATAL_USEFUL_READING_SOURCE } from './general-natal-useful-reading-candidate.js';
+import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
+import {
   I13_STRENGTH_EVIDENCE_RULES, I13_STRENGTH_EVIDENCE_METHODOLOGY,
   I13_STRENGTH_EVIDENCE_SOURCES,
 } from './i13-strength-evidence-pack.js';
@@ -37,6 +45,9 @@ const base = createGeneralNatalMultifactorRegistry();
 const sources: readonly SourceReference[] = Object.freeze(
   [...new Map([
     ...base.sources,
+    GENERAL_NATAL_USEFUL_READING_SOURCE,
+    GENERAL_NATAL_CONCLUSION_SOURCE,
+    GENERAL_NATAL_PEER_TAXONOMY_SOURCE,
     ...I13_STRENGTH_EVIDENCE_SOURCES,
     ...I18A_MONTH_BRANCH_STRENGTH_SOURCES,
     ...I18B_HIDDEN_CHALLENGE_SOURCES,
@@ -59,6 +70,8 @@ export const SHARED_NATAL_STRUCTURAL_METHODOLOGY: MethodologyDefinition = {
     'A challenging-direction month context may coexist with hidden peer-root or hidden resource membership; neither positive effectiveness nor balancing dominance is settled.',
     'I13 hidden peer-root and hidden resource-support observations must remain separate, and never become a universal Tonggen, strength score or favorable-period prediction.',
     'Actual I13 visible-stem T2 may independently oppose month-direction relation; year, month and hour are only unweighted distinct observations, not an outcome.',
+    'N13 source-bounded Five Relations are emitted from actual exact T5 family presence as independent research-only T8, not as newly authorized Preview, Production, sale, fortune or domain outcomes.',
+    'The N13 exact 劫財 predicate is required for adverse peer-to-wealth. Generic 比肩 family presence cannot replace it.',
     'A visible observation must be selected by exact evidence kind and direction rather than mixing unrelated hidden-stem Claims.',
     'Different upstream claims are bound to one snapshot and the same scenario. No ranking across schools or methods is authorized.',
     'A structural observation alongside a Ten-God family does not establish causation, strength, quality, domain outcomes or future timing.',
@@ -283,6 +296,8 @@ export const SHARED_NATAL_STRUCTURAL_PACK: InterpretationPack = Object.freeze({
   name: 'Shared chart-limited structural context, Research only',
   methodologyRefs: [
     ...base.pack.methodologyRefs,
+    { id: GENERAL_NATAL_SOURCE_BOUNDED_METHODOLOGY.methodologyId,
+      version: GENERAL_NATAL_SOURCE_BOUNDED_METHODOLOGY.version },
     { id: I13_STRENGTH_EVIDENCE_METHODOLOGY.methodologyId,
       version: I13_STRENGTH_EVIDENCE_METHODOLOGY.version },
     { id: I18A_MONTH_BRANCH_STRENGTH_METHODOLOGY.methodologyId,
@@ -295,7 +310,9 @@ export const SHARED_NATAL_STRUCTURAL_PACK: InterpretationPack = Object.freeze({
   ],
   enabledRuleSets: [
     ...base.pack.enabledRuleSets,
-    ...new Set([...I13_STRENGTH_EVIDENCE_RULES, ...I18A_MONTH_BRANCH_STRENGTH_RULES,
+    ...new Set([...GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES,
+      ...GENERAL_NATAL_SOURCE_BOUNDED_RELATION_RULES,
+      ...I13_STRENGTH_EVIDENCE_RULES, ...I18A_MONTH_BRANCH_STRENGTH_RULES,
       ...I18B_HIDDEN_CHALLENGE_RULES, ...I18C_ROOT_CLASS_RULES,
       ...SHARED_NATAL_STRUCTURAL_T8_RULES]
       .map(x => x.ruleSetId)),
@@ -314,10 +331,13 @@ export function createSharedNatalStructuralSynthesisRegistry(
   createdAt = '1970-01-01T00:00:00.000Z',
 ) {
   return createRuleRegistrySnapshot({
-    rules: [...base.rules, ...I13_STRENGTH_EVIDENCE_RULES, ...I18A_MONTH_BRANCH_STRENGTH_RULES,
+    rules: [...base.rules, ...GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES,
+      ...GENERAL_NATAL_SOURCE_BOUNDED_RELATION_RULES,
+      ...I13_STRENGTH_EVIDENCE_RULES, ...I18A_MONTH_BRANCH_STRENGTH_RULES,
       ...I18B_HIDDEN_CHALLENGE_RULES, ...I18C_ROOT_CLASS_RULES,
       ...SHARED_NATAL_STRUCTURAL_T8_RULES],
     methodologies: [...base.methodologies,
+      GENERAL_NATAL_SOURCE_BOUNDED_METHODOLOGY,
       I13_STRENGTH_EVIDENCE_METHODOLOGY,
       I18A_MONTH_BRANCH_STRENGTH_METHODOLOGY,
       I18B_HIDDEN_CHALLENGE_METHODOLOGY,

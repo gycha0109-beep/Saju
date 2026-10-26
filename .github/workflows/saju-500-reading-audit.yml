@@ -20,6 +20,8 @@ on:
       - 'scripts/saju-500-capability-reachability-audit.mjs'
       - 'scripts/saju-500-capability-reachability-check.mjs'
       - 'scripts/saju-500-whole-chart-structural-final-audit.mjs'
+      - 'scripts/saju-500-source-bounded-relation-graph-audit.mjs'
+      - 'src/research/shared-natal-source-bounded-relation-graph.ts'
       - 'scripts/saju-shared-structural-sample.mjs'
       - 'src/research/shared-natal-structural-synthesis-candidate.ts'
       - 'src/preview/shared-natal-structural-reading.ts'
@@ -73,6 +75,8 @@ jobs:
         run: node scripts/saju-500-capability-reachability-check.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json"
       - name: Execute source-limited whole-chart structural integration on all 500 cases
         run: node scripts/saju-500-whole-chart-structural-final-audit.mjs "$RUNNER_TEMP/saju-500-whole-chart-structural-report.json"
+      - name: Execute source-bounded N13 N14 N20 N22 research graph on the same 500 births
+        run: node scripts/saju-500-source-bounded-relation-graph-audit.mjs "$RUNNER_TEMP/saju-500-source-bounded-relations-report.json"
       - name: Upload audit and semantic-quality evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -85,5 +89,6 @@ jobs:
             ${{ runner.temp }}/saju-500-closeout-report.json
             ${{ runner.temp }}/saju-500-capability-report.json
             ${{ runner.temp }}/saju-500-whole-chart-structural-report.json
+            ${{ runner.temp }}/saju-500-source-bounded-relations-report.json
           if-no-files-found: warn
           retention-days: 30
