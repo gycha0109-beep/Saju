@@ -97,6 +97,7 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).toContain('올해 문구의 계산 근거와 연구 출처');
     expect(html).toContain('내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)');
     expect(html).toContain('명하 내부 연구 정책, 독립 고전 근거 아님');
+    expect(html).toContain('검증 전 연구 가설');
     for (const section of report.annual.sections) {
       expect(html).toContain(section.researchProfileId);
       expect(html).toContain(section.candidateClaimType);

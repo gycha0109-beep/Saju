@@ -88,6 +88,7 @@ function render(
   ).join('');
   const annual = report.annual.sections.map(section =>
     '<article><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
+    '<p>이 연운 문단은 출처 권한이 확립되지 않은 내부 연구 가설이며, 특정 개인의 실제 미래를 입증하지 않습니다.</p>' +
     (section.observedClash ? '<p>원국 ' + e(section.relatedPillar ?? '') +
       ' 지지 ' + e(section.observedClash.natalBranch) + '와 해당 연운 지지 ' +
       e(section.observedClash.annualBranch) + ' 사이의 충이 계산되었습니다. ' +

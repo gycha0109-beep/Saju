@@ -252,6 +252,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<article class="reading-card"><small>' +
     (section.kind === 'core' ? '올해의 중심 연구 관점' : '충 구조 관련 미검증 연운 가설') +
     '</small><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
+    '<p class="muted">위 연운 해석은 내부 정책으로 작성한 검증 전 연구 가설입니다. 고전 원문의 해당 현대적 의미가 확인된 결론은 아닙니다.</p>' +
     (section.observedClash && section.relatedPillar
       ? '<p>계산된 관계: 원국 ' + e(PILLAR_LABEL[section.relatedPillar]) +
         '의 ' + e(section.observedClash.natalBranch) + '와 이 연간의 ' +

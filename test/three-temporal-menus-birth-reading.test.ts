@@ -37,6 +37,7 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
     expect(reading.html).toContain('id="life-stage"');
     expect(reading.html).toContain('원국 일간 ' + report.observedStructuralContext.natalDayStem);
     expect(reading.html).toContain('계산된 관계 식별이며 운세 해석이나 사건 예측이 아닙니다');
+    expect(reading.html).toContain('출처 권한이 확립되지 않은 내부 연구 가설');
     for (const phase of report.observedStructuralContext.monthlyPhases) {
       expect(reading.html).toContain('월주는 ' + phase.pillarLabel);
       expect(reading.html).toContain('원국 일간과의 월간 십신 관계는 ' + phase.monthlyStemTenGod);
