@@ -127,6 +127,10 @@ describe('opt-in consumer Annual exploration', () => {
     expect(tension?.title).toContain('일주');
     expect(tension?.text).toContain('특정 사건의 예고로 보지');
     expect(tension?.candidateClaimType).toBe('GENERAL_ANNUAL_BRANCH_CLASH_TENSION');
+    expect(tension?.observedClash).toEqual({
+      natalBranch: '자',
+      annualBranch: value.annualPillar.branch,
+    });
     expect(tension?.calculationFactPaths).toEqual([
       'temporal.targetYear', 'temporal.annualPillar',
       'temporal.annualBranchRelations.day',

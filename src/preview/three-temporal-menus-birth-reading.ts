@@ -76,6 +76,10 @@ function render(
       '년은 조회 시각의 현재 연도가 아닙니다. 현재 연운으로 적용하지 않고 비교만 합니다.';
   const annual = report.annual.sections.map(section =>
     '<article><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
+    (section.observedClash ? '<p>원국 ' + e(section.relatedPillar ?? '') +
+      ' 지지 ' + e(section.observedClash.natalBranch) + '와 해당 연운 지지 ' +
+      e(section.observedClash.annualBranch) + ' 사이의 충이 계산되었습니다. ' +
+      '이는 확인된 구조 사실이며 특정 사건의 예측이 아닙니다.</p>' : '') +
     '<details><summary>연운 원문 출처와 계산 근거</summary><p>후보 프로필: ' +
     e(section.researchProfileId) + '</p><p>계산 경로: ' +
     e(section.calculationFactPaths.join(' · ')) + '</p><p>정책: ' +
@@ -97,7 +101,12 @@ function render(
   const monthly = report.monthly.sections.map(section =>
     '<article><h3>' + (section.segmentId === 'before_jeol'
       ? '절입 전 · ' : '절입 이후 · ') + e(section.title) + '</h3><p>' +
-      e(section.text) + '</p><details><summary>절입 기간·T9 Claim과 출처</summary>' +
+      e(section.text) + '</p>' +
+      (section.observedClash ? '<p>원국 ' + e(section.relatedPillar ?? '') +
+        ' 지지 ' + e(section.observedClash.natalBranch) + '와 해당 월운 지지 ' +
+        e(section.observedClash.monthlyBranch) + ' 사이의 충이 계산되었습니다. ' +
+        '이는 확인된 구조 사실이며 특정 사건의 예측이 아닙니다.</p>' : '') +
+      '<details><summary>절입 기간·T9 Claim과 출처</summary>' +
       '<p>기간: ' + e(section.calculatedInterval.startsAt) + ' — ' +
       e(section.calculatedInterval.endsAt) + '</p><p>Claim: ' +
       e(section.claimId) + '</p><p>계산: ' + e(section.factPaths.join(' · ')) +
@@ -138,14 +147,19 @@ function render(
     '</header><nav><a href="#annual">올해</a><a href="#monthly">이번 달</a>' +
     '<a href="#life-stage">삶의 단계</a></nav>' +
     '<section id="annual"><h2>올해 — ' + report.targetYear + '년</h2><p>' +
-    e(yearNote) + '</p>' + annual + '</section>' +
+    e(yearNote) + '</p>' + annual +
+    (natal ? '<h3>이 사람의 원국 해석 — 올해 운세와 별개의 근거</h3><p>' +
+      '아래는 같은 명식에서 실제 선택된 원국 연구 해석입니다. ' +
+      '원국의 성향을 올해의 사건이나 성과로 자동 해석하지 않습니다.</p>' + natal : '') +
+    '</section>' +
     '<section id="monthly"><h2>이번 달 — ' + report.targetMonth + '월</h2>' +
     '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth +
-    '<h3>절입 전후 전체 풀이</h3>' + monthly + '</section>' +
+    '<h3>절입 전후 전체 풀이</h3>' + monthly +
+    '<p>월운 T9 근거와 위의 원국 해석은 구분합니다. ' +
+    '상호작용을 설명하는 출처 있는 시간 해석 규칙이 확보되기 전에는 합쳐서 운세로 단정하지 않습니다.</p></section>' +
     '<section id="life-stage"><h2>삶의 단계 — 계산된 대운</h2><p>' +
     '대운의 간지·시각만 계산된 사실입니다. 길흉이나 사건 시기를 해석하지 않습니다.</p>' +
-    periods + (natal ? '<h3>대운과 분리된 원국 연구 풀이</h3>' + natal : '') +
-    '</section><aside><h2>아직 허가되지 않은 내용과 한계</h2><ul>' +
+    periods + '</section><aside><h2>아직 허가되지 않은 내용과 한계</h2><ul>' +
     gaps + '</ul><p>공식 공개·저장·판매·결제 권한은 없습니다.</p></aside>' +
     '</main></body></html>';
 }

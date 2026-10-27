@@ -1,4 +1,4 @@
-import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
+import type { CanonicalSajuSnapshot, EarthlyBranch, PillarSlot } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -34,6 +34,8 @@ export interface GeneralMonthlyExplorationSection {
   sourceIds: readonly string[];
   factPaths: readonly string[];
   relatedPillar?: PillarSlot;
+  /** Exact source-checked structural relation, not a predicted outcome. */
+  observedClash?: Readonly<{ natalBranch: EarthlyBranch; monthlyBranch: EarthlyBranch }>;
 }
 
 export interface GeneralMonthlyExplorationReport {
@@ -192,6 +194,10 @@ export function buildGeneralMonthlyExplorationReport(
       sourceIds: claim.sourceRefs,
       factPaths: claim.factRefs,
       relatedPillar: slot,
+      observedClash: {
+        natalBranch: relation.value.natalBranch,
+        monthlyBranch: relation.value.monthlyBranch,
+      },
     });
   }
 

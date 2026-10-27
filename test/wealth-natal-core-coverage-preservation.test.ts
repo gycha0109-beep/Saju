@@ -21,6 +21,12 @@ describe('wealth: preserve independently grounded core coverage', () => {
     expect(report.sections).toHaveLength(3);
     expect(report.sections[0]?.pattern).not.toBe('WEALTH_OFFICER_RESOURCE');
     expect(new Set(report.sections.map(x => x.axis)).size).toBe(3);
+    expect(report.eligibleAlternatives.length).toBeGreaterThan(0);
+    const shown = new Set(report.sections.map(x => x.claimType));
+    expect(report.eligibleAlternatives.every(x =>
+      !shown.has(x.claimType) && x.sourceIds.length > 0 &&
+      x.ruleId.length > 0 && x.observedFactPaths.length > 0,
+    )).toBe(true);
     expect(report.mayPublish).toBe(false);
     expect(report.maySell).toBe(false);
   });

@@ -45,6 +45,10 @@ export interface WealthNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly WealthNatalMultifactorSection[];
+  /** Matched and source-qualified T8 interpretations omitted from the
+   * short first-screen narrative. Omission is not negative evidence. */
+  eligibleAlternatives: readonly Pick<WealthNatalMultifactorSection,
+    'claimType' | 'axis' | 'channel' | 'ruleId' | 'sourceIds' | 'observedFactPaths'>[];
   readingGuide?: WealthNatalReadingGuide;
   missing: readonly string[];
   limitations: readonly string[];
@@ -395,6 +399,17 @@ export function buildWealthNatalMultifactorReport(
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly WealthNatalMultifactorSection[] = chosen;
+  const displayedClaimTypes = new Set(sections.map(section => section.claimType));
+  const eligibleAlternatives = result
+    .filter(section => !displayedClaimTypes.has(section.claimType))
+    .map(section => ({
+      claimType: section.claimType,
+      axis: section.axis,
+      channel: section.channel,
+      ruleId: section.ruleId,
+      sourceIds: section.sourceIds,
+      observedFactPaths: section.observedFactPaths,
+    }));
   const readingGuide = buildWealthNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
@@ -410,6 +425,7 @@ export function buildWealthNatalMultifactorReport(
     introduction: '실제 명식의 십신 관계를 바탕으로 가치를 만들어 내는 과정, 자원을 다루는 기준, 준비와 배분 사이의 구조를 함께 살펴봅니다. 수입이나 재산을 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    eligibleAlternatives,
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :

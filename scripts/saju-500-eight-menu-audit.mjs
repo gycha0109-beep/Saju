@@ -75,13 +75,32 @@ function natalEntry(report) {
   if (report.readingGuide?.paragraph) prose.push(report.readingGuide.paragraph);
   // Narrative and selected source-backed claim types are counted separately:
   // different stems/dates inside the text do not automatically prove different meaning.
-  return entry(
+  const row = entry(
     prose.join('\n\n'),
     sections.map(s => [s.claimType, s.pattern, s.axis, s.channel]),
     report.state,
     sections.length,
     'sourced_natal_research',
   );
+  // A second, evidence-bound signature is deliberately kept distinct from
+  // the legacy coarse profile. Exact birth identity/hash is NOT a meaning.
+  row.evidenceComponents = sections.map(s => ({
+    claimType: s.claimType,
+    pattern: s.pattern,
+    axis: s.axis,
+    channel: s.channel,
+    ruleId: s.ruleId,
+    sourceIds: [...(s.sourceIds ?? [])].sort(),
+    factPaths: [...(s.observedFactPaths ?? [])].sort(),
+    // Qualified chart observations are part of the explanation. They are not
+    // counted as new methodology, rank, luck score, or guaranteed life event.
+    observedPositions: [...(s.observedPositions ?? [])].sort(),
+  }));
+  row.evidenceSignature = digest(JSON.stringify(row.evidenceComponents));
+  row.coverageExplanation = Array.isArray(report.missing)
+    ? report.missing.filter(x => typeof x === 'string').join(' ')
+    : '';
+  return row;
 }
 function temporalEntries(result) {
   const report = result.annualMonthly.report;
@@ -113,6 +132,7 @@ function temporalEntries(result) {
       candidateClaimType: s.candidateClaimType,
       calculatedFactPaths: [...s.calculationFactPaths],
       relatedPillar: s.relatedPillar ?? null,
+      observedClash: s.observedClash ?? null,
     })),
   };
   m.sourceEvidence = {
@@ -127,8 +147,20 @@ function temporalEntries(result) {
       ruleIds: [...s.ruleIds],
       factPaths: [...s.factPaths],
       relatedPillar: s.relatedPillar ?? null,
+      observedClash: s.observedClash ?? null,
     })),
   };
+  // These signatures track bound, selected evidence rather than rendered
+  // Korean strings. Monthly claimId is intentionally excluded: it is a
+  // run identity, not an additional source-backed interpretation.
+  a.evidenceComponents = a.sourceEvidence;
+  a.evidenceSignature = digest(JSON.stringify(a.evidenceComponents));
+  m.evidenceComponents = {
+    referenceState: m.sourceEvidence.referenceState,
+    referenceSegment: m.sourceEvidence.referenceSegment,
+    sections: m.sourceEvidence.sections.map(({claimId, ...section}) => section),
+  };
+  m.evidenceSignature = digest(JSON.stringify(m.evidenceComponents));
   const l = entry(
     life.periods.map(p => p.text).join('\n\n'),
     [life.interpretationStatus, ...life.periods.map(p => p.kind)],
@@ -164,9 +196,16 @@ function summarize(rows) {
     generated: rows.length,
     withReadableText: nonEmpty.length,
     withoutReadableText: rows.length - nonEmpty.length,
+    // A missing interpretation section is not automatically an empty
+    // user-facing response: insufficiency can be explained explicitly.
+    withoutSectionsOrExplanation: rows.filter(row =>
+      row.text.length === 0 && !(row.coverageExplanation?.trim())).length,
     avgProseCharacters: nonEmpty.length ? Math.round(nonEmpty.reduce((n,r)=>n+r.text.length,0)/nonEmpty.length) : 0,
     exactText: tally(nonEmpty, 'exactKey'),
     meaningProfile: tally(nonEmpty, 'meaningKey'),
+    ...(nonEmpty.every(row => row.evidenceSignature) ? {
+      selectedEvidenceProfile: tally(nonEmpty, 'evidenceSignature'),
+    } : {}),
     reportStates: Object.fromEntries([...new Set(rows.map(r => r.state))].sort()
       .map(state=>[state,rows.filter(r=>r.state===state).length])),
     researchKind: rows[0]?.kind ?? null,
@@ -248,6 +287,27 @@ export function runFiveHundredSajuAudit() {
     sameCalculationHashGroups:sameChart.slice(0,10),
     elapsedMs:Date.now()-startedAt,
     menuResults:Object.fromEntries(DOMAIN_NAMES.map(name=>[name,summarize(rows[name])])),
+    // Opt-in exact case evidence for cross-commit comparisons. Names, dates, and
+    // calculation hashes remain outside the meaning signature: they are identities,
+    // not proof that a governed interpretation changed.
+    ...(process.env.SAJU_500_CASE_RESULTS === '1' ? {
+      caseResults: Object.fromEntries(DOMAIN_NAMES.map(name => [name,
+        rows[name].map(row => ({
+          birth: row.birth,
+          calculationHash: row.calculationHash,
+          state: row.state,
+          sectionCount: row.sectionCount,
+          exactTextHash: row.exactKey,
+          meaningSignature: row.meaningKey,
+          consumedMeaning: row.meaningComponents,
+          selectedEvidenceSignature: row.evidenceSignature ?? null,
+          selectedEvidence: row.evidenceComponents ?? null,
+          text: row.text,
+          coverageExplanation: row.coverageExplanation ?? null,
+          ...(row.sourceEvidence ? { sourceEvidence: row.sourceEvidence } : {}),
+        })),
+      ])),
+    } : {}),
     rootCauseDiagnostics: {
       version: ROOT_CAUSE_AUDIT_VERSION,
       wealth: summarizeMissingWealthCauses(wealthMissingCases),

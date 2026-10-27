@@ -1,4 +1,4 @@
-import type { PillarSlot, TenGod } from '../contracts/calculation.js';
+import type { EarthlyBranch, PillarSlot, TenGod } from '../contracts/calculation.js';
 import type { AnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
 import { GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES } from '../research/general-annual-narrative-profiles.js';
 import {
@@ -45,6 +45,8 @@ export interface GeneralAnnualExplorationSection {
   policySourceId: typeof GENERAL_ANNUAL_POLICY_SOURCE.sourceId;
   methodologyId: typeof GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId;
   relatedPillar?: PillarSlot;
+  /** Exact, verified branch observation. This is not a new T9 conclusion. */
+  observedClash?: Readonly<{ natalBranch: EarthlyBranch; annualBranch: EarthlyBranch }>;
 }
 
 export interface GeneralAnnualExplorationReport {
@@ -149,6 +151,10 @@ export function buildGeneralAnnualExplorationReport(
       policySourceId: GENERAL_ANNUAL_POLICY_SOURCE.sourceId,
       methodologyId: GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId,
       relatedPillar: slot,
+      observedClash: {
+        natalBranch: state.value.natalBranch,
+        annualBranch: state.value.annualBranch,
+      },
     });
   }
 
