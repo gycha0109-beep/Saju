@@ -44,7 +44,7 @@ function run(month: number, day = 9, known = true, referenceDateTime = NOW.toISO
 
 describe('one-person annual to monthly source-bound research reading', () => {
   it('joins actual annual themes and both T9 monthly phases in a single Korean reading', () => {
-    const { natal, report } = run(9);
+    const { natal, facts, report } = run(9);
     expect(report.snapshotId).toBe(natal.snapshotId);
     expect(report.calculationHash).toBe(natal.calculationHash);
     expect(report.annual.targetYear).toBe(2026);
@@ -52,6 +52,20 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(report.monthly.coverage).toBe('complete');
     expect(report.periodComparison).toContain('절입 전');
     expect(report.periodComparison).toContain('절입 이후');
+    expect(report.observedStructuralContext.scope).toBe('calculated_relation_identity_only');
+    expect(report.observedStructuralContext.interpretationAuthorityGranted).toBe(false);
+    expect(report.observedStructuralContext.natalDayStem).toBe(
+      natal.pillars.day.status === 'resolved' ? natal.pillars.day.value.stem.value : null,
+    );
+    expect(report.observedStructuralContext.monthlyPhases).toEqual(
+      facts.segments.map(phase => ({
+        segmentId: phase.segmentId,
+        pillarLabel: phase.monthlyPillar.stem + phase.monthlyPillar.branch,
+        monthlyStemTenGod: phase.monthlyStemTenGod,
+        startsAt: phase.startsAt,
+        endsAt: phase.endsAt,
+      })),
+    );
     expect(report.referenceReading.state).toBe('in_period');
     expect(report.referenceReading.segmentId).toBe('before_jeol');
     const themes = report.monthly.sections.filter(x => x.kind === 'theme');
@@ -72,6 +86,11 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).toContain('href="#monthly-reading"');
     expect(html).toContain('id="reference-month-reading"');
     expect(html).toContain('조회 시각에 해당하는 이번 달의 풀이');
+    expect(html).toContain('원국 일간 ' + report.observedStructuralContext.natalDayStem);
+    for (const phase of report.observedStructuralContext.monthlyPhases) {
+      expect(html).toContain('월주 ' + phase.pillarLabel);
+      expect(html).toContain('월간과 일간의 십신 관계 ' + phase.monthlyStemTenGod);
+    }
     expect(html).toContain(report.referenceReading.theme!.text);
     expect(html).toContain(report.referenceReading.theme!.claimId);
     expect(html).toContain(report.annual.sections[0]!.text);

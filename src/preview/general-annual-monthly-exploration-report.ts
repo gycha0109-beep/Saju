@@ -1,4 +1,4 @@
-import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { CanonicalSajuSnapshot, HeavenlyStem, PillarSlot, TenGod } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
@@ -33,6 +33,22 @@ export interface GeneralAnnualMonthlyExplorationReport {
   annual: GeneralAnnualExplorationReport;
   monthly: GeneralMonthlyExplorationReport;
   periodComparison: string;
+  /** Same-chart structural identities only; never T8/T9 prognostic synthesis. */
+  observedStructuralContext: {
+    scope: 'calculated_relation_identity_only';
+    natalDayStem: HeavenlyStem | null;
+    annualPillarLabel: string;
+    annualStemTenGod: TenGod;
+    monthlyPhases: readonly {
+      segmentId: MonthlySegmentId;
+      pillarLabel: string;
+      monthlyStemTenGod: TenGod;
+      startsAt: string;
+      endsAt: string;
+    }[];
+    sourceFactPaths: readonly string[];
+    interpretationAuthorityGranted: false;
+  };
   /** The yearly profile is for a Seoul civil calendar year, not an Ipchun annual pillar. */
   annualReference: {
     referenceDateTime: string;
@@ -129,6 +145,31 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       ? 'in_target_civil_year' as const : 'outside_target_civil_year' as const,
   };
 
+  const observedStructuralContext = {
+    scope: 'calculated_relation_identity_only' as const,
+    natalDayStem: snapshot.pillars.day.status === 'resolved'
+      ? snapshot.pillars.day.value.stem.value : null,
+    annualPillarLabel: annual.annualPillarLabel,
+    annualStemTenGod: annual.annualStemTenGod,
+    monthlyPhases: facts.segments.map(segment => ({
+      segmentId: segment.segmentId,
+      pillarLabel: segment.monthlyPillar.stem + segment.monthlyPillar.branch,
+      monthlyStemTenGod: segment.monthlyStemTenGod,
+      startsAt: segment.startsAt,
+      endsAt: segment.endsAt,
+    })),
+    sourceFactPaths: [
+      'pillars.day.value.stem.value', 'derivedFacts.dayMaster.value',
+      'temporal.annualPillar', 'temporal.annualStemTenGod',
+      'temporal.segmentsById.before_jeol.monthlyPillar',
+      'temporal.segmentsById.before_jeol.monthlyStemTenGod',
+      'temporal.segmentsById.after_jeol.monthlyPillar',
+      'temporal.segmentsById.after_jeol.monthlyStemTenGod',
+      'temporal.jeolBoundary.at',
+    ],
+    interpretationAuthorityGranted: false as const,
+  };
+
   const periodComparison =
     String(annual.targetYear) + '년 전체 미리보기는 ' + annual.annualStemTenGod +
     '을(를) 기준으로 읽습니다. ' + String(monthly.targetMonth) + '월은 ' +
@@ -142,7 +183,8 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     researchOnly: true, usefulComplete: false, mayPublish: false, maySell: false,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     targetYear: monthly.targetYear, targetMonth: monthly.targetMonth,
-    annual, monthly, periodComparison, annualReference, referenceReading,
+    annual, monthly, periodComparison, observedStructuralContext,
+    annualReference, referenceReading,
     caveats: [
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
       '이 연결 화면은 별도 통합 운세 규칙이 아니라 기존 연운 연구 문구와 월운 T9 근거를 순서대로 보여줍니다.',
@@ -155,6 +197,9 @@ export function buildGeneralAnnualMonthlyExplorationReport(
 const SEGMENTS = ['before_jeol', 'after_jeol'] as const satisfies readonly MonthlySegmentId[];
 const SEGMENT_LABEL: Readonly<Record<MonthlySegmentId, string>> = {
   before_jeol: '절입 전', after_jeol: '절입 이후',
+};
+const PILLAR_LABEL: Readonly<Record<PillarSlot, string>> = {
+  year: '연주', month: '월주', day: '일주', hour: '시주',
 };
 
 function escapeHtml(value: string): string {
@@ -170,8 +215,14 @@ function kst(instant: string): string {
 function monthlyCard(section: GeneralMonthlyExplorationSection): string {
   const e = escapeHtml;
   return '<article class="reading-card">' +
-    '<small>' + (section.kind === 'theme' ? '이 구간의 중심 관점' : '충 관계에 대한 보조 관점') + '</small>' +
+    '<small>' + (section.kind === 'theme' ? '이 구간의 중심 관점' : '충 구조 관련 연구 해석 후보') + '</small>' +
     '<h4>' + e(section.title) + '</h4><p>' + e(section.text) + '</p>' +
+    (section.observedClash && section.relatedPillar
+      ? '<p>계산된 관계: 원국 ' + e(PILLAR_LABEL[section.relatedPillar]) +
+        '의 ' + e(section.observedClash.natalBranch) + '와 이 월운의 ' +
+        e(section.observedClash.monthlyBranch) +
+        '가 충 관계입니다. 이 사실만으로 사건이나 길흉을 판정하지 않습니다.</p>'
+      : '') +
     '<details><summary>이 풀이의 계산 근거와 출처</summary>' +
     '<p>기간: ' + e(kst(section.calculatedInterval.startsAt)) + '부터 ' +
       e(kst(section.calculatedInterval.endsAt)) + ' 전까지</p>' +
@@ -186,10 +237,27 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   report: GeneralAnnualMonthlyExplorationReport,
 ): string {
   const e = escapeHtml;
+  const structural = report.observedStructuralContext;
+  const dayStem = structural.natalDayStem ?? '미확정';
+  const yearFacts = '원국 일간 ' + dayStem + ' · 서울 달력연도 표시용 간지 ' +
+    structural.annualPillarLabel + ' · 해당 연간 천간과 일간의 십신 관계 ' +
+    structural.annualStemTenGod + '. 이는 계산된 관계 식별이며 운세 결론이 아닙니다.';
+  const monthlyFacts = structural.monthlyPhases.map(phase =>
+    '<p class="muted">' + (phase.segmentId === 'before_jeol' ? '절입 전' : '절입 후') +
+    ' 월주 ' + e(phase.pillarLabel) + ' · 월간과 일간의 십신 관계 ' +
+    e(phase.monthlyStemTenGod) + ' (' + e(kst(phase.startsAt)) + ' ~ ' +
+    e(kst(phase.endsAt)) + ' 전). 구조 사실이며 추가 운세 해석이 아닙니다.</p>'
+  ).join('');
   const annual = report.annual.sections.map(section =>
     '<article class="reading-card"><small>' +
-    (section.kind === 'core' ? '올해의 중심 관점' : '연운의 조건부 충 관계') +
+    (section.kind === 'core' ? '올해의 중심 연구 관점' : '충 구조 관련 미검증 연운 가설') +
     '</small><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
+    (section.observedClash && section.relatedPillar
+      ? '<p>계산된 관계: 원국 ' + e(PILLAR_LABEL[section.relatedPillar]) +
+        '의 ' + e(section.observedClash.natalBranch) + '와 이 연간의 ' +
+        e(section.observedClash.annualBranch) +
+        '가 충 관계입니다. 이 사실만으로 사건이나 길흉을 판정하지 않습니다.</p>'
+      : '') +
     '<details><summary>올해 문구의 계산 근거와 연구 출처</summary>' +
     '<p>해석 범위: 내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)</p>' +
     '<p>문구 프로필: ' + e(section.researchProfileId) + '</p>' +
@@ -270,12 +338,11 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     ' · 연구용 월별 적용 범위만 안내합니다.</p>' + focus + '</section>' +
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
     '<p class="muted" id="reference-year-context">' + e(annualContext) + '</p>' +
-    '<p class="muted">서울 달력 연도 기준 · 연간 ' + e(report.annual.annualPillarLabel) +
-    ' · 십신 ' + e(report.annual.annualStemTenGod) + '</p>' + annual + '</section>' +
+    '<p class="muted">' + e(yearFacts) + '</p>' + annual + '</section>' +
     '<section id="monthly-reading"><h2>' + e(report.monthly.headline) + '</h2>' +
     '<p>' + e(report.periodComparison) + '</p>' +
     '<p class="muted">' + e(report.monthly.jeolBoundary.name) + ' 절입: ' +
-    e(kst(report.monthly.jeolBoundary.at)) + '</p>' + monthly + '</section>' +
+    e(kst(report.monthly.jeolBoundary.at)) + '</p>' + monthlyFacts + monthly + '</section>' +
     '<aside><strong>해석 범위와 아직 모르는 부분</strong><ul>' + caveats + '</ul></aside>' +
     '</main></body></html>';
 }

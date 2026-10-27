@@ -133,6 +133,26 @@ function temporalEntries(result) {
   // IMPORTANT: Dayun periods describe calendar/pillar facts, not supported
   // forecasts; report life-stage's structural uniqueness but DO NOT count it
   // as distinct life-stage interpretations.
+  if (report.observedStructuralContext.scope !== 'calculated_relation_identity_only' ||
+      report.observedStructuralContext.interpretationAuthorityGranted !== false ||
+      report.observedStructuralContext.monthlyPhases.length !== 2 ||
+      report.observedStructuralContext.monthlyPhases[0].segmentId !== 'before_jeol' ||
+      report.observedStructuralContext.monthlyPhases[1].segmentId !== 'after_jeol') {
+    throw new Error('Cross-period factual preview cannot be interpreted as an admitted semantic claim');
+  }
+  a.calculatedStructure = {
+    natalDayStem: report.observedStructuralContext.natalDayStem,
+    annualPillarLabel: report.observedStructuralContext.annualPillarLabel,
+    annualStemTenGod: report.observedStructuralContext.annualStemTenGod,
+    sourceFactPaths: report.observedStructuralContext.sourceFactPaths,
+    interpretationAuthorityGranted: report.observedStructuralContext.interpretationAuthorityGranted,
+  };
+  m.calculatedStructure = {
+    natalDayStem: report.observedStructuralContext.natalDayStem,
+    monthlyPhases: report.observedStructuralContext.monthlyPhases,
+    sourceFactPaths: report.observedStructuralContext.sourceFactPaths,
+    interpretationAuthorityGranted: report.observedStructuralContext.interpretationAuthorityGranted,
+  };
   a.sourceEvidence = {
     annualStemTenGod: report.annual.annualStemTenGod,
     annualCalendarPolicy: report.annual.calendarPolicy,
@@ -215,6 +235,12 @@ function summarize(rows) {
     generated: rows.length,
     withReadableText: nonEmpty.length,
     withoutReadableText: rows.length - nonEmpty.length,
+    ...(rows.some(row => row.calculatedStructure) ? {
+      calculatedStructureCoverage: rows.filter(row => row.calculatedStructure).length,
+      calculatedStructureProfiles: tally(rows.filter(row => row.calculatedStructure)
+        .map(row => ({...row, calculatedStructureSignature: digest(JSON.stringify(row.calculatedStructure))})),
+      'calculatedStructureSignature'),
+    } : {}),
     // A missing interpretation section is not automatically an empty
     // user-facing response: insufficiency can be explained explicitly.
     withoutSectionsOrExplanation: rows.filter(row =>
@@ -321,6 +347,7 @@ export function runFiveHundredSajuAudit() {
           consumedMeaning: row.meaningComponents,
           selectedEvidenceSignature: row.evidenceSignature ?? null,
           selectedEvidence: row.evidenceComponents ?? null,
+          calculatedStructure: row.calculatedStructure ?? null,
           text: row.text,
           coverageExplanation: row.coverageExplanation ?? null,
           eligibleAlternatives: row.eligibleAlternatives ?? null,

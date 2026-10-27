@@ -75,6 +75,10 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
       card.authority.mayPersist === false &&
       card.authority.maySell === false)).toBe(true);
     expect(cards[0]?.provenance.snapshotId).toBe(snapshot.snapshotId);
+    expect(cards[0]?.observedStructuralContext).toEqual(annualMonthly.observedStructuralContext);
+    expect(cards[1]?.observedStructuralContext).toEqual(annualMonthly.observedStructuralContext);
+    expect(cards[0]?.observedStructuralContext?.interpretationAuthorityGranted).toBe(false);
+    expect(cards[2]?.observedStructuralContext).toBeUndefined();
     expect(cards[1]?.provenance.calculationHash).toBe(snapshot.calculationHash);
     expect(cards[2]?.provenance.snapshotId).toBe(snapshot.snapshotId);
     expect(cards[0]?.sections.map(section => section.text)).toEqual(
@@ -91,6 +95,19 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
       section.factPaths.includes('luckCycle') &&
       section.sourceIds.includes(lifeStage.policyId))).toBe(true);
     expect(JSON.stringify(cards[2])).not.toContain('official_grounded_response');
+  });
+
+  it('rejects cross-period factual context falsely presented as approved meaning', () => {
+    const { annualMonthly } = reports();
+    expect(() => buildTemporalResearchMenuReadings({
+      annualMonthly: {
+        ...annualMonthly,
+        observedStructuralContext: {
+          ...annualMonthly.observedStructuralContext,
+          interpretationAuthorityGranted: true as never,
+        },
+      },
+    })).toThrow('Temporal menu bridge rejects');
   });
 
   it('preserves exact monthly T9 sources, intervals, Jeol phase and claim IDs', () => {

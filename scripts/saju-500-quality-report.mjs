@@ -41,6 +41,11 @@ const menus = MENU_NAMES.map(name => {
     transitions[key]=(transitions[key]??0)+1;
   }
   const summary=after.menuResults[name];
+  if ((name === '올해' || name === '이번 달') &&
+      (current.some(row=>!row.calculatedStructure ||
+         row.calculatedStructure.interpretationAuthorityGranted !== false))) {
+    throw new Error('Temporal reading must expose exact, non-authorized chart facts for every case');
+  }
   const unexplained=current.filter(r=>r.sectionCount === 0 &&
     !r.text.trim() && !(r.coverageExplanation?.trim()) &&
     !(r.sourceEvidence && name === '삶의 단계')).length;
@@ -56,6 +61,8 @@ const menus = MENU_NAMES.map(name => {
     beforeMeaningProfiles:before.menuResults[name].meaningProfile.unique,
     afterMeaningProfiles:summary.meaningProfile.unique,
     afterExactTexts:summary.exactText.unique,
+    calculatedStructureCoverage:summary.calculatedStructureCoverage??0,
+    calculatedStructureVariants:summary.calculatedStructureProfiles?.unique??0,
     example: current.find(r=>r.text.trim()) ? (() => {
       const found=current.find(r=>r.text.trim());
       return {
@@ -72,7 +79,8 @@ const monthlyRegistry = createGeneralMonthlyReadingCandidateRegistry('2026-10-25
 const annualAuthorized = annual.authorityState.annualSpecificSourceAuthorityEstablished &&
   annual.authorityState.productionAdmissionAuthority;
 const monthlyAuthorized = monthlyRegistry.pack.status === 'production';
-const studyOnly = Object.values(after.permissions ?? {}).every(v => v === false);
+const studyOnly = ['mayPublish', 'maySell', 'mayCallOfficial'].every(name =>
+  Object.hasOwn(after.permissions ?? {}, name) && after.permissions[name] === false);
 const qualityGate = {
   fixed500Execution:after.failedCases === 0,
   fixed500InputsUnchanged:menus.every(m=>m.calculationChanged===0),
@@ -115,6 +123,9 @@ const markdown = '# 사주 고정 500건 × 8메뉴 개선 비교\n\n'+
   ', 오류 0: '+qualityGate.fixed500Execution+
   ', 무설명 공백 0: '+qualityGate.noMissingExplanation+
   ', 연구 권한 보존: '+qualityGate.officialPermissionsNotGranted+'\n\n'+
+  '연운 계산 사실 연결: '+menus.find(m=>m.name==='올해').calculatedStructureCoverage+
+  '/500, 월운 계산 사실 연결: '+menus.find(m=>m.name==='이번 달').calculatedStructureCoverage+
+  '/500. 이 숫자는 새로운 예측·의미 해석을 뜻하지 않습니다.\n\n'+
   '## 실제 한국어 결과 예시\n\n'+examples+'\n## 미확립 범위\n\n'+
   report.limitations.map(x=>'- '+x).join('\n')+'\n';
 writeFileSync(markdownPath,markdown,'utf8');

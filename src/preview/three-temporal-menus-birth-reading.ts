@@ -74,6 +74,18 @@ function render(
     ? '조회 시각의 서울 달력 연도에 해당하는 연구용 연운입니다.'
     : '선택한 ' + report.targetYear +
       '년은 조회 시각의 현재 연도가 아닙니다. 현재 연운으로 적용하지 않고 비교만 합니다.';
+  const structural = report.observedStructuralContext;
+  const observedAnnual = '원국 일간 ' + (structural.natalDayStem ?? '미확정') +
+    ' · 서울 달력연도 표시용 간지 ' + structural.annualPillarLabel +
+    ' · 십신 관계 ' + structural.annualStemTenGod +
+    '. 이 내용은 계산된 관계 식별이며 운세 해석이나 사건 예측이 아닙니다.';
+  const observedMonthly = structural.monthlyPhases.map(phase =>
+    '<p>계산된 ' + (phase.segmentId === 'before_jeol' ? '절입 전' : '절입 후') +
+    ' 월주는 ' + e(phase.pillarLabel) + '이며 원국 일간과의 월간 십신 관계는 ' +
+    e(phase.monthlyStemTenGod) + '입니다. 적용 구간: ' +
+    e(phase.startsAt) + '부터 ' + e(phase.endsAt) +
+    ' 전까지. 추가 운세 의미를 부여하지 않습니다.</p>'
+  ).join('');
   const annual = report.annual.sections.map(section =>
     '<article><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
     (section.observedClash ? '<p>원국 ' + e(section.relatedPillar ?? '') +
@@ -148,14 +160,14 @@ function render(
     '</header><nav><a href="#annual">올해</a><a href="#monthly">이번 달</a>' +
     '<a href="#life-stage">삶의 단계</a></nav>' +
     '<section id="annual"><h2>올해 — ' + report.targetYear + '년</h2><p>' +
-    e(yearNote) + '</p>' + annual +
+    e(yearNote) + '</p><p>' + e(observedAnnual) + '</p>' + annual +
     (natal ? '<h3>이 사람의 원국 해석 — 올해 운세와 별개의 근거</h3><p>' +
       '아래는 같은 명식에서 실제 선택된 원국 연구 해석입니다. ' +
       '원국의 성향을 올해의 사건이나 성과로 자동 해석하지 않습니다.</p>' + natal : '') +
     '</section>' +
     '<section id="monthly"><h2>이번 달 — ' + report.targetMonth + '월</h2>' +
     '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth +
-    '<h3>절입 전후 전체 풀이</h3>' + monthly +
+    '<h3>절입 전후 전체 풀이</h3>' + observedMonthly + monthly +
     '<p>월운 T9 근거와 위의 원국 해석은 구분합니다. ' +
     '상호작용을 설명하는 출처 있는 시간 해석 규칙이 확보되기 전에는 합쳐서 운세로 단정하지 않습니다.</p></section>' +
     '<section id="life-stage"><h2>삶의 단계 — 계산된 대운</h2><p>' +
