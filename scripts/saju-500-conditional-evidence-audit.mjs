@@ -23,6 +23,7 @@ for(const menu of menus){
   let daysWithUnavailable=0;
   let extraTimeSlices=0;
   let linkedT9=0;
+  let focusedCases=0;
   let observedAnnualDayunRelations=0;
   const t9RelationStates={};
   for(const row of rows){
@@ -52,6 +53,20 @@ for(const menu of menus){
              (link.existingT9Link==='matched_source_owned_theme' &&
               (!link.existingT9ClaimId||!link.existingT9MethodologyId));
          }))throw new Error('Monthly T9 research links do not match exact source-owned intervals');
+      const focus=row.currentT9Evidence;
+      const instant=Date.parse(focus?.referenceDateTime);
+      const active=links.filter(link=>
+        Date.parse(link.startsAt)<=instant && instant<Date.parse(link.endsAtExclusive));
+      if(!focus || !focus.isResearchOnly || !Number.isFinite(instant) ||
+          active.length!==1 || focus.state!=='in_period' ||
+          focus.activeT9ClaimId!==active[0].existingT9ClaimId ||
+          focus.segmentId!==active[0].segmentId ||
+          focus.startsAt!==active[0].startsAt ||
+          focus.endsAtExclusive!==active[0].endsAtExclusive ||
+          focus.annualDayunRelation!==active[0].annualDayunRelation) {
+        throw new Error('Monthly current T9 evidence is not the exact active original interval');
+      }
+      focusedCases++;
       for(const link of links) {
         linkedT9+=link.existingT9Link==='matched_source_owned_theme'?1:0;
         observedAnnualDayunRelations+=['branch_clash_observed',
@@ -112,6 +127,7 @@ for(const menu of menus){
     extraTimeSlices,
     ...(menu==='이번 달'?{
       existingT9ClaimLinks:linkedT9,
+      exactReferenceFocusedCases:focusedCases,
       observedAnnualDayunRelations,
       annualDayunRelationStates:t9RelationStates,
       newlyEmittedT9Claims:0,

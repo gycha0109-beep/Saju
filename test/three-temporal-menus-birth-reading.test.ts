@@ -56,6 +56,10 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
       expect(reading.html).toContain(section.sourceIds[0]!);
     }
     expect(reading.html).toContain(report.monthly.referenceReading.theme!.text);
+    const focused = report.t9EvidenceLinks.referenceEvidenceFocus.activeLink;
+    expect(focused).not.toBeNull();
+    expect(reading.html.split('<h3>절입 전후 전체 풀이</h3>')[0])
+      .toContain(focused!.koreanExplanation);
     for (const period of life.periods) {
       expect(reading.html).toContain(period.text);
     }
@@ -73,6 +77,10 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
       'outside_target_month');
     expect(outside.html).toContain('현재 연운으로 적용하지 않고 비교만 합니다');
     expect(outside.html).toContain('현재 월운으로 표시하지 않습니다');
+    expect(outside.annualMonthly.report.t9EvidenceLinks.referenceEvidenceFocus.activeLink)
+      .toBeNull();
+    expect(outside.html.split('<h3>절입 전후 전체 풀이</h3>')[0])
+      .not.toContain('이 시각의 조건부 계산 근거');
     expect(outside.html).not.toContain('조회 시각에 해당하는 월운</h3><article class="current">');
     expect(outside.lifeStage.report).toEqual(inPeriod.lifeStage.report);
     expect(outside.annualMonthly.report.monthly.sections.map(s => s.claimId))

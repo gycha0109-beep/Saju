@@ -322,6 +322,26 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '</details></article>',
   ).join('\n');
   const selected = report.referenceReading;
+  const currentLink = report.t9EvidenceLinks.referenceEvidenceFocus;
+  const active = currentLink.activeLink;
+  const at = Date.parse(selected.referenceDateTime);
+  if (currentLink.referenceDateTime !== selected.referenceDateTime ||
+      currentLink.state !== selected.state ||
+      currentLink.segmentId !== (selected.segmentId ?? null) ||
+      (selected.state === 'outside_target_month' && active !== null) ||
+      (selected.state !== 'outside_target_month' &&
+        (!active || !(Date.parse(active.startsAt) <= at &&
+          at < Date.parse(active.endsAtExclusive)) ||
+         active.segmentId !== selected.segmentId ||
+         active.existingT9ClaimId !== (selected.theme?.claimId ?? null)))) {
+    throw new TypeError('Current monthly HTML cannot display evidence for another Jeol or Dayun interval.');
+  }
+  const currentConditionalFact = selected.state === 'in_period' && active
+    ? '<div class="current-conditional-evidence"><h3>이 조회 시각의 조건부 계산 근거 (운세 예측 아님)</h3>' +
+      '<p>' + e(active.koreanExplanation) + '</p><p class="muted">대운·세운 관측 구간: ' +
+      e(kst(active.startsAt)) + '부터 ' + e(kst(active.endsAtExclusive)) +
+      ' 전까지. 다른 구간의 근거를 현재 풀이로 적용하지 않습니다.</p></div>'
+    : '';
   const annualAt = report.annualReference;
   if (annualAt.referenceDateTime !== selected.referenceDateTime ||
       annualAt.civilYearAtReference !==
@@ -389,7 +409,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<section class="current-reading" id="reference-month-reading">' +
     '<h2>조회 시각에 해당하는 이번 달의 풀이</h2>' +
     '<p class="muted">조회 기준: ' + e(kst(selected.referenceDateTime)) +
-    ' · 연구용 월별 적용 범위만 안내합니다.</p>' + focus + '</section>' +
+    ' · 연구용 월별 적용 범위만 안내합니다.</p>' + focus +
+    currentConditionalFact + '</section>' +
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
     '<p class="muted" id="reference-year-context">' + e(annualContext) + '</p>' +
     '<p class="muted">' + e(yearFacts) + '</p>' + annual + '</section>' +

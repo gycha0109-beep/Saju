@@ -41,6 +41,14 @@ export interface ExistingT9CompositionEvidenceLink {
   koreanExplanation: string;
 }
 
+export interface T9ReferenceEvidenceFocus {
+  referenceDateTime: string;
+  state: 'in_period' | 'insufficient_evidence' | 'outside_target_month';
+  segmentId: MonthlySegmentId | null;
+  /** Exactly one active subinterval if the request is in this civil month. */
+  activeLink: ExistingT9CompositionEvidenceLink | null;
+}
+
 export interface AnnualDayunT9PreconditionReview {
   version: typeof ANNUAL_DAYUN_T9_PRECONDITION_VERSION;
   scope: 'existing_monthly_t9_claim_evidence_link_only';
@@ -52,6 +60,7 @@ export interface AnnualDayunT9PreconditionReview {
   methodologyCorpus: 'R153';
   conflictOrderCorpus: 'R154';
   existingT9ClaimLinks: readonly ExistingT9CompositionEvidenceLink[];
+  referenceEvidenceFocus: T9ReferenceEvidenceFocus;
   sourceQualifiedCrossLayerMeaningEstablished: false;
   interpretationClaimEmissionAuthorized: false;
   mayPublish: false;
@@ -196,6 +205,34 @@ export function buildAnnualDayunExistingT9ClaimLinks(
         'R153·R154의 합성 의미 발행 권한이 없어 새로운 T9 풀이를 만들지 않습니다.',
     });
   }
+  const reference = report.monthly.referenceReading;
+  const instant = Date.parse(reference.referenceDateTime);
+  if (!Number.isFinite(instant)) {
+    throw new TypeError('Research T9 reference time must be an actual UTC instant.');
+  }
+  const activeLinks = links.filter(link =>
+    Date.parse(link.startsAt) <= instant && instant < Date.parse(link.endsAtExclusive));
+  if (activeLinks.length > 1 ||
+      (reference.state === 'outside_target_month' &&
+        (activeLinks.length !== 0 || reference.segmentId !== undefined ||
+         reference.theme !== undefined)) ||
+      (reference.state !== 'outside_target_month' &&
+        (activeLinks.length !== 1 ||
+         activeLinks[0]!.segmentId !== reference.segmentId)) ||
+      (reference.state === 'in_period' &&
+        (!reference.theme || activeLinks[0]?.existingT9ClaimId !== reference.theme.claimId ||
+         activeLinks[0]?.existingT9Link !== 'matched_source_owned_theme')) ||
+      (reference.state === 'insufficient_evidence' &&
+        (reference.theme !== undefined ||
+         activeLinks[0]?.existingT9Link !== 'missing_original_theme'))) {
+    throw new TypeError('Research T9 reference must select exactly its original Jeol and Dayun interval.');
+  }
+  const referenceEvidenceFocus: T9ReferenceEvidenceFocus = {
+    referenceDateTime: reference.referenceDateTime,
+    state: reference.state,
+    segmentId: reference.segmentId ?? null,
+    activeLink: activeLinks[0] ?? null,
+  };
   return {
     version: ANNUAL_DAYUN_T9_PRECONDITION_VERSION,
     scope: 'existing_monthly_t9_claim_evidence_link_only',
@@ -207,6 +244,7 @@ export function buildAnnualDayunExistingT9ClaimLinks(
     methodologyCorpus: 'R153',
     conflictOrderCorpus: 'R154',
     existingT9ClaimLinks: links,
+    referenceEvidenceFocus,
     sourceQualifiedCrossLayerMeaningEstablished: false,
     interpretationClaimEmissionAuthorized: false,
     mayPublish: false,

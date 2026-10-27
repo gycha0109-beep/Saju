@@ -171,6 +171,30 @@ function temporalEntries(result) {
   }));
   a.compositionEvidence = compositionEvidence;
   m.compositionEvidence = compositionEvidence;
+  const evidenceFocus = t9Links.referenceEvidenceFocus;
+  const focusedLink = evidenceFocus.activeLink;
+  const instant = Date.parse(evidenceFocus.referenceDateTime);
+  if (evidenceFocus.referenceDateTime !== focus.referenceDateTime ||
+      evidenceFocus.state !== focus.state ||
+      evidenceFocus.segmentId !== (focus.segmentId ?? null) ||
+      (focus.state === 'outside_target_month' && focusedLink !== null) ||
+      (focus.state !== 'outside_target_month' &&
+        (!focusedLink ||
+         !(Date.parse(focusedLink.startsAt) <= instant &&
+           instant < Date.parse(focusedLink.endsAtExclusive)) ||
+         focusedLink.existingT9ClaimId !== (focus.theme?.claimId ?? null)))) {
+    throw new Error('500-case T9 focus must be selected by the original Jeol and Dayun interval');
+  }
+  m.currentT9Evidence = {
+    state: evidenceFocus.state,
+    referenceDateTime: evidenceFocus.referenceDateTime,
+    segmentId: evidenceFocus.segmentId,
+    activeT9ClaimId: focusedLink?.existingT9ClaimId ?? null,
+    startsAt: focusedLink?.startsAt ?? null,
+    endsAtExclusive: focusedLink?.endsAtExclusive ?? null,
+    annualDayunRelation: focusedLink?.annualDayunRelation ?? null,
+    isResearchOnly: true,
+  };
   m.existingT9EvidenceLinks = t9Links.existingT9ClaimLinks.map(link => ({
     segmentId: link.segmentId,
     startsAt: link.startsAt,
@@ -420,6 +444,7 @@ export function runFiveHundredSajuAudit() {
           compositionEvidence: row.compositionEvidence ?? null,
           compositionAuthority: row.compositionAuthority ?? null,
           existingT9EvidenceLinks: row.existingT9EvidenceLinks ?? null,
+          currentT9Evidence: row.currentT9Evidence ?? null,
           text: row.text,
           coverageExplanation: row.coverageExplanation ?? null,
           eligibleAlternatives: row.eligibleAlternatives ?? null,

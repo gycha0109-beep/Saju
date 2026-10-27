@@ -58,6 +58,8 @@ export interface TemporalResearchMenuReading {
   conditionalComposition?: GeneralAnnualMonthlyExplorationReport['conditionalComposition'];
   /** Links only to original research T9 IDs. It does not issue or promote Claims. */
   t9EvidenceLinks?: GeneralAnnualMonthlyExplorationReport['t9EvidenceLinks'];
+  /** Active structural evidence at the exact requested instant, never whole-month meaning. */
+  t9ReferenceEvidence?: GeneralAnnualMonthlyExplorationReport['t9EvidenceLinks']['referenceEvidenceFocus'];
   /** Reference-time projection applies to the monthly menu only. */
   referenceFocus?: TemporalMonthlyReferenceFocus;
   missing: readonly string[];
@@ -152,6 +154,28 @@ export function buildTemporalResearchMenuReadings(
         joined.t9EvidenceLinks.interpretationClaimEmissionAuthorized ||
         joined.t9EvidenceLinks.sourceQualifiedCrossLayerMeaningEstablished ||
         joined.t9EvidenceLinks.mayPublish || joined.t9EvidenceLinks.maySell ||
+        joined.t9EvidenceLinks.referenceEvidenceFocus.referenceDateTime !==
+          joined.monthly.referenceReading.referenceDateTime ||
+        joined.t9EvidenceLinks.referenceEvidenceFocus.state !==
+          joined.monthly.referenceReading.state ||
+        joined.t9EvidenceLinks.referenceEvidenceFocus.segmentId !==
+          (joined.monthly.referenceReading.segmentId ?? null) ||
+        (() => {
+          const focus = joined.t9EvidenceLinks.referenceEvidenceFocus;
+          const at = Date.parse(focus.referenceDateTime);
+          const applicable = joined.t9EvidenceLinks.existingT9ClaimLinks.filter(link =>
+            Date.parse(link.startsAt) <= at && at < Date.parse(link.endsAtExclusive));
+          return !Number.isFinite(at) || applicable.length > 1 ||
+            (focus.state === 'outside_target_month' &&
+              (focus.activeLink !== null || applicable.length !== 0)) ||
+            (focus.state !== 'outside_target_month' &&
+              (applicable.length !== 1 || focus.activeLink === null ||
+               focus.activeLink.startsAt !== applicable[0]?.startsAt ||
+               focus.activeLink.endsAtExclusive !== applicable[0]?.endsAtExclusive ||
+               focus.activeLink.existingT9ClaimId !== applicable[0]?.existingT9ClaimId ||
+               (focus.state === 'in_period' &&
+                focus.activeLink.existingT9ClaimId !== joined.monthly.referenceReading.theme?.claimId)));
+        })() ||
         joined.t9EvidenceLinks.existingT9ClaimLinks.length !==
           joined.conditionalComposition.slices.length ||
         joined.t9EvidenceLinks.existingT9ClaimLinks.some((link, index) => {
@@ -344,6 +368,7 @@ export function buildTemporalResearchMenuReadings(
         observedStructuralContext: joined.observedStructuralContext,
         conditionalComposition: joined.conditionalComposition,
         t9EvidenceLinks: joined.t9EvidenceLinks,
+        t9ReferenceEvidence: joined.t9EvidenceLinks.referenceEvidenceFocus,
       }),
       ...(referenceFocus === undefined ? {} : { referenceFocus }),
       missing: joined === undefined

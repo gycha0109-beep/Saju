@@ -70,6 +70,24 @@ function render(
   const life = lifeStage.report;
   const annualReference = report.annualReference;
   const monthlyFocus = report.monthly.referenceReading;
+  const selectedRelation = report.t9EvidenceLinks.referenceEvidenceFocus;
+  const selectedLink = selectedRelation.activeLink;
+  const referenceInstant = Date.parse(monthlyFocus.referenceDateTime);
+  if (selectedRelation.referenceDateTime !== monthlyFocus.referenceDateTime ||
+      selectedRelation.state !== monthlyFocus.state ||
+      selectedRelation.segmentId !== (monthlyFocus.segmentId ?? null) ||
+      (monthlyFocus.state === 'outside_target_month' && selectedLink !== null) ||
+      (monthlyFocus.state !== 'outside_target_month' &&
+        (!selectedLink || !(Date.parse(selectedLink.startsAt) <= referenceInstant &&
+          referenceInstant < Date.parse(selectedLink.endsAtExclusive)) ||
+         selectedLink.existingT9ClaimId !== (monthlyFocus.theme?.claimId ?? null)))) {
+    throw new TypeError('Current three-menu monthly evidence must belong to the exact Jeol and Dayun interval.');
+  }
+  const selectedStructuralReading = monthlyFocus.state === 'in_period' && selectedLink
+    ? '<article><h3>이 시각의 조건부 계산 근거 (새 운세 아님)</h3><p>' +
+      e(selectedLink.koreanExplanation) + '</p><small>적용 구간: ' +
+      e(selectedLink.startsAt) + ' — ' + e(selectedLink.endsAtExclusive) +
+      '</small></article>' : '';
   const yearNote = annualReference.state === 'in_target_civil_year'
     ? '조회 시각의 서울 달력 연도에 해당하는 연구용 연운입니다.'
     : '선택한 ' + report.targetYear +
@@ -182,7 +200,7 @@ function render(
       '원국의 성향을 올해의 사건이나 성과로 자동 해석하지 않습니다.</p>' + natal : '') +
     '</section>' +
     '<section id="monthly"><h2>이번 달 — ' + report.targetMonth + '월</h2>' +
-    '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth +
+    '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth + selectedStructuralReading +
     '<h3>절입 전후 전체 풀이</h3>' + observedMonthly + monthly +
     '<h3>원국·대운·세운·월운의 조건부 구조 관계</h3>' + conditionals +
     '<h3>기존 월운 T9 Claim의 연구용 근거 연결</h3>' + linkedT9 +

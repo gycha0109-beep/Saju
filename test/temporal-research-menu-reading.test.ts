@@ -210,7 +210,8 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     }
     const referenceSegmentId = original.segmentId;
     const referenceTheme = original.theme;
-    const blocked = buildTemporalResearchMenuReadings({
+    // Changing the selected state alone without rederiving original T9 evidence is forged.
+    expect(() => buildTemporalResearchMenuReadings({
       annualMonthly: {
         ...inMonth,
         monthly: {
@@ -219,13 +220,10 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
             referenceDateTime: original.referenceDateTime,
             state: 'insufficient_evidence',
             segmentId: referenceSegmentId,
-          }
+          },
         },
       },
-    })[1]!;
-    expect(blocked.referenceFocus?.state).toBe('insufficient_evidence');
-    expect(blocked.referenceFocus?.currentSection).toBeUndefined();
-    expect(blocked.referenceFocus?.message).toContain('보류');
+    })).toThrow('Temporal menu bridge rejects');
     expect(() => buildTemporalResearchMenuReadings({
       annualMonthly: {
         ...inMonth,
@@ -237,7 +235,7 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
           },
         },
       },
-    })).toThrow('Monthly reference');
+    })).toThrow('Temporal menu bridge rejects');
     expect(() => buildTemporalResearchMenuReadings({
         annualMonthly: {
           ...inMonth,
@@ -249,7 +247,7 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
             },
           },
         },
-      })).toThrow('Monthly reference');
+      })).toThrow('Temporal menu bridge rejects');
   });
 
   it('does not fabricate life-stage calculations for unknown birth time', () => {

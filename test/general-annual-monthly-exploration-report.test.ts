@@ -145,6 +145,25 @@ describe('one-person annual to monthly source-bound research reading', () => {
       state: 'in_period', segmentId: 'after_jeol',
     });
     const selected = after.report.referenceReading.theme!;
+    const beforeFocus = before.report.t9EvidenceLinks.referenceEvidenceFocus;
+    const afterFocus = after.report.t9EvidenceLinks.referenceEvidenceFocus;
+    expect(beforeFocus.activeLink?.segmentId).toBe('before_jeol');
+    expect(afterFocus.activeLink?.segmentId).toBe('after_jeol');
+    expect(beforeFocus.activeLink?.existingT9ClaimId)
+      .toBe(before.report.referenceReading.theme?.claimId);
+    expect(afterFocus.activeLink?.existingT9ClaimId).toBe(selected.claimId);
+    expect(Date.parse(beforeFocus.activeLink!.endsAtExclusive))
+      .toBe(Date.parse(jeolAt));
+    expect(Date.parse(afterFocus.activeLink!.startsAt))
+      .toBe(Date.parse(jeolAt));
+    const beforeCurrentHtml = renderGeneralAnnualMonthlyExplorationHtml(before.report)
+      .split('<section id="year-reading">')[0]!;
+    const afterCurrentHtml = renderGeneralAnnualMonthlyExplorationHtml(after.report)
+      .split('<section id="year-reading">')[0]!;
+    expect(beforeCurrentHtml).toContain(beforeFocus.activeLink!.koreanExplanation);
+    expect(afterCurrentHtml).toContain(afterFocus.activeLink!.koreanExplanation);
+    expect(beforeCurrentHtml).not.toContain(afterFocus.activeLink!.koreanExplanation);
+    expect(afterCurrentHtml).not.toContain(beforeFocus.activeLink!.koreanExplanation);
     expect(selected.kind).toBe('theme');
     expect(selected.claimId).toBe(
       after.report.monthly.sections.find(section =>
@@ -167,6 +186,9 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).toContain('월 밖에 있어 현재 적용 구간을 정하지 않았습니다.');
     expect(html).toContain('10월 절입 전·후');
     expect(html).not.toContain(' · 조회 시각 구간');
+    expect(report.t9EvidenceLinks.referenceEvidenceFocus.activeLink).toBeNull();
+    const currentOnly = html.split('<section id="year-reading">')[0]!;
+    expect(currentOnly).not.toContain('이 조회 시각의 조건부 계산 근거');
   });
 
   it('distinguishes a selected annual civil year from the reference instant across Seoul midnight', () => {
