@@ -262,7 +262,10 @@ export function buildTemporalResearchMenuReadings(
       sections: annual,
       missing: joined === undefined
         ? ['연도 및 출생정보를 입력하고 연운 연구 풀이를 실행해야 합니다.']
-        : [...joined.annual.caveats],
+        : [
+          ...joined.annual.caveats,
+          '현재 연운의 원국 종합해석을 뒷받침할 별도의 출처·방법론 권한이 확립되지 않아 관련 결론은 보류합니다.',
+        ],
       provenance: joinedProvenance,
       authority: AUTHORITY,
     },
@@ -280,7 +283,11 @@ export function buildTemporalResearchMenuReadings(
       ...(referenceFocus === undefined ? {} : { referenceFocus }),
       missing: joined === undefined
         ? ['연도·월·출생정보를 입력하고 월운 연구 풀이를 실행해야 합니다.']
-        : [...joined.monthly.missing, ...joined.monthly.caveats],
+        : [
+          ...joined.monthly.missing,
+          ...joined.monthly.caveats,
+          '원국과 월운의 별도 종합 관계 및 연운으로부터의 의미 상속은 출처 있는 방법론이 없어 적용하지 않습니다.',
+        ],
       provenance: joinedProvenance,
       authority: AUTHORITY,
     },

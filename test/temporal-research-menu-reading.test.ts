@@ -133,6 +133,8 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     }
     expect(annual.statusMessage).toContain('연운 Official 해석은 미승인');
     expect(monthly.statusMessage).toContain('월운 Official 해석은 미승인');
+    expect(annual.missing.join(' ')).toContain('원국 종합해석을 뒷받침할');
+    expect(monthly.missing.join(' ')).toContain('연운으로부터의 의미 상속');
   });
 
   it('selects only the exact T9 theme for the real reference instant inside the requested month', () => {
