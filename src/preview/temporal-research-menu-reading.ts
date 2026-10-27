@@ -290,9 +290,9 @@ export function buildTemporalResearchMenuReadings(
         ? '개인별 연간 연구 문구만 제공됩니다. 연운 Official 해석은 미승인입니다.'
         : '올해의 개인별 연구 풀이가 아직 실행되지 않았습니다.',
       sections: annual,
+      // Month-scoped composition is not a full-year evidence claim.
       ...(joined === undefined ? {} : {
         observedStructuralContext: joined.observedStructuralContext,
-        conditionalComposition: joined.conditionalComposition,
       }),
       missing: joined === undefined
         ? ['연도 및 출생정보를 입력하고 연운 연구 풀이를 실행해야 합니다.']

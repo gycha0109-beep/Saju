@@ -76,7 +76,7 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
       card.authority.maySell === false)).toBe(true);
     expect(cards[0]?.provenance.snapshotId).toBe(snapshot.snapshotId);
     expect(cards[0]?.observedStructuralContext).toEqual(annualMonthly.observedStructuralContext);
-    expect(cards[0]?.conditionalComposition).toEqual(annualMonthly.conditionalComposition);
+    expect(cards[0]?.conditionalComposition).toBeUndefined();
     expect(cards[1]?.conditionalComposition).toEqual(annualMonthly.conditionalComposition);
     expect(cards[2]?.conditionalComposition).toBeUndefined();
     expect(cards[1]?.observedStructuralContext).toEqual(annualMonthly.observedStructuralContext);
