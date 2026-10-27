@@ -140,6 +140,35 @@ function temporalEntries(result) {
       report.observedStructuralContext.monthlyPhases[1].segmentId !== 'after_jeol') {
     throw new Error('Cross-period factual preview cannot be interpreted as an admitted semantic claim');
   }
+  const composition = report.conditionalComposition;
+  if (composition.scope !== 'research_structural_conditions_only' ||
+      composition.interpretationAuthorityGranted || composition.mayPublish ||
+      composition.maySell || composition.slices.length < 2) {
+    throw new Error('Five hundred case research cannot promote conditional relation facts to T9 semantics');
+  }
+  const compositionEvidence = composition.slices.map(slice => ({
+    segmentId: slice.segmentId,
+    startsAt: slice.startsAt,
+    endsAtExclusive: slice.endsAtExclusive,
+    dayunStatus: slice.dayunStatus,
+    dayunBranch: slice.dayunBranch,
+    natalUnavailableSlots: slice.natalUnavailableSlots,
+    relations: slice.relations.map(relation => ({
+      kind: relation.kind,
+      left: relation.left,
+      right: relation.right,
+      sourceIds: relation.sourceIds,
+    })),
+  }));
+  a.compositionEvidence = compositionEvidence;
+  m.compositionEvidence = compositionEvidence;
+  a.compositionAuthority = {
+    interpretationAuthorityGranted:composition.interpretationAuthorityGranted,
+    mayPublish:composition.mayPublish,
+    maySell:composition.maySell,
+    mayGrantOfficialAuthority:composition.mayGrantOfficialAuthority,
+  };
+  m.compositionAuthority = a.compositionAuthority;
   a.calculatedStructure = {
     natalDayStem: report.observedStructuralContext.natalDayStem,
     annualPillarLabel: report.observedStructuralContext.annualPillarLabel,
@@ -235,6 +264,12 @@ function summarize(rows) {
     generated: rows.length,
     withReadableText: nonEmpty.length,
     withoutReadableText: rows.length - nonEmpty.length,
+    ...(rows.some(row => row.compositionEvidence) ? {
+      compositionCoverage: rows.filter(row => row.compositionEvidence).length,
+      compositionPatterns: tally(rows.filter(row => row.compositionEvidence)
+        .map(row => ({ ...row, compositionSignature: digest(JSON.stringify(row.compositionEvidence)) })),
+        'compositionSignature'),
+    } : {}),
     ...(rows.some(row => row.calculatedStructure) ? {
       calculatedStructureCoverage: rows.filter(row => row.calculatedStructure).length,
       calculatedStructureProfiles: tally(rows.filter(row => row.calculatedStructure)
@@ -348,6 +383,8 @@ export function runFiveHundredSajuAudit() {
           selectedEvidenceSignature: row.evidenceSignature ?? null,
           selectedEvidence: row.evidenceComponents ?? null,
           calculatedStructure: row.calculatedStructure ?? null,
+          compositionEvidence: row.compositionEvidence ?? null,
+          compositionAuthority: row.compositionAuthority ?? null,
           text: row.text,
           coverageExplanation: row.coverageExplanation ?? null,
           eligibleAlternatives: row.eligibleAlternatives ?? null,

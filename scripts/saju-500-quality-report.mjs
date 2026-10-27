@@ -42,7 +42,7 @@ const menus = MENU_NAMES.map(name => {
   }
   const summary=after.menuResults[name];
   if ((name === '올해' || name === '이번 달') &&
-      (current.some(row=>!row.calculatedStructure ||
+      (current.some(row=>!row.compositionEvidence || !row.calculatedStructure ||
          row.calculatedStructure.interpretationAuthorityGranted !== false))) {
     throw new Error('Temporal reading must expose exact, non-authorized chart facts for every case');
   }
@@ -63,6 +63,8 @@ const menus = MENU_NAMES.map(name => {
     afterExactTexts:summary.exactText.unique,
     calculatedStructureCoverage:summary.calculatedStructureCoverage??0,
     calculatedStructureVariants:summary.calculatedStructureProfiles?.unique??0,
+    compositionCoverage:summary.compositionCoverage??0,
+    compositionVariants:summary.compositionPatterns?.unique??0,
     example: current.find(r=>r.text.trim()) ? (() => {
       const found=current.find(r=>r.text.trim());
       return {
@@ -125,7 +127,9 @@ const markdown = '# 사주 고정 500건 × 8메뉴 개선 비교\n\n'+
   ', 연구 권한 보존: '+qualityGate.officialPermissionsNotGranted+'\n\n'+
   '연운 계산 사실 연결: '+menus.find(m=>m.name==='올해').calculatedStructureCoverage+
   '/500, 월운 계산 사실 연결: '+menus.find(m=>m.name==='이번 달').calculatedStructureCoverage+
-  '/500. 이 숫자는 새로운 예측·의미 해석을 뜻하지 않습니다.\n\n'+
+  '/500. 관계 조건 결합: '+menus.find(m=>m.name==='올해').compositionCoverage+
+  '/500, 계산 관계 패턴 '+menus.find(m=>m.name==='올해').compositionVariants+
+  '종. 이 숫자는 새로운 예측·의미 해석을 뜻하지 않습니다.\n\n'+
   '## 실제 한국어 결과 예시\n\n'+examples+'\n## 미확립 범위\n\n'+
   report.limitations.map(x=>'- '+x).join('\n')+'\n';
 writeFileSync(markdownPath,markdown,'utf8');

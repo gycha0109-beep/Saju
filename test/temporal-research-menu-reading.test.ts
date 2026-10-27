@@ -76,6 +76,9 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
       card.authority.maySell === false)).toBe(true);
     expect(cards[0]?.provenance.snapshotId).toBe(snapshot.snapshotId);
     expect(cards[0]?.observedStructuralContext).toEqual(annualMonthly.observedStructuralContext);
+    expect(cards[0]?.conditionalComposition).toEqual(annualMonthly.conditionalComposition);
+    expect(cards[1]?.conditionalComposition).toEqual(annualMonthly.conditionalComposition);
+    expect(cards[2]?.conditionalComposition).toBeUndefined();
     expect(cards[1]?.observedStructuralContext).toEqual(annualMonthly.observedStructuralContext);
     expect(cards[0]?.observedStructuralContext?.interpretationAuthorityGranted).toBe(false);
     expect(cards[2]?.observedStructuralContext).toBeUndefined();
@@ -108,6 +111,18 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
         },
       },
     })).toThrow('Temporal menu bridge rejects');
+  });
+
+  it('rejects conditional structural context forged as publishable or from another Jeol month', () => {
+    const { annualMonthly } = reports();
+    for(const forged of [
+      { ...annualMonthly.conditionalComposition, mayPublish: true as never },
+      { ...annualMonthly.conditionalComposition, jeolAt: '2026-01-01T00:00:00.000Z' },
+    ]) {
+      expect(() => buildTemporalResearchMenuReadings({
+        annualMonthly: {...annualMonthly, conditionalComposition: forged},
+      })).toThrow('Temporal menu bridge rejects');
+    }
   });
 
   it('preserves exact monthly T9 sources, intervals, Jeol phase and claim IDs', () => {

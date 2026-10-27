@@ -122,3 +122,14 @@
 - GAP-06: 이 문헌들은 주로 질적 분석이며 결과 예측 정확도의 독립적 통계 검증 자료가 아님.
 
 **결론**: 직접 출처에 뿌리를 둔 원국 선행·대운/연운 충합 공존 및 월주 절입 산출 규칙의 연구 방향은 확보했다. 그러나 전통에서 기술한 규칙을 '개인의 미래가 실제로 그렇게 된다'는 정확도 증거로 간주할 수 없으며, 월운 종합결론 및 현대 연운 테마의 Product/Official 권한은 여전히 `HOLD`다. 이 결과는 기존 authority bridge review를 변경하지 않는다.
+
+## 6. 읽기 전용 연구 근거 구현 및 500명 반례 대조
+
+- 구현: `src/preview/temporal-composition-conditional-context.ts`는 기존 `CanonicalSajuSnapshot`, `AnnualInterpretationFacts`, `MonthlyInterpretationFacts`, `resolveDayunTemporalContext`만 소비한다. **신규 병렬 의미 엔진이나 전통 방법론 Registry가 아니다.**
+- 관측: T0 출처 카탈로그를 유지한 지지 `branch_clash` / `branch_six_combination` **구조 사실**만 조회. 나머지 생극·합화, 용신·기신, 우세 판정, 사건·운세를 새로 정의하지 않는다.
+- 시간: 서울 민간 달력 연운과 입춘 효력 연주는 다르게 취급한다. 월운은 실제 절입 전후 반개구간 `[start,end)`이며 해당 구간에 대운이 바뀌면 분할. 원국 시간이나 대운 계산이 불명확하면 해당 관계를 생략하고 미확정을 설명한다.
+- 출력: 연구 전용 자료의 소스 ID, 명식·시각·대운 구간 및 조건부 관계의 한국어 실제 설명을 분리하여 `GeneralAnnualMonthlyExplorationReport` 및 연구용 시간운 메뉴에 전달. 출처 자료의 고전 원칙을 근거로 구체 운세 결론을 만들지는 않는다.
+- 검사: `test/temporal-composition-conditional-context.test.ts`, `test/temporal-research-menu-reading.test.ts` 등에 절입·대운 교체, 출처 있는 관계 식별, 공식 승격 거부를 확인.
+- 고정 500명×8메뉴 재검사: 전체 의미 변경 **0**, 조건부 구조 관계 기록 **2,364건**, 구조 패턴 **398종**, 대운 전환으로 추가 분할한 월구간 **4개**. 동일한 기존 연운/월운 해석 프로필 안에서 구조 근거만 다른 쌍은 각각 39쌍·50쌍 표본 수집 (`scripts/saju-500-conditional-evidence-audit.mjs`; 출생/간지/기간은 이 검사의 재현 가능한 입력값).
+- 실제 반례: 기존 **연운 프로필이 같은** 1971-02-24 21:59와 1992-10-21 11:08은 2026년 10월 구조가 다르다. 첫 명식은 원국 월지 寅과 대운 申의 충, 절입 전 원국 일지 辰과 월운 酉의 육합, 절입 후 辰과 戌의 충이 관측된다. 둘째 명식은 해당 월 구간에서 위 구조 관계가 관측되지 않는다. **이는 원국 관계의 증거 차이지 서로 다른 사건 발생이나 길흉이 확정된 근거가 아니다.**
+- 검증 경계: `conditionalComposition.interpretationAuthorityGranted = false`, `mayPublish = false`, `maySell = false`. 새로운 미래 예측 Claim 0건. 원국×대운×세운×월운 *의미 종합*의 직접 출처·예외 및 권한이 확보되기 전까지 Official/Production은 `HOLD`.

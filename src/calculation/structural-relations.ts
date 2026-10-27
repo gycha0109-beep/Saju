@@ -127,6 +127,10 @@ export function isStructuralBranchClash(left: EarthlyBranch, right: EarthlyBranc
   return pairMatches(left, right, BRANCH_CLASHES);
 }
 
+export function isStructuralBranchSixCombination(left: EarthlyBranch, right: EarthlyBranch): boolean {
+  return pairMatches(left, right, BRANCH_SIX_COMBINATIONS);
+}
+
 function tripleMatches(
   values: readonly EarthlyBranch[],
   groups: readonly (readonly [EarthlyBranch, EarthlyBranch, EarthlyBranch])[],

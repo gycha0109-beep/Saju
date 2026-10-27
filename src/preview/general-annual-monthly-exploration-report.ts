@@ -3,6 +3,10 @@ import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import { buildAnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
+import {
+  buildTemporalCompositionConditionalContext,
+  type TemporalCompositionContext,
+} from './temporal-composition-conditional-context.js';
 import type { MonthlyInterpretationFacts, MonthlySegmentId } from '../reading/monthly-interpretation-facts.js';
 import { buildTemporalReadingContext } from '../reading/temporal-reading-context.js';
 import {
@@ -33,6 +37,8 @@ export interface GeneralAnnualMonthlyExplorationReport {
   annual: GeneralAnnualExplorationReport;
   monthly: GeneralMonthlyExplorationReport;
   periodComparison: string;
+  /** Read-only relational context: a literature-bound precondition, never a forecast. */
+  conditionalComposition: TemporalCompositionContext;
   /** Same-chart structural identities only; never T8/T9 prognostic synthesis. */
   observedStructuralContext: {
     scope: 'calculated_relation_identity_only';
@@ -110,9 +116,8 @@ export function buildGeneralAnnualMonthlyExplorationReport(
   };
   const annualContext = buildTemporalReadingContext(annualRequest);
   requireLinkedPeriod(annualContext?.scope === 'annual', 'annual context unavailable');
-  const annual = buildGeneralAnnualExplorationReport(
-    buildAnnualInterpretationFacts(snapshot, annualContext),
-  );
+  const annualFacts = buildAnnualInterpretationFacts(snapshot, annualContext);
+  const annual = buildGeneralAnnualExplorationReport(annualFacts);
   requireLinkedPeriod(
     annual.targetYear === monthly.targetYear &&
     annual.referenceDateTime === facts.referenceDateTime &&
@@ -145,6 +150,16 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       ? 'in_target_civil_year' as const : 'outside_target_civil_year' as const,
   };
 
+  const conditionalComposition = buildTemporalCompositionConditionalContext(
+    snapshot, annualFacts, facts,
+  );
+  requireLinkedPeriod(
+    conditionalComposition.snapshotId === snapshot.snapshotId &&
+    conditionalComposition.calculationHash === snapshot.calculationHash &&
+    !conditionalComposition.interpretationAuthorityGranted &&
+    !conditionalComposition.mayPublish && !conditionalComposition.maySell,
+    'conditional structural context must retain source and chart boundaries',
+  );
   const observedStructuralContext = {
     scope: 'calculated_relation_identity_only' as const,
     natalDayStem: snapshot.pillars.day.status === 'resolved'
@@ -184,6 +199,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     targetYear: monthly.targetYear, targetMonth: monthly.targetMonth,
     annual, monthly, periodComparison, observedStructuralContext,
+    conditionalComposition,
     annualReference, referenceReading,
     caveats: [
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
@@ -237,6 +253,23 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   report: GeneralAnnualMonthlyExplorationReport,
 ): string {
   const e = escapeHtml;
+  const conditional = report.conditionalComposition;
+  if (conditional.snapshotId !== report.snapshotId ||
+      conditional.calculationHash !== report.calculationHash ||
+      conditional.interpretationAuthorityGranted ||
+      conditional.mayPublish || conditional.maySell) {
+    throw new TypeError('A calculated composition cannot promote research interpretation authority');
+  }
+  const conditionalCards = conditional.slices.map(slice =>
+    '<article class="reading-card"><small>조건부 관계 사실 · 미검증 운세 의미</small>' +
+    '<h4>' + e(slice.segmentId === 'before_jeol' ? '절입 전' : '절입 후') +
+    ' 관계 확인</h4><p>' + e(slice.koreanExplanation) + '</p>' +
+    '<details><summary>실제 계산 구간 및 전통 자료</summary><p>' +
+    e(kst(slice.startsAt)) + '부터 ' + e(kst(slice.endsAtExclusive)) +
+    ' 전까지 · 대운 지지: ' + e(slice.dayunBranch ?? '미확정') +
+    '</p><p>연구 자료: ' + e(conditional.source.study) +
+    '</p></details></article>'
+  ).join('');
   const structural = report.observedStructuralContext;
   const dayStem = structural.natalDayStem ?? '미확정';
   const yearFacts = '원국 일간 ' + dayStem + ' · 서울 달력연도 표시용 간지 ' +
@@ -343,7 +376,9 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<section id="monthly-reading"><h2>' + e(report.monthly.headline) + '</h2>' +
     '<p>' + e(report.periodComparison) + '</p>' +
     '<p class="muted">' + e(report.monthly.jeolBoundary.name) + ' 절입: ' +
-    e(kst(report.monthly.jeolBoundary.at)) + '</p>' + monthlyFacts + monthly + '</section>' +
+    e(kst(report.monthly.jeolBoundary.at)) + '</p>' + monthlyFacts + monthly +
+    '<h3>원국·대운·세운·월운의 조건부 구조 관계 (예측 아님)</h3>' +
+    conditionalCards + '</section>' +
     '<aside><strong>해석 범위와 아직 모르는 부분</strong><ul>' + caveats + '</ul></aside>' +
     '</main></body></html>';
 }

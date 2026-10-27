@@ -79,6 +79,16 @@ function render(
     ' · 서울 달력연도 표시용 간지 ' + structural.annualPillarLabel +
     ' · 십신 관계 ' + structural.annualStemTenGod +
     '. 이 내용은 계산된 관계 식별이며 운세 해석이나 사건 예측이 아닙니다.';
+  const conditional = report.conditionalComposition;
+  const conditionals = conditional.slices.map(slice =>
+    '<article><h3>' + (slice.segmentId === 'before_jeol' ? '절입 전' : '절입 후') +
+    ' · 조건부 구조 관계</h3><p>' + e(slice.koreanExplanation) +
+    '</p><details><summary>연구 출처·대운 기간</summary><p>' +
+    e(conditional.source.study) + '</p><p>' +
+    e(slice.startsAt) + ' — ' + e(slice.endsAtExclusive) +
+    ' · 대운 지지: ' + e(slice.dayunBranch ?? '미확정') +
+    '</p></details></article>'
+  ).join('');
   const observedMonthly = structural.monthlyPhases.map(phase =>
     '<p>계산된 ' + (phase.segmentId === 'before_jeol' ? '절입 전' : '절입 후') +
     ' 월주는 ' + e(phase.pillarLabel) + '이며 원국 일간과의 월간 십신 관계는 ' +
@@ -169,6 +179,7 @@ function render(
     '<section id="monthly"><h2>이번 달 — ' + report.targetMonth + '월</h2>' +
     '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth +
     '<h3>절입 전후 전체 풀이</h3>' + observedMonthly + monthly +
+    '<h3>원국·대운·세운·월운의 조건부 구조 관계</h3>' + conditionals +
     '<p>월운 T9 근거와 위의 원국 해석은 구분합니다. ' +
     '상호작용을 설명하는 출처 있는 시간 해석 규칙이 확보되기 전에는 합쳐서 운세로 단정하지 않습니다.</p></section>' +
     '<section id="life-stage"><h2>삶의 단계 — 계산된 대운</h2><p>' +
