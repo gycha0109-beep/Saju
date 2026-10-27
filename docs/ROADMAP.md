@@ -240,5 +240,6 @@
 
 - **실제 개선 전 500건 결과:** https://github.com/gycha0109-beep/Saju/actions/runs/40122318503
 - **검사 코드 변경 PR:** https://github.com/gycha0109-beep/Saju/pull/2732
+- **연운·월운 추가 문헌 연구(2026-10-27):** [원국·대운·세운·월운 합성 문헌 조사와 구현 허용 범위](research/annual-monthly-composition-literature-evidence-2026-10-27.md). 『삼명통회』·『적천수』 및 2021–2026 학술자료 확인. 대운의 조건부 상호작용 근거는 발견했으나 연운·월운 종합 결과의 직접 허가와 경험적 정확성 증명은 아님.
 - **핵심 소스:** src/research/wealth-natal-multifactor-candidate.ts, src/preview/wealth-natal-multifactor-report.ts, src/research/general-annual-reading-candidate.ts, src/preview/general-annual-exploration-report.ts, src/research/general-monthly-reading-candidate.ts, src/preview/general-monthly-exploration-report.ts
 - **기존 사주 해석 설계 근거:** Myeonghwa Personalized Interpretation Architecture v1.3 및 MyeongHa Saju Product Interpretation Architecture v1.2. 이 문서들은 **별도의 실행 로드맵이 아니라 구현·의미·권한을 판단하는 설계 근거**다.
