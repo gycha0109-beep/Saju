@@ -357,15 +357,31 @@ export function buildWealthNatalMultifactorReport(
   const coreCandidates = result.filter(section =>
     section.axis === 'core' || section.axis === 'creation' ||
     section.axis === 'management' || section.axis === 'planning');
-  const core = [...coreCandidates].sort((a, b) => {
-    const countA = selectIndependentNatalSupportingAxes(a,
-      result.filter(section => section.axis !== 'context')).supporting.length;
-    const countB = selectIndependentNatalSupportingAxes(b,
-      result.filter(section => section.axis !== 'context')).supporting.length;
-    return countB - countA ||
-      AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
-      a.claimType.localeCompare(b.claimType);
-  })[0];
+  const eligible = result.filter(section => section.axis !== 'context');
+  const legacyCount = (candidate: WealthNatalMultifactorSection): number => {
+    const axes = new Set([candidate.axis]);
+    const paths = new Set(candidate.observedFactPaths);
+    let count = 0;
+    for (const section of eligible) {
+      if (count >= 2) break;
+      if (axes.has(section.axis) ||
+          !section.observedFactPaths.some(path => !paths.has(path))) continue;
+      axes.add(section.axis);
+      section.observedFactPaths.forEach(path => paths.add(path));
+      count++;
+    }
+    return count;
+  };
+  const core = coreCandidates.map(section => ({
+    section,
+    supported: selectIndependentNatalSupportingAxes(section, eligible).supporting.length,
+    previouslyComplete: legacyCount(section) === 2,
+  })).sort((a,b) =>
+    b.supported - a.supported ||
+    Number(b.previouslyComplete) - Number(a.previouslyComplete) ||
+    AXES.indexOf(a.section.axis) - AXES.indexOf(b.section.axis) ||
+    a.section.claimType.localeCompare(b.section.claimType)
+  )[0]?.section;
   // Actual Wealth relations take priority. Context-only T8 may fill an otherwise
   // empty research page, but never establishes the missing Wealth synthesis.
   const supportSelection = core

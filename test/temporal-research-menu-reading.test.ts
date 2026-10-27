@@ -104,6 +104,13 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
       expect(projected).toBeDefined();
       expect(projected?.sourceIds).toEqual(original.sourceIds);
       expect(projected?.factPaths).toEqual(original.factPaths);
+      if (original.observedClash && original.relatedPillar) {
+        expect(projected?.observedClash).toEqual({
+          natalPillar: original.relatedPillar,
+          natalBranch: original.observedClash.natalBranch,
+          temporalBranch: original.observedClash.monthlyBranch,
+        });
+      }
       expect(projected?.interval).toEqual({
         startsAt: original.calculatedInterval.startsAt,
         endsAtExclusive: original.calculatedInterval.endsAt,
@@ -115,6 +122,15 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     const annual = buildTemporalResearchMenuReadings({ annualMonthly })[0]!;
     expect(annual.sections.every(s => s.evidenceKind === 'annual_research_profile')).toBe(true);
     expect(annual.sections.every(s => s.claimId === undefined)).toBe(true);
+    for (const original of annualMonthly.annual.sections) {
+      if (!original.observedClash || !original.relatedPillar) continue;
+      const projected = annual.sections.find(x => x.researchProfileKey === original.id);
+      expect(projected?.observedClash).toEqual({
+        natalPillar: original.relatedPillar,
+        natalBranch: original.observedClash.natalBranch,
+        temporalBranch: original.observedClash.annualBranch,
+      });
+    }
     expect(annual.statusMessage).toContain('연운 Official 해석은 미승인');
     expect(monthly.statusMessage).toContain('월운 Official 해석은 미승인');
   });

@@ -21,6 +21,15 @@ const REGISTRIES = [
 ] as const;
 
 describe('four different consumer natal menus require independently observed T0 support', () => {
+  it('recovers two independent support axes when an early broad axis consumes both paths', () => {
+    const core = { axis: 'core', observedFactPaths: ['base'] };
+    const wide = { axis: 'creation', observedFactPaths: ['pathA','pathB'] };
+    const narrowA = { axis: 'management', observedFactPaths: ['pathA'] };
+    const narrowB = { axis: 'planning', observedFactPaths: ['pathB'] };
+    const selected = selectIndependentNatalSupportingAxes(core,[wide,narrowA,narrowB]);
+    expect(selected.supporting.map(x => x.axis)).toEqual(['management','planning']);
+  });
+
   it('does not upgrade differently named axes when they repeat the same observed Canonical fact paths', () => {
     const core = { axis: 'core', observedFactPaths: ['derivedFacts.tenGods.value.year.stem.value'] };
     const repeated = { axis: 'management', observedFactPaths: [...core.observedFactPaths] };

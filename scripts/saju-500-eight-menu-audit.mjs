@@ -100,6 +100,14 @@ function natalEntry(report) {
   row.coverageExplanation = Array.isArray(report.missing)
     ? report.missing.filter(x => typeof x === 'string').join(' ')
     : '';
+  row.eligibleAlternatives = (report.eligibleAlternatives ?? []).map(alt => ({
+    claimType: alt.claimType,
+    axis: alt.axis,
+    channel: alt.channel,
+    ruleId: alt.ruleId,
+    sourceIds: [...alt.sourceIds],
+    factPaths: [...alt.observedFactPaths],
+  }));
   return row;
 }
 function temporalEntries(result) {
@@ -158,7 +166,16 @@ function temporalEntries(result) {
   m.evidenceComponents = {
     referenceState: m.sourceEvidence.referenceState,
     referenceSegment: m.sourceEvidence.referenceSegment,
-    sections: m.sourceEvidence.sections.map(({claimId, ...section}) => section),
+    sections: m.sourceEvidence.sections.map(section => ({
+      kind: section.kind,
+      segmentId: section.segmentId,
+      tenGod: section.tenGod,
+      sourceIds: section.sourceIds,
+      ruleIds: section.ruleIds,
+      factPaths: section.factPaths,
+      relatedPillar: section.relatedPillar,
+      observedClash: section.observedClash,
+    })),
   };
   m.evidenceSignature = digest(JSON.stringify(m.evidenceComponents));
   const l = entry(
@@ -304,6 +321,7 @@ export function runFiveHundredSajuAudit() {
           selectedEvidence: row.evidenceComponents ?? null,
           text: row.text,
           coverageExplanation: row.coverageExplanation ?? null,
+          eligibleAlternatives: row.eligibleAlternatives ?? null,
           ...(row.sourceEvidence ? { sourceEvidence: row.sourceEvidence } : {}),
         })),
       ])),

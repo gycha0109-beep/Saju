@@ -22,21 +22,58 @@ export function selectIndependentNatalSupportingAxes<T extends ObservedNatalAxis
   if (!Number.isInteger(maximum) || maximum < 0 || core.observedFactPaths.length === 0) {
     throw new TypeError('Independent natal axes require actual calculated core paths and a valid limit');
   }
-  const axes = new Set<string>([core.axis]);
+  const greedyAxes = new Set<string>([core.axis]);
+  const greedyPaths = new Set(core.observedFactPaths);
+  const greedy: T[] = [];
+  for (const candidate of candidates) {
+    if (greedy.length >= maximum) break;
+    if (greedyAxes.has(candidate.axis)) continue;
+    const distinct = candidate.observedFactPaths.some(path => !greedyPaths.has(path));
+    if (!distinct) continue;
+    greedy.push(candidate);
+    greedyAxes.add(candidate.axis);
+    candidate.observedFactPaths.forEach(path => greedyPaths.add(path));
+  }
+
+  // Preserve existing selection exactly when it already reaches the requested
+  // independent coverage. Otherwise search the bounded candidate combinations:
+  // a broad early axis may consume facts needed by two independent later axes.
+  let best = greedy;
+  if (best.length < maximum) {
+    const visit = (from: number, chosen: T[], axes: Set<string>, paths: Set<string>): void => {
+      if (chosen.length > best.length) best = [...chosen];
+      if (best.length === maximum) return;
+      for (let i = from; i < candidates.length; i++) {
+        if (chosen.length + candidates.length - i <= best.length) break;
+        const candidate = candidates[i]!;
+        if (axes.has(candidate.axis) ||
+            !candidate.observedFactPaths.some(path => !paths.has(path))) continue;
+        const nextAxes = new Set(axes);
+        const nextPaths = new Set(paths);
+        nextAxes.add(candidate.axis);
+        candidate.observedFactPaths.forEach(path => nextPaths.add(path));
+        visit(i + 1, [...chosen, candidate], nextAxes, nextPaths);
+        if (best.length === maximum) return;
+      }
+    };
+    visit(0, [], new Set([core.axis]), new Set(core.observedFactPaths));
+  }
+
   const usedPaths = new Set(core.observedFactPaths);
-  const supporting: T[] = [];
+  const axes = new Set([core.axis]);
+  const chosen = new Set(best);
+  let included = 0;
   let overlapOnlyCount = 0;
   for (const candidate of candidates) {
-    if (supporting.length >= maximum) break;
-    if (axes.has(candidate.axis)) continue;
-    const newPaths = candidate.observedFactPaths.filter(path => !usedPaths.has(path));
-    if (newPaths.length === 0) {
+    if (included >= maximum) break;
+    if (chosen.has(candidate)) {
+      included++;
+      axes.add(candidate.axis);
+      candidate.observedFactPaths.forEach(path => usedPaths.add(path));
+    } else if (!axes.has(candidate.axis) &&
+               candidate.observedFactPaths.every(path => usedPaths.has(path))) {
       overlapOnlyCount++;
-      continue;
     }
-    supporting.push(candidate);
-    axes.add(candidate.axis);
-    candidate.observedFactPaths.forEach(path => usedPaths.add(path));
   }
-  return { supporting, overlapOnlyCount };
+  return { supporting: best, overlapOnlyCount };
 }

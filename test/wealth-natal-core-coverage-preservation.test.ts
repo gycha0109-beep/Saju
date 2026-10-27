@@ -6,6 +6,28 @@ import { buildWealthNatalMultifactorReport } from '../src/preview/wealth-natal-m
 import { createWealthNatalMultifactorRegistry } from '../src/research/wealth-natal-multifactor-candidate.js';
 
 describe('wealth: preserve independently grounded core coverage', () => {
+  it('does not treat irrelevant adjacent birth minutes as distinct wealth meanings', () => {
+    const now = new Date('2026-10-25T00:00:00.000Z');
+    const registry = createWealthNatalMultifactorRegistry();
+    const interpret = (minute: number) => {
+      const snapshot = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar',
+        date: { year: 1995, month: 2, day: 28 },
+        time: { known: true, hour: 22, minute },
+        sexForTraditionalCalculation: 'male',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now });
+      const execution = runInterpretation(snapshot, registry, { now });
+      const report = buildWealthNatalMultifactorReport(snapshot, execution, registry);
+      return { report, snapshot };
+    };
+    const a = interpret(42), b = interpret(43);
+    expect(a.snapshot.calculationHash).not.toBe(b.snapshot.calculationHash);
+    expect(a.snapshot.pillars).toEqual(b.snapshot.pillars);
+    expect(a.report.sections.map(x => [x.claimType, x.observedFactPaths, x.paragraph]))
+      .toEqual(b.report.sections.map(x => [x.claimType, x.observedFactPaths, x.paragraph]));
+    expect(a.report.state).toBe(b.report.state);
+  });
+
   it('does not replace a complete existing reading with an overlapping three-family core', () => {
     const now = new Date('2026-10-25T00:00:00.000Z');
     const snapshot = calculateCanonicalSajuSnapshot({

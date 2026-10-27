@@ -1,3 +1,4 @@
+import type { EarthlyBranch, PillarSlot } from '../contracts/calculation.js';
 import type { GeneralAnnualMonthlyExplorationReport } from './general-annual-monthly-exploration-report.js';
 import type { LifeStageDayunResearchReport } from './life-stage-dayun-research-report.js';
 
@@ -20,6 +21,12 @@ export interface TemporalResearchMenuSection {
   researchProfileKey?: string;
   sourceIds: readonly string[];
   factPaths: readonly string[];
+  /** A measured temporal-to-natal clash, not a new outcome or T9 synthesis. */
+  observedClash?: Readonly<{
+    natalPillar: PillarSlot;
+    natalBranch: EarthlyBranch;
+    temporalBranch: EarthlyBranch;
+  }>;
   interval?: {
     startsAt: string;
     endsAtExclusive: string;
@@ -143,6 +150,13 @@ export function buildTemporalResearchMenuReadings(
       factPaths: section.relatedPillar === undefined
         ? ['temporal.annualStemTenGod']
         : ['temporal.annualBranchRelations.' + section.relatedPillar],
+      ...(section.observedClash && section.relatedPillar ? {
+        observedClash: {
+          natalPillar: section.relatedPillar,
+          natalBranch: section.observedClash.natalBranch,
+          temporalBranch: section.observedClash.annualBranch,
+        },
+      } : {}),
     })) ?? [];
   const monthly = joined?.monthly.sections.filter(section =>
     section.text.trim().length > 0 &&
@@ -155,6 +169,13 @@ export function buildTemporalResearchMenuReadings(
       claimId: section.claimId,
       sourceIds: [...section.sourceIds],
       factPaths: [...section.factPaths],
+      ...(section.observedClash && section.relatedPillar ? {
+        observedClash: {
+          natalPillar: section.relatedPillar,
+          natalBranch: section.observedClash.natalBranch,
+          temporalBranch: section.observedClash.monthlyBranch,
+        },
+      } : {}),
       interval: {
         startsAt: section.calculatedInterval.startsAt,
         endsAtExclusive: section.calculatedInterval.endsAt,

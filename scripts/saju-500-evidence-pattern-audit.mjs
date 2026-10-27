@@ -1,4 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
+import process from 'node:process';
+import console from 'node:console';
 
 const [inputPath, outputPath] = process.argv.slice(2);
 if (!inputPath || !outputPath) {
@@ -9,7 +11,6 @@ if (audit.seed !== '0x5a1a2026' || audit.count !== 500 || audit.failedCases !== 
   throw new Error('Only the fixed, successful 500-case experiment can be compared.');
 }
 const eligible = [];
-const scope = [];
 for (const [menu, rows] of Object.entries(audit.caseResults ?? {})) {
   for (const row of rows) {
     if (!row.text || !row.selectedEvidenceSignature) continue;
@@ -52,6 +53,20 @@ const patterns = [...byEvidence.entries()].map(([key, rows]) => ({
 }));
 patterns.sort((a,b) => a.menu.localeCompare(b.menu, 'ko') ||
   a.selectedEvidenceSignature.localeCompare(b.selectedEvidenceSignature));
+const menuNames = [...new Set(patterns.map(row => row.menu))].sort((a,b) => a.localeCompare(b, 'ko'));
+const grouped = new Map(menuNames.map(name => [name, patterns.filter(row => row.menu === name)]));
+const inspectedPatterns = [];
+for (let offset = 0; inspectedPatterns.length < 100; offset++) {
+  let collected = false;
+  for (const name of menuNames) {
+    const row = grouped.get(name)?.[offset];
+    if (!row) continue;
+    inspectedPatterns.push(row);
+    collected = true;
+    if (inspectedPatterns.length === 100) break;
+  }
+  if (!collected) break;
+}
 const sameEvidenceDifferentText = [...byEvidence.values()]
   .filter(rows => new Set(rows.map(x => x.exactTextHash)).size > 1)
   .map(rows => ({
@@ -74,7 +89,10 @@ const report = {
   count: audit.count, seed: audit.seed, reference: '2026-10-25T00:00:00.000Z',
   distinctSourceBoundEvidencePatterns: patterns.length,
   atLeast100Observed: patterns.length >= 100,
-  inspectedPatterns: patterns.slice(0,100),
+  inspectedPatterns,
+  sampledMenus: Object.fromEntries(menuNames.map(name => [name,
+    inspectedPatterns.filter(row => row.menu === name).length])),
+  sameEvidenceConsistentText: sameEvidenceDifferentText.length === 0,
   sameEvidenceDifferentText,
   sameCoarseMeaningDifferentEvidence,
   exclusions: {

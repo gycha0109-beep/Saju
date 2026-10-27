@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs';
+import process from 'node:process';
 const [baselinePath, candidatePath, outputPath] = process.argv.slice(2);
 if (!baselinePath || !candidatePath) {
   throw new Error('Usage: node scripts/saju-500-diff.mjs baseline.json candidate.json [output.json]');
