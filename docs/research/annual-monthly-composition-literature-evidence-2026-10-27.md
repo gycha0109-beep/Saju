@@ -138,7 +138,7 @@
 
 - 코드: `src/preview/annual-dayun-existing-t9-claim-links.ts`, `test/annual-dayun-existing-t9-claim-links.test.ts`.
 - **기존 Claim 재사용:** `GeneralMonthlyExplorationReport`의 실제 EvidenceSelector가 선택한 T9 연구 `claimId` / `methodologyId` / `sourceIds` / `ruleIds` / `factPaths`에만 연결한다. 본 모듈은 새 RuleDefinition/InterpretationClaim을 생성하지 않는다.
-- **성립 조건:** 원국 일간·대운 확정 여부, R153의 `NATAL_DAY_STEM_CONTEXT_REQUIRED`·`DAYUN_CONTEXT_REQUIRED`·`MEETING_COMBINATION_CHECK_REQUIRED`·`PUNISHMENT_CLASH_CHECK_REQUIRED` 전제, T0에 열거된 지지 충/육합 쌍의 실제 계산 결과.
+- **성립 조건:** 원국 일간·대운 확정 여부, R153의 `ANNUAL_STEM_COMPONENT_RETAINED`·`ANNUAL_BRANCH_COMPONENT_RETAINED`·`NATAL_DAY_STEM_CONTEXT_REQUIRED`·`DAYUN_CONTEXT_REQUIRED`·`MEETING_COMBINATION_CHECK_REQUIRED`·`PUNISHMENT_CLASH_CHECK_REQUIRED` 6개 전제, T0에 열거된 지지 충/육합 쌍의 실제 계산 결과.
 - **불성립·미확정:** 대운–세운의 충·육합이 없는 경우를 '해당 두 종류의 관계 미관측'으로만 표기하고 다른 효과의 부재나 길흉을 단정하지 않는다. 출생시각 등 때문에 대운이 불명확하면 `dayun_unavailable`로 남긴다.
 - **원본 Claim 일치:** 월운 T9 Claim의 선택한 절입 구간과 대운 교체가 생긴 세부 구간의 시작/끝 시각이 서로 포함 관계여야 한다. 조작된 Claim ID·기간·방법론 권한 상태는 실패 처리한다.
 - **R154 경계:** 먼저 탐색된 충/육합에 임의 우선순위를 부여하지 않으며, 건수로 결과·강도를 점수화하지 않는다. `compositionMeaningState='not_admitted'`, `newlyEmittedT9Claims=0`, `mayPublish=false`, `maySell=false`를 유지한다.

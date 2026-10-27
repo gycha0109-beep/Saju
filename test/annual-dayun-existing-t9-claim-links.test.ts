@@ -44,7 +44,7 @@ describe('R153 R154 annual/Dayun structural prerequisites for existing monthly T
       expect(item.existingT9SourceIds).toEqual(exact[0]?.sourceIds);
       expect(item.startsAt).toBe(slice.startsAt);
       expect(item.endsAtExclusive).toBe(slice.endsAtExclusive);
-      expect(item.sourceMethodPrerequisites).toHaveLength(4);
+      expect(item.sourceMethodPrerequisites).toHaveLength(6);
       expect(item.newlyEmittedT9Claims).toBe(0);
       expect(item.compositionMeaningState).toBe('not_admitted');
       expect(item.rankOrOutcomeEstablished).toBe(false);
@@ -79,6 +79,13 @@ describe('R153 R154 annual/Dayun structural prerequisites for existing monthly T
 
   it('fails closed when original T9 fact paths are replaced or exact period is forged',()=>{
     const current=report(birth(1998,3,28,22,19));
+    expect(()=>buildAnnualDayunExistingT9ClaimLinks({
+      ...current,
+      observedStructuralContext:{
+        ...current.observedStructuralContext,
+        annualPillarLabel:'가짜연주',
+      },
+    })).toThrow('cannot cross source or chart authority');
     const modified={
       ...current,
       monthly:{

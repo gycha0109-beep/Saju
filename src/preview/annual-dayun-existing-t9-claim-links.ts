@@ -64,6 +64,8 @@ type Source = Pick<GeneralAnnualMonthlyExplorationReport,
   'annual' | 'monthly' | 'conditionalComposition' | 'observedStructuralContext'>;
 
 const REQUIRED = [
+  'ANNUAL_STEM_COMPONENT_RETAINED',
+  'ANNUAL_BRANCH_COMPONENT_RETAINED',
   'NATAL_DAY_STEM_CONTEXT_REQUIRED',
   'DAYUN_CONTEXT_REQUIRED',
   'MEETING_COMBINATION_CHECK_REQUIRED',
@@ -89,6 +91,11 @@ function assertResearchBoundary(report: Source): void {
       report.conditionalComposition.interpretationAuthorityGranted ||
       report.conditionalComposition.mayPublish || report.conditionalComposition.maySell ||
       report.annual.targetYear !== report.targetYear ||
+      report.annual.annualPillarLabel !== report.observedStructuralContext.annualPillarLabel ||
+      report.annual.annualStemTenGod !== report.observedStructuralContext.annualStemTenGod ||
+      report.observedStructuralContext.annualPillarLabel.length < 2 ||
+      report.conditionalComposition.slices.some(slice=>
+        !report.observedStructuralContext.annualPillarLabel.endsWith(slice.annualBranch)) ||
       report.monthly.targetYear !== report.targetYear ||
       report.monthly.targetMonth !== report.targetMonth ||
       report.annual.calendarPolicy !== 'civil_year_only' ||
