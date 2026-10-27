@@ -10,6 +10,10 @@ import {
 import type { MonthlyInterpretationFacts, MonthlySegmentId } from '../reading/monthly-interpretation-facts.js';
 import { buildTemporalReadingContext } from '../reading/temporal-reading-context.js';
 import {
+  buildAnnualDayunExistingT9ClaimLinks,
+  type AnnualDayunT9PreconditionReview,
+} from './annual-dayun-existing-t9-claim-links.js';
+import {
   buildGeneralAnnualExplorationReport,
   type GeneralAnnualExplorationReport,
 } from './general-annual-exploration-report.js';
@@ -39,6 +43,8 @@ export interface GeneralAnnualMonthlyExplorationReport {
   periodComparison: string;
   /** Read-only relational context: a literature-bound precondition, never a forecast. */
   conditionalComposition: TemporalCompositionContext;
+  /** Research-only match to existing T9 monthly Claim IDs; no new Claim issuance. */
+  t9EvidenceLinks: AnnualDayunT9PreconditionReview;
   /** Same-chart structural identities only; never T8/T9 prognostic synthesis. */
   observedStructuralContext: {
     scope: 'calculated_relation_identity_only';
@@ -192,7 +198,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     phase('after_jeol', '절입 이후') + '. ' +
     '이는 서로 다른 기간의 연구 해석 후보를 나란히 읽는 안내이며, 한쪽 결과로 다른 기간의 사건을 예측하지 않습니다.';
 
-  return {
+  const baseReport: Omit<GeneralAnnualMonthlyExplorationReport, 't9EvidenceLinks'> = {
     version: GENERAL_ANNUAL_MONTHLY_EXPLORATION_VERSION,
     mode: 'internal_exploration', status: 'not_official_reading',
     researchOnly: true, usefulComplete: false, mayPublish: false, maySell: false,
@@ -207,6 +213,10 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       '개인별 명식의 계산 사실 외에 특정 사건, 재물 규모, 건강 및 관계 결과를 예측하지 않습니다.',
       '내부 연구 미리보기이며 Official Reading, 공개 또는 판매 권한을 부여하지 않습니다.',
     ],
+  };
+  return {
+    ...baseReport,
+    t9EvidenceLinks: buildAnnualDayunExistingT9ClaimLinks(baseReport),
   };
 }
 
@@ -260,6 +270,16 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       conditional.mayPublish || conditional.maySell) {
     throw new TypeError('A calculated composition cannot promote research interpretation authority');
   }
+  const linkedT9Cards = report.t9EvidenceLinks.existingT9ClaimLinks.map(link =>
+    '<article class="reading-card"><small>기존 T9 Claim과 조건부 계산 근거 연결 · 해석 권한 없음</small>' +
+    '<p>' + e(link.koreanExplanation) + '</p>' +
+    '<details><summary>원본 T9 Claim 출처·연구 조건</summary><p>기존 Claim: ' +
+    e(link.existingT9ClaimId ?? '없음') + ' · 방법론: ' +
+    e(link.existingT9MethodologyId ?? '미확정') + '</p><p>원본 출처: ' +
+    e(link.existingT9SourceIds.join(' · ')) + '</p><p>R153 요구조건: ' +
+    e(link.sourceMethodPrerequisites.join(' · ')) +
+    '</p></details></article>'
+  ).join('');
   const conditionalCards = conditional.slices.map(slice =>
     '<article class="reading-card"><small>조건부 관계 사실 · 미검증 운세 의미</small>' +
     '<h4>' + e(slice.segmentId === 'before_jeol' ? '절입 전' : '절입 후') +
@@ -378,7 +398,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<p class="muted">' + e(report.monthly.jeolBoundary.name) + ' 절입: ' +
     e(kst(report.monthly.jeolBoundary.at)) + '</p>' + monthlyFacts + monthly +
     '<h3>원국·대운·세운·월운의 조건부 구조 관계 (예측 아님)</h3>' +
-    conditionalCards + '</section>' +
+    conditionalCards + '<h3>기존 월운 T9 Claim과 계산 근거 대조 (새 해석 아님)</h3>' +
+    linkedT9Cards + '</section>' +
     '<aside><strong>해석 범위와 아직 모르는 부분</strong><ul>' + caveats + '</ul></aside>' +
     '</main></body></html>';
 }

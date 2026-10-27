@@ -80,6 +80,11 @@ function render(
     ' · 십신 관계 ' + structural.annualStemTenGod +
     '. 이 내용은 계산된 관계 식별이며 운세 해석이나 사건 예측이 아닙니다.';
   const conditional = report.conditionalComposition;
+  const linkedT9 = report.t9EvidenceLinks.existingT9ClaimLinks.map(link =>
+    '<article><p>' + e(link.koreanExplanation) + '</p><details><summary>원본 T9 Claim·방법론</summary><p>' +
+    e(link.existingT9ClaimId ?? '없음') + ' · ' +
+    e(link.existingT9MethodologyId ?? '없음') + '</p></details></article>'
+  ).join('');
   const conditionals = conditional.slices.map(slice =>
     '<article><h3>' + (slice.segmentId === 'before_jeol' ? '절입 전' : '절입 후') +
     ' · 조건부 구조 관계</h3><p>' + e(slice.koreanExplanation) +
@@ -180,6 +185,7 @@ function render(
     '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth +
     '<h3>절입 전후 전체 풀이</h3>' + observedMonthly + monthly +
     '<h3>원국·대운·세운·월운의 조건부 구조 관계</h3>' + conditionals +
+    '<h3>기존 월운 T9 Claim의 연구용 근거 연결</h3>' + linkedT9 +
     '<p>월운 T9 근거와 위의 원국 해석은 구분합니다. ' +
     '상호작용을 설명하는 출처 있는 시간 해석 규칙이 확보되기 전에는 합쳐서 운세로 단정하지 않습니다.</p></section>' +
     '<section id="life-stage"><h2>삶의 단계 — 계산된 대운</h2><p>' +

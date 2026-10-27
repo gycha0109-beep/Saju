@@ -56,6 +56,8 @@ export interface TemporalResearchMenuReading {
   observedStructuralContext?: GeneralAnnualMonthlyExplorationReport['observedStructuralContext'];
   /** Layered calendar / natal / Dayun relation matches with no interpreted outcome. */
   conditionalComposition?: GeneralAnnualMonthlyExplorationReport['conditionalComposition'];
+  /** Links only to original research T9 IDs. It does not issue or promote Claims. */
+  t9EvidenceLinks?: GeneralAnnualMonthlyExplorationReport['t9EvidenceLinks'];
   /** Reference-time projection applies to the monthly menu only. */
   referenceFocus?: TemporalMonthlyReferenceFocus;
   missing: readonly string[];
@@ -141,7 +143,31 @@ export function buildTemporalResearchMenuReadings(
         joined.conditionalComposition.jeolAt !== joined.monthly.jeolBoundary.at ||
         joined.conditionalComposition.slices.length < 2 ||
         joined.conditionalComposition.slices[0]?.segmentId !== 'before_jeol' ||
-        joined.conditionalComposition.slices.at(-1)?.segmentId !== 'after_jeol') {
+        joined.conditionalComposition.slices.at(-1)?.segmentId !== 'after_jeol' ||
+        joined.t9EvidenceLinks.scope !== 'existing_monthly_t9_claim_evidence_link_only' ||
+        joined.t9EvidenceLinks.snapshotId !== joined.snapshotId ||
+        joined.t9EvidenceLinks.calculationHash !== joined.calculationHash ||
+        joined.t9EvidenceLinks.targetYear !== joined.targetYear ||
+        joined.t9EvidenceLinks.targetMonth !== joined.targetMonth ||
+        joined.t9EvidenceLinks.interpretationClaimEmissionAuthorized ||
+        joined.t9EvidenceLinks.sourceQualifiedCrossLayerMeaningEstablished ||
+        joined.t9EvidenceLinks.mayPublish || joined.t9EvidenceLinks.maySell ||
+        joined.t9EvidenceLinks.existingT9ClaimLinks.length !==
+          joined.conditionalComposition.slices.length ||
+        joined.t9EvidenceLinks.existingT9ClaimLinks.some((link, index) => {
+          const slice = joined.conditionalComposition.slices[index];
+          const themes = joined.monthly.sections.filter(section =>
+            section.kind === 'theme' && section.segmentId === link.segmentId &&
+            Date.parse(section.calculatedInterval.startsAt) <= Date.parse(link.startsAt) &&
+            Date.parse(link.endsAtExclusive) <= Date.parse(section.calculatedInterval.endsAt));
+          return !slice || link.segmentId !== slice.segmentId ||
+            link.startsAt !== slice.startsAt || link.endsAtExclusive !== slice.endsAtExclusive ||
+            link.newlyEmittedT9Claims !== 0 || link.compositionMeaningState !== 'not_admitted' ||
+            link.rankOrOutcomeEstablished ||
+            link.existingT9ClaimId !== (themes[0]?.claimId ?? null) ||
+            link.existingT9MethodologyId !== (themes[0]?.methodologyId ?? null) ||
+            themes.length > 1;
+        })) {
       throw new TypeError('Temporal menu bridge rejects an official or mixed-period research report.');
     }
   }
@@ -317,6 +343,7 @@ export function buildTemporalResearchMenuReadings(
       ...(joined === undefined ? {} : {
         observedStructuralContext: joined.observedStructuralContext,
         conditionalComposition: joined.conditionalComposition,
+        t9EvidenceLinks: joined.t9EvidenceLinks,
       }),
       ...(referenceFocus === undefined ? {} : { referenceFocus }),
       missing: joined === undefined

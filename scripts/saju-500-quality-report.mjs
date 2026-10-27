@@ -46,6 +46,13 @@ const menus = MENU_NAMES.map(name => {
          row.calculatedStructure.interpretationAuthorityGranted !== false))) {
     throw new Error('Temporal reading must expose exact, non-authorized chart facts for every case');
   }
+  if(name==='이번 달' && current.some(row=>
+      !Array.isArray(row.existingT9EvidenceLinks) ||
+      row.existingT9EvidenceLinks.length !== row.compositionEvidence.length ||
+      row.existingT9EvidenceLinks.some(link=>link.newT9Claims!==0 ||
+        (link.existingT9Link==='matched_source_owned_theme' && !link.existingT9ClaimId)))) {
+    throw new Error('Monthly research must keep exact original T9 Claim links without new issuance');
+  }
   const unexplained=current.filter(r=>r.sectionCount === 0 &&
     !r.text.trim() && !(r.coverageExplanation?.trim()) &&
     !(r.sourceEvidence && name === '삶의 단계')).length;
@@ -65,6 +72,10 @@ const menus = MENU_NAMES.map(name => {
     calculatedStructureVariants:summary.calculatedStructureProfiles?.unique??0,
     compositionCoverage:summary.compositionCoverage??0,
     compositionVariants:summary.compositionPatterns?.unique??0,
+    existingT9LinkCoverage:summary.existingT9LinkCoverage??0,
+    existingT9LinkTotal:summary.existingT9LinkTotal??0,
+    existingT9LinkedClaims:summary.existingT9LinkedClaims??0,
+    annualDayunObservedMatches:summary.annualDayunObservedMatches??0,
     example: current.find(r=>r.text.trim()) ? (() => {
       const found=current.find(r=>r.text.trim());
       return {
@@ -91,6 +102,8 @@ const qualityGate = {
   sourceBoundObservedPatterns:patterns.distinctSourceBoundEvidencePatterns,
   inspectedPatterns:patterns.inspectedPatterns.length,
   controlledPairs:patterns.controlledPairs?.length??0,
+  originalMonthlyT9EvidenceLinksPreserved:menus.find(m=>m.name==='이번 달')?.existingT9LinkCoverage===500,
+  newTemporalInterpretationClaimsIssued:0,
   annualSemanticAuthority:annualAuthorized,
   monthlySemanticAuthority:monthlyAuthorized,
   finalRoadmapAccepted:false,
@@ -130,6 +143,12 @@ const markdown = '# 사주 고정 500건 × 8메뉴 개선 비교\n\n'+
   '/500. 관계 조건 결합: '+menus.find(m=>m.name==='올해').compositionCoverage+
   '/500, 계산 관계 패턴 '+menus.find(m=>m.name==='올해').compositionVariants+
   '종. 이 숫자는 새로운 예측·의미 해석을 뜻하지 않습니다.\n\n'+
+  '기존 월운 T9 연구 Claim에 연결한 실제 계산 구간: '+
+  menus.find(m=>m.name==='이번 달').existingT9LinkedClaims+
+  '개 / 총 계산 구간 '+menus.find(m=>m.name==='이번 달').existingT9LinkTotal+
+  '개. 대운–연운 충·육합 관측 구간 '+
+  menus.find(m=>m.name==='이번 달').annualDayunObservedMatches+
+  '개. 새로운 해석 Claim 발행 0개 (R153/R154 source authority HOLD).\n\n'+
   '## 실제 한국어 결과 예시\n\n'+examples+'\n## 미확립 범위\n\n'+
   report.limitations.map(x=>'- '+x).join('\n')+'\n';
 writeFileSync(markdownPath,markdown,'utf8');

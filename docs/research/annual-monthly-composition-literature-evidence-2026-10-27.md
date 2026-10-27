@@ -133,3 +133,14 @@
 - 고정 500명×8메뉴 재검사: 전체 의미 변경 **0**, 조건부 구조 관계 기록 **2,364건**, 구조 패턴 **398종**, 대운 전환으로 추가 분할한 월구간 **4개**. 동일한 기존 연운/월운 해석 프로필 안에서 구조 근거만 다른 쌍은 각각 39쌍·50쌍 표본 수집 (`scripts/saju-500-conditional-evidence-audit.mjs`; 출생/간지/기간은 이 검사의 재현 가능한 입력값).
 - 실제 반례: 기존 **연운 프로필이 같은** 1971-02-24 21:59와 1992-10-21 11:08은 2026년 10월 구조가 다르다. 첫 명식은 원국 월지 寅과 대운 申의 충, 절입 전 원국 일지 辰과 월운 酉의 육합, 절입 후 辰과 戌의 충이 관측된다. 둘째 명식은 해당 월 구간에서 위 구조 관계가 관측되지 않는다. **이는 원국 관계의 증거 차이지 서로 다른 사건 발생이나 길흉이 확정된 근거가 아니다.**
 - 검증 경계: `conditionalComposition.interpretationAuthorityGranted = false`, `mayPublish = false`, `maySell = false`. 새로운 미래 예측 Claim 0건. 선택 월에 국한한 조건부 관계 근거는 **결합 연구 리포트와 월운 연구 메뉴에만** 전달하며, 연운 연구 메뉴의 연간 의미 증거로 옮기지 않는다. 위 39쌍 연운 프로필 대조는 고정된 10월 맥락에서 기존 연운 문구가 구분하지 못하는 구조 차이를 비교한 감사 결과다. 원국×대운×세운×월운 *의미 종합*의 직접 출처·예외 및 권한이 확보되기 전까지 Official/Production은 `HOLD`.
+
+## 7. R153·R154 전제와 기존 T9 Claim ID의 조건부 연결 (연구 전용)
+
+- 코드: `src/preview/annual-dayun-existing-t9-claim-links.ts`, `test/annual-dayun-existing-t9-claim-links.test.ts`.
+- **기존 Claim 재사용:** `GeneralMonthlyExplorationReport`의 실제 EvidenceSelector가 선택한 T9 연구 `claimId` / `methodologyId` / `sourceIds` / `ruleIds` / `factPaths`에만 연결한다. 본 모듈은 새 RuleDefinition/InterpretationClaim을 생성하지 않는다.
+- **성립 조건:** 원국 일간·대운 확정 여부, R153의 `NATAL_DAY_STEM_CONTEXT_REQUIRED`·`DAYUN_CONTEXT_REQUIRED`·`MEETING_COMBINATION_CHECK_REQUIRED`·`PUNISHMENT_CLASH_CHECK_REQUIRED` 전제, T0에 열거된 지지 충/육합 쌍의 실제 계산 결과.
+- **불성립·미확정:** 대운–세운의 충·육합이 없는 경우를 '해당 두 종류의 관계 미관측'으로만 표기하고 다른 효과의 부재나 길흉을 단정하지 않는다. 출생시각 등 때문에 대운이 불명확하면 `dayun_unavailable`로 남긴다.
+- **원본 Claim 일치:** 월운 T9 Claim의 선택한 절입 구간과 대운 교체가 생긴 세부 구간의 시작/끝 시각이 서로 포함 관계여야 한다. 조작된 Claim ID·기간·방법론 권한 상태는 실패 처리한다.
+- **R154 경계:** 먼저 탐색된 충/육합에 임의 우선순위를 부여하지 않으며, 건수로 결과·강도를 점수화하지 않는다. `compositionMeaningState='not_admitted'`, `newlyEmittedT9Claims=0`, `mayPublish=false`, `maySell=false`를 유지한다.
+- 500명 재검사에서 기존 T9 Claim과 실제 기간을 연결한 1,004개 구간 중 **연운–대운 충 96개**, **육합 58개**, 두 관계 미관측 **850개**를 확인했다. 이는 원국별 구조 관측이지 새로운 현대 운세 1,004종이 아니다. 4건의 대운 교체에 따라 절입 구간이 추가 분할된 결과이며, 8메뉴 기존 의미 서명 변경 0건.
+- 현대 심리·직업·재물 성과·사고·건강 등 새로운 연운/월운 의미를 입증하는 직접 방법론은 확보하지 못했다. 기존 R153·R154의 `interpretationClaimEmissionAuthorized=false` 정책을 변경하지 않는다.

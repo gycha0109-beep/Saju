@@ -22,6 +22,9 @@ for(const menu of menus){
   let relationMatches=0;
   let daysWithUnavailable=0;
   let extraTimeSlices=0;
+  let linkedT9=0;
+  let observedAnnualDayunRelations=0;
+  const t9RelationStates={};
   for(const row of rows){
     if(!row.compositionAuthority ||
         Object.values(row.compositionAuthority).length !== 4 ||
@@ -37,6 +40,25 @@ for(const menu of menus){
             !['natal','dayun','annual','monthly'].includes(rel.left?.layer)||
             !['natal','dayun','annual','monthly'].includes(rel.right?.layer)))) {
       throw new Error(menu+' has unsourced or non-structural relation');
+    }
+    if(menu==='이번 달') {
+      const links=row.existingT9EvidenceLinks;
+      if(!Array.isArray(links)||links.length!==row.compositionEvidence.length||
+         links.some((link,i)=>{
+           const slice=row.compositionEvidence[i];
+           return link.segmentId!==slice.segmentId ||
+             link.startsAt!==slice.startsAt || link.endsAtExclusive!==slice.endsAtExclusive ||
+             link.newT9Claims!==0 ||
+             (link.existingT9Link==='matched_source_owned_theme' &&
+              (!link.existingT9ClaimId||!link.existingT9MethodologyId));
+         }))throw new Error('Monthly T9 research links do not match exact source-owned intervals');
+      for(const link of links) {
+        linkedT9+=link.existingT9Link==='matched_source_owned_theme'?1:0;
+        observedAnnualDayunRelations+=['branch_clash_observed',
+          'branch_six_combination_observed'].includes(link.annualDayunRelation)?1:0;
+        t9RelationStates[link.annualDayunRelation]=
+          (t9RelationStates[link.annualDayunRelation]??0)+1;
+      }
     }
     const first=row.compositionEvidence[0];
     const last=row.compositionEvidence.at(-1);
@@ -88,6 +110,12 @@ for(const menu of menus){
     totalObservedRelationMatches:relationMatches,
     casesWithUnavailableDayun:daysWithUnavailable,
     extraTimeSlices,
+    ...(menu==='이번 달'?{
+      existingT9ClaimLinks:linkedT9,
+      observedAnnualDayunRelations,
+      annualDayunRelationStates:t9RelationStates,
+      newlyEmittedT9Claims:0,
+    }:{}),
     sameCoarseMeaningDifferentStructuralEvidencePairs:controlledPairs,
     prognosticClaimsInferred:0,
     officialAuthorizationGranted:false,

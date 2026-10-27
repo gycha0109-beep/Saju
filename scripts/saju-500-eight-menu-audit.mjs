@@ -118,6 +118,15 @@ function temporalEntries(result) {
   const monthly = report.monthly.sections;
   const focus = report.monthly.referenceReading;
   const life = result.lifeStage.report;
+  const t9Links = report.t9EvidenceLinks;
+  if (t9Links.scope !== 'existing_monthly_t9_claim_evidence_link_only' ||
+      t9Links.interpretationClaimEmissionAuthorized || t9Links.mayPublish ||
+      t9Links.maySell || t9Links.sourceQualifiedCrossLayerMeaningEstablished ||
+      t9Links.existingT9ClaimLinks.length !== report.conditionalComposition.slices.length ||
+      t9Links.existingT9ClaimLinks.some(link =>
+        link.newlyEmittedT9Claims !== 0 || link.compositionMeaningState !== 'not_admitted')) {
+    throw new Error('Existing monthly T9 Claim evidence link violated research authority');
+  }
   const a = entry(
     annual.map(s => s.title + '\n' + s.text).join('\n\n'),
     annual.map(s => [s.researchProfileId, s.title]),
@@ -162,6 +171,20 @@ function temporalEntries(result) {
   }));
   a.compositionEvidence = compositionEvidence;
   m.compositionEvidence = compositionEvidence;
+  m.existingT9EvidenceLinks = t9Links.existingT9ClaimLinks.map(link => ({
+    segmentId: link.segmentId,
+    startsAt: link.startsAt,
+    endsAtExclusive: link.endsAtExclusive,
+    existingT9ClaimId: link.existingT9ClaimId,
+    existingT9MethodologyId: link.existingT9MethodologyId,
+    existingT9Link: link.existingT9Link,
+    annualDayunRelation: link.annualDayunRelation,
+    observationStatus: link.observationStatus,
+    natalDayStemAvailable: link.natalDayStemAvailable,
+    natalAnnualRelationCount: link.natalAnnualRelationCount,
+    sources: link.annualDayunStructuralSources,
+    newT9Claims: link.newlyEmittedT9Claims,
+  }));
   a.compositionAuthority = {
     interpretationAuthorityGranted:composition.interpretationAuthorityGranted,
     mayPublish:composition.mayPublish,
@@ -264,6 +287,17 @@ function summarize(rows) {
     generated: rows.length,
     withReadableText: nonEmpty.length,
     withoutReadableText: rows.length - nonEmpty.length,
+    ...(rows.some(row => row.existingT9EvidenceLinks) ? {
+      existingT9LinkCoverage: rows.filter(row => row.existingT9EvidenceLinks).length,
+      existingT9LinkTotal: rows.reduce((n,row) => n+(row.existingT9EvidenceLinks?.length??0),0),
+      existingT9LinkedClaims: rows.reduce((n,row) => n+
+        (row.existingT9EvidenceLinks?.filter(item=>item.existingT9Link===
+          'matched_source_owned_theme').length??0),0),
+      annualDayunObservedMatches: rows.reduce((n,row) => n+
+        (row.existingT9EvidenceLinks?.filter(item=>[
+          'branch_clash_observed','branch_six_combination_observed',
+        ].includes(item.annualDayunRelation)).length??0),0),
+    } : {}),
     ...(rows.some(row => row.compositionEvidence) ? {
       compositionCoverage: rows.filter(row => row.compositionEvidence).length,
       compositionPatterns: tally(rows.filter(row => row.compositionEvidence)
@@ -385,6 +419,7 @@ export function runFiveHundredSajuAudit() {
           calculatedStructure: row.calculatedStructure ?? null,
           compositionEvidence: row.compositionEvidence ?? null,
           compositionAuthority: row.compositionAuthority ?? null,
+          existingT9EvidenceLinks: row.existingT9EvidenceLinks ?? null,
           text: row.text,
           coverageExplanation: row.coverageExplanation ?? null,
           eligibleAlternatives: row.eligibleAlternatives ?? null,
