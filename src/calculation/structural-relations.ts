@@ -123,6 +123,10 @@ function pairMatches<T extends string>(
   );
 }
 
+export function isStructuralBranchClash(left: EarthlyBranch, right: EarthlyBranch): boolean {
+  return pairMatches(left, right, BRANCH_CLASHES);
+}
+
 function tripleMatches(
   values: readonly EarthlyBranch[],
   groups: readonly (readonly [EarthlyBranch, EarthlyBranch, EarthlyBranch])[],

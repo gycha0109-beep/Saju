@@ -1,4 +1,5 @@
 import type { EarthlyBranch, PillarSlot, TenGod } from '../contracts/calculation.js';
+import { isStructuralBranchClash } from '../calculation/structural-relations.js';
 import type { AnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
 import { GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES } from '../research/general-annual-narrative-profiles.js';
 import {
@@ -131,6 +132,10 @@ export function buildGeneralAnnualExplorationReport(
     }
     if (state.value.pillar !== slot || state.value.annualBranch !== facts.annualPillar.branch) {
       throw new Error(`Contradictory annual branch relation for ${slot}.`);
+    }
+    const calculatedClash = isStructuralBranchClash(state.value.natalBranch, state.value.annualBranch);
+    if ((state.value.relation === 'clash') !== calculatedClash) {
+      throw new Error(`The annual branch relation contradicts its calculated pair: ${slot}.`);
     }
     if (state.value.relation !== 'clash') continue;
     const key = `ANNUAL_BRANCH_CLASH_${slot.toUpperCase()}`;

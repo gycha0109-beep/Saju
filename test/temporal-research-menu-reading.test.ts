@@ -104,6 +104,7 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
       expect(projected).toBeDefined();
       expect(projected?.sourceIds).toEqual(original.sourceIds);
       expect(projected?.factPaths).toEqual(original.factPaths);
+      expect(projected?.methodologyId).toBe(original.methodologyId);
       if (original.observedClash && original.relatedPillar) {
         expect(projected?.observedClash).toEqual({
           natalPillar: original.relatedPillar,
@@ -125,6 +126,8 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     for (const original of annualMonthly.annual.sections) {
       if (!original.observedClash || !original.relatedPillar) continue;
       const projected = annual.sections.find(x => x.researchProfileKey === original.id);
+      expect(projected?.methodologyId).toBe(original.methodologyId);
+      expect(projected?.researchPolicySourceId).toBe(original.policySourceId);
       expect(projected?.observedClash).toEqual({
         natalPillar: original.relatedPillar,
         natalBranch: original.observedClash.natalBranch,

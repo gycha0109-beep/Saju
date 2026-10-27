@@ -24,6 +24,7 @@ export interface WealthNatalMultifactorSection {
   upstreamClaimIds: readonly string[];
   sourceIds: readonly string[];
   ruleId: string;
+  methodologyId: string;
   observedPositions: readonly string[];
   observedFactPaths: readonly string[];
 }
@@ -48,7 +49,7 @@ export interface WealthNatalMultifactorReport {
   /** Matched and source-qualified T8 interpretations omitted from the
    * short first-screen narrative. Omission is not negative evidence. */
   eligibleAlternatives: readonly Pick<WealthNatalMultifactorSection,
-    'claimType' | 'axis' | 'channel' | 'ruleId' | 'sourceIds' | 'observedFactPaths'>[];
+    'claimType' | 'axis' | 'channel' | 'ruleId' | 'methodologyId' | 'sourceIds' | 'observedFactPaths'>[];
   readingGuide?: WealthNatalReadingGuide;
   missing: readonly string[];
   limitations: readonly string[];
@@ -255,6 +256,7 @@ function toSection(
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
+    methodologyId: claim.methodologyRef.id,
     observedPositions: locations.map(x => x.display),
     observedFactPaths: locations.map(x => x.factPath),
   };
@@ -423,6 +425,7 @@ export function buildWealthNatalMultifactorReport(
       axis: section.axis,
       channel: section.channel,
       ruleId: section.ruleId,
+      methodologyId: section.methodologyId,
       sourceIds: section.sourceIds,
       observedFactPaths: section.observedFactPaths,
     }));

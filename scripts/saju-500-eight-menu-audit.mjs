@@ -90,6 +90,7 @@ function natalEntry(report) {
     axis: s.axis,
     channel: s.channel,
     ruleId: s.ruleId,
+    methodologyId: s.methodologyId ?? null,
     sourceIds: [...(s.sourceIds ?? [])].sort(),
     factPaths: [...(s.observedFactPaths ?? [])].sort(),
     // Qualified chart observations are part of the explanation. They are not
@@ -105,6 +106,7 @@ function natalEntry(report) {
     axis: alt.axis,
     channel: alt.channel,
     ruleId: alt.ruleId,
+    methodologyId: alt.methodologyId ?? null,
     sourceIds: [...alt.sourceIds],
     factPaths: [...alt.observedFactPaths],
   }));

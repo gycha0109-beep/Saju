@@ -155,6 +155,30 @@ describe('opt-in consumer Annual exploration', () => {
       },
     })).toThrow('Contradictory annual branch relation');
 
+    expect(() => buildGeneralAnnualExplorationReport({
+      ...value,
+      annualBranchRelations: {
+        ...value.annualBranchRelations,
+        day: resolved({
+          pillar: 'day', natalBranch: '묘',
+          annualBranch: value.annualPillar.branch,
+          relation: 'clash',
+        }),
+      },
+    })).toThrow('contradicts its calculated pair');
+
+    expect(() => buildGeneralAnnualExplorationReport({
+      ...value,
+      annualBranchRelations: {
+        ...value.annualBranchRelations,
+        day: resolved({
+          pillar: 'day', natalBranch: '자',
+          annualBranch: value.annualPillar.branch,
+          relation: 'none',
+        }),
+      },
+    })).toThrow('contradicts its calculated pair');
+
     const report = buildGeneralAnnualExplorationReport(value);
     expect(report.status).toBe('not_official_reading');
     expect(report.mode).toBe('internal_exploration');

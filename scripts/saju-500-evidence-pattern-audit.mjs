@@ -29,6 +29,7 @@ for (const [menu, rows] of Object.entries(audit.caseResults ?? {})) {
       selectedEvidenceSignature: row.selectedEvidenceSignature,
       selectedEvidence: e,
       exactTextHash: row.exactTextHash,
+      koreanText: row.text,
       researchOnly: true,
     });
   }
@@ -84,6 +85,51 @@ const sameCoarseMeaningDifferentEvidence = [...byMeaning.values()]
     evidenceVariants: new Set(rows.map(x => x.selectedEvidenceSignature)).size,
     birthExamples: rows.slice(0,3).map(x => x.birth),
   }));
+const eligiblePairs = [];
+for (const rows of byMeaning.values()) {
+  const firstByEvidence = new Map();
+  for (const row of rows) {
+    if (!firstByEvidence.has(row.selectedEvidenceSignature)) {
+      firstByEvidence.set(row.selectedEvidenceSignature, row);
+    }
+  }
+  const witnesses = [...firstByEvidence.values()];
+  if (witnesses.length < 2) continue;
+  const first = witnesses[0], second = witnesses[1];
+  eligiblePairs.push({
+    menu: first.menu,
+    sharedCoarseMeaningSignature: first.meaningSignature,
+    first: {
+      birth: first.birth,
+      selectedEvidenceSignature: first.selectedEvidenceSignature,
+      sourceBoundEvidence: first.selectedEvidence,
+      koreanTextHash: first.exactTextHash,
+      koreanText: first.koreanText,
+    },
+    second: {
+      birth: second.birth,
+      selectedEvidenceSignature: second.selectedEvidenceSignature,
+      sourceBoundEvidence: second.selectedEvidence,
+      koreanTextHash: second.exactTextHash,
+      koreanText: second.koreanText,
+    },
+    meaningDifferenceEstablished: false,
+    evidenceDifferenceEstablished: true,
+  });
+}
+const pairMenus = new Map(menuNames.map(name => [name, eligiblePairs.filter(pair => pair.menu === name)]));
+const controlledPairs = [];
+for (let offset = 0; controlledPairs.length < 100; offset++) {
+  let found = false;
+  for (const name of menuNames) {
+    const pair = pairMenus.get(name)?.[offset];
+    if (!pair) continue;
+    controlledPairs.push(pair);
+    found = true;
+    if (controlledPairs.length === 100) break;
+  }
+  if (!found) break;
+}
 const report = {
   scope: 'Research-only source-qualified selected evidence, not 100 authorized distinct fortunes',
   count: audit.count, seed: audit.seed, reference: '2026-10-25T00:00:00.000Z',
@@ -92,6 +138,10 @@ const report = {
   inspectedPatterns,
   sampledMenus: Object.fromEntries(menuNames.map(name => [name,
     inspectedPatterns.filter(row => row.menu === name).length])),
+  controlledPairs,
+  atLeast100ControlledPairs: controlledPairs.length >= 100,
+  controlledPairMenus: Object.fromEntries(menuNames.map(name => [name,
+    controlledPairs.filter(pair => pair.menu === name).length])),
   sameEvidenceConsistentText: sameEvidenceDifferentText.length === 0,
   sameEvidenceDifferentText,
   sameCoarseMeaningDifferentEvidence,

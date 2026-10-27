@@ -111,6 +111,7 @@ function render(
       e(section.calculatedInterval.endsAt) + '</p><p>Claim: ' +
       e(section.claimId) + '</p><p>계산: ' + e(section.factPaths.join(' · ')) +
       '</p><p>출처: ' + e(section.sourceIds.join(' · ')) +
+      '</p><p>방법론: ' + e(section.methodologyId) +
       '</p></details></article>',
   ).join('') || '<p>선택한 월에 읽을 수 있는 출처 연결 풀이가 없습니다.</p>';
   const periods = life.periods.map(period =>

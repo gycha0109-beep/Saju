@@ -19,6 +19,8 @@ export interface TemporalResearchMenuSection {
   /** Monthly claim ID is only an internal research Claim, not Official authority. */
   claimId?: string;
   researchProfileKey?: string;
+  researchPolicySourceId?: string;
+  methodologyId?: string;
   sourceIds: readonly string[];
   factPaths: readonly string[];
   /** A measured temporal-to-natal clash, not a new outcome or T9 synthesis. */
@@ -146,6 +148,8 @@ export function buildTemporalResearchMenuReadings(
       evidenceKind: 'annual_research_profile' as const,
       // The annual section ID is a research semantic key, not a source ID.
       researchProfileKey: section.id,
+      researchPolicySourceId: section.policySourceId,
+      methodologyId: section.methodologyId,
       sourceIds: [],
       factPaths: section.relatedPillar === undefined
         ? ['temporal.annualStemTenGod']
@@ -167,6 +171,7 @@ export function buildTemporalResearchMenuReadings(
       text: section.text,
       evidenceKind: 'monthly_t9_research_claim' as const,
       claimId: section.claimId,
+      methodologyId: section.methodologyId,
       sourceIds: [...section.sourceIds],
       factPaths: [...section.factPaths],
       ...(section.observedClash && section.relatedPillar ? {

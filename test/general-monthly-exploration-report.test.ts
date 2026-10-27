@@ -142,6 +142,45 @@ describe('real-calculated monthly Korean research consumer preview', () => {
     expect(report.status).toBe('not_official_reading');
   });
 
+  it('rejects fabricated monthly clash facts even when a real T9 claim remains selected', () => {
+    const natal = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 1998, month: 3, day: 28 },
+      time: { known: true, hour: 22, minute: 19 },
+      sexForTraditionalCalculation: 'male',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const x = run(10, natal);
+    const tension = x.report.sections.find(s => s.kind === 'tension');
+    expect(tension?.relatedPillar).toBeDefined();
+    if (!tension?.relatedPillar) throw new Error('Expected 2026-10 T9 tension fixture');
+    const id = tension.segmentId;
+    const slot = tension.relatedPillar;
+    const original = x.facts.segmentsById[id].monthlyBranchRelations[slot];
+    if (original.status !== 'resolved') throw new Error('Expected resolved natal branch');
+    const tampered = {
+      ...x.facts,
+      segmentsById: {
+        ...x.facts.segmentsById,
+        [id]: {
+          ...x.facts.segmentsById[id],
+          monthlyBranchRelations: {
+            ...x.facts.segmentsById[id].monthlyBranchRelations,
+            [slot]: {
+              status: 'resolved' as const,
+              value: {
+                ...original.value,
+                natalBranch: original.value.natalBranch === '자' ? '축' as const : '자' as const,
+              },
+            },
+          },
+        },
+      },
+    };
+    expect(() => buildGeneralMonthlyExplorationReport(
+      natal, tampered, x.execution, x.registry, x.request,
+    )).toThrow('unresolved or foreign monthly tension');
+  });
+
   it('refuses a different person or a different target month instead of reusing foreign T9 copy', () => {
     const x = run(9);
     expect(() => buildGeneralMonthlyExplorationReport(

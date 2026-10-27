@@ -47,7 +47,8 @@ describe('wealth: preserve independently grounded core coverage', () => {
     const shown = new Set(report.sections.map(x => x.claimType));
     expect(report.eligibleAlternatives.every(x =>
       !shown.has(x.claimType) && x.sourceIds.length > 0 &&
-      x.ruleId.length > 0 && x.observedFactPaths.length > 0,
+      x.ruleId.length > 0 && x.methodologyId.length > 0 &&
+      x.observedFactPaths.length > 0,
     )).toBe(true);
     expect(report.mayPublish).toBe(false);
     expect(report.maySell).toBe(false);

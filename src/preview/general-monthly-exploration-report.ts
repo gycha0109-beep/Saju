@@ -1,3 +1,4 @@
+import { isStructuralBranchClash } from '../calculation/structural-relations.js';
 import type { CanonicalSajuSnapshot, EarthlyBranch, PillarSlot } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -178,7 +179,17 @@ export function buildGeneralMonthlyExplorationReport(
     requireEvidence(slot !== undefined && SLOTS.includes(slot),
       'monthly tension must refer to an actual natal pillar');
     const relation = segment.monthlyBranchRelations[slot];
-    requireEvidence(relation.status === 'resolved' &&
+    const natal = snapshot.pillars[slot];
+    const branchMatches = relation.status === 'resolved' && (
+      natal.status === 'resolved'
+        ? natal.value.branch.value === relation.value.natalBranch
+        : natal.status === 'ambiguous' && natal.candidates.length > 0 &&
+          natal.candidates.every(candidate => candidate.value.branch.value === relation.value.natalBranch)
+    );
+    requireEvidence(relation.status === 'resolved' && branchMatches &&
+      relation.value.pillar === slot &&
+      relation.value.monthlyBranch === segment.monthlyPillar.branch &&
+      isStructuralBranchClash(relation.value.natalBranch, relation.value.monthlyBranch) &&
       relation.value.relation === 'clash' &&
       claim.factRefs.includes(`temporal.segmentsById.${value.segmentId}.monthlyBranchRelations.${slot}.relation`) &&
       claim.sourceRefs.length > 0, 'unresolved or foreign monthly tension');
@@ -293,6 +304,7 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
         <div class="label">${section.kind === 'theme' ? '이 구간의 중심 관점' : '함께 살펴볼 충 관계'}</div>
         <h3>${escapeHtml(section.title)}</h3>
         <p>${escapeHtml(section.text)}</p>
+        ${section.observedClash ? `<p>원국 ${escapeHtml(SLOT_KO[section.relatedPillar!])} 지지 ${escapeHtml(section.observedClash.natalBranch)}와 해당 월운 지지 ${escapeHtml(section.observedClash.monthlyBranch)} 사이의 충이 계산되었습니다. 이 사실만으로 사건이나 길흉을 예측하지 않습니다.</p>` : ''}
         <details><summary>계산 근거와 출처</summary>
           <p>십신: ${escapeHtml(section.tenGod)} / 주장: ${escapeHtml(section.claimId)}</p>
           <p>근거: ${escapeHtml(section.factPaths.join(' · '))}</p>
