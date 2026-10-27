@@ -514,6 +514,15 @@ function renderWealthMultifactorInMainReport(report) {
     '<p class="reader-note">최소 유효 풀이: '+escapeHtml(report.state)+
     ' · 전체 제품 완성 판정과 별개인 연구 후보</p>'+
     (cases || '<p class="limited">현재 근거에서 충분한 원국 복합 해석을 구성할 수 없습니다.</p>')+
+    (report.insufficientEvidence === undefined ? '' :
+      '<article class="reader-paragraph"><h3>실제 관측된 T5 근거와 재물 종합 보류 사유</h3>' +
+      '<p>' + escapeHtml(report.insufficientEvidence.koreanExplanation) + '</p>' +
+      report.insufficientEvidence.observedT5.map(item =>
+        '<details><summary>' + escapeHtml(item.positions.join(' · ')) +
+        '</summary><p>Claim: '+escapeHtml(item.claimId)+
+        '</p><p>규칙: '+escapeHtml(item.ruleId)+
+        '</p><p>출처: '+escapeHtml(item.sourceIds.join(' · '))+
+        '</p></details>').join('') + '</article>')+
     (report.missing.length ? '<p class="limited">부족한 근거: '+
       escapeHtml(report.missing.join(' · '))+'</p>' : '')+
     '<details><summary>명식별 해석의 한계 및 권한</summary>'+

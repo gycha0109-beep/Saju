@@ -57,6 +57,43 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(report.maySell).toBe(false);
   });
 
+  it('preserves source-qualified T5 positions and claim identity without emitting T8', () => {
+    const cases = [
+      { birth: [1955,10,31,19,35] as const, cause: 'wealth_t5_without_same_channel_partner', hasWealth: true },
+      { birth: [1967,8,22,10,28] as const, cause: 'no_wealth_t5_in_registered_channels', hasWealth: false },
+    ] as const;
+    for (const item of cases) {
+      const {snapshot, execution, report} = wealthReading(
+        item.birth[0], item.birth[1], item.birth[2], item.birth[3], item.birth[4],
+      );
+      const trace = report.insufficientEvidence;
+      expect(report.state).toBe('insufficient');
+      expect(report.sections).toHaveLength(0);
+      expect(trace).toBeDefined();
+      expect(trace?.cause).toBe(item.cause);
+      expect(trace?.sourceQualifiedT8ClaimCount).toBe(0);
+      expect(trace?.recoverableByRegisteredT8Rules).toBe(false);
+      expect(trace?.koreanExplanation).toContain('재물 종합 T8 문단은 발행하지 않습니다');
+      const original = execution.claims.filter(claim => claim.state === 'active' &&
+        claim.taxonomy.tier === 'T5');
+      expect(trace?.observedT5.map(claim => claim.claimId).sort())
+        .toEqual(original.map(claim => claim.claimId).sort());
+      expect(trace?.observedT5.some(claim => claim.family === 'wealth')).toBe(item.hasWealth);
+      for (const entry of trace?.observedT5 ?? []) {
+        expect(entry.positions.length).toBeGreaterThan(0);
+        expect(entry.positions.length).toBe(entry.factPaths.length);
+        expect(entry.sourceIds.length).toBeGreaterThan(0);
+        expect(entry.factPaths.every(path =>
+          /^derivedFacts[.]tenGods[.]value[.](year|month|day|hour)[.](stem|branch)[.]value$/u.test(path)))
+          .toBe(true);
+        expect(entry.sourceIds).toEqual(
+          execution.claims.find(claim => claim.claimId === entry.claimId)?.sourceRefs);
+      }
+      expect(report.snapshotId).toBe(snapshot.snapshotId);
+      expect(report.maySell).toBe(false);
+    }
+  });
+
   it('distinguishes a present wealth T5 with no eligible same-channel combination', () => {
     const { execution, report } = wealthReading(1955, 10, 31, 19, 35);
     expect(execution.claims.some(c => c.state === 'active' &&

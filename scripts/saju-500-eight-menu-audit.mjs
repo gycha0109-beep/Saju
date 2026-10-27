@@ -101,6 +101,32 @@ function natalEntry(report) {
   row.coverageExplanation = Array.isArray(report.missing)
     ? report.missing.filter(x => typeof x === 'string').join(' ')
     : '';
+  if (report.insufficientEvidence !== undefined) {
+    const t5 = report.insufficientEvidence;
+    if (report.state !== 'insufficient' || report.sections.length !== 0 ||
+        t5.sourceQualifiedT8ClaimCount !== 0 ||
+        t5.recoverableByRegisteredT8Rules !== false ||
+        t5.observedT5.some(item => item.sourceIds.length === 0 ||
+          item.positions.length === 0 || item.factPaths.length !== item.positions.length)) {
+      throw new Error('Insufficient Wealth evidence cannot be promoted to T8');
+    }
+    row.wealthInsufficientEvidence = {
+      cause: t5.cause,
+      koreanExplanation: t5.koreanExplanation,
+      t8ClaimCount: t5.sourceQualifiedT8ClaimCount,
+      recoverable: t5.recoverableByRegisteredT8Rules,
+      t5: t5.observedT5.map(item => ({
+        claimId: item.claimId,
+        claimType: item.claimType,
+        sourceIds: item.sourceIds,
+        ruleId: item.ruleId,
+        channel: item.channel,
+        family: item.family,
+        positions: item.positions,
+        factPaths: item.factPaths,
+      })),
+    };
+  }
   row.eligibleAlternatives = (report.eligibleAlternatives ?? []).map(alt => ({
     claimType: alt.claimType,
     axis: alt.axis,
@@ -448,6 +474,7 @@ export function runFiveHundredSajuAudit() {
           text: row.text,
           coverageExplanation: row.coverageExplanation ?? null,
           eligibleAlternatives: row.eligibleAlternatives ?? null,
+          wealthInsufficientEvidence: row.wealthInsufficientEvidence ?? null,
           ...(row.sourceEvidence ? { sourceEvidence: row.sourceEvidence } : {}),
         })),
       ])),

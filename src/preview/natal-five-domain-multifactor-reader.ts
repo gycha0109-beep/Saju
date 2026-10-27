@@ -323,6 +323,33 @@ function renderFirstScreenSelectedInterpretations(
     '<p class="bounded-note">' + escapeHtml(scope) + '</p></section>';
 }
 
+function renderWealthInsufficientEvidence(report: WealthNatalMultifactorReport): string {
+  const evidence = report.insufficientEvidence;
+  if (evidence === undefined) return '';
+  guard(report.state === 'insufficient' && report.sections.length === 0 &&
+    evidence.status === 't5_observation_only_t8_not_emitted' &&
+    evidence.sourceQualifiedT8ClaimCount === 0 &&
+    evidence.recoverableByRegisteredT8Rules === false &&
+    evidence.observedT5.every(item =>
+      item.sourceIds.length > 0 && item.claimId.length > 0 &&
+      item.ruleId.length > 0 && item.factPaths.length === item.positions.length &&
+      item.factPaths.length > 0 &&
+      item.factPaths.every(path => /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path))),
+    'Wealth unavailable evidence cannot fabricate a T8 interpretation');
+  const detail = evidence.observedT5.map(item =>
+    '<li>' + escapeHtml(item.positions.join(' · ')) +
+    '<details><summary>기존 T5 근거 및 출처</summary><p>Claim: ' +
+    escapeHtml(item.claimId) + '</p><p>규칙: ' + escapeHtml(item.ruleId) +
+    '</p><p>출처: ' + escapeHtml(item.sourceIds.join(' · ')) +
+    '</p><p>계산 경로: ' + escapeHtml(item.factPaths.join(' · ')) +
+    '</p></details></li>').join('');
+  return '<section class="reading-guide" aria-label="재물 T8 근거 부족의 실제 T5 관측">' +
+    '<h3>이 명식에서 확인된 십신 근거와 재물 풀이 보류 사유</h3><p>' +
+    escapeHtml(evidence.koreanExplanation) + '</p>' +
+    (detail ? '<ul>' + detail + '</ul>' : '') +
+    '<p>기존 T5 관측만 보여 주며, 등록된 T8 재물 종합해석으로 승격하지 않습니다.</p></section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -351,13 +378,16 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
         : domain === 'relationship'
           ? renderRelationshipReadingGuide(report as RelationshipNatalMultifactorReport) : '';
   const firstMeaning = renderFirstScreenSelectedInterpretations(domain, report);
+  const insufficientEvidence = domain === 'wealth'
+    ? renderWealthInsufficientEvidence(report as WealthNatalMultifactorReport) : '';
   const details = firstMeaning === '' ? readingGuide + originalText
     : '<details class="full-claim-evidence"><summary>원국 풀이의 상세 설명·명식 근거와 출처</summary>' +
       readingGuide + originalText + '</details>';
   return '<article aria-labelledby="domain-' + domain + '" class="domain">' +
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
-    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning + details + missing +
+    '<p>' + escapeHtml(report.introduction) + '</p>' +
+    firstMeaning + insufficientEvidence + details + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }

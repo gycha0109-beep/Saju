@@ -38,6 +38,25 @@ export interface WealthNatalReadingGuide {
     distinctObservedPositions: readonly string[];
   }[];
 }
+export interface WealthInsufficientT5Evidence {
+  status: 't5_observation_only_t8_not_emitted';
+  cause: 'no_wealth_t5_in_registered_channels' |
+    'wealth_t5_without_same_channel_partner' | 'no_resolved_t5';
+  sourceQualifiedT8ClaimCount: 0;
+  recoverableByRegisteredT8Rules: false;
+  observedT5: readonly {
+    claimId: string;
+    claimType: string;
+    family: string;
+    channel: Channel;
+    sourceIds: readonly string[];
+    ruleId: string;
+    positions: readonly string[];
+    factPaths: readonly string[];
+  }[];
+  koreanExplanation: string;
+}
+
 export interface WealthNatalMultifactorReport {
   snapshotId: string;
   calculationHash: string;
@@ -51,6 +70,8 @@ export interface WealthNatalMultifactorReport {
   eligibleAlternatives: readonly Pick<WealthNatalMultifactorSection,
     'claimType' | 'axis' | 'channel' | 'ruleId' | 'methodologyId' | 'sourceIds' | 'observedFactPaths'>[];
   readingGuide?: WealthNatalReadingGuide;
+  /** Original source-checked T5 observations, never a replacement for missing T8 meaning. */
+  insufficientEvidence?: WealthInsufficientT5Evidence;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -151,6 +172,95 @@ function explainMissingWealthT8(
     : '기존 십신 관점 규칙에서 재성 계열의 활성 근거가 확인되지 않아, 등록된 재물 복합 해석 규칙을 적용할 수 없습니다. ';
   return sourceNote + reason +
     '이는 재성이 없거나 돈이 없다는 판정이 아니며, 실제 소득·재산·재물운의 좋고 나쁨을 뜻하지 않습니다.';
+}
+
+function inspectInsufficientT5Evidence(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+): WealthInsufficientT5Evidence {
+  guard(snapshot.completeness.birthTimeKnown &&
+    snapshot.derivedFacts.tenGods.status === 'resolved' &&
+    !execution.claims.some(claim => claim.state === 'active' &&
+      claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'wealth' &&
+      claim.predicate === 'wealth_multifactor_structure'),
+    'Unresolved T8 evidence can only inspect a resolved chart without emitted T8');
+  const facts = snapshot.derivedFacts.tenGods;
+  if (facts.status !== 'resolved') throw new TypeError('Ten-God facts unresolved');
+  const observedT5 = execution.claims.flatMap(claim => {
+    if (claim.state !== 'active' || claim.taxonomy.tier !== 'T5' ||
+        claim.snapshotId !== snapshot.snapshotId) return [];
+    const match = /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+      .exec(claim.claimType);
+    if (!match) return [];
+    const family = match[1]!.toLowerCase();
+    const channel = match[2]!.toLowerCase() as Channel;
+    const expectedRuleId = 'RULE-GENERAL-NATAL-T5-' +
+      match[1] + '-' + match[2];
+    const ref = claim.ruleRefs[0];
+    const rule = registry.rules.find(r => r.ruleId === ref?.ruleId &&
+      r.version === ref?.version);
+    const evaluation = execution.evaluations.find(e =>
+      e.evaluationId === ref?.evaluationId);
+    guard(claim.ruleRefs.length === 1 && rule &&
+      rule.ruleId === expectedRuleId &&
+      rule.output.claimType === claim.claimType &&
+      rule.status === 'research' &&
+      evaluation?.status === 'matched' &&
+      evaluation.emittedClaimIds.includes(claim.claimId) &&
+      claim.factRefs.includes('derivedFacts.tenGods') &&
+      claim.sourceRefs.length > 0 &&
+      claim.sourceRefs.every(sourceId => registry.sources.some(source =>
+        source.sourceId === sourceId)) &&
+      rule.sourceRefs.every(source => claim.sourceRefs.includes(source.sourceId)),
+      'The insufficient T5 observation must come from its own matched source and rule');
+    const slots: readonly PillarSlot[] = channel === 'visible_stems'
+      ? ['year','month','hour'] : ['year','month','day','hour'];
+    const key = channel === 'visible_stems' ? 'stem' : 'branch';
+    const matches = slots.flatMap(slot => {
+      const item = facts.value[slot][key];
+      return item?.status === 'resolved' && FAMILIES[family]!.includes(item.value)
+        ? [{
+          path: 'derivedFacts.tenGods.value.' + slot + '.' + key + '.value',
+          position: SLOT_NAMES[slot] + ' ' +
+            (key === 'stem' ? '천간' : '지지 대표 십신') + ' ' + item.value,
+        }] : [];
+    });
+    guard(matches.length > 0 && new Set(matches.map(item => item.path)).size === matches.length,
+      'An active T5 theme must have actually observed canonical positions');
+    return [{
+      claimId: claim.claimId, claimType: claim.claimType, family, channel,
+      sourceIds: [...claim.sourceRefs], ruleId: rule.ruleId,
+      positions: matches.map(item => item.position),
+      factPaths: matches.map(item => item.path),
+    }];
+  }).sort((a,b) => a.claimType.localeCompare(b.claimType));
+  const known = new Set(observedT5.map(item => item.claimType));
+  const eligible = registry.rules.filter(rule => rule.status === 'research' &&
+    rule.taxonomy.tier === 'T8' && rule.taxonomy.category === 'wealth' &&
+    rule.inputs.every(input => input.source === 'interpretation_claim' &&
+      known.has(input.pathOrClaimType)));
+  guard(eligible.length === 0, 'Existing eligible Wealth T8 rules cannot be silently downgraded');
+  const hasWealth = observedT5.some(item => item.family === 'wealth');
+  const cause = observedT5.length === 0 ? 'no_resolved_t5' as const :
+    hasWealth ? 'wealth_t5_without_same_channel_partner' as const :
+      'no_wealth_t5_in_registered_channels' as const;
+  const factsText = observedT5.map(item =>
+    (item.channel === 'visible_stems' ? '천간' : '지지 대표 십신') +
+    '에서 ' + item.positions.join(' · ') + ' 관측').join('; ');
+  const scope = hasWealth
+    ? '재성 관점은 관측되지만 같은 채널에 등록된 T8 조합 상대가 없습니다.'
+    : '기존 T5 규칙의 두 관측 채널에서 재성 계열이 확인되지 않습니다.';
+  return {
+    status: 't5_observation_only_t8_not_emitted',
+    cause,
+    sourceQualifiedT8ClaimCount: 0,
+    recoverableByRegisteredT8Rules: false,
+    observedT5,
+    koreanExplanation: (factsText || '확정된 T5 십신 관측 항목이 없습니다.') +
+      '. ' + scope + ' 그러므로 출처 있는 재물 종합 T8 문단은 발행하지 않습니다.' +
+      ' 이는 소득·재산의 많고 적음 또는 미래 재물운을 뜻하지 않습니다.',
+  };
 }
 
 function textFor(claimType: string, key: 'headline'|'summary') {
@@ -432,6 +542,9 @@ export function buildWealthNatalMultifactorReport(
   const readingGuide = buildWealthNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
+  const insufficientEvidence = state === 'insufficient' &&
+    snapshot.completeness.birthTimeKnown
+    ? inspectInsufficientT5Evidence(snapshot, execution, registry) : undefined;
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 재물의 다중 근거 T8 해석은 보류합니다.');
   }
@@ -446,6 +559,7 @@ export function buildWealthNatalMultifactorReport(
     sections,
     eligibleAlternatives,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(insufficientEvidence === undefined ? {} : { insufficientEvidence }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],

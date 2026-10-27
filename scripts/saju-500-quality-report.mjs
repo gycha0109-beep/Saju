@@ -87,6 +87,24 @@ const menus = MENU_NAMES.map(name => {
     })() : null,
   };
 });
+const missingWealth = after.caseResults['재물'].filter(row => row.state === 'insufficient');
+if (missingWealth.length !== 17 || missingWealth.some(row =>
+    row.sectionCount !== 0 || row.eligibleAlternatives?.length !== 0 ||
+    !row.wealthInsufficientEvidence ||
+    row.wealthInsufficientEvidence.recoverable !== false ||
+    row.wealthInsufficientEvidence.t8ClaimCount !== 0 ||
+    !row.wealthInsufficientEvidence.t5?.length)) {
+  throw new Error('The 17 insufficient Wealth reports must explain their source-owned T5 facts.');
+}
+const wealthBlockedByCause = Object.fromEntries([
+  'no_wealth_t5_in_registered_channels',
+  'wealth_t5_without_same_channel_partner',
+].map(cause=>[cause,missingWealth.filter(row=>
+  row.wealthInsufficientEvidence.cause===cause).length]));
+if(wealthBlockedByCause.no_wealth_t5_in_registered_channels!==16 ||
+   wealthBlockedByCause.wealth_t5_without_same_channel_partner!==1) {
+  throw new Error('The 17 source-bound Wealth insufficiency reasons changed.');
+}
 const annual = buildGeneralAnnualAuthorityBridgeReview();
 const monthlyRegistry = createGeneralMonthlyReadingCandidateRegistry('2026-10-25T00:00:00.000Z');
 const annualAuthorized = annual.authorityState.annualSpecificSourceAuthorityEstablished &&
@@ -106,6 +124,9 @@ const qualityGate = {
   newTemporalInterpretationClaimsIssued:0,
   annualSemanticAuthority:annualAuthorized,
   monthlySemanticAuthority:monthlyAuthorized,
+  wealthInsufficientSourceTraces:missingWealth.length,
+  wealthBlockedByCause,
+  wealthNewlyRecoverableWithCurrentT8Rules:0,
   finalRoadmapAccepted:false,
 };
 const report = {
@@ -149,6 +170,8 @@ const markdown = '# 사주 고정 500건 × 8메뉴 개선 비교\n\n'+
   '개. 대운–연운 충·육합 관측 구간 '+
   menus.find(m=>m.name==='이번 달').annualDayunObservedMatches+
   '개. 새로운 해석 Claim 발행 0개 (R153/R154 source authority HOLD).\n\n'+
+  '재물 부족 17명 중 기존 T8 근거로 복구 가능 0명; 재성 T5 관측 없음 16명, 재성은 있으나 같은 채널 조합 상대 없음 1명.'+
+  ' T5 실제 위치 및 Claim·Rule·Source는 각 사례별 별도 기록합니다.\n\n'+
   '## 실제 한국어 결과 예시\n\n'+examples+'\n## 미확립 범위\n\n'+
   report.limitations.map(x=>'- '+x).join('\n')+'\n';
 writeFileSync(markdownPath,markdown,'utf8');

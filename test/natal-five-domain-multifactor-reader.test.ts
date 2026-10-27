@@ -54,6 +54,29 @@ function reports(snapshot: ReturnType<typeof sample>): NatalFiveDomainMultifacto
 }
 
 describe('same-chart five-domain multifactor Korean research reading', () => {
+  it('shows source-owned T5 observations rather than inventing a wealth T8 paragraph', () => {
+    const chart = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar', date: { year: 1955, month: 10, day: 31 },
+      time: { known: true, hour: 19, minute: 35 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const result = reports(chart);
+    expect(result.wealth.state).toBe('insufficient');
+    expect(result.wealth.sections).toHaveLength(0);
+    const trace = result.wealth.insufficientEvidence!;
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, result);
+    const wealthCard = html.split('<h2 id="domain-wealth">')[1]!
+      .split('</article>')[0]!;
+    expect(wealthCard).toContain('재물 T8 근거 부족의 실제 T5 관측');
+    expect(wealthCard).toContain(trace.koreanExplanation);
+    expect(wealthCard).toContain('등록된 T8 재물 종합해석으로 승격하지 않습니다');
+    for (const theme of trace.observedT5) {
+      expect(wealthCard).toContain(theme.claimId);
+      expect(wealthCard).toContain(theme.sourceIds[0]!);
+      expect(wealthCard).toContain(theme.positions[0]!);
+    }
+    expect(html).toContain('내부 연구용 미리보기');
+  });
   it('renders five source-owned Korean meanings and evidence scopes on one real canonical chart', () => {
     const chart = sample(3, 10);
     const sections = reports(chart);
