@@ -687,7 +687,9 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(app.calls[0]?.url).toBe('/api/preview/compatibility-charts');
     expect(app.calls[0]?.body.partnerBirth?.date).toBe('1996-01-09');
     expect(app.calls[0]?.body.partnerBirth?.time).toBeNull();
-    expect(app.get('twelve-state-compatibility').dataset.state).toBe('partial');
+    expect(app.get('twelve-state-compatibility').dataset.state).toBe('unavailable');
+    expect(app.get('twelve-state-compatibility').textContent)
+      .toContain('궁합 해석은 아직 제공할 수 없습니다');
     expect(app.get('twelve-reading-compatibility').collectText()).toContain('상대방 명식');
     expect(app.get('twelve-reading-compatibility').collectText()).toContain('경오');
     expect(app.get('twelve-reading-compatibility').collectText()).toContain('궁합 점수');
