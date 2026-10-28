@@ -209,6 +209,47 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     }
   });
 
+  it('distinguishes an existing topic reading from an independent question-specific conclusion', async () => {
+    const app = mountBrowser(async (_url, call) => {
+      const requestedText = call.body.reading?.text || '';
+      const existingTopic = requestedText === '질문: 재물운';
+      return {
+        ok: true, status: 200,
+        json: async () => ({
+          responseVersion: 'myeonghwa-product-reading-response-v2',
+          requestContext: {
+            requestedText,
+            intent: existingTopic
+              ? { domain: 'wealth', temporalScope: 'natal' }
+              : { domain: 'question_specific', temporalScope: 'natal' },
+            calculationSex: call.body.birth.sex,
+          },
+          state: 'delivered', messageCode: 'READING_DELIVERED',
+          reading: {
+            subject: subjectFor(call.body.birth),
+            sections: [{
+              title: '근거 있는 풀이', state: 'complete',
+              blocks: [{ type: 'paragraph', text: '실제 근거에서 전달된 문단' }],
+            }],
+            disclosures: [],
+          },
+        }),
+      };
+    });
+    const question = app.get('menu-question-text');
+    question.value = '재물운';
+    await app.get('twelve-open-question').dispatch('click');
+    expect(app.get('twelve-state-question').dataset.state).toBe('partial');
+    expect(app.get('twelve-reading-question').collectText())
+      .toContain('질문의 개별 상황에 대한 별도 결론이 아닙니다');
+    question.value = '직장 이직을 고민하고 있어요';
+    await question.dispatch('input');
+    await app.get('twelve-open-question').dispatch('click');
+    expect(app.get('twelve-state-question').dataset.state).toBe('partial');
+    expect(app.get('twelve-reading-question').collectText())
+      .not.toContain('질문의 개별 상황에 대한 별도 결론이 아닙니다');
+  });
+
   it('blocks a response for a different dayun calculation sex even when birth date and topic match', async () => {
     const app = mountBrowser(async (_url, call) => ({
       ok: true, status: 200,
