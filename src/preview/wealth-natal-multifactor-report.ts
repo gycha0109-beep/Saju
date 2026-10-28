@@ -419,7 +419,7 @@ function buildWealthNatalReadingGuide(
   const paragraphs = [
     `이 명식에서 재물과 자원을 읽는 중심 구조적 관점은 ‘${core.headline}’입니다. ${core.observedPositions.join(' · ')}에서 관측된 근거와 연결된 연구용 해석 후보입니다.`,
     ...supports.map((section, index) =>
-      `별도 관점인 ‘${section.headline}’은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 추가로 확인된 계산 근거를 바탕으로 함께 살핍니다.`),
+      `별도 관점: ‘${section.headline}’. 이 관점은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 추가로 확인된 계산 근거를 바탕으로 함께 살핍니다.`),
     ...(state === 'complete'
       ? ['중심 관점 하나와 독립적인 계산 근거를 더하는 보조 관점 두 가지를 구분해 읽을 수 있습니다. 다만 이 기준 충족은 실제 소득·재산·투자 성과의 판단이 아닙니다.']
       : [`독립적인 보조 관점은 현재 ${supporting.length}개만 확인되어 필요한 두 가지를 모두 설명하지 못합니다. 재물운 전체 종합 판단은 보류합니다.`]),
