@@ -49,6 +49,7 @@ import type { ReadingAnnualTemporalStructureV1 } from './annual-temporal-structu
 import { buildApprovedRelationshipMultifactorOverviewV1 } from './approved-relationship-multifactor-overview.js';
 import { buildApprovedDomainMultifactorContextV1 } from './approved-domain-multifactor-context.js';
 import { buildApprovedCareerChannelContextV1 } from './approved-career-channel-context.js';
+import { buildApprovedGeneralThemeContextV1 } from './approved-general-theme-context.js';
 import { buildApprovedSpouseDayBranchContextV1 } from './approved-spouse-day-branch-context.js';
 
 export const OFFICIAL_READING_RENDERER_VERSION =
@@ -1075,6 +1076,41 @@ function renderOfficialReadingInternalV1(
             }),
           };
         }),
+      };
+    }
+  }
+
+  // General T8 family themes are independent interpretations. Attach the
+  // actual person's channel-specific evidence only in the standard reading;
+  // detailed and concise readers already own distinct approved copy.
+  const generalContext =
+    detailPreferenceResolution?.resolvedDetail === 'concise' ||
+    effectiveDetailedRealization !== undefined
+      ? undefined
+      : buildApprovedGeneralThemeContextV1(bundle, plan, explainabilityEntries);
+  if (generalContext !== undefined) {
+    const byRef = new Map(generalContext.perspectives.map(item =>
+      [item.explainabilityRef, item.text] as const));
+    for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      const section = sections[sectionIndex];
+      if (!section) continue;
+      sections[sectionIndex] = {
+        ...section,
+        blocks: section.blocks.map(block => block.type !== 'insights'
+          ? block
+          : {
+              ...block,
+              items: block.items.map(item => {
+                const extra = item.explainabilityRef === undefined
+                  ? undefined : byRef.get(item.explainabilityRef);
+                return extra === undefined ? item : {
+                  ...item,
+                  summary: [item.summary, extra]
+                    .filter((x): x is string => x !== undefined && x.length > 0)
+                    .join('\n\n'),
+                };
+              }),
+            }),
       };
     }
   }
