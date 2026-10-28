@@ -330,14 +330,16 @@ export function buildTemporalResearchMenuReadings(
   // The monthly menu answers the requested instant, not every T9 claim
   // calculated for both sides of the Jeol boundary. The other sections remain
   // available for clearly labelled comparison, but are NOT current meaning.
-  const monthlyHasMeaning = referenceFocus?.state === 'in_period' &&
-    referenceFocus.currentSection !== undefined &&
-    referenceFocus.currentSection.evidenceKind === 'monthly_t9_research_claim' &&
+  const currentMonthlySection = referenceFocus?.state === 'in_period'
+    ? referenceFocus.currentSection
+    : undefined;
+  const monthlyHasMeaning = currentMonthlySection !== undefined &&
+    currentMonthlySection.evidenceKind === 'monthly_t9_research_claim' &&
     monthly.some(section =>
-      section.claimId === referenceFocus.currentSection?.claimId &&
-      section.interval?.startsAt === referenceFocus.currentSection?.interval?.startsAt &&
+      section.claimId === currentMonthlySection.claimId &&
+      section.interval?.startsAt === currentMonthlySection.interval?.startsAt &&
       section.interval?.endsAtExclusive ===
-        referenceFocus.currentSection?.interval?.endsAtExclusive);
+        currentMonthlySection.interval?.endsAtExclusive);
   const lifeHasFacts = lifeSections.length > 0;
   return [
     {
@@ -372,15 +374,16 @@ export function buildTemporalResearchMenuReadings(
         : referenceFocus?.state === 'outside_target_month'
           ? '조회 시각이 선택한 월 밖입니다. 다른 절입 구간의 문장을 현재 월운으로 제공하지 않습니다.'
           : '조회 시각에 해당하는 절입 구간의 개인별 T9 근거가 확인되지 않아 월운 해석을 보류합니다.',
-      sections: monthlyHasMeaning
+      sections: monthlyHasMeaning && currentMonthlySection !== undefined
         ? [
           {
-            ...referenceFocus.currentSection!,
-            title: '조회 시각에 적용되는 풀이 · ' + referenceFocus.currentSection!.title,
+            ...currentMonthlySection,
+            title: '조회 시각에 적용되는 풀이 · ' + currentMonthlySection.title,
           },
           ...monthly.filter(section =>
-            section.claimId !== referenceFocus.currentSection!.claimId ||
-            section.interval?.startsAt !== referenceFocus.currentSection!.interval?.startsAt)
+            section.claimId !== currentMonthlySection.claimId ||
+            section.interval?.startsAt !== currentMonthlySection.interval?.startsAt ||
+            section.interval?.endsAtExclusive !== currentMonthlySection.interval?.endsAtExclusive)
             .map(section => ({
               ...section,
               title: '다른 절입 구간의 비교 자료 (현재 풀이 아님) · ' + section.title,
