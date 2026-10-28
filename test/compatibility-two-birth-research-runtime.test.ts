@@ -72,6 +72,45 @@ describe('real two-birth compatibility intake remains facts only', () => {
     expect(result.html).toContain('source-qualified T10 Claim');
   });
 
+  it('shows a separately sourced T8 relationship axis omitted by first-screen selection without upgrading dyadic T10', () => {
+    const first: BirthInput = {
+      calendarType: 'solar',
+      date: { year: 2024, month: 1, day: 3 },
+      time: { known: true, hour: 0, minute: 0 },
+      sexForTraditionalCalculation: 'unspecified',
+    };
+    const output = read(first, SECOND);
+    const original = output.personalRelationship.subject.sections.filter(section =>
+      section.evidenceMode === undefined);
+    const alternatives = output.personalRelationship.subject.sections.filter(section =>
+      section.evidenceMode === 'reused_calculated_paths');
+    expect(original.length).toBeGreaterThan(0);
+    expect(alternatives.length).toBeGreaterThan(0);
+    const consumed = new Set(original.flatMap(section => section.observedFactPaths));
+    for (const alt of alternatives) {
+      expect(alt.sourceIds.length).toBeGreaterThanOrEqual(2);
+      expect(alt.observedFactPaths.every(path => consumed.has(path))).toBe(true);
+      expect(output.html).toContain(escapedHtmlText(alt.paragraph));
+    }
+    expect(output.html).toContain('독립 근거가 추가된 것도 아닙니다');
+    expect(output.report.subject.personRef).toBe(QUERY.subjectPersonRef);
+    expect(output.report.target.personRef).toBe(QUERY.targetPersonRef);
+    const reverse = read(SECOND, first);
+    expect(reverse.personalRelationship.target.sections
+      .map(section => [section.title, section.paragraph]))
+      .toEqual(output.personalRelationship.subject.sections
+        .map(section => [section.title, section.paragraph]));
+    expect(reverse.personalRelationship.subject.sections
+      .map(section => [section.title, section.paragraph]))
+      .toEqual(output.personalRelationship.target.sections
+        .map(section => [section.title, section.paragraph]));
+    expect(output.report.readingStatus).toBe('insufficient_interpersonal_meaning_authority');
+    expect(output.availability).toBe('unavailable');
+    expect(output.mayClaimInterpersonalMeaning).toBe(false);
+    expect(output.mayPublish).toBe(false);
+    expect(output.maySell).toBe(false);
+  });
+
   it('connects exact R068/R069 pairwise source HOLDS without changing the existing preview or personal readings', () => {
     const cases: readonly (readonly [BirthInput, BirthInput])[] = [
       [FIRST, SECOND],
