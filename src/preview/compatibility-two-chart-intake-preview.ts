@@ -54,6 +54,8 @@ export interface CompatibilityPersonalRelationshipReading {
     paragraph: string;
     sourceIds: readonly string[];
     observedFactPaths: readonly string[];
+    /** Independently issued T8 interpretation using previously selected facts. */
+    evidenceMode?: 'reused_calculated_paths';
   }[];
 }
 
@@ -254,11 +256,16 @@ function personalRelationshipHtml(
     guard(reading.personRef === facts.personRef &&
       reading.snapshotId === facts.snapshotId &&
       reading.calculationHash === facts.calculationHash &&
-      reading.sections.every(section =>
+      reading.sections.every((section, index) =>
         section.title.trim().length > 0 &&
         section.paragraph.trim().length > 0 &&
         section.sourceIds.length >= 2 &&
-        section.observedFactPaths.length >= 2) &&
+        section.observedFactPaths.length >= 2 &&
+        (section.evidenceMode !== 'reused_calculated_paths' ||
+          (index > 0 && section.observedFactPaths.every(path =>
+            reading.sections.slice(0, index).some(prior =>
+              prior.evidenceMode === undefined &&
+              prior.observedFactPaths.includes(path))))) &&
       (reading.coverage === 'bounded_natal_t8_research' ?
         reading.sections.length > 0 : reading.sections.length === 0),
     'each personal T8 interpretation must retain its own calculated snapshot and sources');
@@ -274,7 +281,11 @@ function personalRelationshipHtml(
         ? '<p>이 사람의 명식에서는 출처를 갖춘 원국 관계 풀이가 부족합니다.</p>'
         : reading.sections.map(section =>
           '<div><h4>' + escapeHtml(section.title) + '</h4><p>' +
-          escapeHtml(section.paragraph) + '</p><details><summary>해석 근거</summary>' +
+          escapeHtml(section.paragraph) + '</p>' +
+          (section.evidenceMode === 'reused_calculated_paths'
+            ? '<p>같은 사람에게서 이미 사용한 근거를 다시 읽는 별도 기존 T8 관점입니다. ' +
+              '궁합이나 두 사람의 관계 결과가 아니며 독립 근거가 추가된 것도 아닙니다.</p>'
+            : '') + '<details><summary>해석 근거</summary>' +
           '<p>Source: ' + escapeHtml(section.sourceIds.join(' · ')) +
           '</p><p>계산 사실 경로: ' +
           escapeHtml(section.observedFactPaths.join(' · ')) +
