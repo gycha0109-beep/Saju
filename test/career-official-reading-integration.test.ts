@@ -15,6 +15,7 @@ import { buildReadingCompositionEvidence } from '../src/reading/reading-profile-
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
+import { buildApprovedCareerChannelContextV1 } from '../src/reading/approved-career-channel-context.js';
 import { buildOfficialReadingCharacterGroundingV1 } from '../src/reading/official-reading-reader-parity.js';
 import {
   PRODUCT_READING_RESPONSE_VERSION,
@@ -219,6 +220,36 @@ describe('admitted Career Preview semantics -> Official Reading -> Reader', () =
 
     const report = renderOfficialReadingV1(semantics, plan);
     const reportJson = JSON.stringify(report.sections);
+    expect(reportJson).toContain('이 해석을 뒷받침하는 실제 위치:');
+    expect(reportJson).toContain('연주 천간 비견');
+    expect(reportJson).toContain('월주 천간 편재');
+    expect(reportJson).toContain('시주 천간 편관');
+    expect(reportJson).toContain('지지 대표 십신');
+    expect(reportJson).not.toContain('직업 적성 보장');
+
+    const matching = buildApprovedCareerChannelContextV1(
+      semantics, plan, report.explainability.entries);
+    expect(matching).toBeDefined();
+    expect(matching?.perspectives.length).toBeGreaterThanOrEqual(3);
+    // A copied interpretation cannot be made personal by fabricating the
+    // Ten-God positions or leaving its actual computation unverified.
+    const missingFacts = buildApprovedCareerChannelContextV1(
+      { ...semantics, canonicalFacts: [] }, plan, report.explainability.entries);
+    expect(missingFacts).toBeUndefined();
+    const invalidSourceCopy = buildApprovedCareerChannelContextV1({
+      ...semantics,
+      units: semantics.units.map(unit => unit.role === 'primary'
+        ? {
+            ...unit,
+            canonicalText: {
+              ...(unit.canonicalText?.headline === undefined
+                ? {} : { headline: unit.canonicalText.headline }),
+              summary: '이 출처가 승인하지 않은 직업 성패 단정',
+            },
+          }
+        : unit),
+    }, plan, report.explainability.entries);
+    expect(invalidSourceCopy).toBeUndefined();
     for (const unit of primaryCareerUnits) {
       expect(reportJson).toContain(unit.canonicalText?.summary);
     }
