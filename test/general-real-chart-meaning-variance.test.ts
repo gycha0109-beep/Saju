@@ -87,7 +87,7 @@ describe('real chart-to-chart semantic variance for whole-chart general Korean R
       expect(sample.explainability.length).toBeGreaterThan(0);
     }
   });
-  it('replays exactly the same person's Korean interpretation and selected semantic claims', () => {
+  it('replays exactly the same personal Korean interpretation and selected semantic claims', () => {
     const first = personalGeneral(9);
     const replay = personalGeneral(9);
     expect(replay).toEqual(first);
