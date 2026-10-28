@@ -323,6 +323,52 @@ function renderFirstScreenSelectedInterpretations(
     '<p class="bounded-note">' + escapeHtml(scope) + '</p></section>';
 }
 
+/**
+ * Show only other existing Wealth T8 interpretations with provably repeated
+ * selected calculation paths. They must never count toward the two independent
+ * support axes required by the research completeness policy.
+ */
+function renderWealthOverlappingPerspectives(report: WealthNatalMultifactorReport): string {
+  const alternatives = report.overlappingPerspectives;
+  if (alternatives === undefined || alternatives.length === 0) return '';
+  const selected = report.sections;
+  const usedPaths = new Set(selected.flatMap(section => section.observedFactPaths));
+  const selectedClaims = new Set(selected.map(section => section.claimType));
+  guard(report.state === 'partial' && selected.length > 0 &&
+    report.readingGuide !== undefined && alternatives.length <= 2 &&
+    alternatives.every(section =>
+      !selectedClaims.has(section.claimType) &&
+      section.axis !== 'context' &&
+      section.sourceIds.length > 0 &&
+      section.ruleId === 'RULE-' + section.claimType &&
+      section.methodologyId.length > 0 &&
+      section.paragraph.trim().length > 0 &&
+      section.upstreamClaimIds.length >= 2 &&
+      section.observedFactPaths.length === section.observedPositions.length &&
+      section.observedFactPaths.length >= 2 &&
+      section.observedFactPaths.every(path => usedPaths.has(path)) &&
+      JSON.stringify(section.observedFactPaths) ===
+        JSON.stringify(section.overlapsSelectedFactPaths)),
+    'Wealth additional perspectives must be existing overlapping T8 evidence');
+  const items = alternatives.map(section =>
+    '<section class="overlapping-wealth-claim"><h4>' +
+    escapeHtml(section.headline) + '</h4><p>' +
+    escapeHtml(section.paragraph) + '</p><details><summary>원래 T8 근거·출처</summary>' +
+    '<p>Claim 유형: ' + escapeHtml(section.claimType) + '</p>' +
+    '<p>규칙: ' + escapeHtml(section.ruleId) + '</p>' +
+    '<p>방법론: ' + escapeHtml(section.methodologyId) + '</p>' +
+    '<p>출처: ' + escapeHtml(section.sourceIds.join(' · ')) + '</p>' +
+    '<p>재사용된 계산 경로: ' +
+    escapeHtml(section.overlapsSelectedFactPaths.join(' · ')) +
+    '</p></details></section>').join('');
+  return '<section class="overlapping-perspectives" aria-label="재물 중복 근거의 별도 해석">' +
+    '<h3>같은 계산 근거로도 읽을 수 있는 다른 재물 관점</h3>' +
+    '<p>아래는 실제 T8 규칙으로 따로 발행된 기존 연구 해석입니다. ' +
+    '이미 사용한 계산 위치를 다시 읽는 것이므로 독립 보조 근거가 추가된 것은 아닙니다. ' +
+    '부분 풀이의 상태가 종합 완료로 바뀌지 않습니다.</p>' +
+    items + '</section>';
+}
+
 function renderWealthInsufficientEvidence(report: WealthNatalMultifactorReport): string {
   const evidence = report.insufficientEvidence;
   if (evidence === undefined) return '';
@@ -380,6 +426,8 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
   const firstMeaning = renderFirstScreenSelectedInterpretations(domain, report);
   const insufficientEvidence = domain === 'wealth'
     ? renderWealthInsufficientEvidence(report as WealthNatalMultifactorReport) : '';
+  const overlapping = domain === 'wealth'
+    ? renderWealthOverlappingPerspectives(report as WealthNatalMultifactorReport) : '';
   const details = firstMeaning === '' ? readingGuide + originalText
     : '<details class="full-claim-evidence"><summary>원국 풀이의 상세 설명·명식 근거와 출처</summary>' +
       readingGuide + originalText + '</details>';
@@ -387,7 +435,7 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
     '<p>' + escapeHtml(report.introduction) + '</p>' +
-    firstMeaning + insufficientEvidence + details + missing +
+    firstMeaning + overlapping + insufficientEvidence + details + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }
