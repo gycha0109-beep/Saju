@@ -76,12 +76,38 @@ function individualRelationshipContext(
         section.paragraph.trim().length === 0)) {
     throw new TypeError('Personal relationship research must retain each source-bound T8 chart.');
   }
-  const sections = report.sections.map(section => ({
-    title: section.headline,
-    paragraph: section.paragraph,
-    sourceIds: [...section.sourceIds],
-    observedFactPaths: [...section.observedFactPaths],
-  }));
+  const originalPaths = new Set(report.sections.flatMap(section =>
+    section.observedFactPaths));
+  const alternativeClaims = new Set(report.sections.map(section => section.claimType));
+  const alternatives = report.overlappingPerspectives ?? [];
+  if (alternatives.length > 0 && (
+      report.state !== 'partial' || alternatives.length > 2 ||
+      alternatives.some(section =>
+        alternativeClaims.has(section.claimType) ||
+        section.ruleId !== 'RULE-' + section.claimType ||
+        section.sourceIds.length < 2 ||
+        section.upstreamClaimIds.length < 2 ||
+        section.observedFactPaths.length < 2 ||
+        section.observedFactPaths.some(path => !originalPaths.has(path)) ||
+        JSON.stringify(section.overlapsSelectedFactPaths) !==
+          JSON.stringify(section.observedFactPaths)))) {
+    throw new TypeError('Individual T8 overlap is not sourced to its own unchanged person.');
+  }
+  const sections = [
+    ...report.sections.map(section => ({
+      title: section.headline,
+      paragraph: section.paragraph,
+      sourceIds: [...section.sourceIds],
+      observedFactPaths: [...section.observedFactPaths],
+    })),
+    ...alternatives.map(section => ({
+      title: section.headline,
+      paragraph: section.paragraph,
+      sourceIds: [...section.sourceIds],
+      observedFactPaths: [...section.observedFactPaths],
+      evidenceMode: 'reused_calculated_paths' as const,
+    })),
+  ];
   return {
     personRef,
     snapshotId: snapshot.snapshotId,
