@@ -133,6 +133,16 @@
 - **실제 실행:** `test/general-real-chart-meaning-variance.test.ts` 신규 추가. 서로 다른 **1996-03-01~14 14개 출생 명식**을 동일한 계산·T8 Registry·Official Reading renderer에서 실행해, 단순 출생일·해시·사주 근거 위치 표기가 아닌 **실제 선택 T8 Claim 종류/해석 제목 조합의 차이**를 비교했다. 출생 차트 14개 사이의 Claim 의미 조합과 한국어 제목 조합이 각각 2종을 초과해야 통과하도록 했다. 동일 명식 재실행 시 Claim·한국어 전체 출력을 포함한 모든 비교 결과의 동일성도 확인했다.
 - **검증 결과:** 대상 2개 테스트 **실제 Vitest PASS**. 이 결과는 **전체 사주 메뉴 14개 실제 명식 표본**에서 의미 조합이 달라진다는 제한된 증거다. 기존 500명×8메뉴 전체/가족·궁합·질문형 T10/T11의 의미 품질 완료 증거는 아니다. 이 표본을 근거로 12개 메뉴 중 어떤 메뉴도 완성으로 표시하지 않는다.
 - **재물의 남은 핵심 공백:** 기존 500명 감사에서 111명/500명의 풀이 누락 기록이 있다. 대상이 가진 다가족 T8 결론의 미발행과 근거 선택·읽기 출력의 누락을 **별개의 문제**로 분리해야 한다. `wealth-natal-core-coverage-preservation` 회귀 규칙에 따라 이미 완성된 다축 해석을 더 좁은 단일 중첩 조합으로 대체해서는 안 된다. 별도 출처 없는 단일 십신 추측을 재물 종합 결론으로 추가하지 않는다.
+### 2026-10-28: 재물·사업·연애·관계의 미표시 T8 원문 복구 (기존 근거만 재사용)
+
+- **실제 해석 출력 구현:** `src/preview/wealth-natal-multifactor-report.ts`와 `src/preview/natal-five-domain-multifactor-reader.ts`에서 이미 `runInterpretation`이 발행하고 정확한 T8 규칙·Source·Methodology·T5 선행 근거·실제 계산 경로가 검증된 **재물 관련 별도 의미축**을, 첫 화면의 독립적인 보조 축과 겹치는 계산 위치만으로 설명할 경우에도 `overlappingPerspectives`에 보존하여 연구용 한국어 본문으로 읽을 수 있게 했다.
+- **사업·연애·관계 확장:** `src/preview/natal-overlapping-t8-perspectives.ts`를 구현하고 사업·관계 연구 보고서에도 정확히 같은 **기존 T8 의미 출력 누락 방지 규칙**을 적용했다. 선택된 T8과 서로 다른 의미축이면서 **동일한 Canonical 계산 위치만** 소비한 경우만 최대 2개를 추가 표시한다. 다른 사람의 Claim·다른 방법론·관측되지 않은 근거를 새로 만들지 않는다.
+- **완성 상태 보존:** 중복 경로를 사용하는 추가 의미는 결코 독립적인 보조 근거로 산정하지 않으며 `complete` 판정이나 제품 `Official`·판매 권한을 부여하지 않는다. 기존 `sections`·`readingGuide`·`eligibleAlternatives`·부족 근거 표시는 그대로 유지하고, 추가로 읽는 문단에는 **재사용 근거 및 연구 한계**를 명시한다. 렌더러가 원래 Rule·Source·FactPath 일치성을 재확인하며 위조된 관찰 경로는 거부한다.
+- **재물 연구용 500 실제 계산 표본:** 고정 입력 **2024년 1~12월의 일/시각 500개 조합**에서 현재 연구용 `createWealthNatalMultifactorRegistry`의 결과는 `complete 183`, `partial 302`, `insufficient 15`. 15건 모두 해당 채널에 재성 T5 근거가 없고 T8 재물 결론도 발행되지 않은 경우다. 이번 추가 출력은 `partial` 중 **45건**의 기존 T8 별도 의미를 읽을 수 있게 했으며 **상태별 건수는 바꾸지 않았다**.
+- **사업·관계 연구용 100 실제 계산 표본:** 사업은 `complete 68`·`partial 30`·`insufficient 2`; 중복 근거의 별도 T8 해석은 **부분 풀이 5건**에서 새로 노출됐다. 관계는 `complete 42`·`partial 58`, 그중 **16건**에서 다른 의미축이 새로 읽히게 됐다.
+- **공식 재물 제품 경로 별도 검증:** `createWealthNatalReadingCandidateRegistry` + `prepareProductReading`의 별도 500건 실측은 **500건 모두 ready_for_execution/complete/T8 Claim 존재**, 서로 다른 재물 T8 Claim 조합 **18종**. `test/wealth-official-admission-500-cohort.test.ts`로 반복 가능한 실제 계산→T8→Profile/EvidenceSelector 회귀 테스트를 추가했다. 이것은 **공식 진입·선택 경로의 특정 표본 검증**으로서, 이 500건 자체의 실제 한국어 의미 깊이·상업 승인이나 이전 111건 감사의 문제가 모두 해결됐다는 뜻은 아니다.
+- **검증:** 새 원문 노출·중복 경로·출처·권한·위조 거부를 `test/natal-five-domain-multifactor-reader.test.ts`에 반영했고, 재물 관련 선택 4개 테스트 파일 **18개 테스트 PASS**, 최신 `npm run typecheck` **PASS**를 실제 임시 체크아웃에서 확인했다. 과거 111건은 별도 감사 코호트로 그대로 보존하며 이번 500건과 직접 합산/비교하지 않는다.
+
 ## 부록 A. 2026-10-25 고정 500명 × 8메뉴 개선 계획 (이력 보존)
 
 > 아래의 7단계 및 수치는 **당시 한정된 8개 메뉴 대상**입니다. 당시의 표본·기준과 이미 완료된 작업을 보존하기 위한 기록이며, 상단 **12개 동등 메뉴의 활성 로드맵을 대체하거나 제한하지 않습니다.** 새 구현을 시작할 때는 항상 상단의 12개 메뉴별 실제 Reading 품질을 기준으로 판단합니다.
