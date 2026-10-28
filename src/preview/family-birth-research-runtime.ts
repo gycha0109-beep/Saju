@@ -104,7 +104,9 @@ export function buildFamilyBirthResearchReading(
     version: FAMILY_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
     scope: request.scope,
-    availability: hasFacts ? 'partial' : 'unavailable',
+    // Calculation facts are displayed, but no parent/child interpretation
+    // was admitted by R070. Availability refers to the requested meaning.
+    availability: 'unavailable',
     meaning: hasFacts ? 'calculation_facts_only' : 'none',
     mayClaimFamilyOutcome: false,
     mayGrantOfficialAuthority: false,
