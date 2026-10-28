@@ -159,7 +159,9 @@ function availableOriginalSections(
         ? reports.relationship.overlappingPerspectives ?? []
         : [];
   if (alternatives.length === 0) return selected;
-  const selectedPaths = new Set(selected.flatMap(section => section.observedFactPaths));
+  const selectedPaths = new Set(selected.flatMap(section =>
+    'calculatedFactPaths' in section
+      ? section.calculatedFactPaths : section.observedFactPaths));
   const selectedAxes = new Set(selected.map(section => section.axis));
   const selectedClaims = new Set(selected.map(section => section.claimType));
   const alternativeAxes = new Set(alternatives.map(section => section.axis));
