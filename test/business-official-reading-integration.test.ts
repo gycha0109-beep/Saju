@@ -19,6 +19,17 @@ import { buildOfficialReadingCharacterGroundingV1 } from '../src/reading/officia
 import { assembleOfficialReadingArtifactV1 } from '../src/reading/official-reading-artifact.js';
 import { buildProductReadingResponse } from '../src/reading/product-reading-response.js';
 import { PRODUCT_READING_DELIVERY_VERSION } from '../src/reading/product-reading-delivery.js';
+const DELIVERY_TEST_CONSTRAINTS = {
+  mayExposeInternalClaimIds: false,
+  mayExposeRawInternalReasonCodes: false,
+  mayExposeResearchAuthorityStateAsConsumerMeaning: false,
+  mayRenderCoverageAsFortuneJudgment: false,
+  maySynthesizeMissingReadingText: false,
+  mayTreatClarificationCandidateAsSelectedIntent: false,
+  mayTreatFallbackAsNewInterpretationAuthority: false,
+} as const;
+
+
 import {
   PRODUCT_READING_RESPONSE_VERSION,
   type ProductReadingResponse,
@@ -208,7 +219,7 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
         '이 결론에 사용된 실제 십신 계열과 관찰 위치:'));
     expect(contextualized.length).toBeGreaterThan(0);
     expect(contextualized.every(item =>
-      item.explainabilityRef.length > 0 && (
+      (item.explainabilityRef?.length ?? 0) > 0 && (
         item.summary?.includes('지지 대표 십신') === true ||
         item.summary?.includes('천간') === true
       ))).toBe(true);
@@ -231,6 +242,8 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
     );
     const transported = buildProductReadingResponse({
       deliveryId: 'business-approved-context',
+      audit: { executionId: 'business-evidence-test', preparationId: 'business-context-test' },
+      constraints: DELIVERY_TEST_CONSTRAINTS,
       deliveryVersion: PRODUCT_READING_DELIVERY_VERSION,
       state: 'delivered',
       messageCode: 'READING_DELIVERED',
@@ -312,6 +325,8 @@ describe('Wealth approved composite reading remains grounded in real selected cl
     );
     const wealthTransport = buildProductReadingResponse({
       deliveryId: 'wealth-approved-context',
+      audit: { executionId: 'wealth-evidence-test', preparationId: 'wealth-context-test' },
+      constraints: DELIVERY_TEST_CONSTRAINTS,
       deliveryVersion: PRODUCT_READING_DELIVERY_VERSION,
       state: 'delivered',
       messageCode: 'READING_DELIVERED',
