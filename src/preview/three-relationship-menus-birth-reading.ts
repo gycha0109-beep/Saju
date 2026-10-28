@@ -72,8 +72,10 @@ function verifiedInputs(
         familyMember.subject.report.calculationHash !== p.calculationHash ||
         familyMember.subjectNatal.snapshotId !== p.snapshotId ||
         familyMember.subjectNatal.calculationHash !== p.calculationHash ||
+        familyMember.subjectNatal.personRef !== k.subject.personRef ||
         familyMember.member.snapshotId !== k.target.snapshotId ||
         familyMember.member.calculationHash !== k.target.calculationHash ||
+        familyMember.member.personRef !== k.target.personRef ||
         familyMember.familyMeaningStatus !== 'family_t8_source_authority_not_established' ||
         familyMember.mayInferFamilyDynamics ||
         familyMember.mayGrantOfficialAuthority || familyMember.mayPublish ||
