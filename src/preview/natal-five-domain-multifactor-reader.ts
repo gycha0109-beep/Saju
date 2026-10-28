@@ -369,6 +369,57 @@ function renderWealthOverlappingPerspectives(report: WealthNatalMultifactorRepor
     items + '</section>';
 }
 
+/**
+ * An already-emitted Business/Relationship T8 axis can have a different
+ * source-owned meaning while sharing every Canonical path with the first
+ * selected interpretation. Display it as interpretation, NOT new evidence.
+ */
+function renderOtherDomainOverlaps(
+  domain: 'business' | 'relationship',
+  report: BusinessNatalMultifactorReport | RelationshipNatalMultifactorReport,
+): string {
+  const alternatives = report.overlappingPerspectives;
+  if (alternatives === undefined || alternatives.length === 0) return '';
+  const originals = report.sections;
+  const usedPaths = new Set(originals.flatMap(section => section.observedFactPaths));
+  const claims = new Set(originals.map(section => section.claimType));
+  const axes = new Set(originals.map(section => section.axis));
+  const actualAxes = new Set(alternatives.map(section => section.axis));
+  guard(report.state === 'partial' && originals.length > 0 &&
+    report.readingGuide !== undefined &&
+    alternatives.length <= 2 && alternatives.length === actualAxes.size &&
+    alternatives.every(section =>
+      section.claimType.startsWith(domain.toUpperCase() + '_NATAL_MULTIFACTOR_') &&
+      section.ruleId === 'RULE-' + section.claimType &&
+      !claims.has(section.claimType) && !axes.has(section.axis) &&
+      section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
+      section.paragraph.trim().length > 0 &&
+      section.observedFactPaths.length >= 2 &&
+      section.observedFactPaths.length === section.observedPositions.length &&
+      section.observedFactPaths.every(path => usedPaths.has(path)) &&
+      JSON.stringify(section.observedFactPaths) ===
+        JSON.stringify(section.overlapsSelectedFactPaths)),
+    'Business/Relationship alternate T8 must reuse only admitted selected facts');
+  const label = domain === 'business' ? '사업' : '관계';
+  const paragraphs = alternatives.map(section =>
+    '<section class="overlapping-natal-claim"><h4>' +
+    escapeHtml(section.headline) + '</h4><p>' +
+    escapeHtml(section.paragraph) + '</p><details>' +
+    '<summary>원래 T8 규칙·출처·계산 경로</summary><p>Claim: ' +
+    escapeHtml(section.claimType) + '</p><p>규칙: ' +
+    escapeHtml(section.ruleId) + '</p><p>출처: ' +
+    escapeHtml(section.sourceIds.join(' · ')) +
+    '</p><p>다시 사용한 계산 경로: ' +
+    escapeHtml(section.overlapsSelectedFactPaths.join(' · ')) +
+    '</p></details></section>').join('');
+  return '<section class="overlapping-perspectives" aria-label="' + label +
+    ' 중복 근거의 별도 T8 해석"><h3>같은 계산 근거에서 확인된 다른 ' +
+    label + ' 관점</h3><p>아래는 기존 규칙이 실제로 발행한 다른 연구용 T8 해석입니다. ' +
+    '이미 선택한 관점의 계산 위치를 다시 사용하므로 새로운 독립 근거가 아니며, ' +
+    '부분 풀이를 종합 완료로 바꾸거나 실제 사람·사업 결과를 단정하지 않습니다.</p>' +
+    paragraphs + '</section>';
+}
+
 function renderWealthInsufficientEvidence(report: WealthNatalMultifactorReport): string {
   const evidence = report.insufficientEvidence;
   if (evidence === undefined) return '';
@@ -427,7 +478,13 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
   const insufficientEvidence = domain === 'wealth'
     ? renderWealthInsufficientEvidence(report as WealthNatalMultifactorReport) : '';
   const overlapping = domain === 'wealth'
-    ? renderWealthOverlappingPerspectives(report as WealthNatalMultifactorReport) : '';
+    ? renderWealthOverlappingPerspectives(report as WealthNatalMultifactorReport)
+    : domain === 'business' || domain === 'relationship'
+      ? renderOtherDomainOverlaps(
+          domain,
+          report as BusinessNatalMultifactorReport | RelationshipNatalMultifactorReport,
+        )
+      : '';
   const details = firstMeaning === '' ? readingGuide + originalText
     : '<details class="full-claim-evidence"><summary>원국 풀이의 상세 설명·명식 근거와 출처</summary>' +
       readingGuide + originalText + '</details>';
