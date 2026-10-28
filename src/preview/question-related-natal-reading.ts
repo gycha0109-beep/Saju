@@ -10,10 +10,10 @@ type DomainReport = NatalFiveDomainMultifactorReports[Topic];
 
 const TOPICS: readonly { key: Topic; title: string; words: readonly string[] }[] = [
   { key: 'general', title: '전체 사주', words: ['전체 사주', '종합 사주', '사주 전반'] },
-  { key: 'career', title: '직업·진로', words: ['직업운', '진로', '직업', '커리어', '취업', '직장', '이직', '퇴사', '적성'] },
-  { key: 'wealth', title: '재물', words: ['재물운', '재물', '금전운', '돈', '저축', '지출', '자금', '자산'] },
-  { key: 'business', title: '사업', words: ['사업운', '사업', '창업'] },
-  { key: 'relationship', title: '연애·관계', words: ['연애운', '연애', '관계운', '대인관계', '소통', '썸'] },
+  { key: 'career', title: '직업·진로', words: ['직업운', '진로', '직업', '커리어', '취업', '직장', '이직', '퇴사', '적성', '면접', '일자리', '복직', '회사', '직무'] },
+  { key: 'wealth', title: '재물', words: ['재물운', '재물', '금전운', '돈', '저축', '지출', '자금', '자산', '대출', '부채', '빚', '소비', '예산'] },
+  { key: 'business', title: '사업', words: ['사업운', '사업', '창업', '동업', '개업', '자영업', '가게 운영'] },
+  { key: 'relationship', title: '연애·관계', words: ['연애운', '연애', '관계운', '대인관계', '소통', '썸', '데이트', '연인', '애인', '친구 관계'] },
 ] as const;
 
 /**
@@ -42,7 +42,7 @@ const FOCUS_BY_TOPIC: Readonly<Partial<Record<Topic, readonly QuestionAxisFocus[
   ],
   wealth: [
     { axis: 'creation', label: '자원 형성', words: ['자원 형성', '자원 창출'] },
-    { axis: 'management', label: '자원 관리', words: ['관리', '저축', '지출', '운용'] },
+    { axis: 'management', label: '자원 관리', words: ['관리', '저축', '지출', '운용', '대출', '부채', '빚', '소비'] },
     { axis: 'planning', label: '자원 계획', words: ['계획', '예산', '준비'] },
     { axis: 'tension', label: '자원 선택의 긴장', words: ['긴장', '조율'] },
   ],
@@ -50,10 +50,10 @@ const FOCUS_BY_TOPIC: Readonly<Partial<Record<Topic, readonly QuestionAxisFocus[
     { axis: 'execution', label: '실행', words: ['실행', '산출'] },
     { axis: 'governance', label: '운영 기준', words: ['운영', '기준', '관리'] },
     { axis: 'preparation', label: '준비', words: ['준비', '학습'] },
-    { axis: 'coordination', label: '조율', words: ['조율', '협업', '협력'] },
+    { axis: 'coordination', label: '조율', words: ['조율', '협업', '협력', '동업'] },
   ],
   relationship: [
-    { axis: 'expression', label: '표현·소통', words: ['소통', '표현', '대화'] },
+    { axis: 'expression', label: '표현·소통', words: ['소통', '표현', '대화', '연락'] },
     { axis: 'boundaries', label: '관계의 경계', words: ['경계', '거리감'] },
     { axis: 'reception', label: '이해·수용', words: ['이해', '수용'] },
     { axis: 'coordination', label: '조율', words: ['조율', '협의'] },
@@ -66,6 +66,7 @@ const OUT_OF_SCOPE = [
   '올해', '내년', '내후년', '이번 달', '이번달', '다음 달', '다음달', '언제',
   '몇 살', '몇 년', '시기', '미래', '확률', '정확히', '얼마',
   '궁합', '배우자', '결혼', '이혼', '부모', '자녀', '가족', '건강', '수명',
+  '성공할', '합격할', '승진할', '당첨', '수익률', '매출 얼마', '투자 수익',
 ] as const;
 
 /** Input guidance only; it never upgrades held T9/T10/T11 semantics. */
@@ -93,6 +94,9 @@ function unsupportedQuestionRequirements(forbidden: readonly string[]): string[]
   }
   if (has('건강', '수명')) {
     required.push('건강 상태 또는 수명을 판단하는 사주 해석을 제공하지 않습니다.');
+  }
+  if (has('성공할', '합격할', '승진할', '당첨', '수익률', '매출 얼마', '투자 수익')) {
+    required.push('합격·승진·사업 성공·투자 수익이나 당첨 등 특정 결과를 판정할 근거가 없어 기존 업무·자원 관리 성향의 해석을 정답처럼 제시하지 않습니다.');
   }
   return required;
 }
