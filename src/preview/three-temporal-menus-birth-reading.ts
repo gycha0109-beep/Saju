@@ -195,20 +195,25 @@ function render(
     '<a href="#life-stage">삶의 단계</a></nav>' +
     '<section id="annual"><h2>올해 — ' + report.targetYear + '년</h2><p>' +
     e(yearNote) + '</p><p>' + e(observedAnnual) + '</p>' + annual +
-    (natal ? '<h3>이 사람의 원국 해석 — 올해 운세와 별개의 근거</h3><p>' +
-      '아래는 같은 명식에서 실제 선택된 원국 연구 해석입니다. ' +
-      '원국의 성향을 올해의 사건이나 성과로 자동 해석하지 않습니다.</p>' + natal : '') +
     '</section>' +
     '<section id="monthly"><h2>이번 달 — ' + report.targetMonth + '월</h2>' +
     '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth + selectedStructuralReading +
-    '<h3>절입 전후 전체 풀이</h3>' + observedMonthly + monthly +
+    '<h3>절입 전후 전체 풀이 (현재 해석이 아닌 구간도 포함)</h3>' +
+    '<p>아래 두 구간은 출처 있는 비교 자료입니다. 현재 적용되는 해석은 위의 조회 시각 구간 하나뿐입니다.</p>' +
+    observedMonthly + monthly +
     '<h3>원국·대운·세운·월운의 조건부 구조 관계</h3>' + conditionals +
     '<h3>기존 월운 T9 Claim의 연구용 근거 연결</h3>' + linkedT9 +
     '<p>월운 T9 근거와 위의 원국 해석은 구분합니다. ' +
     '상호작용을 설명하는 출처 있는 시간 해석 규칙이 확보되기 전에는 합쳐서 운세로 단정하지 않습니다.</p></section>' +
     '<section id="life-stage"><h2>삶의 단계 — 계산된 대운</h2><p>' +
     '대운의 간지·시각만 계산된 사실입니다. 길흉이나 사건 시기를 해석하지 않습니다.</p>' +
-    periods + '</section><aside><h2>아직 허가되지 않은 내용과 한계</h2><ul>' +
+    periods +
+    (natal ? '<h3>같은 사람에게서 별도로 확인한 사주 해석 근거</h3><p>' +
+      '아래는 이 사람에 대해 이미 선택된 독립적인 T8 연구 해석입니다. ' +
+      '대운 구간과 동일한 사람의 정보라는 것만 확인되며, ' +
+      '대운이 이 성향을 강화·약화하거나 삶의 사건을 일으킨다는 뜻은 아닙니다.</p>' +
+      natal : '<p>이 사람에 대해 추가로 연결할 기존 개인별 해석 근거는 확인되지 않았습니다.</p>') +
+    '</section><aside><h2>아직 허가되지 않은 내용과 한계</h2><ul>' +
     gaps + '</ul><p>공식 공개·저장·판매·결제 권한은 없습니다.</p></aside>' +
     '</main></body></html>';
 }
