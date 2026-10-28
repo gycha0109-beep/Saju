@@ -188,7 +188,9 @@ export function buildCompatibilityTwoBirthResearchReading(
   return {
     version: COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
-    availability: bothHaveFacts ? 'partial' : 'unavailable',
+    // A pair of calculated charts and two independent T8 readings do not
+    // amount to a partially delivered dyadic T10 compatibility reading.
+    availability: 'unavailable',
     meaning: bothHaveFacts ? 'two_person_calculation_only' : 'none',
     mayClaimInterpersonalMeaning: false,
     mayGrantOfficialAuthority: false,
