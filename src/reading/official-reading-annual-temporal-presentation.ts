@@ -69,6 +69,10 @@ export function buildOfficialReadingAnnualTemporalSectionV1(
             value: `${value.annualPillar.stem}${value.annualPillar.branch}`,
           },
           {
+            label: '연간 천간의 십신',
+            value: value.annualStemTenGod,
+          },
+          {
             label: '이전 구조 상태',
             value: STATE_LABELS[transition.previousState],
           },
@@ -84,7 +88,17 @@ export function buildOfficialReadingAnnualTemporalSectionV1(
       },
       {
         type: 'paragraph',
-        text: TRANSITION_TEXT[transition.transitionKind],
+        text: value.targetYear + '년의 연간은 ' +
+          value.annualPillar.stem + value.annualPillar.branch +
+          '이며, 연간 천간을 일간에 대조한 십신은 ' +
+          value.annualStemTenGod + '입니다. ' +
+          '이 십신의 관찰 사실 자체를 길흉이나 구조 변화의 원인으로 판정하지 않습니다. ' +
+          '이미 검증된 연간 구조 평가에서는 ' +
+          STATE_LABELS[transition.previousState] + ' 상태에서 ' +
+          IMPACT_LABELS[transition.periodImpact] + '이 적용되어 ' +
+          STATE_LABELS[transition.nextState] + ' 상태로 이어집니다. ' +
+          TRANSITION_TEXT[transition.transitionKind] +
+          ' 이 설명은 해당 구조 전환에 한정되며 직업·재물·관계의 사건이나 성패를 예측하지 않습니다.',
       },
     ],
     state: 'complete',
