@@ -140,6 +140,38 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
     expect(timed.sections).toHaveLength(0);
   });
 
+  it('recognizes everyday money, work, partnership and contact questions without claiming event outcomes', () => {
+    const { snapshot, reports } = run();
+    const cases = [
+      { questionText: '대출이나 부채를 관리할 때의 제 습관', domain: 'wealth', axis: 'management' },
+      { questionText: '회사에서 맡는 직무에 대한 제 일하는 성향', domain: 'career' },
+      { questionText: '동업에서 협업을 조율하는 제 방식', domain: 'business', axis: 'coordination' },
+      { questionText: '연인과 연락하고 대화하는 제 방식', domain: 'relationship', axis: 'expression' },
+    ] as const;
+    for (const value of cases) {
+      const result = buildQuestionRelatedNatalReading(
+        snapshot, question(value.questionText), reports);
+      expect(result.topic, value.questionText).toBe(value.domain);
+      if ('axis' in value) expect(result.focusAxis).toBe(value.axis);
+      expect(result.status === 'related_evidence' || result.status === 'insufficient')
+        .toBe(true);
+      expect(result.mayPublish).toBe(false);
+      expect(result.maySell).toBe(false);
+      expect(result.caveats.join(' ')).toContain('T11 풀이가 아닙니다');
+    }
+    for (const questionText of [
+      '창업하면 성공할 수 있을까요?',
+      '면접에 합격할 가능성이 있나요?',
+      '투자 수익률을 예측해 주세요',
+    ]) {
+      const result = buildQuestionRelatedNatalReading(
+        snapshot, question(questionText), reports);
+      expect(result.status, questionText).toBe('unsupported');
+      expect(result.sections).toHaveLength(0);
+      expect(result.missing.join(' ')).toContain('특정 결과를 판정할 근거');
+    }
+  });
+
   it('never substitutes an unrelated axis when the requested source-owned view is absent', () => {
     const { snapshot, reports } = run();
     const withoutManagement = {
