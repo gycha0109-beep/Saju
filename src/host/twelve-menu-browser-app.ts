@@ -384,6 +384,14 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
       : '사용 가능한 해석 문단이 없거나 추가 정보가 필요합니다.');
     if (payload.messageCode) note(view.output,
       readingMessages[payload.messageCode] || '이 주제의 결과를 확인할 수 없습니다.', 'field-hint');
+    if (view.spec && view.spec.id === 'question' && payload.requestContext &&
+        payload.requestContext.intent &&
+        payload.requestContext.intent.domain !== 'question_specific') {
+      note(view.output,
+        '입력한 표현이 기존 주제 풀이로 연결됐습니다. ' +
+        '현재 표시된 내용은 질문의 개별 상황에 대한 별도 결론이 아닙니다.',
+        'notice');
+    }
     renderCalculatedFacts(view, payload.reading);
     if (state === 'partial') {
       sections.forEach(function(section) {
