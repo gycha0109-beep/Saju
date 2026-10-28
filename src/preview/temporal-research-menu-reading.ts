@@ -410,10 +410,13 @@ export function buildTemporalResearchMenuReadings(
     {
       version: TEMPORAL_RESEARCH_MENU_READING_VERSION,
       menuId: 'life_stage', label: '삶의 단계',
-      availability: lifeHasFacts ? 'partial' : 'unavailable',
+      // Calculated Dayun periods do not constitute a partially completed
+      // interpretation of a person's life stages. Facts remain readable
+      // below but never raise the semantic availability of this menu.
+      availability: 'unavailable',
       meaning: lifeHasFacts ? 'calculation_facts_only' : 'none',
       statusMessage: lifeHasFacts
-        ? '현재·다음 대운의 계산 구간만 확인됐습니다. 삶의 단계에 대한 의미 해석은 미승인입니다.'
+        ? '현재·다음 대운의 구간 계산 사실은 표시하지만, 삶의 단계 해석은 아직 제공할 수 없습니다.'
         : '확정된 대운 구간 또는 필요한 출생정보가 없어 표시할 계산 사실이 부족합니다.',
       sections: lifeSections,
       missing: life === undefined
