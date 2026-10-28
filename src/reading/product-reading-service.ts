@@ -1,4 +1,4 @@
-import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { CanonicalSajuSnapshot, SexForTraditionalCalculation } from '../contracts/calculation.js';
 import type { NarrativePolicy } from '../contracts/narrative.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
@@ -39,6 +39,7 @@ export interface ProductReadingInternals {
 function assembleProductReadingInternals(
   execution: GovernedReadingExecutionResult,
   input: ConsumerReadingRequestInput,
+  calculationSex: SexForTraditionalCalculation,
 ): ProductReadingInternals {
   const normalizedRequest = execution.preparation.normalization.request;
   const delivery = buildProductReadingDelivery(execution);
@@ -60,6 +61,7 @@ function assembleProductReadingInternals(
       normalizedRequest === undefined ? undefined : {
         requestedText: input.text,
         intent: normalizedRequest.intent,
+        calculationSex,
       },
     ),
     ...(officialSemanticSourceHandoff === undefined
@@ -80,7 +82,9 @@ export async function runProductReadingInternals(
   const execution = await executeProductReading(
     snapshot, interpretation, registry, input, options, legacyNarrativeRuntime,
   );
-  return assembleProductReadingInternals(execution, input);
+  return assembleProductReadingInternals(
+    execution, input, snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
+  );
 }
 
 
@@ -133,7 +137,9 @@ export async function requestProductReading(
       optionsOrAdapter, runtimeOrPolicy as NarrativePolicy,
       legacyOptions as ProductReadingServiceOptions,
     );
-    return assembleProductReadingInternals(execution, input).response;
+    return assembleProductReadingInternals(
+      execution, input, snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
+    ).response;
   }
   return (await runProductReadingInternals(
     snapshot, interpretation, registry, input,

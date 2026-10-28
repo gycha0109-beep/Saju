@@ -324,7 +324,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     monthly: ['general', 'monthly'],
     spouse: ['relationship', 'natal', 'spouse']
   };
-  function matchesRequestedReadingContext(payload, requestedText, menuId) {
+  function matchesRequestedReadingContext(payload, requestedText, menuId, birth) {
     const context = payload.requestContext;
     // All current governed v2 responses carry context. Pre-existing preview
     // test and old transport fixtures without responseVersion remain readable.
@@ -332,6 +332,11 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
         context === undefined) return true;
     if (!context || context.requestedText !== requestedText ||
         !context.intent || typeof context.intent !== 'object') return false;
+    // Dayun calculation can depend on the traditional-calculation sex even
+    // when the birth date and clock are identical. A cached response from
+    // a different selection must never be presented as this person's reading.
+    if (payload.responseVersion === 'myeonghwa-product-reading-response-v2' &&
+        context.calculationSex !== birth.sex) return false;
     const intent = context.intent;
     if (typeof intent.domain !== 'string' ||
         typeof intent.temporalScope !== 'string') return false;
@@ -515,7 +520,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     if (!matchesRequestedBirth(payload, birth)) {
       throw new Error('요청한 사람과 다른 명식의 결과가 돌아와 표시하지 않았습니다.');
     }
-    if (!matchesRequestedReadingContext(payload, '연애운', 'relationship')) {
+    if (!matchesRequestedReadingContext(payload, '연애운', 'relationship', birth)) {
       throw new Error('요청한 관계 주제와 다른 풀이가 돌아와 표시하지 않았습니다.');
     }
     return payload;
@@ -617,7 +622,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
         if (!payload || !matchesRequestedBirth(payload, birth)) {
           throw new Error('이 출생정보와 다른 명식의 결과는 표시할 수 없습니다.');
         }
-        if (!matchesRequestedReadingContext(payload, scope.text, 'family')) {
+        if (!matchesRequestedReadingContext(payload, scope.text, 'family', birth)) {
           throw new Error('부모·자녀 중 요청한 범위와 다른 풀이를 표시하지 않았습니다.');
         }
         return payload;
@@ -797,7 +802,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
           if (!matchesRequestedBirth(payload, requestBirth)) {
             throw new Error('현재 입력한 생년월일·출생시각과 다른 명식의 풀이가 반환되어 표시하지 않았습니다.');
           }
-          if (!matchesRequestedReadingContext(payload, requestedTopic, spec.id)) {
+          if (!matchesRequestedReadingContext(payload, requestedTopic, spec.id, requestBirth)) {
             throw new Error('선택한 주제·질문과 다른 풀이가 반환되어 표시하지 않았습니다.');
           }
           renderPayload(view, payload);

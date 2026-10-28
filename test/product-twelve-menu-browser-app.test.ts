@@ -169,7 +169,9 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
         ok: true, status: 200,
         json: async () => ({
           responseVersion: 'myeonghwa-product-reading-response-v2',
-          requestContext,
+          requestContext: requestContext === undefined ? undefined : {
+            ...requestContext, calculationSex: call.body.birth.sex,
+          },
           state: 'delivered', messageCode: 'READING_DELIVERED',
           reading: {
             subject: subjectFor(call.body.birth),
@@ -189,12 +191,41 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     }
   });
 
+  it('blocks a response for a different dayun calculation sex even when birth date and topic match', async () => {
+    const app = mountBrowser(async (_url, call) => ({
+      ok: true, status: 200,
+      json: async () => ({
+        responseVersion: 'myeonghwa-product-reading-response-v2',
+        requestContext: {
+          requestedText: call.body.reading?.text,
+          intent: { domain: 'career', temporalScope: 'natal' },
+          calculationSex: 'female',
+        },
+        state: 'delivered', messageCode: 'READING_DELIVERED',
+        reading: {
+          subject: subjectFor(call.body.birth),
+          sections: [{
+            title: '잘못된 성별 운 계산', state: 'complete',
+            blocks: [{ type: 'paragraph', text: '다른 대운을 사용한 잘못된 해석' }],
+          }],
+          disclosures: [],
+        },
+      }),
+    }));
+    await app.get('twelve-open-career').dispatch('click');
+    expect(app.calls[0]?.body.birth.sex).toBe('unspecified');
+    expect(app.get('twelve-state-career').dataset.state).toBe('unavailable');
+    expect(app.get('twelve-reading-career').collectText())
+      .not.toContain('다른 대운을 사용한 잘못된 해석');
+  });
+
   it('renders the matching governed topic and blocks a swapped parent-child result', async () => {
     const app = mountBrowser(async (_url, call) => ({
       ok: true, status: 200,
       json: async () => ({
         responseVersion: 'myeonghwa-product-reading-response-v2',
         requestContext: {
+          calculationSex: call.body.birth.sex,
           requestedText: call.body.reading?.text || '',
           intent: call.body.reading?.text === '부모운'
             ? { domain: 'family', temporalScope: 'natal', relationshipScope: 'children' }

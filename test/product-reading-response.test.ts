@@ -124,6 +124,7 @@ describe('Product Reading Consumer Transport Response', () => {
     const context = {
       requestedText: '직업·커리어',
       intent: { domain: 'career', temporalScope: 'natal' } as const,
+      calculationSex: 'male' as const,
     };
     const response = buildProductReadingResponse(delivered(), context);
     expect(response.requestContext).toEqual(context);
@@ -131,9 +132,11 @@ describe('Product Reading Consumer Transport Response', () => {
     const switched = buildProductReadingResponse(delivered(), {
       requestedText: '재물',
       intent: { domain: 'wealth', temporalScope: 'natal' },
+      calculationSex: 'female',
     });
     expect(switched.responseId).not.toBe(response.responseId);
     expect(switched.reading?.readingId).toBe(response.reading?.readingId);
+    expect(switched.requestContext?.calculationSex).toBe('female');
     // A transport label must not assert new eligibility or official claims.
     expect(response).not.toHaveProperty('officialInterpretationAuthorized');
   });

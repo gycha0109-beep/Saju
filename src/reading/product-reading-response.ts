@@ -1,3 +1,4 @@
+import type { SexForTraditionalCalculation } from '../contracts/calculation.js';
 import type { ReadingArtifact, ReadingBlockView, ReadingIntent } from '../contracts/reading.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import type { ProductReadingDeliveryResult } from './product-reading-delivery.js';
@@ -170,6 +171,7 @@ export interface ProductReadingResponseReading {
 export interface ProductReadingResponseContext {
   requestedText: string;
   intent: ProductReadingResponseClarificationOption;
+  calculationSex?: SexForTraditionalCalculation;
 }
 
 export interface ProductReadingResponse {
@@ -451,12 +453,19 @@ function clarification(
 
 export function buildProductReadingResponse(
   delivery: ProductReadingDeliveryResult,
-  requestContext?: { requestedText: string; intent: ReadingIntent },
+  requestContext?: {
+    requestedText: string;
+    intent: ReadingIntent;
+    calculationSex?: SexForTraditionalCalculation;
+  },
 ): ProductReadingResponse {
   const publicContext: ProductReadingResponseContext | undefined =
     requestContext === undefined ? undefined : {
       requestedText: requestContext.requestedText,
       intent: clarificationOption(requestContext.intent),
+      ...(requestContext.calculationSex === undefined ? {} : {
+        calculationSex: requestContext.calculationSex,
+      }),
     };
   const reading = delivery.artifact === undefined ? undefined : readingView(delivery.artifact);
   const responseClarification = clarification(delivery);
