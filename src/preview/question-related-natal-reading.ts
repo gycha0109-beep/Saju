@@ -108,6 +108,8 @@ export interface QuestionRelatedNatalSection {
   ruleId: string;
   sourceIds: readonly string[];
   factPaths: readonly string[];
+  /** Already-issued T8 using the same facts, never independent T11 support. */
+  evidenceMode?: 'reused_calculated_paths';
 }
 
 export interface QuestionRelatedNatalReading {
@@ -134,6 +136,49 @@ export interface QuestionRelatedNatalReading {
   sections: readonly QuestionRelatedNatalSection[];
   missing: readonly string[];
   caveats: readonly string[];
+}
+
+type SourceSection = DomainReport['sections'][number];
+
+/**
+ * An explicitly requested question axis can use source-issued T8 views omitted
+ * from the independent first-screen MUR. Such views reuse the very same
+ * canonical paths and must NEVER increase support counts or grant T11 meaning.
+ */
+function availableOriginalSections(
+  topic: Topic,
+  reports: NatalFiveDomainMultifactorReports,
+): readonly (SourceSection & { overlapsSelectedFactPaths?: readonly string[] })[] {
+  const report = reports[topic];
+  const selected: readonly SourceSection[] = report.sections;
+  const alternatives = topic === 'wealth'
+    ? reports.wealth.overlappingPerspectives ?? []
+    : topic === 'business'
+      ? reports.business.overlappingPerspectives ?? []
+      : topic === 'relationship'
+        ? reports.relationship.overlappingPerspectives ?? []
+        : [];
+  if (alternatives.length === 0) return selected;
+  const selectedPaths = new Set(selected.flatMap(section => section.observedFactPaths));
+  const selectedAxes = new Set(selected.map(section => section.axis));
+  const selectedClaims = new Set(selected.map(section => section.claimType));
+  const alternativeAxes = new Set(alternatives.map(section => section.axis));
+  assert(report.state === 'partial' && alternatives.length <= 2 &&
+    alternativeAxes.size === alternatives.length &&
+    alternatives.every(section =>
+      !selectedAxes.has(section.axis) &&
+      !selectedClaims.has(section.claimType) &&
+      section.claimType.startsWith(topic.toUpperCase() + '_NATAL_MULTIFACTOR_') &&
+      section.ruleId === 'RULE-' + section.claimType &&
+      section.sourceIds.length > 0 &&
+      section.upstreamClaimIds.length >= 2 &&
+      section.observedFactPaths.length >= 2 &&
+      section.paragraph.trim().length > 0 &&
+      section.observedFactPaths.every(path => selectedPaths.has(path)) &&
+      JSON.stringify(section.overlapsSelectedFactPaths) ===
+        JSON.stringify(section.observedFactPaths)),
+    'Question cannot promote an unrelated or unsourced secondary T8 view');
+  return [...selected, ...alternatives];
 }
 
 function assert(value: unknown, message: string): asserts value {
@@ -228,9 +273,14 @@ export function buildQuestionRelatedNatalReading(
   // already-issued bounded T8 section independently, without asserting a new
   // combined interpretation, preference, conflict winner or T11 meaning.
   const focus = axes.length === 1 ? axes[0] : undefined;
+  // Broad questions retain first-screen priority. An explicit axis may
+  // select a different already-issued T8 meaning that reuses the same facts.
+  const availableSections = axes.length === 0
+    ? report.sections : availableOriginalSections(item.key, reports);
   const matchingSections = axes.length === 0
-    ? report.sections
-    : report.sections.filter(section => axes.some(axis => axis.axis === section.axis));
+    ? availableSections
+    : availableSections.filter(section =>
+        axes.some(axis => axis.axis === section.axis));
   const absentAxes = axes.filter(axis =>
     !matchingSections.some(section => section.axis === axis.axis));
   const focusDetails = axes.length === 0 ? {} : axes.length === 1 ? {
@@ -263,6 +313,9 @@ export function buildQuestionRelatedNatalReading(
       ruleId: section.ruleId,
       sourceIds: section.sourceIds,
       factPaths,
+      ...('overlapsSelectedFactPaths' in section &&
+        Array.isArray(section.overlapsSelectedFactPaths)
+        ? { evidenceMode: 'reused_calculated_paths' as const } : {}),
     };
   });
   return base(snapshot, question, 'related_evidence',
@@ -280,6 +333,9 @@ export function buildQuestionRelatedNatalReading(
           : '') +
         '이 요청된 것으로 확인했습니다. 같은 사용자에 대해 기존에 발행된 ' +
         sections.length + '개 근거 있는 연구 해석을 원문 그대로 연결했습니다. ' +
+        (sections.some(section => section.evidenceMode === 'reused_calculated_paths')
+          ? '이 중 일부는 이미 사용한 계산 경로를 다시 읽는 별도의 기존 T8 관점으로 독립 근거가 늘어난 것은 아닙니다. '
+          : '') +
         '질문의 개별 상황에서 무엇을 선택해야 하는지나 미래 결과를 별도로 판정한 내용은 아닙니다.',
       reportState: report.state, sections });
 }
@@ -295,7 +351,10 @@ export function renderQuestionRelatedNatalReadingHtml(reading: QuestionRelatedNa
     'question report authority cannot be upgraded in presentation');
   const sections = reading.sections.map(section =>
     '<article><h2>' + escapeHtml(section.title) + '</h2><p>' +
-    escapeHtml(section.paragraph) + '</p><details><summary>기존 근거 확인</summary><p>' +
+    escapeHtml(section.paragraph) + '</p>' +
+    (section.evidenceMode === 'reused_calculated_paths'
+      ? '<p>기존 계산 근거를 다시 사용하는 다른 T8 의미축이며, 새로운 독립 근거나 질문에 대한 T11 결론이 아닙니다.</p>'
+      : '') + '<details><summary>기존 근거 확인</summary><p>' +
     escapeHtml(section.factPaths.join(' · ')) + '</p><p>' +
     escapeHtml(section.sourceIds.join(' · ')) + '</p><p>' +
     escapeHtml(section.claimType + ' · ' + section.ruleId) + '</p></details></article>').join('');
