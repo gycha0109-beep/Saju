@@ -204,9 +204,10 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
         '이 결론에 사용된 실제 십신 계열과 관찰 위치:'));
     expect(contextualized.length).toBeGreaterThan(0);
     expect(contextualized.every(item =>
-      item.explainabilityRef.length > 0 &&
-      item.summary?.includes('지지 대표 십신') ||
-      item.summary?.includes('천간'))).toBe(true);
+      item.explainabilityRef.length > 0 && (
+        item.summary?.includes('지지 대표 십신') === true ||
+        item.summary?.includes('천간') === true
+      ))).toBe(true);
     expect(reportJson).toContain('사업에서 함께 확인된 근거 기반 해석');
     for (const unit of primaryBusinessUnits) {
       expect(reportJson).toContain(unit.canonicalText?.summary);
