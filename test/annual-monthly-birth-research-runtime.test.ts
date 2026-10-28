@@ -71,6 +71,8 @@ describe('actual birth → internal annual + both monthly Jeol research reading'
     expect(september.monthlyMenu.referenceFocus?.state).toBe('in_period');
     expect(october.monthlyMenu.referenceFocus?.state).toBe('outside_target_month');
     expect(october.monthlyMenu.referenceFocus?.currentSection).toBeUndefined();
+    expect(october.monthlyMenu.availability).toBe('unavailable');
+    expect(october.monthlyMenu.meaning).toBe('none');
     expect(september.report.monthly.jeolBoundary.at)
       .not.toEqual(october.report.monthly.jeolBoundary.at);
     expect(september.report.monthly.sections.filter(x => x.kind === 'theme')
