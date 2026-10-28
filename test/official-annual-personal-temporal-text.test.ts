@@ -43,7 +43,7 @@ describe('yearly Korean reading renders only the governed transition and factual
     expect(paragraph?.type).toBe('paragraph');
     if (paragraph?.type !== 'paragraph') throw new Error('Expected approved structural wording');
     expect(paragraph.text).toContain('연간 천간을 일간에 대조한 십신은 식신입니다');
-    expect(paragraph.text).toContain('정상 상태에서 구조 유지가 적용되어 정상 상태');
+    expect(paragraph.text).toContain('정상 상태에서 구조 유지라는 평가가 적용되어 정상 상태');
     expect(paragraph.text).toContain('사건이나 성패를 예측하지 않습니다');
   });
 
