@@ -16,6 +16,29 @@ ReadingRequest
 
 It does not add calculation rules, interpretation rules, domain heuristics, fortune scores, source authority, or production semantic authorization.
 
+### Product clarification (2026-10-28): 12 equal reading menus
+
+The product presents **12 independent reading choices at the same product level**, not a hierarchy of `core`, `extension`, `premium`, or `secondary` readings. `General Natal` is **one menu**, not a required parent menu or purchase prerequisite for the other 11.
+
+| Visible menu (Korean) | Existing request/profile intent boundary |
+| --- | --- |
+| 전체 사주 해석 | `general + natal` |
+| 직업·커리어 | `career + natal` |
+| 재물 | `wealth + natal` |
+| 연애·관계 | `relationship + natal + general` |
+| 사업 | `business + natal` |
+| 가족 | `family + natal + parents/children` (request-dependent; never infer the scope) |
+| 삶의 단계 | `life-stage + general` / existing life-stage reading profile |
+| 올해 | `general + annual` with the selected year |
+| 이번 달 | `general + monthly` with the selected month and relevant Jeol policy |
+| 배우자·관계 | `relationship + natal + spouse` (not two-person compatibility) |
+| 궁합 | `compatibility + natal` with the required second birth profile |
+| 지금 고민으로 보기 | `question-specific + natal` with the actual question/request context |
+
+These are **product labels mapped to already-defined intent shapes**, not new executable selectors or a new Interpretation authority. Different T8/T9/T10/T11 requirements and required input shapes **do not** make one menu superior to another. Existing profile-content authorization remains separate from availability and actual evidence coverage; the mapping does not claim that all 12 already produce complete official readings.
+
+The earlier *Product Interpretation Architecture v1.2* P1–P4 / “Core Natal SKU Coverage” ordering was a **product rollout proposal**, not a menu tier system or a permanent restriction to four reading topics. The older 2026-10-25 500-person × 8-menu study remains a historical measurement, not an exclusion rule for the four other menus. See the active [12-menu roadmap](../ROADMAP.md).
+
 ## 2. Architecture decisions
 
 ### ReadingArtifact remains unchanged
