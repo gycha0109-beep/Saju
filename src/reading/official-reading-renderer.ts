@@ -48,6 +48,7 @@ import {
 import type { ReadingAnnualTemporalStructureV1 } from './annual-temporal-structure-projection.js';
 import { buildApprovedRelationshipMultifactorOverviewV1 } from './approved-relationship-multifactor-overview.js';
 import { buildApprovedDomainMultifactorContextV1 } from './approved-domain-multifactor-context.js';
+import { buildApprovedCareerChannelContextV1 } from './approved-career-channel-context.js';
 
 export const OFFICIAL_READING_RENDERER_VERSION =
   'myeonghwa-official-reading-renderer-v1' as const;
@@ -1064,6 +1065,44 @@ function renderOfficialReadingInternalV1(
                 ].filter((value): value is string =>
                   value !== undefined && value.length > 0,
                 ).join('\n\n'),
+              };
+            }),
+          };
+        }),
+      };
+    }
+  }
+
+  // Career uses exact subtype/channel authority; it does not turn a
+  // branch-only context into a directly visible professional conclusion.
+  // Only extend the same source-bound Insight and original explainabilityRef.
+  const careerContext =
+    detailPreferenceResolution?.resolvedDetail === 'concise'
+      ? undefined
+      : buildApprovedCareerChannelContextV1(
+          bundle, plan, explainabilityEntries,
+        );
+  if (careerContext !== undefined) {
+    const byRef = new Map(careerContext.perspectives.map(item =>
+      [item.explainabilityRef, item.text] as const));
+    for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      const section = sections[sectionIndex];
+      if (section === undefined) continue;
+      sections[sectionIndex] = {
+        ...section,
+        blocks: section.blocks.map(block => {
+          if (block.type !== 'insights') return block;
+          return {
+            ...block,
+            items: block.items.map(item => {
+              const text = byRef.get(item.explainabilityRef);
+              if (text === undefined) return item;
+              return {
+                ...item,
+                summary: [item.summary, text]
+                  .filter((value): value is string =>
+                    value !== undefined && value.length > 0)
+                  .join('\n\n'),
               };
             }),
           };
