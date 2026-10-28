@@ -55,7 +55,7 @@ describe('real two-birth compatibility intake remains facts only', () => {
       'pillars.year.value', 'pillars.month.value',
       'pillars.day.value', 'pillars.hour.value',
     ]);
-    expect(result.availability).toBe('partial');
+    expect(result.availability).toBe('unavailable');
     expect(result.meaning).toBe('two_person_calculation_only');
     expect(result.lifecycle).toBe('internal_research_only');
     expect(result.mayClaimInterpersonalMeaning).toBe(false);
@@ -135,7 +135,7 @@ describe('real two-birth compatibility intake remains facts only', () => {
       expect(output.html).toBe(renderCompatibilityTwoChartIntakeHtml(
         output.report, output.personalRelationship,
       ));
-      expect(output.availability).toBe('partial');
+      expect(output.availability).toBe('unavailable');
       expect(output.mayClaimInterpersonalMeaning).toBe(false);
       expect(read(firstBirth, secondBirth)).toEqual(output);
     }
@@ -209,7 +209,7 @@ describe('real two-birth compatibility intake remains facts only', () => {
     expect(result.report.subject.pillars[3]?.status).toBe('resolved');
     expect(result.report.target.pillars[3]?.status).toBe('unavailable');
     expect(result.report.missing.join(' ')).toContain('두 번째 사람의 출생시각 미상');
-    expect(result.availability).toBe('partial');
+    expect(result.availability).toBe('unavailable');
     expect(result.mayClaimInterpersonalMeaning).toBe(false);
     expect(result.html).toContain('확인 불가');
   });
