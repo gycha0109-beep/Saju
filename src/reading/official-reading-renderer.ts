@@ -47,6 +47,7 @@ import {
 } from './official-reading-annual-temporal-presentation.js';
 import type { ReadingAnnualTemporalStructureV1 } from './annual-temporal-structure-projection.js';
 import { buildApprovedRelationshipMultifactorOverviewV1 } from './approved-relationship-multifactor-overview.js';
+import { buildApprovedDomainMultifactorContextV1 } from './approved-domain-multifactor-context.js';
 
 export const OFFICIAL_READING_RENDERER_VERSION =
   'myeonghwa-official-reading-renderer-v1' as const;
@@ -1021,6 +1022,53 @@ function renderOfficialReadingInternalV1(
           }),
         };
       }
+    }
+  }
+
+  // This is a presentation-only connection of already-admitted composite
+  // Wealth/Business conclusions to their exact T5 support and canonical facts.
+  // The original T8 insight/ref survives unchanged; no new Claim, section or
+  // domain eligibility is introduced. Concise is kept as its exact approved
+  // output without appending an additional presentation layer.
+  const multifactorContext =
+    detailPreferenceResolution?.resolvedDetail === 'concise'
+      ? undefined
+      : buildApprovedDomainMultifactorContextV1(
+          bundle, plan, explainabilityEntries,
+        );
+  if (multifactorContext !== undefined) {
+    const byRef = new Map(multifactorContext.perspectives.map(perspective =>
+      [perspective.explainabilityRef, perspective] as const));
+    let introductionAdded = false;
+    for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      const section = sections[sectionIndex];
+      if (section === undefined) continue;
+      sections[sectionIndex] = {
+        ...section,
+        blocks: section.blocks.map(block => {
+          if (block.type !== 'insights') return block;
+          return {
+            ...block,
+            items: block.items.map(item => {
+              const perspective = byRef.get(item.explainabilityRef);
+              if (perspective === undefined) return item;
+              const prefix = introductionAdded ? '' :
+                multifactorContext.title + '\\n\\n' +
+                multifactorContext.explanation + '\\n\\n';
+              introductionAdded = true;
+              return {
+                ...item,
+                summary: [
+                  item.summary,
+                  prefix + perspective.headline + '\\n' + perspective.text,
+                ].filter((value): value is string =>
+                  value !== undefined && value.length > 0,
+                ).join('\\n\\n'),
+              };
+            }),
+          };
+        }),
+      };
     }
   }
 
