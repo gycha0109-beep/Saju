@@ -325,7 +325,12 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     spouse: ['relationship', 'natal', 'spouse']
   };
   function matchesRequestedReadingContext(payload, requestedText, menuId, birth) {
+    if (!payload || typeof payload !== 'object') return false;
     const context = payload.requestContext;
+    // An unresolved input has no selected ReadingIntent or personal prose.
+    // Preserve its actionable clarification instead of mislabeling it as
+    // a cross-menu reply. Only a reading or a bound intent requires matching.
+    if (payload.reading === undefined && context === undefined) return true;
     // All current governed v2 responses carry context. Pre-existing preview
     // test and old transport fixtures without responseVersion remain readable.
     if (payload.responseVersion !== 'myeonghwa-product-reading-response-v2' &&
