@@ -1032,7 +1032,11 @@ function renderOfficialReadingInternalV1(
   // domain eligibility is introduced. Concise is kept as its exact approved
   // output without appending an additional presentation layer.
   const multifactorContext =
-    detailPreferenceResolution?.resolvedDetail === 'concise'
+    detailPreferenceResolution?.resolvedDetail === 'concise' ||
+    // Relationship already has its own source-bound detailed realization.
+    // Do not print the same composite interpretation twice in that mode.
+    (bundle.intent.domain === 'relationship' &&
+      effectiveDetailedRealization !== undefined)
       ? undefined
       : buildApprovedDomainMultifactorContextV1(
           bundle, plan, explainabilityEntries,
