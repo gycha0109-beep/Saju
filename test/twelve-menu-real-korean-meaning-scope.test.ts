@@ -198,6 +198,50 @@ describe('12 equal menus: actual chart-specific Korean meaning and explicit gaps
     expect(second.question.maySell).toBe(false);
   }, 30_000);
 
+  it('distinguishes source-issued meanings across 12 further real-person cases without turning held menus into fortunes', () => {
+    const signatures = new Set<string>();
+    const spouseObservations = new Set<string>();
+    const dayunIntervals = new Set<string>();
+    const relatedQuestionStatuses = new Set<string>();
+    const yearProfiles = new Set<string>();
+    for (let index = 0; index < 12; index++) {
+      const birth: BirthInput = {
+        calendarType: 'solar',
+        date: { year: 1986 + index, month: index + 1, day: 7 + index },
+        time: { known: true, hour: (index * 2) % 24, minute: 0 },
+        sexForTraditionalCalculation: index % 2 === 0 ? 'male' : 'female',
+      };
+      const output = twelve(birth, OTHER, REFERENCE);
+      expect(output.inspectedMenus).toHaveLength(12);
+      const natalSignature = NATAL_MENUS.map(key => output.reports[key]
+        .sections.map(section => section.claimType).sort().join('|')).join(' / ');
+      signatures.add(natalSignature);
+      spouseObservations.add(output.relations.spouse.report.observation);
+      dayunIntervals.add(output.temporal.lifeStage.report.periods
+        .map(period => period.pillar + '@' + period.startsAt).join('|'));
+      yearProfiles.add(output.temporal.annualMonthly.report.annual.sections
+        .map(section => section.researchProfileId).sort().join('|'));
+      relatedQuestionStatuses.add(output.question.status);
+      expect(output.questionHtml).toContain('T11 풀이가 아닙니다');
+      expect(output.question.mayPublish).toBe(false);
+      expect(output.relations.compatibility.availability).toBe('unavailable');
+      expect(output.relations.compatibility.mayClaimInterpersonalMeaning).toBe(false);
+      expect(output.relations.family.parents.mayClaimFamilyOutcome).toBe(false);
+      expect(output.temporal.lifeStage.interpretationStatus)
+        .toBe('source_authority_not_established');
+      expect(output.temporal.annualMonthly.monthlyMenu.authority.mayCallOfficial)
+        .toBe(false);
+    }
+    // Semantic variation is counted by T8 Claim type, not by changing
+    // observed positions, input dates, markup, or calculation hashes.
+    expect(signatures.size).toBeGreaterThan(5);
+    expect(spouseObservations.size).toBeGreaterThan(2);
+    expect(dayunIntervals.size).toBeGreaterThan(2);
+    expect(yearProfiles.size).toBeGreaterThan(2);
+    expect([...relatedQuestionStatuses].every(status =>
+      status === 'related_evidence' || status === 'insufficient')).toBe(true);
+  }, 30_000);
+
   it('replays all twelve actual outputs exactly for the same input and reference instant', () => {
     const one = twelve(SELF, OTHER, REFERENCE);
     const again = twelve(SELF, OTHER, REFERENCE);
