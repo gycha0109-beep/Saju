@@ -1056,7 +1056,8 @@ function renderOfficialReadingInternalV1(
           return {
             ...block,
             items: block.items.map(item => {
-              const perspective = byRef.get(item.explainabilityRef);
+              const perspective = item.explainabilityRef === undefined
+                ? undefined : byRef.get(item.explainabilityRef);
               if (perspective === undefined) return item;
               const prefix = introductionAdded ? '' :
                 multifactorContext.title + '\n\n' +
@@ -1100,7 +1101,8 @@ function renderOfficialReadingInternalV1(
           return {
             ...block,
             items: block.items.map(item => {
-              const text = byRef.get(item.explainabilityRef);
+              const text = item.explainabilityRef === undefined
+                ? undefined : byRef.get(item.explainabilityRef);
               if (text === undefined) return item;
               return {
                 ...item,
