@@ -272,6 +272,7 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
     expect(reader.parity.semanticHash).toBe(semantics.semanticHash);
     expect(reader.parity.semanticHash).toBe(report.sourceSemanticHash);
   });
+});
 
 describe('Wealth approved composite reading remains grounded in real selected claims', () => {
   it('renders admitted wealth T8 combinations with observed support and keeps source meaning intact', () => {
