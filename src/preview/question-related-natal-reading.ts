@@ -124,6 +124,8 @@ export interface QuestionRelatedNatalReading {
   topicLabel?: string;
   /** An axis requested by this question, not an independently issued T11 claim. */
   focusAxis?: string;
+  /** A navigational explanation of selected existing evidence, not an answer or T11 Claim. */
+  selectedEvidenceIntroduction?: string;
   focusLabel?: string;
   /** Several independently issued axes from ONE requested natal domain, never a T11 synthesis. */
   focusAxes?: readonly { axis: string; label: string }[];
@@ -154,6 +156,7 @@ function base(
     focusAxis?: string;
     focusLabel?: string;
     focusAxes?: readonly { axis: string; label: string }[];
+    selectedEvidenceIntroduction?: string;
     reportState: DomainReport['state'];
     sections: readonly QuestionRelatedNatalSection[];
   },
@@ -270,6 +273,14 @@ export function buildQuestionRelatedNatalReading(
       ...absentAxes.map(axis => axis.label +
         ' 관점은 해당 명식에서 승인된 연구 근거가 없어 별도 해석을 보류합니다.')],
     { topic: item.key, topicLabel: item.title, ...focusDetails,
+      selectedEvidenceIntroduction:
+        '질문에서 ' + item.title + ' 분야' +
+        (axes.length > 0
+          ? '의 ' + axes.map(axis => axis.label).join('·') + ' 관점'
+          : '') +
+        '이 요청된 것으로 확인했습니다. 같은 사용자에 대해 기존에 발행된 ' +
+        sections.length + '개 근거 있는 연구 해석을 원문 그대로 연결했습니다. ' +
+        '질문의 개별 상황에서 무엇을 선택해야 하는지나 미래 결과를 별도로 판정한 내용은 아닙니다.',
       reportState: report.state, sections });
 }
 
@@ -296,7 +307,10 @@ export function renderQuestionRelatedNatalReadingHtml(reading: QuestionRelatedNa
     'article{border-top:1px solid #bbb;padding:1em 0}details,aside{color:#555;font-size:13px}' +
     '</style></head><body><header><small>명하 · 내부 연구용 · 정식 질문풀이 아님</small><h1>' +
     escapeHtml(reading.headline) + '</h1><p>질문: ' + escapeHtml(reading.question) +
-    '</p></header><main>' + (sections || '<p>현재 연결할 수 있는 근거 있는 풀이가 없습니다.</p>') +
+    '</p></header><main>' +
+    (reading.selectedEvidenceIntroduction === undefined ? '' :
+      '<p>' + escapeHtml(reading.selectedEvidenceIntroduction) + '</p>') +
+    (sections || '<p>현재 연결할 수 있는 근거 있는 풀이가 없습니다.</p>') +
     '</main><aside><h2>해석 범위와 부족한 부분</h2><ul>' + reasons +
     '</ul></aside></body></html>';
 }
