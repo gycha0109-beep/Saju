@@ -132,7 +132,10 @@ function renderHtml(
     (result.sections.length
       ? result.sections.map(section => '<article><h4>' + e(section.title) +
         '</h4><p>' + e(section.paragraph) +
-        '</p><details><summary>이 사람의 원국 연구 근거</summary><p>' +
+        '</p>' + (section.evidenceMode === 'reused_calculated_paths'
+          ? '<p>이 사람의 다른 기존 T8 관점이며 이미 선택된 계산 근거를 반복합니다. ' +
+            '두 사람의 궁합이나 상호작용 해석이 아닙니다.</p>'
+          : '') + '<details><summary>이 사람의 원국 연구 근거</summary><p>' +
         e(section.sourceIds.join(' · ')) + '</p><p>' +
         e(section.observedFactPaths.join(' · ')) + '</p></details></article>').join('')
       : '<p>이 사람의 독립적인 출처 한정 관계 풀이가 부족합니다.</p>') +
