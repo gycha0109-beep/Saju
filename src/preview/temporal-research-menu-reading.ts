@@ -327,8 +327,17 @@ export function buildTemporalResearchMenuReadings(
 
   const annualHasMeaning = annual.some(section =>
     section.evidenceKind === 'annual_research_profile');
-  const monthlyHasMeaning = monthly.some(section =>
-    section.evidenceKind === 'monthly_t9_research_claim');
+  // The monthly menu answers the requested instant, not every T9 claim
+  // calculated for both sides of the Jeol boundary. The other sections remain
+  // available for clearly labelled comparison, but are NOT current meaning.
+  const monthlyHasMeaning = referenceFocus?.state === 'in_period' &&
+    referenceFocus.currentSection !== undefined &&
+    referenceFocus.currentSection.evidenceKind === 'monthly_t9_research_claim' &&
+    monthly.some(section =>
+      section.claimId === referenceFocus.currentSection?.claimId &&
+      section.interval?.startsAt === referenceFocus.currentSection?.interval?.startsAt &&
+      section.interval?.endsAtExclusive ===
+        referenceFocus.currentSection?.interval?.endsAtExclusive);
   const lifeHasFacts = lifeSections.length > 0;
   return [
     {
@@ -359,11 +368,28 @@ export function buildTemporalResearchMenuReadings(
       availability: monthlyHasMeaning ? 'partial' : 'unavailable',
       meaning: monthlyHasMeaning ? 'bounded_research_interpretation' : 'none',
       statusMessage: monthlyHasMeaning
-        ? (referenceFocus?.state === 'in_period'
-          ? '조회 시각의 절입 구간별 기존 T9 풀이를 지정했습니다. 월운 Official 해석은 미승인입니다.'
-          : '선택한 월의 절입 구간별 T9 연구 풀이입니다. 조회 시각의 현재 풀이와 다를 수 있습니다. 월운 Official 해석은 미승인입니다.')
-        : '해당 월의 출처에 연결된 개인별 풀이 근거가 충분하지 않습니다.',
-      sections: monthly,
+        ? '조회 시각의 절입 구간에 실제 해당하는 기존 T9 풀이를 선택했습니다. 나머지는 다른 구간의 비교 자료이며 월운 Official 해석은 미승인입니다.'
+        : referenceFocus?.state === 'outside_target_month'
+          ? '조회 시각이 선택한 월 밖입니다. 다른 절입 구간의 문장을 현재 월운으로 제공하지 않습니다.'
+          : '조회 시각에 해당하는 절입 구간의 개인별 T9 근거가 확인되지 않아 월운 해석을 보류합니다.',
+      sections: monthlyHasMeaning
+        ? [
+          {
+            ...referenceFocus.currentSection!,
+            title: '조회 시각에 적용되는 풀이 · ' + referenceFocus.currentSection!.title,
+          },
+          ...monthly.filter(section =>
+            section.claimId !== referenceFocus.currentSection!.claimId ||
+            section.interval?.startsAt !== referenceFocus.currentSection!.interval?.startsAt)
+            .map(section => ({
+              ...section,
+              title: '다른 절입 구간의 비교 자료 (현재 풀이 아님) · ' + section.title,
+            })),
+        ]
+        : monthly.map(section => ({
+            ...section,
+            title: '현재 풀이가 아닌 기간별 연구 자료 · ' + section.title,
+          })),
       ...(joined === undefined ? {} : {
         observedStructuralContext: joined.observedStructuralContext,
         conditionalComposition: joined.conditionalComposition,
