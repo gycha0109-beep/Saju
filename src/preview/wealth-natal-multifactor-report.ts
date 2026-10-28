@@ -70,6 +70,14 @@ export interface WealthNatalMultifactorReport {
   eligibleAlternatives: readonly Pick<WealthNatalMultifactorSection,
     'claimType' | 'axis' | 'channel' | 'ruleId' | 'methodologyId' | 'sourceIds' | 'observedFactPaths'>[];
   readingGuide?: WealthNatalReadingGuide;
+  /**
+   * Different, already-emitted source-qualified T8 perspectives whose facts
+   * overlap the selected first-screen reading. They can be READ, but cannot
+   * count as independent supporting evidence or increase MUR coverage.
+   */
+  overlappingPerspectives?: readonly (WealthNatalMultifactorSection & {
+    overlapsSelectedFactPaths: readonly string[];
+  })[];
   /** Original source-checked T5 observations, never a replacement for missing T8 meaning. */
   insufficientEvidence?: WealthInsufficientT5Evidence;
   missing: readonly string[];
@@ -528,6 +536,34 @@ export function buildWealthNatalMultifactorReport(
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly WealthNatalMultifactorSection[] = chosen;
   const displayedClaimTypes = new Set(sections.map(section => section.claimType));
+  const selectedFactPaths = new Set(chosen.flatMap(section => section.observedFactPaths));
+  const shownAxes = new Set(chosen.map(section => section.axis));
+  const supplementaryAxes = new Set<Axis>();
+  // In a PARTIAL reading there can be additional, source-issued T8 meanings
+  // using only facts already consumed by the selected evidence. These are
+  // useful as separate perspectives, but absolutely not independent axes.
+  // Never hide a truly independent support here; it belongs in the selected
+  // evidence or in the unchanged explicit coverage gap.
+  const overlappingPerspectives = core !== undefined && chosen.length < 3
+    ? result
+        .filter(section =>
+          !displayedClaimTypes.has(section.claimType) &&
+          section.axis !== 'context' &&
+          !shownAxes.has(section.axis) &&
+          section.observedFactPaths.length > 0 &&
+          section.observedFactPaths.every(path => selectedFactPaths.has(path)))
+        .filter(section => {
+          if (supplementaryAxes.has(section.axis)) return false;
+          supplementaryAxes.add(section.axis);
+          return true;
+        })
+        .slice(0, 2)
+        .map(section => ({
+          ...section,
+          overlapsSelectedFactPaths: section.observedFactPaths.filter(path =>
+            selectedFactPaths.has(path)),
+        }))
+    : [];
   const eligibleAlternatives = result
     .filter(section => !displayedClaimTypes.has(section.claimType))
     .map(section => ({
@@ -559,6 +595,7 @@ export function buildWealthNatalMultifactorReport(
     sections,
     eligibleAlternatives,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(overlappingPerspectives.length === 0 ? {} : { overlappingPerspectives }),
     ...(insufficientEvidence === undefined ? {} : { insufficientEvidence }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
