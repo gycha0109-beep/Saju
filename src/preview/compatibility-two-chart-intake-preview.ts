@@ -265,7 +265,7 @@ function personalRelationshipHtml(
           (index > 0 && section.observedFactPaths.every(path =>
             reading.sections.slice(0, index).some(prior =>
               prior.evidenceMode === undefined &&
-              prior.observedFactPaths.includes(path))))) &&
+              prior.observedFactPaths.includes(path)))))) &&
       (reading.coverage === 'bounded_natal_t8_research' ?
         reading.sections.length > 0 : reading.sections.length === 0),
     'each personal T8 interpretation must retain its own calculated snapshot and sources');
