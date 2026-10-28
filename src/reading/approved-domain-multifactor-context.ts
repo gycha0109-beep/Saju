@@ -42,8 +42,10 @@ const AXES: Readonly<Record<Domain, readonly ConclusionAxis[]>> = {
 };
 
 function equalSet(left: readonly string[], right: readonly string[]): boolean {
-  return left.length === right.length &&
-    [...left].sort().every((value, index) => value === [...right].sort()[index]);
+  if (left.length !== right.length) return false;
+  const sortedLeft = [...left].sort();
+  const sortedRight = [...right].sort();
+  return sortedLeft.every((value, index) => value === sortedRight[index]);
 }
 
 function sourceProfiles(domain: Domain): {
