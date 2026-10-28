@@ -66,22 +66,33 @@ function sourceProfiles(domain: Domain): {
           concise: RELATIONSHIP_NATAL_APPROVED_CONCISE_DEFINITIONS };
 }
 
+interface FamilyPositionEvidence {
+  positions: readonly string[];
+  sharedChannel?: '천간' | '지지';
+}
+
 function observedFamilyPositions(
   bundle: CanonicalReadingSemanticBundleV1,
   supportingTypes: readonly string[],
-): readonly string[] | undefined {
+  requireSharedChannel: boolean,
+): FamilyPositionEvidence | undefined {
   const selected = bundle.canonicalFacts.filter(fact =>
     fact.path === 'derivedFacts.tenGods' && fact.scenarioRef === undefined);
-  if (selected.length !== 1 || selected[0]?.fact.status !== 'resolved') return undefined;
-  const value = selected[0].fact.value;
+  const canonical = selected[0];
+  if (selected.length !== 1 || canonical?.fact.status !== 'resolved') return undefined;
+  const value = canonical.fact.value;
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const chart = value as TenGodChartFact;
-  const result: string[] = [];
 
+  const families: {
+    name: string;
+    stems: readonly string[];
+    branches: readonly string[];
+  }[] = [];
   for (const type of supportingTypes) {
     const family = FAMILIES[type];
     if (family === undefined) return undefined;
-    const positions: string[] = [];
+    const stems: string[] = [], branches: string[] = [];
     for (const slot of SLOTS) {
       const pillar = chart[slot];
       for (const channel of ['stem', 'branch'] as const) {
@@ -89,17 +100,35 @@ function observedFamilyPositions(
         const observed = pillar?.[channel];
         if (observed?.status !== 'resolved' ||
             !family.gods.includes(observed.value)) continue;
-        positions.push(
-          SLOT_LABEL[slot] +
+        const line = SLOT_LABEL[slot] +
           (channel === 'stem' ? ' 천간 ' : ' 지지 대표 십신 ') +
-          observed.value,
-        );
+          observed.value;
+        if (channel === 'stem') stems.push(line);
+        else branches.push(line);
       }
     }
-    if (positions.length === 0) return undefined;
-    result.push(family.name + ': ' + positions.join(' · '));
+    if (stems.length + branches.length === 0) return undefined;
+    families.push({ name: family.name, stems, branches });
   }
-  return result;
+
+  // The Business candidate's actual consumer rule requires every family
+  // in the T8 composite to occur in ONE shared channel. Do not cite a
+  // cross-channel mixture as its evidence, even if the same five-family
+  // presence rule would admit a Wealth or Relationship conclusion.
+  const sharedChannel = !requireSharedChannel ? undefined
+    : families.every(item => item.stems.length > 0) ? '천간' as const
+    : families.every(item => item.branches.length > 0) ? '지지' as const
+    : undefined;
+  if (requireSharedChannel && sharedChannel === undefined) return undefined;
+
+  return {
+    positions: families.map(item =>
+      item.name + ': ' +
+      (sharedChannel === '천간' ? item.stems
+        : sharedChannel === '지지' ? item.branches
+        : [...item.stems, ...item.branches]).join(' · ')),
+    ...(sharedChannel === undefined ? {} : { sharedChannel }),
+  };
 }
 
 function conclusionAxis(unit: CanonicalReadingSemanticUnitV1, domain: Domain):
@@ -123,6 +152,7 @@ interface ApprovedContextCandidate {
   approvedSummary: string;
   approvedHeadline: string;
   evidencePositions: readonly string[];
+  sharedChannel?: '천간' | '지지';
   explainabilityRef: string;
   familyCount: number;
   approvedOrder: number;
@@ -188,6 +218,10 @@ export function buildApprovedDomainMultifactorContextV1(
           unit.predicate !== domain + '_conclusion' ||
           unit.scenarioRef !== undefined ||
           unit.ruleRefs.length === 0 || unit.sourceRefs.length === 0 ||
+          // Business conclusions in this product registry are issued by the
+          // channel-sensitive versions of the approved T8 candidate rules.
+          (domain === 'business' && !unit.ruleRefs.some(rule =>
+            rule.ruleId.startsWith('RULE-CHANNEL-SENSITIVE-BUSINESS-NATAL-'))) ||
           bundle.claimRelations.some(relation =>
             relation.relation === 'contradicts' &&
             (relation.fromClaimId === unit.claimId ||
@@ -228,9 +262,9 @@ export function buildApprovedDomainMultifactorContextV1(
       const types = directSupport.map(item => item!.claimType);
       if (!equalSet(types, profile.supportingClaimTypes) ||
           !types.every(type => FAMILIES[type] !== undefined)) continue;
-      const evidencePositions = observedFamilyPositions(
-        bundle, profile.supportingClaimTypes);
-      if (evidencePositions === undefined) continue;
+      const familyEvidence = observedFamilyPositions(
+        bundle, profile.supportingClaimTypes, domain === 'business');
+      if (familyEvidence === undefined) continue;
 
       const visible = entries.get(unit.unitId);
       if (visible === undefined || visible.primaryUnitRefs?.length !== 1 ||
@@ -246,7 +280,10 @@ export function buildApprovedDomainMultifactorContextV1(
         axis,
         approvedSummary: short.conciseText,
         approvedHeadline: profile.standardText.headline ?? '',
-        evidencePositions,
+        evidencePositions: familyEvidence.positions,
+        ...(familyEvidence.sharedChannel === undefined ? {} : {
+          sharedChannel: familyEvidence.sharedChannel,
+        }),
         explainabilityRef: visible.explainabilityRef,
         familyCount: profile.supportingClaimTypes.length,
         approvedOrder: entry.approvedOrder,
@@ -283,7 +320,11 @@ export function buildApprovedDomainMultifactorContextV1(
       headline: item.approvedHeadline,
       text: item.approvedSummary +
         '\n\n이 결론에 사용된 실제 십신 계열과 관찰 위치: ' +
-        item.evidencePositions.join(' / '),
+        item.evidencePositions.join(' / ') +
+        (item.sharedChannel === undefined ? '' :
+          '\n이 복합 결론의 선행 십신 계열은 모두 ' +
+          item.sharedChannel +
+          '에서 함께 관찰되었습니다. 이는 채널 일치의 사실이며 우세·성패 판정이 아닙니다.'),
     })),
   };
 }
