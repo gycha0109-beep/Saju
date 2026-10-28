@@ -137,6 +137,20 @@ export interface FamilyMemberBirthResearchReading {
   lifecycle: 'internal_research_only';
   scope: FamilyObservationScope;
   subject: FamilyBirthResearchReading;
+  /** Separate, unmerged T8 reading of the person who asked about family. */
+  subjectNatal: {
+    personRef: string;
+    snapshotId: string;
+    calculationHash: string;
+    coverage: 'bounded_natal_t8_research' | 'insufficient_evidence';
+    introduction: string;
+    sections: readonly {
+      headline: string;
+      paragraph: string;
+      sourceIds: readonly string[];
+      factPaths: readonly string[];
+    }[];
+  };
   member: {
     personRef: string;
     snapshotId: string;
@@ -187,6 +201,39 @@ export function buildFamilyMemberBirthResearchReading(
   // Reuse the existing precise-clock validation and R070 scope authority.
   const subject = buildFamilyBirthResearchReading(subjectBirth, request);
   const now = new Date(request.referenceDateTime);
+  // Both people retain independent personal T8 selections. Comparing their
+  // readings is not a parent-child interaction Claim or prediction.
+  const subjectSnapshot = calculateAuthorizedMyeonghwaProductionSnapshot(
+    subjectBirth, { now },
+  ).snapshot;
+  const subjectRegistry = createGeneralNatalMultifactorRegistry();
+  const subjectExecution = runInterpretation(subjectSnapshot, subjectRegistry, { now });
+  const subjectReport = buildGeneralNatalMultifactorReport(
+    subjectSnapshot, subjectExecution, subjectRegistry,
+  );
+  if (subjectReport.snapshotId !== subject.report.snapshotId ||
+      subjectReport.calculationHash !== subject.report.calculationHash ||
+      !subjectReport.researchOnly || subjectReport.usefulComplete ||
+      subjectReport.mayPublish || subjectReport.maySell ||
+      subjectReport.sections.some(section =>
+        section.sourceIds.length < 2 || section.upstreamClaimIds.length < 2 ||
+        section.observedFactPaths.length < 2 || !section.paragraph.trim())) {
+    throw new TypeError('Family subject natal T8 must match exactly its source family chart.');
+  }
+  const subjectNatal = {
+    personRef: ownerRef.trim(),
+    snapshotId: subjectSnapshot.snapshotId,
+    calculationHash: subjectSnapshot.calculationHash,
+    coverage: subjectReport.sections.length > 0
+      ? 'bounded_natal_t8_research' as const
+      : 'insufficient_evidence' as const,
+    introduction: subjectReport.readingGuide?.paragraph ?? subjectReport.introduction,
+    sections: subjectReport.sections.map(section => ({
+      headline: section.headline, paragraph: section.paragraph,
+      sourceIds: [...section.sourceIds],
+      factPaths: [...section.observedFactPaths],
+    })),
+  };
   const snapshot = calculateAuthorizedMyeonghwaProductionSnapshot(memberBirth, { now }).snapshot;
   const registry = createGeneralNatalMultifactorRegistry();
   const execution = runInterpretation(snapshot, registry, { now });
@@ -218,6 +265,18 @@ export function buildFamilyMemberBirthResearchReading(
     sections,
   };
   const label = request.scope === 'parents' ? '부모' : '자녀';
+  const subjectHtml = '<section aria-label="질문한 본인의 별도 원국 해석">' +
+    '<h2>질문한 본인의 원국 구조 · 내부 연구</h2>' +
+    '<p>이 문단들은 가족 관계에 대한 해석이 아닌 질문자 본인 명식의 기존 T8 해석입니다. ' +
+    '입력된 가족 구성원의 문단과 독립적이며 누구의 실제 행동이나 관계 결과도 뜻하지 않습니다.</p>' +
+    (subjectNatal.sections.length === 0
+      ? '<p>질문자 본인에 대한 원국 T8 연구 해석 근거가 부족합니다.</p>'
+      : subjectNatal.sections.map(section =>
+        '<article><h3>' + familyEscape(section.headline) + '</h3><p>' +
+        familyEscape(section.paragraph) + '</p><details><summary>질문자 본인의 원국 근거</summary><p>' +
+        familyEscape(section.sourceIds.join(' · ')) + '</p><p>' +
+        familyEscape(section.factPaths.join(' · ')) +
+        '</p></details></article>').join('')) + '</section>';
   const sectionHtml = '<section aria-label="별도 가족 구성원 본인의 원국 해석">' +
     '<h2>입력된 ' + label + ' 본인의 원국 구조 · 내부 연구</h2>' +
     '<p>다른 사람의 출생정보로 별도로 계산한 일반 원국 T8 연구 문장입니다. ' +
@@ -241,6 +300,7 @@ export function buildFamilyMemberBirthResearchReading(
     lifecycle: 'internal_research_only',
     scope: request.scope,
     subject,
+    subjectNatal,
     member,
     familyMeaningStatus: 'family_t8_source_authority_not_established',
     mayInferFamilyDynamics: false,
@@ -248,6 +308,7 @@ export function buildFamilyMemberBirthResearchReading(
     mayPublish: false,
     mayPersist: false,
     maySell: false,
-    html: subject.html.slice(0, -closing.length) + sectionHtml + closing,
+    html: subject.html.slice(0, -closing.length) +
+      subjectHtml + sectionHtml + closing,
   };
 }
