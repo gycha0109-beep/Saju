@@ -182,6 +182,17 @@ describe('two separate family members with already sourced personal natal T8', (
     ).snapshot;
     expect(output.subject.report.snapshotId).not.toBe(realMember.snapshotId);
     expect(output.member.snapshotId).toBe(realMember.snapshotId);
+    expect(output.subjectNatal.personRef).toBe('self');
+    expect(output.subjectNatal.snapshotId).toBe(output.subject.report.snapshotId);
+    expect(output.subjectNatal.calculationHash).toBe(output.subject.report.calculationHash);
+    expect(output.subjectNatal.snapshotId).not.toBe(output.member.snapshotId);
+    expect(output.html).toContain('질문한 본인의 원국 구조');
+    expect(output.html).toContain('질문자 본인 명식의 기존 T8 해석');
+    for (const own of output.subjectNatal.sections) {
+      expect(own.sourceIds.length).toBeGreaterThanOrEqual(2);
+      expect(own.factPaths.length).toBeGreaterThanOrEqual(2);
+      expect(output.html).toContain(escapedHtmlText(own.paragraph));
+    }
     expect(output.member.calculationHash).toBe(realMember.calculationHash);
     expect(output.subject.scope).toBe('parents');
     expect(output.subject.researchUnavailability.snapshotId)
@@ -217,6 +228,9 @@ describe('two separate family members with already sourced personal natal T8', (
       { ...request, scope: 'children' });
     expect(result.scope).toBe('children');
     expect(result.subject.report.observations.map(x => x.pillarSlot)).toEqual(['hour']);
+    expect(result.subjectNatal.snapshotId).toBe(result.subject.report.snapshotId);
+    expect(result.subjectNatal.sections.length).toBeGreaterThan(0);
+    expect(result.html).toContain('질문한 본인의 원국 구조');
     expect(result.member.coverage).toBe('insufficient_evidence');
     expect(result.member.sections).toHaveLength(0);
     expect(result.html).toContain('입력된 자녀 본인의 원국 구조');
