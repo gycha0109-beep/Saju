@@ -179,7 +179,7 @@ describe('SA-7C spouse position-only detailed Official Reading pilot', () => {
     );
     for (const current of [standard, detailed]) {
       const sectionsText = JSON.stringify(current.officialReadingReport?.sections);
-      expect(sectionsText).toMatch(/이 사람의 실제 일지\\(日支\\)는 [자축인묘진사오미신유술해]\\([子丑寅卯辰巳午未申酉戌亥]\\)로 계산됐습니다/u);
+      expect(sectionsText).toMatch(/이 사람의 실제 일지\(日支\)는 [자축인묘진사오미신유술해]\([子丑寅卯辰巳午未申酉戌亥]\)로 계산됐습니다/u);
       expect(sectionsText).toContain('특정 배우자의 성격');
       expect(sectionsText).not.toContain('결혼하게 됩니다');
       if (current.canonicalSemantics === undefined ||
