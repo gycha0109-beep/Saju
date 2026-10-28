@@ -54,6 +54,58 @@ function reports(snapshot: ReturnType<typeof sample>): NatalFiveDomainMultifacto
 }
 
 describe('same-chart five-domain multifactor Korean research reading', () => {
+  it('makes a source-issued but overlapping Wealth T8 meaning readable without treating repeated paths as new evidence', () => {
+    const chart = sample(1, 3, 3);
+    const result = reports(chart);
+    const wealth = result.wealth;
+    expect(wealth.state).toBe('partial');
+    expect(wealth.sections.length).toBeGreaterThan(0);
+    const alternatives = wealth.overlappingPerspectives ?? [];
+    expect(alternatives.length).toBeGreaterThan(0);
+    const originalFactPaths = new Set(wealth.sections.flatMap(section =>
+      section.observedFactPaths));
+    const displayed = new Set(wealth.sections.map(section => section.claimType));
+    const axes = new Set(wealth.sections.map(section => section.axis));
+    for (const section of alternatives) {
+      expect(displayed.has(section.claimType)).toBe(false);
+      expect(axes.has(section.axis)).toBe(false);
+      expect(section.observedFactPaths.length).toBeGreaterThanOrEqual(2);
+      expect(section.overlapsSelectedFactPaths).toEqual(section.observedFactPaths);
+      expect(section.observedFactPaths.every(path =>
+        originalFactPaths.has(path))).toBe(true);
+      expect(wealth.eligibleAlternatives.map(item => item.claimType))
+        .toContain(section.claimType);
+      expect(section.sourceIds.length).toBeGreaterThan(0);
+      expect(section.paragraph).toContain(section.headline);
+    }
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, result);
+    const wealthHtml = html.split('<h2 id="domain-wealth">')[1]!
+      .split('</article>')[0]!;
+    expect(wealthHtml).toContain('같은 계산 근거로도 읽을 수 있는 다른 재물 관점');
+    expect(wealthHtml).toContain('독립 보조 근거가 추가된 것은 아닙니다');
+    for (const section of alternatives) {
+      expect(wealthHtml).toContain(section.paragraph);
+      expect(wealthHtml).toContain(section.sourceIds[0]!);
+      expect(wealthHtml).toContain(section.ruleId);
+    }
+    expect(wealth.mayPublish).toBe(false);
+    expect(wealth.maySell).toBe(false);
+    expect(wealth.usefulComplete).toBe(false);
+    const forged = {
+      ...result,
+      wealth: {
+        ...wealth,
+        overlappingPerspectives: alternatives.map((section, i) =>
+          i !== 0 ? section : {
+            ...section,
+            observedFactPaths: ['derivedFacts.tenGods.value.fake.stem.value'],
+          }),
+      },
+    };
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
+      .toThrow('existing overlapping T8 evidence');
+  });
+
   it('shows source-owned T5 observations rather than inventing a wealth T8 paragraph', () => {
     const chart = calculateCanonicalSajuSnapshot({
       calendarType: 'solar', date: { year: 1955, month: 10, day: 31 },
