@@ -37,7 +37,7 @@ function delivered(chart: Subject, topic: Topic, index: number): ProductReadingR
       intent: {
         domain: topic.domain,
         temporalScope: 'natal',
-        ...(topic.domain === 'relationship' ? { relationshipScope: 'general' } : {}),
+        ...(topic.domain === 'relationship' ? { relationshipScope: 'general' as const } : {}),
       },
       calculationSex: chart.input.sexForTraditionalCalculation ?? 'unspecified',
     },
@@ -115,7 +115,9 @@ describe('five-topic natal delivery remains subject- and intent-bound (all equal
   it('does not count a delivered reading without a resolved intent as valid', () => {
     const chart = snapshot();
     const missing = five(chart);
-    missing[3] = { ...missing[3]!, requestContext: undefined };
+    const stripped = { ...missing[3]! };
+    delete stripped.requestContext;
+    missing[3] = stripped;
     expect(() => assembleNatalFiveDomainProductResponses(chart, missing))
       .toThrow('requires source-bound topic and person');
   });
