@@ -296,7 +296,9 @@ describe('Wealth approved composite reading remains grounded in real selected cl
             ? {
                 ...unit,
                 canonicalText: {
-                  headline: unit.canonicalText?.headline,
+                  ...(unit.canonicalText?.headline === undefined
+                    ? {}
+                    : { headline: unit.canonicalText.headline }),
                   summary: '근거 없는 대체 문장을 거부해야 합니다.',
                 },
               }
