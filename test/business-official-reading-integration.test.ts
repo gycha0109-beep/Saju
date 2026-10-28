@@ -16,6 +16,9 @@ import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
 import { buildApprovedDomainMultifactorContextV1 } from '../src/reading/approved-domain-multifactor-context.js';
 import { buildOfficialReadingCharacterGroundingV1 } from '../src/reading/official-reading-reader-parity.js';
+import { assembleOfficialReadingArtifactV1 } from '../src/reading/official-reading-artifact.js';
+import { buildProductReadingResponse } from '../src/reading/product-reading-response.js';
+import { PRODUCT_READING_DELIVERY_VERSION } from '../src/reading/product-reading-delivery.js';
 import {
   PRODUCT_READING_RESPONSE_VERSION,
   type ProductReadingResponse,
@@ -210,6 +213,21 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
         item.summary?.includes('천간') === true
       ))).toBe(true);
     expect(reportJson).toContain('사업에서 함께 확인된 근거 기반 해석');
+    const artifact = assembleOfficialReadingArtifactV1(
+      natalSnapshot, execution, semantics, plan, report,
+      { readingVersion: 'business-reader-evidence-context-v1',
+        generatedAt: new Date('2026-09-23T05:30:00.000Z') },
+    );
+    const transported = buildProductReadingResponse({
+      deliveryId: 'business-approved-context',
+      deliveryVersion: PRODUCT_READING_DELIVERY_VERSION,
+      state: 'delivered',
+      messageCode: 'READING_DELIVERED',
+      requiredAction: 'none',
+      artifact,
+    });
+    expect(JSON.stringify(transported.reading?.sections))
+      .toContain('이 결론에 사용된 실제 십신 계열과 관찰 위치');
     // Absent canonical Ten-God facts cannot be repaired by a generic
     // sentence that merely repeats the original domain Claim.
     const noFacts = buildApprovedDomainMultifactorContextV1(
@@ -272,6 +290,21 @@ describe('Wealth approved composite reading remains grounded in real selected cl
     const report = renderOfficialReadingV1(semantics, plan);
     const text = JSON.stringify(report.sections);
     expect(text).toContain('재물에서 함께 확인된 근거 기반 해석');
+    const wealthArtifact = assembleOfficialReadingArtifactV1(
+      natalSnapshot, execution, semantics, plan, report,
+      { readingVersion: 'wealth-reader-evidence-context-v1',
+        generatedAt: new Date('2026-09-23T05:30:00.000Z') },
+    );
+    const wealthTransport = buildProductReadingResponse({
+      deliveryId: 'wealth-approved-context',
+      deliveryVersion: PRODUCT_READING_DELIVERY_VERSION,
+      state: 'delivered',
+      messageCode: 'READING_DELIVERED',
+      requiredAction: 'none',
+      artifact: wealthArtifact,
+    });
+    expect(JSON.stringify(wealthTransport.reading?.sections))
+      .toContain('이 결론에 사용된 실제 십신 계열과 관찰 위치');
     expect(text).toContain('이 결론에 사용된 실제 십신 계열과 관찰 위치');
     expect(text).toMatch(/(?:연주|월주|일주|시주) (?:천간|지지 대표 십신)/u);
     const sourceUnits = semantics.units.filter(unit =>
