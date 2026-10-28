@@ -213,6 +213,17 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
         item.summary?.includes('천간') === true
       ))).toBe(true);
     expect(reportJson).toContain('사업에서 함께 확인된 근거 기반 해석');
+    expect(reportJson).toMatch(
+      /이 복합 결론의 선행 십신 계열은 모두 (?:천간|지지)에서 함께 관찰되었습니다/u,
+    );
+    const foreignMethod = buildApprovedDomainMultifactorContextV1({
+      ...semantics,
+      units: semantics.units.map(unit =>
+        unit.role === 'primary' && unit.predicate === 'business_conclusion'
+          ? { ...unit, ruleRefs: [] }
+          : unit),
+    }, plan, report.explainability.entries);
+    expect(foreignMethod).toBeUndefined();
     const artifact = assembleOfficialReadingArtifactV1(
       natalSnapshot, execution, semantics, plan, report,
       { readingVersion: 'business-reader-evidence-context-v1',
@@ -290,6 +301,9 @@ describe('Wealth approved composite reading remains grounded in real selected cl
     const report = renderOfficialReadingV1(semantics, plan);
     const text = JSON.stringify(report.sections);
     expect(text).toContain('재물에서 함께 확인된 근거 기반 해석');
+    // Wealth does not have the Business-specific shared-channel admission
+    // premise and must not silently be labelled with that stronger claim.
+    expect(text).not.toContain('이 복합 결론의 선행 십신 계열은 모두');
     const wealthArtifact = assembleOfficialReadingArtifactV1(
       natalSnapshot, execution, semantics, plan, report,
       { readingVersion: 'wealth-reader-evidence-context-v1',
