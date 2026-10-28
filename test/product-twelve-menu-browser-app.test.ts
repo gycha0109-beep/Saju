@@ -159,6 +159,24 @@ function mountBrowser(fetcher?: (url: string, call: FakeHttpCall) => Promise<unk
 }
 
 describe('actual browser twelve-card entrypoint on existing Saju product host', () => {
+  it('preserves governed clarification when no reading or resolved intent exists', async () => {
+    const app = mountBrowser(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        responseVersion: 'myeonghwa-product-reading-response-v2',
+        state: 'invalid_request',
+        messageCode: 'READING_REQUEST_INVALID',
+        requiredAction: 'provide_required_context',
+        consumerDiagnostics: ['question_text_required'],
+      }),
+    }));
+    await app.get('twelve-open-career').dispatch('click');
+    expect(app.get('twelve-state-career').dataset.state).toBe('unavailable');
+    const copy = app.get('twelve-reading-career').collectText();
+    expect(copy).toContain('지금 고민하는 실제 질문을 입력해 주세요');
+    expect(copy).not.toContain('선택한 주제·질문과 다른 풀이');
+  });
+
   it('rejects same-person responses bound to a different topic or an absent governed request context', async () => {
     for (const requestContext of [
       { requestedText: '재물', intent: { domain: 'wealth', temporalScope: 'natal' } },
