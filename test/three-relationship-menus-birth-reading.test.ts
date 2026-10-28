@@ -71,7 +71,7 @@ describe('one self chart and one authorized other chart → three separate relat
   it('keeps family child scope unavailable with unknown time, not a guessed relation', () => {
     const result = buildThreeRelationshipMenusBirthReading(
       { ...SELF, time: { known: false } }, OTHER, request);
-    expect(result.family.parents.availability).toBe('partial');
+    expect(result.family.parents.availability).toBe('unavailable');
     expect(result.family.children.availability).toBe('unavailable');
     expect(result.family.children.report.observations[0]?.observedPillar).toBeUndefined();
     expect(result.html).toContain('간지가 확정되지 않았으므로');
