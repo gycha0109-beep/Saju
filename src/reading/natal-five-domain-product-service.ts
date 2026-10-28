@@ -1,4 +1,5 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import { buildReadingArtifactShell } from './reading-artifact-shell.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import {
   deterministicContentHash,
@@ -95,6 +96,50 @@ export async function requestNatalFiveDomainReadings(
   return assembleNatalFiveDomainProductResponses(snapshot, responses);
 }
 
+/** The five-domain bundle is an API convenience, never a priority tier.
+ * In particular, a transported interpretation for one subject/topic cannot
+ * occupy another subject/topic's slot just because it arrived at the same index.
+ * Compare the canonical birth *display* using the same shell as the artifact,
+ * not newly inferred astrological properties or a caller-provided label.
+ */
+function assertNatalDomainResponseIdentity(
+  snapshot: CanonicalSajuSnapshot,
+  topic: typeof NATAL_FIVE_DOMAIN_PRODUCT_ORDER[number],
+  response: ProductReadingResponse,
+): void {
+  const context = response.requestContext;
+  const isDelivered =
+    response.state === 'delivered' || response.state === 'delivered_with_fallback';
+  if (!isDelivered && response.reading !== undefined) {
+    throw new TypeError('Natal bundle cannot show a reading from a blocked response.');
+  }
+  if (isDelivered && (context === undefined || response.reading === undefined)) {
+    throw new TypeError('Natal bundle delivered response requires source-bound topic and person.');
+  }
+  if (context !== undefined) {
+    const scope = context.intent;
+    if (context.requestedText !== topic.requestText ||
+        scope.domain !== topic.domain || scope.temporalScope !== 'natal' ||
+        (scope.relationshipScope ?? null) !==
+          (topic.domain === 'relationship' ? 'general' : null) ||
+        context.calculationSex !==
+          (snapshot.input.sexForTraditionalCalculation ?? 'unspecified')) {
+      throw new TypeError('Natal bundle received a different requested reading intent.');
+    }
+  }
+  if (response.reading !== undefined) {
+    const expected = buildReadingArtifactShell(snapshot).subject.birthInputDisplay;
+    const actual = response.reading.subject.birthInputDisplay;
+    if (actual.calendarType !== expected.calendarType ||
+        actual.date !== expected.date ||
+        actual.timeKnown !== expected.timeKnown ||
+        (actual.time ?? null) !== (expected.time ?? null) ||
+        (actual.leapMonth ?? null) !== (expected.leapMonth ?? null)) {
+      throw new TypeError('Natal bundle received a reading for a different birth input.');
+    }
+  }
+}
+
 export function assembleNatalFiveDomainProductResponses(
   snapshot: CanonicalSajuSnapshot,
   responses: readonly ProductReadingResponse[],
@@ -108,6 +153,7 @@ export function assembleNatalFiveDomainProductResponses(
       if (!response || response.responseVersion.length === 0) {
         throw new TypeError('Natal bundle requires a governed response for each domain.');
       }
+      assertNatalDomainResponseIdentity(snapshot, topic, response);
       return {
         domain: topic.domain,
         title: topic.title,
