@@ -14,6 +14,7 @@ import { buildReadingCompositionEvidence } from '../src/reading/reading-profile-
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
+import { buildApprovedDomainMultifactorContextV1 } from '../src/reading/approved-domain-multifactor-context.js';
 import { buildOfficialReadingCharacterGroundingV1 } from '../src/reading/official-reading-reader-parity.js';
 import {
   PRODUCT_READING_RESPONSE_VERSION,
@@ -209,6 +210,14 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
         item.summary?.includes('천간') === true
       ))).toBe(true);
     expect(reportJson).toContain('사업에서 함께 확인된 근거 기반 해석');
+    // Absent canonical Ten-God facts cannot be repaired by a generic
+    // sentence that merely repeats the original domain Claim.
+    const noFacts = buildApprovedDomainMultifactorContextV1(
+      { ...semantics, canonicalFacts: [] },
+      plan,
+      report.explainability.entries,
+    );
+    expect(noFacts).toBeUndefined();
     for (const unit of primaryBusinessUnits) {
       expect(reportJson).toContain(unit.canonicalText?.summary);
     }
@@ -279,6 +288,24 @@ describe('Wealth approved composite reading remains grounded in real selected cl
     expect(new Set(renderedContextItems.map(item => item.explainabilityRef)).size)
       .toBe(renderedContextItems.length);
     expect(text).not.toContain('netWorthAuthorized');
+    const brokenText = buildApprovedDomainMultifactorContextV1(
+      {
+        ...semantics,
+        units: semantics.units.map(unit =>
+          unit.role === 'primary' && unit.predicate === 'wealth_conclusion'
+            ? {
+                ...unit,
+                canonicalText: {
+                  headline: unit.canonicalText?.headline,
+                  summary: '근거 없는 대체 문장을 거부해야 합니다.',
+                },
+              }
+            : unit),
+      },
+      plan,
+      report.explainability.entries,
+    );
+    expect(brokenText).toBeUndefined();
     expect(text).not.toContain('businessSuccessAuthorized');
   });
 });
