@@ -17,6 +17,7 @@ import {
 import { executeProductReading } from '../src/reading/governed-reading-execution.js';
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
+import { buildApprovedSpouseDayBranchContextV1 } from '../src/reading/approved-spouse-day-branch-context.js';
 import {
   RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
 } from '../src/reading/official-reading-detailed-presentation-spouse.js';
@@ -176,6 +177,21 @@ describe('SA-7C spouse position-only detailed Official Reading pilot', () => {
     ).toEqual(
       standard.officialReadingReport.sections.map((section) => section.sectionId),
     );
+    for (const current of [standard, detailed]) {
+      const sectionsText = JSON.stringify(current.officialReadingReport?.sections);
+      expect(sectionsText).toMatch(/이 사람의 실제 일지\\(日支\\)는 [자축인묘진사오미신유술해]\\([子丑寅卯辰巳午未申酉戌亥]\\)로 계산됐습니다/u);
+      expect(sectionsText).toContain('특정 배우자의 성격');
+      expect(sectionsText).not.toContain('결혼하게 됩니다');
+      if (current.canonicalSemantics === undefined ||
+          current.officialReadingPlan === undefined ||
+          current.officialReadingReport === undefined) {
+        throw new Error('Expected source-bound spouse official Reading');
+      }
+      expect(buildApprovedSpouseDayBranchContextV1({
+        ...current.canonicalSemantics, canonicalFacts: [],
+      }, current.officialReadingPlan,
+      current.officialReadingReport.explainability.entries)).toBeUndefined();
+    }
     expect(JSON.stringify(detailed.officialReadingReport.sections).length).toBeGreaterThan(
       JSON.stringify(standard.officialReadingReport.sections).length,
     );
