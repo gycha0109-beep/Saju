@@ -159,6 +159,66 @@ function mountBrowser(fetcher?: (url: string, call: FakeHttpCall) => Promise<unk
 }
 
 describe('actual browser twelve-card entrypoint on existing Saju product host', () => {
+  it('rejects same-person responses bound to a different topic or an absent governed request context', async () => {
+    for (const requestContext of [
+      { requestedText: '재물', intent: { domain: 'wealth', temporalScope: 'natal' } },
+      { requestedText: '직업·커리어', intent: { domain: 'wealth', temporalScope: 'natal' } },
+      undefined,
+    ]) {
+      const app = mountBrowser(async (_url, call) => ({
+        ok: true, status: 200,
+        json: async () => ({
+          responseVersion: 'myeonghwa-product-reading-response-v2',
+          requestContext,
+          state: 'delivered', messageCode: 'READING_DELIVERED',
+          reading: {
+            subject: subjectFor(call.body.birth),
+            sections: [{
+              title: '다른 메뉴 결과', state: 'complete',
+              blocks: [{ type: 'paragraph', text: '잘못된 개인화 결과' }],
+            }],
+            disclosures: [],
+          },
+        }),
+      }));
+      await app.get('twelve-open-career').dispatch('click');
+      expect(app.get('twelve-state-career').dataset.state).toBe('unavailable');
+      const text = app.get('twelve-reading-career').collectText();
+      expect(text).toContain('선택한 주제·질문과 다른 풀이');
+      expect(text).not.toContain('잘못된 개인화 결과');
+    }
+  });
+
+  it('renders the matching governed topic and blocks a swapped parent-child result', async () => {
+    const app = mountBrowser(async (_url, call) => ({
+      ok: true, status: 200,
+      json: async () => ({
+        responseVersion: 'myeonghwa-product-reading-response-v2',
+        requestContext: {
+          requestedText: call.body.reading?.text || '',
+          intent: call.body.reading?.text === '부모운'
+            ? { domain: 'family', temporalScope: 'natal', relationshipScope: 'children' }
+            : { domain: 'career', temporalScope: 'natal' },
+        },
+        state: 'delivered', messageCode: 'READING_DELIVERED',
+        reading: {
+          subject: subjectFor(call.body.birth),
+          sections: [{
+            title: '동일 명식 풀이', state: 'complete',
+            blocks: [{ type: 'paragraph', text: '다른 주제와 혼용하면 안 됩니다' }],
+          }],
+          disclosures: [],
+        },
+      }),
+    }));
+    await app.get('twelve-open-career').dispatch('click');
+    expect(app.get('twelve-state-career').dataset.state).toBe('partial');
+    await app.get('twelve-open-family').dispatch('click');
+    expect(app.get('twelve-state-family').dataset.state).toBe('unavailable');
+    expect(app.get('twelve-reading-family').collectText())
+      .not.toContain('다른 주제와 혼용하면 안 됩니다');
+  });
+
   it('installs exactly twelve customer menu cards into the existing deferred app.js', () => {
     expect(PRODUCT_HOST_APP_SCRIPT).toContain(PRODUCT_TWELVE_MENU_BROWSER_SCRIPT);
     const app = mountBrowser();

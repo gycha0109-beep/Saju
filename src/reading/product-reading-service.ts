@@ -38,7 +38,9 @@ export interface ProductReadingInternals {
 
 function assembleProductReadingInternals(
   execution: GovernedReadingExecutionResult,
+  input: ConsumerReadingRequestInput,
 ): ProductReadingInternals {
+  const normalizedRequest = execution.preparation.normalization.request;
   const delivery = buildProductReadingDelivery(execution);
   const officialSemanticSourceHandoff =
     execution.canonicalSemantics !== undefined &&
@@ -53,7 +55,13 @@ function assembleProductReadingInternals(
   return {
     execution,
     delivery,
-    response: buildProductReadingResponse(delivery),
+    response: buildProductReadingResponse(
+      delivery,
+      normalizedRequest === undefined ? undefined : {
+        requestedText: input.text,
+        intent: normalizedRequest.intent,
+      },
+    ),
     ...(officialSemanticSourceHandoff === undefined
       ? {}
       : { officialSemanticSourceHandoff }),
@@ -72,7 +80,7 @@ export async function runProductReadingInternals(
   const execution = await executeProductReading(
     snapshot, interpretation, registry, input, options, legacyNarrativeRuntime,
   );
-  return assembleProductReadingInternals(execution);
+  return assembleProductReadingInternals(execution, input);
 }
 
 
@@ -125,7 +133,7 @@ export async function requestProductReading(
       optionsOrAdapter, runtimeOrPolicy as NarrativePolicy,
       legacyOptions as ProductReadingServiceOptions,
     );
-    return assembleProductReadingInternals(execution).response;
+    return assembleProductReadingInternals(execution, input).response;
   }
   return (await runProductReadingInternals(
     snapshot, interpretation, registry, input,

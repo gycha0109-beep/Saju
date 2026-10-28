@@ -165,7 +165,15 @@ export interface ProductReadingResponseReading {
   generatedAt: string;
 }
 
+/** Echoed selection context, not a new interpretation or availability authority.
+ * Never return internal Claim, rule, source or registry references here. */
+export interface ProductReadingResponseContext {
+  requestedText: string;
+  intent: ProductReadingResponseClarificationOption;
+}
+
 export interface ProductReadingResponse {
+  requestContext?: ProductReadingResponseContext;
   responseId: string;
   responseVersion: string;
   state: ProductReadingResponseState;
@@ -443,7 +451,13 @@ function clarification(
 
 export function buildProductReadingResponse(
   delivery: ProductReadingDeliveryResult,
+  requestContext?: { requestedText: string; intent: ReadingIntent },
 ): ProductReadingResponse {
+  const publicContext: ProductReadingResponseContext | undefined =
+    requestContext === undefined ? undefined : {
+      requestedText: requestContext.requestedText,
+      intent: clarificationOption(requestContext.intent),
+    };
   const reading = delivery.artifact === undefined ? undefined : readingView(delivery.artifact);
   const responseClarification = clarification(delivery);
   const coverage =
@@ -467,6 +481,7 @@ export function buildProductReadingResponse(
     messageCode: delivery.messageCode,
     requiredAction: delivery.requiredAction,
     readingId: reading?.readingId,
+    requestContext: publicContext,
     clarification: responseClarification,
     coverage,
     consumerDiagnostics,
@@ -478,6 +493,7 @@ export function buildProductReadingResponse(
     state: delivery.state,
     messageCode: delivery.messageCode,
     requiredAction: delivery.requiredAction,
+    ...(publicContext === undefined ? {} : { requestContext: publicContext }),
     ...(reading === undefined ? {} : { reading }),
     ...(responseClarification === undefined ? {} : { clarification: responseClarification }),
     ...(coverage === undefined ? {} : { coverage }),

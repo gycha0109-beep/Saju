@@ -120,6 +120,24 @@ function delivered(overrides: DeliveryOverrides = {}): ProductReadingDeliveryRes
 }
 
 describe('Product Reading Consumer Transport Response', () => {
+  it('binds the public response to the actual chosen topic without adding interpretive authority', () => {
+    const context = {
+      requestedText: '직업·커리어',
+      intent: { domain: 'career', temporalScope: 'natal' } as const,
+    };
+    const response = buildProductReadingResponse(delivered(), context);
+    expect(response.requestContext).toEqual(context);
+    expect(JSON.stringify(response)).not.toContain('claim-secret-123');
+    const switched = buildProductReadingResponse(delivered(), {
+      requestedText: '재물',
+      intent: { domain: 'wealth', temporalScope: 'natal' },
+    });
+    expect(switched.responseId).not.toBe(response.responseId);
+    expect(switched.reading?.readingId).toBe(response.reading?.readingId);
+    // A transport label must not assert new eligibility or official claims.
+    expect(response).not.toHaveProperty('officialInterpretationAuthorized');
+  });
+
   it('removes delivery audit, constraints, and the raw ReadingArtifact wrapper', () => {
     const response = buildProductReadingResponse(delivered());
 

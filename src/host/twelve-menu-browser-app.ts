@@ -309,6 +309,52 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     return true;
   }
 
+  // The response must belong to this exact card and text request, not merely
+  // to a person who happens to have the same birth time. The engine may reuse
+  // an established reading for an exact question topic; the original question
+  // still has to match the echoed request.
+  const expectedMenuIntent = {
+    general: ['general', 'natal'],
+    career: ['career', 'natal'],
+    wealth: ['wealth', 'natal'],
+    relationship: ['relationship', 'natal', 'general'],
+    business: ['business', 'natal'],
+    life_stage: ['life_stage', 'life_stage'],
+    annual: ['general', 'annual'],
+    monthly: ['general', 'monthly'],
+    spouse: ['relationship', 'natal', 'spouse']
+  };
+  function matchesRequestedReadingContext(payload, requestedText, menuId) {
+    const context = payload.requestContext;
+    // All current governed v2 responses carry context. Pre-existing preview
+    // test and old transport fixtures without responseVersion remain readable.
+    if (payload.responseVersion !== 'myeonghwa-product-reading-response-v2' &&
+        context === undefined) return true;
+    if (!context || context.requestedText !== requestedText ||
+        !context.intent || typeof context.intent !== 'object') return false;
+    const intent = context.intent;
+    if (typeof intent.domain !== 'string' ||
+        typeof intent.temporalScope !== 'string') return false;
+    if (menuId === 'family') {
+      return intent.domain === 'family' && intent.temporalScope === 'natal' &&
+        intent.relationshipScope ===
+          (requestedText === '부모운' ? 'parents' :
+            requestedText === '자녀운' ? 'children' : null);
+    }
+    if (menuId === 'question') {
+      // Exact governed topic questions can be routed to their already
+      // authorized intent; an arbitrary question cannot authorize a result.
+      return requestedText.startsWith('질문: ') &&
+        (intent.domain === 'question_specific' ||
+         ['general','career','wealth','relationship','business','family',
+          'life_stage','compatibility'].includes(intent.domain));
+    }
+    const selected = expectedMenuIntent[menuId];
+    return !!selected && intent.domain === selected[0] &&
+      intent.temporalScope === selected[1] &&
+      (intent.relationshipScope || null) === (selected[2] || null);
+  }
+
   function renderPayload(view, payload) {
     const sections = payload.reading && Array.isArray(payload.reading.sections)
       ? payload.reading.sections.filter(function(section) {
@@ -469,6 +515,9 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     if (!matchesRequestedBirth(payload, birth)) {
       throw new Error('요청한 사람과 다른 명식의 결과가 돌아와 표시하지 않았습니다.');
     }
+    if (!matchesRequestedReadingContext(payload, '연애운', 'relationship')) {
+      throw new Error('요청한 관계 주제와 다른 풀이가 돌아와 표시하지 않았습니다.');
+    }
     return payload;
   }
 
@@ -567,6 +616,9 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
         const payload = await response.json();
         if (!payload || !matchesRequestedBirth(payload, birth)) {
           throw new Error('이 출생정보와 다른 명식의 결과는 표시할 수 없습니다.');
+        }
+        if (!matchesRequestedReadingContext(payload, scope.text, 'family')) {
+          throw new Error('부모·자녀 중 요청한 범위와 다른 풀이를 표시하지 않았습니다.');
         }
         return payload;
       }));
@@ -744,6 +796,9 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
         } else {
           if (!matchesRequestedBirth(payload, requestBirth)) {
             throw new Error('현재 입력한 생년월일·출생시각과 다른 명식의 풀이가 반환되어 표시하지 않았습니다.');
+          }
+          if (!matchesRequestedReadingContext(payload, requestedTopic, spec.id)) {
+            throw new Error('선택한 주제·질문과 다른 풀이가 반환되어 표시하지 않았습니다.');
           }
           renderPayload(view, payload);
         }
