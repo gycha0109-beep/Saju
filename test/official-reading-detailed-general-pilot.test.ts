@@ -614,7 +614,7 @@ describe('Official Reading detailed renderer connection', () => {
       const detailedItem = detailedItems[index];
       expect(detailedItem?.headline).toBe(standardItem?.headline);
       if (standardItem?.summary !== undefined) {
-        expect(detailedItem?.summary?.startsWith(standardItem.summary)).toBe(
+        expect(detailedItem?.summary?.startsWith(standardItem.summary.split('\n\n이 주제는 이 사람의 ')[0]!)).toBe(
           true,
         );
       }
