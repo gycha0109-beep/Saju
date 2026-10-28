@@ -84,7 +84,7 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(wealthHtml).toContain('같은 계산 근거로도 읽을 수 있는 다른 재물 관점');
     expect(wealthHtml).toContain('독립 보조 근거가 추가된 것은 아닙니다');
     for (const section of alternatives) {
-      expect(wealthHtml).toContain(section.paragraph);
+      expect(wealthHtml).toContain(section.paragraph.replaceAll("'", '&#39;'));
       expect(wealthHtml).toContain(section.sourceIds[0]!);
       expect(wealthHtml).toContain(section.ruleId);
     }
