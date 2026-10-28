@@ -1053,17 +1053,17 @@ function renderOfficialReadingInternalV1(
               const perspective = byRef.get(item.explainabilityRef);
               if (perspective === undefined) return item;
               const prefix = introductionAdded ? '' :
-                multifactorContext.title + '\\n\\n' +
-                multifactorContext.explanation + '\\n\\n';
+                multifactorContext.title + '\n\n' +
+                multifactorContext.explanation + '\n\n';
               introductionAdded = true;
               return {
                 ...item,
                 summary: [
                   item.summary,
-                  prefix + perspective.headline + '\\n' + perspective.text,
+                  prefix + perspective.headline + '\n' + perspective.text,
                 ].filter((value): value is string =>
                   value !== undefined && value.length > 0,
-                ).join('\\n\\n'),
+                ).join('\n\n'),
               };
             }),
           };
