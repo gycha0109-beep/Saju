@@ -384,7 +384,8 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
       : '사용 가능한 해석 문단이 없거나 추가 정보가 필요합니다.');
     if (payload.messageCode) note(view.output,
       readingMessages[payload.messageCode] || '이 주제의 결과를 확인할 수 없습니다.', 'field-hint');
-    if (view.spec && view.spec.id === 'question' && payload.requestContext &&
+    if (state === 'partial' && view.spec && view.spec.id === 'question' &&
+        payload.requestContext &&
         payload.requestContext.intent &&
         payload.requestContext.intent.domain !== 'question_specific') {
       note(view.output,
