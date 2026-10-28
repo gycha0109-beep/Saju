@@ -49,6 +49,7 @@ import type { ReadingAnnualTemporalStructureV1 } from './annual-temporal-structu
 import { buildApprovedRelationshipMultifactorOverviewV1 } from './approved-relationship-multifactor-overview.js';
 import { buildApprovedDomainMultifactorContextV1 } from './approved-domain-multifactor-context.js';
 import { buildApprovedCareerChannelContextV1 } from './approved-career-channel-context.js';
+import { buildApprovedSpouseDayBranchContextV1 } from './approved-spouse-day-branch-context.js';
 
 export const OFFICIAL_READING_RENDERER_VERSION =
   'myeonghwa-official-reading-renderer-v1' as const;
@@ -1111,6 +1112,37 @@ function renderOfficialReadingInternalV1(
             }),
           };
         }),
+      };
+    }
+  }
+
+  // An already authorized spouse T8 position-only Claim is generic text
+  // without the user's actual day branch. Connect only that canonical fact
+  // to the same Insight; do not infer the partner or add T10 meaning.
+  const spousePosition = buildApprovedSpouseDayBranchContextV1(
+    bundle, plan, explainabilityEntries,
+  );
+  if (spousePosition !== undefined) {
+    for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      const section = sections[sectionIndex];
+      if (section === undefined) continue;
+      sections[sectionIndex] = {
+        ...section,
+        blocks: section.blocks.map(block => block.type !== 'insights'
+          ? block
+          : {
+              ...block,
+              items: block.items.map(item =>
+                item.explainabilityRef !== spousePosition.explainabilityRef
+                  ? item
+                  : {
+                      ...item,
+                      summary: [item.summary, spousePosition.text]
+                        .filter((value): value is string =>
+                          value !== undefined && value.length > 0)
+                        .join('\n\n'),
+                    }),
+            }),
       };
     }
   }
