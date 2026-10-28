@@ -106,6 +106,47 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       .toThrow('existing overlapping T8 evidence');
   });
 
+  it('reads existing Business and Relationship alternate T8 meanings while keeping partial status', () => {
+    const examples = [
+      { domain: 'business', label: '사업', month: 1, day: 7, hour: 12 },
+      { domain: 'relationship', label: '관계', month: 1, day: 3, hour: 0 },
+    ] as const;
+    for (const current of examples) {
+      const chart = sample(current.month, current.day, current.hour);
+      const result = reports(chart);
+      const report = result[current.domain];
+      const alternatives = report.overlappingPerspectives ?? [];
+      expect(report.state, current.domain).toBe('partial');
+      expect(alternatives.length, current.domain).toBeGreaterThan(0);
+      const selectedPaths = new Set(report.sections.flatMap(section =>
+        section.observedFactPaths));
+      const selectedClaims = new Set(report.sections.map(section =>
+        section.claimType));
+      const selectedAxes = new Set(report.sections.map(section => section.axis));
+      const html = renderNatalFiveDomainMultifactorResearchHtml(chart, result);
+      const ownCard = html.split('<h2 id="domain-' + current.domain + '">')[1]!
+        .split('</article>')[0]!;
+      expect(ownCard).toContain(
+        '같은 계산 근거에서 확인된 다른 ' + current.label + ' 관점');
+      expect(ownCard).toContain('새로운 독립 근거가 아니며');
+      for (const section of alternatives) {
+        expect(selectedClaims.has(section.claimType)).toBe(false);
+        expect(selectedAxes.has(section.axis)).toBe(false);
+        expect(section.overlapsSelectedFactPaths).toEqual(section.observedFactPaths);
+        expect(section.observedFactPaths.every(path =>
+          selectedPaths.has(path))).toBe(true);
+        expect(section.sourceIds.length).toBeGreaterThan(0);
+        expect(ownCard).toContain(section.headline);
+        expect(ownCard).toContain(section.paragraph.replaceAll("'", '&#39;'));
+        expect(ownCard).toContain(section.ruleId);
+        expect(ownCard).toContain(section.sourceIds[0]!);
+      }
+      expect(report.usefulComplete).toBe(false);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+  });
+
   it('shows source-owned T5 observations rather than inventing a wealth T8 paragraph', () => {
     const chart = calculateCanonicalSajuSnapshot({
       calendarType: 'solar', date: { year: 1955, month: 10, day: 31 },
