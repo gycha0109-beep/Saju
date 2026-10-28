@@ -25,11 +25,11 @@ const wealthRegistry = createWealthNatalMultifactorRegistry();
 const businessRegistry = createBusinessNatalMultifactorRegistry();
 const relationshipRegistry = createRelationshipNatalMultifactorRegistry();
 
-function run(known = true, day = 10) {
+function run(known = true, day = 10, month = 3, hour = 12) {
   const snapshot = calculateCanonicalSajuSnapshot({
     calendarType: 'solar',
-    date: { year: 2024, month: 3, day },
-    time: known ? { known: true, hour: 12, minute: 0 } as const : { known: false } as const,
+    date: { year: 2024, month, day },
+    time: known ? { known: true, hour, minute: 0 } as const : { known: false } as const,
     sexForTraditionalCalculation: 'unspecified',
   }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
   const reports = {
@@ -172,6 +172,66 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
       expect(result.sections).toHaveLength(0);
       expect(result.missing.join(' ')).toContain('특정 결과를 판정할 근거');
     }
+  });
+
+  it('recovers exactly requested Wealth, Business and Relationship axes from genuine overlapping T8 observations', () => {
+    const cases = [
+      { topic: 'wealth', day: 3, month: 1, hour: 3,
+        prompt: '재물운의 자원 계획은 어떤가요?', axis: 'planning' },
+      { topic: 'business', day: 7, month: 1, hour: 12,
+        prompt: '사업에서 조율 관점을 알고 싶어요', axis: 'coordination' },
+      { topic: 'relationship', day: 3, month: 1, hour: 0,
+        prompt: '연애에서 경계 관점은 어떤가요?', axis: 'boundaries' },
+    ] as const;
+    for (const c of cases) {
+      const { snapshot, reports } = run(true, c.day, c.month, c.hour);
+      const originals = reports[c.topic];
+      const alternative = originals.overlappingPerspectives?.find(section =>
+        section.axis === c.axis);
+      expect(alternative, c.prompt).toBeDefined();
+      expect(originals.sections.some(section => section.axis === c.axis)).toBe(false);
+      const result = buildQuestionRelatedNatalReading(
+        snapshot, question(c.prompt), reports);
+      expect(result.status, c.prompt).toBe('related_evidence');
+      expect(result.topic).toBe(c.topic);
+      expect(result.focusAxis).toBe(c.axis);
+      expect(result.sections).toHaveLength(1);
+      expect(result.sections[0]).toMatchObject({
+        title: alternative!.headline,
+        paragraph: alternative!.paragraph,
+        claimType: alternative!.claimType,
+        factPaths: alternative!.observedFactPaths,
+        evidenceMode: 'reused_calculated_paths',
+      });
+      expect(result.selectedEvidenceIntroduction).toContain('독립 근거가 늘어난 것은 아닙니다');
+      expect(result.missing.join(' ')).not.toContain(
+        '관점의 명식별 해석 근거가 없어 다른 관점으로 답하지 않습니다');
+      const html = renderQuestionRelatedNatalReadingHtml(result);
+      expect(html).toContain('새로운 독립 근거나 질문에 대한 T11 결론이 아닙니다');
+      expect(result.usefulComplete).toBe(false);
+      expect(result.mayPublish).toBe(false);
+      expect(result.maySell).toBe(false);
+    }
+  });
+
+  it('rejects forged question-only source paths when a secondary T8 is not admitted by the selected chart', () => {
+    const { snapshot, reports } = run(true, 3, 1, 3);
+    const original = reports.wealth.overlappingPerspectives!;
+    expect(original.length).toBeGreaterThan(0);
+    const forged = {
+      ...reports,
+      wealth: {
+        ...reports.wealth,
+        overlappingPerspectives: original.map((entry, index) =>
+          index !== 0 ? entry : {
+            ...entry,
+            observedFactPaths: ['derivedFacts.tenGods.value.fake.stem.value'],
+          }),
+      },
+    };
+    expect(() => buildQuestionRelatedNatalReading(
+      snapshot, question('재물운의 계획 관점'), forged,
+    )).toThrow('unsourced secondary T8 view');
   });
 
   it('never substitutes an unrelated axis when the requested source-owned view is absent', () => {
