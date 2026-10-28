@@ -8,6 +8,7 @@ import {
   BUSINESS_NATAL_READING_CANDIDATE_VERSION,
   createBusinessNatalReadingCandidateRegistry,
 } from '../src/research/business-natal-reading-candidate.js';
+import { createWealthNatalReadingCandidateRegistry } from '../src/research/wealth-natal-reading-candidate.js';
 import { requirePreviewSemanticAdmissionV1 } from '../src/preview/preview-semantic-admission.js';
 import { buildReadingCompositionEvidence } from '../src/reading/reading-profile-authorization.js';
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
@@ -194,6 +195,19 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
     const report = renderOfficialReadingV1(semantics, plan);
     expect(report.sourceSemanticHash).toBe(semantics.semanticHash);
     const reportJson = JSON.stringify(report.sections);
+    // A previously admitted two-/three-family T8 conclusion must become a
+    // readable, source-owned composite paragraph with its actual canonical
+    // support, not only an independent list of generic Ten-God meanings.
+    const contextualized = report.sections.flatMap(section =>
+      section.blocks.flatMap(block => block.type === 'insights' ? block.items : []))
+      .filter(item => item.summary?.includes(
+        '이 결론에 사용된 실제 십신 계열과 관찰 위치:'));
+    expect(contextualized.length).toBeGreaterThan(0);
+    expect(contextualized.every(item =>
+      item.explainabilityRef.length > 0 &&
+      item.summary?.includes('지지 대표 십신') ||
+      item.summary?.includes('천간'))).toBe(true);
+    expect(reportJson).toContain('사업에서 함께 확인된 근거 기반 해석');
     for (const unit of primaryBusinessUnits) {
       expect(reportJson).toContain(unit.canonicalText?.summary);
     }
@@ -218,5 +232,52 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
     expect(reader.grounding.sourceSemanticHash).toBe(semantics.semanticHash);
     expect(reader.parity.semanticHash).toBe(semantics.semanticHash);
     expect(reader.parity.semanticHash).toBe(report.sourceSemanticHash);
+  });
+
+describe('Wealth approved composite reading remains grounded in real selected claims', () => {
+  it('renders admitted wealth T8 combinations with observed support and keeps source meaning intact', () => {
+    const natalSnapshot = snapshot();
+    const registry = createWealthNatalReadingCandidateRegistry(
+      '2026-09-23T05:30:00.000Z');
+    const execution = runInterpretation(natalSnapshot, registry, {
+      requestId: 'wealth-official-multifactor-evidence',
+      now: new Date('2026-09-23T05:30:00.000Z'),
+    });
+    const composition = buildReadingCompositionEvidence(
+      natalSnapshot, execution, registry, {
+        requestId: 'wealth-official-multifactor-reading',
+        intent: { domain: 'wealth', temporalScope: 'natal' },
+      },
+    );
+    expect(composition.selection.coverageState).toBe('complete');
+    if (composition.evidence === undefined) {
+      throw new Error('Expected existing wealth source-qualified evidence.');
+    }
+    const semantics = buildCanonicalReadingSemanticBundleV1({
+      intent: { domain: 'wealth', temporalScope: 'natal' },
+      evidence: composition.evidence.bundle,
+      targetClaimIds: composition.selection.targetClaimIds,
+    });
+    const plan = buildOfficialReadingPlanV1(semantics);
+    const report = renderOfficialReadingV1(semantics, plan);
+    const text = JSON.stringify(report.sections);
+    expect(text).toContain('재물에서 함께 확인된 근거 기반 해석');
+    expect(text).toContain('이 결론에 사용된 실제 십신 계열과 관찰 위치');
+    expect(text).toMatch(/(?:연주|월주|일주|시주) (?:천간|지지 대표 십신)/u);
+    const sourceUnits = semantics.units.filter(unit =>
+      unit.role === 'primary' && unit.predicate === 'wealth_conclusion');
+    expect(sourceUnits.length).toBeGreaterThan(0);
+    for (const source of sourceUnits) {
+      expect(text).toContain(source.canonicalText!.summary!);
+    }
+    const renderedContextItems = report.sections.flatMap(section =>
+      section.blocks.flatMap(block => block.type === 'insights' ? block.items : []))
+      .filter(item => item.summary?.includes('이 결론에 사용된 실제 십신 계열'));
+    expect(renderedContextItems.length).toBeGreaterThan(0);
+    expect(renderedContextItems.length).toBeLessThanOrEqual(3);
+    expect(new Set(renderedContextItems.map(item => item.explainabilityRef)).size)
+      .toBe(renderedContextItems.length);
+    expect(text).not.toContain('netWorthAuthorized');
+    expect(text).not.toContain('businessSuccessAuthorized');
   });
 });
