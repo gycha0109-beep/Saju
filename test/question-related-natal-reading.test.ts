@@ -77,6 +77,8 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
     expect(reports.wealth.sections.length).toBeGreaterThan(0);
     expect(selected.status).toBe('related_evidence');
     expect(selected.topic).toBe('wealth');
+    expect(selected.selectedEvidenceIntroduction).toContain('기존에 발행된');
+    expect(selected.selectedEvidenceIntroduction).toContain('미래 결과를 별도로 판정한 내용은 아닙니다');
     expect(selected.sections.length).toBe(reports.wealth.sections.length);
     for (const [index, section] of selected.sections.entries()) {
       const original = reports.wealth.sections[index]!;
