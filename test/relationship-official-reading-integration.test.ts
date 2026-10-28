@@ -14,6 +14,7 @@ import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
 import { buildApprovedRelationshipMultifactorOverviewV1 } from '../src/reading/approved-relationship-multifactor-overview.js';
+import { buildApprovedDomainMultifactorContextV1 } from '../src/reading/approved-domain-multifactor-context.js';
 import { buildApprovedOfficialReadingDetailedRealizationV1 } from '../src/reading/official-reading-detailed-realization.js';
 import { buildOfficialReadingCharacterGroundingV1 } from '../src/reading/official-reading-reader-parity.js';
 import {
@@ -191,6 +192,26 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
 
     const report = renderOfficialReadingV1(semantics, plan);
     const reportJson = JSON.stringify(report.sections);
+    // The regular consumer reading must present already-approved multi-family
+    // relationship meaning, not reserve it solely for the detailed surface.
+    expect(reportJson).toContain('연애·관계에서 함께 확인된 근거 기반 해석');
+    expect(reportJson).toContain('이 결론에 사용된 실제 십신 계열과 관찰 위치');
+    expect(reportJson).toMatch(/(?:연주|월주|일주|시주) (?:천간|지지 대표 십신)/u);
+    const standardComposite = buildApprovedDomainMultifactorContextV1(
+      semantics, plan, report.explainability.entries);
+    expect(standardComposite?.domain).toBe('relationship');
+    expect(standardComposite?.perspectives.length).toBeGreaterThan(0);
+
+    // No relationship-specific T8 evidence can be used to answer spouse or
+    // two-person compatibility questions merely by changing the selected menu.
+    expect(buildApprovedDomainMultifactorContextV1({
+      ...semantics,
+      intent: { domain: 'relationship', temporalScope: 'natal',
+        relationshipScope: 'spouse' },
+    }, plan, report.explainability.entries)).toBeUndefined();
+    expect(buildApprovedDomainMultifactorContextV1({
+      ...semantics, canonicalFacts: [],
+    }, plan, report.explainability.entries)).toBeUndefined();
     for (const unit of primaryRelationshipUnits) {
       expect(reportJson).toContain(unit.canonicalText?.summary);
     }
