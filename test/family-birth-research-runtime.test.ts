@@ -41,7 +41,7 @@ describe('actual birth to bounded parent/child family observation', () => {
     expect(result.report.calculationHash).toBe(snapshot.calculationHash);
     expect(result.report.observations.map(item => item.factPath))
       .toEqual(['pillars.year', 'pillars.month']);
-    expect(result.availability).toBe('partial');
+    expect(result.availability).toBe('unavailable');
     expect(result.meaning).toBe('calculation_facts_only');
     expect(result.lifecycle).toBe('internal_research_only');
     expect(result.mayClaimFamilyOutcome).toBe(false);
@@ -82,7 +82,7 @@ describe('actual birth to bounded parent/child family observation', () => {
     expect(children.report.observations[0]?.state).not.toBe('resolved');
     expect(children.report.observations[0]?.observedPillar).toBeUndefined();
     expect(children.html).toContain('간지가 확정되지 않았으므로');
-    expect(parents.availability).toBe('partial');
+    expect(parents.availability).toBe('unavailable');
     expect(parents.meaning).toBe('calculation_facts_only');
     expect(parents.report.observations.every(item => item.factPath !== 'pillars.hour')).toBe(true);
     expect(parents.report.snapshotId).toBe(children.report.snapshotId);
