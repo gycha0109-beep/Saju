@@ -207,6 +207,10 @@ function render(
     '상호작용을 설명하는 출처 있는 시간 해석 규칙이 확보되기 전에는 합쳐서 운세로 단정하지 않습니다.</p></section>' +
     '<section id="life-stage"><h2>삶의 단계 — 계산된 대운</h2><p>' +
     '대운의 간지·시각만 계산된 사실입니다. 길흉이나 사건 시기를 해석하지 않습니다.</p>' +
+    (life.transitionSummary === undefined ? '' :
+      '<article><h3>지금과 다음 대운의 정확한 전환 경계</h3><p>' +
+      e(life.transitionSummary) +
+      '</p><p>이 내용은 두 기간의 연결만 확인하며 개인의 인생 전환·성과·관계를 예측하지 않습니다.</p></article>') +
     periods +
     (natal ? '<h3>같은 사람에게서 별도로 확인한 사주 해석 근거</h3><p>' +
       '아래는 이 사람에 대해 이미 선택된 독립적인 T8 연구 해석입니다. ' +
