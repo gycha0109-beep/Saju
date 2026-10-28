@@ -68,6 +68,61 @@ describe('one self chart and one authorized other chart → three separate relat
     expect(buildThreeRelationshipMenusBirthReading(SELF, OTHER, request)).toEqual(result);
   });
 
+  it('connects a declared parent or child person only with a separate family-purpose attestation', () => {
+    const original = buildThreeRelationshipMenusBirthReading(SELF, OTHER, request);
+    expect(original.familyMember).toBeUndefined();
+    expect(original.html).not.toContain('id="family-selected-member"');
+    for (const scope of ['parents', 'children'] as const) {
+      const output = buildThreeRelationshipMenusBirthReading(SELF, OTHER, {
+        ...request, familyMemberScope: scope,
+        familyMemberBirthUseAuthorized: true,
+      });
+      const actual = output.familyMember;
+      expect(actual).toBeDefined();
+      expect(actual?.scope).toBe(scope);
+      expect(actual?.subjectNatal.personRef).toBe('self');
+      expect(actual?.member.personRef).toBe('other');
+      expect(actual?.subjectNatal.snapshotId).toBe(output.family.parents.report.snapshotId);
+      expect(actual?.member.snapshotId).toBe(output.compatibility.report.target.snapshotId);
+      expect(actual?.subjectNatal.calculationHash).toBe(output.calculationHash);
+      expect(actual?.member.calculationHash)
+        .toBe(output.compatibility.report.target.calculationHash);
+      expect(actual?.familyMeaningStatus)
+        .toBe('family_t8_source_authority_not_established');
+      expect(actual?.mayInferFamilyDynamics).toBe(false);
+      expect(output.html).toContain('id="family-selected-member"');
+      expect(output.html).toContain(scope === 'parents'
+        ? '직접 선택한 부모 구성원' : '직접 선택한 자녀 구성원');
+      expect(output.html).toContain('두 사람 사이의 가족 역학이나 실제 관계 결과가 아닙니다');
+      expect(output.html).toContain('부모·자녀 관계 자체를 설명하는 T8 근거가 승인된 것은 아닙니다');
+      for (const person of [actual!.subjectNatal, actual!.member]) {
+        for (const section of person.sections) {
+          expect(section.sourceIds.length).toBeGreaterThanOrEqual(2);
+          expect(section.factPaths.length).toBeGreaterThanOrEqual(2);
+          expect(output.html).toContain(section.paragraph.replace(/[&<>"']/gu, char => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+          })[char]!));
+        }
+      }
+      expect(output.mayClaimFamilyOutcome).toBe(false);
+      expect(output.mayClaimInterpersonalMeaning).toBe(false);
+      expect(output.maySell).toBe(false);
+    }
+  });
+
+  it('rejects inferred family role and unconsented reuse of the compatibility target birth', () => {
+    expect(() => buildThreeRelationshipMenusBirthReading(SELF, OTHER, {
+      ...request, familyMemberScope: 'parents',
+    })).toThrow('separate use admission');
+    expect(() => buildThreeRelationshipMenusBirthReading(SELF, OTHER, {
+      ...request, familyMemberBirthUseAuthorized: true,
+    })).toThrow('explicit family scope');
+    expect(() => buildThreeRelationshipMenusBirthReading(SELF, OTHER, {
+      ...request, familyMemberScope: 'partner' as 'parents',
+      familyMemberBirthUseAuthorized: true,
+    })).toThrow('exact parents/children scope');
+  });
+
   it('keeps family child scope unavailable with unknown time, not a guessed relation', () => {
     const result = buildThreeRelationshipMenusBirthReading(
       { ...SELF, time: { known: false } }, OTHER, request);
