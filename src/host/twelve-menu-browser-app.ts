@@ -495,7 +495,10 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     });
     note(view.output, payload.explanation, 'disclosure');
     list(view.output, payload.limitations || []);
-    setState(view, 'partial', '두 사람의 계산 사실만 확인했습니다. 궁합 해석은 미지원입니다.');
+    // Two calculated charts are not a partial interpersonal reading.
+    // Preserve the useful facts, but report semantic reading as unavailable.
+    setState(view, 'unavailable',
+      '두 사람의 계산 사실만 확인했습니다. 궁합 해석은 아직 제공할 수 없습니다.');
   }
 
   async function fetchOwnRelationshipReading(birth) {
