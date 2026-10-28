@@ -9,18 +9,21 @@ import type { ApprovedOfficialReadingDetailedSourceProfileV1 } from './official-
 import type { ApprovedOfficialReadingConciseDefinitionV1 } from './official-reading-concise-presentation-definition.js';
 import { WEALTH_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from './official-reading-detailed-presentation-wealth.js';
 import { BUSINESS_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from './official-reading-detailed-presentation-business.js';
+import { RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from './official-reading-detailed-presentation-relationship.js';
 import { WEALTH_NATAL_APPROVED_CONCISE_DEFINITIONS } from './official-reading-concise-presentation-wealth.js';
 import { BUSINESS_NATAL_APPROVED_CONCISE_DEFINITIONS } from './official-reading-concise-presentation-business.js';
+import { RELATIONSHIP_NATAL_APPROVED_CONCISE_DEFINITIONS } from './official-reading-concise-presentation-relationship.js';
 
 export const APPROVED_DOMAIN_MULTIFACTOR_CONTEXT_POLICY_VERSION =
   'myeonghwa-approved-domain-multifactor-context-v1' as const;
 
-type Domain = 'wealth' | 'business';
+type Domain = 'wealth' | 'business' | 'relationship';
 type ExplainabilityEntry = ExplainabilityIndex['entries'][number];
 type ConclusionAxis =
   | 'value_creation' | 'spending' | 'management' | 'friction'
   | 'decision_execution' | 'uncertainty' | 'allocation' | 'accountability'
-  | 'partnership' | 'pressure';
+  | 'partnership' | 'pressure'
+  | 'closeness' | 'expression' | 'values' | 'boundary';
 
 const FAMILIES: Readonly<Record<string, { name: string; gods: readonly string[] }>> =
   Object.freeze({
@@ -39,6 +42,7 @@ const AXES: Readonly<Record<Domain, readonly ConclusionAxis[]>> = {
   wealth: ['value_creation', 'spending', 'management', 'friction'],
   business: ['decision_execution', 'uncertainty', 'allocation', 'accountability',
     'partnership', 'pressure', 'friction'],
+  relationship: ['closeness', 'expression', 'values', 'boundary', 'friction'],
 };
 
 function equalSet(left: readonly string[], right: readonly string[]): boolean {
@@ -55,8 +59,11 @@ function sourceProfiles(domain: Domain): {
   return domain === 'wealth'
     ? { detailed: WEALTH_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
         concise: WEALTH_NATAL_APPROVED_CONCISE_DEFINITIONS }
-    : { detailed: BUSINESS_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
-        concise: BUSINESS_NATAL_APPROVED_CONCISE_DEFINITIONS };
+    : domain === 'business'
+      ? { detailed: BUSINESS_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+          concise: BUSINESS_NATAL_APPROVED_CONCISE_DEFINITIONS }
+      : { detailed: RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+          concise: RELATIONSHIP_NATAL_APPROVED_CONCISE_DEFINITIONS };
 }
 
 function observedFamilyPositions(
@@ -103,7 +110,9 @@ function conclusionAxis(unit: CanonicalReadingSemanticUnitV1, domain: Domain):
   }
   const axis = domain === 'wealth'
     ? ('wealthKind' in payload ? payload.wealthKind : undefined)
-    : ('businessKind' in payload ? payload.businessKind : undefined);
+    : domain === 'business'
+      ? ('businessKind' in payload ? payload.businessKind : undefined)
+      : ('relationshipKind' in payload ? payload.relationshipKind : undefined);
   return AXES[domain].find(value => value === axis);
 }
 
@@ -145,8 +154,12 @@ export function buildApprovedDomainMultifactorContextV1(
   explainability: readonly ExplainabilityEntry[],
 ): ApprovedDomainMultifactorContextV1 | undefined {
   if (bundle.intent.temporalScope !== 'natal' ||
-      (bundle.intent.domain !== 'wealth' && bundle.intent.domain !== 'business') ||
-      bundle.intent.relationshipScope !== undefined) return undefined;
+      (bundle.intent.domain !== 'wealth' &&
+       bundle.intent.domain !== 'business' &&
+       bundle.intent.domain !== 'relationship') ||
+      (bundle.intent.domain === 'relationship'
+        ? bundle.intent.relationshipScope !== 'general'
+        : bundle.intent.relationshipScope !== undefined)) return undefined;
 
   const domain = bundle.intent.domain;
   const profiles = sourceProfiles(domain);
@@ -171,6 +184,7 @@ export function buildApprovedDomainMultifactorContextV1(
       if (unit === undefined || unit.role !== 'primary' ||
           unit.taxonomy.tier !== 'T8' ||
           unit.taxonomy.category !== domain ||
+          (domain === 'relationship' && unit.taxonomy.subcategory !== 'general') ||
           unit.predicate !== domain + '_conclusion' ||
           unit.scenarioRef !== undefined ||
           unit.ruleRefs.length === 0 || unit.sourceRefs.length === 0 ||
@@ -186,7 +200,9 @@ export function buildApprovedDomainMultifactorContextV1(
           profile.supportingClaimTypes.length < 2 ||
           profile.scenarioPolicy !== 'none' ||
           profile.contradictionPolicy !== 'none' ||
-          profile.owner !== domain + ':natal' ||
+          profile.owner !== (domain === 'relationship'
+            ? 'relationship:natal:general'
+            : domain + ':natal') ||
           unit.canonicalText?.headline !== profile.standardText.headline ||
           unit.canonicalText?.summary !== profile.standardText.summary ||
           unit.methodologyRef.id !== profile.methodologyRef.id ||
@@ -252,13 +268,15 @@ export function buildApprovedDomainMultifactorContextV1(
     selected.push(candidate);
     if (selected.length === 3) break;
   }
-  const label = domain === 'wealth' ? '재물' : '사업';
+  const label = domain === 'wealth' ? '재물'
+    : domain === 'business' ? '사업' : '연애·관계';
   return {
     domain,
     title: label + '에서 함께 확인된 근거 기반 해석',
     explanation:
       '다음 내용은 이미 허용된 복합 해석의 원문 요지에 실제 명식의 근거 위치를 연결한 것입니다. ' +
-      '한 가지 십신의 존재만으로 얻은 결론이 아니며, 추가 예측·성패·금액·등급을 만들지 않습니다. ' +
+      '한 가지 십신의 존재만으로 얻은 결론이 아니며, ' +
+      '금전 규모·사업 성패·특정 상대의 속성·궁합·관계 결과나 등급을 예측하지 않습니다. ' +
       '여기 표시하지 않은 다른 해석은 원래 항목에 그대로 남아 있습니다.',
     perspectives: selected.map(item => ({
       explainabilityRef: item.explainabilityRef,
