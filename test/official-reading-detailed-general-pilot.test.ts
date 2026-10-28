@@ -43,6 +43,7 @@ import {
   type GovernedReadingEvidenceBundleV1,
 } from '../src/reading/governed-reading-evidence.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
+import { buildApprovedGeneralThemeContextV1 } from '../src/reading/approved-general-theme-context.js';
 import {
   renderApprovedDetailedOfficialReadingV1,
   renderOfficialReadingV1,
@@ -451,6 +452,32 @@ describe('Official Reading general natal detailed material pilot', () => {
   });
 });
 
+
+describe('General natal standard interpretation uses actual Ten-God channels', () => {
+  it('shows the selected T8 theme source and its real stem/branch positions only', () => {
+    const semantics = semanticsFor({
+      label: 'general-context',
+      intent: { domain: 'general', temporalScope: 'natal' },
+      registry: createGeneralNatalUsefulReadingCandidateRegistry(NOW),
+    });
+    const plan = buildOfficialReadingPlanV1(semantics);
+    const report = renderOfficialReadingV1(semantics, plan);
+    const context = buildApprovedGeneralThemeContextV1(
+      semantics, plan, report.explainability.entries);
+    expect(context).toBeDefined();
+    expect(context?.perspectives.length).toBeGreaterThan(0);
+    const actualText = JSON.stringify(report.sections);
+    expect(actualText).toContain('실제 관측 위치:');
+    expect(actualText).toMatch(/(?:연주|월주|일주|시주) (?:천간|지지 대표 십신)/u);
+    expect(actualText).toContain('다른 주제와 함께 읽을 근거');
+    expect(buildApprovedGeneralThemeContextV1({
+      ...semantics, canonicalFacts: [],
+    }, plan, report.explainability.entries)).toBeUndefined();
+    expect(buildApprovedGeneralThemeContextV1({
+      ...semantics, intent: { domain: 'career', temporalScope: 'natal' },
+    }, plan, report.explainability.entries)).toBeUndefined();
+  });
+});
 
 describe('Official Reading detailed renderer connection', () => {
   function generalFixture() {
