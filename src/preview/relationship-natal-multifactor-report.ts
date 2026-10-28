@@ -1,5 +1,6 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
 import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { selectOverlappingNatalT8Perspectives } from './natal-overlapping-t8-perspectives.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -46,6 +47,11 @@ export interface RelationshipNatalMultifactorReport {
   introduction: string;
   sections: readonly RelationshipNatalMultifactorSection[];
   readingGuide?: RelationshipNatalReadingGuide;
+  /** Other already-emitted T8 meanings reusing the selected evidence.
+   * Readable nuance only; NEVER independent MUR support or new relationship outcome. */
+  overlappingPerspectives?: readonly (RelationshipNatalMultifactorSection & {
+    overlapsSelectedFactPaths: readonly string[];
+  })[];
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -321,6 +327,9 @@ export function buildRelationshipNatalMultifactorReport(
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly RelationshipNatalMultifactorSection[] = chosen;
+  const overlappingPerspectives = state === 'partial' && core !== undefined
+    ? selectOverlappingNatalT8Perspectives(chosen, result)
+    : [];
   const readingGuide = buildRelationshipNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
@@ -337,6 +346,7 @@ export function buildRelationshipNatalMultifactorReport(
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(overlappingPerspectives.length === 0 ? {} : { overlappingPerspectives }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],
