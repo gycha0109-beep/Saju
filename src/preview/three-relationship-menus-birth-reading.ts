@@ -1,7 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
   buildFamilyBirthResearchReading,
+  buildFamilyMemberBirthResearchReading,
   type FamilyBirthResearchReading,
+  type FamilyMemberBirthResearchReading,
 } from './family-birth-research-runtime.js';
 import {
   buildSpousePositionBirthResearchReading,
@@ -22,6 +24,10 @@ export interface ThreeRelationshipMenusBirthRequest {
   referenceDateTime: string;
   /** A caller attestation, not a replacement for host-level consent verification. */
   targetBirthUseAuthorized: true;
+  /** Only an explicitly selected parent/child role may reuse the second birth. */
+  familyMemberScope?: 'parents' | 'children';
+  /** A separate caller attestation for the family-member research purpose. */
+  familyMemberBirthUseAuthorized?: true;
 }
 
 export interface ThreeRelationshipMenusBirthReading {
@@ -39,6 +45,8 @@ export interface ThreeRelationshipMenusBirthReading {
   snapshotId: string;
   calculationHash: string;
   family: { parents: FamilyBirthResearchReading; children: FamilyBirthResearchReading };
+  /** Present only when the caller separately identifies and admits a family member. */
+  familyMember?: FamilyMemberBirthResearchReading;
   spouse: SpousePositionBirthResearchReading;
   compatibility: CompatibilityTwoBirthResearchReading;
   html: string;
@@ -54,10 +62,23 @@ function verifiedInputs(
   family: { parents: FamilyBirthResearchReading; children: FamilyBirthResearchReading },
   spouse: SpousePositionBirthResearchReading,
   compatibility: CompatibilityTwoBirthResearchReading,
+  familyMember?: FamilyMemberBirthResearchReading,
 ): { snapshotId: string; calculationHash: string } {
   const p = family.parents.report, c = family.children.report;
   const s = spouse.report, k = compatibility.report;
-  if (p.snapshotId !== c.snapshotId ||
+  if ((familyMember !== undefined && (
+        familyMember.scope !== familyMember.subject.scope ||
+        familyMember.subject.report.snapshotId !== p.snapshotId ||
+        familyMember.subject.report.calculationHash !== p.calculationHash ||
+        familyMember.subjectNatal.snapshotId !== p.snapshotId ||
+        familyMember.subjectNatal.calculationHash !== p.calculationHash ||
+        familyMember.member.snapshotId !== k.target.snapshotId ||
+        familyMember.member.calculationHash !== k.target.calculationHash ||
+        familyMember.familyMeaningStatus !== 'family_t8_source_authority_not_established' ||
+        familyMember.mayInferFamilyDynamics ||
+        familyMember.mayGrantOfficialAuthority || familyMember.mayPublish ||
+        familyMember.mayPersist || familyMember.maySell)) ||
+      p.snapshotId !== c.snapshotId ||
       p.calculationHash !== c.calculationHash ||
       s.snapshotId !== p.snapshotId ||
       s.calculationHash !== p.calculationHash ||
@@ -92,6 +113,7 @@ function renderHtml(
   family: { parents: FamilyBirthResearchReading; children: FamilyBirthResearchReading },
   spouse: SpousePositionBirthResearchReading,
   compatibility: CompatibilityTwoBirthResearchReading,
+  familyMember?: FamilyMemberBirthResearchReading,
 ): string {
   const scopes = [
     ['parents', '부모와 관련된 본인 명식 관찰', family.parents],
@@ -108,6 +130,29 @@ function renderHtml(
       data.report.missing.map(s => '<p class="limited">' + e(s) + '</p>').join('') +
       '</section>';
   }).join('');
+  // Never silently treat the compatibility target as somebody's parent or
+  // child. This section exists only for an explicitly admitted family role.
+  const familyMemberHtml = familyMember === undefined ? '' : (
+    '<section id="family-selected-member"><h3>직접 선택한 ' +
+    (familyMember.scope === 'parents' ? '부모' : '자녀') +
+    ' 구성원의 별도 원국 풀이</h3>' +
+    '<p>이 설명들은 질문자와 가족 구성원 각각의 기존 T8 해석이며 ' +
+    '두 사람 사이의 가족 역학이나 실제 관계 결과가 아닙니다.</p>' +
+    ([
+      ['질문자 본인의 원국 T8 관점', familyMember.subjectNatal],
+      ['선택한 가족 구성원 본인의 원국 T8 관점', familyMember.member],
+    ] as const).map(([title, personal]) =>
+      '<section><h4>' + e(title) + '</h4>' +
+      (personal.sections.length === 0
+        ? '<p>이 사람의 별도 원국 T8 해석은 아직 근거가 부족합니다.</p>'
+        : personal.sections.map(section =>
+          '<article><h5>' + e(section.headline) + '</h5><p>' +
+          e(section.paragraph) + '</p><details><summary>각자 원국의 출처</summary><p>' +
+          e(section.sourceIds.join(' · ')) + '</p><p>' +
+          e(section.factPaths.join(' · ')) +
+          '</p></details></article>').join('')) + '</section>').join('') +
+    '<p>부모·자녀 관계 자체를 설명하는 T8 근거가 승인된 것은 아닙니다.</p></section>'
+  );
   const spouseReport = spouse.report;
   const spouseHtml = '<article><h3>' + e(spouseReport.headline) + '</h3><p>' +
     e(spouseReport.observation) + '</p><p>' + e(spouseReport.summary) +
@@ -155,7 +200,8 @@ function renderHtml(
     '<h1>가족 · 배우자 · 궁합</h1><p>세 메뉴의 해석 범위를 구분해 읽습니다. 실제 출생 명식 두 개가 필요한 궁합은 계산 비교와 각자의 독립된 원국 풀이만 제공합니다.</p>' +
     '</header><nav><a href="#family">가족</a><a href="#spouse">배우자·관계</a>' +
     '<a href="#compatibility">궁합</a></nav>' +
-    '<section id="family"><h2>가족 — 부모/자녀 별도 범위</h2>' + familyHtml + '</section>' +
+    '<section id="family"><h2>가족 — 부모/자녀 별도 범위</h2>' +
+    familyHtml + familyMemberHtml + '</section>' +
     '<section id="spouse"><h2>배우자·관계 — 일지 위치만</h2>' + spouseHtml + '</section>' +
     '<section id="compatibility"><h2>궁합 — 두 명식의 독립 계산과 연구 풀이</h2>' +
     '<p class="limited">상호 궁합 점수·결혼 결과·두 사람의 상호작용 해석은 근거가 확립되지 않아 제공하지 않습니다.</p>' +
@@ -171,6 +217,16 @@ export function buildThreeRelationshipMenusBirthReading(
 ): ThreeRelationshipMenusBirthReading {
   if (request.targetBirthUseAuthorized !== true) {
     throw new TypeError('Second-person birth research requires an explicit use attestation.');
+  }
+  if (request.familyMemberScope !== undefined &&
+      (request.familyMemberScope !== 'parents' &&
+       request.familyMemberScope !== 'children' ||
+       request.familyMemberBirthUseAuthorized !== true)) {
+    throw new TypeError('Family-member view requires an exact parents/children scope and separate use admission.');
+  }
+  if (request.familyMemberScope === undefined &&
+      request.familyMemberBirthUseAuthorized !== undefined) {
+    throw new TypeError('Family-member use admission requires an explicit family scope.');
   }
   const family = {
     parents: buildFamilyBirthResearchReading(subjectBirth, {
@@ -191,7 +247,16 @@ export function buildThreeRelationshipMenusBirthReading(
       referenceDateTime: request.referenceDateTime,
     },
   );
-  const ids = verifiedInputs(family, spouse, compatibility);
+  const familyMember = request.familyMemberScope === undefined
+    ? undefined
+    : buildFamilyMemberBirthResearchReading(subjectBirth, targetBirth, {
+        scope: request.familyMemberScope,
+        subjectPersonRef: request.subjectPersonRef,
+        memberPersonRef: request.targetPersonRef,
+        memberBirthUseAuthorized: request.familyMemberBirthUseAuthorized!,
+        referenceDateTime: request.referenceDateTime,
+      });
+  const ids = verifiedInputs(family, spouse, compatibility, familyMember);
   return {
     version: THREE_RELATIONSHIP_MENUS_BIRTH_READING_VERSION,
     lifecycle: 'internal_research_only',
@@ -204,7 +269,9 @@ export function buildThreeRelationshipMenusBirthReading(
     mayPublish: false,
     mayPersist: false,
     maySell: false,
-    ...ids, family, spouse, compatibility,
-    html: renderHtml(family, spouse, compatibility),
+    ...ids, family,
+    ...(familyMember === undefined ? {} : { familyMember }),
+    spouse, compatibility,
+    html: renderHtml(family, spouse, compatibility, familyMember),
   };
 }
