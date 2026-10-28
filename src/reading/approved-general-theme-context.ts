@@ -77,9 +77,10 @@ export function buildApprovedGeneralThemeContextV1(
       const payload = unit.semanticPayload;
       if (payload === null || typeof payload !== 'object' || Array.isArray(payload) ||
           !('family' in payload) || !('channel' in payload)) continue;
-      const family = payload.family;
+      const family = typeof payload.family === 'string'
+        ? payload.family.toUpperCase() : '';
       const channel = payload.channel;
-      if (typeof family !== 'string' || !Object.hasOwn(FAMILIES, family) ||
+      if (!Object.hasOwn(FAMILIES, family) ||
           (channel !== 'visible_stems' && channel !== 'branches')) continue;
       const claimType = 'GENERAL_NATAL_' + family + '_' +
         (channel === 'visible_stems' ? 'VISIBLE_STEMS' : 'BRANCHES') + '_THEME';
