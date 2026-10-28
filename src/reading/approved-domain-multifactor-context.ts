@@ -153,6 +153,7 @@ export function buildApprovedDomainMultifactorContextV1(
   const concise = new Map(profiles.concise.map(def =>
     [def.claimType, def] as const));
   const units = new Map(bundle.units.map(unit => [unit.unitId, unit] as const));
+  const unitsByClaim = new Map(bundle.units.map(unit => [unit.claimId, unit] as const));
   const entries = new Map(explainability.flatMap(entry =>
     entry.primaryUnitRefs?.length === 1
       ? [[entry.primaryUnitRefs[0]!, entry] as const]
@@ -198,11 +199,15 @@ export function buildApprovedDomainMultifactorContextV1(
           !profile.provenance.sourceRefs.every(source =>
             unit.sourceRefs.includes(source))) continue;
 
-      const supportUnits = binding.supportingUnitRefs.map(ref => units.get(ref));
-      if (supportUnits.some(item => item === undefined ||
-          item.role !== 'supporting' ||
-          item.scenarioRef !== undefined)) continue;
-      const types = supportUnits.map(item => item!.claimType);
+      // The official plan includes TRANSITIVE evidence as well as the direct
+      // T5 family prerequisites. Match the actual T8 Claim's direct upstream
+      // family edges exactly; require every one in the plan's evidence binding.
+      // Do not mistake additional transitive support for a new family premise.
+      const directSupport = unit.upstreamClaimRefs.map(ref => unitsByClaim.get(ref));
+      if (directSupport.some(item => item === undefined ||
+          item.role !== 'supporting' || item.scenarioRef !== undefined ||
+          !binding.supportingUnitRefs.includes(item.unitId))) continue;
+      const types = directSupport.map(item => item!.claimType);
       if (!equalSet(types, profile.supportingClaimTypes) ||
           !types.every(type => FAMILIES[type] !== undefined)) continue;
       const evidencePositions = observedFamilyPositions(
