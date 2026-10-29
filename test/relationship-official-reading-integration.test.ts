@@ -250,7 +250,7 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       .flatMap(block => block.items)
       .filter(item => item.summary?.includes('실제 명식에서 함께 확인된 십신 계열:'));
     expect(focusedItems.length).toBeGreaterThanOrEqual(2);
-    expect(focusedItems.length).toBeLessThanOrEqual(3);
+    expect(focusedItems.length).toBeLessThanOrEqual(5);
     const proofRefs = new Set(detailedReport.explainability.entries.map(x => x.explainabilityRef));
     for (const item of focusedItems) {
       expect(item.explainabilityRef).toBeDefined();
@@ -273,6 +273,20 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     const approvedDetailedMaterial =
       buildApprovedOfficialReadingDetailedRealizationV1(semantics, plan);
     expect(approvedDetailedMaterial).toBeDefined();
+    const sourceOwnedOverview = buildApprovedRelationshipMultifactorOverviewV1(
+      semantics, plan, approvedDetailedMaterial, detailedReport.explainability.entries);
+    const comparison = sourceOwnedOverview?.blocks.find(block => block.type === 'comparison');
+    if (comparison === undefined || comparison.type !== 'comparison') {
+      throw new Error('Expected source-admitted relationship axes in detailed reading');
+    }
+    expect(focusedItems.length).toBe(comparison.perspectives.length);
+    expect(new Set(comparison.perspectives.map(item => item.explainabilityRef)).size)
+      .toBe(comparison.perspectives.length);
+    for (const perspective of comparison.perspectives) {
+      expect(focusedItems.some(item =>
+        item.explainabilityRef === perspective.explainabilityRef &&
+        item.summary?.includes(perspective.text))).toBe(true);
+    }
     const focusEntry = detailedReport.explainability.entries.find(entry =>
       entry.explainabilityRef === focusedItems[0]?.explainabilityRef,
     );
