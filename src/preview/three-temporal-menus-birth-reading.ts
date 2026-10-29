@@ -1,4 +1,6 @@
 import type { BirthInput } from '../contracts/calculation.js';
+import { buildAnnualPrimaryWitnessIdentityContext } from
+  './annual-primary-witness-identity-context.js';
 import {
   buildAnnualMonthlyBirthResearchReading,
   type AnnualMonthlyBirthResearchReading,
@@ -93,6 +95,17 @@ function render(
     : '선택한 ' + report.targetYear +
       '년은 조회 시각의 현재 연도가 아닙니다. 현재 연운으로 적용하지 않고 비교만 합니다.';
   const structural = report.observedStructuralContext;
+  const exactAnnualWitness = buildAnnualPrimaryWitnessIdentityContext(report);
+  const annualWitnessHtml = exactAnnualWitness === undefined ? '' :
+    '<article><h3>고전 원문과 정확히 일치하는 십신 관계 · 연구</h3><p>' +
+    e(exactAnnualWitness.text) + '</p>' +
+    '<details><summary>검증된 원문·계산 경로</summary><p>' +
+    e(exactAnnualWitness.historicalPassage) + '</p><p>' +
+    e(exactAnnualWitness.exactSourceCandidateId) + ' · PDF ' +
+    exactAnnualWitness.sourcePdfPageOneBased + '쪽</p><p>' +
+    e(exactAnnualWitness.sourceLocator) + '</p><p>' +
+    e(exactAnnualWitness.calculatedFactPaths.join(' · ')) +
+    '</p></details></article>';
   const observedAnnual = '원국 일간 ' + (structural.natalDayStem ?? '미확정') +
     ' · 서울 달력연도 표시용 간지 ' + structural.annualPillarLabel +
     ' · 십신 관계 ' + structural.annualStemTenGod +
@@ -197,7 +210,8 @@ function render(
     '</header><nav><a href="#annual">올해</a><a href="#monthly">이번 달</a>' +
     '<a href="#life-stage">삶의 단계</a></nav>' +
     '<section id="annual"><h2>올해 — ' + report.targetYear + '년</h2><p>' +
-    e(yearNote) + '</p><p>' + e(observedAnnual) + '</p>' + annual +
+    e(yearNote) + '</p><p>' + e(observedAnnual) + '</p>' +
+    annualWitnessHtml + annual +
     '</section>' +
     '<section id="monthly"><h2>이번 달 — ' + report.targetMonth + '월</h2>' +
     '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth + selectedStructuralReading +
