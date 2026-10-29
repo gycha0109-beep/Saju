@@ -14,6 +14,19 @@ describe('S6 real-chart Korean meaning and contrast quality regression', () => {
     expect(audit.cases).toHaveLength(NATAL_S6_BIRTH_CASES.length);
     expect(audit.contrasts).toHaveLength(NATAL_S6_CONTRASTS.length);
     expect(audit.differentiatedPairCount).toBeGreaterThanOrEqual(10);
+    for (const pair of audit.contrasts) {
+      expect(pair.evidenceWithoutNewClaimMeaning).toBe(
+        pair.differentConsumedEvidence && !pair.differentSourceBackedMeaning,
+      );
+      expect(pair.wordingWithoutNewClaimMeaningOrEvidence).toBe(
+        pair.differentRenderedWording && !pair.differentConsumedEvidence &&
+        !pair.differentSourceBackedMeaning,
+      );
+      expect(pair.sourceMeaningWithoutWordingChange).toBe(
+        pair.differentSourceBackedMeaning && !pair.differentRenderedWording,
+      );
+      expect(pair.differentSourceBackedMeaning && !pair.materiallyDifferentInputs).toBe(false);
+    }
     expect(audit.contrasts.filter(p => p.differentSourceBackedMeaning).every(
       p => p.materiallyDifferentInputs && JSON.stringify(p.leftMeanings) !== JSON.stringify(p.rightMeanings),
     )).toBe(true);
