@@ -77,3 +77,39 @@ export function selectIndependentNatalSupportingAxes<T extends ObservedNatalAxis
   }
   return { supporting: best, overlapOnlyCount };
 }
+
+/**
+ * Reuse the strongest available set of independently observed, ALREADY ISSUED
+ * T8 source interpretations. The normal source-defined core remains preferred
+ * whenever it can be supported by two independent axes. Only when its
+ * large fact footprint hides an otherwise valid three-axis explanation may a
+ * pre-existing narrower core take its place. No new T8 claim or fact is minted.
+ */
+export function selectSourceBoundNatalCore<T extends ObservedNatalAxis>(
+  candidates: readonly T[],
+  corePriority: readonly string[],
+): {
+  core: T | undefined;
+  supports: IndependentNatalSupports<T> | undefined;
+  displacedCore: T | undefined;
+} {
+  const eligible = corePriority.flatMap(axis => {
+    const unit = candidates.find(candidate => candidate.axis === axis);
+    return unit === undefined ? [] : [unit];
+  });
+  const preferred = eligible[0];
+  if (preferred === undefined) {
+    return { core: undefined, supports: undefined, displacedCore: undefined };
+  }
+  const current = selectIndependentNatalSupportingAxes(preferred, candidates);
+  if (current.supporting.length >= 2) {
+    return { core: preferred, supports: current, displacedCore: undefined };
+  }
+  for (const candidate of eligible.slice(1)) {
+    const alternative = selectIndependentNatalSupportingAxes(candidate, candidates);
+    if (alternative.supporting.length >= 2) {
+      return { core: candidate, supports: alternative, displacedCore: preferred };
+    }
+  }
+  return { core: preferred, supports: current, displacedCore: undefined };
+}
