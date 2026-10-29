@@ -79,12 +79,14 @@ describe('previously issued T8 meanings reused only in the correct individual na
       ...partial,
       overlappingPerspectives: [{
         ...extra, claimType: original.claimType,
+        overlapsSelectedFactPaths: [a, b],
       }],
     })).toThrow('original distinct source-issued Claim');
     expect(() => collectExistingNatalT8Views('general', {
       ...partial,
       overlappingPerspectives: [{
         ...extra, ruleId: 'RULE-FORGED',
+        overlapsSelectedFactPaths: [a, b],
       }],
     })).toThrow('original distinct source-issued Claim');
   });
