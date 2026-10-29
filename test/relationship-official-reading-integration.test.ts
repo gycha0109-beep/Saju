@@ -308,7 +308,7 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
         item.summary?.includes(perspective.text))).toBe(true);
     }
     const sameAxisDetailed = primaryRelationshipUnits.filter(unit =>
-      (unit.semanticPayload as { relationshipKind?: string }).relationshipKind === 'values' &&
+      (unit.semanticPayload as { relationshipKind?: string }).relationshipKind === 'expression' &&
       unit.upstreamClaimRefs.length >= 2);
     expect(sameAxisDetailed.length).toBeGreaterThanOrEqual(2);
     for (const unit of sameAxisDetailed) {
