@@ -171,7 +171,10 @@ function render(
     '이 명식에 확정된 현재·다음 대운 구간이 없습니다.') + '</p>';
   const natal = lifeStage.natalContext.sections.map(section =>
     '<article><h3>' + e(section.title) + '</h3><p>' +
-      e(section.paragraph) + '</p><details><summary>원국 해석 출처</summary><p>' +
+      e(section.paragraph) + '</p>' +
+      (section.evidenceMode === undefined ? '' :
+        '<p>이미 발행된 다른 원국 T8 해석이며, 대운·시기 결과 또는 독립 종합 근거로 추가 계산하지 않습니다.</p>') +
+      '<details><summary>원국 해석 출처</summary><p>' +
       e(section.sourceIds.join(' · ')) + '</p><p>' +
       e(section.factPaths.join(' · ')) + '</p></details></article>',
   ).join('');
