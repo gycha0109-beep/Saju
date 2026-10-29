@@ -82,6 +82,13 @@
 - **검증 코드:** `test/business-official-reading-integration.test.ts`와 `test/relationship-official-reading-integration.test.ts`에서 출처 승인된 각 관점이 실제 한국어 Insight에 연결되는지, 단일 계열과 복합 해석이 혼동되지 않는지, 상세 관계 풀이에 선택된 출처 있는 관점이 누락되지 않는지를 추가 검사한다. **DESKTOP-6C3L8O4 원격 실행 환경은 오프라인으로, 변경 후 `typecheck`·Vitest 실행은 아직 하지 못했다. 따라서 PASS나 12메뉴 해석 완료로 보고하지 않는다.**
 - **다음 작업:** 12개 동등 메뉴별 승인 범위 안에서 실제 해석 본문과 지원 누락을 계속 개선한다. T9/T10/T11 및 관계 종합의 보류 권한은 유지한다. 최종 PR/CI/병합은 전체 로드맵 완료 후 1회 수행한다.
 
+### 2026-10-29: Desktop Commander 직접 연결 복구 및 사주 브랜치 실행 검증
+
+- Windows `DESKTOP-6C3L8O4`의 **직접 `Desktop_Commander` 커넥터**로 `hostname` 명령과 GitHub 접근을 검증했다. 원격 `Remote_Desktop_Commander`는 호출 한도 0% 때문에 별도 경로에서 오프라인으로 보였으며, 작업 PC 직접 커넥터는 정상이었다. 사용자 체크아웃 대신 `%TEMP%\\saju-12menu-current-audit`에 대상 브랜치를 별도로 복제했다.
+- Node 24.20.0, npm 11.19.0, `npm ci --ignore-scripts` 완료. 최초 `npm run typecheck`에서 질문형 풀이의 `evidenceMode` 선택 필드 타입 오류 2건을 발견하여 `QuestionRelatedNatalSection[]` 명시로 수정했다.
+- 수정 커밋을 다시 내려받아 **`npm run typecheck` PASS**, **`npm run build` PASS**, **`npm run lint` PASS** 확인했다. 지정 회귀 테스트 4개 파일 **34개 PASS**. 관계 통합 테스트 한 건이 변경된 상세 한국어 경계 문구와 이전 기대 문구의 차이로 실패하여 현재 원문과 일치하도록 수정한 뒤 재실행해 34개 전부 통과했다.
+- 전체 Vitest는 별도 시작했으며 **완료(exit code 및 최종 요약)가 확인되기 전에는 통과로 판정하지 않는다**. 이것은 12개 메뉴 종합 해석 또는 T9/T10/T11/R070 권한의 완료가 아니다. 중간 PR/CI/병합 없이 대상 브랜치 유지.
+
 ## 4. 12개 메뉴 개인화 출력의 실제 구현 누적 (2026-10-28)
 
 - **한 브랜치 유지:** `fix/saju/wealth-preserve-independent-core`에서 구현을 누적한다. 작업 단위 PR/통합 CI/병합은 하지 않는다. 전체 12개 해석 로드맵을 완료한 뒤 최종 PR·CI·병합한다.
