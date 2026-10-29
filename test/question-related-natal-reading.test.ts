@@ -214,6 +214,77 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
     }
   });
 
+  it('keeps already issued General T8 perspectives available to a directly focused question', () => {
+    const prompts = {
+      expression: '전체 사주에서 표현 방식이 궁금합니다',
+      response: '전체 사주에서 대응 방식이 궁금합니다',
+      responsibility: '전체 사주에서 역할에 관한 관점이 궁금합니다',
+      tension: '전체 사주에서 구조적 조율 관점이 궁금합니다',
+    } as const;
+    let found: { month: number; day: number; hour: number; axis: keyof typeof prompts } | undefined;
+    for (const month of [1, 3, 5, 7, 9, 11]) {
+      if (found) break;
+      for (const day of [3, 7, 11, 17, 23]) {
+        if (found) break;
+        for (const hour of [0, 6, 12, 18]) {
+          const chart = calculateCanonicalSajuSnapshot({
+            calendarType: 'solar',
+            date: { year: 2024, month, day },
+            time: { known: true, hour, minute: 0 },
+            sexForTraditionalCalculation: 'unspecified',
+          }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+          const report = buildGeneralNatalMultifactorReport(chart,
+            runInterpretation(chart, generalRegistry, { now: NOW }), generalRegistry);
+          const extra = report.overlappingPerspectives?.find(section =>
+            Object.hasOwn(prompts, section.axis));
+          if (extra) {
+            found = { month, day, hour, axis: extra.axis as keyof typeof prompts };
+            break;
+          }
+        }
+      }
+    }
+    expect(found).toBeDefined();
+    if (!found) return;
+    const { snapshot, reports } = run(true, found.day, found.month, found.hour);
+    const original = reports.general.overlappingPerspectives?.find(section =>
+      section.axis === found!.axis);
+    expect(original).toBeDefined();
+    expect(reports.general.state).toBe('partial');
+    expect(reports.general.sections.some(section =>
+      section.claimType === original!.claimType)).toBe(false);
+    const actual = buildQuestionRelatedNatalReading(
+      snapshot, question(prompts[found.axis]), reports);
+    expect(actual.status).toBe('related_evidence');
+    expect(actual.focusAxis).toBe(found.axis);
+    expect(actual.sections).toHaveLength(1);
+    expect(actual.sections[0]).toMatchObject({
+      title: original!.headline,
+      paragraph: original!.paragraph,
+      claimType: original!.claimType,
+      ruleId: original!.ruleId,
+      sourceIds: original!.sourceIds,
+      factPaths: original!.observedFactPaths,
+      evidenceMode: 'reused_calculated_paths',
+    });
+    expect(actual.selectedEvidenceIntroduction).toContain('독립 근거가 늘어난 것은 아닙니다');
+    expect(actual.usefulComplete).toBe(false);
+    expect(actual.mayPublish).toBe(false);
+    expect(actual.maySell).toBe(false);
+    const forged = {
+      ...reports,
+      general: {
+        ...reports.general,
+        overlappingPerspectives: reports.general.overlappingPerspectives!.map(section =>
+          section.claimType !== original!.claimType ? section : {
+            ...section, observedFactPaths: ['derivedFacts.tenGods.value.invalid.stem.value'],
+          }),
+      },
+    };
+    expect(() => buildQuestionRelatedNatalReading(snapshot,
+      question(prompts[found!.axis]), forged)).toThrow('unsourced secondary T8 view');
+  });
+
   it('rejects forged question-only source paths when a secondary T8 is not admitted by the selected chart', () => {
     const { snapshot, reports } = run(true, 3, 1, 3);
     const original = reports.wealth.overlappingPerspectives!;
