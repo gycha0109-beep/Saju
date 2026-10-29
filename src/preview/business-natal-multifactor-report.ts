@@ -1,5 +1,5 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
-import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { selectSourceBoundNatalCore } from './natal-independent-supporting-axes.js';
 import { selectOverlappingNatalT8Perspectives } from './natal-overlapping-t8-perspectives.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -46,6 +46,9 @@ export interface BusinessNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly BusinessNatalMultifactorSection[];
+  /** Original source-issued preferred core if a different eligible T8 core yields
+   * genuinely independent observed support; never counted as a fourth MUR axis. */
+  displacedOriginalCore?: BusinessNatalMultifactorSection;
   readingGuide?: BusinessNatalReadingGuide;
   /** Other already-emitted T8 meanings reusing the selected evidence.
    * Readable nuance only; NEVER independent MUR support or new relationship outcome. */
@@ -303,13 +306,12 @@ export function buildBusinessNatalMultifactorReport(
     : [];
   // Prefer the 3-input core. When not observed, a narrower two-input core can
   // still be rendered, but completion needs two OTHER independently grounded axes.
-  const core = result.find(s => s.axis === 'core') ??
-    result.find(s => s.axis === 'execution') ??
-    result.find(s => s.axis === 'governance') ??
-    result.find(s => s.axis === 'preparation');
+  const coreChoice = selectSourceBoundNatalCore(result, ['core', 'execution', 'governance', 'preparation']);
+  const core = coreChoice.core;
+  const supportSelection = coreChoice.supports;
   // A genuine source-bound coordination-only observation is visible as a PARTIAL
   // reading, never promoted to a MUR core or a consumer product completion.
-  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
+
   const chosen: BusinessNatalMultifactorSection[] = core
     ? [core, ...(supportSelection?.supporting ?? [])]
     : result.filter(section => section.axis === 'coordination').slice(0, 1);
@@ -345,6 +347,9 @@ export function buildBusinessNatalMultifactorReport(
     introduction: '실제 명식의 십신 관계를 바탕으로 산출과 실행, 운영 기준, 준비와 협업의 관계를 함께 살펴봅니다. 창업 적성이나 사업 성과를 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    ...(coreChoice.displacedCore === undefined ? {} : {
+      displacedOriginalCore: coreChoice.displacedCore,
+    }),
     ...(readingGuide === undefined ? {} : { readingGuide }),
     ...(overlappingPerspectives.length === 0 ? {} : { overlappingPerspectives }),
     missing,
