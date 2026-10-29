@@ -68,6 +68,34 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
     expect(buildThreeTemporalMenusBirthReading(BIRTH, target())).toEqual(reading);
   });
 
+  it('renders extra source-issued personal natal T8 paragraphs without turning them into T9 or Dayun outcomes', () => {
+    const person: BirthInput = {
+      calendarType: 'solar',
+      date: { year: 1985, month: 12, day: 24 },
+      time: { known: true, hour: 7, minute: 0 },
+      sexForTraditionalCalculation: 'unspecified',
+    };
+    const output = buildThreeTemporalMenusBirthReading(person, target());
+    const natal = output.lifeStage.natalContext.sections;
+    const original = natal.filter(section => section.evidenceMode === undefined);
+    const extras = natal.filter(section =>
+      section.evidenceMode === 'reused_calculated_paths');
+    expect(original).toHaveLength(1);
+    expect(extras).toHaveLength(2);
+    for (const section of extras) {
+      expect(output.html).toContain(section.paragraph.replace(/[&<>"']/gu, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      })[char]!));
+      expect(section.sourceIds.length).toBeGreaterThanOrEqual(2);
+    }
+    expect(output.html).toContain('대운·시기 결과 또는 독립 종합 근거로 추가 계산하지 않습니다');
+    expect(output.lifeStage.report.interpretationStatus).toBe('source_authority_not_established');
+    expect(output.annualMonthly.monthlyMenu.authority.mayMarkMenuAvailable).toBe(false);
+    expect(output.mayGrantOfficialAuthority).toBe(false);
+    expect(output.mayPublish).toBe(false);
+    expect(output.maySell).toBe(false);
+  });
+
   it('uses a different year/month only as selected-period research, never claims current month or future outcomes', () => {
     const inPeriod = buildThreeTemporalMenusBirthReading(BIRTH, target());
     const outside = buildThreeTemporalMenusBirthReading(BIRTH, target(2030, 6));
