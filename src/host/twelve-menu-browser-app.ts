@@ -73,12 +73,6 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     if (!block || typeof block !== 'object') return false;
     switch (block.type) {
       case 'paragraph': return typeof block.text === 'string' && block.text.trim().length > 0;
-      case 'insights': return Array.isArray(block.items) &&
-        block.items.some(function(item) {
-          return item && typeof item === 'object' && (
-            (typeof item.headline === 'string' && item.headline.trim().length > 0) ||
-            (typeof item.summary === 'string' && item.summary.trim().length > 0));
-        });
       case 'key_points': return Array.isArray(block.items) &&
         block.items.some(function(item) { return typeof item === 'string' && item.trim(); });
       case 'comparison': return Array.isArray(block.perspectives) &&
@@ -101,22 +95,6 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
       note(container, block.text, block.type === 'source_hint' ? 'disclosure' : '');
     } else if (block.type === 'key_points') {
       list(container, block.items || []);
-    } else if (block.type === 'insights') {
-      (Array.isArray(block.items) ? block.items : []).forEach(function(item) {
-        if (!item || typeof item !== 'object') return;
-        const headline = typeof item.headline === 'string' ? item.headline.trim() : '';
-        const summary = typeof item.summary === 'string' ? item.summary.trim() : '';
-        if (!headline && !summary) return;
-        const article = element('article', undefined, 'reading-insight');
-        if (headline) article.appendChild(element('h4', headline));
-        if (summary && summary !== headline) note(article, summary, 'reading-insight-text');
-        if (Array.isArray(item.qualifiers)) {
-          list(article, item.qualifiers.filter(function(value) {
-            return typeof value === 'string' && value.trim().length > 0;
-          }));
-        }
-        container.appendChild(article);
-      });
     } else if (block.type === 'comparison') {
       note(container, block.title);
       list(container, (block.perspectives || []).map(function(item) {
