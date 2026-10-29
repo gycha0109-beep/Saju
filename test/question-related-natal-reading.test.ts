@@ -13,6 +13,7 @@ import { buildCareerMultifactorResearchReport } from '../src/preview/career-nata
 import { buildWealthNatalMultifactorReport } from '../src/preview/wealth-natal-multifactor-report.js';
 import { buildBusinessNatalMultifactorReport } from '../src/preview/business-natal-multifactor-report.js';
 import { buildRelationshipNatalMultifactorReport } from '../src/preview/relationship-natal-multifactor-report.js';
+import { renderNatalFiveDomainMultifactorResearchHtml } from '../src/preview/natal-five-domain-multifactor-reader.js';
 import {
   buildQuestionRelatedNatalReading,
   renderQuestionRelatedNatalReadingHtml,
@@ -251,6 +252,9 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
       section.axis === found!.axis);
     expect(original).toBeDefined();
     expect(reports.general.state).toBe('partial');
+    const generalHtml = renderNatalFiveDomainMultifactorResearchHtml(snapshot, reports);
+    expect(generalHtml).toContain('같은 계산 근거에서 확인된 다른 전체 사주 관점');
+    expect(generalHtml).toContain('새로운 독립 근거가 아니며');
     expect(reports.general.sections.some(section =>
       section.claimType === original!.claimType)).toBe(false);
     const actual = buildQuestionRelatedNatalReading(
@@ -283,6 +287,8 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
     };
     expect(() => buildQuestionRelatedNatalReading(snapshot,
       question(prompts[found!.axis]), forged)).toThrow('unsourced secondary T8 view');
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(snapshot, forged))
+      .toThrow('alternate T8 must reuse only admitted selected facts');
   });
 
   it('rejects forged question-only source paths when a secondary T8 is not admitted by the selected chart', () => {
