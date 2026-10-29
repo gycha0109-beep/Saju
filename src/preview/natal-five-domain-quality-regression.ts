@@ -173,6 +173,11 @@ export interface NatalS6Contrast {
   differentSourceBackedMeaning: boolean;
   /** Evidence may differ even when authorized semantic content does not. */
   differentConsumedEvidence: boolean;
+  /** A distinct rendered paragraph is not automatically a distinct T8 Claim. */
+  differentRenderedWording: boolean;
+  evidenceWithoutNewClaimMeaning: boolean;
+  wordingWithoutNewClaimMeaningOrEvidence: boolean;
+  sourceMeaningWithoutWordingChange: boolean;
   leftMeanings: readonly string[];
   rightMeanings: readonly string[];
 }
@@ -259,9 +264,15 @@ export function runNatalS6QualityRegression(): {
       JSON.stringify(left.meaningSignature) !== JSON.stringify(right.meaningSignature);
     const differentConsumedEvidence =
       JSON.stringify(left.evidenceSignature) !== JSON.stringify(right.evidenceSignature);
+    const differentRenderedWording =
+      JSON.stringify(left.wordingSignature) !== JSON.stringify(right.wordingSignature);
     return {
       ...pair, materiallyDifferentInputs, differentSourceBackedMeaning,
-      differentConsumedEvidence,
+      differentConsumedEvidence, differentRenderedWording,
+      evidenceWithoutNewClaimMeaning: differentConsumedEvidence && !differentSourceBackedMeaning,
+      wordingWithoutNewClaimMeaningOrEvidence: differentRenderedWording &&
+        !differentConsumedEvidence && !differentSourceBackedMeaning,
+      sourceMeaningWithoutWordingChange: differentSourceBackedMeaning && !differentRenderedWording,
       leftMeanings: left.meaningSignature, rightMeanings: right.meaningSignature,
     };
   });
