@@ -72,7 +72,7 @@ describe('real two-birth compatibility intake remains facts only', () => {
     expect(result.html).toContain('source-qualified T10 Claim');
   });
 
-  it('shows a separately sourced T8 relationship axis omitted by first-screen selection without upgrading dyadic T10', () => {
+  it('retains source-owned relationship T8 when first-screen selection changes without dyadic T10', () => {
     const first: BirthInput = {
       calendarType: 'solar',
       date: { year: 2024, month: 1, day: 3 },
@@ -85,14 +85,29 @@ describe('real two-birth compatibility intake remains facts only', () => {
     const alternatives = output.personalRelationship.subject.sections.filter(section =>
       section.evidenceMode === 'reused_calculated_paths');
     expect(original.length).toBeGreaterThan(0);
-    expect(alternatives.length).toBeGreaterThan(0);
+    // The original overlapping T8 may now be directly selected by the
+    // independently grounded core chooser. Both must retain exact source copy.
+    if (alternatives.length === 0) {
+      expect(original).toHaveLength(3);
+      const axes = new Set<string>();
+      const paths = new Set<string>();
+      for (const section of original) {
+        expect(axes.has(section.title)).toBe(false);
+        expect(section.observedFactPaths.some(path => !paths.has(path)))
+          .toBe(true);
+        section.observedFactPaths.forEach(path => paths.add(path));
+        axes.add(section.title);
+      }
+    }
     const consumed = new Set(original.flatMap(section => section.observedFactPaths));
     for (const alt of alternatives) {
       expect(alt.sourceIds.length).toBeGreaterThanOrEqual(2);
       expect(alt.observedFactPaths.every(path => consumed.has(path))).toBe(true);
       expect(output.html).toContain(escapedHtmlText(alt.paragraph));
     }
-    expect(output.html).toContain('독립 근거가 추가된 것도 아닙니다');
+    if (alternatives.length > 0) {
+      expect(output.html).toContain('독립 근거가 추가된 것도 아닙니다');
+    }
     expect(output.report.subject.personRef).toBe(QUERY.subjectPersonRef);
     expect(output.report.target.personRef).toBe(QUERY.targetPersonRef);
     const reverse = read(SECOND, first);
@@ -109,6 +124,29 @@ describe('real two-birth compatibility intake remains facts only', () => {
     expect(output.mayClaimInterpersonalMeaning).toBe(false);
     expect(output.mayPublish).toBe(false);
     expect(output.maySell).toBe(false);
+  });
+
+  it('preserves a displaced original T8 relationship claim in the exact person only', () => {
+    const first: BirthInput = {
+      calendarType: 'solar',
+      date: { year: 1986, month: 12, day: 8 },
+      time: { known: true, hour: 19, minute: 0 },
+      sexForTraditionalCalculation: 'unspecified',
+    };
+    const output = read(first, SECOND);
+    const retained = output.personalRelationship.subject.sections.filter(section =>
+      section.evidenceMode === 'original_source_core');
+    expect(retained).toHaveLength(1);
+    expect(retained[0]!.title).toBeTruthy();
+    expect(retained[0]!.paragraph).toContain('이 원국에서 확인된 근거는');
+    expect(retained[0]!.sourceIds.length).toBeGreaterThanOrEqual(2);
+    expect(retained[0]!.observedFactPaths.length).toBeGreaterThanOrEqual(2);
+    expect(output.html).toContain(escapedHtmlText(retained[0]!.paragraph));
+    expect(output.html).toContain('원래 중심 후보로 발행된');
+    expect(output.personalRelationship.target.sections.some(section =>
+      section.evidenceMode === 'original_source_core')).toBe(false);
+    expect(output.mayClaimInterpersonalMeaning).toBe(false);
+    expect(output.report.readingStatus).toBe('insufficient_interpersonal_meaning_authority');
   });
 
   it('connects exact R068/R069 pairwise source HOLDS without changing the existing preview or personal readings', () => {
