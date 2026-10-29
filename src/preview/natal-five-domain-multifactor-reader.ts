@@ -146,6 +146,8 @@ function renderCareerAdditionalVerifiedSections(report: CareerMultifactorReport)
       section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
       section.calculatedFactPaths.length >= 2 &&
       section.calculatedFactPaths.length === section.calculatedPositions.length &&
+      section.calculatedFactPaths.every(path => FACT_PATH.test(path)) &&
+      section.calculatedPositions.every(position => section.paragraph.includes(position)) &&
       section.calculatedFactPaths.some(path => !paths.has(path)) &&
       section.paragraph.trim().length > 0,
       'Career additional T8 must retain separately verified canonical evidence');
