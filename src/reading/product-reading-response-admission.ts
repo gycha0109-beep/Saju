@@ -353,6 +353,19 @@ function assertCoverage(value: unknown, field: string): void {
       throw new TypeError(`${field}.explanation must be short single-line text.`);
     }
   }
+  if (value.guidance !== undefined) {
+    assertArray(value.guidance, `${field}.guidance`);
+    if (value.guidance.length === 0 || value.guidance.length > 10) {
+      throw new RangeError(`${field}.guidance must contain 1-10 request guidance items.`);
+    }
+    value.guidance.forEach((item, index) => {
+      assertNonEmptyString(item, `${field}.guidance[${index}]`);
+      if ((item as string).length > 250 || Array.from(item as string).some(character =>
+        character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) {
+        throw new TypeError(`${field}.guidance items must be short single-line text.`);
+      }
+    });
+  }
 }
 
 function assertConsumerDiagnostics(value: unknown, field: string): void {

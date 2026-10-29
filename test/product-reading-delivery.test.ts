@@ -260,9 +260,11 @@ describe('Product Reading Delivery Contract', () => {
     const delivery = await execute('질문: ' + question, []);
     const response = buildProductReadingResponse(delivery);
     expect(response.state).toBe('insufficient_evidence');
-    expect(response.coverage?.explanation).toContain(expected);
-    expect(response.coverage?.explanation).not.toContain(absent);
-    expect(response.coverage?.explanation).toContain('답변 가능 여부를 보장하지 않습니다');
+    const guidance = response.coverage?.guidance?.join(' ') ?? '';
+    expect(guidance).toContain(expected);
+    expect(guidance).not.toContain(absent);
+    expect(guidance).toContain('답변 가능 여부를 보장하지 않습니다');
+    expect(response.coverage?.explanation?.length).toBeLessThanOrEqual(250);
     expect(response.reading).toBeUndefined();
     expect(response.coverage?.hasAvailableEvidence).toBe(false);
     expect(JSON.stringify(response)).not.toContain('T11');

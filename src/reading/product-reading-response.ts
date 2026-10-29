@@ -46,6 +46,8 @@ export interface ProductReadingResponseCoverage {
   missingRequirementCount: number;
   /** Controlled Korean scope explanation, never internal rule identifiers. */
   explanation?: string;
+  /** Controlled request guidance, kept separate from interpretation prose. */
+  guidance?: readonly string[];
 }
 
 export interface ProductReadingResponseClarificationOption {
@@ -484,6 +486,9 @@ export function buildProductReadingResponse(
           ...(delivery.coverage.explanation === undefined
             ? {}
             : { explanation: delivery.coverage.explanation }),
+          ...(delivery.coverage.guidance === undefined
+            ? {}
+            : { guidance: [...delivery.coverage.guidance] }),
         };
   const consumerDiagnostics =
     delivery.consumerDiagnostics === undefined ? undefined : [...delivery.consumerDiagnostics];

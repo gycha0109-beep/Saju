@@ -40,6 +40,8 @@ export interface ProductReadingCoverageSummary {
   missingRequirementCount: number;
   /** Public, controlled Korean explanation; never an internal requirement code. */
   explanation?: string;
+  /** Request clarification only; never an interpreted answer or evidence. */
+  guidance?: readonly string[];
 }
 
 export interface ProductReadingClarification {
@@ -147,10 +149,19 @@ function consumerMissingEvidenceLabel(requirement: string): string {
   if (requirement === 'LIFE_STAGE_PERIOD_CLAIM_REQUIRED') {
     return '삶의 시기별 변화를 해석할 근거';
   }
-  if (/^ANNUAL_[A-Z_]+_PERIOD_CLAIM_REQUIRED$/u.test(requirement)) {
+  if (requirement === 'FAMILY_PARENTS_DOMAIN_CLAIM_REQUIRED') {
+    return '부모와의 관계를 직접 해석할 근거';
+  }
+  if (requirement === 'FAMILY_CHILDREN_DOMAIN_CLAIM_REQUIRED') {
+    return '자녀와의 관계를 직접 해석할 근거';
+  }
+  if (requirement === 'RELATIONSHIP_SPOUSE_DOMAIN_CLAIM_REQUIRED') {
+    return '배우자에 관한 요청 범위의 해석 근거';
+  }
+  if (/^ANNUAL_(?:[A-Z_]+_)?PERIOD_CLAIM_REQUIRED$/u.test(requirement)) {
     return '해당 연도의 흐름을 해석할 근거';
   }
-  if (/^MONTHLY_[A-Z_]+_PERIOD_CLAIM_REQUIRED$/u.test(requirement)) {
+  if (/^MONTHLY_(?:[A-Z_]+_)?PERIOD_CLAIM_REQUIRED$/u.test(requirement)) {
     return '해당 월의 흐름을 해석할 근거';
   }
   if (/^NATAL_[A-Z_]+_DOMAIN_CLAIM_REQUIRED$/u.test(requirement) ||
@@ -186,9 +197,13 @@ function coverageSummary(
     hasAvailableEvidence: (selection?.selectedClaimIds.length ?? 0) > 0,
     missingRequirementCount: selection?.missingRequirements.length ?? 0,
     explanation: explanation +
-      (isUnansweredOpenQuestion ? unansweredQuestionGuidance(
-        execution.preparation.normalization.request?.question ?? '',
-      ) : ''),
+      (isUnansweredOpenQuestion
+        ? ' 해당 질문에 직접 답할 근거는 부족합니다. 기존 주제 풀이를 확인하려면 ' +
+          '“질문: 직업운” 또는 “질문: 재물운”처럼 정확한 주제를 선택할 수 있습니다. ' +
+          '해당 주제 역시 실제 해석 근거가 확인된 범위에서만 제공됩니다.' : ''),
+    ...(isUnansweredOpenQuestion ? { guidance: unansweredQuestionGuidance(
+      execution.preparation.normalization.request?.question ?? '',
+    ) } : {}),
   };
 }
 

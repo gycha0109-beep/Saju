@@ -3,7 +3,7 @@
  * interpretation. Matches only explicit request words; uncertain intent stays
  * open. Adding context cannot grant the missing question-specific authority.
  */
-export function unansweredQuestionGuidance(question: string): string {
+export function unansweredQuestionGuidance(question: string): readonly string[] {
   const text = question.normalize('NFKC').replace(/\s+/gu, ' ').trim();
   const messages: string[] = [];
   const has = (pattern: RegExp) => pattern.test(text);
@@ -37,8 +37,6 @@ export function unansweredQuestionGuidance(question: string): string {
   if (messages.length === 0) {
     messages.push('어떤 주제의 어떤 상황이 궁금한지, 비교할 선택지가 있는지 구체적으로 알려 주세요. 질문의 주제를 추정해 다른 풀이로 대체하지 않습니다.');
   }
-  return ' 해당 질문에 직접 답할 근거는 부족합니다. ' + messages.join(' ') +
-    ' 보완 정보는 질문 범위를 확인하기 위한 것이며 답변 가능 여부를 보장하지 않습니다. ' +
-    '기존 주제 풀이를 확인하려면 “질문: 직업운” 또는 “질문: 재물운”처럼 정확한 주제를 선택할 수 있습니다. ' +
-    '해당 주제 역시 실제 해석 근거가 확인된 범위에서만 제공됩니다.';
+  return [...messages,
+    '보완 정보는 질문 범위를 확인하기 위한 것이며 답변 가능 여부를 보장하지 않습니다.'];
 }

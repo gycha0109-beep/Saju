@@ -405,6 +405,9 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     if (payload.coverage && payload.coverage.explanation) {
       note(view.output, payload.coverage.explanation, 'disclosure');
     }
+    if (payload.coverage && Array.isArray(payload.coverage.guidance)) {
+      list(view.output, payload.coverage.guidance);
+    }
     renderRequiredAction(view, payload);
     if (payload.clarification) {
       const reason = payload.clarification.kind === 'domain'
@@ -828,6 +831,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
         if (epoch !== currentEpoch || sequence !== view.sequence) return;
         view.output.replaceChildren();
         setState(view, 'unavailable', error.message || '조회하지 못했습니다.');
+        note(view.output, error.message || '조회하지 못했습니다.', 'notice');
       } finally {
         if (sequence === view.sequence) button.disabled = false;
       }

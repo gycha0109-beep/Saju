@@ -305,6 +305,18 @@ describe('ProductReadingResponse admission', () => {
     })).toThrow('explanation');
   });
 
+  it('admits bounded request guidance without widening the explanation limit', () => {
+    const response = coverageResponse('insufficient_evidence');
+    expect(() => assertProductReadingResponse({ ...response,
+      coverage: { ...response.coverage, guidance: ['현재 역할과 비교할 선택지를 알려 주세요.'] },
+    })).not.toThrow();
+    for (const guidance of [[], Array(11).fill('안내'), [''], ['가'.repeat(251)], ['첫줄\n다음줄'], [12]]) {
+      expect(() => assertProductReadingResponse({ ...response,
+        coverage: { ...response.coverage, guidance },
+      })).toThrow();
+    }
+  });
+
   it('rejects a blocking state with its required coverage removed', () => {
     const malformed = { ...coverageResponse('partial_evidence') } as Record<string, unknown>;
     delete malformed.coverage;

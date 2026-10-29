@@ -159,6 +159,30 @@ function mountBrowser(fetcher?: (url: string, call: FakeHttpCall) => Promise<unk
 }
 
 describe('actual browser twelve-card entrypoint on existing Saju product host', () => {
+  it('renders the unanswered question guidance separately from a reading', async () => {
+    const app = mountBrowser(async (_url, call) => ({
+      ok: true, status: 200,
+      json: async () => ({
+        responseVersion: 'myeonghwa-product-reading-response-v2',
+        state: 'insufficient_evidence', messageCode: 'READING_EVIDENCE_INSUFFICIENT',
+        requiredAction: 'none',
+        requestContext: { requestedText: call.body.reading?.text,
+          intent: { domain: 'question_specific', temporalScope: 'natal' },
+          calculationSex: call.body.birth.sex },
+        coverage: { state: 'insufficient', hasAvailableEvidence: false,
+          missingRequirementCount: 1, explanation: '질문에 직접 답할 근거가 부족합니다.',
+          guidance: ['현재 역할과 비교할 선택지를 알려 주세요.', '추가 정보가 있어도 결과를 보장하지 않습니다.'] },
+      }),
+    }));
+    app.get('menu-question-text').value = '지금 이직해야 할까요?';
+    await app.get('twelve-open-question').dispatch('click');
+    const result = app.get('twelve-reading-question');
+    expect(result.collectText()).toContain('현재 역할과 비교할 선택지');
+    expect(result.collectText()).toContain('추가 정보가 있어도 결과를 보장하지 않습니다');
+    expect(result.querySelectorAll('ul').length).toBeGreaterThan(0);
+    expect(app.get('twelve-state-question').dataset.state).toBe('unavailable');
+  });
+
   it('preserves governed clarification when no reading or resolved intent exists', async () => {
     const app = mountBrowser(async () => ({
       ok: true, status: 200,
