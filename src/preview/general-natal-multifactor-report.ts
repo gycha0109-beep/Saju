@@ -1,5 +1,6 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
 import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { selectOverlappingNatalT8Perspectives } from './natal-overlapping-t8-perspectives.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -52,6 +53,10 @@ export interface GeneralNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly GeneralNatalMultifactorSection[];
+  /** Existing independently issued T8 perspective on already consumed facts. Not extra support. */
+  overlappingPerspectives?: readonly (GeneralNatalMultifactorSection & {
+    overlapsSelectedFactPaths: readonly string[];
+  })[];
   readingGuide?: GeneralNatalSourceBoundReadingGuide;
   missing: readonly string[];
   limitations: readonly string[];
@@ -353,6 +358,9 @@ export function buildGeneralNatalMultifactorReport(
   const state: Status = snapshot.completeness.birthTimeKnown && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly GeneralNatalMultifactorSection[] = core ? chosen : partialTension;
+  const overlappingPerspectives = state === 'partial' && core !== undefined
+    ? selectOverlappingNatalT8Perspectives(sections, result)
+    : [];
   const readingGuide = generalSourceBoundReadingGuide(core, sections);
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 원국 전체의 다중 근거 T8 해석은 보류합니다.');
@@ -367,6 +375,7 @@ export function buildGeneralNatalMultifactorReport(
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)) +
       (readingGuide === undefined ? '' : ' ' + readingGuide.paragraph),
     sections,
+    ...(overlappingPerspectives.length === 0 ? {} : { overlappingPerspectives }),
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
