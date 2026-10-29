@@ -133,6 +133,50 @@ function reportDetails(reports: NatalFiveDomainMultifactorReports) {
     };
   });
 }
+/**
+ * The source-owned semantic selection and the precise observed evidence are
+ * separate signatures. Merely changing a pillar, channel or displayed
+ * position must not inflate the number of distinct meanings. Source/rule
+ * changes remain visible in evidence, while domain, claim semantics, axis,
+ * pattern and source authority determine the admitted research meaning.
+ */
+export function buildNatalS6MeaningAndEvidenceSignatures(
+  domains: ReturnType<typeof reportDetails>,
+): {
+  meaningSignature: readonly string[];
+  evidenceSignature: readonly string[];
+} {
+  const meaningSignature: string[] = [];
+  const evidenceSignature: string[] = [];
+  for (const domain of domains) {
+    for (const section of domain.sections) {
+      requireEvidence(section.claimType.startsWith(domain.domain.toUpperCase() + '_NATAL_MULTIFACTOR_') &&
+        section.ruleId === 'RULE-' + section.claimType &&
+        section.sourceIds.length > 0 &&
+        section.positions.length === section.factPaths.length &&
+        section.factPaths.length >= 2,
+      domain.domain + ': invalid semantic/evidence signature provenance');
+      const semanticClaim = section.claimType.replace(/_(VISIBLE_STEMS|BRANCHES)$/u, '');
+      const sourceIds = [...new Set(section.sourceIds)].sort();
+      meaningSignature.push(JSON.stringify({
+        domain: domain.domain, semanticClaim, axis: section.axis,
+        pattern: section.pattern, sourceIds,
+      }));
+      evidenceSignature.push(JSON.stringify({
+        domain: domain.domain, claimType: section.claimType,
+        ruleId: section.ruleId, sourceIds,
+        observed: section.factPaths.map((path, index) => ({
+          path, position: section.positions[index],
+        })).sort((a, b) => a.path.localeCompare(b.path)),
+      }));
+    }
+  }
+  return {
+    meaningSignature: meaningSignature.sort(),
+    evidenceSignature: evidenceSignature.sort(),
+  };
+}
+
 export interface NatalS6AuditCase {
   caseId: string;
   scenario: NatalS6BirthCase['scenario'];
@@ -141,6 +185,8 @@ export interface NatalS6AuditCase {
   calculationHash: string;
   structureSignature: string;
   meaningSignature: readonly string[];
+  /** Exact selected Rule, channel and Canonical observation provenance. */
+  evidenceSignature: readonly string[];
   domains: ReturnType<typeof reportDetails>;
   html: string;
 }
@@ -149,6 +195,8 @@ export interface NatalS6Contrast {
   right: string;
   materiallyDifferentInputs: boolean;
   differentSourceBackedMeaning: boolean;
+  /** Evidence may differ even when authorized semantic content does not. */
+  differentConsumedEvidence: boolean;
   leftMeanings: readonly string[];
   rightMeanings: readonly string[];
 }
@@ -214,16 +262,13 @@ export function runNatalS6QualityRegression(): {
           caseId + '/' + domain.domain + ': unknown birth hour must fail closed');
       }
     }
-    // Strip channel suffix: moving a claim from branch to stem alone is not
-    // counted as proof of a different interpreted meaning.
-    const meaningSignature = domains.flatMap(domain => domain.sections.map(section =>
-      domain.domain + ':' + section.claimType.replace(/_(VISIBLE_STEMS|BRANCHES)$/u, '')))
-      .sort();
+    const { meaningSignature, evidenceSignature } =
+      buildNatalS6MeaningAndEvidenceSignatures(domains);
     return {
       caseId, scenario, birth, snapshotId: snapshot.snapshotId,
       calculationHash: snapshot.calculationHash,
       structureSignature: exactStructure(snapshot),
-      meaningSignature, domains, html,
+      meaningSignature, evidenceSignature, domains, html,
     };
   });
   const indexed = new Map(rows.map(row => [row.caseId, row]));
@@ -236,8 +281,11 @@ export function runNatalS6QualityRegression(): {
     const materiallyDifferentInputs = left.structureSignature !== right.structureSignature;
     const differentSourceBackedMeaning = materiallyDifferentInputs &&
       JSON.stringify(left.meaningSignature) !== JSON.stringify(right.meaningSignature);
+    const differentConsumedEvidence =
+      JSON.stringify(left.evidenceSignature) !== JSON.stringify(right.evidenceSignature);
     return {
       ...pair, materiallyDifferentInputs, differentSourceBackedMeaning,
+      differentConsumedEvidence,
       leftMeanings: left.meaningSignature, rightMeanings: right.meaningSignature,
     };
   });
