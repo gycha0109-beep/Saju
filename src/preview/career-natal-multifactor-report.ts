@@ -455,8 +455,22 @@ export function renderCareerMultifactorResearchHtml(report: CareerMultifactorRep
     partial: '부분 풀이 · 원국 종합 근거 부족',
     insufficient: '풀이 보류 · 출생정보 또는 근거 부족',
   };
+  const sourceOnly = report.insufficientT5Evidence;
+  const sourceOnlyMarkup = sourceOnly === undefined ? '' :
+    '<section aria-label="관측된 T5와 미발행 직업 T8"><h2>확인된 원국 관측과 직업 종합 해석의 보류</h2>' +
+    '<p>다음은 등록된 출처와 Rule로 검증된 T5 십신 관측입니다. ' +
+    '직업 적성·성공이나 종합 T8 Claim으로 확장할 수 없습니다.</p>' +
+    (sourceOnly.observations.length === 0
+      ? '<p>현재 등록된 규칙에서 해당 십신 관측을 찾지 못했습니다.</p>'
+      : '<ul>' + sourceOnly.observations.map(item =>
+        '<li>' + e(item.positions.join(' · ')) +
+        '<details><summary>원래 T5 Claim·Rule·출처</summary><p>' +
+        e(item.claimType + ' · ' + item.ruleId) + '</p><p>' +
+        e(item.sourceIds.join(' · ')) + '</p><p>' +
+        e(item.factPaths.join(' · ')) +
+        '</p></details></li>').join('') + '</ul>') + '</section>';
   const missingMarkup = report.missing.length > 0
     ? `<section aria-label="아직 설명할 수 없는 부분"><h2>아직 설명할 수 없는 부분</h2><ul>${report.missing.map(reason => `<li>${e(reason)}</li>`).join('')}</ul></section>`
     : '';
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header>${readingGuideMarkup}${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${additionalMarkup}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header>${readingGuideMarkup}${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${additionalMarkup}${sourceOnlyMarkup}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
 }
