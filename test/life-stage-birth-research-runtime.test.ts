@@ -70,6 +70,32 @@ describe('actual birth → exact current/next Dayun timeline without unsupported
     })).toThrow('identical canonical chart');
   });
 
+  it('retains original overlapping natal T8 explanations without deriving Dayun outcomes', () => {
+    const birth: BirthInput = {
+      calendarType: 'solar',
+      date: { year: 1985, month: 12, day: 24 },
+      time: { known: true, hour: 7, minute: 0 },
+      sexForTraditionalCalculation: 'unspecified',
+    };
+    const output = buildLifeStageBirthResearchReading(birth, REFERENCE);
+    const original = output.natalContext.sections.filter(item =>
+      item.evidenceMode === undefined);
+    const extras = output.natalContext.sections.filter(item =>
+      item.evidenceMode === 'reused_calculated_paths');
+    expect(original).toHaveLength(1);
+    expect(extras).toHaveLength(2);
+    const paths = new Set(original.flatMap(item => item.factPaths));
+    for (const item of extras) {
+      expect(item.factPaths.every(path => paths.has(path))).toBe(true);
+      expect(item.sourceIds.length).toBeGreaterThanOrEqual(2);
+      expect(output.html).toContain(escapedHtmlText(item.paragraph));
+    }
+    expect(output.html).toContain('독립 종합 근거를 추가하지 않습니다');
+    expect(output.report.interpretationStatus).toBe('source_authority_not_established');
+    expect(output.mayGrantOfficialAuthority).toBe(false);
+    expect(output.maySell).toBe(false);
+  });
+
   it('keeps unavailable natal T8 separate from actual or unavailable Dayun timing', () => {
     const missing = buildLifeStageBirthResearchReading(
       { ...BIRTH, time: { known: false } }, REFERENCE,
