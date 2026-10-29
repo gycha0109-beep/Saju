@@ -106,7 +106,11 @@ export function selectSourceBoundNatalCore<T extends ObservedNatalAxis>(
   for (const candidate of eligible.slice(1)) {
     const alternative = selectIndependentNatalSupportingAxes(candidate, candidates);
     if (alternative.supporting.length >= 2) {
-      return { core: candidate, supports: alternative, displacedCore: preferred };
+      return {
+        core: candidate,
+        supports: alternative,
+        displacedCore: alternative.supporting.includes(preferred) ? undefined : preferred,
+      };
     }
   }
   return { core: preferred, supports: current, displacedCore: undefined };
