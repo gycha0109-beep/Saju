@@ -370,13 +370,13 @@ function renderWealthOverlappingPerspectives(report: WealthNatalMultifactorRepor
 }
 
 /**
- * An already-emitted Business/Relationship T8 axis can have a different
+ * An already-emitted General/Business/Relationship T8 axis can have a different
  * source-owned meaning while sharing every Canonical path with the first
  * selected interpretation. Display it as interpretation, NOT new evidence.
  */
 function renderOtherDomainOverlaps(
-  domain: 'business' | 'relationship',
-  report: BusinessNatalMultifactorReport | RelationshipNatalMultifactorReport,
+  domain: 'general' | 'business' | 'relationship',
+  report: GeneralNatalMultifactorReport | BusinessNatalMultifactorReport | RelationshipNatalMultifactorReport,
 ): string {
   const alternatives = report.overlappingPerspectives;
   if (alternatives === undefined || alternatives.length === 0) return '';
@@ -399,8 +399,8 @@ function renderOtherDomainOverlaps(
       section.observedFactPaths.every(path => usedPaths.has(path)) &&
       JSON.stringify(section.observedFactPaths) ===
         JSON.stringify(section.overlapsSelectedFactPaths)),
-    'Business/Relationship alternate T8 must reuse only admitted selected facts');
-  const label = domain === 'business' ? '사업' : '관계';
+    'General/Business/Relationship alternate T8 must reuse only admitted selected facts');
+  const label = domain === 'general' ? '전체 사주' : domain === 'business' ? '사업' : '관계';
   const paragraphs = alternatives.map(section =>
     '<section class="overlapping-natal-claim"><h4>' +
     escapeHtml(section.headline) + '</h4><p>' +
@@ -479,10 +479,10 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     ? renderWealthInsufficientEvidence(report as WealthNatalMultifactorReport) : '';
   const overlapping = domain === 'wealth'
     ? renderWealthOverlappingPerspectives(report as WealthNatalMultifactorReport)
-    : domain === 'business' || domain === 'relationship'
+    : domain === 'general' || domain === 'business' || domain === 'relationship'
       ? renderOtherDomainOverlaps(
           domain,
-          report as BusinessNatalMultifactorReport | RelationshipNatalMultifactorReport,
+          report as GeneralNatalMultifactorReport | BusinessNatalMultifactorReport | RelationshipNatalMultifactorReport,
         )
       : '';
   const details = firstMeaning === '' ? readingGuide + originalText
