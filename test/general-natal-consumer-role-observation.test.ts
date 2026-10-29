@@ -38,13 +38,18 @@ describe('N7 true calculated Ten-God role positions in actual Preview reading', 
     expect(observe(early)).toEqual(observe(again));
     expect(observe(early)).not.toEqual(observe(midday));
     expect(observe(midday)).not.toEqual(observe(evening));
-    const { quality } = buildNatalMeaningQualityAudit([
+    const { quality, meaning } = buildNatalMeaningQualityAudit([
       { caseId: 'a', birthLabel: 'early', response: early },
       { caseId: 'b', birthLabel: 'later', response: evening },
     ]);
-    expect(quality.repeatedMeaningPairs).toBe(1);
+    // The approved T8 body now carries individually observed source positions.
+    // Removing only N5/N7 facts must preserve this legitimate distinction.
+    expect(quality.repeatedMeaningPairs).toBe(0);
     expect(quality.actualRepeatedConsumerPairs).toBe(0);
-    expect(quality.pairsSeparatedOnlyByCalculatedFacts).toBe(1);
+    expect(quality.pairsSeparatedOnlyByCalculatedFacts).toBe(0);
+    expect(quality.semanticCompletionGranted).toBe(false);
+    expect(meaning.cases[0]?.interpretationFingerprint)
+      .not.toBe(meaning.cases[1]?.interpretationFingerprint);
   });
 
   it('remains request-local under concurrent reads for different birth dates', async () => {
