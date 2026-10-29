@@ -15,6 +15,7 @@ import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
 import { buildApprovedRelationshipMultifactorOverviewV1 } from '../src/reading/approved-relationship-multifactor-overview.js';
 import { buildApprovedDomainMultifactorContextV1 } from '../src/reading/approved-domain-multifactor-context.js';
+import { RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from '../src/reading/official-reading-detailed-presentation-relationship.js';
 import { buildApprovedOfficialReadingDetailedRealizationV1 } from '../src/reading/official-reading-detailed-realization.js';
 import { buildOfficialReadingCharacterGroundingV1 } from '../src/reading/official-reading-reader-parity.js';
 import {
@@ -217,6 +218,14 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
         perspective.explainabilityRef === entry!.explainabilityRef)).toBe(true);
     }
     for (const perspective of standardComposite!.perspectives) {
+      const source = report.explainability.entries.find(entry =>
+        entry.explainabilityRef === perspective.explainabilityRef);
+      const unit = semantics.units.find(candidate =>
+        candidate.unitId === source?.primaryUnitRefs?.[0]);
+      const approved = RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.find(profile =>
+        profile.claimType === unit?.claimType);
+      expect(approved?.approvedTextByRole.clarification).toBeDefined();
+      expect(perspective.text).toContain(approved!.approvedTextByRole.clarification);
       expect(renderedRelationshipAxes.some(item =>
         item.explainabilityRef === perspective.explainabilityRef &&
         item.summary?.includes(perspective.headline) &&
