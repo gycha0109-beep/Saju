@@ -479,7 +479,10 @@ describe('General natal standard interpretation uses actual Ten-God channels', (
         profile.standardText.summary === unit.canonicalText?.summary);
       expect(approved?.approvedTextByRole.clarification).toBeDefined();
       expect(perspective.text).toContain(approved!.approvedTextByRole.clarification);
-      expect(actualText).toContain(perspective.text);
+      expect(report.sections.some(section => section.blocks.some(block =>
+        block.type === 'insights' && block.items.some(item =>
+          item.explainabilityRef === perspective.explainabilityRef &&
+          item.summary?.includes(perspective.text))))).toBe(true);
     }
     expect(buildApprovedGeneralThemeContextV1({
       ...semantics, canonicalFacts: [],
