@@ -106,7 +106,7 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       .toThrow('existing overlapping T8 evidence');
   });
 
-  it('reads existing Business and Relationship alternate T8 meanings while keeping partial status', () => {
+  it('reads source-issued Business and Relationship T8 meanings without double counting evidence', () => {
     const examples = [
       { domain: 'business', label: '사업', month: 1, day: 7, hour: 12 },
       { domain: 'relationship', label: '관계', month: 1, day: 3, hour: 0 },
@@ -116,6 +116,29 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       const result = reports(chart);
       const report = result[current.domain];
       const alternatives = report.overlappingPerspectives ?? [];
+      if (report.state === 'complete') {
+        expect(current.domain).toBe('relationship');
+        expect(report.sections).toHaveLength(3);
+        const selectedAxes = new Set<string>();
+        const observedPaths = new Set<string>();
+        for (const section of report.sections) {
+          expect(selectedAxes.has(section.axis)).toBe(false);
+          expect(section.observedFactPaths.some(path => !observedPaths.has(path)))
+            .toBe(true);
+          section.observedFactPaths.forEach(path => observedPaths.add(path));
+          selectedAxes.add(section.axis);
+          expect(section.sourceIds.length).toBeGreaterThan(0);
+          expect(section.ruleId).toBe('RULE-' + section.claimType);
+        }
+        const html = renderNatalFiveDomainMultifactorResearchHtml(chart, result);
+        for (const section of report.sections) {
+          expect(html).toContain(section.headline);
+        }
+        expect(report.mayPublish).toBe(false);
+        expect(report.maySell).toBe(false);
+        expect(report.usefulComplete).toBe(false);
+        continue;
+      }
       expect(report.state, current.domain).toBe('partial');
       expect(alternatives.length, current.domain).toBeGreaterThan(0);
       const selectedPaths = new Set(report.sections.flatMap(section =>
