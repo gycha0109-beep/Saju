@@ -158,7 +158,7 @@
 - **실제 코드 변경:** `src/preview/general-natal-multifactor-report.ts`가 기존 Registry/EvidenceSelector에서 이미 확인됐으나 독립 보조 근거 요건 때문에 첫 화면에 선택되지 않은 전체 사주 T8의 **별도 의미축**을, 기존 계산 FactPath가 완전히 겹치고 중심 근거가 있는 `partial` 사례에 한해 `overlappingPerspectives`로 보존한다. 원래 문단·Rule·Source·Claim 경로를 새로 합성하지 않고 전달하며 독립 보조 근거 수·판정을 바꾸지 않는다.
 - **사용자 한국어 출력:** `src/preview/natal-five-domain-multifactor-reader.ts`에서 이 전체 사주 관점을 실제 원문·출처와 함께 읽을 수 있게 했고, 기존 직업 보고서 `additionalVerifiedSections`에 이미 있던 T8 원문도 5메뉴 통합 화면에 누락 없이 출력한다. 첫 화면의 핵심·보조 선택과 완료 판정은 보존한다.
 - **질문형 메뉴:** `src/preview/question-related-natal-reading.ts`가 명시적으로 요청한 전체 사주 축에서 위의 기존 중복 T8 관점을 선택할 수 있고, 직업 축에서 이미 EvidenceSelector를 통과했지만 중심 요약에서 빠졌던 `additionalVerifiedSections`의 원래 문단을 읽게 한다. 중복 계산은 중복이라고 알리며 신규 T11 주장·성패·시기·제3자 관계 결론을 만들지 않는다.
-- **기본 무결성:** 사람별 Snapshot/CalculationHash 일치, T8 Rule·Source·계산 경로 검증 및 연구용 `mayPublish=false`·`maySell=false` 유지. 기존 선택된 정상 문단은 그대로 둔다. `test/question-related-natal-reading.test.ts`에 실제 명식·출처 일치 및 위조된 경로 거부 회귀 테스트를 추가했다.
+- **기본 무결성:** 사람별 Snapshot/CalculationHash 일치, T8 Rule·Source·계산 경로 검증 및 연구용 `mayPublish=false`·`maySell=false` 유지. 10월 29일 후속 보강에서 직업 추가 문단과 질문 연결 모두 기존 정본 십신 계산 경로 형태와 원문에 기재된 실제 계산 위치를 검증하도록 강화했고, 원래 경로 수만 맞춘 가짜 근거도 회귀 테스트에서 거부하도록 작성했다. 기존 선택된 정상 문단은 그대로 둔다. `test/question-related-natal-reading.test.ts`에 실제 명식·출처 일치 및 위조된 경로 거부 회귀 테스트를 추가했다.
 - **검증 상태:** GitHub 동일 개발 브랜치에 코드·테스트·이력 커밋은 완료. 이 구간에서 집 PC Desktop Commander가 연결되지 않아 새 `npm run typecheck` 및 Vitest 실행 결과를 **확인하지 못했다**. 이전 60건 PASS는 이 변경 후의 합격 근거가 아니다. 검증 전에는 12개 메뉴 의미 품질 합격 또는 최종 PR/CI/병합으로 보고하지 않는다.
 - **계속 남은 종합 의미:** R070 가족, 단계별 대운, T10 궁합, T11 질문의 독립 종합 Claim·Rule·Methodology·Source는 여전히 미확립. 올해/이번 달의 새로운 T9 종합 해석도 보류한다. 12개 메뉴 의미 품질 전수 검증, 기존 500명×8메뉴 회귀, 최종 통합은 아직 미완료다.
 
