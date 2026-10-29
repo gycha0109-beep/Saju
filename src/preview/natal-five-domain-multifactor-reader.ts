@@ -1,4 +1,5 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { InsufficientNatalT5Evidence } from './natal-t5-insufficient-evidence.js';
 import { findSharedNatalFactLinks } from './natal-five-domain-shared-evidence.js';
 import type { GeneralNatalMultifactorReport, GeneralNatalMultifactorSection } from './general-natal-multifactor-report.js';
 import type { CareerMultifactorReport, CareerMultifactorReportSection } from './career-natal-multifactor-report.js';
@@ -483,6 +484,41 @@ function renderWealthInsufficientEvidence(report: WealthNatalMultifactorReport):
     '<p>기존 T5 관측만 보여 주며, 등록된 T8 재물 종합해석으로 승격하지 않습니다.</p></section>';
 }
 
+function renderUnissuedDomainT5(
+  domain: string,
+  report: ResearchReport,
+): string {
+  if (domain === 'wealth' || !('insufficientT5Evidence' in report)) return '';
+  const evidence = report.insufficientT5Evidence as InsufficientNatalT5Evidence | undefined;
+  if (evidence === undefined) return '';
+  guard(report.state === 'insufficient' && report.sections.length === 0 &&
+    evidence.status === 'source_matched_t5_only_without_domain_t8' &&
+    evidence.domain === domain && evidence.sourceQualifiedDomainT8Count === 0 &&
+    evidence.researchOnly && !evidence.mayPublish && !evidence.maySell &&
+    evidence.observations.every(item =>
+      item.claimType.startsWith('TEN_GOD_') &&
+      item.ruleId.startsWith('RULE-GENERAL-NATAL-T5-') &&
+      item.sourceIds.length > 0 &&
+      item.factPaths.length === item.positions.length &&
+      item.factPaths.length > 0 &&
+      item.factPaths.every(path => FACT_PATH.test(path))),
+    'a source-owned T5 observation must never masquerade as missing T8 meaning');
+  const rows = evidence.observations.map(item =>
+    '<li>' + escapeHtml(item.positions.join(' · ')) +
+    '<details><summary>계산된 T5의 원래 Rule·출처</summary><p>' +
+    escapeHtml(item.claimType + ' · ' + item.ruleId) + '</p><p>' +
+    escapeHtml(item.sourceIds.join(' · ')) + '</p><p>' +
+    escapeHtml(item.factPaths.join(' · ')) +
+    '</p></details></li>').join('');
+  return '<section class="insufficient-t5-only"><h3>확인된 명식 사실과 해석 보류 사유</h3>' +
+    '<p>이 명식에서는 아래 십신 관측이 기존 T5 규칙과 출처로 확인되지만, ' +
+    '해당 분야의 복합 해석 T8은 발행되지 않았습니다. ' +
+    '이 사실을 해당 분야의 성격·성과·관계·미래 운세 결론으로 확대하지 않습니다.</p>' +
+    (rows ? '<ul>' + rows + '</ul>' :
+      '<p>현재 등록된 규칙으로 확인된 T5 관측 문단도 없습니다.</p>') +
+    '</section>';
+}
+
 function renderDisplacedNatalCore(
   domain: string,
   report: GeneralNatalMultifactorReport | BusinessNatalMultifactorReport | RelationshipNatalMultifactorReport,
@@ -544,7 +580,8 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
           ? renderRelationshipReadingGuide(report as RelationshipNatalMultifactorReport) : '';
   const firstMeaning = renderFirstScreenSelectedInterpretations(domain, report);
   const insufficientEvidence = domain === 'wealth'
-    ? renderWealthInsufficientEvidence(report as WealthNatalMultifactorReport) : '';
+    ? renderWealthInsufficientEvidence(report as WealthNatalMultifactorReport)
+    : renderUnissuedDomainT5(domain, report);
   const overlapping = domain === 'wealth'
     ? renderWealthOverlappingPerspectives(report as WealthNatalMultifactorReport)
     : domain === 'general' || domain === 'business' || domain === 'relationship'
