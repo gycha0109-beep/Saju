@@ -366,9 +366,15 @@ describe('Wealth approved composite reading remains grounded in real selected cl
     const approvedWealthAxes = buildApprovedDomainMultifactorContextV1(
       semantics, plan, report.explainability.entries);
     expect(approvedWealthAxes).toBeDefined();
-    expect(renderedContextItems.length).toBe(approvedWealthAxes!.perspectives.length);
+    const allWealthContextItems = report.sections.flatMap(section =>
+      section.blocks.flatMap(block => block.type === 'insights' ? block.items : []))
+      .filter(item => item.summary?.includes('실제 십신과 관찰 위치:') ||
+        item.summary?.includes('실제 십신 계열과 관찰 위치:'));
+    expect(allWealthContextItems.length).toBe(approvedWealthAxes!.perspectives.length);
+    expect(allWealthContextItems.some(item => item.summary?.includes(
+      '단일 계열 해석에 사용된 실제 십신과 관찰 위치'))).toBe(true);
     for (const perspective of approvedWealthAxes!.perspectives) {
-      expect(renderedContextItems.some(item =>
+      expect(allWealthContextItems.some(item =>
         item.explainabilityRef === perspective.explainabilityRef &&
         item.summary?.includes(perspective.text))).toBe(true);
     }
