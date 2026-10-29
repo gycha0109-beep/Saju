@@ -203,6 +203,9 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     expect(standardComposite?.perspectives.length).toBeGreaterThan(0);
     const renderedRelationshipAxes = report.sections.flatMap(section =>
       section.blocks.flatMap(block => block.type === 'insights' ? block.items : []));
+    expect(standardComposite!.perspectives.some(perspective =>
+      perspective.text.includes('단일 계열 해석에 사용된 실제 십신과 관찰 위치')))
+      .toBe(true);
     for (const perspective of standardComposite!.perspectives) {
       expect(renderedRelationshipAxes.some(item =>
         item.explainabilityRef === perspective.explainabilityRef &&
