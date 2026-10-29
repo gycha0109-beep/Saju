@@ -6,6 +6,8 @@ import { buildThreeTemporalMenusBirthReading } from
   '../src/preview/three-temporal-menus-birth-reading.js';
 import { buildAnnualPrimaryWitnessIdentityContext } from
   '../src/preview/annual-primary-witness-identity-context.js';
+import { buildTemporalResearchMenuReadings } from
+  '../src/preview/temporal-research-menu-reading.js';
 
 const gapDay: BirthInput = {
   calendarType: 'solar',
@@ -42,6 +44,15 @@ describe('exact original Ming Tai Sui witness on an actual calculated natal char
       expect(primary?.monthlyAuthorityInherited).toBe(false);
       expect(output.html).toContain(item.passage);
       expect(output.html).toContain(primary!.text);
+      expect(output.annualMonthly.html).toContain(item.passage);
+      expect(output.annualMonthly.html).toContain(primary!.text);
+      const menus = buildTemporalResearchMenuReadings({ annualMonthly: output.annualMonthly.report });
+      const witness = menus[0]!.sections.find(section =>
+        section.evidenceKind === 'annual_primary_relation_witness');
+      expect(witness?.text).toContain(item.passage);
+      expect(witness?.sourceIds).toEqual([primary!.exactSourceCandidateId]);
+      expect(witness?.factPaths).toEqual(primary!.calculatedFactPaths);
+      expect(menus[0]!.authority.mayCallOfficial).toBe(false);
       expect(output.html).toContain('고전 원문과 정확히 일치하는 십신 관계 · 연구');
       expect(output.mayPublish).toBe(false);
       expect(output.maySell).toBe(false);
