@@ -25,13 +25,27 @@ describe('source-owned natal T8 center selection preserves genuinely independent
       [root, expression, boundaries, coordination], priority);
     expect(result.core?.claimType).toBe('expression-t8');
     expect(result.supports?.supporting.map(item => item.claimType))
-      .toEqual(['boundaries-t8', 'coordination-t8']);
-    expect(result.displacedCore).toBe(root);
+      .toEqual(['root-t8', 'coordination-t8']);
+    // When the former root remains as a distinct-axis support, do not
+    // display its original paragraph a second time as a displaced core.
+    expect(result.displacedCore).toBeUndefined();
     const paths = new Set(result.core?.observedFactPaths ?? []);
     for (const support of result.supports?.supporting ?? []) {
       expect(support.observedFactPaths.some(path => !paths.has(path))).toBe(true);
       support.observedFactPaths.forEach(path => paths.add(path));
     }
+  });
+
+  it('retains original T8 explanation when a better same-axis channel is used', () => {
+    const original = issued('core-branch-t8', 'core', 'a', 'b', 'c', 'd');
+    const alternate = issued('core-stem-t8', 'core', 'a', 'b');
+    const expression = issued('expression-t8', 'expression', 'a', 'c');
+    const boundary = issued('boundary-t8', 'boundaries', 'd', 'e');
+    const result = selectSourceBoundNatalCore(
+      [original, alternate, expression, boundary], priority);
+    expect(result.core).toBe(alternate);
+    expect(result.supports?.supporting).toEqual([expression, boundary]);
+    expect(result.displacedCore).toBe(original);
   });
 
   it('keeps original source-defined core when two independent supports exist', () => {
