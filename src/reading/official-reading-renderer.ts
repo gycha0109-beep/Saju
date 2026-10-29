@@ -1042,6 +1042,7 @@ function renderOfficialReadingInternalV1(
       ? undefined
       : buildApprovedDomainMultifactorContextV1(
           bundle, plan, explainabilityEntries,
+          effectiveDetailedRealization === undefined ? 'standard' : 'detailed',
         );
   if (multifactorContext !== undefined) {
     const byRef = new Map(multifactorContext.perspectives.map(perspective =>
@@ -1068,7 +1069,8 @@ function renderOfficialReadingInternalV1(
                 ...item,
                 summary: [
                   item.summary,
-                  prefix + perspective.headline + '\n' + perspective.text,
+                  prefix + (effectiveDetailedRealization === undefined
+                    ? perspective.headline + '\n' : '') + perspective.text,
                 ].filter((value): value is string =>
                   value !== undefined && value.length > 0,
                 ).join('\n\n'),
