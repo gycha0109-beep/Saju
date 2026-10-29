@@ -77,6 +77,73 @@ function section(poly, x) {
   }
   return ys.length === 2 ? ys.sort((a, b) => a - b) : null;
 }
+function orientation(a, b, c) {
+  const p = (b.x - a.x) * (c.y - a.y),
+    q = (b.y - a.y) * (c.x - a.x),
+    delta = p - q;
+  // Cancellation allowance only; never a morphology/model-error tolerance.
+  return Math.abs(delta) <= 32 * Number.EPSILON * (Math.abs(p) + Math.abs(q))
+    ? 0
+    : Math.sign(delta);
+}
+function onSegment(a, b, p) {
+  return (
+    orientation(a, b, p) === 0 &&
+    p.x >= Math.min(a.x, b.x) &&
+    p.x <= Math.max(a.x, b.x) &&
+    p.y >= Math.min(a.y, b.y) &&
+    p.y <= Math.max(a.y, b.y)
+  );
+}
+function intersects(a, b, c, d) {
+  const abC = orientation(a, b, c),
+    abD = orientation(a, b, d),
+    cdA = orientation(c, d, a),
+    cdB = orientation(c, d, b);
+  return (
+    (abC * abD < 0 && cdA * cdB < 0) ||
+    onSegment(a, b, c) ||
+    onSegment(a, b, d) ||
+    onSegment(c, d, a) ||
+    onSegment(c, d, b)
+  );
+}
+function simplePolygon(poly) {
+  for (let i = 0; i < poly.length; i++) {
+    const next = (i + 1) % poly.length;
+    if (poly[i].x === poly[next].x && poly[i].y === poly[next].y) return false;
+    for (let j = i + 1; j < poly.length; j++) {
+      const after = (j + 1) % poly.length;
+      if (next === j || after === i) continue;
+      if (intersects(poly[i], poly[next], poly[j], poly[after])) return false;
+    }
+  }
+  return true;
+}
+function strictlyInside(point, poly) {
+  let inside = false;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i],
+      b = poly[(i + 1) % poly.length];
+    if (onSegment(a, b, point)) return false;
+    if (
+      a.y > point.y !== b.y > point.y &&
+      point.x < a.x + ((point.y - a.y) * (b.x - a.x)) / (b.y - a.y)
+    )
+      inside = !inside;
+  }
+  return inside;
+}
+function nestedContours(outer, inner) {
+  if (!simplePolygon(outer) || !simplePolygon(inner)) return false;
+  if (!inner.every((p) => strictlyInside(p, outer))) return false;
+  // Vertex containment alone is insufficient for a concave outer contour.
+  return !outer.some((a, i) =>
+    inner.some((c, j) =>
+      intersects(a, outer[(i + 1) % outer.length], c, inner[(j + 1) % inner.length]),
+    ),
+  );
+}
 // Scalar evidence only; raw points and classification pixels never leave the worker.
 export function computeMorphology({
   landmarks,
@@ -146,6 +213,7 @@ export function computeMorphology({
         bounds = extent(outer),
         span = bounds.right - bounds.left,
         x = (bounds.right + bounds.left) / 2;
+      if (!nestedContours(outer, inner)) throw Error('SECTION_UNAVAILABLE');
       const a = section(outer, x),
         b = section(inner, x);
       if (!(span > 0) || !a || !b || b[0] < a[0] || b[1] > a[1] || a[1] <= a[0])
@@ -209,7 +277,8 @@ export function validateMorphology(input, { viewRole } = {}) {
     }[id];
     if (id === 'browSpan' && (!Array.isArray(part.ratios) || part.ratios.length !== 2))
       throw Error('PARSING_SUMMARY_INVALID');
-    const values = id === 'browSpan' ? part.ratios : keys.map((k) => part[k]);
+    // Array iteration skips holes; materialize both required side values first.
+    const values = id === 'browSpan' ? [part.ratios[0], part.ratios[1]] : keys.map((k) => part[k]);
     if (
       values.some(
         (n, i) => !Number.isFinite(n) || n < 0 || (n === 0 && !(id === 'lipBalance' && i === 2)),

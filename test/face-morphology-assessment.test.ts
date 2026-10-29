@@ -146,6 +146,109 @@ describe('visible morphology measurements and item-first assessment', () => {
       'rawPoints',
     );
   });
+  it('withholds lip thickness when the inner contour exits the outer polygon inside its bounds', () => {
+    const f = fixture();
+    // Still inside the outer bounding box and ordered at the centre section,
+    // but above the diamond's actual upper-left edge.
+    f.landmarks[f.topology.mouth[4]!.start] = { x: 0.35, y: 0.64 };
+    expect(computeMorphology(f).lipBalance).toMatchObject({
+      status: 'unavailable',
+      reason: 'SECTION_UNAVAILABLE',
+    });
+  });
+  it('rejects incomplete brow pairs before assessment can display them', () => {
+    const result = computeMorphology(fixture());
+    const ratios = Array<number>(2);
+    ratios[0] = 1.2;
+    expect(() =>
+      validateMorphology({ ...result, browSpan: { status: 'available', ratios } }),
+    ).toThrow('PARSING_SUMMARY_INVALID');
+  });
+  it.each([
+    [
+      'an edge crossing a concave outer boundary',
+      [
+        [0.3, 0.6],
+        [0.7, 0.6],
+        [0.7, 0.8],
+        [0.3, 0.8],
+        [0.3, 0.74],
+        [0.43, 0.74],
+        [0.43, 0.66],
+        [0.3, 0.66],
+      ],
+      [
+        [0.35, 0.62],
+        [0.65, 0.62],
+        [0.65, 0.78],
+        [0.35, 0.78],
+      ],
+    ],
+    [
+      'a self-crossing inner boundary',
+      [
+        [0.3, 0.6],
+        [0.7, 0.6],
+        [0.7, 0.8],
+        [0.3, 0.8],
+      ],
+      [
+        [0.35, 0.65],
+        [0.65, 0.75],
+        [0.65, 0.65],
+        [0.35, 0.75],
+      ],
+    ],
+    [
+      'a touching inner boundary',
+      [
+        [0.3, 0.6],
+        [0.7, 0.6],
+        [0.7, 0.8],
+        [0.3, 0.8],
+      ],
+      [
+        [0.3, 0.7],
+        [0.5, 0.65],
+        [0.65, 0.7],
+        [0.5, 0.75],
+      ],
+    ],
+  ])('withholds ambiguous nested lips: %s', (_name, outer, inner) => {
+    const f = fixture();
+    let next = 100;
+    f.topology.mouth = [outer, inner].flatMap((ring) => {
+      const ids = ring.map(([x, y]) => {
+        const id = next++;
+        f.landmarks[id] = { x: x!, y: y! };
+        return id;
+      });
+      return ids.map((start, i) => ({ start, end: ids[(i + 1) % ids.length]! }));
+    });
+    const result = computeMorphology(f);
+    expect(result.lipBalance).toMatchObject({
+      status: 'unavailable',
+      reason: 'SECTION_UNAVAILABLE',
+    });
+    // A malformed mouth does not suppress independently supported regions.
+    expect(result.browSpan.status).toBe('available');
+    expect(result.noseExtent.status).toBe('available');
+  });
+  it('preserves nested lip measurements under reflection and topology permutation', () => {
+    const f = fixture(),
+      expected = computeMorphology(f);
+    f.landmarks = f.landmarks.map((p) => ({ ...p, x: 1 - p.x }));
+    f.topology.mouth = f.topology.mouth
+      .toReversed()
+      .map(({ start, end }) => ({ start: end, end: start }));
+    const actual = computeMorphology(f);
+    expect(actual.lipBalance.status).toBe('available');
+    if (actual.lipBalance.status !== 'available' || expected.lipBalance.status !== 'available')
+      throw Error();
+    expect(actual.lipBalance.upper).toBeCloseTo(expected.lipBalance.upper);
+    expect(actual.lipBalance.lower).toBeCloseTo(expected.lipBalance.lower);
+    expect(actual.lipBalance.opening).toBeCloseTo(expected.lipBalance.opening);
+  });
   it('classifies observable comparisons and keeps all eight distinct items with missing requirements', () => {
     const cards = assessMorphology({
       record: { captureRef: 'one', viewRole: 'frontal' },

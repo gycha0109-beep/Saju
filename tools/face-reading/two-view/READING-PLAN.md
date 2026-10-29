@@ -152,3 +152,27 @@ evidence remains in the ignored intake under `morphology-2729-verification.json`
 and `morphology-2729-recovery.json`; source paths and pixels are not published.
 These are local runtime/preservation results, not human accuracy validation,
 source-role admission or completed traditional named-form classification.
+
+### Contour validation correction (2026-10-29)
+
+The lip calculation now checks simple, strictly nested polygons in addition to
+the original bounding-box and centre-section checks. A contour that crosses,
+touches, or leaves the outer contour cannot establish separated upper/lower
+bands and returns `SECTION_UNAVAILABLE`. This includes a concave outer boundary
+whose vertices enclose the inner vertices but whose edges cross the inner edges.
+The orientation guard addresses floating-point cancellation only; it introduces
+no source or model-error threshold. Independently supported brow and nose
+observations remain available when the mouth is withheld.
+
+The scalar validator also materializes both required brow ratios before checking
+them, so a sparse two-slot array cannot bypass validation. These are corrections
+to the existing candidate contract, not new anatomical or traditional authority.
+Existing private scalar summaries contain no contours and cannot retroactively
+prove this stronger runtime check; rerun the original local captures to obtain
+fresh observations. The 2026-10-24 all-23 evidence above predates this correction.
+
+Validation on 2026-10-29: 62 tests across the seven direct two-view/geometry/parser
+test files, TypeScript typecheck, build, scoped ESLint and formatting pass.
+Regression cases cover protrusion within unchanged bounding boxes, concave
+edge escape, self-intersection, touching boundaries, sparse brow pairs and
+reflection/topology permutation. Real-photo re-execution remains outstanding.
