@@ -96,6 +96,13 @@
 - **실행 증거:** `official-reading-detailed-general-pilot.test.ts`에서 원문+관측 위치 및 상세 설명 1회 출력, `career-official-reading-integration.test.ts`에서 승인된 직업 설명과 실제 관측 연결을 확인했다. Windows 검사 전용 체크아웃에서 `npm run typecheck` 통과, 해당 원국·직업·12개 메뉴 범위 테스트 **16/16 PASS**. 전체 Vitest는 프로세스가 최종 종료 코드와 요약을 남기지 않아 전체 통과로 판정하지 않으며, 단일 실행에 의존하지 않고 분할 검증 여부를 계속 확인한다.
 - **미완료:** 가족·배우자·궁합·시기·질문별 독립 종합 해석의 승인 근거·품질 판정은 별개로 남아 있다. 12개 카드 출력이나 기존 T8 요약을 전체 로드맵 완료로 표시하지 않는다. 중간 PR·CI·병합은 하지 않는다.
 
+### 2026-10-29: 분할 실행에서 발견한 상세 풀이 계승 계약 회귀 수정
+
+- **실행된 분할 회귀:** 총 1,596개 테스트 파일 중 Vitest `--shard=1/32 --maxWorkers=2` 첫 구간에서 **50개 파일·356개 테스트 중 352 PASS / 4 FAIL**. 네 실패는 모두 `official-reading-detailed-domain-coverage.test.ts`에서 **직업·재물·연애·사업 상세 풀이가 기존 일반 풀이 원문으로 시작해야 한다**는 출력 계약 위반이었다. 본문 개선을 무작정 승인하거나 테스트 기대값을 완화하지 않았다.
+- **실제 코드 수정:** `src/reading/official-reading-renderer.ts`의 상세 출력이 동일 Claim·계획의 일반 풀이를 실제로 재구성하여 **그 한국어 문단을 앞부분에 보존**하도록 했다. 원래 출처 승인된 상세 재료는 중복된 문단만 제외하고 뒤에 유지하며, 관계 비교 텍스트는 임의의 개행 단위로 잘라 의미를 훼손하지 않게 보존한다. 상세 출력의 기존 제목·섹션·인용/Claim 참조·권한은 유지한다.
+- **수정 후 확인:** Windows 검사 체크아웃에서 `npm run typecheck` **PASS**, `official-reading-detailed-domain-coverage`, `official-reading-detailed-general-pilot`, `career-official-reading-integration`, `business-official-reading-integration`, `relationship-official-reading-integration` **5개 파일 25개 테스트 PASS**. 모든 테스트 파일의 재실행 결과로 확대하지 않는다.
+- **남은 단계:** 1/32 구간 전체의 최종 재검사 및 다른 구간의 정상 종료·실패 분류, 12개 메뉴의 독립 의미·권한·품질 판정. PR/CI/병합은 최종 완료 후 수행한다.
+
 ## 4. 12개 메뉴 개인화 출력의 실제 구현 누적 (2026-10-28)
 
 - **한 브랜치 유지:** `fix/saju/wealth-preserve-independent-core`에서 구현을 누적한다. 작업 단위 PR/통합 CI/병합은 하지 않는다. 전체 12개 해석 로드맵을 완료한 뒤 최종 PR·CI·병합한다.
