@@ -293,6 +293,7 @@ describe('R199 automatic annual Official Reading production', () => {
         type: 'fact_table',
         rows: [
           { label: '연간 기둥', value: '임술' },
+          { label: '연간 천간의 십신', value: '식신' },
           { label: '이전 구조 상태', value: '정상' },
           { label: '이번 구조 방향', value: '구조 약화 방향' },
           { label: '다음 구조 상태', value: '약화' },
@@ -300,7 +301,11 @@ describe('R199 automatic annual Official Reading production', () => {
       },
       {
         type: 'paragraph',
-        text: '기존 구조가 한 단계 약해지는 흐름입니다.',
+        text: '2042년의 연간은 임술이며, 연간 천간을 일간에 대조한 십신은 식신입니다. ' +
+          '이 십신의 관찰 사실 자체를 길흉이나 구조 변화의 원인으로 판정하지 않습니다. ' +
+          '이미 검증된 연간 구조 평가에서는 정상 상태에서 적용된 평가는 「구조 약화 방향」이며, 다음 구조 상태는 약화입니다. ' +
+          '기존 구조가 한 단계 약해지는 흐름입니다. ' +
+          '이 설명은 해당 구조 전환에 한정되며 직업·재물·관계의 사건이나 성패를 예측하지 않습니다.',
       },
     ]);
 
