@@ -285,7 +285,10 @@ function personalRelationshipHtml(
           (section.evidenceMode === 'reused_calculated_paths'
             ? '<p>같은 사람에게서 이미 사용한 근거를 다시 읽는 별도 기존 T8 관점입니다. ' +
               '궁합이나 두 사람의 관계 결과가 아니며 독립 근거가 추가된 것도 아닙니다.</p>'
-            : '') + '<details><summary>해석 근거</summary>' +
+            : section.evidenceMode === 'original_source_core'
+              ? '<p>원래 중심 후보로 발행된 같은 사람의 별도 T8 원문입니다. ' +
+                '다른 실제 근거를 우선해 첫 화면에서 제외했지만, 궁합·상호작용의 독립 근거가 아닙니다.</p>'
+              : '') + '<details><summary>해석 근거</summary>' +
           '<p>Source: ' + escapeHtml(section.sourceIds.join(' · ')) +
           '</p><p>계산 사실 경로: ' +
           escapeHtml(section.observedFactPaths.join(' · ')) +
