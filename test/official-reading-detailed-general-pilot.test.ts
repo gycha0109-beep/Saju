@@ -484,6 +484,30 @@ describe('General natal standard interpretation uses actual Ten-God channels', (
           item.explainabilityRef === perspective.explainabilityRef &&
           item.summary?.includes(perspective.text))))).toBe(true);
     }
+    const detailedReport = renderOfficialReadingV1(semantics, plan, {
+      preferredDetail: 'detailed',
+    });
+    expect(detailedReport.detailPreferenceResolution?.resolvedDetail).toBe('detailed');
+    const evidenceOnly = buildApprovedGeneralThemeContextV1(
+      semantics, plan, detailedReport.explainability.entries, 'detailed');
+    expect(evidenceOnly?.perspectives).toHaveLength(context!.perspectives.length);
+    for (const perspective of evidenceOnly!.perspectives) {
+      const item = detailedReport.sections.flatMap(section => section.blocks)
+        .flatMap(block => block.type === 'insights' ? block.items : [])
+        .find(item => item.explainabilityRef === perspective.explainabilityRef);
+      expect(item?.summary).toContain(perspective.text);
+      expect(perspective.text).toContain('실제 관측 위치:');
+      const entry = detailedReport.explainability.entries.find(source =>
+        source.explainabilityRef === perspective.explainabilityRef);
+      const unit = semantics.units.find(source => source.unitId === entry?.primaryUnitRefs?.[0]);
+      const approved = GENERAL_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.find(profile =>
+        profile.claimType === unit?.claimType &&
+        profile.standardText.summary === unit.canonicalText?.summary);
+      const clarification = approved?.approvedTextByRole.clarification;
+      expect(clarification).toBeDefined();
+      expect(perspective.text).not.toContain(clarification!);
+      expect(item?.summary?.split(clarification!).length).toBe(2);
+    }
     expect(buildApprovedGeneralThemeContextV1({
       ...semantics, canonicalFacts: [],
     }, plan, report.explainability.entries)).toBeUndefined();
