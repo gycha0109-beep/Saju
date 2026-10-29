@@ -47,6 +47,9 @@ describe('one self chart and one authorized other chart → three separate relat
       ...result.family.children.report.observations,
     ]) expect(result.html).toContain(item.text);
     expect(result.html).toContain(result.spouse.report.observation);
+    expect(result.spouse.report.clarification.trim().length).toBeGreaterThan(0);
+    expect(result.html).toContain(result.spouse.report.clarification);
+    expect(result.html).toContain(result.spouse.report.boundary);
     expect(result.html).toContain(result.spouse.report.provenance.sourceProfileId);
     for (const item of result.compatibility.report.comparisons) {
       expect(result.html).toContain(item.explanation);
