@@ -103,6 +103,13 @@
 - **수정 후 확인:** Windows 검사 체크아웃에서 `npm run typecheck` **PASS**, `official-reading-detailed-domain-coverage`, `official-reading-detailed-general-pilot`, `career-official-reading-integration`, `business-official-reading-integration`, `relationship-official-reading-integration` **5개 파일 25개 테스트 PASS**. 모든 테스트 파일의 재실행 결과로 확대하지 않는다.
 - **남은 단계:** 1/32 구간 전체의 최종 재검사 및 다른 구간의 정상 종료·실패 분류, 12개 메뉴의 독립 의미·권한·품질 판정. PR/CI/병합은 최종 완료 후 수행한다.
 
+### 2026-10-29: 추가 실행 결과와 미완료 범위의 정직한 판정
+
+- **상세 출력 계약 복구 확인:** TypeScript `typecheck` PASS, `official-reading-detailed-domain-coverage` 및 원국 일반·직업·재물·사업·연애 관계 5개 통합 테스트 파일 **25/25 PASS**. 기존 `상세.summary.startsWith(일반.summary)` 계약을 유지하고, 동일 출처 문단 중복을 억제하면서 관계 상세 복합 설명을 분할·삭제하지 않는다.
+- **연구용 실제 출생 2건 비교:** `scripts/natal-five-domain-multifactor-research-demo.mjs`를 1990-05-15 14:30(양력, 계산 성별 unspecified)·1998-08-18 11:30(동일 조건)에 실행해 생성 성공을 확인했다. 첫 명식은 원국 전체/직업/재물/사업/연애 다섯 보고서 모두 연구 내부 상태 `partial`(각 1/1/1/2/2개 섹션). 둘째 명식은 전체 `partial` 2개·직업 `partial` 2개·재물 `complete` 3개·사업 `complete` 3개·연애 `partial` 2개 섹션이었다. 이 연구용 `complete`는 **공식·판매·전체 종합 의미 권한이나 12개 메뉴 최종 합격과 무관**하다. 실제 근거의 차이로 발생한 부분 출력 사례이며 외견상 문단 수만으로 개선 완료를 판정하지 않는다.
+- **도구/검증:** 작업 PC 직접 Desktop Commander는 계속 정상. ESLint·TS 빌드는 정상 실행. 전 저장소 `format:check`는 2,331개 파일의 광범위한 기존 스타일 차이로 실패하므로 별도 품질 이슈로 기록하되, 현재 사주 트랙과 무관한 수천 파일을 일괄 수정하지 않는다. 전체 1,596개 테스트 파일의 모든 분할 실행 완료 증거는 아직 확보하지 못했다.
+- **남은 의미 작업:** 독립 종합 해석이 `partial`인 명식, T9/T10/T11의 미확립 출처, 12개 동등 메뉴의 실제 한국어 의미 판정. 없는 근거를 발행하거나 승인 상태를 임의 승격시키지 않는다.
+
 ## 4. 12개 메뉴 개인화 출력의 실제 구현 누적 (2026-10-28)
 
 - **한 브랜치 유지:** `fix/saju/wealth-preserve-independent-core`에서 구현을 누적한다. 작업 단위 PR/통합 CI/병합은 하지 않는다. 전체 12개 해석 로드맵을 완료한 뒤 최종 PR·CI·병합한다.
