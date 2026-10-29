@@ -6,6 +6,9 @@ import {
   type ResolvedRuleRegistrySnapshot,
 } from '../interpretation/rule-registry.js';
 import type { GovernedReadingExecutionResult } from './governed-reading-execution.js';
+import {
+  normalizeConsumerReadingRequest, type ConsumerReadingRequestInput,
+} from './consumer-reading-request-adapter.js';
 import { inspectSajuSelectedRuleBundleV1 } from './source-reading-selected-rule-bundle.js';
 import type { ProductReadingDeliveryResult } from './product-reading-delivery.js';
 import { resolveReadingProfileSelectionAuthorization } from './reading-profile-authorization.js';
@@ -77,6 +80,8 @@ export interface InspectSourceReadingProofReadinessInputV1 {
   readonly execution: GovernedReadingExecutionResult;
   readonly delivery: ProductReadingDeliveryResult;
   readonly response: ProductReadingResponse;
+  /** Original server-owned request, required when the response echoes context. */
+  readonly requestInput?: ConsumerReadingRequestInput;
 }
 
 function inspection(
@@ -182,12 +187,27 @@ export function inspectSourceReadingProofReadinessV1(
   } catch {
     return inspection('blocked', 'response_not_admitted');
   }
+  // Product responses now bind the selected menu, original text and calculation
+  // sex. Reconstruct that context from the server-owned input, never from the
+  // response being inspected; otherwise swapped menu metadata could be signed.
+  const original = input.requestInput;
+  if ((response.requestContext !== undefined && original === undefined) ||
+      (original !== undefined && normalizeConsumerReadingRequest(original).normalizationId !==
+        preparation.normalization.normalizationId)) {
+    return inspection('blocked', 'response_delivery_mismatch');
+  }
+  const request = preparation.normalization.request;
+  const expectedContext = original === undefined || request === undefined ? undefined : {
+    requestedText: original.text,
+    intent: request.intent,
+    calculationSex: snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
+  };
   if (!['delivered', 'delivered_with_fallback'].includes(response.state)
     || delivery.state !== response.state
     || delivery.messageCode !== response.messageCode
     || delivery.requiredAction !== response.requiredAction
     || response.reading?.readingId !== artifact.readingId
-    || deterministicContentHash(buildProductReadingResponse(delivery))
+    || deterministicContentHash(buildProductReadingResponse(delivery, expectedContext))
       !== deterministicContentHash(response)) {
     return inspection('blocked', 'response_delivery_mismatch');
   }

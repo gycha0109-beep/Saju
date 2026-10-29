@@ -473,7 +473,8 @@ async function runProductHostReadingInternals(
     dependencies.readingOptionsForRequest?.(context) ?? dependencies.readingOptions,
     dependencies.legacyNarrativeRuntime,
   );
-  return { executedRequestBody: parsed, snapshot, interpretation, registry, ...reading };
+  return { executedRequestBody: parsed, requestInput: input,
+    snapshot, interpretation, registry, ...reading };
 }
 
 export function createMyeonghwaProductHost(

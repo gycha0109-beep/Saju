@@ -59,6 +59,31 @@ async function fixture() {
 }
 
 describe('2B-3A source Reading in-process proof readiness inventory', () => {
+  it('binds echoed menu metadata to original server input rather than trusting the response', async () => {
+    const source = await fixture();
+    const requestInput = { requestId: 'source-proof-readiness-fixture-reading', text: '사주' };
+    const context = { requestedText: requestInput.text,
+      intent: source.execution.preparation.normalization.request!.intent,
+      calculationSex: 'unspecified' as const };
+    const response = buildProductReadingResponse(source.delivery, context);
+    const input = { ...source, requestInput, response };
+    expect(inspectSourceReadingProofReadinessV1(input).state).toBe('held');
+    expect(inspectSourceReadingProofReadinessV1({ ...source, response }))
+      .toMatchObject({ state: 'blocked', reason: 'response_delivery_mismatch' });
+    for (const changed of [
+      { ...context, requestedText: '재물운' },
+      { ...context, intent: { domain: 'wealth' as const, temporalScope: 'natal' as const } },
+      { ...context, calculationSex: 'male' as const },
+    ]) {
+      expect(inspectSourceReadingProofReadinessV1({ ...input,
+        response: buildProductReadingResponse(source.delivery, changed),
+      })).toMatchObject({ state: 'blocked', reason: 'response_delivery_mismatch' });
+    }
+    expect(inspectSourceReadingProofReadinessV1({ ...input,
+      requestInput: { ...requestInput, text: '재물운' },
+    })).toMatchObject({ state: 'blocked', reason: 'response_delivery_mismatch' });
+  });
+
   it('inventories exact Saju-owned identities but never grants proof or Production authority', async () => {
     const source = await fixture();
     expect(source.execution.state).toBe('completed');
