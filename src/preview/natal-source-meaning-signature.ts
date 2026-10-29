@@ -45,11 +45,17 @@ export function buildSourceNatalMeaningSignatures(
   const wording: string[] = [];
   for (const domain of domains) {
     for (const section of domain.sections) {
-      if (!section.claimType || section.ruleId !== 'RULE-' + section.claimType ||
+      const claimedChannel = section.channel === 'branches' ? '_BRANCHES' : '_VISIBLE_STEMS';
+      const pathChannel = section.channel === 'branches' ? '.branch.value' : '.stem.value';
+      if (!['general', 'career', 'wealth', 'business', 'relationship'].includes(domain.domain) ||
+          !section.claimType.startsWith(domain.domain.toUpperCase() + '_NATAL_MULTIFACTOR_') ||
+          !section.claimType.endsWith(claimedChannel) ||
+          section.ruleId !== 'RULE-' + section.claimType ||
           !section.axis || !section.pattern || section.sourceIds.length === 0 ||
           section.upstreamClaimIds.length < 2 ||
           section.factPaths.length < 2 ||
-          !section.factPaths.every(path => FACT_PATH.test(path)) ||
+          new Set(section.factPaths).size !== section.factPaths.length ||
+          !section.factPaths.every(path => FACT_PATH.test(path) && path.endsWith(pathChannel)) ||
           !section.paragraph.trim()) {
         throw new TypeError('Natal meaning signature requires a source-issued T8 and observed T5 facts.');
       }
