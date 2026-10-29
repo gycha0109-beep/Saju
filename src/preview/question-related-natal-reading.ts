@@ -62,6 +62,9 @@ const FOCUS_BY_TOPIC: Readonly<Partial<Record<Topic, readonly QuestionAxisFocus[
 
 // Not an interpretation algorithm: any future-event/third-party topic needs
 // its OWN source-owned claim, scoped input, and reading admission.
+const CANONICAL_TEN_GOD_FACT_PATH =
+  /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u;
+
 const OUT_OF_SCOPE = [
   '올해', '내년', '내후년', '이번 달', '이번달', '다음 달', '다음달', '언제',
   '몇 살', '몇 년', '시기', '미래', '확률', '정확히', '얼마',
@@ -171,6 +174,8 @@ function availableOriginalSections(
         section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
         section.calculatedFactPaths.length >= 2 &&
         section.calculatedFactPaths.length === section.calculatedPositions.length &&
+        section.calculatedFactPaths.every(path => CANONICAL_TEN_GOD_FACT_PATH.test(path)) &&
+        section.calculatedPositions.every(position => section.paragraph.includes(position)) &&
         section.paragraph.trim().length > 0 &&
         section.calculatedFactPaths.some(path => !usedPaths.has(path)),
         'Question cannot use unverified or repeated Career T8 evidence');
