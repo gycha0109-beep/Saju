@@ -3,6 +3,7 @@ import {
   NATAL_S6_BIRTH_CASES,
   NATAL_S6_CONTRASTS,
   runNatalS6QualityRegression,
+  buildNatalS6MeaningAndEvidenceSignatures,
 } from '../src/preview/natal-five-domain-quality-regression.js';
 
 describe('S6 real-chart Korean meaning and contrast quality regression', () => {
@@ -17,6 +18,11 @@ describe('S6 real-chart Korean meaning and contrast quality regression', () => {
       p => p.materiallyDifferentInputs && JSON.stringify(p.leftMeanings) !== JSON.stringify(p.rightMeanings),
     )).toBe(true);
     for (const item of audit.cases) {
+      const traced = buildNatalS6MeaningAndEvidenceSignatures(item.domains);
+      expect(item.meaningSignature).toEqual(traced.meaningSignature);
+      expect(item.evidenceSignature).toEqual(traced.evidenceSignature);
+      expect(item.wordingSignature).toEqual(traced.wordingSignature);
+      expect(item.meaningSignature.length).toBe(item.domains.flatMap(d => d.sections).length);
       expect(item.calculationHash.length).toBeGreaterThan(0);
       expect(item.html).toContain('<html lang="ko">');
       expect(item.html).toContain('출판 및 판매 불가');
@@ -47,4 +53,45 @@ describe('S6 real-chart Korean meaning and contrast quality regression', () => {
     expect(audit.mayPublish).toBe(false);
     expect(audit.maySell).toBe(false);
   }, 120_000);
+
+  it('separates a changed T8 observation channel from semantic meaning and actual Korean copy', () => {
+    const cohort = runNatalS6QualityRegression();
+    const selected = cohort.cases.find(c => c.domains.some(d => d.sections.length));
+    expect(selected).toBeDefined();
+    const domain = selected!.domains.find(d => d.sections.length)!;
+    const section = domain.sections[0]!;
+    const base = buildNatalS6MeaningAndEvidenceSignatures([{
+      ...domain, sections: [section],
+    }]);
+    const swappedChannel = section.channel === 'branches' ? 'visible_stems' : 'branches';
+    const swapSuffix = swappedChannel === 'branches' ? '_BRANCHES' : '_VISIBLE_STEMS';
+    const changed = {
+      ...section,
+      channel: swappedChannel,
+      claimType: section.claimType.replace(/_(BRANCHES|VISIBLE_STEMS)$/u, swapSuffix),
+      ruleId: 'RULE-' + section.claimType.replace(/_(BRANCHES|VISIBLE_STEMS)$/u, swapSuffix),
+      factPaths: section.factPaths.map(p =>
+        p.replace(/\\.(stem|branch)\\.value$/u,
+          swappedChannel === 'branches' ? '.branch.value' : '.stem.value')),
+      positions: section.positions.map(p => p + ' (표시 근거 변화)'),
+      paragraph: section.paragraph + ' 관측 설명 문구 변화',
+    };
+    const evidenceChanged = buildNatalS6MeaningAndEvidenceSignatures([{
+      ...domain, sections: [changed],
+    }]);
+    expect(evidenceChanged.meaningSignature).toEqual(base.meaningSignature);
+    expect(evidenceChanged.evidenceSignature).not.toEqual(base.evidenceSignature);
+    expect(evidenceChanged.wordingSignature).not.toEqual(base.wordingSignature);
+    const changedAxis = buildNatalS6MeaningAndEvidenceSignatures([{
+      ...domain, sections: [{ ...section, axis: section.axis + '_different' }],
+    }]);
+    expect(changedAxis.meaningSignature).not.toEqual(base.meaningSignature);
+    const changedSource = buildNatalS6MeaningAndEvidenceSignatures([{
+      ...domain, sections: [{ ...section, sourceIds: [...section.sourceIds, 'source-only-comparison'] }],
+    }]);
+    expect(changedSource.meaningSignature).not.toEqual(base.meaningSignature);
+    expect(() => buildNatalS6MeaningAndEvidenceSignatures([{
+      ...domain, sections: [{ ...section, ruleId: 'RULE-FORGED' }],
+    }])).toThrow('source-issued T8');
+  });
 });
