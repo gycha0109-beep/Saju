@@ -291,6 +291,9 @@ export function buildApprovedDomainMultifactorContextV1(
     }
   }
   if (candidates.length === 0) return undefined;
+  // Show every independently admitted meaning axis. An arbitrary first-three
+  // presentation cap withheld valid source-owned explanations from the reading.
+  // Duplicates of a semantic axis still collapse to one preferred Claim.
   // Different already-approved meaning axes, not a ranking of people or menus.
   candidates.sort((a, b) =>
     b.familyCount - a.familyCount ||
@@ -303,7 +306,6 @@ export function buildApprovedDomainMultifactorContextV1(
     if (usedAxes.has(candidate.axis)) continue;
     usedAxes.add(candidate.axis);
     selected.push(candidate);
-    if (selected.length === 3) break;
   }
   const label = domain === 'wealth' ? '재물'
     : domain === 'business' ? '사업' : '연애·관계';
@@ -314,7 +316,7 @@ export function buildApprovedDomainMultifactorContextV1(
       '다음 내용은 이미 허용된 복합 해석의 원문 요지에 실제 명식의 근거 위치를 연결한 것입니다. ' +
       '한 가지 십신의 존재만으로 얻은 결론이 아니며, ' +
       '금전 규모·사업 성패·특정 상대의 속성·궁합·관계 결과나 등급을 예측하지 않습니다. ' +
-      '여기 표시하지 않은 다른 해석은 원래 항목에 그대로 남아 있습니다.',
+      '출처와 계산 근거가 확인된 의미축을 각각 원래 항목에 연결하며, 다른 해석은 원래 항목에 그대로 남아 있습니다.',
     perspectives: selected.map(item => ({
       explainabilityRef: item.explainabilityRef,
       headline: item.approvedHeadline,
