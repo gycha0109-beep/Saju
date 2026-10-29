@@ -1,4 +1,6 @@
 import type { EarthlyBranch, PillarSlot } from '../contracts/calculation.js';
+import { buildAnnualPrimaryWitnessIdentityContext } from
+  './annual-primary-witness-identity-context.js';
 import type { GeneralAnnualMonthlyExplorationReport } from './general-annual-monthly-exploration-report.js';
 import type { LifeStageDayunResearchReport } from './life-stage-dayun-research-report.js';
 
@@ -15,7 +17,8 @@ export type TemporalResearchMeaning =
 export interface TemporalResearchMenuSection {
   title: string;
   text: string;
-  evidenceKind: 'annual_research_profile' | 'monthly_t9_research_claim' | 'canonical_dayun_fact';
+  evidenceKind: 'annual_research_profile' | 'annual_primary_relation_witness' |
+    'monthly_t9_research_claim' | 'canonical_dayun_fact';
   /** Monthly claim ID is only an internal research Claim, not Official authority. */
   claimId?: string;
   researchProfileKey?: string;
@@ -216,7 +219,9 @@ export function buildTemporalResearchMenuReadings(
     targetMonth: joined.targetMonth,
     timeZone: 'Asia/Seoul' as const,
   };
-  const annual = joined?.annual.sections.filter(section =>
+  const primaryWitness = joined === undefined ? undefined
+    : buildAnnualPrimaryWitnessIdentityContext(joined);
+  const annualProfiles = joined?.annual.sections.filter(section =>
     section.text.trim().length > 0).map(section => ({
       title: section.title,
       text: section.text,
@@ -237,6 +242,16 @@ export function buildTemporalResearchMenuReadings(
         },
       } : {}),
     })) ?? [];
+  const annual = [
+    ...annualProfiles,
+    ...(primaryWitness === undefined ? [] : [{
+      title: '고전 직접 원문과 일치하는 십신 관계 · 운세 결론 아님',
+      text: primaryWitness.text + ' 원문: ' + primaryWitness.historicalPassage,
+      evidenceKind: 'annual_primary_relation_witness' as const,
+      sourceIds: [primaryWitness.exactSourceCandidateId],
+      factPaths: [...primaryWitness.calculatedFactPaths],
+    }]),
+  ];
   const monthly = joined?.monthly.sections.filter(section =>
     section.text.trim().length > 0 &&
     section.sourceIds.length > 0 &&
