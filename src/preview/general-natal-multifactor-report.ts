@@ -1,5 +1,5 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
-import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { selectSourceBoundNatalCore } from './natal-independent-supporting-axes.js';
 import { selectOverlappingNatalT8Perspectives } from './natal-overlapping-t8-perspectives.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -53,6 +53,9 @@ export interface GeneralNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly GeneralNatalMultifactorSection[];
+  /** Original source-issued preferred core if a different eligible T8 core yields
+   * genuinely independent observed support; never counted as a fourth MUR axis. */
+  displacedOriginalCore?: GeneralNatalMultifactorSection;
   /** Existing independently issued T8 perspective on already consumed facts. Not extra support. */
   overlappingPerspectives?: readonly (GeneralNatalMultifactorSection & {
     overlapsSelectedFactPaths: readonly string[];
@@ -331,11 +334,9 @@ export function buildGeneralNatalMultifactorReport(
     : [];
   // Prefer the 3-input core. When not observed, a narrower two-input core can
   // still be rendered, but completion needs two OTHER independently grounded axes.
-  const core = result.find(s => s.axis === 'core') ??
-    result.find(s => s.axis === 'expression') ??
-    result.find(s => s.axis === 'response') ??
-    result.find(s => s.axis === 'responsibility');
-  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
+  const coreChoice = selectSourceBoundNatalCore(result, ['core', 'expression', 'response', 'responsibility']);
+  const core = coreChoice.core;
+  const supportSelection = coreChoice.supports;
   const chosen: GeneralNatalMultifactorSection[] = core
     ? [core, ...(supportSelection?.supporting ?? [])] : [];
   // Tension-only source-qualified T8 is useful partial evidence, but never
@@ -375,6 +376,9 @@ export function buildGeneralNatalMultifactorReport(
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)) +
       (readingGuide === undefined ? '' : ' ' + readingGuide.paragraph),
     sections,
+    ...(coreChoice.displacedCore === undefined ? {} : {
+      displacedOriginalCore: coreChoice.displacedCore,
+    }),
     ...(overlappingPerspectives.length === 0 ? {} : { overlappingPerspectives }),
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
