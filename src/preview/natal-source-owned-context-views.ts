@@ -78,8 +78,11 @@ export function collectExistingNatalT8Views<T extends OriginalNatalT8Section>(
   }
   const original = report.displacedOriginalCore;
   if (original !== undefined) {
+    const eligibleOriginalAxes = domain === 'general'
+      ? ['core', 'expression', 'response', 'responsibility']
+      : ['core', 'expression', 'boundaries', 'reception'];
     if (report.state !== 'complete' || report.sections.length !== 3 ||
-        original.axis !== 'core') {
+        !eligibleOriginalAxes.includes(original.axis)) {
       throw new TypeError('Displaced source T8 can only be retained after independently complete selection.');
     }
     validate(original);
