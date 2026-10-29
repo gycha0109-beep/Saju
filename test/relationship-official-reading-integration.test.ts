@@ -319,13 +319,18 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       expect(JSON.stringify(rejected)).not.toContain('승인되지 않은 관계 결론');
       expect(JSON.stringify(rejected)).not.toContain(originalHeadline);
 
+      const directSourceId = focusedUnit.upstreamClaimRefs
+        .map(claimId => semantics.units.find(unit => unit.claimId === claimId)?.unitId)
+        .find((id): id is string => id !== undefined);
+      expect(directSourceId).toBeDefined();
       const brokenBinding = {
         ...plan,
         sections: plan.sections.map(section => ({
           ...section,
           primaryEvidenceBindings: section.primaryEvidenceBindings.map(binding =>
             binding.primaryUnitRef === targetUnitId
-              ? { ...binding, supportingUnitRefs: binding.supportingUnitRefs.slice(1) }
+              ? { ...binding, supportingUnitRefs: binding.supportingUnitRefs.filter(
+                  ref => ref !== directSourceId) }
               : binding,
           ),
         })),
