@@ -287,6 +287,59 @@ describe('Product Reading Consumer Transport Response', () => {
     expect(JSON.stringify(response)).not.toContain('"type":"insights"');
   });
 
+  it('does not transport a qualifier-only insight as a consumer meaning paragraph', () => {
+    const source = artifact();
+    const fixture: ReadingArtifact = {
+      ...source,
+      sections: source.sections.map(section => ({
+        ...section,
+        blocks: [{
+          type: 'insights',
+          items: [{
+            headline: ' ',
+            summary: '',
+            qualifiers: ['해석 범위의 한계만 존재합니다.'],
+            explainabilityRef: 'explainability-ref-secret',
+          }],
+        }],
+      })),
+    };
+    const response = buildProductReadingResponse(delivered({ artifact: fixture }));
+    expect(response.reading?.sections[0]?.blocks).toEqual([]);
+    expect(JSON.stringify(response)).not.toContain('해석 범위의 한계만 존재합니다.');
+    expect(response.state).toBe('delivered');
+  });
+
+  it('keeps each real approved insight while excluding blank and qualifier-only list entries', () => {
+    const source = artifact();
+    const fixture: ReadingArtifact = {
+      ...source,
+      sections: source.sections.map(section => ({
+        ...section,
+        blocks: [{
+          type: 'insights',
+          items: [
+            { headline: '첫 번째 근거', summary: '첫 번째 해석 원문',
+              qualifiers: ['근거 범위 한정'], explainabilityRef: 'explainability-ref-secret' },
+            { qualifiers: ['해석 본문 없는 한계'], explainabilityRef: 'explainability-ref-secret' },
+            { headline: ' ', summary: '\t',
+              explainabilityRef: 'explainability-ref-secret' },
+            { headline: '두 번째 근거', summary: '두 번째 해석 원문',
+              explainabilityRef: 'explainability-ref-secret' },
+          ],
+        }],
+      })),
+    };
+    const response = buildProductReadingResponse(delivered({ artifact: fixture }));
+    expect(response.reading?.sections[0]?.blocks).toEqual([{
+      type: 'key_points',
+      items: ['첫 번째 근거\n첫 번째 해석 원문\n근거 범위 한정',
+        '두 번째 근거\n두 번째 해석 원문'],
+    }]);
+    expect(JSON.stringify(response)).not.toContain('해석 본문 없는 한계');
+    expect(JSON.stringify(response)).not.toContain('explainability-ref-secret');
+  });
+
   it('copies clarification candidates into transport-owned scalar option shapes', () => {
     const response = buildProductReadingResponse(
       delivered({
