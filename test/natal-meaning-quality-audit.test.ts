@@ -20,7 +20,7 @@ async function realReading(date: string, time: string | null): Promise<ProductRe
 }
 
 describe('N6 semantic differentiation separate from calculated fact fingerprints', () => {
-  it('detects a genuine repeated interpretation even when the delivered consumer prose is unique', async () => {
+  it('retains source-owned T8 interpretation distinctions after stripping only N5/N7 calculated passages', async () => {
     const [early, evening, repeated, unknown] = await Promise.all([
       realReading('1984-01-07', '00:30'),
       realReading('1984-01-07', '19:30'),
@@ -40,24 +40,29 @@ describe('N6 semantic differentiation separate from calculated fact fingerprints
       realConsumerCaseCount: 4,
       distinctDisplayedCharts: 2,
       consumerTextUnique: 2,
-      meaningTextUnique: 1,
+      meaningTextUnique: 2,
       actualRepeatedConsumerPairs: 0,
-      repeatedMeaningPairs: 2,
-      pairsSeparatedOnlyByCalculatedFacts: 2,
+      repeatedMeaningPairs: 0,
+      pairsSeparatedOnlyByCalculatedFacts: 0,
       semanticCompletionGranted: false,
       mayPublish: false,
       maySell: false,
     });
-    expect(quality.factOnlySeparatedCasePairs).toEqual([
-      { left: 'a', right: 'b' },
-      { left: 'b', right: 'duplicate' },
-    ]);
+    expect(quality.factOnlySeparatedCasePairs).toEqual([]);
     expect(meaning.cases.find((item) => item.caseId === 'unknown-hour')
       ?.interpretationFingerprint).toBeUndefined();
     expect(consumer.cases.find((item) => item.caseId === 'a')?.interpretationFingerprint)
       .not.toBe(consumer.cases.find((item) => item.caseId === 'b')?.interpretationFingerprint);
-    expect(meaning.cases.find((item) => item.caseId === 'a')?.interpretationFingerprint)
-      .toBe(meaning.cases.find((item) => item.caseId === 'b')?.interpretationFingerprint);
+    const earlyMeaning = meaning.cases.find((item) => item.caseId === 'a');
+    const eveningMeaning = meaning.cases.find((item) => item.caseId === 'b');
+    expect(earlyMeaning?.interpretationFingerprint)
+      .not.toBe(eveningMeaning?.interpretationFingerprint);
+    expect(earlyMeaning?.interpretationParagraphs.some((paragraph, index) =>
+      paragraph !== eveningMeaning?.interpretationParagraphs[index])).toBe(true);
+    expect(earlyMeaning?.interpretationFingerprint).toBe(
+      meaning.cases.find((item) => item.caseId === 'duplicate')?.interpretationFingerprint,
+    );
+    expect(quality.casesWithoutMeaning).toContain('unknown-hour');
   });
 
   it('cannot hide arbitrary interpretation or duplicated factual context behind a marker', async () => {
