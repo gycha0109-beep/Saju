@@ -63,7 +63,8 @@ describe('S6 real-chart Korean meaning and contrast quality regression', () => {
     const base = buildNatalS6MeaningAndEvidenceSignatures([{
       ...domain, sections: [section],
     }]);
-    const swappedChannel = section.channel === 'branches' ? 'visible_stems' : 'branches';
+    const swappedChannel: typeof section.channel = section.channel === 'branches'
+      ? 'visible_stems' : 'branches';
     const swapSuffix = swappedChannel === 'branches' ? '_BRANCHES' : '_VISIBLE_STEMS';
     const changed = {
       ...section,
@@ -82,8 +83,10 @@ describe('S6 real-chart Korean meaning and contrast quality regression', () => {
     expect(evidenceChanged.meaningSignature).toEqual(base.meaningSignature);
     expect(evidenceChanged.evidenceSignature).not.toEqual(base.evidenceSignature);
     expect(evidenceChanged.wordingSignature).not.toEqual(base.wordingSignature);
+    const alternativeAxis: typeof section.axis = section.axis === 'core'
+      ? 'expression' : 'core';
     const changedAxis = buildNatalS6MeaningAndEvidenceSignatures([{
-      ...domain, sections: [{ ...section, axis: section.axis + '_different' }],
+      ...domain, sections: [{ ...section, axis: alternativeAxis }],
     }]);
     expect(changedAxis.meaningSignature).not.toEqual(base.meaningSignature);
     const changedSource = buildNatalS6MeaningAndEvidenceSignatures([{
