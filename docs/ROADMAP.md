@@ -72,10 +72,13 @@
 
 ### 2026-10-29: 공식 재물·사업·연애·관계 Reading의 승인 의미 누락 보완
 
-- **실제 사용자 문단 변경:** `src/reading/approved-domain-multifactor-context.ts`에서 동일 분야의 서로 다른 기존 승인 해석 축을 최대 3개로 잘라내던 표시 제한을 해제했다. `OfficialReadingPlan`에 실제 선택된 T8의 정확한 원문·방법론·직접 선행 십신·출처·명식 관찰 사실을 통과한 서로 다른 축은 원래 `explainabilityRef`의 Insight에 각각 연결한다. 새 Claim·T11·허용되지 않은 종합 결론을 생성하지 않는다.
+- **실제 사용자 문단 변경:** `src/reading/approved-domain-multifactor-context.ts`에서 동일 분야의 서로 다른 기존 승인 해석 축을 최대 3개로 잘라내던 표시 제한을 해제했다. `OfficialReadingPlan`에 실제 선택된 T8의 정확한 원문·방법론·직접 선행 십신·출처·명식 관찰 사실을 통과한 승인 결론은 주제축 중복 여부와 관계없이 원래 `explainabilityRef`의 Insight에 각각 연결한다. 새 Claim·T11·허용되지 않은 종합 결론을 생성하지 않는다.
 - **단일 계열과 복합 결론의 구분:** 기존 출처 승인 자료에 실제로 존재하는 1개 십신 계열 T8도 그 *기존 개별 결론*의 관찰 위치를 표시한다. 여러 가족 계열이 결합된 T8에서만 `복합 결론`·공통 천간/지지 채널 문구를 사용한다. 독립된 복합 근거가 없을 때 단일 계열 풀이를 전체 종합·성패·재무 전망으로 승격하지 않는다.
-- **관계 상세도 동일하게 복구:** `src/reading/approved-relationship-multifactor-overview.ts`에서 서로 다른 승인 관계 해석 축을 세 개로 잘라내던 제한을 제거하고, 실제 선택된 개수와 원래 출처 참조를 본문에 연결했다. 또한 공식 계획의 재귀 상위 근거를 직접 선행 십신 계열로 잘못 대조해 정상 T8 문단을 누락할 수 있었던 문제를 바로잡았다. 상세 풀이 요약 자체는 신규 관계 예측이나 독립 해석 권한을 생성하지 않는다.
+- **관계 상세도 동일하게 복구:** `src/reading/approved-relationship-multifactor-overview.ts`에서 서로 다른 승인 관계 해석 축을 세 개로 잘라내던 제한을 제거했다. 동일 주제축의 서로 다른 승인 T8도 원래 문단의 근거 설명을 제공하도록 했으며, 원래 출처 참조를 본문에 연결했다. 또한 공식 계획의 재귀 상위 근거를 직접 선행 십신 계열로 잘못 대조해 정상 T8 문단을 누락할 수 있었던 문제를 바로잡았다. 상세 풀이 요약 자체는 신규 관계 예측이나 독립 해석 권한을 생성하지 않는다.
 - **같은 주제 축의 서로 다른 기존 결론 보존:** `src/reading/approved-domain-multifactor-context.ts`에서 단순히 `management`·`values` 등 넓은 축이 같다는 이유만으로 기존 승인 T8 중 하나만 근거와 연결하던 제한을 제거했다. 원래 선택된 각 승인 Claim을 그 Claim의 설명 참조에만 연결하며, 동일 축의 복수 결론을 서로 독립적인 새 종합 근거로 중복 계산하지 않는다.
+- **승인된 설명 원문 연결:** `src/reading/approved-domain-multifactor-context.ts`는 기존 승인 프로필의 Claim별 한국어 설명(`approvedTextByRole.clarification`)을 일반 읽기에서 실제 십신 근거와 함께 출력한다. `src/reading/official-reading-renderer.ts`는 상세 읽기의 기존 승인 설명과 중복하지 않도록 추가 증거 문단만 붙인다. 원문·근거의 소유권과 공식 권한은 변경하지 않는다.
+- **12개 메뉴 실제 화면 오류 수정:** `src/host/twelve-menu-browser-app.ts`가 원래 공식 읽기의 `insights` 블록을 의미 문단으로 인지·표시하지 못해, 정상 승인 T8 출력이 있어도 메뉴를 미지원으로 보이게 하던 문제를 고쳤다. `headline`·`summary`·`qualifiers`를 텍스트로 표시하고, 한계 문구만 존재하는 블록은 의미 풀이 제공으로 판정하지 않는다. `test/twelve-menu-browser-insight-rendering.test.ts`에서 브라우저 스크립트와 응답을 연결하는 회귀 사례를 추가했다.
+- **실행 근거:** GitHub의 변경된 실제 브라우저 스크립트를 별도 V8 격리 실행 환경에서 모의 DOM·서버 응답과 함께 평가해 원국 5개 메뉴의 해석 제목·본문·한계 표시 및 한계만 있는 경우 비제공 판정을 직접 확인했다. 이는 별도 화면 구동 검증이지 전체 서버·엔진 실행이나 12개 실측이 아니다.
 - **검증 코드:** `test/business-official-reading-integration.test.ts`와 `test/relationship-official-reading-integration.test.ts`에서 출처 승인된 각 관점이 실제 한국어 Insight에 연결되는지, 단일 계열과 복합 해석이 혼동되지 않는지, 상세 관계 풀이에 선택된 출처 있는 관점이 누락되지 않는지를 추가 검사한다. **DESKTOP-6C3L8O4 원격 실행 환경은 오프라인으로, 변경 후 `typecheck`·Vitest 실행은 아직 하지 못했다. 따라서 PASS나 12메뉴 해석 완료로 보고하지 않는다.**
 - **다음 작업:** 12개 동등 메뉴별 승인 범위 안에서 실제 해석 본문과 지원 누락을 계속 개선한다. T9/T10/T11 및 관계 종합의 보류 권한은 유지한다. 최종 PR/CI/병합은 전체 로드맵 완료 후 1회 수행한다.
 
