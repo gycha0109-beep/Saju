@@ -256,6 +256,9 @@ describe('Product Reading Delivery Contract', () => {
     ['언제 결혼할까요?', '결혼·이혼의 발생이나 결과', '현재 역할과 비교할 선택지'],
     ['건강은 괜찮을까요?', '건강·질병·수명', '현재 역할과 비교할 선택지'],
     ['어떻게 하면 좋을까요?', '어떤 주제의 어떤 상황', '두 명식이 있어도'],
+    ['창업 아이디어를 받아들이는 기준이 궁금해요', '사업 질문은', '가족에 관한 질문'],
+    ['아이와 대화가 어려워요', '가족에 관한 질문', '현재 역할과 비교할 선택지'],
+    ['딸기 가게 창업을 고민해요', '사업 질문은', '가족에 관한 질문'],
   ])('keeps question-specific missing context in the actual response: %s', async (question, expected, absent) => {
     const delivery = await execute('질문: ' + question, []);
     const response = buildProductReadingResponse(delivery);

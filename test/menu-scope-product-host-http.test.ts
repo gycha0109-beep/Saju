@@ -55,6 +55,7 @@ describe('actual product host request-scoped missing evidence', () => {
     ['질문: 내년 창업하면 성공할까요?', '조회할 연도·월'],
     ['질문: 어머니와 대화를 어떻게 해야 할까요?', '부모·자녀 중 누구와의 관계'],
     ['질문: 그 사람과 궁합이 좋을까요?', '상대방의 출생정보'],
+    ['질문: 창업 아이디어를 받아들이는 기준은?', '사업 질문은'],
   ])('preserves an open question without inheriting natal evidence: %s', async (text, expected) => {
     const response = await request(text, '1998-08-18', null);
     expect(response.state).toBe('insufficient_evidence');
