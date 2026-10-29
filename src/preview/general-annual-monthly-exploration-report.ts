@@ -1,4 +1,6 @@
 import type { CanonicalSajuSnapshot, HeavenlyStem, PillarSlot, TenGod } from '../contracts/calculation.js';
+import { buildAnnualPrimaryWitnessIdentityContext } from
+  './annual-primary-witness-identity-context.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
@@ -291,6 +293,17 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '</p></details></article>'
   ).join('');
   const structural = report.observedStructuralContext;
+  const primaryWitness = buildAnnualPrimaryWitnessIdentityContext(report);
+  const primaryWitnessHtml = primaryWitness === undefined ? '' :
+    '<article class="reading-card"><small>고전 원문으로 확인한 정확한 관계 이름 · 연구</small>' +
+    '<p>' + e(primaryWitness.text) + '</p>' +
+    '<details><summary>직접 확인한 원문·출처·계산</summary><p>' +
+    e(primaryWitness.historicalPassage) + '</p><p>' +
+    e(primaryWitness.exactSourceCandidateId) + ' · PDF ' +
+    primaryWitness.sourcePdfPageOneBased + '쪽</p><p>' +
+    e(primaryWitness.sourceLocator) + '</p><p>' +
+    e(primaryWitness.calculatedFactPaths.join(' · ')) +
+    '</p></details></article>';
   const dayStem = structural.natalDayStem ?? '미확정';
   const yearFacts = '원국 일간 ' + dayStem + ' · 서울 달력연도 표시용 간지 ' +
     structural.annualPillarLabel + ' · 해당 연간 천간과 일간의 십신 관계 ' +
@@ -413,7 +426,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     currentConditionalFact + '</section>' +
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
     '<p class="muted" id="reference-year-context">' + e(annualContext) + '</p>' +
-    '<p class="muted">' + e(yearFacts) + '</p>' + annual + '</section>' +
+    '<p class="muted">' + e(yearFacts) + '</p>' + primaryWitnessHtml +
+    annual + '</section>' +
     '<section id="monthly-reading"><h2>' + e(report.monthly.headline) + '</h2>' +
     '<p>' + e(report.periodComparison) + '</p>' +
     '<p class="muted">' + e(report.monthly.jeolBoundary.name) + ' 절입: ' +
