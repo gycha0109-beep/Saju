@@ -302,6 +302,10 @@ function insightCompatibilityBlocks(
     const headline = item.headline === undefined ? undefined : redact(item.headline);
     const summary = item.summary === undefined ? undefined : redact(item.summary);
     const qualifiers = (item.qualifiers ?? []).map((qualifier) => redact(qualifier));
+    // A scope-only qualifier is not the Claim's actual Korean interpretation.
+    // Keep the existing response-v2 compatibility shape, but never materialize
+    // qualifier-only or blank source units as a delivered meaning paragraph.
+    if (!(headline?.trim() || summary?.trim())) return [];
     const semanticBlocks: ProductReadingResponseBlock[] =
       headline === undefined && summary === undefined
         ? []
@@ -320,20 +324,21 @@ function insightCompatibilityBlocks(
     ];
   }
 
-  return [
-    {
-      type: 'key_points',
-      items: block.items.map((item) =>
-        [
-          ...(item.headline === undefined ? [] : [redact(item.headline)]),
-          ...(item.summary === undefined || item.summary === item.headline
-            ? []
-            : [redact(item.summary)]),
-          ...(item.qualifiers ?? []).map((qualifier) => redact(qualifier)),
-        ].join('\n'),
-      ),
-    },
-  ];
+  const materializedItems = block.items.flatMap((item) => {
+    const headline = item.headline === undefined ? undefined : redact(item.headline);
+    const summary = item.summary === undefined ? undefined : redact(item.summary);
+    if (!(headline?.trim() || summary?.trim())) return [];
+    const lines = [
+      ...(headline?.trim() ? [headline] : []),
+      ...(summary?.trim() && summary !== headline ? [summary] : []),
+      ...(item.qualifiers ?? []).map(qualifier => redact(qualifier))
+        .filter(text => text.trim().length > 0),
+    ];
+    return [lines.join('\n')];
+  });
+  return materializedItems.length === 0
+    ? []
+    : [{ type: 'key_points', items: materializedItems }];
 }
 
 function readingBlocks(
