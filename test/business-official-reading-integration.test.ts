@@ -15,6 +15,8 @@ import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
 import { buildApprovedDomainMultifactorContextV1 } from '../src/reading/approved-domain-multifactor-context.js';
+import { BUSINESS_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from '../src/reading/official-reading-detailed-presentation-business.js';
+import { WEALTH_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from '../src/reading/official-reading-detailed-presentation-wealth.js';
 import { buildOfficialReadingCharacterGroundingV1 } from '../src/reading/official-reading-reader-parity.js';
 import { assembleOfficialReadingArtifactV1 } from '../src/reading/official-reading-artifact.js';
 import { buildProductReadingResponse } from '../src/reading/product-reading-response.js';
@@ -240,11 +242,25 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
     expect(allApprovedItems.some(item => item.summary?.includes(
       '단일 계열 해석에 사용된 실제 십신과 관찰 위치'))).toBe(true);
     for (const perspective of approvedAxes!.perspectives) {
+      const source = report.explainability.entries.find(entry =>
+        entry.explainabilityRef === perspective.explainabilityRef);
+      const unit = semantics.units.find(candidate =>
+        candidate.unitId === source?.primaryUnitRefs?.[0]);
+      const approval = BUSINESS_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.find(profile =>
+        profile.claimType === unit?.claimType);
+      expect(approval?.approvedTextByRole.clarification).toBeDefined();
+      expect(perspective.text).toContain(approval!.approvedTextByRole.clarification);
       expect(allApprovedItems.some(item =>
         item.explainabilityRef === perspective.explainabilityRef &&
         item.summary?.includes(perspective.headline) &&
         item.summary?.includes(perspective.text))).toBe(true);
     }
+    const detailedBusinessEvidence = buildApprovedDomainMultifactorContextV1(
+      semantics, plan, report.explainability.entries, 'detailed');
+    expect(detailedBusinessEvidence?.perspectives).toHaveLength(approvedAxes!.perspectives.length);
+    expect(detailedBusinessEvidence!.perspectives.every(item =>
+      item.text.includes('실제 십신') &&
+      !item.text.includes('승인된 상세 설명:'))).toBe(true);
     expect(contextualized.every(item =>
       (item.explainabilityRef?.length ?? 0) > 0 && (
         item.summary?.includes('지지 대표 십신') === true ||
@@ -396,10 +412,24 @@ describe('Wealth approved composite reading remains grounded in real selected cl
     expect(allWealthContextItems.some(item => item.summary?.includes(
       '단일 계열 해석에 사용된 실제 십신과 관찰 위치'))).toBe(true);
     for (const perspective of approvedWealthAxes!.perspectives) {
+      const source = report.explainability.entries.find(entry =>
+        entry.explainabilityRef === perspective.explainabilityRef);
+      const unit = semantics.units.find(candidate =>
+        candidate.unitId === source?.primaryUnitRefs?.[0]);
+      const approval = WEALTH_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.find(profile =>
+        profile.claimType === unit?.claimType);
+      expect(approval?.approvedTextByRole.clarification).toBeDefined();
+      expect(perspective.text).toContain(approval!.approvedTextByRole.clarification);
       expect(allWealthContextItems.some(item =>
         item.explainabilityRef === perspective.explainabilityRef &&
         item.summary?.includes(perspective.text))).toBe(true);
     }
+    const detailedWealthEvidence = buildApprovedDomainMultifactorContextV1(
+      semantics, plan, report.explainability.entries, 'detailed');
+    expect(detailedWealthEvidence?.perspectives).toHaveLength(approvedWealthAxes!.perspectives.length);
+    expect(detailedWealthEvidence!.perspectives.every(item =>
+      item.text.includes('실제 십신') &&
+      !item.text.includes('승인된 상세 설명:'))).toBe(true);
     expect(new Set(renderedContextItems.map(item => item.explainabilityRef)).size)
       .toBe(renderedContextItems.length);
     expect(text).not.toContain('netWorthAuthorized');
