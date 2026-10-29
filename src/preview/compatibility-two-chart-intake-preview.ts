@@ -55,7 +55,7 @@ export interface CompatibilityPersonalRelationshipReading {
     sourceIds: readonly string[];
     observedFactPaths: readonly string[];
     /** Independently issued T8 interpretation using previously selected facts. */
-    evidenceMode?: 'reused_calculated_paths';
+    evidenceMode?: 'reused_calculated_paths' | 'original_source_core';
   }[];
 }
 
