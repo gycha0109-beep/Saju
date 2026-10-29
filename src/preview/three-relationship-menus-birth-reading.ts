@@ -149,7 +149,10 @@ function renderHtml(
         ? '<p>이 사람의 별도 원국 T8 해석은 아직 근거가 부족합니다.</p>'
         : personal.sections.map(section =>
           '<article><h5>' + e(section.headline) + '</h5><p>' +
-          e(section.paragraph) + '</p><details><summary>각자 원국의 출처</summary><p>' +
+          e(section.paragraph) + '</p>' +
+          (section.evidenceMode === undefined ? '' :
+            '<p>기존에 발행된 원국 T8의 별도 해석이며 부모·자녀 관계의 종합 근거가 아닙니다.</p>') +
+          '<details><summary>각자 원국의 출처</summary><p>' +
           e(section.sourceIds.join(' · ')) + '</p><p>' +
           e(section.factPaths.join(' · ')) +
           '</p></details></article>').join('')) + '</section>').join('') +
@@ -183,7 +186,10 @@ function renderHtml(
         '</p>' + (section.evidenceMode === 'reused_calculated_paths'
           ? '<p>이 사람의 다른 기존 T8 관점이며 이미 선택된 계산 근거를 반복합니다. ' +
             '두 사람의 궁합이나 상호작용 해석이 아닙니다.</p>'
-          : '') + '<details><summary>이 사람의 원국 연구 근거</summary><p>' +
+          : section.evidenceMode === 'original_source_core'
+            ? '<p>원래 중심 후보로 발행된 개인별 관계 T8 해석입니다. ' +
+              '해당 사람의 원국 의미일 뿐 두 사람의 궁합 근거가 아닙니다.</p>'
+            : '') + '<details><summary>이 사람의 원국 연구 근거</summary><p>' +
         e(section.sourceIds.join(' · ')) + '</p><p>' +
         e(section.observedFactPaths.join(' · ')) + '</p></details></article>').join('')
       : '<p>이 사람의 독립적인 출처 한정 관계 풀이가 부족합니다.</p>') +
