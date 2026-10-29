@@ -1,3 +1,5 @@
+import { buildInsufficientNatalT5Evidence, type InsufficientNatalT5Evidence } from
+  './natal-t5-insufficient-evidence.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -51,6 +53,8 @@ export interface CareerMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly CareerMultifactorReportSection[];
+  /** Existing matched T5 observations only, never new domain T8 meaning. */
+  insufficientT5Evidence?: InsufficientNatalT5Evidence;
   /** Additional exact, rule-verified T8 observations omitted from the MUR top-three.
    * These are not counted as independent MUR axes or proof of completeness.
    */
@@ -411,6 +415,10 @@ export function buildCareerMultifactorResearchReport(
     introduction: '실제 명식에서 관측된 서로 다른 십신 근거를 연결하여, 전통 명리에서 일을 읽는 구조적 관점을 정리했습니다. 심리 검사나 개인의 직업 운명을 확정하는 결과가 아닙니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections: shown,
+    ...(state === 'insufficient' && snapshot.completeness.birthTimeKnown ? {
+      insufficientT5Evidence: buildInsufficientNatalT5Evidence('career',
+        snapshot, execution, registry),
+    } : {}),
     additionalVerifiedSections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
     limitations: [
