@@ -221,6 +221,8 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
   }
   if (candidates.length === 0) return undefined;
 
+  // Preserve every source-admitted distinct relationship meaning axis. The
+  // previous first-three cap discarded independent approved source paragraphs.
   // Prefer independent interpretive axes; within an axis favor the larger
   // already-approved supporting family set, never an inferred score or rank.
   candidates.sort((left, right) =>
@@ -235,7 +237,6 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
     if (axes.has(candidate.axis)) continue;
     axes.add(candidate.axis);
     selected.push(candidate);
-    if (selected.length === 3) break;
   }
   const explainabilityRefs = selected.map(x => x.explainabilityRef);
   const idHash = deterministicContentHash({
@@ -258,7 +259,7 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
           (selected.length < 3
             ? ' 현재 확인된 서로 다른 관계 관점은 ' + selected.length +
               '개입니다. 다른 관점의 근거가 없으므로 이 요약만으로 관계 종합풀이의 완성을 뜻하지 않습니다.'
-            : ' 세 관계 관점의 요약은 승인된 개별 풀이를 찾아 읽도록 돕는 것이며, 원국 전체의 최소 유효 해석 완료 판정과는 별개입니다.'),
+            : ' 서로 구별되는 ' + selected.length + '개 관계 관점의 요약은 승인된 개별 풀이를 찾아 읽도록 돕는 것이며, 원국 전체의 최소 유효 해석 완료 판정과는 별개입니다.'),
       },
       {
         type: 'comparison',
