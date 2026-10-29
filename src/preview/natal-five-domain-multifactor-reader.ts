@@ -133,6 +133,40 @@ function renderCareerReadingGuide(report: CareerMultifactorReport): string {
     '</p></section>';
 }
 
+/** Existing Career T8 clauses not promoted into the three-axis MUR. */
+function renderCareerAdditionalVerifiedSections(report: CareerMultifactorReport): string {
+  const additional = report.additionalVerifiedSections;
+  if (additional.length === 0) return '';
+  const types = new Set(report.sections.map(section => section.claimType));
+  const paths = new Set(report.sections.flatMap(section => section.calculatedFactPaths));
+  const items = additional.map(section => {
+    guard(!types.has(section.claimType) &&
+      section.claimType.startsWith('CAREER_NATAL_MULTIFACTOR_') &&
+      section.ruleId === 'RULE-' + section.claimType &&
+      section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
+      section.calculatedFactPaths.length >= 2 &&
+      section.calculatedFactPaths.length === section.calculatedPositions.length &&
+      section.calculatedFactPaths.some(path => !paths.has(path)) &&
+      section.paragraph.trim().length > 0,
+      'Career additional T8 must retain separately verified canonical evidence');
+    types.add(section.claimType);
+    section.calculatedFactPaths.forEach(path => paths.add(path));
+    return '<section class="additional-career-t8"><h4>' +
+      escapeHtml(section.headline) + '</h4><p>' +
+      escapeHtml(section.paragraph) + '</p><details>' +
+      '<summary>기존 T8 규칙·출처·계산 경로</summary><p>' +
+      escapeHtml(section.claimType + ' · ' + section.ruleId) + '</p><p>' +
+      escapeHtml(section.sourceIds.join(' · ')) + '</p><p>' +
+      escapeHtml(section.calculatedFactPaths.join(' · ')) +
+      '</p></details></section>';
+  }).join('');
+  return '<section aria-label="별도로 확인된 직업 T8 관점">' +
+    '<h3>추가로 읽을 수 있는 직업 관점</h3>' +
+    '<p>이 명식에서 기존 규칙이 발행했지만 첫 화면의 세 축에 포함되지 않은 ' +
+    '직업 연구 해석입니다. 새로운 종합 근거로 세거나 적성·성공·미래 결과를 단정하지 않습니다.</p>' +
+    items + '</section>';
+}
+
 function renderWealthReadingGuide(report: WealthNatalMultifactorReport): string {
   const guide = report.readingGuide;
   if (guide === undefined) return '';
@@ -485,6 +519,8 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
           report as GeneralNatalMultifactorReport | BusinessNatalMultifactorReport | RelationshipNatalMultifactorReport,
         )
       : '';
+  const additionalCareer = domain === 'career'
+    ? renderCareerAdditionalVerifiedSections(report as CareerMultifactorReport) : '';
   const details = firstMeaning === '' ? readingGuide + originalText
     : '<details class="full-claim-evidence"><summary>원국 풀이의 상세 설명·명식 근거와 출처</summary>' +
       readingGuide + originalText + '</details>';
@@ -492,7 +528,7 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
     '<p>' + escapeHtml(report.introduction) + '</p>' +
-    firstMeaning + overlapping + insufficientEvidence + details + missing +
+    firstMeaning + overlapping + additionalCareer + insufficientEvidence + details + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }
