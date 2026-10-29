@@ -85,7 +85,7 @@ describe('S6 real-chart Korean meaning and contrast quality regression', () => {
       claimType: section.claimType.replace(/_(BRANCHES|VISIBLE_STEMS)$/u, swapSuffix),
       ruleId: 'RULE-' + section.claimType.replace(/_(BRANCHES|VISIBLE_STEMS)$/u, swapSuffix),
       factPaths: section.factPaths.map(p =>
-        p.replace(/\\.(stem|branch)\\.value$/u,
+        p.replace(/\.(stem|branch)\.value$/u,
           swappedChannel === 'branches' ? '.branch.value' : '.stem.value')),
       positions: section.positions.map(p => p + ' (표시 근거 변화)'),
       paragraph: section.paragraph + ' 관측 설명 문구 변화',
