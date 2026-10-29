@@ -67,7 +67,7 @@ describe('exact original Ming Tai Sui witness on an actual calculated natal char
     const forged = {
       ...output.report,
       mayPublish: true as const,
-    };
+    } as unknown as typeof output.report;
     expect(() => buildAnnualPrimaryWitnessIdentityContext(forged))
       .toThrow('research-only');
     expect(output.monthlyMenu.authority.mayCallOfficial).toBe(false);
