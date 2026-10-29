@@ -221,9 +221,15 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
     const approvedAxes = buildApprovedDomainMultifactorContextV1(
       semantics, plan, report.explainability.entries);
     expect(approvedAxes).toBeDefined();
-    expect(contextualized.length).toBe(approvedAxes!.perspectives.length);
+    const allApprovedItems = report.sections.flatMap(section =>
+      section.blocks.flatMap(block => block.type === 'insights' ? block.items : []))
+      .filter(item => item.summary?.includes('실제 십신과 관찰 위치:') ||
+        item.summary?.includes('실제 십신 계열과 관찰 위치:'));
+    expect(allApprovedItems.length).toBe(approvedAxes!.perspectives.length);
+    expect(allApprovedItems.some(item => item.summary?.includes(
+      '단일 계열 해석에 사용된 실제 십신과 관찰 위치'))).toBe(true);
     for (const perspective of approvedAxes!.perspectives) {
-      expect(contextualized.some(item =>
+      expect(allApprovedItems.some(item =>
         item.explainabilityRef === perspective.explainabilityRef &&
         item.summary?.includes(perspective.headline) &&
         item.summary?.includes(perspective.text))).toBe(true);
