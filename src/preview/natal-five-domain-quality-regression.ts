@@ -1,4 +1,5 @@
 import type { BirthInput, CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import { buildSourceNatalMeaningSignatures } from './natal-source-meaning-signature.js';
 import { calculateCanonicalSajuSnapshot } from '../calculation/calculation-engine.js';
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../production/production-calculation-policy.js';
@@ -133,47 +134,19 @@ function reportDetails(reports: NatalFiveDomainMultifactorReports) {
     };
   });
 }
-/**
- * The source-owned semantic selection and the precise observed evidence are
- * separate signatures. Merely changing a pillar, channel or displayed
- * position must not inflate the number of distinct meanings. Source/rule
- * changes remain visible in evidence, while domain, claim semantics, axis,
- * pattern and source authority determine the admitted research meaning.
- */
+/** Source-issued claim meaning, consumed roles and Korean prose are separate. */
 export function buildNatalS6MeaningAndEvidenceSignatures(
   domains: ReturnType<typeof reportDetails>,
 ): {
   meaningSignature: readonly string[];
   evidenceSignature: readonly string[];
+  wordingSignature: readonly string[];
 } {
-  const meaningSignature: string[] = [];
-  const evidenceSignature: string[] = [];
-  for (const domain of domains) {
-    for (const section of domain.sections) {
-      requireEvidence(section.claimType.startsWith(domain.domain.toUpperCase() + '_NATAL_MULTIFACTOR_') &&
-        section.ruleId === 'RULE-' + section.claimType &&
-        section.sourceIds.length > 0 &&
-        section.positions.length === section.factPaths.length &&
-        section.factPaths.length >= 2,
-      domain.domain + ': invalid semantic/evidence signature provenance');
-      const semanticClaim = section.claimType.replace(/_(VISIBLE_STEMS|BRANCHES)$/u, '');
-      const sourceIds = [...new Set(section.sourceIds)].sort();
-      meaningSignature.push(JSON.stringify({
-        domain: domain.domain, semanticClaim, axis: section.axis,
-        pattern: section.pattern, sourceIds,
-      }));
-      evidenceSignature.push(JSON.stringify({
-        domain: domain.domain, claimType: section.claimType,
-        ruleId: section.ruleId, sourceIds,
-        observed: section.factPaths.map((path, index) => ({
-          path, position: section.positions[index],
-        })).sort((a, b) => a.path.localeCompare(b.path)),
-      }));
-    }
-  }
+  const result = buildSourceNatalMeaningSignatures(domains);
   return {
-    meaningSignature: meaningSignature.sort(),
-    evidenceSignature: evidenceSignature.sort(),
+    meaningSignature: result.claimMeaning,
+    evidenceSignature: result.evidenceRoles,
+    wordingSignature: result.wording,
   };
 }
 
@@ -187,6 +160,8 @@ export interface NatalS6AuditCase {
   meaningSignature: readonly string[];
   /** Exact selected Rule, channel and Canonical observation provenance. */
   evidenceSignature: readonly string[];
+  /** Actual Korean display copy, not authoritative semantic identity. */
+  wordingSignature: readonly string[];
   domains: ReturnType<typeof reportDetails>;
   html: string;
 }
@@ -262,13 +237,13 @@ export function runNatalS6QualityRegression(): {
           caseId + '/' + domain.domain + ': unknown birth hour must fail closed');
       }
     }
-    const { meaningSignature, evidenceSignature } =
+    const { meaningSignature, evidenceSignature, wordingSignature } =
       buildNatalS6MeaningAndEvidenceSignatures(domains);
     return {
       caseId, scenario, birth, snapshotId: snapshot.snapshotId,
       calculationHash: snapshot.calculationHash,
       structureSignature: exactStructure(snapshot),
-      meaningSignature, evidenceSignature, domains, html,
+      meaningSignature, evidenceSignature, wordingSignature, domains, html,
     };
   });
   const indexed = new Map(rows.map(row => [row.caseId, row]));
