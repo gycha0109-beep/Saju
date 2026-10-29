@@ -200,16 +200,37 @@ describe('one-person annual to monthly source-bound research reading', () => {
       referenceDateTime: '2025-12-31T15:00:00.000Z',
       civilYearAtReference: 2026,
       state: 'in_target_civil_year',
+      ipchunBoundary: {
+        status: 'resolved', referenceDateTime: '2025-12-31T15:00:00.000Z',
+        civilYear: 2026, effectiveYear: 2025,
+        effectivePillar: { stem: '을', branch: '사', cycleIndex: 41 },
+        ipchunAt: '2026-02-03T20:02:00.000Z',
+        position: 'before_ipchun', policy: 'ipchun_start_inclusive',
+      },
     });
     expect(beforeYear.report.annualReference).toEqual({
       referenceDateTime: '2025-12-31T14:59:59.999Z',
       civilYearAtReference: 2025,
       state: 'outside_target_civil_year',
+      ipchunBoundary: {
+        status: 'resolved', referenceDateTime: '2025-12-31T14:59:59.999Z',
+        civilYear: 2025, effectiveYear: 2025,
+        effectivePillar: { stem: '을', branch: '사', cycleIndex: 41 },
+        ipchunAt: '2025-02-03T14:10:00.000Z',
+        position: 'at_or_after_ipchun', policy: 'ipchun_start_inclusive',
+      },
     });
     expect(nextYear.report.annualReference).toEqual({
       referenceDateTime: '2026-12-31T15:00:00.000Z',
       civilYearAtReference: 2027,
       state: 'outside_target_civil_year',
+      ipchunBoundary: {
+        status: 'resolved', referenceDateTime: '2026-12-31T15:00:00.000Z',
+        civilYear: 2027, effectiveYear: 2026,
+        effectivePillar: { stem: '병', branch: '오', cycleIndex: 42 },
+        ipchunAt: '2027-02-04T01:46:00.000Z',
+        position: 'before_ipchun', policy: 'ipchun_start_inclusive',
+      },
     });
     // Year-specific original Korean profile is not rewritten by the clock.
     expect(inYear.report.annual.sections).toEqual(beforeYear.report.annual.sections);

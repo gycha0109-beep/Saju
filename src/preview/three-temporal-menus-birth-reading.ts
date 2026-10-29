@@ -1,4 +1,5 @@
 import type { BirthInput } from '../contracts/calculation.js';
+import { annualReferenceBoundaryText } from '../reading/annual-reference-boundary.js';
 import { buildAnnualPrimaryWitnessIdentityContext } from
   './annual-primary-witness-identity-context.js';
 import {
@@ -109,7 +110,8 @@ function render(
   const observedAnnual = '원국 일간 ' + (structural.natalDayStem ?? '미확정') +
     ' · 서울 달력연도 표시용 간지 ' + structural.annualPillarLabel +
     ' · 십신 관계 ' + structural.annualStemTenGod +
-    '. 이 내용은 계산된 관계 식별이며 운세 해석이나 사건 예측이 아닙니다.';
+    '. 이 내용은 계산된 관계 식별이며 운세 해석이나 사건 예측이 아닙니다. ' +
+    annualReferenceBoundaryText(annualReference.ipchunBoundary);
   const conditional = report.conditionalComposition;
   const linkedT9 = report.t9EvidenceLinks.existingT9ClaimLinks.map(link =>
     '<article><p>' + e(link.koreanExplanation) + '</p><details><summary>원본 T9 Claim·방법론</summary><p>' +

@@ -57,6 +57,8 @@ export interface TemporalResearchMenuReading {
   sections: readonly TemporalResearchMenuSection[];
   /** Exact same-chart structural identities for evidence display only; never additional T9 meaning. */
   observedStructuralContext?: GeneralAnnualMonthlyExplorationReport['observedStructuralContext'];
+  /** Civil year and exact Ipchun effective year remain separate calendar facts. */
+  annualReference?: GeneralAnnualMonthlyExplorationReport['annualReference'];
   /** Layered calendar / natal / Dayun relation matches with no interpreted outcome. */
   conditionalComposition?: GeneralAnnualMonthlyExplorationReport['conditionalComposition'];
   /** Links only to original research T9 IDs. It does not issue or promote Claims. */
@@ -369,6 +371,7 @@ export function buildTemporalResearchMenuReadings(
       // Month-scoped composition is not a full-year evidence claim.
       ...(joined === undefined ? {} : {
         observedStructuralContext: joined.observedStructuralContext,
+        annualReference: joined.annualReference,
       }),
       missing: joined === undefined
         ? ['연도 및 출생정보를 입력하고 연운 연구 풀이를 실행해야 합니다.']

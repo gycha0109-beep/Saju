@@ -3,6 +3,7 @@ import type { GeneralAnnualMonthlyExplorationReport } from
 import {
   buildGeneralAnnualAtomicSourceAcquisition,
 } from '../research/general-annual-atomic-semantic-source-acquisition.js';
+import { buildAnnualReferenceBoundary } from '../reading/annual-reference-boundary.js';
 
 export const ANNUAL_PRIMARY_WITNESS_IDENTITY_CONTEXT_VERSION =
   'myeongha-annual-primary-witness-identity-context-v1' as const;
@@ -46,10 +47,17 @@ export function buildAnnualPrimaryWitnessIdentityContext(
   const observed = report.observedStructuralContext;
   const day = observed.natalDayStem;
   const annualStem = observed.annualPillarLabel.slice(0, 1);
-  // A Gregorian year label is not itself the historical Ipchun-year pillar.
-  // Only March–December are admissible for this bounded identity comparison;
-  // January and February would require a separately verified boundary.
-  if (day !== '갑' || report.targetMonth < 3) return undefined;
+  // Compare only an in-month instant whose calculated Ipchun year is the
+  // target civil year. February after Ipchun can now be checked exactly;
+  // neither a previous effective year nor an out-of-month clock is inherited.
+  const boundary = buildAnnualReferenceBoundary(report.annualReference.referenceDateTime);
+  if (JSON.stringify(boundary) !== JSON.stringify(report.annualReference.ipchunBoundary)) {
+    throw new TypeError('Annual primary witness requires the exact calculated Ipchun boundary.');
+  }
+  if (day !== '갑' || boundary.status !== 'resolved' ||
+      boundary.effectiveYear !== report.targetYear ||
+      boundary.effectivePillar.stem !== annualStem ||
+      report.referenceReading.state === 'outside_target_month') return undefined;
   const example = annualStem === '경' && observed.annualStemTenGod === '편관'
     ? {
         tenGod: '편관' as const,
@@ -99,7 +107,7 @@ export function buildAnnualPrimaryWitnessIdentityContext(
     sourceLocator: String(source.sourceIdentity.locator),
     sourcePdfPageOneBased: source.acquisition.pdfPageOneBased,
     calculatedFactPaths: ['derivedFacts.dayMaster', 'temporal.annualPillar.stem',
-      'temporal.annualStemTenGod'],
+      'temporal.annualStemTenGod', 'annualReference.ipchunBoundary'],
     identityOnly: true,
     researchOnly: true,
     annualOutcomeAuthorized: false,

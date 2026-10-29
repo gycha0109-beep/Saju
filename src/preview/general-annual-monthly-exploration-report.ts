@@ -6,6 +6,9 @@ import type { InterpretationExecutionResult } from '../interpretation/interpreta
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import { buildAnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
 import {
+  buildAnnualReferenceBoundary, annualReferenceBoundaryText, type AnnualReferenceBoundary,
+} from '../reading/annual-reference-boundary.js';
+import {
   buildTemporalCompositionConditionalContext,
   type TemporalCompositionContext,
 } from './temporal-composition-conditional-context.js';
@@ -68,6 +71,7 @@ export interface GeneralAnnualMonthlyExplorationReport {
     referenceDateTime: string;
     civilYearAtReference: number;
     state: 'in_target_civil_year' | 'outside_target_civil_year';
+    ipchunBoundary: AnnualReferenceBoundary;
   };
   /** Shared with the exact single-month research result. */
   referenceReading: GeneralMonthlyExplorationReport['referenceReading'];
@@ -154,6 +158,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
   const annualReference = {
     referenceDateTime: referenceReading.referenceDateTime,
     civilYearAtReference,
+    ipchunBoundary: buildAnnualReferenceBoundary(referenceReading.referenceDateTime),
     state: civilYearAtReference === annual.targetYear
       ? 'in_target_civil_year' as const : 'outside_target_civil_year' as const,
   };
@@ -357,18 +362,21 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     : '';
   const annualAt = report.annualReference;
   if (annualAt.referenceDateTime !== selected.referenceDateTime ||
+      JSON.stringify(annualAt.ipchunBoundary) !== JSON.stringify(
+        buildAnnualReferenceBoundary(selected.referenceDateTime)) ||
       annualAt.civilYearAtReference !==
         new Date(Date.parse(selected.referenceDateTime) + 9 * 60 * 60 * 1000).getUTCFullYear() ||
       (annualAt.state === 'in_target_civil_year') !==
         (annualAt.civilYearAtReference === report.targetYear)) {
     throw new TypeError('Annual/monthly HTML requires matching civil-year reference context.');
   }
-  const annualContext = annualAt.state === 'in_target_civil_year'
+  const annualContext = (annualAt.state === 'in_target_civil_year'
     ? '조회 시각 ' + kst(annualAt.referenceDateTime) + '은 서울 달력 ' +
       report.targetYear + '년에 속합니다. 이 연운은 해당 선택 연도의 연구용 풀이입니다.'
     : '조회 시각 ' + kst(annualAt.referenceDateTime) + '은 서울 달력 ' +
       annualAt.civilYearAtReference + '년입니다. 아래 ' + report.targetYear +
-      '년 연운은 현재 연도에 적용되는 풀이가 아니라 선택한 연도의 연구 비교 자료입니다.';
+      '년 연운은 현재 연도에 적용되는 풀이가 아니라 선택한 연도의 연구 비교 자료입니다.') +
+      ' ' + annualReferenceBoundaryText(annualAt.ipchunBoundary);
   const focus = selected.state === 'in_period' && selected.theme !== undefined
     ? '<p class="muted">해당 절입 구간: ' + e(SEGMENT_LABEL[selected.segmentId!]) +
       ' · ' + e(kst(selected.theme.calculatedInterval.startsAt)) + '부터 ' +
