@@ -1219,7 +1219,14 @@ function renderOfficialReadingInternalV1(
     // Recompute only the presentation, never the Claim selection or authority.
     const standardReport = renderOfficialReadingInternalV1(
       bundle, plan,
-      { ...options, preferredDetail: undefined },
+      {
+        ...(options.sourceSummaries === undefined ? {} : {
+          sourceSummaries: options.sourceSummaries,
+        }),
+        ...(options.annualTemporalStructure === undefined ? {} : {
+          annualTemporalStructure: options.annualTemporalStructure,
+        }),
+      },
     );
     const standardByRef = new Map(standardReport.sections.flatMap(section =>
       section.blocks.flatMap(block => block.type === 'insights'
@@ -1241,9 +1248,28 @@ function renderOfficialReadingInternalV1(
                 if (standard?.summary === undefined ||
                     item.summary === undefined ||
                     item.summary.startsWith(standard.summary)) return item;
-                const additional = item.summary.split('\n\n')
+                const comparison = relationshipOverview?.blocks.find(block =>
+                  block.type === 'comparison');
+                const perspective = comparison?.type === 'comparison'
+                  ? comparison.perspectives.find(value =>
+                      value.explainabilityRef === item.explainabilityRef)
+                  : undefined;
+                // A relationship comparison is one indivisible source-owned
+                // paragraph, including embedded line breaks. Do not remove
+                // any of its content just because one sentence also appears
+                // in the standard Claim's narrower Korean explanation.
+                const perspectiveText = perspective === undefined ? undefined
+                  : perspective.label + '\n' + perspective.text;
+                const perspectiveOffset = perspectiveText === undefined
+                  ? -1 : item.summary.lastIndexOf(perspectiveText);
+                const prefix = perspectiveOffset < 0 ? item.summary
+                  : item.summary.slice(0, perspectiveOffset);
+                const additional = prefix.split('\n\n')
                   .filter(paragraph => paragraph.trim().length > 0 &&
                     !standard.summary!.includes(paragraph));
+                if (perspectiveOffset >= 0) {
+                  additional.push(item.summary.slice(perspectiveOffset));
+                }
                 return {
                   ...item,
                   summary: [standard.summary, ...additional].join('\n\n'),
