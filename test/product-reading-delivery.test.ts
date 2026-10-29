@@ -247,6 +247,27 @@ describe('Product Reading Delivery Contract', () => {
     expect(compat.consumerDiagnostics).toEqual(['target_person_required']);
   });
 
+  it.each([
+    ['지금 이직해야 할까요?', '현재 역할과 비교할 선택지', '가족에 관한 질문'],
+    ['내년 창업은 성공할까요?', '조회할 연도·월', '가족에 관한 질문'],
+    ['어머니와 대화가 어려운데 어떻게 해야 할까요?', '부모·자녀 중 누구와의 관계', '투자 매매 결정'],
+    ['그 사람과 궁합이 좋을까요?', '상대방의 출생정보', '합격·승진 결과'],
+    ['주식 투자로 돈을 벌까요?', '투자 매매 결정', '배우자궁의 위치'],
+    ['언제 결혼할까요?', '결혼·이혼의 발생이나 결과', '현재 역할과 비교할 선택지'],
+    ['건강은 괜찮을까요?', '건강·질병·수명', '현재 역할과 비교할 선택지'],
+    ['어떻게 하면 좋을까요?', '어떤 주제의 어떤 상황', '두 명식이 있어도'],
+  ])('keeps question-specific missing context in the actual response: %s', async (question, expected, absent) => {
+    const delivery = await execute('질문: ' + question, []);
+    const response = buildProductReadingResponse(delivery);
+    expect(response.state).toBe('insufficient_evidence');
+    expect(response.coverage?.explanation).toContain(expected);
+    expect(response.coverage?.explanation).not.toContain(absent);
+    expect(response.coverage?.explanation).toContain('답변 가능 여부를 보장하지 않습니다');
+    expect(response.reading).toBeUndefined();
+    expect(response.coverage?.hasAvailableEvidence).toBe(false);
+    expect(JSON.stringify(response)).not.toContain('T11');
+  });
+
   it('keeps delivery identity deterministic for the same governed execution result', async () => {
     const currentSnapshot = snapshot();
     const claims = [claim(currentSnapshot.snapshotId, 'family-parents-deterministic', 'T8', 'family', 'parents')];
