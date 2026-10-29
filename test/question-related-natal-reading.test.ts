@@ -291,6 +291,77 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
       .toThrow('alternate T8 must reuse only admitted selected facts');
   }, 30_000);
 
+  it('retrieves an original Career T8 axis left outside the first-screen summary', () => {
+    const prompts = {
+      execution: '직업에서 실행 관점이 궁금해요',
+      preparation: '직업에서 학습 관점이 궁금해요',
+      responsibility: '직업에서 책임 관점이 궁금해요',
+      tension: '직업에서 기준 조율 관점이 궁금해요',
+    } as const;
+    let found: { month: number; day: number; hour: number; axis: keyof typeof prompts } | undefined;
+    for (const month of [1, 3, 5, 7, 9, 11]) {
+      if (found) break;
+      for (const day of [3, 7, 11, 17, 23]) {
+        if (found) break;
+        for (const hour of [0, 6, 12, 18]) {
+          const chart = calculateCanonicalSajuSnapshot({
+            calendarType: 'solar', date: { year: 2024, month, day },
+            time: { known: true, hour, minute: 0 },
+            sexForTraditionalCalculation: 'unspecified',
+          }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+          const report = buildCareerMultifactorResearchReport(chart,
+            runInterpretation(chart, careerRegistry, { now: NOW }), careerRegistry);
+          const extra = report.additionalVerifiedSections.find(section =>
+            Object.hasOwn(prompts, section.axis) &&
+            !report.sections.some(selected => selected.axis === section.axis));
+          if (extra) {
+            found = { month, day, hour, axis: extra.axis as keyof typeof prompts };
+            break;
+          }
+        }
+      }
+    }
+    expect(found).toBeDefined();
+    if (!found) return;
+    const { snapshot, reports } = run(true, found.day, found.month, found.hour);
+    const source = reports.career.additionalVerifiedSections.find(section =>
+      section.axis === found!.axis);
+    expect(source).toBeDefined();
+    const current = buildQuestionRelatedNatalReading(
+      snapshot, question(prompts[found.axis]), reports);
+    expect(current.status).toBe('related_evidence');
+    expect(current.focusAxis).toBe(found.axis);
+    expect(current.sections).toHaveLength(1);
+    expect(current.sections[0]).toMatchObject({
+      title: source!.headline, paragraph: source!.paragraph,
+      claimType: source!.claimType, ruleId: source!.ruleId,
+      sourceIds: source!.sourceIds, factPaths: source!.calculatedFactPaths,
+      evidenceMode: 'preexisting_additional_t8',
+    });
+    const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, reports);
+    expect(html).toContain('추가로 읽을 수 있는 직업 관점');
+    expect(html).toContain(source!.headline);
+    expect(renderQuestionRelatedNatalReadingHtml(current))
+      .toContain('새로운 T11 답변이나 종합 완료 판정이 아닙니다');
+    expect(current.usefulComplete).toBe(false);
+    expect(current.mayPublish).toBe(false);
+    expect(current.maySell).toBe(false);
+    const forged = {
+      ...reports,
+      career: {
+        ...reports.career,
+        additionalVerifiedSections: reports.career.additionalVerifiedSections.map(section =>
+          section.claimType !== source!.claimType ? section : {
+            ...section, calculatedFactPaths: ['derivedFacts.tenGods.value.invalid.stem.value'],
+          }),
+      },
+    };
+    expect(() => buildQuestionRelatedNatalReading(snapshot,
+      question(prompts[found!.axis]), forged)).toThrow('unverified or repeated Career T8');
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(snapshot, forged))
+      .toThrow('Career additional T8 must retain separately verified canonical evidence');
+  }, 30_000);
+
   it('rejects forged question-only source paths when a secondary T8 is not admitted by the selected chart', () => {
     const { snapshot, reports } = run(true, 3, 1, 3);
     const original = reports.wealth.overlappingPerspectives!;
