@@ -10,6 +10,7 @@ import { createRelationshipNatalMultifactorRegistry } from
   '../research/relationship-natal-multifactor-candidate.js';
 import { buildRelationshipNatalMultifactorReport } from
   './relationship-natal-multifactor-report.js';
+import { collectExistingNatalT8Views } from './natal-source-owned-context-views.js';
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 
 import {
@@ -93,21 +94,14 @@ function individualRelationshipContext(
           JSON.stringify(section.observedFactPaths)))) {
     throw new TypeError('Individual T8 overlap is not sourced to its own unchanged person.');
   }
-  const sections = [
-    ...report.sections.map(section => ({
+  const sections = collectExistingNatalT8Views('relationship', report).map(
+    ({ section, evidenceMode }) => ({
       title: section.headline,
       paragraph: section.paragraph,
       sourceIds: [...section.sourceIds],
       observedFactPaths: [...section.observedFactPaths],
-    })),
-    ...alternatives.map(section => ({
-      title: section.headline,
-      paragraph: section.paragraph,
-      sourceIds: [...section.sourceIds],
-      observedFactPaths: [...section.observedFactPaths],
-      evidenceMode: 'reused_calculated_paths' as const,
-    })),
-  ];
+      ...(evidenceMode === undefined ? {} : { evidenceMode }),
+    }));
   return {
     personRef,
     snapshotId: snapshot.snapshotId,
