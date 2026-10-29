@@ -1167,6 +1167,11 @@ function renderOfficialReadingInternalV1(
       ? undefined
       : buildApprovedSpouseDayBranchContextV1(
           bundle, plan, explainabilityEntries,
+          sections.flatMap(section => section.blocks.flatMap(block =>
+            block.type === 'insights'
+              ? block.items.flatMap(item => item.explainabilityRef === undefined
+                ? [] : [item.explainabilityRef])
+              : [])),
         );
   if (spousePosition !== undefined) {
     for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
