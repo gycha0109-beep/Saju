@@ -39,20 +39,24 @@ export function buildAnnualPrimaryWitnessIdentityContext(
       report.annual.status !== 'not_official_reading' ||
       report.observedStructuralContext.interpretationAuthorityGranted ||
       report.annual.targetYear !== report.targetYear ||
-      report.monthly.targetYear !== report.targetYear) {
+      report.monthly.targetYear !== report.targetYear ||
+      report.annual.calendarPolicy !== 'civil_year_only') {
     throw new TypeError('Annual primary witness requires the exact research-only calculated report.');
   }
   const observed = report.observedStructuralContext;
   const day = observed.natalDayStem;
   const annualStem = observed.annualPillarLabel.slice(0, 1);
-  if (day !== '甲') return undefined;
-  const example = annualStem === '庚' && observed.annualStemTenGod === '편관'
+  // A Gregorian year label is not itself the historical Ipchun-year pillar.
+  // Only March–December are admissible for this bounded identity comparison;
+  // January and February would require a separately verified boundary.
+  if (day !== '갑' || report.targetMonth < 3) return undefined;
+  const example = annualStem === '경' && observed.annualStemTenGod === '편관'
     ? {
         tenGod: '편관' as const,
         passage: '歲君傷日者如庚剋甲日為偏官',
         text: '원국 일간 甲과 이 연도의 연간 庚이 계산됐습니다. 고전에서 庚이 甲을 극하는 관계를 偏官(편관)이라고 명시한 바로 그 사례에 해당합니다.',
       }
-    : annualStem === '戊' && observed.annualStemTenGod === '편재'
+    : annualStem === '무' && observed.annualStemTenGod === '편재'
       ? {
           tenGod: '편재' as const,
           passage: '日犯歲君如甲日剋戊年為偏財',
@@ -74,7 +78,7 @@ export function buildAnnualPrimaryWitnessIdentityContext(
       !('pdfPageOneBased' in source.acquisition) ||
       source.acquisition.pdfPageOneBased !== 25 ||
       !('examplesOnLeftLeaf' in source.acquisition) ||
-      !source.acquisition.examplesOnLeftLeaf.includes(example.passage) ||
+      !source.acquisition.examplesOnLeftLeaf.some(passage => passage === example.passage) ||
       acquired.atomicStemRelationAdjudication.production !== 'HOLD' ||
       acquired.authorityBoundary.production !== 'HOLD' ||
       decision?.identitySourceSupportGrade !== 'PRIMARY_SUPPORTED' ||
