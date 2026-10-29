@@ -158,6 +158,7 @@ function renderHtml(
   const spouseReport = spouse.report;
   const spouseHtml = '<article><h3>' + e(spouseReport.headline) + '</h3><p>' +
     e(spouseReport.observation) + '</p><p>' + e(spouseReport.summary) +
+    '</p><p>' + e(spouseReport.clarification) +
     '</p><p>' + e(spouseReport.boundary) +
     '</p><details><summary>승인된 위치 설명 출처</summary><p>' +
     e(spouseReport.dayPillarFactPath) + ' · ' +
