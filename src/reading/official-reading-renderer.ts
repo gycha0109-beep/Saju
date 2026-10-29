@@ -1082,14 +1082,16 @@ function renderOfficialReadingInternalV1(
     }
   }
 
-  // General T8 family themes are independent interpretations. Attach the
-  // actual person's channel-specific evidence only in the standard reading;
-  // detailed and concise readers already own distinct approved copy.
+  // General T8 themes are independently source-owned. Standard includes the
+  // already-approved clarification; detailed already has that text, so attach
+  // only the exact observed chart positions without repeating approved copy.
   const generalContext =
-    detailPreferenceResolution?.resolvedDetail === 'concise' ||
-    effectiveDetailedRealization !== undefined
+    detailPreferenceResolution?.resolvedDetail === 'concise'
       ? undefined
-      : buildApprovedGeneralThemeContextV1(bundle, plan, explainabilityEntries);
+      : buildApprovedGeneralThemeContextV1(
+          bundle, plan, explainabilityEntries,
+          effectiveDetailedRealization === undefined ? 'standard' : 'detailed',
+        );
   if (generalContext !== undefined) {
     const byRef = new Map(generalContext.perspectives.map(item =>
       [item.explainabilityRef, item.text] as const));
