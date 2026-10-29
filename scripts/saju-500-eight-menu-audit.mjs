@@ -15,6 +15,7 @@ import { buildWealthNatalMultifactorReport } from '../dist/preview/wealth-natal-
 import { buildBusinessNatalMultifactorReport } from '../dist/preview/business-natal-multifactor-report.js';
 import { buildRelationshipNatalMultifactorReport } from '../dist/preview/relationship-natal-multifactor-report.js';
 import { buildThreeTemporalMenusBirthReading } from '../dist/preview/three-temporal-menus-birth-reading.js';
+import { buildSourceNatalMeaningSignatures } from '../dist/preview/natal-source-meaning-signature.js';
 import {
   diagnoseMissingWealthReading,
   analyzeTemporalRepetition,
@@ -82,6 +83,28 @@ function natalEntry(report) {
     sections.length,
     'sourced_natal_research',
   );
+  // Preserve legacy meaningKey for fixed-seed historical comparisons. Never
+  // silently compare this new source-qualified schema to old baseline keys.
+  const qualified = buildSourceNatalMeaningSignatures([{
+    domain: report.version.replace(/^.*?-natal-/u, '').split('-')[0] || 'unknown',
+    sections: sections.map(section => ({
+      claimType: section.claimType,
+      pattern: section.pattern,
+      axis: section.axis,
+      channel: section.channel,
+      ruleId: section.ruleId,
+      ...(section.methodologyId === undefined ? {} : { methodologyId: section.methodologyId }),
+      sourceIds: section.sourceIds,
+      upstreamClaimIds: section.upstreamClaimIds,
+      factPaths: section.calculatedFactPaths ?? section.observedFactPaths ?? [],
+      paragraph: section.paragraph,
+    })),
+  }]);
+  row.sourceMeaningComponents = qualified.claimMeaning;
+  row.sourceMeaningSignature = digest(JSON.stringify(qualified.claimMeaning));
+  row.sourceEvidenceRoles = qualified.evidenceRoles;
+  row.sourceEvidenceRolesSignature = digest(JSON.stringify(qualified.evidenceRoles));
+  row.sourceWordingSignature = digest(JSON.stringify(qualified.wording));
   // A second, evidence-bound signature is deliberately kept distinct from
   // the legacy coarse profile. Exact birth identity/hash is NOT a meaning.
   row.evidenceComponents = sections.map(s => ({
@@ -367,6 +390,10 @@ function summarize(rows) {
     avgProseCharacters: nonEmpty.length ? Math.round(nonEmpty.reduce((n,r)=>n+r.text.length,0)/nonEmpty.length) : 0,
     exactText: tally(nonEmpty, 'exactKey'),
     meaningProfile: tally(nonEmpty, 'meaningKey'),
+    ...(nonEmpty.every(row => row.sourceMeaningSignature) ? {
+      sourceQualifiedMeaningProfile: tally(nonEmpty, 'sourceMeaningSignature'),
+      sourceEvidenceRolesProfile: tally(nonEmpty, 'sourceEvidenceRolesSignature'),
+    } : {}),
     ...(nonEmpty.every(row => row.evidenceSignature) ? {
       selectedEvidenceProfile: tally(nonEmpty, 'evidenceSignature'),
     } : {}),
@@ -464,6 +491,11 @@ export function runFiveHundredSajuAudit() {
           exactTextHash: row.exactKey,
           meaningSignature: row.meaningKey,
           consumedMeaning: row.meaningComponents,
+          sourceQualifiedMeaningSignature: row.sourceMeaningSignature ?? null,
+          sourceQualifiedMeaning: row.sourceMeaningComponents ?? null,
+          sourceEvidenceRolesSignature: row.sourceEvidenceRolesSignature ?? null,
+          sourceEvidenceRoles: row.sourceEvidenceRoles ?? null,
+          sourceWordingSignature: row.sourceWordingSignature ?? null,
           selectedEvidenceSignature: row.evidenceSignature ?? null,
           selectedEvidence: row.evidenceComponents ?? null,
           calculatedStructure: row.calculatedStructure ?? null,
