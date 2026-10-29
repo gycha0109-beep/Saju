@@ -68,6 +68,11 @@ const menus = MENU_NAMES.map(name => {
     beforeMeaningProfiles:before.menuResults[name].meaningProfile.unique,
     afterMeaningProfiles:summary.meaningProfile.unique,
     afterExactTexts:summary.exactText.unique,
+    // New S6 source-qualified metrics are NOT commensurable with a historical
+    // pre-S6 meaningKey; report current values but do not manufacture deltas.
+    afterSourceQualifiedMeaningProfiles:summary.sourceQualifiedMeaningProfile?.unique ?? null,
+    afterSourceEvidenceRolesProfiles:summary.sourceEvidenceRolesProfile?.unique ?? null,
+    sourceQualifiedBaselineComparable:false,
     calculatedStructureCoverage:summary.calculatedStructureCoverage??0,
     calculatedStructureVariants:summary.calculatedStructureProfiles?.unique??0,
     compositionCoverage:summary.compositionCoverage??0,
