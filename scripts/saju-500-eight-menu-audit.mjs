@@ -70,7 +70,7 @@ function entry(text, meaning, state, sectionCount, kind) {
     kind,
   };
 }
-function natalEntry(report) {
+function natalEntry(report, domain) {
   const sections = report.sections ?? [];
   const prose = sections.map(s => s.headline + '\n' + s.paragraph);
   if (report.readingGuide?.paragraph) prose.push(report.readingGuide.paragraph);
@@ -86,7 +86,7 @@ function natalEntry(report) {
   // Preserve legacy meaningKey for fixed-seed historical comparisons. Never
   // silently compare this new source-qualified schema to old baseline keys.
   const qualified = buildSourceNatalMeaningSignatures([{
-    domain: report.version.replace(/^.*?-natal-/u, '').split('-')[0] || 'unknown',
+    domain,
     sections: sections.map(section => ({
       claimType: section.claimType,
       pattern: section.pattern,
@@ -442,7 +442,7 @@ export function runFiveHundredSajuAudit() {
         rows[({
           general:'전체 사주', career:'직업·커리어', wealth:'재물',
           relationship:'연애·관계', business:'사업',
-        })[domain]].push({...natalEntry(report),birth:stamp,calculationHash:chartKey});
+        })[domain]].push({...natalEntry(report, domain),birth:stamp,calculationHash:chartKey});
         if (domain === 'wealth' && report.sections.length === 0) {
           wealthMissingCases.push(
             diagnoseMissingWealthReading(snapshot, interpretation, registry, report, stamp),
