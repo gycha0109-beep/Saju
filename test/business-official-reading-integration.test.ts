@@ -218,6 +218,16 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
       .filter(item => item.summary?.includes(
         '이 결론에 사용된 실제 십신 계열과 관찰 위치:'));
     expect(contextualized.length).toBeGreaterThan(0);
+    const approvedAxes = buildApprovedDomainMultifactorContextV1(
+      semantics, plan, report.explainability.entries);
+    expect(approvedAxes).toBeDefined();
+    expect(contextualized.length).toBe(approvedAxes!.perspectives.length);
+    for (const perspective of approvedAxes!.perspectives) {
+      expect(contextualized.some(item =>
+        item.explainabilityRef === perspective.explainabilityRef &&
+        item.summary?.includes(perspective.headline) &&
+        item.summary?.includes(perspective.text))).toBe(true);
+    }
     expect(contextualized.every(item =>
       (item.explainabilityRef?.length ?? 0) > 0 && (
         item.summary?.includes('지지 대표 십신') === true ||
@@ -347,7 +357,15 @@ describe('Wealth approved composite reading remains grounded in real selected cl
       section.blocks.flatMap(block => block.type === 'insights' ? block.items : []))
       .filter(item => item.summary?.includes('이 결론에 사용된 실제 십신 계열'));
     expect(renderedContextItems.length).toBeGreaterThan(0);
-    expect(renderedContextItems.length).toBeLessThanOrEqual(3);
+    const approvedWealthAxes = buildApprovedDomainMultifactorContextV1(
+      semantics, plan, report.explainability.entries);
+    expect(approvedWealthAxes).toBeDefined();
+    expect(renderedContextItems.length).toBe(approvedWealthAxes!.perspectives.length);
+    for (const perspective of approvedWealthAxes!.perspectives) {
+      expect(renderedContextItems.some(item =>
+        item.explainabilityRef === perspective.explainabilityRef &&
+        item.summary?.includes(perspective.text))).toBe(true);
+    }
     expect(new Set(renderedContextItems.map(item => item.explainabilityRef)).size)
       .toBe(renderedContextItems.length);
     expect(text).not.toContain('netWorthAuthorized');
