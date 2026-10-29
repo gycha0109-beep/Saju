@@ -9,6 +9,8 @@ import { runInterpretation } from '../interpretation/interpretation-engine.js';
 import { createGeneralNatalMultifactorRegistry } from
   '../research/general-natal-multifactor-candidate.js';
 import { buildGeneralNatalMultifactorReport } from './general-natal-multifactor-report.js';
+import { collectExistingNatalT8Views, type OriginalNatalEvidenceMode } from
+  './natal-source-owned-context-views.js';
 
 import {
   buildFamilyCanonicalObservationPreview,
@@ -149,6 +151,7 @@ export interface FamilyMemberBirthResearchReading {
       paragraph: string;
       sourceIds: readonly string[];
       factPaths: readonly string[];
+      evidenceMode?: OriginalNatalEvidenceMode;
     }[];
   };
   member: {
@@ -162,6 +165,7 @@ export interface FamilyMemberBirthResearchReading {
       paragraph: string;
       sourceIds: readonly string[];
       factPaths: readonly string[];
+      evidenceMode?: OriginalNatalEvidenceMode;
     }[];
   };
   familyMeaningStatus: 'family_t8_source_authority_not_established';
@@ -220,6 +224,7 @@ export function buildFamilyMemberBirthResearchReading(
         section.observedFactPaths.length < 2 || !section.paragraph.trim())) {
     throw new TypeError('Family subject natal T8 must match exactly its source family chart.');
   }
+  const subjectViews = collectExistingNatalT8Views('general', subjectReport);
   const subjectNatal = {
     personRef: ownerRef.trim(),
     snapshotId: subjectSnapshot.snapshotId,
@@ -228,10 +233,11 @@ export function buildFamilyMemberBirthResearchReading(
       ? 'bounded_natal_t8_research' as const
       : 'insufficient_evidence' as const,
     introduction: subjectReport.readingGuide?.paragraph ?? subjectReport.introduction,
-    sections: subjectReport.sections.map(section => ({
+    sections: subjectViews.map(({ section, evidenceMode }) => ({
       headline: section.headline, paragraph: section.paragraph,
       sourceIds: [...section.sourceIds],
       factPaths: [...section.observedFactPaths],
+      ...(evidenceMode === undefined ? {} : { evidenceMode }),
     })),
   };
   const snapshot = calculateAuthorizedMyeonghwaProductionSnapshot(memberBirth, { now }).snapshot;
@@ -248,12 +254,14 @@ export function buildFamilyMemberBirthResearchReading(
         section.observedFactPaths.length < 2)) {
     throw new TypeError('Family-member original natal T8 evidence is not independently grounded.');
   }
-  const sections = report.sections.map(section => ({
-    headline: section.headline,
-    paragraph: section.paragraph,
-    sourceIds: [...section.sourceIds],
-    factPaths: [...section.observedFactPaths],
-  }));
+  const sections = collectExistingNatalT8Views('general', report).map(
+    ({ section, evidenceMode }) => ({
+      headline: section.headline,
+      paragraph: section.paragraph,
+      sourceIds: [...section.sourceIds],
+      factPaths: [...section.observedFactPaths],
+      ...(evidenceMode === undefined ? {} : { evidenceMode }),
+    }));
   const member = {
     personRef: memberRef.trim(),
     snapshotId: snapshot.snapshotId,
@@ -273,7 +281,10 @@ export function buildFamilyMemberBirthResearchReading(
       ? '<p>질문자 본인에 대한 원국 T8 연구 해석 근거가 부족합니다.</p>'
       : subjectNatal.sections.map(section =>
         '<article><h3>' + familyEscape(section.headline) + '</h3><p>' +
-        familyEscape(section.paragraph) + '</p><details><summary>질문자 본인의 원국 근거</summary><p>' +
+        familyEscape(section.paragraph) + '</p>' +
+        (section.evidenceMode === undefined ? '' :
+          '<p>기존 T8을 추가로 확인한 문단이며 가족 관계 해석이나 독립 종합 근거를 늘린 것이 아닙니다.</p>') +
+        '<details><summary>질문자 본인의 원국 근거</summary><p>' +
         familyEscape(section.sourceIds.join(' · ')) + '</p><p>' +
         familyEscape(section.factPaths.join(' · ')) +
         '</p></details></article>').join('')) + '</section>';
@@ -286,7 +297,10 @@ export function buildFamilyMemberBirthResearchReading(
       ? '<p>이 가족 구성원의 출처 있는 원국 구조 해석은 아직 부족합니다.</p>'
       : member.sections.map(section =>
         '<article><h3>' + familyEscape(section.headline) + '</h3><p>' +
-        familyEscape(section.paragraph) + '</p><details><summary>개인별 원국 근거</summary><p>' +
+        familyEscape(section.paragraph) + '</p>' +
+        (section.evidenceMode === undefined ? '' :
+          '<p>이미 발행된 별도 T8 문단이며 가족 관계 해석이나 독립 종합 근거의 추가가 아닙니다.</p>') +
+        '<details><summary>개인별 원국 근거</summary><p>' +
         familyEscape(section.sourceIds.join(' · ')) + '</p><p>' +
         familyEscape(section.factPaths.join(' · ')) +
         '</p></details></article>').join('')) +
