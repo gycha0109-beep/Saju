@@ -222,6 +222,32 @@ describe('two separate family members with already sourced personal natal T8', (
     expect(buildFamilyMemberBirthResearchReading(BIRTH, member, request)).toEqual(output);
   });
 
+  it('shows separately issued overlapping T8 meanings only on the exact selected family member chart', () => {
+    const selectedMember: BirthInput = {
+      calendarType: 'solar',
+      date: { year: 1985, month: 12, day: 24 },
+      time: { known: true, hour: 7, minute: 0 },
+      sexForTraditionalCalculation: 'unspecified',
+    };
+    const output = buildFamilyMemberBirthResearchReading(BIRTH, selectedMember, request);
+    const extra = output.member.sections.filter(item =>
+      item.evidenceMode === 'reused_calculated_paths');
+    expect(extra).toHaveLength(2);
+    const ordinary = output.member.sections.filter(item =>
+      item.evidenceMode === undefined);
+    expect(ordinary).toHaveLength(1);
+    const consumed = new Set(ordinary.flatMap(item => item.factPaths));
+    for (const source of extra) {
+      expect(source.factPaths.every(path => consumed.has(path))).toBe(true);
+      expect(source.sourceIds.length).toBeGreaterThanOrEqual(2);
+      expect(output.html).toContain(escapedHtmlText(source.paragraph));
+    }
+    expect(output.html).toContain('독립 종합 근거의 추가가 아닙니다');
+    expect(output.member.personRef).toBe('parent');
+    expect(output.familyMeaningStatus).toBe('family_t8_source_authority_not_established');
+    expect(output.mayInferFamilyDynamics).toBe(false);
+  });
+
   it('preserves parent versus child scope and unavailable natal T8 for the member with unknown hour', () => {
     const result = buildFamilyMemberBirthResearchReading(BIRTH,
       { ...member, time: { known: false } },
