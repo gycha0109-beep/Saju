@@ -113,6 +113,27 @@ describe('one self chart and one authorized other chart → three separate relat
     }
   });
 
+  it('retains the original person-specific relationship T8 even after a new source-based core is chosen', () => {
+    const subject: BirthInput = {
+      calendarType: 'solar',
+      date: { year: 1986, month: 12, day: 8 },
+      time: { known: true, hour: 19, minute: 0 },
+      sexForTraditionalCalculation: 'unspecified',
+    };
+    const reading = buildThreeRelationshipMenusBirthReading(subject, OTHER, request);
+    const original = reading.compatibility.personalRelationship.subject.sections.filter(section =>
+      section.evidenceMode === 'original_source_core');
+    expect(original).toHaveLength(1);
+    expect(reading.html).toContain(original[0]!.paragraph.replace(/[&<>"']/gu, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char]!));
+    expect(reading.html).toContain('원래 중심 후보로 발행된 개인별 관계 T8 해석입니다');
+    expect(reading.html).toContain(reading.spouse.report.clarification);
+    expect(reading.mayClaimInterpersonalMeaning).toBe(false);
+    expect(reading.mayInferPartnerTraits).toBe(false);
+    expect(reading.maySell).toBe(false);
+  });
+
   it('rejects inferred family role and unconsented reuse of the compatibility target birth', () => {
     expect(() => buildThreeRelationshipMenusBirthReading(SELF, OTHER, {
       ...request, familyMemberScope: 'parents',
