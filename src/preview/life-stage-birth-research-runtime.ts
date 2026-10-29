@@ -4,6 +4,7 @@ import { runInterpretation } from '../interpretation/interpretation-engine.js';
 import { createGeneralNatalMultifactorRegistry } from
   '../research/general-natal-multifactor-candidate.js';
 import { buildGeneralNatalMultifactorReport } from './general-natal-multifactor-report.js';
+import { collectExistingNatalT8Views } from './natal-source-owned-context-views.js';
 
 import {
   buildLifeStageDayunResearchReport,
@@ -63,12 +64,14 @@ export function buildLifeStageBirthResearchReading(
         section.observedFactPaths.length < 2)) {
     throw new TypeError('Life-stage natal context must retain original chart-specific T8 research sources.');
   }
-  const natalSections = natal.sections.map(section => ({
-    title: section.headline,
-    paragraph: section.paragraph,
-    sourceIds: [...section.sourceIds],
-    factPaths: [...section.observedFactPaths],
-  }));
+  const natalSections = collectExistingNatalT8Views('general', natal).map(
+    ({ section, evidenceMode }) => ({
+      title: section.headline,
+      paragraph: section.paragraph,
+      sourceIds: [...section.sourceIds],
+      factPaths: [...section.observedFactPaths],
+      ...(evidenceMode === undefined ? {} : { evidenceMode }),
+    }));
   const natalContext: LifeStageNatalStructureContext = {
     snapshotId: snapshot.snapshotId,
     calculationHash: snapshot.calculationHash,
