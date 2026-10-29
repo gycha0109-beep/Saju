@@ -1125,6 +1125,7 @@ function renderOfficialReadingInternalV1(
       ? undefined
       : buildApprovedCareerChannelContextV1(
           bundle, plan, explainabilityEntries,
+          effectiveDetailedRealization === undefined ? 'standard' : 'detailed',
         );
   if (careerContext !== undefined) {
     const byRef = new Map(careerContext.perspectives.map(item =>
