@@ -151,8 +151,10 @@ function availableOriginalSections(
 ): readonly (SourceSection & { overlapsSelectedFactPaths?: readonly string[] })[] {
   const report = reports[topic];
   const selected: readonly SourceSection[] = report.sections;
-  const alternatives = topic === 'wealth'
-    ? reports.wealth.overlappingPerspectives ?? []
+  const alternatives = topic === 'general'
+    ? reports.general.overlappingPerspectives ?? []
+    : topic === 'wealth'
+      ? reports.wealth.overlappingPerspectives ?? []
     : topic === 'business'
       ? reports.business.overlappingPerspectives ?? []
       : topic === 'relationship'
