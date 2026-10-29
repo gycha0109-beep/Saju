@@ -95,8 +95,8 @@ export function buildOfficialReadingAnnualTemporalSectionV1(
           '이 십신의 관찰 사실 자체를 길흉이나 구조 변화의 원인으로 판정하지 않습니다. ' +
           '이미 검증된 연간 구조 평가에서는 ' +
           STATE_LABELS[transition.previousState] + ' 상태에서 ' +
-          IMPACT_LABELS[transition.periodImpact] + '라는 평가가 적용되어 ' +
-          STATE_LABELS[transition.nextState] + ' 상태로 이어집니다. ' +
+          '적용된 평가는 「' + IMPACT_LABELS[transition.periodImpact] + '」이며, 다음 구조 상태는 ' +
+          STATE_LABELS[transition.nextState] + '입니다. ' +
           TRANSITION_TEXT[transition.transitionKind] +
           ' 이 설명은 해당 구조 전환에 한정되며 직업·재물·관계의 사건이나 성패를 예측하지 않습니다.',
       },
