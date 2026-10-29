@@ -88,6 +88,10 @@ describe('S6 exact source-owned meaning vs evidence role vs display wording', ()
       { ...base, upstreamClaimIds: ['ONE'] },
       { ...base, factPaths: [dayBranch, 'pillars.hour.branch'] },
       { ...base, paragraph: ' ' },
+      { ...base, claimType: 'RELATIONSHIP_NATAL_MULTIFACTOR_EXPRESSION_BRANCHES',
+        ruleId: 'RULE-RELATIONSHIP_NATAL_MULTIFACTOR_EXPRESSION_BRANCHES' },
+      { ...base, channel: 'visible_stems' as const },
+      { ...base, factPaths: [dayBranch, dayBranch] },
     ]) {
       expect(() => signature(altered)).toThrow(/source-issued T8/u);
     }
