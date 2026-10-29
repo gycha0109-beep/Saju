@@ -93,10 +93,8 @@ export function selectSourceBoundNatalCore<T extends ObservedNatalAxis>(
   supports: IndependentNatalSupports<T> | undefined;
   displacedCore: T | undefined;
 } {
-  const eligible = corePriority.flatMap(axis => {
-    const unit = candidates.find(candidate => candidate.axis === axis);
-    return unit === undefined ? [] : [unit];
-  });
+  const eligible = corePriority.flatMap(axis =>
+    candidates.filter(candidate => candidate.axis === axis));
   const preferred = eligible[0];
   if (preferred === undefined) {
     return { core: undefined, supports: undefined, displacedCore: undefined };
