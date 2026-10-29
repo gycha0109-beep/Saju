@@ -16,6 +16,7 @@ import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
 import { buildApprovedCareerChannelContextV1 } from '../src/reading/approved-career-channel-context.js';
+import { CAREER_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from '../src/reading/official-reading-detailed-presentation-career.js';
 import { buildOfficialReadingCharacterGroundingV1 } from '../src/reading/official-reading-reader-parity.js';
 import {
   PRODUCT_READING_RESPONSE_VERSION,
@@ -231,6 +232,24 @@ describe('admitted Career Preview semantics -> Official Reading -> Reader', () =
       semantics, plan, report.explainability.entries);
     expect(matching).toBeDefined();
     expect(matching?.perspectives.length).toBeGreaterThanOrEqual(3);
+    for (const perspective of matching!.perspectives) {
+      const entry = report.explainability.entries.find(item =>
+        item.explainabilityRef === perspective.explainabilityRef);
+      const unit = semantics.units.find(item => item.unitId === entry?.primaryUnitRefs?.[0]);
+      const approved = CAREER_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.find(profile =>
+        profile.claimType === unit?.claimType);
+      expect(approved?.approvedTextByRole.clarification).toBeDefined();
+      expect(perspective.text).toContain(approved!.approvedTextByRole.clarification);
+      expect(reportJson).toContain(perspective.text);
+    }
+    const detailedContext = buildApprovedCareerChannelContextV1(
+      semantics, plan, report.explainability.entries, 'detailed');
+    expect(detailedContext?.perspectives.length).toBe(matching!.perspectives.length);
+    expect(detailedContext!.perspectives.every(item =>
+      item.text.includes('이 해석을 뒷받침하는 실제 위치:') &&
+      !matching!.perspectives.some(original =>
+        original.explainabilityRef === item.explainabilityRef &&
+        item.text === original.text))).toBe(true);
     // A copied interpretation cannot be made personal by fabricating the
     // Ten-God positions or leaving its actual computation unverified.
     const missingFacts = buildApprovedCareerChannelContextV1(
