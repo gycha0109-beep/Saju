@@ -87,7 +87,7 @@
 - Windows `DESKTOP-6C3L8O4`의 **직접 `Desktop_Commander` 커넥터**로 `hostname` 명령과 GitHub 접근을 검증했다. 원격 `Remote_Desktop_Commander`는 호출 한도 0% 때문에 별도 경로에서 오프라인으로 보였으며, 작업 PC 직접 커넥터는 정상이었다. 사용자 체크아웃 대신 `%TEMP%\\saju-12menu-current-audit`에 대상 브랜치를 별도로 복제했다.
 - Node 24.20.0, npm 11.19.0, `npm ci --ignore-scripts` 완료. 최초 `npm run typecheck`에서 질문형 풀이의 `evidenceMode` 선택 필드 타입 오류 2건을 발견하여 `QuestionRelatedNatalSection[]` 명시로 수정했다.
 - 수정 커밋을 다시 내려받아 **`npm run typecheck` PASS**, **`npm run build` PASS**, **`npm run lint` PASS** 확인했다. 지정 회귀 테스트 4개 파일 **34개 PASS**. 관계 통합 테스트 한 건이 변경된 상세 한국어 경계 문구와 이전 기대 문구의 차이로 실패하여 현재 원문과 일치하도록 수정한 뒤 재실행해 34개 전부 통과했다.
-- 전체 Vitest는 별도 시작했으며 **완료(exit code 및 최종 요약)가 확인되기 전에는 통과로 판정하지 않는다**. 이것은 12개 메뉴 종합 해석 또는 T9/T10/T11/R070 권한의 완료가 아니다. 중간 PR/CI/병합 없이 대상 브랜치 유지.
+- 전체 Vitest를 별도로 시작했으나 프로세스가 최종 요약·종료 코드 기록 없이 종료되어 **전체 PASS로 판정하지 않는다**. 그 대신 추가로 `test/twelve-menu-real-korean-meaning-scope.test.ts`, `test/natal-five-domain-multifactor-reader.test.ts`, `test/relationship-natal-multifactor-consumer-report.test.ts`의 3개 파일 **26개 테스트 PASS**를 확인했다. 이것은 12개 메뉴 종합 해석 또는 T9/T10/T11/R070 권한의 완료가 아니다. 중간 PR/CI/병합 없이 대상 브랜치 유지.
 
 ## 4. 12개 메뉴 개인화 출력의 실제 구현 누적 (2026-10-28)
 
