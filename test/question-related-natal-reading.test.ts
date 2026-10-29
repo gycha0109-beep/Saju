@@ -352,7 +352,9 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
         ...reports.career,
         additionalVerifiedSections: reports.career.additionalVerifiedSections.map(section =>
           section.claimType !== source!.claimType ? section : {
-            ...section, calculatedFactPaths: ['derivedFacts.tenGods.value.invalid.stem.value'],
+            ...section, calculatedFactPaths: section.calculatedFactPaths.map((_, index) =>
+              'derivedFacts.tenGods.value.' + (index % 2 ? 'month' : 'year') +
+              '.invalid.value'),
           }),
       },
     };
