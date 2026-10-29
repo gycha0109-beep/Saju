@@ -339,7 +339,7 @@ export function buildQuestionRelatedNatalReading(
       { topic: item.key, topicLabel: item.title, ...focusDetails,
         reportState: report.state, sections: [] });
   }
-  const sections = matchingSections.map(section => {
+  const sections: QuestionRelatedNatalSection[] = matchingSections.map(section => {
     const factPaths = 'calculatedFactPaths' in section
       ? section.calculatedFactPaths : section.observedFactPaths;
     assert(section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
