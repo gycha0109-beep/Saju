@@ -120,6 +120,16 @@
 - **후속 실측 및 회귀:** 실제 명식 3개 분야(전체 사주·사업·관계)의 이전 중심 T8을 그대로 보존하고 새로운 중심+보조 T8의 서로 다른 `FactPath`·Claim·Rule·출처를 검증했다(`test/natal-source-bound-core-selection-real-chart.test.ts`). 질문형 메뉴의 T8 관점이 이전에는 중복 대안이었더라도 새 독립 근거 조합에서 직접 선택된 경우 원래 T8 근거를 그대로 반환하도록 `test/question-related-natal-reading.test.ts`를 실제 실행 결과 기반으로 수정했다(독립된 신규 T11 답변은 만들지 않음). Windows 분할 Vitest `--shard=1/32 --maxWorkers=2`에서 51개 파일·**359/359 PASS**, 종료 코드 0 확보. 해당 분할 검사는 최종 질문형 테스트 변경 전에 시작됐으며 최신 질문형 테스트 **16/16 PASS**는 별도 실행으로 확인했다. 나머지 31개 분할은 검사되지 않았으므로 전체 통과로 쓰지 않는다.
 - **추가 제한:** 이 수정은 어디까지나 이미 발행된 **연구용 T8 선택 정책**의 개선이다. 해석 권한을 새로 부여하거나 근거 없이 부족한 원국에 Claim을 생성하지 않는다. 사용자 요청이 요구하는 12개 메뉴별 종합 의미·근거 완성, 최종 테스트·품질 판정은 계속 남아 있다. 중간 PR·CI·병합은 수행하지 않는다.
 
+### 2026-10-29: 가족·배우자·궁합·삶의 단계에서 원래 발행된 T8 한국어 해석 보존
+
+- **실제 원인:** 연구용 명식 T8의 독립 보조축 선택 로직을 개선한 뒤에도 가족 구성원 개인 풀이·궁합의 두 개인 관계 풀이·삶의 단계에서 참고하는 개인 원국 풀이가 **첫 화면에 선택된 T8만** 전달하고 있었다. 첫 화면의 독립 근거 조건 때문에 제외된 원래 발행 T8(`overlappingPerspectives`)과 더 나은 근거 조합으로 중심에서 내려온 원래 T8(`displacedOriginalCore`)은 원문이 있어도 사용자 읽기에서 누락됐다. 배우자 통합 화면에서는 기존에 승인된 일지 배우자궁 프로필 `clarification` 문단도 빠져 있었다.
+- **공통 보존 경계:** `src/preview/natal-source-owned-context-views.ts`가 **같은 분야의 실제 발행 T8**에서 기존 Claim 타입·Rule·T5 선행 근거·출처·실제 Canonical Ten-God 관측 경로를 확인한다. 이미 선택된 문단, 계산 위치가 전부 겹치는 다른 T8, 독립 중심 변경으로 별도 표시해야 하는 원래 T8을 구분한다. 위조된 경로·규칙·중복 Claim이나 다른 분야의 해석은 거절한다. 추가 문단은 `evidenceMode`로 명시하며 **독립 근거 개수·연구 상태·Official 권한을 변경하지 않는다**.
+- **가족·삶의 단계:** `family-birth-research-runtime.ts`에서 질문자와 별도로 명시·허용된 가족 구성원 각각의 원국 T8을 추가 보존한다. 부모/자녀 상호작용을 합성하지 않는다. `life-stage-birth-research-runtime.ts`·`life-stage-dayun-research-report.ts`·`three-temporal-menus-birth-reading.ts`에서 같은 사람의 이미 발행된 원국 T8을 시기별 원국 참고 문단에 포함하되 대운·세운·월운 T9 또는 구간의 인과·길흉으로 바꾸지 않는다.
+- **배우자·궁합:** `three-relationship-menus-birth-reading.ts`는 승인된 일지 배우자궁 `clarification` 원문을 위치 관찰과 함께 표시한다. `compatibility-two-birth-research-runtime.ts`·`compatibility-two-chart-intake-preview.ts`·통합 관계 화면은 각 사람의 기존 관계 T8과 중심에서 제외된 원래 T8의 근거를 **그 사람 풀이에만** 연결한다. 상대 성격·가족 역학·두 사람의 궁합 T10·결혼 결과는 미승인 상태로 유지한다.
+- **실제 명식 실증:** 양력 **1985-12-24 07:00**은 원국 중심 1개 외에 이미 발행됐으나 동일 계산 경로를 재사용하는 T8 두 개가 가족 구성원·삶의 단계 연구 화면에서 사용자별 원문과 출처를 유지하는 것을 확인했다. 양력 **1986-12-08 19:00**은 중심 조합을 바꾸면서 제외됐던 원래 관계 T8을 궁합의 해당 사람 원국 풀이에서 별도 보존하는 것을 확인했다. 상대방의 풀이로 옮기거나 T10 결과로 승격하지 않는다.
+- **실행 확인:** Windows Desktop Commander 직접 연결의 검사 전용 체크아웃에서 `npm run typecheck` **PASS**, `npm run lint` **PASS**, `npm run build` **PASS(종료 코드 0)**. `test/natal-source-owned-context-views.test.ts`, `test/family-birth-research-runtime.test.ts`, `test/life-stage-birth-research-runtime.test.ts`, `test/compatibility-two-birth-research-runtime.test.ts`, `test/three-relationship-menus-birth-reading.test.ts`, `test/three-temporal-menus-birth-reading.test.ts`, `test/question-related-natal-reading.test.ts`, `test/twelve-menu-real-korean-meaning-scope.test.ts`의 **8개 파일 61/61 PASS**. 일부 초기 테스트의 기존 부분 상태 가정은 새 독립 근거 선택과 일치하게 정확한 Claim·출처·경로를 검사하도록 갱신했다.
+- **남은 작업:** 위 보강은 원래 승인/연구 T8의 한국어 전달 누락을 줄인 것이지 가족 R070·궁합 T10·월운/대운 관련 T9·별도 질문 T11의 **독립 의미 권한**을 확보한 것이 아니다. 전체 12개 메뉴 각각의 종합 해석·미확립 근거·전체 1,596개 테스트 파일 최종 회귀 판정은 계속 미완료다. 중간 PR·CI·병합은 수행하지 않는다.
+
 ## 4. 12개 메뉴 개인화 출력의 실제 구현 누적 (2026-10-28)
 
 - **한 브랜치 유지:** `fix/saju/wealth-preserve-independent-core`에서 구현을 누적한다. 작업 단위 PR/통합 CI/병합은 하지 않는다. 전체 12개 해석 로드맵을 완료한 뒤 최종 PR·CI·병합한다.
