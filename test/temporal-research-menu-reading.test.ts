@@ -61,10 +61,10 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     const { snapshot, annualMonthly, lifeStage } = reports();
     const cards = buildTemporalResearchMenuReadings({ annualMonthly, lifeStage });
     expect(cards.map(card => card.menuId)).toEqual(['annual', 'monthly', 'life_stage']);
-    expect(cards.map(card => card.availability)).toEqual(['partial', 'partial', 'partial']);
+    expect(cards.map(card => card.availability)).toEqual(['partial', 'unavailable', 'unavailable']);
     expect(cards.map(card => card.meaning)).toEqual([
       'bounded_research_interpretation',
-      'bounded_research_interpretation',
+      'none',
       'calculation_facts_only',
     ]);
     expect(cards.every(card =>
@@ -126,7 +126,7 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
   });
 
   it('preserves exact monthly T9 sources, intervals, Jeol phase and claim IDs', () => {
-    const { annualMonthly } = reports();
+    const { annualMonthly } = reports(true, 1990, '2030-06-02T12:00:00.000Z');
     const monthly = buildTemporalResearchMenuReadings({ annualMonthly })[1]!;
     expect(monthly.availability).toBe('partial');
     expect(monthly.provenance.targetMonth).toBe(6);
