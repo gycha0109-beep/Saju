@@ -1210,6 +1210,50 @@ function renderOfficialReadingInternalV1(
     throw new RangeError('Official Reading renderer produced no report sections.');
   }
 
+  if (effectiveDetailedRealization !== undefined) {
+    // Detailed is an extension of the exact standard consumer reading, not a
+    // competing replacement. A source-approved standard contextual paragraph
+    // must survive verbatim before any extra detailed role material. Keep
+    // every detailed-only paragraph, but do not print identical approved
+    // clarification twice when standard already contains that source copy.
+    // Recompute only the presentation, never the Claim selection or authority.
+    const standardReport = renderOfficialReadingInternalV1(
+      bundle, plan,
+      { ...options, preferredDetail: undefined },
+    );
+    const standardByRef = new Map(standardReport.sections.flatMap(section =>
+      section.blocks.flatMap(block => block.type === 'insights'
+        ? block.items.flatMap(item => item.explainabilityRef === undefined
+          ? [] : [[item.explainabilityRef, item] as const])
+        : [])));
+    for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      const section = sections[sectionIndex];
+      if (section === undefined) continue;
+      sections[sectionIndex] = {
+        ...section,
+        blocks: section.blocks.map(block => block.type !== 'insights'
+          ? block
+          : {
+              ...block,
+              items: block.items.map(item => {
+                const standard = item.explainabilityRef === undefined
+                  ? undefined : standardByRef.get(item.explainabilityRef);
+                if (standard?.summary === undefined ||
+                    item.summary === undefined ||
+                    item.summary.startsWith(standard.summary)) return item;
+                const additional = item.summary.split('\n\n')
+                  .filter(paragraph => paragraph.trim().length > 0 &&
+                    !standard.summary!.includes(paragraph));
+                return {
+                  ...item,
+                  summary: [standard.summary, ...additional].join('\n\n'),
+                };
+              }),
+            }),
+      };
+    }
+  }
+
   const disclosures: readonly ReadingDisclosureView[] = [];
   const explainability: ExplainabilityIndex = {
     entries: explainabilityEntries.sort((left, right) =>
