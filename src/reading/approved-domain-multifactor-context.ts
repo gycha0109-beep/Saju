@@ -295,18 +295,20 @@ export function buildApprovedDomainMultifactorContextV1(
   // presentation cap withheld valid source-owned explanations from the reading.
   // A one-family T8 can receive its own exact chart positions only when its
   // individual source profile is approved. It is never described as a composite.
-  // Duplicates of a semantic axis still collapse to one preferred Claim.
-  // Different already-approved meaning axes, not a ranking of people or menus.
+  // The individual source-owned T8 meaning is not interchangeable with
+  // another approved Claim simply because their broad display axis matches.
+  // Preserve each distinct selected meaning on its own original Insight.
+  // Repeating an axis does NOT increase the number of independent axes.
   candidates.sort((a, b) =>
     b.familyCount - a.familyCount ||
     a.approvedOrder - b.approvedOrder ||
     a.claimType.localeCompare(b.claimType) ||
     a.unitId.localeCompare(b.unitId));
   const selected: ApprovedContextCandidate[] = [];
-  const usedAxes = new Set<ConclusionAxis>();
+  const seenClaims = new Set<string>();
   for (const candidate of candidates) {
-    if (usedAxes.has(candidate.axis)) continue;
-    usedAxes.add(candidate.axis);
+    if (seenClaims.has(candidate.claimType)) continue;
+    seenClaims.add(candidate.claimType);
     selected.push(candidate);
   }
   const label = domain === 'wealth' ? '재물'
@@ -319,7 +321,8 @@ export function buildApprovedDomainMultifactorContextV1(
       '단일 계열의 기존 해석과 복합 근거의 기존 해석은 서로 구분하며, ' +
       '단일 계열을 명식 전체의 종합 판단으로 승격하지 않습니다. ' +
       '금전 규모·사업 성패·특정 상대의 속성·궁합·관계 결과나 등급을 예측하지 않습니다. ' +
-      '출처와 계산 근거가 확인된 의미축을 각각 원래 항목에 연결하며, 다른 해석은 원래 항목에 그대로 남아 있습니다.',
+      '출처와 계산 근거가 확인된 기존 결론을 각각 원래 항목에 연결합니다. ' +
+      '같은 주제 축의 결론 여러 개도 독립된 새 근거로 세지 않으며 다른 해석은 원래 항목에 남아 있습니다.',
     perspectives: selected.map(item => ({
       explainabilityRef: item.explainabilityRef,
       headline: item.approvedHeadline,
