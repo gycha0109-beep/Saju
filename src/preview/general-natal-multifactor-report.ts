@@ -1,6 +1,8 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
 import { selectSourceBoundNatalCore } from './natal-independent-supporting-axes.js';
 import { selectOverlappingNatalT8Perspectives } from './natal-overlapping-t8-perspectives.js';
+import { buildInsufficientNatalT5Evidence, type InsufficientNatalT5Evidence } from
+  './natal-t5-insufficient-evidence.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -53,6 +55,8 @@ export interface GeneralNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly GeneralNatalMultifactorSection[];
+  /** Existing matched T5 observations only, never new domain T8 meaning. */
+  insufficientT5Evidence?: InsufficientNatalT5Evidence;
   /** Original source-issued preferred core if a different eligible T8 core yields
    * genuinely independent observed support; never counted as a fourth MUR axis. */
   displacedOriginalCore?: GeneralNatalMultifactorSection;
@@ -376,6 +380,10 @@ export function buildGeneralNatalMultifactorReport(
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)) +
       (readingGuide === undefined ? '' : ' ' + readingGuide.paragraph),
     sections,
+    ...(state === 'insufficient' && snapshot.completeness.birthTimeKnown ? {
+      insufficientT5Evidence: buildInsufficientNatalT5Evidence('general',
+        snapshot, execution, registry),
+    } : {}),
     ...(coreChoice.displacedCore === undefined ? {} : {
       displacedOriginalCore: coreChoice.displacedCore,
     }),
