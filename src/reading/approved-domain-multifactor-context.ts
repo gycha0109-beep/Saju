@@ -231,7 +231,7 @@ export function buildApprovedDomainMultifactorContextV1(
       const profile = entry?.profile;
       const short = concise.get(unit.claimType);
       if (profile === undefined || short === undefined ||
-          profile.supportingClaimTypes.length < 2 ||
+          profile.supportingClaimTypes.length < 1 ||
           profile.scenarioPolicy !== 'none' ||
           profile.contradictionPolicy !== 'none' ||
           profile.owner !== (domain === 'relationship'
@@ -293,6 +293,8 @@ export function buildApprovedDomainMultifactorContextV1(
   if (candidates.length === 0) return undefined;
   // Show every independently admitted meaning axis. An arbitrary first-three
   // presentation cap withheld valid source-owned explanations from the reading.
+  // A one-family T8 can receive its own exact chart positions only when its
+  // individual source profile is approved. It is never described as a composite.
   // Duplicates of a semantic axis still collapse to one preferred Claim.
   // Different already-approved meaning axes, not a ranking of people or menus.
   candidates.sort((a, b) =>
@@ -314,15 +316,21 @@ export function buildApprovedDomainMultifactorContextV1(
     title: label + '에서 함께 확인된 근거 기반 해석',
     explanation:
       '다음 내용은 이미 허용된 복합 해석의 원문 요지에 실제 명식의 근거 위치를 연결한 것입니다. ' +
-      '한 가지 십신의 존재만으로 얻은 결론이 아니며, ' +
+      '단일 계열의 기존 해석과 복합 근거의 기존 해석은 서로 구분하며, ' +
+      '단일 계열을 명식 전체의 종합 판단으로 승격하지 않습니다. ' +
       '금전 규모·사업 성패·특정 상대의 속성·궁합·관계 결과나 등급을 예측하지 않습니다. ' +
       '출처와 계산 근거가 확인된 의미축을 각각 원래 항목에 연결하며, 다른 해석은 원래 항목에 그대로 남아 있습니다.',
     perspectives: selected.map(item => ({
       explainabilityRef: item.explainabilityRef,
       headline: item.approvedHeadline,
       text: item.approvedSummary +
-        '\n\n이 결론에 사용된 실제 십신 계열과 관찰 위치: ' +
+        (item.familyCount === 1
+          ? '\n\n이 단일 계열 해석에 사용된 실제 십신과 관찰 위치: '
+          : '\n\n이 결론에 사용된 실제 십신 계열과 관찰 위치: ') +
         item.evidencePositions.join(' / ') +
+        (item.familyCount === 1
+          ? '\n이 문단은 이미 승인된 한 가지 계열의 관점이며 서로 독립적인 복합 해석이나 인생 전체의 결론이 아닙니다.'
+          : '') +
         (item.sharedChannel === undefined ? '' :
           '\n이 복합 결론의 선행 십신 계열은 모두 ' +
           item.sharedChannel +
