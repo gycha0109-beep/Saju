@@ -150,6 +150,7 @@ interface ApprovedContextCandidate {
   claimType: string;
   axis: ConclusionAxis;
   approvedSummary: string;
+  approvedClarification: string;
   approvedHeadline: string;
   evidencePositions: readonly string[];
   sharedChannel?: '천간' | '지지';
@@ -182,6 +183,7 @@ export function buildApprovedDomainMultifactorContextV1(
   bundle: CanonicalReadingSemanticBundleV1,
   plan: OfficialReadingPlanV1,
   explainability: readonly ExplainabilityEntry[],
+  presentation: 'standard' | 'detailed' = 'standard',
 ): ApprovedDomainMultifactorContextV1 | undefined {
   if (bundle.intent.temporalScope !== 'natal' ||
       (bundle.intent.domain !== 'wealth' &&
@@ -246,6 +248,8 @@ export function buildApprovedDomainMultifactorContextV1(
           short.standardText.headline !== profile.standardText.headline ||
           short.standardText.summary !== profile.standardText.summary ||
           short.conciseText.trim().length === 0 ||
+          profile.approvedTextByRole.clarification?.trim().length === 0 ||
+          profile.approvedTextByRole.clarification === undefined ||
           !equalSet(unit.prohibitedExtensions, profile.prohibitedExtensions) ||
           !equalSet(short.prohibitedExtensions, profile.prohibitedExtensions) ||
           !profile.provenance.sourceRefs.every(source =>
@@ -279,6 +283,7 @@ export function buildApprovedDomainMultifactorContextV1(
         claimType: unit.claimType,
         axis,
         approvedSummary: short.conciseText,
+        approvedClarification: profile.approvedTextByRole.clarification,
         approvedHeadline: profile.standardText.headline ?? '',
         evidencePositions: familyEvidence.positions,
         ...(familyEvidence.sharedChannel === undefined ? {} : {
@@ -326,7 +331,10 @@ export function buildApprovedDomainMultifactorContextV1(
     perspectives: selected.map(item => ({
       explainabilityRef: item.explainabilityRef,
       headline: item.approvedHeadline,
-      text: item.approvedSummary +
+      text: (presentation === 'detailed'
+          ? ''
+          : item.approvedSummary + '\n\n승인된 상세 설명: ' +
+            item.approvedClarification + '\n\n') +
         (item.familyCount === 1
           ? '\n\n이 단일 계열 해석에 사용된 실제 십신과 관찰 위치: '
           : '\n\n이 결론에 사용된 실제 십신 계열과 관찰 위치: ') +
