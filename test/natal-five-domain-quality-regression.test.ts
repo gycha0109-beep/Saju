@@ -66,7 +66,7 @@ describe('S6 real-chart Korean meaning and contrast quality regression', () => {
     const swappedChannel: typeof section.channel = section.channel === 'branches'
       ? 'visible_stems' : 'branches';
     const swapSuffix = swappedChannel === 'branches' ? '_BRANCHES' : '_VISIBLE_STEMS';
-    const changed = {
+    const changed: typeof section = {
       ...section,
       channel: swappedChannel,
       claimType: section.claimType.replace(/_(BRANCHES|VISIBLE_STEMS)$/u, swapSuffix),
@@ -86,7 +86,7 @@ describe('S6 real-chart Korean meaning and contrast quality regression', () => {
     const alternativeAxis: typeof section.axis = section.axis === 'core'
       ? 'expression' : 'core';
     const changedAxis = buildNatalS6MeaningAndEvidenceSignatures([{
-      ...domain, sections: [{ ...section, axis: alternativeAxis }],
+      ...domain, sections: [{ ...section, axis: alternativeAxis as typeof section.axis }],
     }]);
     expect(changedAxis.meaningSignature).not.toEqual(base.meaningSignature);
     const changedSource = buildNatalS6MeaningAndEvidenceSignatures([{
