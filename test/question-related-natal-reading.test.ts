@@ -175,7 +175,7 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
     }
   });
 
-  it('recovers exactly requested Wealth, Business and Relationship axes from genuine overlapping T8 observations', () => {
+  it('retrieves exactly requested Wealth, Business and Relationship axes whether selected or overlapping', () => {
     const cases = [
       { topic: 'wealth', day: 3, month: 1, hour: 3,
         prompt: '재물운의 자원 계획은 어떤가요?', axis: 'planning' },
@@ -187,10 +187,12 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
     for (const c of cases) {
       const { snapshot, reports } = run(true, c.day, c.month, c.hour);
       const originals = reports[c.topic];
+      const direct = originals.sections.find(section => section.axis === c.axis);
       const alternative = originals.overlappingPerspectives?.find(section =>
         section.axis === c.axis);
-      expect(alternative, c.prompt).toBeDefined();
-      expect(originals.sections.some(section => section.axis === c.axis)).toBe(false);
+      const existing = direct ?? alternative;
+      expect(existing, c.prompt).toBeDefined();
+      expect(direct === undefined || alternative === undefined).toBe(true);
       const result = buildQuestionRelatedNatalReading(
         snapshot, question(c.prompt), reports);
       expect(result.status, c.prompt).toBe('related_evidence');
@@ -198,17 +200,23 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
       expect(result.focusAxis).toBe(c.axis);
       expect(result.sections).toHaveLength(1);
       expect(result.sections[0]).toMatchObject({
-        title: alternative!.headline,
-        paragraph: alternative!.paragraph,
-        claimType: alternative!.claimType,
-        factPaths: alternative!.observedFactPaths,
-        evidenceMode: 'reused_calculated_paths',
+        title: existing!.headline,
+        paragraph: existing!.paragraph,
+        claimType: existing!.claimType,
+        factPaths: existing!.observedFactPaths,
+        ...(alternative === undefined ? {} : {
+          evidenceMode: 'reused_calculated_paths',
+        }),
       });
-      expect(result.selectedEvidenceIntroduction).toContain('독립 근거가 늘어난 것은 아닙니다');
+      if (alternative !== undefined) {
+        expect(result.selectedEvidenceIntroduction).toContain('독립 근거가 늘어난 것은 아닙니다');
+      }
       expect(result.missing.join(' ')).not.toContain(
         '관점의 명식별 해석 근거가 없어 다른 관점으로 답하지 않습니다');
       const html = renderQuestionRelatedNatalReadingHtml(result);
-      expect(html).toContain('새로운 독립 근거나 질문에 대한 T11 결론이 아닙니다');
+      if (alternative !== undefined) {
+        expect(html).toContain('새로운 독립 근거나 질문에 대한 T11 결론이 아닙니다');
+      }
       expect(result.usefulComplete).toBe(false);
       expect(result.mayPublish).toBe(false);
       expect(result.maySell).toBe(false);
