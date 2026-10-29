@@ -200,7 +200,7 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     const standardComposite = buildApprovedDomainMultifactorContextV1(
       semantics, plan, report.explainability.entries);
     expect(standardComposite?.domain).toBe('relationship');
-    expect(standardComposite?.perspectives.length).toBeGreaterThan(0);
+    expect(standardComposite?.perspectives.length).toBeGreaterThan(3);
     const renderedRelationshipAxes = report.sections.flatMap(section =>
       section.blocks.flatMap(block => block.type === 'insights' ? block.items : []));
     expect(standardComposite!.perspectives.some(perspective =>
