@@ -89,6 +89,13 @@
 - 수정 커밋을 다시 내려받아 **`npm run typecheck` PASS**, **`npm run build` PASS**, **`npm run lint` PASS** 확인했다. 지정 회귀 테스트 4개 파일 **34개 PASS**. 관계 통합 테스트 한 건이 변경된 상세 한국어 경계 문구와 이전 기대 문구의 차이로 실패하여 현재 원문과 일치하도록 수정한 뒤 재실행해 34개 전부 통과했다.
 - 전체 Vitest를 별도로 시작했으나 프로세스가 최종 요약·종료 코드 기록 없이 종료되어 **전체 PASS로 판정하지 않는다**. 그 대신 추가로 `test/twelve-menu-real-korean-meaning-scope.test.ts`, `test/natal-five-domain-multifactor-reader.test.ts`, `test/relationship-natal-multifactor-consumer-report.test.ts`의 3개 파일 **26개 테스트 PASS**를 확인했다. 이것은 12개 메뉴 종합 해석 또는 T9/T10/T11/R070 권한의 완료가 아니다. 중간 PR/CI/병합 없이 대상 브랜치 유지.
 
+### 2026-10-29: 원국 전체·직업의 승인 의미를 실사용 문단에 추가 연결
+
+- **전체 원국:** `approved-general-theme-context.ts`의 실제 선택된 T8 십신 주제마다 원래 승인된 한국어 `clarification`을 일반 풀이에 연결한다. **상세 풀이**에는 이미 승인된 설명이 있으므로 동일 문장을 복제하지 않고 실제 연·월·일·시주의 천간·지지 십신 관측 위치만 기존 Claim `explainabilityRef`에 추가한다. 새로운 오행 강약 판정·길흉·인생 종합결론을 만들지 않는다.
+- **직업:** `approved-career-channel-context.ts`는 주제·십신·천간/지지 채널이 일치하는 기존 승인된 직업 설명(`clarification`)과 실제 관측 위치를 일반 풀이에 함께 연결한다. 상세 풀이에는 기존 출처 승인 원문이 들어 있으므로 관측 위치만 추가하고 같은 설명을 반복하지 않는다. 특정 직종·적성·취업 결과를 새로 판단하지 않는다.
+- **실행 증거:** `official-reading-detailed-general-pilot.test.ts`에서 원문+관측 위치 및 상세 설명 1회 출력, `career-official-reading-integration.test.ts`에서 승인된 직업 설명과 실제 관측 연결을 확인했다. Windows 검사 전용 체크아웃에서 `npm run typecheck` 통과, 해당 원국·직업·12개 메뉴 범위 테스트 **16/16 PASS**. 전체 Vitest는 프로세스가 최종 종료 코드와 요약을 남기지 않아 전체 통과로 판정하지 않으며, 단일 실행에 의존하지 않고 분할 검증 여부를 계속 확인한다.
+- **미완료:** 가족·배우자·궁합·시기·질문별 독립 종합 해석의 승인 근거·품질 판정은 별개로 남아 있다. 12개 카드 출력이나 기존 T8 요약을 전체 로드맵 완료로 표시하지 않는다. 중간 PR·CI·병합은 하지 않는다.
+
 ## 4. 12개 메뉴 개인화 출력의 실제 구현 누적 (2026-10-28)
 
 - **한 브랜치 유지:** `fix/saju/wealth-preserve-independent-core`에서 구현을 누적한다. 작업 단위 PR/통합 CI/병합은 하지 않는다. 전체 12개 해석 로드맵을 완료한 뒤 최종 PR·CI·병합한다.
