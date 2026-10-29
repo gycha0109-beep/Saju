@@ -11,6 +11,7 @@ import type {
 } from './canonical-reading-semantics.js';
 import type { OfficialReadingPlanV1 } from './official-reading-plan.js';
 import { CAREER_NATAL_APPROVED_CONCISE_DEFINITIONS } from './official-reading-concise-presentation-career.js';
+import { CAREER_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from './official-reading-detailed-presentation-career.js';
 
 export const APPROVED_CAREER_CHANNEL_CONTEXT_VERSION =
   'myeonghwa-approved-career-channel-context-v1' as const;
@@ -99,6 +100,7 @@ export function buildApprovedCareerChannelContextV1(
   bundle: CanonicalReadingSemanticBundleV1,
   plan: OfficialReadingPlanV1,
   entries: readonly ExplainabilityEntry[],
+  presentation: 'standard' | 'detailed' = 'standard',
 ): ApprovedCareerChannelContextV1 | undefined {
   if (bundle.intent.domain !== 'career' ||
       bundle.intent.temporalScope !== 'natal' ||
@@ -106,6 +108,8 @@ export function buildApprovedCareerChannelContextV1(
 
   const defs = new Map(CAREER_NATAL_APPROVED_CONCISE_DEFINITIONS.map((def, order) =>
     [def.claimType, { def, order }] as const));
+  const detailedSources = new Map(CAREER_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.map(profile =>
+    [profile.claimType, profile] as const));
   const units = new Map(bundle.units.map(unit => [unit.unitId, unit] as const));
   const evidence = new Map(entries.flatMap(entry =>
     entry.primaryUnitRefs?.length === 1
@@ -142,6 +146,18 @@ export function buildApprovedCareerChannelContextV1(
           !sameList(unit.prohibitedExtensions, approved.def.prohibitedExtensions) ||
           approved.def.conciseText.trim().length === 0) continue;
 
+      const detailed = detailedSources.get(unit.claimType);
+      if (detailed === undefined || detailed.owner !== 'career:natal' ||
+          detailed.scenarioPolicy !== 'none' ||
+          detailed.contradictionPolicy !== 'none' ||
+          detailed.standardText.headline !== approved.def.standardText.headline ||
+          detailed.standardText.summary !== approved.def.standardText.summary ||
+          detailed.methodologyRef.id !== approved.def.methodologyRef.id ||
+          detailed.methodologyRef.version !== approved.def.methodologyRef.version ||
+          !sameList(detailed.prohibitedExtensions, approved.def.prohibitedExtensions) ||
+          detailed.approvedTextByRole.clarification?.trim().length === 0 ||
+          detailed.approvedTextByRole.clarification === undefined) continue;
+
       const entry = evidence.get(unit.unitId);
       if (entry === undefined || entry.primaryUnitRefs?.[0] !== unit.unitId ||
           !sameList(entry.supportingUnitRefs ?? [], binding.supportingUnitRefs)) {
@@ -158,7 +174,10 @@ export function buildApprovedCareerChannelContextV1(
         god: target.god,
         channel: target.channel,
         order: approved.order,
-        text: approved.def.conciseText + '\n\n' +
+        text: (presentation === 'standard'
+          ? approved.def.conciseText + '\n\n' +
+            detailed.approvedTextByRole.clarification + '\n\n'
+          : '') +
           '이 해석을 뒷받침하는 실제 위치: ' + locations.join(' · ') +
           '\n이 위치는 ' + role +
           '에 대한 기존 해석의 관찰 근거이지, 직업 적성·성공·강약의 판정은 아닙니다.',
