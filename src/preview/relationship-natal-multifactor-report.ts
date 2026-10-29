@@ -1,6 +1,8 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
 import { selectSourceBoundNatalCore } from './natal-independent-supporting-axes.js';
 import { selectOverlappingNatalT8Perspectives } from './natal-overlapping-t8-perspectives.js';
+import { buildInsufficientNatalT5Evidence, type InsufficientNatalT5Evidence } from
+  './natal-t5-insufficient-evidence.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -46,6 +48,8 @@ export interface RelationshipNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly RelationshipNatalMultifactorSection[];
+  /** Existing matched T5 observations only, never new domain T8 meaning. */
+  insufficientT5Evidence?: InsufficientNatalT5Evidence;
   /** Original source-issued preferred core if a different eligible T8 core yields
    * genuinely independent observed support; never counted as a fourth MUR axis. */
   displacedOriginalCore?: RelationshipNatalMultifactorSection;
@@ -347,6 +351,10 @@ export function buildRelationshipNatalMultifactorReport(
     introduction: '실제 명식의 십신 관계를 바탕으로 자기 관점과 표현, 서로의 역할, 받아들이는 태도의 구조적 관점을 함께 살펴봅니다. 실제 관계의 질이나 결혼 결과를 추론하지 않는 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    ...(state === 'insufficient' && snapshot.completeness.birthTimeKnown ? {
+      insufficientT5Evidence: buildInsufficientNatalT5Evidence('relationship',
+        snapshot, execution, registry),
+    } : {}),
     ...(coreChoice.displacedCore === undefined ? {} : {
       displacedOriginalCore: coreChoice.displacedCore,
     }),
