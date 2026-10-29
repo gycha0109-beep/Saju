@@ -221,6 +221,7 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
     const approvedAxes = buildApprovedDomainMultifactorContextV1(
       semantics, plan, report.explainability.entries);
     expect(approvedAxes).toBeDefined();
+    expect(approvedAxes!.perspectives.length).toBeGreaterThan(3);
     const allApprovedItems = report.sections.flatMap(section =>
       section.blocks.flatMap(block => block.type === 'insights' ? block.items : []))
       .filter(item => item.summary?.includes('실제 십신과 관찰 위치:') ||
@@ -366,6 +367,7 @@ describe('Wealth approved composite reading remains grounded in real selected cl
     const approvedWealthAxes = buildApprovedDomainMultifactorContextV1(
       semantics, plan, report.explainability.entries);
     expect(approvedWealthAxes).toBeDefined();
+    expect(approvedWealthAxes!.perspectives.length).toBeGreaterThan(3);
     const allWealthContextItems = report.sections.flatMap(section =>
       section.blocks.flatMap(block => block.type === 'insights' ? block.items : []))
       .filter(item => item.summary?.includes('실제 십신과 관찰 위치:') ||
