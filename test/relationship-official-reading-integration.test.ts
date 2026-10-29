@@ -206,6 +206,16 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     expect(standardComposite!.perspectives.some(perspective =>
       perspective.text.includes('단일 계열 해석에 사용된 실제 십신과 관찰 위치')))
       .toBe(true);
+    const sameAxisRelationship = primaryRelationshipUnits.filter(unit =>
+      (unit.semanticPayload as { relationshipKind?: string }).relationshipKind === 'values');
+    expect(sameAxisRelationship.length).toBeGreaterThanOrEqual(2);
+    for (const unit of sameAxisRelationship) {
+      const entry = report.explainability.entries.find(e =>
+        e.primaryUnitRefs?.length === 1 && e.primaryUnitRefs[0] === unit.unitId);
+      expect(entry).toBeDefined();
+      expect(standardComposite!.perspectives.some(perspective =>
+        perspective.explainabilityRef === entry!.explainabilityRef)).toBe(true);
+    }
     for (const perspective of standardComposite!.perspectives) {
       expect(renderedRelationshipAxes.some(item =>
         item.explainabilityRef === perspective.explainabilityRef &&
