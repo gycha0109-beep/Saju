@@ -201,6 +201,14 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       semantics, plan, report.explainability.entries);
     expect(standardComposite?.domain).toBe('relationship');
     expect(standardComposite?.perspectives.length).toBeGreaterThan(0);
+    const renderedRelationshipAxes = report.sections.flatMap(section =>
+      section.blocks.flatMap(block => block.type === 'insights' ? block.items : []));
+    for (const perspective of standardComposite!.perspectives) {
+      expect(renderedRelationshipAxes.some(item =>
+        item.explainabilityRef === perspective.explainabilityRef &&
+        item.summary?.includes(perspective.headline) &&
+        item.summary?.includes(perspective.text))).toBe(true);
+    }
 
     // No relationship-specific T8 evidence can be used to answer spouse or
     // two-person compatibility questions merely by changing the selected menu.
