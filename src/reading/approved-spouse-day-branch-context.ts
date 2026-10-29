@@ -30,6 +30,8 @@ export function buildApprovedSpouseDayBranchContextV1(
   bundle: CanonicalReadingSemanticBundleV1,
   plan: OfficialReadingPlanV1,
   entries: readonly Entry[],
+  /** Only refs materialized as user-visible Insight items, not limits sections. */
+  visibleInsightRefs: readonly string[] = [],
 ): ApprovedSpouseDayBranchContextV1 | undefined {
   if (bundle.intent.domain !== 'relationship' ||
       bundle.intent.temporalScope !== 'natal' ||
@@ -82,7 +84,9 @@ export function buildApprovedSpouseDayBranchContextV1(
   if (attached.length !== 1 || attached[0]?.supportingUnitRefs.length !== 0) {
     return undefined;
   }
+  const insightRefs = new Set(visibleInsightRefs);
   const visible = entries.filter(entry =>
+    insightRefs.has(entry.explainabilityRef) &&
     entry.primaryUnitRefs?.length === 1 &&
     entry.primaryUnitRefs[0] === unit.unitId);
   if (visible.length !== 1 || visible[0] === undefined ||
