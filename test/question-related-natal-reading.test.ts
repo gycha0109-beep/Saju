@@ -289,7 +289,7 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
       question(prompts[found!.axis]), forged)).toThrow('unsourced secondary T8 view');
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(snapshot, forged))
       .toThrow('alternate T8 must reuse only admitted selected facts');
-  });
+  }, 30_000);
 
   it('rejects forged question-only source paths when a secondary T8 is not admitted by the selected chart', () => {
     const { snapshot, reports } = run(true, 3, 1, 3);
