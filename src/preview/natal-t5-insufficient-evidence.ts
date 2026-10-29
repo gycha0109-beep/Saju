@@ -64,7 +64,8 @@ export function buildInsufficientNatalT5Evidence(
     !execution.claims.some(claim => claim.state === 'active' &&
       claim.snapshotId === snapshot.snapshotId &&
       claim.taxonomy.tier === 'T8' &&
-      claim.taxonomy.category === domain),
+      claim.taxonomy.category === domain &&
+      claim.predicate === domain + '_multifactor_structure'),
   'resolved exact chart, matched registry and no source-issued domain T8 required');
   const facts = snapshot.derivedFacts.tenGods;
   if (facts.status !== 'resolved') throw new TypeError('Ten Gods not resolved');
