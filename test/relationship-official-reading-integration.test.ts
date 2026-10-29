@@ -443,7 +443,7 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       .filter(item => item.summary?.includes('실제 명식에서 함께 확인된 십신 계열:')) ?? [];
     expect(focusedItems).toHaveLength(1);
     expect(focus?.state).toBe('complete');
-    expect(JSON.stringify(focus?.blocks)).toContain('관계 종합풀이의 완성을 뜻하지 않습니다.');
+    expect(JSON.stringify(focus?.blocks)).toContain('원국 전체의 최소 유효 해석 완료 판정과는 별개입니다.');
     expect(focusedItems[0]?.summary).toContain('생각을 정리한 뒤');
     expect(focusedItems[0]?.summary).toContain('대화');
     expect(focusedItems[0]?.summary).toContain('인성');
