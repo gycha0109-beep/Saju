@@ -222,6 +222,16 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
       semantics, plan, report.explainability.entries);
     expect(approvedAxes).toBeDefined();
     expect(approvedAxes!.perspectives.length).toBeGreaterThan(3);
+    const sameAxisBusiness = primaryBusinessUnits.filter(unit =>
+      (unit.semanticPayload as { businessKind?: string }).businessKind === 'decision_execution');
+    expect(sameAxisBusiness.length).toBeGreaterThanOrEqual(2);
+    for (const unit of sameAxisBusiness) {
+      const entry = report.explainability.entries.find(e =>
+        e.primaryUnitRefs?.length === 1 && e.primaryUnitRefs[0] === unit.unitId);
+      expect(entry).toBeDefined();
+      expect(approvedAxes!.perspectives.some(perspective =>
+        perspective.explainabilityRef === entry!.explainabilityRef)).toBe(true);
+    }
     const allApprovedItems = report.sections.flatMap(section =>
       section.blocks.flatMap(block => block.type === 'insights' ? block.items : []))
       .filter(item => item.summary?.includes('실제 십신과 관찰 위치:') ||
@@ -368,6 +378,16 @@ describe('Wealth approved composite reading remains grounded in real selected cl
       semantics, plan, report.explainability.entries);
     expect(approvedWealthAxes).toBeDefined();
     expect(approvedWealthAxes!.perspectives.length).toBeGreaterThan(3);
+    const sameAxisWealth = sourceUnits.filter(unit =>
+      (unit.semanticPayload as { wealthKind?: string }).wealthKind === 'management');
+    expect(sameAxisWealth.length).toBeGreaterThanOrEqual(2);
+    for (const unit of sameAxisWealth) {
+      const entry = report.explainability.entries.find(e =>
+        e.primaryUnitRefs?.length === 1 && e.primaryUnitRefs[0] === unit.unitId);
+      expect(entry).toBeDefined();
+      expect(approvedWealthAxes!.perspectives.some(perspective =>
+        perspective.explainabilityRef === entry!.explainabilityRef)).toBe(true);
+    }
     const allWealthContextItems = report.sections.flatMap(section =>
       section.blocks.flatMap(block => block.type === 'insights' ? block.items : []))
       .filter(item => item.summary?.includes('실제 십신과 관찰 위치:') ||
