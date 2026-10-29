@@ -483,6 +483,38 @@ function renderWealthInsufficientEvidence(report: WealthNatalMultifactorReport):
     '<p>기존 T5 관측만 보여 주며, 등록된 T8 재물 종합해석으로 승격하지 않습니다.</p></section>';
 }
 
+function renderDisplacedNatalCore(
+  domain: string,
+  report: GeneralNatalMultifactorReport | BusinessNatalMultifactorReport | RelationshipNatalMultifactorReport,
+): string {
+  const original = report.displacedOriginalCore;
+  if (original === undefined) return '';
+  const selected = report.sections;
+  guard(report.state === 'complete' && selected.length === 3 &&
+    !selected.some(item => item.claimType === original.claimType) &&
+    original.claimType.startsWith(domain.toUpperCase() + '_NATAL_MULTIFACTOR_') &&
+    original.ruleId === 'RULE-' + original.claimType &&
+    original.upstreamClaimIds.length >= 2 &&
+    original.sourceIds.length > 0 &&
+    original.observedFactPaths.length === original.observedPositions.length &&
+    original.observedFactPaths.length >= 2 &&
+    original.paragraph.trim().length > 0,
+    'Displaced natal core must be an existing, independently proven T8 source');
+  return '<section class="source-owned-original-core">' +
+    '<h3>기존 중심 후보로 발행된 별도 해석</h3>' +
+    '<p>다음 문단은 이 명식에서 이미 발행된 T8 연구 해석입니다. ' +
+    '독립 계산 위치를 추가로 활용하는 다른 기존 T8 조합을 우선해 첫 화면에서 ' +
+    '중심 역할을 바꾸었으며, 이 문단을 추가 독립 근거로 중복 계산하지 않습니다. ' +
+    '연구용 풀이 구성 기준은 공식 종합해석이나 실제 결과의 판정이 아닙니다.</p>' +
+    '<article><h4>' + escapeHtml(original.headline) + '</h4><p>' +
+    escapeHtml(original.paragraph) +
+    '</p><details><summary>원래 T8 규칙·출처·계산 위치</summary><p>' +
+    escapeHtml(original.claimType + ' · ' + original.ruleId) + '</p><p>' +
+    escapeHtml(original.sourceIds.join(' · ')) + '</p><p>' +
+    escapeHtml(original.observedFactPaths.join(' · ')) +
+    '</p></details></article></section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -523,6 +555,10 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
       : '';
   const additionalCareer = domain === 'career'
     ? renderCareerAdditionalVerifiedSections(report as CareerMultifactorReport) : '';
+  const displacedCore = domain === 'general' || domain === 'business' || domain === 'relationship'
+    ? renderDisplacedNatalCore(domain,
+        report as GeneralNatalMultifactorReport | BusinessNatalMultifactorReport | RelationshipNatalMultifactorReport)
+    : '';
   const details = firstMeaning === '' ? readingGuide + originalText
     : '<details class="full-claim-evidence"><summary>원국 풀이의 상세 설명·명식 근거와 출처</summary>' +
       readingGuide + originalText + '</details>';
@@ -530,7 +566,7 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
     '<p>' + escapeHtml(report.introduction) + '</p>' +
-    firstMeaning + overlapping + additionalCareer + insufficientEvidence + details + missing +
+    firstMeaning + overlapping + displacedCore + additionalCareer + insufficientEvidence + details + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }
