@@ -125,6 +125,7 @@ function reportDetails(reports: NatalFiveDomainMultifactorReports) {
         claimType: section.claimType, pattern: section.pattern, axis: section.axis,
         channel: section.channel, headline: section.headline, paragraph: section.paragraph,
         sourceIds: section.sourceIds, ruleId: section.ruleId,
+        ...('methodologyId' in section ? { methodologyId: section.methodologyId } : {}),
         upstreamClaimIds: section.upstreamClaimIds,
         positions: 'calculatedPositions' in section
           ? section.calculatedPositions : section.observedPositions,
