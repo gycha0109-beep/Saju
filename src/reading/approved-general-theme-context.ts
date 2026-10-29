@@ -96,6 +96,8 @@ export function buildApprovedGeneralThemeContextV1(
           unit.canonicalText?.headline !== profile.standardText.headline ||
           unit.canonicalText?.summary !== profile.standardText.summary ||
           !sameSet(unit.prohibitedExtensions, profile.prohibitedExtensions) ||
+          profile.approvedTextByRole.clarification?.trim().length === 0 ||
+          profile.approvedTextByRole.clarification === undefined ||
           !profile.provenance.sourceRefs.every(ref => unit.sourceRefs.includes(ref)))
         continue;
 
@@ -125,7 +127,8 @@ export function buildApprovedGeneralThemeContextV1(
       seen.add(claimType);
       perspectives.push({
         explainabilityRef: evidence[0].explainabilityRef,
-        text: '이 주제는 이 사람의 ' +
+        text: profile.approvedTextByRole.clarification + '\n\n' +
+          '이 주제는 이 사람의 ' +
           (channel === 'visible_stems' ? '천간에 드러난' : '지지에 확인된') +
           ' 십신 계열을 바탕으로 한 승인된 해석입니다. 실제 관측 위치: ' +
           positions.join(' · ') + '. ' +
