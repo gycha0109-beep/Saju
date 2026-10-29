@@ -127,6 +127,7 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
       detailed === undefined) return undefined;
 
   const unitsById = new Map(bundle.units.map(unit => [unit.unitId, unit]));
+  const unitsByClaimId = new Map(bundle.units.map(unit => [unit.claimId, unit]));
   const entriesByUnitId = new Map(
     explainabilityEntries.flatMap(entry =>
       entry.primaryUnitRefs?.length === 1
@@ -153,7 +154,8 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
           unit.taxonomy.category !== 'relationship' ||
           unit.taxonomy.subcategory !== 'general' ||
           unit.predicate !== 'relationship_conclusion' ||
-          unit.scenarioRef !== undefined) continue;
+          unit.scenarioRef !== undefined ||
+          unit.ruleRefs.length === 0 || unit.sourceRefs.length === 0) continue;
 
       const approval = profilesByClaimType.get(unit.claimType);
       const profile = approval?.profile;
@@ -170,14 +172,18 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
             (relation.fromClaimId === unit.claimId ||
               relation.toClaimId === unit.claimId))) continue;
 
-      const supportTypes = binding.supportingUnitRefs.map(ref =>
-        unitsById.get(ref)?.claimType,
-      );
-      if (supportTypes.some(type => type === undefined) ||
-          !sameSet(supportTypes as string[], profile.supportingClaimTypes) ||
-          supportTypes.some(type => type === undefined || FAMILY_FACT_LABELS[type] === undefined)) {
-        continue;
-      }
+      // OfficialReadingPlan binds all upstream evidence transitively. The
+      // approved T8 composite's meaning is owned by its DIRECT T5 family
+      // premises; an extra transitive fact is neither a new premise nor a
+      // reason to discard an otherwise qualified Korean interpretation.
+      const directSupport = unit.upstreamClaimRefs.map(ref => unitsByClaimId.get(ref));
+      if (directSupport.length < 2 || directSupport.some(item =>
+        item === undefined || item.role !== 'supporting' ||
+        item.scenarioRef !== undefined ||
+        !binding.supportingUnitRefs.includes(item.unitId))) continue;
+      const supportTypes = directSupport.map(item => item!.claimType);
+      if (!sameSet(supportTypes, profile.supportingClaimTypes) ||
+          supportTypes.some(type => FAMILY_FACT_LABELS[type] === undefined)) continue;
 
       const observedPositions = confirmedTenGodPositions(
         bundle, profile.supportingClaimTypes,
