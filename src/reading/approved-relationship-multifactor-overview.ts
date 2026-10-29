@@ -227,10 +227,10 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
   }
   if (candidates.length === 0) return undefined;
 
-  // Preserve every source-admitted distinct relationship meaning axis. The
-  // previous first-three cap discarded independent approved source paragraphs.
-  // Prefer independent interpretive axes; within an axis favor the larger
-  // already-approved supporting family set, never an inferred score or rank.
+  // Every separately source-admitted T8 claim retains its original meaning
+  // and its own evidence link, even when another claim shares its broad axis.
+  // Do not equate number of claims with number of independent interpretation
+  // axes or a completed minimum-useful-reading assessment.
   candidates.sort((left, right) =>
     right.distinctFamilies - left.distinctFamilies ||
     left.approvedOrder - right.approvedOrder ||
@@ -238,12 +238,13 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
     left.unitId.localeCompare(right.unitId),
   );
   const selected: ApprovedComposite[] = [];
-  const axes = new Set<RelationshipAxis>();
+  const claimTypes = new Set<string>();
   for (const candidate of candidates) {
-    if (axes.has(candidate.axis)) continue;
-    axes.add(candidate.axis);
+    if (claimTypes.has(candidate.claimType)) continue;
+    claimTypes.add(candidate.claimType);
     selected.push(candidate);
   }
+  const distinctAxes = new Set(selected.map(candidate => candidate.axis)).size;
   const explainabilityRefs = selected.map(x => x.explainabilityRef);
   const idHash = deterministicContentHash({
     policy: APPROVED_RELATIONSHIP_MULTIFACTOR_OVERVIEW_POLICY_VERSION,
@@ -256,16 +257,16 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
     sectionId: 'official_relationship_composite_' + idHash.slice(0, 20),
     sectionType: 'overview',
     title: '내 명식에서 함께 확인된 관계 주제',
-    state: selected.length < 3 ? 'partial' : 'complete',
+    state: distinctAxes < 3 ? 'partial' : 'complete',
     explainabilityRefs,
     blocks: [
       {
         type: 'paragraph',
         text: '아래 항목은 실제 명식에서 각각 두 개 이상의 십신 계열 근거가 확인되고, 기존 승인된 관계풀이의 문장과 출처가 일치하는 경우만 모았습니다. 특정 상대의 성격, 궁합, 결혼이나 관계 결과를 판정하지 않습니다.' +
-          (selected.length < 3
-            ? ' 현재 확인된 서로 다른 관계 관점은 ' + selected.length +
-              '개입니다. 다른 관점의 근거가 없으므로 이 요약만으로 관계 종합풀이의 완성을 뜻하지 않습니다.'
-            : ' 서로 구별되는 ' + selected.length + '개 관계 관점의 요약은 승인된 개별 풀이를 찾아 읽도록 돕는 것이며, 원국 전체의 최소 유효 해석 완료 판정과는 별개입니다.'),
+          ' 출처와 실제 계산 근거를 확인한 기존 승인 해석은 ' + selected.length +
+          '개이며, 서로 구별되는 주제축은 ' + distinctAxes + '개입니다. ' +
+          '같은 주제축의 다른 결론을 독립 보조 근거로 중복 계산하지 않습니다. ' +
+          '이는 승인된 개별 풀이의 근거를 읽도록 돕는 요약으로, 원국 전체의 최소 유효 해석 완료 판정과는 별개입니다.',
       },
       {
         type: 'comparison',
