@@ -31,6 +31,7 @@ export interface LifeStageNatalStructureContext {
     paragraph: string;
     sourceIds: readonly string[];
     factPaths: readonly string[];
+    evidenceMode?: 'reused_calculated_paths' | 'original_source_core';
   }[];
 }
 
@@ -228,6 +229,8 @@ export function renderLifeStageDayunResearchHtml(
       ? '<p>같은 명식에 연결할 수 있는 출처 있는 원국 구조 해석이 부족합니다.</p>'
       : natalContext.sections.map(item =>
         '<article><h3>' + e(item.title) + '</h3><p>' + e(item.paragraph) + '</p>' +
+        (item.evidenceMode === undefined ? '' :
+          '<p>기존에 발행된 별도 T8 원국 해석입니다. 대운 해석이나 독립 종합 근거를 추가하지 않습니다.</p>') +
         '<details><summary>원국 해석 근거</summary><p>' +
         e(item.sourceIds.join(' · ')) + '</p><p>' +
         e(item.factPaths.join(' · ')) + '</p></details></article>',
