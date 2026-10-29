@@ -109,7 +109,7 @@ export interface QuestionRelatedNatalSection {
   sourceIds: readonly string[];
   factPaths: readonly string[];
   /** Already-issued T8 using the same facts, never independent T11 support. */
-  evidenceMode?: 'reused_calculated_paths';
+  evidenceMode?: 'reused_calculated_paths' | 'preexisting_additional_t8';
 }
 
 export interface QuestionRelatedNatalReading {
@@ -148,9 +148,40 @@ type SourceSection = DomainReport['sections'][number];
 function availableOriginalSections(
   topic: Topic,
   reports: NatalFiveDomainMultifactorReports,
-): readonly (SourceSection & { overlapsSelectedFactPaths?: readonly string[] })[] {
+): readonly (SourceSection & {
+  overlapsSelectedFactPaths?: readonly string[];
+  additionalExistingCareer?: true;
+})[] {
   const report = reports[topic];
   const selected: readonly SourceSection[] = report.sections;
+  // Career's extra T8 clauses are already issued and EvidenceSelector-selected,
+  // but excluded from the first-screen summary. A specifically requested axis
+  // can read them independently without enlarging the MUR support count.
+  if (topic === 'career') {
+    const sources = reports.career.additionalVerifiedSections;
+    const selectedAxes = new Set(selected.map(section => section.axis));
+    const selectedTypes = new Set(selected.map(section => section.claimType));
+    const usedPaths = new Set(selected.flatMap(section =>
+      'calculatedFactPaths' in section ? section.calculatedFactPaths : section.observedFactPaths));
+    const extra: (typeof sources[number] & { additionalExistingCareer: true })[] = [];
+    for (const section of sources) {
+      assert(section.claimType.startsWith('CAREER_NATAL_MULTIFACTOR_') &&
+        section.ruleId === 'RULE-' + section.claimType &&
+        !selectedTypes.has(section.claimType) &&
+        section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
+        section.calculatedFactPaths.length >= 2 &&
+        section.calculatedFactPaths.length === section.calculatedPositions.length &&
+        section.paragraph.trim().length > 0 &&
+        section.calculatedFactPaths.some(path => !usedPaths.has(path)),
+        'Question cannot use unverified or repeated Career T8 evidence');
+      section.calculatedFactPaths.forEach(path => usedPaths.add(path));
+      if (!selectedAxes.has(section.axis)) {
+        selectedAxes.add(section.axis);
+        extra.push({ ...section, additionalExistingCareer: true });
+      }
+    }
+    return [...selected, ...extra];
+  }
   const alternatives = topic === 'general'
     ? reports.general.overlappingPerspectives ?? []
     : topic === 'wealth'
@@ -319,7 +350,9 @@ export function buildQuestionRelatedNatalReading(
       factPaths,
       ...('overlapsSelectedFactPaths' in section &&
         Array.isArray(section.overlapsSelectedFactPaths)
-        ? { evidenceMode: 'reused_calculated_paths' as const } : {}),
+        ? { evidenceMode: 'reused_calculated_paths' as const } :
+        ('additionalExistingCareer' in section && section.additionalExistingCareer === true)
+          ? { evidenceMode: 'preexisting_additional_t8' as const } : {}),
     };
   });
   return base(snapshot, question, 'related_evidence',
@@ -340,6 +373,9 @@ export function buildQuestionRelatedNatalReading(
         (sections.some(section => section.evidenceMode === 'reused_calculated_paths')
           ? '이 중 일부는 이미 사용한 계산 경로를 다시 읽는 별도의 기존 T8 관점으로 독립 근거가 늘어난 것은 아닙니다. '
           : '') +
+        (sections.some(section => section.evidenceMode === 'preexisting_additional_t8')
+          ? '첫 화면에서 제외됐지만 원래 발행된 직업 T8 관점을 해당 질문에 한해 읽으며, 이를 전체 직업운의 독립 종합 결론으로 세지 않습니다. '
+          : '') +
         '질문의 개별 상황에서 무엇을 선택해야 하는지나 미래 결과를 별도로 판정한 내용은 아닙니다.',
       reportState: report.state, sections });
 }
@@ -358,7 +394,9 @@ export function renderQuestionRelatedNatalReadingHtml(reading: QuestionRelatedNa
     escapeHtml(section.paragraph) + '</p>' +
     (section.evidenceMode === 'reused_calculated_paths'
       ? '<p>기존 계산 근거를 다시 사용하는 다른 T8 의미축이며, 새로운 독립 근거나 질문에 대한 T11 결론이 아닙니다.</p>'
-      : '') + '<details><summary>기존 근거 확인</summary><p>' +
+      : section.evidenceMode === 'preexisting_additional_t8'
+        ? '<p>기존 직업 T8 규칙이 발행한 별도 관점이며, 새로운 T11 답변이나 종합 완료 판정이 아닙니다.</p>'
+        : '') + '<details><summary>기존 근거 확인</summary><p>' +
     escapeHtml(section.factPaths.join(' · ')) + '</p><p>' +
     escapeHtml(section.sourceIds.join(' · ')) + '</p><p>' +
     escapeHtml(section.claimType + ' · ' + section.ruleId) + '</p></details></article>').join('');
