@@ -331,10 +331,12 @@ export function buildApprovedDomainMultifactorContextV1(
         (item.familyCount === 1
           ? '\n이 문단은 이미 승인된 한 가지 계열의 관점이며 서로 독립적인 복합 해석이나 인생 전체의 결론이 아닙니다.'
           : '') +
-        (item.sharedChannel === undefined ? '' :
-          '\n이 복합 결론의 선행 십신 계열은 모두 ' +
-          item.sharedChannel +
-          '에서 함께 관찰되었습니다. 이는 채널 일치의 사실이며 우세·성패 판정이 아닙니다.'),
+        (item.sharedChannel === undefined ? '' : item.familyCount === 1
+          ? '\n이 단일 계열은 ' + item.sharedChannel +
+            '에서 관찰됐습니다. 다른 계열과의 결합이나 우세·성패 판정이 아닙니다.'
+          : '\n이 복합 결론의 선행 십신 계열은 모두 ' +
+            item.sharedChannel +
+            '에서 함께 관찰되었습니다. 이는 채널 일치의 사실이며 우세·성패 판정이 아닙니다.'),
     })),
   };
 }
