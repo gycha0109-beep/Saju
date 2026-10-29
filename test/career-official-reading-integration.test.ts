@@ -240,7 +240,10 @@ describe('admitted Career Preview semantics -> Official Reading -> Reader', () =
         profile.claimType === unit?.claimType);
       expect(approved?.approvedTextByRole.clarification).toBeDefined();
       expect(perspective.text).toContain(approved!.approvedTextByRole.clarification);
-      expect(reportJson).toContain(perspective.text);
+      expect(report.sections.some(section => section.blocks.some(block =>
+        block.type === 'insights' && block.items.some(item =>
+          item.explainabilityRef === perspective.explainabilityRef &&
+          item.summary?.includes(perspective.text))))).toBe(true);
     }
     const detailedContext = buildApprovedCareerChannelContextV1(
       semantics, plan, report.explainability.entries, 'detailed');
