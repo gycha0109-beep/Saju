@@ -470,6 +470,17 @@ describe('General natal standard interpretation uses actual Ten-God channels', (
     expect(actualText).toContain('실제 관측 위치:');
     expect(actualText).toMatch(/(?:연주|월주|일주|시주) (?:천간|지지 대표 십신)/u);
     expect(actualText).toContain('다른 주제와 함께 읽을 근거');
+    for (const perspective of context!.perspectives) {
+      const entry = report.explainability.entries.find(item =>
+        item.explainabilityRef === perspective.explainabilityRef);
+      const unit = semantics.units.find(item => item.unitId === entry?.primaryUnitRefs?.[0]);
+      const approved = GENERAL_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.find(profile =>
+        profile.claimType === unit?.claimType &&
+        profile.standardText.summary === unit.canonicalText?.summary);
+      expect(approved?.approvedTextByRole.clarification).toBeDefined();
+      expect(perspective.text).toContain(approved!.approvedTextByRole.clarification);
+      expect(actualText).toContain(perspective.text);
+    }
     expect(buildApprovedGeneralThemeContextV1({
       ...semantics, canonicalFacts: [],
     }, plan, report.explainability.entries)).toBeUndefined();
