@@ -40,6 +40,7 @@ export function buildApprovedGeneralThemeContextV1(
   bundle: CanonicalReadingSemanticBundleV1,
   plan: OfficialReadingPlanV1,
   entries: readonly Entry[],
+  presentation: 'standard' | 'detailed' = 'standard',
 ): ApprovedGeneralThemeContextV1 | undefined {
   if (bundle.intent.domain !== 'general' ||
       bundle.intent.temporalScope !== 'natal' ||
@@ -127,7 +128,9 @@ export function buildApprovedGeneralThemeContextV1(
       seen.add(claimType);
       perspectives.push({
         explainabilityRef: evidence[0].explainabilityRef,
-        text: profile.approvedTextByRole.clarification + '\n\n' +
+        text: (presentation === 'standard'
+          ? profile.approvedTextByRole.clarification + '\n\n'
+          : '') +
           '이 주제는 이 사람의 ' +
           (channel === 'visible_stems' ? '천간에 드러난' : '지지에 확인된') +
           ' 십신 계열을 바탕으로 한 승인된 해석입니다. 실제 관측 위치: ' +
