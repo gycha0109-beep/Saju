@@ -260,7 +260,7 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       .flatMap(block => block.items)
       .filter(item => item.summary?.includes('실제 명식에서 함께 확인된 십신 계열:'));
     expect(focusedItems.length).toBeGreaterThanOrEqual(2);
-    expect(focusedItems.length).toBeLessThanOrEqual(5);
+    expect(focusedItems.length).toBeLessThanOrEqual(primaryRelationshipUnits.length);
     const proofRefs = new Set(detailedReport.explainability.entries.map(x => x.explainabilityRef));
     for (const item of focusedItems) {
       expect(item.explainabilityRef).toBeDefined();
@@ -290,12 +290,24 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       throw new Error('Expected source-admitted relationship axes in detailed reading');
     }
     expect(focusedItems.length).toBe(comparison.perspectives.length);
+    expect(comparison.perspectives.length).toBeGreaterThan(5);
     expect(new Set(comparison.perspectives.map(item => item.explainabilityRef)).size)
       .toBe(comparison.perspectives.length);
     for (const perspective of comparison.perspectives) {
       expect(focusedItems.some(item =>
         item.explainabilityRef === perspective.explainabilityRef &&
         item.summary?.includes(perspective.text))).toBe(true);
+    }
+    const sameAxisDetailed = primaryRelationshipUnits.filter(unit =>
+      (unit.semanticPayload as { relationshipKind?: string }).relationshipKind === 'values' &&
+      unit.upstreamClaimRefs.length >= 2);
+    expect(sameAxisDetailed.length).toBeGreaterThanOrEqual(2);
+    for (const unit of sameAxisDetailed) {
+      const entry = detailedReport.explainability.entries.find(item =>
+        item.primaryUnitRefs?.length === 1 && item.primaryUnitRefs[0] === unit.unitId);
+      expect(entry).toBeDefined();
+      expect(comparison.perspectives.some(item =>
+        item.explainabilityRef === entry!.explainabilityRef)).toBe(true);
     }
     const focusEntry = detailedReport.explainability.entries.find(entry =>
       entry.explainabilityRef === focusedItems[0]?.explainabilityRef,
