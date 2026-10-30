@@ -1,0 +1,47 @@
+name: Saju T9 Branch Verification
+on:
+  push:
+    branches:
+      - fix/saju/wealth-preserve-independent-core
+    paths:
+      - '.github/workflows/saju-t9-branch-verification.yml'
+      - 'src/preview/temporal-composition-conditional-context.ts'
+      - 'src/preview/t9-annual-dayun-classical-alignment.ts'
+      - 'src/preview/temporal-research-menu-reading.ts'
+      - 'src/preview/general-annual-monthly-exploration-report.ts'
+      - 'src/preview/three-temporal-menus-birth-reading.ts'
+      - 'test/t9-annual-dayun-classical-alignment.test.ts'
+      - 'scripts/saju-500-eight-menu-audit.mjs'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+      - run: >
+          npx vitest run
+          test/t9-annual-dayun-classical-alignment.test.ts
+          test/temporal-composition-conditional-context.test.ts
+          test/annual-dayun-existing-t9-claim-links.test.ts
+          test/three-temporal-menus-birth-reading.test.ts
+          test/t9-current-source-owned-monthly-context.test.ts
+          test/annual-monthly-birth-research-runtime.test.ts
+          --maxWorkers=2
+      - run: node scripts/saju-500-eight-menu-audit.mjs "${{ runner.temp }}/saju-t9-500-audit.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: saju-t9-branch-audit
+          path: ${{ runner.temp }}/saju-t9-500-audit.json
+          if-no-files-found: warn
+          retention-days: 7
