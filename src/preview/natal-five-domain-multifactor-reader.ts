@@ -492,6 +492,7 @@ function renderWealthSourceBoundCrossChannel(
   guard(comparison.researchOnly && !comparison.mayPublish &&
     !comparison.maySell && !comparison.interpretationAuthorityGranted &&
     comparison.sourceIds.length >= 2 &&
+    comparison.sourceUrl.startsWith('https://zh.wikisource.org/') &&
     comparison.upstreamClaimIds.length === 2 &&
     comparison.observedFactPaths.length === comparison.observedPositions.length &&
     comparison.observedFactPaths.length >= 2 &&
@@ -505,7 +506,9 @@ function renderWealthSourceBoundCrossChannel(
     '<details><summary>연구 전용 출처·실제 계산 경로</summary><p>' +
     escapeHtml(comparison.ruleId) + '</p><p>' +
     escapeHtml(comparison.sourceIds.join(' · ')) + '</p><p>' +
-    escapeHtml(comparison.observedFactPaths.join(' · ')) + '</p></details>' +
+    escapeHtml(comparison.observedFactPaths.join(' · ')) + '</p><p>' +
+    '<a href="' + escapeHtml(comparison.sourceUrl) + '" rel="noopener noreferrer">' +
+    '검증 원문: 삼명통회 논상관</a></p></details>' +
     '<p>이 비교는 재물 종합풀이의 독립 근거 축으로 세지 않습니다.</p></section>';
 }
 
