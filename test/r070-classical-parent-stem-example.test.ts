@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { BirthInput, CanonicalSajuSnapshot } from '../src/contracts/calculation.js';
+import type { BirthInput } from '../src/contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from
   '../src/production/production-calculation-runtime.js';
 import {
