@@ -4,6 +4,8 @@ import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/productio
 import { buildCompatibilityTwoBirthResearchReading } from '../src/preview/compatibility-two-birth-research-runtime.js';
 import { evaluatePairwiseSourceScopeV1 } from '../src/research/family-pair-source-scope-handoff.js';
 import { renderCompatibilityTwoChartIntakeHtml } from '../src/preview/compatibility-two-chart-intake-preview.js';
+import { renderPairwiseClassicalDayStemObservationHtml } from
+  '../src/research/pairwise-day-stem-classical-combination-witness.js';
 
 function escapedHtmlText(value: string): string {
   return value.replace(/[&<>"']/gu, char => ({
@@ -208,10 +210,14 @@ describe('real two-birth compatibility intake remains facts only', () => {
             .toBe(observation.exactPillarIdentity === 'same');
         }
       }
-      // Existing consumer HTML remains a bounded calculation-only preview.
+      // Existing consumer HTML retains its original body plus one source-backed
+      // bounded stem-name observation, never a new T10 judgement.
       expect(output.html).toBe(renderCompatibilityTwoChartIntakeHtml(
         output.report, output.personalRelationship,
-      ));
+      ).replace('</main>', renderPairwiseClassicalDayStemObservationHtml(
+        output.dayStemSourceWitness) + '</main>'));
+      expect(output.dayStemSourceWitness.pairwiseT10Admitted).toBe(false);
+      expect(output.html).toContain('《삼명통회》 권2 논십간합 원문');
       expect(output.availability).toBe('unavailable');
       expect(output.mayClaimInterpersonalMeaning).toBe(false);
       expect(read(firstBirth, secondBirth)).toEqual(output);
