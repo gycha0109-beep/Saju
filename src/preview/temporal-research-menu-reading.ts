@@ -404,6 +404,9 @@ export function buildTemporalResearchMenuReadings(
         observedStructuralContext: joined.observedStructuralContext,
         annualReference: joined.annualReference,
       }),
+      ...(historicalAnnualDayunAlignment === undefined ? {} : {
+        historicalAnnualDayunAlignment,
+      }),
       missing: joined === undefined
         ? ['연도 및 출생정보를 입력하고 연운 연구 풀이를 실행해야 합니다.']
         : [
@@ -450,9 +453,6 @@ export function buildTemporalResearchMenuReadings(
       }),
       ...(referenceFocus === undefined ? {} : { referenceFocus }),
       ...(currentT9SourceContext === undefined ? {} : { currentT9SourceContext }),
-      ...(historicalAnnualDayunAlignment === undefined ? {} : {
-        historicalAnnualDayunAlignment,
-      }),
       missing: joined === undefined
         ? ['연도·월·출생정보를 입력하고 월운 연구 풀이를 실행해야 합니다.']
         : [

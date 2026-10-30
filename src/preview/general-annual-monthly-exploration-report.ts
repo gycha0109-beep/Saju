@@ -446,12 +446,11 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     ' · 연구용 월별 적용 범위만 안내합니다.</p>' + focus +
     (currentT9Source === undefined ? '' :
       renderT9CurrentSourceOwnedMonthlyContext(currentT9Source)) +
-    renderT9ClassicalAnnualDayunAlignment(historicalAlignment) +
     currentConditionalFact + '</section>' +
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
     '<p class="muted" id="reference-year-context">' + e(annualContext) + '</p>' +
     '<p class="muted">' + e(yearFacts) + '</p>' + primaryWitnessHtml +
-    annual + '</section>' +
+    renderT9ClassicalAnnualDayunAlignment(historicalAlignment) + annual + '</section>' +
     '<section id="monthly-reading"><h2>' + e(report.monthly.headline) + '</h2>' +
     '<p>' + e(report.periodComparison) + '</p>' +
     '<p class="muted">' + e(report.monthly.jeolBoundary.name) + ' 절입: ' +

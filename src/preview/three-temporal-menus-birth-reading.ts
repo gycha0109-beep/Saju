@@ -78,7 +78,7 @@ function render(
   const annualReference = report.annualReference;
   const monthlyFocus = report.monthly.referenceReading;
   const currentT9 = annualMonthly.monthlyMenu.currentT9SourceContext;
-  const classical = annualMonthly.monthlyMenu.historicalAnnualDayunAlignment;
+  const classical = annualMonthly.annualMenu.historicalAnnualDayunAlignment;
   if (!classical || classical.snapshotId !== report.snapshotId ||
       classical.calculationHash !== report.calculationHash ||
       classical.newlyEmittedT9Claims !== 0 ||
@@ -233,13 +233,12 @@ function render(
     '<a href="#life-stage">삶의 단계</a></nav>' +
     '<section id="annual"><h2>올해 — ' + report.targetYear + '년</h2><p>' +
     e(yearNote) + '</p><p>' + e(observedAnnual) + '</p>' +
-    annualWitnessHtml + annual +
+    annualWitnessHtml + renderT9ClassicalAnnualDayunAlignment(classical) + annual +
     '</section>' +
     '<section id="monthly"><h2>이번 달 — ' + report.targetMonth + '월</h2>' +
     '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth +
     (currentT9 === undefined ? '' : renderT9CurrentSourceOwnedMonthlyContext(currentT9)) +
     selectedStructuralReading +
-    renderT9ClassicalAnnualDayunAlignment(classical) +
     '<h3>절입 전후 전체 풀이 (현재 해석이 아닌 구간도 포함)</h3>' +
     '<p>아래 두 구간은 출처 있는 비교 자료입니다. 현재 적용되는 해석은 위의 조회 시각 구간 하나뿐입니다.</p>' +
     observedMonthly + monthly +

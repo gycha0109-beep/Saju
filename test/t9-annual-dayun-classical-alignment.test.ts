@@ -26,7 +26,7 @@ const REFERENCE = '2026-10-25T00:00:00.000Z';
 describe('actual classical Suiyun Binglin witness, not annual prognostic authority', () => {
   it('reads both actual full pillars and the original Chinese example at the correct instant', () => {
     const result = read(REFERENCE);
-    const witness = result.monthlyMenu.historicalAnnualDayunAlignment!;
+    const witness = result.annualMenu.historicalAnnualDayunAlignment!;
     const selected = result.report.t9EvidenceLinks.referenceEvidenceFocus.activeLink!;
     const active = result.report.conditionalComposition.slices.find(slice =>
       slice.startsAt === selected.startsAt &&
@@ -59,26 +59,26 @@ describe('actual classical Suiyun Binglin witness, not annual prognostic authori
       targetYear: 2026, targetMonth: 10, referenceDateTime: REFERENCE,
     });
     expect(three.html).toContain(witness.paragraph);
-    expect(three.annualMonthly.monthlyMenu.historicalAnnualDayunAlignment).toEqual(witness);
+    expect(three.annualMonthly.annualMenu.historicalAnnualDayunAlignment).toEqual(witness);
   });
 
   it('never calls an out-of-month or unknown Dayun a historical meeting', () => {
     const outside = read(REFERENCE, 2026, 11);
-    expect(outside.monthlyMenu.historicalAnnualDayunAlignment?.status)
+    expect(outside.annualMenu.historicalAnnualDayunAlignment?.status)
       .toBe('outside_selected_month');
-    expect(outside.monthlyMenu.historicalAnnualDayunAlignment?.anyFullPillarMatch)
+    expect(outside.annualMenu.historicalAnnualDayunAlignment?.anyFullPillarMatch)
       .toBe(false);
     const noHour: BirthInput = { ...birth, time: { known: false } };
     const unknown = read(REFERENCE, 2026, 10, noHour);
-    expect(unknown.monthlyMenu.historicalAnnualDayunAlignment?.status)
+    expect(unknown.annualMenu.historicalAnnualDayunAlignment?.status)
       .toBe('dayun_not_calculated');
-    expect(unknown.monthlyMenu.historicalAnnualDayunAlignment?.dayunPillar).toBeNull();
-    expect(unknown.monthlyMenu.historicalAnnualDayunAlignment?.newlyEmittedT9Claims).toBe(0);
+    expect(unknown.annualMenu.historicalAnnualDayunAlignment?.dayunPillar).toBeNull();
+    expect(unknown.annualMenu.historicalAnnualDayunAlignment?.newlyEmittedT9Claims).toBe(0);
   });
 
   it('does not confuse civil year with the effective annual pillar before Ipchun', () => {
     const early = read('2026-02-01T03:00:00.000Z', 2026, 2);
-    const witness = early.monthlyMenu.historicalAnnualDayunAlignment!;
+    const witness = early.annualMenu.historicalAnnualDayunAlignment!;
     expect(early.report.annualReference.ipchunBoundary.status).toBe('resolved');
     expect(early.report.annualReference.ipchunBoundary.status === 'resolved' &&
       early.report.annualReference.ipchunBoundary.effectiveYear).toBe(2025);
@@ -88,7 +88,7 @@ describe('actual classical Suiyun Binglin witness, not annual prognostic authori
   });
 
   it('rejects altered original historical labels and a promoted reading', () => {
-    const original = read(REFERENCE).monthlyMenu.historicalAnnualDayunAlignment!;
+    const original = read(REFERENCE).annualMenu.historicalAnnualDayunAlignment!;
     expect(() => renderT9ClassicalAnnualDayunAlignment({
       ...original, newlyEmittedT9Claims: 1,
     } as unknown as typeof original)).toThrow('historical source name cannot establish');

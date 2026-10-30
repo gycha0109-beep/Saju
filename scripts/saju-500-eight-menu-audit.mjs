@@ -284,7 +284,7 @@ function temporalEntries(result) {
       newT9Claims: 0, officialAuthority: false,
     };
   }
-  const historical = result.annualMonthly.monthlyMenu.historicalAnnualDayunAlignment;
+  const historical = result.annualMonthly.annualMenu.historicalAnnualDayunAlignment;
   if (!historical || historical.snapshotId !== report.snapshotId ||
       historical.calculationHash !== report.calculationHash ||
       historical.newlyEmittedT9Claims !== 0 ||
