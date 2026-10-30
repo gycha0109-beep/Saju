@@ -83,6 +83,8 @@ const audit = {
     compatibility: { twoPersonCalculated: 0, pairT10Issued: 0, pairingChangedContext: 0,
       differentPersonalT8Presentations: 0, samePersonalT8Presentations: 0,
       differentPersonalT8HeadlineProfiles: 0,
+      classicalDayStemNamedPairs: 0, classicalDayStemNonPairs: 0,
+      classicalDayStemUnresolved: 0,
       subjectPersonalT8Sections: 0, targetPersonalT8Sections: 0 },
     question: { related_evidence: 0, unsupported: 0, ambiguous: 0, insufficient: 0,
       sourceOwnedSections: 0, fabricatedT11: 0 },
@@ -162,6 +164,20 @@ for (let i = 0; i < count; i++) {
       audit.menuCounts.spouse.positionContext++;
     }
     audit.menuCounts.compatibility.twoPersonCalculated++;
+    const stemWitness = relations.compatibility.dayStemSourceWitness;
+    if (stemWitness.sourceId !== 'SRC-SAMYEONG-TONGHOE-V2-LUN-SHI-GAN-HE' ||
+        stemWitness.pairwiseT10Admitted || stemWitness.relationshipCompatibilityEstablished ||
+        !relations.compatibility.html.includes(stemWitness.paragraph) ||
+        !relations.html.includes(stemWitness.paragraph)) {
+      throw new Error('Classical stem pair must be exact-source, visible and held from T10');
+    }
+    if (stemWitness.status === 'named_classical_stem_pair_observed') {
+      audit.menuCounts.compatibility.classicalDayStemNamedPairs++;
+    } else if (stemWitness.status === 'different_day_stem_pair') {
+      audit.menuCounts.compatibility.classicalDayStemNonPairs++;
+    } else {
+      audit.menuCounts.compatibility.classicalDayStemUnresolved++;
+    }
     const subjectT8 = relations.compatibility.personalRelationship.subject.sections;
     const targetT8 = relations.compatibility.personalRelationship.target.sections;
     const semantic = sections => JSON.stringify(sections.map(section => ({
@@ -212,6 +228,10 @@ for (let i = 0; i < count; i++) {
       familyMeaningIssued: false,
       spousePositionStatus: relations.spouse.report.readingStatus,
       pairMeaningIssued: false,
+      classicalDayStemWitness: stemWitness.status,
+      ...(stemWitness.classicalPair === undefined ? {} : {
+        classicalPair: stemWitness.classicalPair,
+      }),
       sourceOwnedSubjectT8Count: subjectT8.length,
       sourceOwnedTargetT8Count: targetT8.length,
       differentPersonalT8Presentation: semantic(subjectT8) !== semantic(targetT8),
