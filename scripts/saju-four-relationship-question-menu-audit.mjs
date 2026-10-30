@@ -1,4 +1,6 @@
 import { writeFileSync } from 'node:fs';
+import process from 'node:process';
+import console from 'node:console';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { pathToFileURL } from 'node:url';
