@@ -1,7 +1,10 @@
 import type { CanonicalSajuSnapshot, HeavenlyStem } from '../contracts/calculation.js';
 import type { FamilySourceScopeHandoff } from './family-pair-source-scope-handoff.js';
 import type { R070ClassicalParentStemExample } from './r070-classical-parent-stem-example.js';
-import { R070_CLASSICAL_PARENT_EXAMPLE_SOURCE } from './r070-classical-parent-stem-example.js';
+import {
+  R070_CLASSICAL_PARENT_EXAMPLE_SOURCE,
+  observeR070ClassicalParentStemExample,
+} from './r070-classical-parent-stem-example.js';
 
 export const R070_PARENT_EXAMPLE_BOUNDARY_RULE_VERSION =
   'r070-jia-yi-parent-source-precondition-gate-v1' as const;
@@ -88,6 +91,11 @@ export function assessR070ParentExampleRuleClaimBoundary(
   if (day.status !== 'resolved' || day.value.hanja !== example.historicalDayStem ||
       (day.value.hanja !== '甲' && day.value.hanja !== '乙')) {
     throw new TypeError('R070 original parent example needs exact calculated Jia/Yi day master');
+  }
+  const verifiedExample = observeR070ClassicalParentStemExample(snapshot);
+  if (verifiedExample === undefined ||
+      JSON.stringify(verifiedExample) !== JSON.stringify(example)) {
+    throw new TypeError('R070 contextual source example must equal exact Canonical evidence');
   }
   const historicalSex = snapshot.input.sexForTraditionalCalculation ?? 'unspecified';
   if (handoff.historicalSex !== historicalSex) {
