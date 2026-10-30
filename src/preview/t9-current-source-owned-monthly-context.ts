@@ -196,6 +196,9 @@ export function renderT9CurrentSourceOwnedMonthlyContext(
     context.sourceTensions.every(item => item.ruleIds.length > 0 &&
       item.sourceIds.length > 0 && item.factPaths.length > 0),
   'rendering cannot promote T9 observation to cross-layer meaning');
+  const pillarNames: Record<PillarSlot, string> = {
+    year: '연지', month: '월지', day: '일지', hour: '시지',
+  };
   return '<article id="t9-current-source-context"><h3>현재 절입 구간의 기존 T9 주제와 개별 충 관측</h3>' +
     '<p>조회 시각 ' + esc(context.referenceDateTime) + '에 해당하는 ' +
     (context.segmentId === 'before_jeol' ? '절입 전' : '절입 후') +
@@ -206,7 +209,7 @@ export function renderT9CurrentSourceOwnedMonthlyContext(
       ? '<p>같은 적용 구간에서 따로 발행된 원국 지지 충 관측 ' +
         context.sourceTensions.length + '건이 있습니다.</p>' +
         context.sourceTensions.map(item =>
-          '<p>원국 ' + esc(item.natalPillar) + ' 지지 ' +
+          '<p>원국 ' + esc(pillarNames[item.natalPillar]) + ' ' +
           esc(item.natalBranch) + '와 월운 지지 ' + esc(item.monthlyBranch) +
           '의 충: ' + esc(item.text) + '</p>').join('')
       : '<p>같은 구간에서 발행된 별도의 T9 지지 충 Claim은 없습니다. ' +
