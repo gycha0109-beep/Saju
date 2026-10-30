@@ -17,7 +17,7 @@ export const WEALTH_NATAL_CROSS_CHANNEL_SOURCE: SourceReference = Object.freeze(
   notes: 'The original 論傷官 says 傷盡則能生財 and requires further conditions. '
     + 'This source supports that the two concepts are discussed together; it does '
     + 'NOT verify 傷盡, 身旺, 財旺, cross-channel activation, money outcomes, or any official Claim.',
-});
+} satisfies SourceReference);
 export const WEALTH_NATAL_CROSS_CHANNEL_METHOD: MethodologyDefinition = Object.freeze({
   methodologyId: 'M-WEALTH-NATAL-CROSS-CHANNEL-OBSERVATION-V1',
   version: WEALTH_NATAL_CROSS_CHANNEL_VERSION,
@@ -110,4 +110,4 @@ export const WEALTH_NATAL_CROSS_CHANNEL_RULE: RuleDefinition = Object.freeze({
     reviewerStatus: 'unreviewed',
   },
   status: 'research',
-});
+} satisfies RuleDefinition);
