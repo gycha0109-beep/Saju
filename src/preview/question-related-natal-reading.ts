@@ -162,7 +162,6 @@ function availableOriginalSections(
   // can read them independently without enlarging the MUR support count.
   if (topic === 'career') {
     const sources = reports.career.additionalVerifiedSections;
-    const selectedAxes = new Set(selected.map(section => section.axis));
     const selectedTypes = new Set(selected.map(section => section.claimType));
     const usedPaths = new Set(selected.flatMap(section =>
       'calculatedFactPaths' in section ? section.calculatedFactPaths : section.observedFactPaths));
@@ -180,10 +179,11 @@ function availableOriginalSections(
         section.calculatedFactPaths.some(path => !usedPaths.has(path)),
         'Question cannot use unverified or repeated Career T8 evidence');
       section.calculatedFactPaths.forEach(path => usedPaths.add(path));
-      if (!selectedAxes.has(section.axis)) {
-        selectedAxes.add(section.axis);
-        extra.push({ ...section, additionalExistingCareer: true });
-      }
+      selectedTypes.add(section.claimType);
+      // A second source-issued Claim on the same broad axis is still an
+      // independent existing paragraph when its Claim and fact paths differ.
+      // Do not silently discard the branch version of a visible-stem reading.
+      extra.push({ ...section, additionalExistingCareer: true });
     }
     return [...selected, ...extra];
   }

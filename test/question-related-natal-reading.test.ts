@@ -26,10 +26,10 @@ const wealthRegistry = createWealthNatalMultifactorRegistry();
 const businessRegistry = createBusinessNatalMultifactorRegistry();
 const relationshipRegistry = createRelationshipNatalMultifactorRegistry();
 
-function run(known = true, day = 10, month = 3, hour = 12) {
+function run(known = true, day = 10, month = 3, hour = 12, year = 2024) {
   const snapshot = calculateCanonicalSajuSnapshot({
     calendarType: 'solar',
-    date: { year: 2024, month, day },
+    date: { year, month, day },
     time: known ? { known: true, hour, minute: 0 } as const : { known: false } as const,
     sexForTraditionalCalculation: 'unspecified',
   }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
@@ -371,6 +371,38 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(snapshot, forged))
       .toThrow('Career additional T8 must retain separately verified canonical evidence');
   }, 30_000);
+
+  it('keeps two original Career T8 readings on the same axis when their observed paths differ', () => {
+    const { snapshot, reports } = run(true, 3, 1, 12, 1975);
+    const source = reports.career;
+    const first = source.sections.find(section => section.axis === 'preparation');
+    const second = source.additionalVerifiedSections.find(section =>
+      section.axis === 'preparation' && section.claimType !== first?.claimType);
+    expect(first).toBeDefined();
+    expect(second).toBeDefined();
+    expect(new Set([...first!.calculatedFactPaths, ...second!.calculatedFactPaths]).size)
+      .toBeGreaterThan(first!.calculatedFactPaths.length);
+    const selected = buildQuestionRelatedNatalReading(
+      snapshot, question('직업에서 준비 관점이 궁금해요'), reports);
+    expect(selected.status).toBe('related_evidence');
+    expect(selected.focusAxis).toBe('preparation');
+    expect(selected.sections.map(section => section.claimType)).toContain(first!.claimType);
+    expect(selected.sections.map(section => section.claimType)).toContain(second!.claimType);
+    expect(selected.sections.find(section => section.claimType === first!.claimType))
+      .toMatchObject({ paragraph: first!.paragraph, factPaths: first!.calculatedFactPaths });
+    expect(selected.sections.find(section => section.claimType === second!.claimType))
+      .toMatchObject({
+        paragraph: second!.paragraph, factPaths: second!.calculatedFactPaths,
+        sourceIds: second!.sourceIds, ruleId: second!.ruleId,
+        evidenceMode: 'preexisting_additional_t8',
+      });
+    const html = renderQuestionRelatedNatalReadingHtml(selected);
+    expect(html).toContain(first!.paragraph);
+    expect(html).toContain(second!.paragraph);
+    expect(html).toContain('새로운 T11 답변이나 종합 완료 판정이 아닙니다');
+    expect(selected.mayPublish).toBe(false);
+    expect(selected.maySell).toBe(false);
+  });
 
   it('rejects forged question-only source paths when a secondary T8 is not admitted by the selected chart', () => {
     const { snapshot, reports } = run(true, 3, 1, 3);
