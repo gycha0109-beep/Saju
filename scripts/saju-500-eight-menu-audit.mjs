@@ -284,6 +284,27 @@ function temporalEntries(result) {
       newT9Claims: 0, officialAuthority: false,
     };
   }
+  const historical = result.annualMonthly.monthlyMenu.historicalAnnualDayunAlignment;
+  if (!historical || historical.snapshotId !== report.snapshotId ||
+      historical.calculationHash !== report.calculationHash ||
+      historical.newlyEmittedT9Claims !== 0 ||
+      historical.compositionalOutcomeAuthorized || historical.mayPublish ||
+      historical.maySell ||
+      (historical.status === 'literal_jiazi_example_matched' &&
+        (historical.dayunPillar !== '갑자' || historical.annualEffectivePillar !== '갑자')) ||
+      (historical.anyFullPillarMatch &&
+        historical.dayunPillar !== historical.annualEffectivePillar)) {
+    throw new TypeError('500-case classical Suiyun witness must remain literal and unpromoted');
+  }
+  m.classicalAnnualDayun = {
+    status: historical.status,
+    annualEffectivePillar: historical.annualEffectivePillar,
+    dayunPillar: historical.dayunPillar,
+    originalExampleExact: historical.exactlyOriginalJiaziExample,
+    otherPillarGeneralization: historical.generalizedBeyondLiteralExample,
+    sourceId: historical.sourceId,
+    emittedT9Claims: 0,
+  };
   m.currentT9Evidence = {
     state: evidenceFocus.state,
     referenceDateTime: evidenceFocus.referenceDateTime,
@@ -410,6 +431,18 @@ function summarize(rows) {
     generated: rows.length,
     withReadableText: nonEmpty.length,
     withoutReadableText: rows.length - nonEmpty.length,
+    ...(rows.some(row => row.classicalAnnualDayun) ? {
+      classicalAnnualDayunCoverage: rows.filter(row => row.classicalAnnualDayun).length,
+      literalJiaziCases: rows.filter(row =>
+        row.classicalAnnualDayun?.status === 'literal_jiazi_example_matched').length,
+      extendedMatchingPillarCases: rows.filter(row =>
+        row.classicalAnnualDayun?.status === 'different_matching_pillar_extrapolation').length,
+      unavailableHistoricalComparisonCases: rows.filter(row =>
+        ['dayun_not_calculated','ipchun_effective_year_mismatch',
+          'outside_selected_month'].includes(row.classicalAnnualDayun?.status)).length,
+      extraClassicalTemporalClaims: rows.reduce((n,row) =>
+        n + (row.classicalAnnualDayun?.emittedT9Claims ?? 0),0),
+    } : {}),
     ...(rows.some(row => row.currentT9SourceBundle) ? {
       activeSourceT9Cases: rows.filter(row => row.currentT9SourceBundle).length,
       casesWithCurrentT9Clash: rows.filter(row =>
