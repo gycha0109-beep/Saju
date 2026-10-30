@@ -81,9 +81,7 @@ export function assessR070ParentExampleRuleClaimBoundary(
       example.calculationHash !== snapshot.calculationHash ||
       example.sourceId !== R070_CLASSICAL_PARENT_EXAMPLE_SOURCE.sourceId ||
       example.familyR070MeaningAuthorized || !example.originalExampleIsContextual ||
-      example.hiddenStemsUsed || example.mayPublish || example.maySell ||
-      example.historicalDayStem !== snapshot.derivedFacts.dayMaster.status &&
-        false) {
+      example.hiddenStemsUsed || example.mayPublish || example.maySell) {
     throw new TypeError('R070 contextual source evidence must remain on its original, unadmitted parent chart');
   }
   const day = snapshot.derivedFacts.dayMaster;
