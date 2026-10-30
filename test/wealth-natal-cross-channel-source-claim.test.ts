@@ -47,6 +47,7 @@ describe('conditional primary-text Shangguan/Wealth research Claim', () => {
     expect(comparison?.claimType).toBe(WEALTH_NATAL_CROSS_CHANNEL_CLAIM_TYPE);
     expect(comparison?.ruleId).toBe(WEALTH_NATAL_CROSS_CHANNEL_RULE.ruleId);
     expect(comparison?.sourceIds).toContain(WEALTH_NATAL_CROSS_CHANNEL_SOURCE.sourceId);
+    expect(comparison?.sourceUrl).toBe(WEALTH_NATAL_CROSS_CHANNEL_SOURCE.url);
     expect(comparison?.observedPositions).toEqual([
       '월주 천간 상관', '시주 천간 상관',
       '연주 지지 대표 십신 편재', '월주 지지 대표 십신 정재',
@@ -96,6 +97,8 @@ describe('conditional primary-text Shangguan/Wealth research Claim', () => {
     expect(card).toContain(x.report.crossChannelComparison!.paragraph);
     expect(card).toContain('이 비교는 재물 종합풀이의 독립 근거 축으로 세지 않습니다');
     expect(card).toContain(WEALTH_NATAL_CROSS_CHANNEL_SOURCE.sourceId);
+    expect(card).toContain('검증 원문: 삼명통회 논상관');
+    expect(card).toContain(WEALTH_NATAL_CROSS_CHANNEL_SOURCE.url);
     expect(card).toContain('풀이 보류');
     expect(x.report.insufficientEvidence?.sourceQualifiedT8ClaimCount).toBe(0);
   });
