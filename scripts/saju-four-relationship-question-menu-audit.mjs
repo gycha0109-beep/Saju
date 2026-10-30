@@ -77,7 +77,9 @@ const audit = {
   menuCounts: {
     family: { parents: 0, children: 0, sourceMeaningIssued: 0 },
     spouse: { positionContext: 0, partnerTraitsIssued: 0 },
-    compatibility: { twoPersonCalculated: 0, pairT10Issued: 0, pairingChangedContext: 0 },
+    compatibility: { twoPersonCalculated: 0, pairT10Issued: 0, pairingChangedContext: 0,
+      differentIndividualT8Meanings: 0, sameIndividualT8Meanings: 0,
+      subjectPersonalT8Sections: 0, targetPersonalT8Sections: 0 },
     question: { related_evidence: 0, unsupported: 0, ambiguous: 0, insufficient: 0,
       sourceOwnedSections: 0, fabricatedT11: 0 },
   },
@@ -156,6 +158,20 @@ for (let i = 0; i < count; i++) {
       audit.menuCounts.spouse.positionContext++;
     }
     audit.menuCounts.compatibility.twoPersonCalculated++;
+    const subjectT8 = relations.compatibility.personalRelationship.subject.sections;
+    const targetT8 = relations.compatibility.personalRelationship.target.sections;
+    const semantic = sections => JSON.stringify(sections.map(section => ({
+      text: section.paragraph,
+      sources: [...section.sourceIds].sort(),
+      paths: [...section.observedFactPaths].sort(),
+    })).sort((a, b) => a.text.localeCompare(b.text)));
+    if (semantic(subjectT8) === semantic(targetT8)) {
+      audit.menuCounts.compatibility.sameIndividualT8Meanings++;
+    } else {
+      audit.menuCounts.compatibility.differentIndividualT8Meanings++;
+    }
+    audit.menuCounts.compatibility.subjectPersonalT8Sections += subjectT8.length;
+    audit.menuCounts.compatibility.targetPersonalT8Sections += targetT8.length;
     if (relations.compatibility.report.target.calculationHash !==
         reversed.compatibility.report.target.calculationHash) {
       audit.menuCounts.compatibility.pairingChangedContext++;
@@ -186,6 +202,9 @@ for (let i = 0; i < count; i++) {
       familyMeaningIssued: false,
       spousePositionStatus: relations.spouse.report.readingStatus,
       pairMeaningIssued: false,
+      sourceOwnedSubjectT8Count: subjectT8.length,
+      sourceOwnedTargetT8Count: targetT8.length,
+      differentIndividualT8Sources: semantic(subjectT8) !== semantic(targetT8),
       pairTargetDifferent: relations.compatibility.report.target.calculationHash !==
         reversed.compatibility.report.target.calculationHash,
       question, questionStatus: q.status,
