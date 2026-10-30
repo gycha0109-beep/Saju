@@ -1,4 +1,8 @@
 import type { EarthlyBranch, PillarSlot } from '../contracts/calculation.js';
+import {
+  buildT9CurrentSourceOwnedMonthlyContext,
+  type T9CurrentSourceOwnedMonthlyContext,
+} from './t9-current-source-owned-monthly-context.js';
 import { buildAnnualPrimaryWitnessIdentityContext } from
   './annual-primary-witness-identity-context.js';
 import type { GeneralAnnualMonthlyExplorationReport } from './general-annual-monthly-exploration-report.js';
@@ -67,6 +71,8 @@ export interface TemporalResearchMenuReading {
   t9ReferenceEvidence?: GeneralAnnualMonthlyExplorationReport['t9EvidenceLinks']['referenceEvidenceFocus'];
   /** Reference-time projection applies to the monthly menu only. */
   referenceFocus?: TemporalMonthlyReferenceFocus;
+  /** Current instant only: original monthly T9 theme + independent T9 clash Claims. */
+  currentT9SourceContext?: T9CurrentSourceOwnedMonthlyContext;
   missing: readonly string[];
   provenance: {
     snapshotId?: string;
@@ -330,6 +336,16 @@ export function buildTemporalResearchMenuReadings(
       };
     }
   }
+  const currentT9SourceContext = joined === undefined ? undefined
+    : buildT9CurrentSourceOwnedMonthlyContext(joined);
+  if ((currentT9SourceContext !== undefined) !==
+      (referenceFocus?.state === 'in_period') ||
+      (currentT9SourceContext !== undefined && (
+        currentT9SourceContext.snapshotId !== joined?.snapshotId ||
+        currentT9SourceContext.calculationHash !== joined.calculationHash ||
+        currentT9SourceContext.sourceTheme.claimId !== referenceFocus?.currentSection?.claimId))) {
+    throw new TypeError('Current T9 source context must match one originally selected monthly Claim.');
+  }
   const lifeSections = life?.periods.map(period => ({
     title: period.kind === 'current' ? '현재 대운 계산 구간' : '다음 대운 계산 구간',
     text: period.text,
@@ -418,6 +434,7 @@ export function buildTemporalResearchMenuReadings(
         t9ReferenceEvidence: joined.t9EvidenceLinks.referenceEvidenceFocus,
       }),
       ...(referenceFocus === undefined ? {} : { referenceFocus }),
+      ...(currentT9SourceContext === undefined ? {} : { currentT9SourceContext }),
       missing: joined === undefined
         ? ['연도·월·출생정보를 입력하고 월운 연구 풀이를 실행해야 합니다.']
         : [
