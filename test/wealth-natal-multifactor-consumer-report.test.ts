@@ -33,7 +33,9 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(registry.pack.packId).toBe(WEALTH_NATAL_MULTIFACTOR_PACK.packId);
     expect(WEALTH_NATAL_MULTIFACTOR_RULES).toHaveLength(18);
     expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(18);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(19);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8' &&
+      r.output.predicate === 'wealth_cross_channel_source_comparison')).toHaveLength(1);
     expect(registry.rules.filter(r => r.taxonomy.subcategory === 'self_baseline')).toHaveLength(0);
     for(const rule of WEALTH_NATAL_MULTIFACTOR_RULES) {
       expect(rule.taxonomy.category).toBe('wealth');
