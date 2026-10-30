@@ -159,6 +159,26 @@ function natalEntry(report, domain) {
     sourceIds: [...alt.sourceIds],
     factPaths: [...alt.observedFactPaths],
   }));
+  if (domain === 'wealth' && report.crossChannelComparison) {
+    const compare = report.crossChannelComparison;
+    if (!compare.researchOnly || compare.mayPublish || compare.maySell ||
+        compare.interpretationAuthorityGranted ||
+        compare.upstreamClaimIds.length !== 2 ||
+        compare.sourceIds.length < 2 ||
+        compare.observedFactPaths.length < 2 ||
+        compare.observedFactPaths.length !== compare.observedPositions.length ||
+        !compare.sourceUrl.startsWith('https://zh.wikisource.org/')) {
+      throw new TypeError('The primary-text cross-channel research Claim cannot be promoted');
+    }
+    row.crossChannelResearch = {
+      claimType: compare.claimType, sourceIds: compare.sourceIds,
+      originalSourceUrl: compare.sourceUrl,
+      observedFactPaths: compare.observedFactPaths,
+      observedPositions: compare.observedPositions,
+      headline: compare.headline, text: compare.paragraph,
+      researchOnly: true, mayPublish: false, maySell: false,
+    };
+  }
   return row;
 }
 function temporalEntries(result) {
@@ -397,6 +417,11 @@ function summarize(rows) {
     ...(nonEmpty.every(row => row.evidenceSignature) ? {
       selectedEvidenceProfile: tally(nonEmpty, 'evidenceSignature'),
     } : {}),
+    ...(rows.some(row => row.crossChannelResearch) ? {
+      boundedSourceCrossChannelCases: rows.filter(row => row.crossChannelResearch).length,
+      boundedSourceCrossChannelClaimTypes: [...new Set(rows
+        .flatMap(row => row.crossChannelResearch ? [row.crossChannelResearch.claimType] : []))],
+    } : {}),
     reportStates: Object.fromEntries([...new Set(rows.map(r => r.state))].sort()
       .map(state=>[state,rows.filter(r=>r.state===state).length])),
     researchKind: rows[0]?.kind ?? null,
@@ -506,6 +531,7 @@ export function runFiveHundredSajuAudit() {
           text: row.text,
           coverageExplanation: row.coverageExplanation ?? null,
           eligibleAlternatives: row.eligibleAlternatives ?? null,
+          sourceBoundCrossChannelResearch: row.crossChannelResearch ?? null,
           wealthInsufficientEvidence: row.wealthInsufficientEvidence ?? null,
           ...(row.sourceEvidence ? { sourceEvidence: row.sourceEvidence } : {}),
         })),
