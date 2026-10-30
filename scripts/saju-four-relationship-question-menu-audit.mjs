@@ -78,7 +78,8 @@ const audit = {
     family: { parents: 0, children: 0, sourceMeaningIssued: 0 },
     spouse: { positionContext: 0, partnerTraitsIssued: 0 },
     compatibility: { twoPersonCalculated: 0, pairT10Issued: 0, pairingChangedContext: 0,
-      differentIndividualT8Meanings: 0, sameIndividualT8Meanings: 0,
+      differentPersonalT8Presentations: 0, samePersonalT8Presentations: 0,
+      differentPersonalT8HeadlineProfiles: 0,
       subjectPersonalT8Sections: 0, targetPersonalT8Sections: 0 },
     question: { related_evidence: 0, unsupported: 0, ambiguous: 0, insufficient: 0,
       sourceOwnedSections: 0, fabricatedT11: 0 },
@@ -165,10 +166,16 @@ for (let i = 0; i < count; i++) {
       sources: [...section.sourceIds].sort(),
       paths: [...section.observedFactPaths].sort(),
     })).sort((a, b) => a.text.localeCompare(b.text)));
+    const headlineProfile = sections => JSON.stringify(sections.map(section => ({
+      title: section.title, sources: [...section.sourceIds].sort(),
+    })).sort((a, b) => a.title.localeCompare(b.title)));
     if (semantic(subjectT8) === semantic(targetT8)) {
-      audit.menuCounts.compatibility.sameIndividualT8Meanings++;
+      audit.menuCounts.compatibility.samePersonalT8Presentations++;
     } else {
-      audit.menuCounts.compatibility.differentIndividualT8Meanings++;
+      audit.menuCounts.compatibility.differentPersonalT8Presentations++;
+    }
+    if (headlineProfile(subjectT8) !== headlineProfile(targetT8)) {
+      audit.menuCounts.compatibility.differentPersonalT8HeadlineProfiles++;
     }
     audit.menuCounts.compatibility.subjectPersonalT8Sections += subjectT8.length;
     audit.menuCounts.compatibility.targetPersonalT8Sections += targetT8.length;
@@ -204,7 +211,8 @@ for (let i = 0; i < count; i++) {
       pairMeaningIssued: false,
       sourceOwnedSubjectT8Count: subjectT8.length,
       sourceOwnedTargetT8Count: targetT8.length,
-      differentIndividualT8Sources: semantic(subjectT8) !== semantic(targetT8),
+      differentPersonalT8Presentation: semantic(subjectT8) !== semantic(targetT8),
+      differentPersonalT8Headlines: headlineProfile(subjectT8) !== headlineProfile(targetT8),
       pairTargetDifferent: relations.compatibility.report.target.calculationHash !==
         reversed.compatibility.report.target.calculationHash,
       question, questionStatus: q.status,
