@@ -404,6 +404,89 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
     expect(selected.maySell).toBe(false);
   });
 
+  it('restores the original General core after source-guided replacement on the same axis', () => {
+    const { snapshot, reports } = run(true, 23, 1, 6, 1984);
+    const retained = reports.general.displacedOriginalCore!;
+    expect(retained.axis).toBe('response');
+    expect(reports.general.sections.some(section => section.axis === retained.axis))
+      .toBe(true);
+    const reading = buildQuestionRelatedNatalReading(
+      snapshot, question('전체 사주에서 대응 방식이 궁금해요'), reports);
+    expect(reading.status).toBe('related_evidence');
+    expect(reading.focusAxis).toBe('response');
+    expect(reading.sections.some(section =>
+      section.evidenceMode === 'preexisting_displaced_core_t8' &&
+      section.claimType === retained.claimType &&
+      section.paragraph === retained.paragraph &&
+      JSON.stringify(section.factPaths) === JSON.stringify(retained.observedFactPaths)))
+      .toBe(true);
+    expect(reading.sections.some(section => section.evidenceMode === undefined)).toBe(true);
+    expect(renderQuestionRelatedNatalReadingHtml(reading)).toContain(retained.claimType);
+    expect(reading.selectedEvidenceIntroduction).toContain('독립 보조 근거');
+    expect(reading.usefulComplete).toBe(false);
+    expect(reading.maySell).toBe(false);
+  });
+
+  it('retains the replaced Business core for a specific execution question', () => {
+    const { snapshot, reports } = run(true, 7, 3, 0, 1975);
+    const retained = reports.business.displacedOriginalCore!;
+    expect(retained.axis).toBe('execution');
+    const reading = buildQuestionRelatedNatalReading(
+      snapshot, question('사업의 실행 관점이 궁금해요'), reports);
+    expect(reading.status).toBe('related_evidence');
+    expect(reading.focusAxis).toBe('execution');
+    expect(reading.sections.map(section => section.claimType)).toContain(retained.claimType);
+    expect(reading.sections.find(section => section.claimType === retained.claimType))
+      .toMatchObject({
+        paragraph: retained.paragraph, factPaths: retained.observedFactPaths,
+        ruleId: retained.ruleId, sourceIds: retained.sourceIds,
+        evidenceMode: 'preexisting_displaced_core_t8',
+      });
+    expect(reading.mayPublish).toBe(false);
+  });
+
+  it('retains an old Relationship core in a broad source-owned research question', () => {
+    const { snapshot, reports } = run(true, 3, 3, 12, 1975);
+    const retained = reports.relationship.displacedOriginalCore!;
+    expect(retained.axis).toBe('core');
+    const reading = buildQuestionRelatedNatalReading(
+      snapshot, question('제 연애 성향을 자세히 알고 싶어요'), reports);
+    expect(reading.status).toBe('related_evidence');
+    expect(reading.focusAxis).toBeUndefined();
+    expect(reading.sections).toHaveLength(reports.relationship.sections.length + 1);
+    expect(reading.sections.at(-1)).toMatchObject({
+      claimType: retained.claimType, paragraph: retained.paragraph,
+      evidenceMode: 'preexisting_displaced_core_t8',
+    });
+    expect(renderQuestionRelatedNatalReadingHtml(reading)).toContain(retained.claimType);
+    expect(reading.mayPublish).toBe(false);
+    expect(reading.maySell).toBe(false);
+  });
+
+  it('rejects invented or duplicated displaced core instead of increasing evidence', () => {
+    const { snapshot, reports } = run(true, 23, 1, 6, 1984);
+    const original = reports.general.displacedOriginalCore!;
+    const forged = {
+      ...reports,
+      general: { ...reports.general, displacedOriginalCore: {
+        ...original, observedFactPaths: ['derivedFacts.tenGods.value.fake.stem.value'],
+      } },
+    };
+    expect(() => buildQuestionRelatedNatalReading(snapshot,
+      question('전체 사주에서 대응 방식이 궁금해요'), forged))
+      .toThrow('unsourced or selected displaced T8 core');
+    const repeated = {
+      ...reports,
+      general: { ...reports.general, displacedOriginalCore: {
+        ...original, claimType: reports.general.sections[0]!.claimType,
+        ruleId: reports.general.sections[0]!.ruleId,
+      } },
+    };
+    expect(() => buildQuestionRelatedNatalReading(snapshot,
+      question('전체 사주에서 대응 방식이 궁금해요'), repeated))
+      .toThrow('unsourced or selected displaced T8 core');
+  });
+
   it('rejects forged question-only source paths when a secondary T8 is not admitted by the selected chart', () => {
     const { snapshot, reports } = run(true, 3, 1, 3);
     const original = reports.wealth.overlappingPerspectives!;

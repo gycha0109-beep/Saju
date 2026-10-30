@@ -112,7 +112,8 @@ export interface QuestionRelatedNatalSection {
   sourceIds: readonly string[];
   factPaths: readonly string[];
   /** Already-issued T8 using the same facts, never independent T11 support. */
-  evidenceMode?: 'reused_calculated_paths' | 'preexisting_additional_t8';
+  evidenceMode?: 'reused_calculated_paths' | 'preexisting_additional_t8' |
+    'preexisting_displaced_core_t8';
 }
 
 export interface QuestionRelatedNatalReading {
@@ -143,6 +144,38 @@ export interface QuestionRelatedNatalReading {
 
 type SourceSection = DomainReport['sections'][number];
 
+type RetainedDisplacedCore = SourceSection & { displacedExistingCore: true };
+
+/**
+ * A source-issued original core can be displaced by a better-supported
+ * three-axis first-screen selection. Preserve it for directly focused and
+ * broad questions without counting it as a fourth independent MUR support.
+ */
+function retainedDisplacedCore(
+  topic: Topic,
+  reports: NatalFiveDomainMultifactorReports,
+): RetainedDisplacedCore | undefined {
+  const report = reports[topic];
+  const core = topic === 'general' ? reports.general.displacedOriginalCore
+    : topic === 'business' ? reports.business.displacedOriginalCore
+      : topic === 'relationship' ? reports.relationship.displacedOriginalCore
+        : undefined;
+  if (core === undefined) return undefined;
+  const selected = report.sections;
+  assert(report.state === 'complete' && selected.length === 3 &&
+    core.claimType.startsWith(topic.toUpperCase() + '_NATAL_MULTIFACTOR_') &&
+    core.ruleId === 'RULE-' + core.claimType &&
+    !selected.some(section => section.claimType === core.claimType) &&
+    core.upstreamClaimIds.length >= 2 && core.sourceIds.length > 0 &&
+    core.observedFactPaths.length === core.observedPositions.length &&
+    core.observedFactPaths.length >= 2 &&
+    core.observedFactPaths.every(path => CANONICAL_TEN_GOD_FACT_PATH.test(path)) &&
+    core.observedPositions.every(position => core.paragraph.includes(position)) &&
+    core.paragraph.trim().length > 0,
+  'Question cannot reintroduce an unsourced or selected displaced T8 core');
+  return { ...core, displacedExistingCore: true };
+}
+
 /**
  * An explicitly requested question axis can use source-issued T8 views omitted
  * from the independent first-screen MUR. Such views reuse the very same
@@ -154,6 +187,7 @@ function availableOriginalSections(
 ): readonly (SourceSection & {
   overlapsSelectedFactPaths?: readonly string[];
   additionalExistingCareer?: true;
+  displacedExistingCore?: true;
 })[] {
   const report = reports[topic];
   const selected: readonly SourceSection[] = report.sections;
@@ -196,7 +230,9 @@ function availableOriginalSections(
       : topic === 'relationship'
         ? reports.relationship.overlappingPerspectives ?? []
         : [];
-  if (alternatives.length === 0) return selected;
+  const displaced = retainedDisplacedCore(topic, reports);
+  if (alternatives.length === 0) return displaced === undefined
+    ? selected : [...selected, displaced];
   const selectedPaths = new Set(selected.flatMap(section =>
     'calculatedFactPaths' in section
       ? section.calculatedFactPaths : section.observedFactPaths));
@@ -218,7 +254,7 @@ function availableOriginalSections(
       JSON.stringify(section.overlapsSelectedFactPaths) ===
         JSON.stringify(section.observedFactPaths)),
     'Question cannot promote an unrelated or unsourced secondary T8 view');
-  return [...selected, ...alternatives];
+  return [...selected, ...alternatives, ...(displaced === undefined ? [] : [displaced])];
 }
 
 function assert(value: unknown, message: string): asserts value {
@@ -316,7 +352,11 @@ export function buildQuestionRelatedNatalReading(
   // Broad questions retain first-screen priority. An explicit axis may
   // select a different already-issued T8 meaning that reuses the same facts.
   const availableSections = axes.length === 0
-    ? report.sections : availableOriginalSections(item.key, reports);
+    ? (() => {
+      const displaced = retainedDisplacedCore(item.key, reports);
+      return displaced === undefined ? report.sections : [...report.sections, displaced];
+    })()
+    : availableOriginalSections(item.key, reports);
   const matchingSections = axes.length === 0
     ? availableSections
     : availableSections.filter(section =>
@@ -357,7 +397,9 @@ export function buildQuestionRelatedNatalReading(
         Array.isArray(section.overlapsSelectedFactPaths)
         ? { evidenceMode: 'reused_calculated_paths' as const } :
         ('additionalExistingCareer' in section && section.additionalExistingCareer === true)
-          ? { evidenceMode: 'preexisting_additional_t8' as const } : {}),
+          ? { evidenceMode: 'preexisting_additional_t8' as const }
+          : ('displacedExistingCore' in section && section.displacedExistingCore === true)
+            ? { evidenceMode: 'preexisting_displaced_core_t8' as const } : {}),
     };
   });
   return base(snapshot, question, 'related_evidence',
@@ -371,15 +413,18 @@ export function buildQuestionRelatedNatalReading(
       selectedEvidenceIntroduction:
         '질문에서 ' + item.title + ' 분야' +
         (axes.length > 0
-          ? '의 ' + axes.map(axis => axis.label).join('·') + ' 관점'
-          : '') +
-        '이 요청된 것으로 확인했습니다. 같은 사용자에 대해 기존에 발행된 ' +
+          ? '의 ' + axes.map(axis => axis.label).join('·') + ' 관점이'
+          : '가') +
+        ' 요청된 것으로 확인했습니다. 같은 사용자에 대해 기존에 발행된 ' +
         sections.length + '개 근거 있는 연구 해석을 원문 그대로 연결했습니다. ' +
         (sections.some(section => section.evidenceMode === 'reused_calculated_paths')
           ? '이 중 일부는 이미 사용한 계산 경로를 다시 읽는 별도의 기존 T8 관점으로 독립 근거가 늘어난 것은 아닙니다. '
           : '') +
         (sections.some(section => section.evidenceMode === 'preexisting_additional_t8')
           ? '첫 화면에서 제외됐지만 원래 발행된 직업 T8 관점을 해당 질문에 한해 읽으며, 이를 전체 직업운의 독립 종합 결론으로 세지 않습니다. '
+          : '') +
+        (sections.some(section => section.evidenceMode === 'preexisting_displaced_core_t8')
+          ? '중심 해석을 재선정하면서 첫 화면에서 교체된 기존 T8 문단도 원래 출처와 계산 위치 그대로 읽습니다. 독립 보조 근거나 종합 해석 개수를 추가하지 않습니다. '
           : '') +
         '질문의 개별 상황에서 무엇을 선택해야 하는지나 미래 결과를 별도로 판정한 내용은 아닙니다.',
       reportState: report.state, sections });
@@ -401,7 +446,9 @@ export function renderQuestionRelatedNatalReadingHtml(reading: QuestionRelatedNa
       ? '<p>기존 계산 근거를 다시 사용하는 다른 T8 의미축이며, 새로운 독립 근거나 질문에 대한 T11 결론이 아닙니다.</p>'
       : section.evidenceMode === 'preexisting_additional_t8'
         ? '<p>기존 직업 T8 규칙이 발행한 별도 관점이며, 새로운 T11 답변이나 종합 완료 판정이 아닙니다.</p>'
-        : '') + '<details><summary>기존 근거 확인</summary><p>' +
+        : section.evidenceMode === 'preexisting_displaced_core_t8'
+          ? '<p>첫 화면의 중심 후보에서 교체됐지만 이미 발행된 원래 T8 해석입니다. 독립 보조 근거가 추가되거나 T11 질문 답변이 완성된 것이 아닙니다.</p>'
+          : '') + '<details><summary>기존 근거 확인</summary><p>' +
     escapeHtml(section.factPaths.join(' · ')) + '</p><p>' +
     escapeHtml(section.sourceIds.join(' · ')) + '</p><p>' +
     escapeHtml(section.claimType + ' · ' + section.ruleId) + '</p></details></article>').join('');
