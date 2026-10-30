@@ -33,6 +33,8 @@ export interface AnnualMonthlyBirthResearchReading {
   maySell: false;
   mayGrantOfficialAuthority: false;
   report: GeneralAnnualMonthlyExplorationReport;
+  /** Annual 12-menu slice with original Gregorian/Ipchun Dayun source classification. */
+  annualMenu: TemporalResearchMenuReading;
   /** Monthly 12-menu consumer slice with exact current Jeol T9 evidence. */
   monthlyMenu: TemporalResearchMenuReading;
   html: string;
@@ -105,8 +107,14 @@ export function buildAnnualMonthlyBirthResearchReading(
     throw new TypeError('Annual/monthly internal preview cannot become an official reading.');
   }
 
-  const monthlyMenu = buildTemporalResearchMenuReadings({ annualMonthly: report })[1];
-  if (monthlyMenu?.menuId !== 'monthly' ||
+  const [annualMenu, monthlyMenu] = buildTemporalResearchMenuReadings({ annualMonthly: report });
+  if (annualMenu?.menuId !== 'annual' ||
+      annualMenu.provenance.snapshotId !== snapshot.snapshotId ||
+      annualMenu.provenance.calculationHash !== snapshot.calculationHash ||
+      annualMenu.authority.mayCallOfficial || annualMenu.authority.mayMarkMenuAvailable ||
+      annualMenu.historicalAnnualDayunAlignment?.snapshotId !== snapshot.snapshotId ||
+      annualMenu.historicalAnnualDayunAlignment?.newlyEmittedT9Claims !== 0 ||
+      monthlyMenu?.menuId !== 'monthly' ||
       monthlyMenu.provenance.snapshotId !== snapshot.snapshotId ||
       monthlyMenu.provenance.calculationHash !== snapshot.calculationHash ||
       monthlyMenu.authority.mayCallOfficial || monthlyMenu.authority.mayMarkMenuAvailable) {
@@ -120,6 +128,7 @@ export function buildAnnualMonthlyBirthResearchReading(
     maySell: false,
     mayGrantOfficialAuthority: false,
     report,
+    annualMenu,
     monthlyMenu,
     html: renderGeneralAnnualMonthlyExplorationHtml(report),
   };
