@@ -1,5 +1,7 @@
 # Product Reading Delivery Contract
 
+> **Commercial roster decision (2026-10-30):** [General menu retirement / shared natal analysis](./general-menu-retirement-policy.md). New purchases expose 11 independent menus; historical general readings and shared natal analysis remain supported.
+
 > **생성 언어 고정 정책:** [사주풀이 생성 언어 고정 정책](./reading-language-lock-policy.md). 최초 생성 전에 결과 언어를 필수로 선택·확인하며, 생성 시작 후 해당 풀이의 언어를 변경하거나 자동 번역하지 않습니다. 앱 UI 언어는 별도로 변경할 수 있습니다.
 
 ## 1. Purpose
