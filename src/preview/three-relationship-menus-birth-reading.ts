@@ -3,6 +3,8 @@ import { renderPairwiseClassicalDayStemObservationHtml } from
   '../research/pairwise-day-stem-classical-combination-witness.js';
 import { renderR070ClassicalParentStemExampleHtml } from
   '../research/r070-classical-parent-stem-example.js';
+import { renderR070ParentExampleRuleClaimBoundaryHtml } from
+  '../research/r070-parent-example-rule-claim-boundary.js';
 import {
   buildFamilyBirthResearchReading,
   buildFamilyMemberBirthResearchReading,
@@ -85,6 +87,13 @@ function verifiedInputs(
         familyMember.mayInferFamilyDynamics ||
         familyMember.mayGrantOfficialAuthority || familyMember.mayPublish ||
         familyMember.mayPersist || familyMember.maySell)) ||
+      (family.parents.parentExampleRuleBoundary !== undefined && (
+        family.parents.parentExampleRuleBoundary.snapshotId !== p.snapshotId ||
+        family.parents.parentExampleRuleBoundary.calculationHash !== p.calculationHash ||
+        family.parents.parentExampleRuleBoundary.familyMeaningAuthorized ||
+        family.parents.parentExampleRuleBoundary.emittedT8Claims !== 0 ||
+        family.parents.parentExampleRuleBoundary.sourceRuleAdmitted)) ||
+      family.children.parentExampleRuleBoundary !== undefined ||
       (family.parents.classicalParentExample !== undefined && (
         family.parents.classicalParentExample.snapshotId !== p.snapshotId ||
         family.parents.classicalParentExample.calculationHash !== p.calculationHash ||
@@ -152,6 +161,8 @@ function renderHtml(
     return '<section id="family-' + id + '"><h3>' + title + '</h3>' + rows +
       (data.classicalParentExample === undefined ? '' :
         renderR070ClassicalParentStemExampleHtml(data.classicalParentExample)) +
+      (data.parentExampleRuleBoundary === undefined ? '' :
+        renderR070ParentExampleRuleClaimBoundaryHtml(data.parentExampleRuleBoundary)) +
       '<p class="limited">이 위치 관찰만으로 실제 부모·자녀 관계나 사건을 해석하지 않습니다.</p>' +
       data.report.missing.map(s => '<p class="limited">' + e(s) + '</p>').join('') +
       '</section>';
