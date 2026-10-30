@@ -58,7 +58,7 @@ describe('selected real monthly T9 source Claims by actual instant and Jeol segm
     expect(rendered).toContain(source.text);
     expect(rendered).toContain(original.text);
     expect(rendered).toContain(original.claimId);
-    expect(rendered).toContain('동시');
+    expect(rendered).toContain('같은 적용 구간에서 따로 발행된');
     expect(output.html).toContain(rendered);
     const allMenus = buildThreeTemporalMenusBirthReading(PERSON_WITH_CLASH, target());
     expect(allMenus.html).toContain(rendered);
