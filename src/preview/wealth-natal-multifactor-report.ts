@@ -529,9 +529,10 @@ function buildCrossChannelComparison(
     observedPositions: positions.map(item => item.position),
     observedFactPaths: positions.map(item => item.path),
     headline: '상관의 산출 관점과 재성의 자원 관점 · 교차 채널 연구',
-    paragraph: '이 명식의 ' + stems.map(item => item.position).join(' · ') +
-      '과 ' + branches.map(item => item.position).join(' · ') +
-      '이 각각 확인됩니다. 《삼명통회》의 「논상관」은 상관과 재성의 관계를 ' +
+    paragraph: '이 명식에서 확인된 관측 위치는 천간: ' +
+      stems.map(item => item.position).join(' · ') +
+      ' / 지지 대표 십신: ' + branches.map(item => item.position).join(' · ') +
+      '입니다. 《삼명통회》의 「논상관」은 상관과 재성의 관계를 ' +
       '특정 전제 아래 논하지만, 천간과 지지 대표 십신의 동시 관측만으로 ' +
       '그 전제(상관상진·일간 강약·재성의 실제 작용)가 충족됐다고 볼 수 없습니다. ' +
       '따라서 산출과 자원이라는 서로 다른 관찰 축을 비교하는 연구용 설명만 ' +
