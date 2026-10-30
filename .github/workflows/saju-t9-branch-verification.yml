@@ -10,6 +10,7 @@ on:
       - 'src/preview/temporal-research-menu-reading.ts'
       - 'src/preview/general-annual-monthly-exploration-report.ts'
       - 'src/preview/three-temporal-menus-birth-reading.ts'
+      - 'src/preview/annual-monthly-birth-research-runtime.ts'
       - 'test/t9-annual-dayun-classical-alignment.test.ts'
       - 'scripts/saju-500-eight-menu-audit.mjs'
 permissions:
