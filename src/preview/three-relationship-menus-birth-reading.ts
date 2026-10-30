@@ -1,6 +1,8 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import { renderPairwiseClassicalDayStemObservationHtml } from
   '../research/pairwise-day-stem-classical-combination-witness.js';
+import { renderR070ClassicalParentStemExampleHtml } from
+  '../research/r070-classical-parent-stem-example.js';
 import {
   buildFamilyBirthResearchReading,
   buildFamilyMemberBirthResearchReading,
@@ -83,6 +85,12 @@ function verifiedInputs(
         familyMember.mayInferFamilyDynamics ||
         familyMember.mayGrantOfficialAuthority || familyMember.mayPublish ||
         familyMember.mayPersist || familyMember.maySell)) ||
+      (family.parents.classicalParentExample !== undefined && (
+        family.parents.classicalParentExample.snapshotId !== p.snapshotId ||
+        family.parents.classicalParentExample.calculationHash !== p.calculationHash ||
+        family.parents.classicalParentExample.familyR070MeaningAuthorized ||
+        family.parents.classicalParentExample.mayGrantOfficialAuthority)) ||
+      family.children.classicalParentExample !== undefined ||
       p.snapshotId !== c.snapshotId ||
       p.calculationHash !== c.calculationHash ||
       s.snapshotId !== p.snapshotId ||
@@ -142,6 +150,8 @@ function renderHtml(
       e(observation.factPath) + '</p></details></article>',
     ).join('');
     return '<section id="family-' + id + '"><h3>' + title + '</h3>' + rows +
+      (data.classicalParentExample === undefined ? '' :
+        renderR070ClassicalParentStemExampleHtml(data.classicalParentExample)) +
       '<p class="limited">이 위치 관찰만으로 실제 부모·자녀 관계나 사건을 해석하지 않습니다.</p>' +
       data.report.missing.map(s => '<p class="limited">' + e(s) + '</p>').join('') +
       '</section>';
