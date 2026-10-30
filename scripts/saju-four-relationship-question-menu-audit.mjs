@@ -78,7 +78,9 @@ const audit = {
   referenceDateTime,
   sampleCount: count,
   menuCounts: {
-    family: { parents: 0, children: 0, sourceMeaningIssued: 0 },
+    family: { parents: 0, children: 0, sourceMeaningIssued: 0,
+      literalClassicalJiaYiExamples: 0, observedFatherStemLabels: 0,
+      observedMotherStemLabels: 0 },
     spouse: { positionContext: 0, partnerTraitsIssued: 0 },
     compatibility: { twoPersonCalculated: 0, pairT10Issued: 0, pairingChangedContext: 0,
       differentPersonalT8Presentations: 0, samePersonalT8Presentations: 0,
@@ -160,6 +162,26 @@ for (let i = 0; i < count; i++) {
       }
       audit.menuCounts.family[name]++;
     }
+    const r070Example = relations.family.parents.classicalParentExample;
+    if (relations.family.children.classicalParentExample !== undefined) {
+      throw new Error('Historical father/mother example entered children scope');
+    }
+    if (r070Example !== undefined) {
+      if (r070Example.snapshotId !== relations.snapshotId ||
+          r070Example.calculationHash !== relations.calculationHash ||
+          r070Example.familyR070MeaningAuthorized ||
+          r070Example.familyRelativeExistenceAuthorized ||
+          r070Example.mayGrantOfficialAuthority ||
+          !relations.family.parents.html.includes(r070Example.paragraph) ||
+          !relations.html.includes(r070Example.paragraph)) {
+        throw new Error('Historical parent example must keep source, subject and R070 HOLD');
+      }
+      audit.menuCounts.family.literalClassicalJiaYiExamples++;
+      audit.menuCounts.family.observedFatherStemLabels +=
+        r070Example.examples[0].observedVisiblePositions.length;
+      audit.menuCounts.family.observedMotherStemLabels +=
+        r070Example.examples[1].observedVisiblePositions.length;
+    }
     if (relations.spouse.report.meaning === 'traditional_spouse_palace_position_only') {
       audit.menuCounts.spouse.positionContext++;
     }
@@ -226,6 +248,9 @@ for (let i = 0; i < count; i++) {
       targetBirth: other.date,
       familyScope: relations.familyMember.scope,
       familyMeaningIssued: false,
+      classicalParentExample: r070Example?.historicalDayStem ?? null,
+      parentSourceVisibleStemCount: r070Example?.examples.reduce((sum, item) =>
+        sum + item.observedVisiblePositions.length, 0) ?? 0,
       spousePositionStatus: relations.spouse.report.readingStatus,
       pairMeaningIssued: false,
       classicalDayStemWitness: stemWitness.status,
