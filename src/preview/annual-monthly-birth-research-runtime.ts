@@ -1,4 +1,6 @@
 import type { BirthInput } from '../contracts/calculation.js';
+import { renderT9CurrentSourceOwnedMonthlyContext } from
+  './t9-current-source-owned-monthly-context.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
@@ -113,6 +115,19 @@ export function buildAnnualMonthlyBirthResearchReading(
     throw new TypeError('Real-birth monthly menu projection must preserve chart and restricted authority.');
   }
 
+  const baseHtml = renderGeneralAnnualMonthlyExplorationHtml(report);
+  const exactCurrent = monthlyMenu.currentT9SourceContext;
+  const yearAnchor = '<section id="year-reading">';
+  if ((exactCurrent !== undefined && (
+        exactCurrent.snapshotId !== report.snapshotId ||
+        exactCurrent.calculationHash !== report.calculationHash ||
+        exactCurrent.sourceTheme.claimId !== report.monthly.referenceReading.theme?.claimId ||
+        baseHtml.split(yearAnchor).length !== 2)) ||
+      (exactCurrent === undefined && report.monthly.referenceReading.state === 'in_period')) {
+    throw new TypeError('Annual/monthly reader cannot attach a T9 context from another period.');
+  }
+  const html = exactCurrent === undefined ? baseHtml : baseHtml.replace(yearAnchor,
+    renderT9CurrentSourceOwnedMonthlyContext(exactCurrent) + yearAnchor);
   return {
     version: ANNUAL_MONTHLY_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
@@ -121,6 +136,6 @@ export function buildAnnualMonthlyBirthResearchReading(
     mayGrantOfficialAuthority: false,
     report,
     monthlyMenu,
-    html: renderGeneralAnnualMonthlyExplorationHtml(report),
+    html,
   };
 }
