@@ -5,7 +5,6 @@ import { buildAnnualMonthlyBirthResearchReading } from
 import { buildThreeTemporalMenusBirthReading } from
   '../src/preview/three-temporal-menus-birth-reading.js';
 import {
-  buildT9ClassicalAnnualDayunAlignment,
   renderT9ClassicalAnnualDayunAlignment,
   T9_CLASSICAL_ANNUAL_DAYUN_ALIGNMENT_SOURCE,
 } from '../src/preview/t9-annual-dayun-classical-alignment.js';
