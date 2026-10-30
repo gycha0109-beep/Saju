@@ -1,5 +1,10 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  observeR070ClassicalParentStemExample,
+  renderR070ClassicalParentStemExampleHtml,
+  type R070ClassicalParentStemExample,
+} from '../research/r070-classical-parent-stem-example.js';
+import {
   evaluateFamilySourceScopeV1,
   explainR070FamilyResearchUnavailabilityKo,
   type R070FamilyResearchUnavailableExplanationKo,
@@ -42,6 +47,8 @@ export interface FamilyBirthResearchReading {
   report: FamilyCanonicalObservationPreview;
   /** Internal source/method gap facts only; not a product menu availability. */
   researchUnavailability: R070FamilyResearchUnavailableExplanationKo;
+  /** Exact historical Jia/Yi example; never a father/mother classification. */
+  classicalParentExample?: R070ClassicalParentStemExample;
   html: string;
 }
 
@@ -100,6 +107,21 @@ export function buildFamilyBirthResearchReading(
       researchUnavailability.maySell !== false) {
     throw new TypeError('R070 research cannot grant family interpretation rights.');
   }
+  const classicalParentExample = request.scope === 'parents'
+    ? observeR070ClassicalParentStemExample(snapshot) : undefined;
+  if (classicalParentExample !== undefined && (
+      classicalParentExample.snapshotId !== report.snapshotId ||
+      classicalParentExample.calculationHash !== report.calculationHash ||
+      classicalParentExample.familyR070MeaningAuthorized ||
+      classicalParentExample.mayGrantOfficialAuthority ||
+      !classicalParentExample.researchOnly)) {
+    throw new TypeError('Historical parent example cannot be interpreted as R070 authority');
+  }
+  const baseHtml = renderFamilyCanonicalObservationHtml(report);
+  const closing = '</main></body></html>';
+  if (classicalParentExample !== undefined && !baseHtml.endsWith(closing)) {
+    throw new TypeError('R070 original example must remain inside the internal-only HTML');
+  }
   const hasFacts = report.observations.some(item =>
     item.state === 'resolved' && item.observedPillar !== undefined);
   return {
@@ -117,7 +139,10 @@ export function buildFamilyBirthResearchReading(
     maySell: false,
     report,
     researchUnavailability,
-    html: renderFamilyCanonicalObservationHtml(report),
+    ...(classicalParentExample === undefined ? {} : { classicalParentExample }),
+    html: classicalParentExample === undefined ? baseHtml :
+      baseHtml.slice(0, -closing.length) +
+      renderR070ClassicalParentStemExampleHtml(classicalParentExample) + closing,
   };
 }
 
