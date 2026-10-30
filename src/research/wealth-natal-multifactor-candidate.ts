@@ -7,6 +7,11 @@ import {
   GENERAL_NATAL_USEFUL_TEN_GOD_RULES,
 } from './general-natal-useful-reading-candidate.js';
 import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
+import {
+  WEALTH_NATAL_CROSS_CHANNEL_METHOD,
+  WEALTH_NATAL_CROSS_CHANNEL_RULE,
+  WEALTH_NATAL_CROSS_CHANNEL_SOURCE,
+} from './wealth-natal-cross-channel-source-candidate.js';
 
 /** Canonical T5 -> source-qualified Wealth T8; no parallel product interpretation. */
 export const WEALTH_NATAL_MULTIFACTOR_VERSION = '0.1.0-research' as const;
@@ -184,10 +189,13 @@ export const WEALTH_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
     { id: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.methodologyId,
       version: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.version },
     { id: METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION },
+    { id: WEALTH_NATAL_CROSS_CHANNEL_METHOD.methodologyId,
+      version: WEALTH_NATAL_CROSS_CHANNEL_METHOD.version },
   ],
   enabledRuleSets: [...new Set([
     ...GENERAL_NATAL_USEFUL_TEN_GOD_RULES.map(x => x.ruleSetId),
     RULE_SET,
+    WEALTH_NATAL_CROSS_CHANNEL_RULE.ruleSetId,
   ])],
   conflictPolicy: 'preserve_all',
   ambiguityPolicy: 'propagate',
@@ -199,9 +207,11 @@ export const WEALTH_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
 });
 export function createWealthNatalMultifactorRegistry(createdAt = '1970-01-01T00:00:00.000Z') {
   return createRuleRegistrySnapshot({
-    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...WEALTH_NATAL_MULTIFACTOR_RULES],
+    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...WEALTH_NATAL_MULTIFACTOR_RULES,
+      WEALTH_NATAL_CROSS_CHANNEL_RULE],
     methodologies: [GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
-      WEALTH_NATAL_MULTIFACTOR_METHODOLOGY],
-    sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE],
+      WEALTH_NATAL_MULTIFACTOR_METHODOLOGY, WEALTH_NATAL_CROSS_CHANNEL_METHOD],
+    sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE,
+      WEALTH_NATAL_CROSS_CHANNEL_SOURCE],
   }, WEALTH_NATAL_MULTIFACTOR_PACK, createdAt);
 }
