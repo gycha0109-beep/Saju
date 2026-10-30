@@ -1,4 +1,8 @@
 import type { CanonicalSajuSnapshot, HeavenlyStem, PillarSlot, TenGod } from '../contracts/calculation.js';
+import {
+  buildT9CurrentSourceOwnedMonthlyContext,
+  renderT9CurrentSourceOwnedMonthlyContext,
+} from './t9-current-source-owned-monthly-context.js';
 import { buildAnnualPrimaryWitnessIdentityContext } from
   './annual-primary-witness-identity-context.js';
 import type { ReadingRequest } from '../contracts/reading.js';
@@ -377,6 +381,10 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       annualAt.civilYearAtReference + '년입니다. 아래 ' + report.targetYear +
       '년 연운은 현재 연도에 적용되는 풀이가 아니라 선택한 연도의 연구 비교 자료입니다.') +
       ' ' + annualReferenceBoundaryText(annualAt.ipchunBoundary);
+  const currentT9Source = buildT9CurrentSourceOwnedMonthlyContext(report);
+  if ((currentT9Source !== undefined) !== (selected.state === 'in_period')) {
+    throw new TypeError('Current monthly source bundle must match the selected reference period.');
+  }
   const focus = selected.state === 'in_period' && selected.theme !== undefined
     ? '<p class="muted">해당 절입 구간: ' + e(SEGMENT_LABEL[selected.segmentId!]) +
       ' · ' + e(kst(selected.theme.calculatedInterval.startsAt)) + '부터 ' +
@@ -431,6 +439,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<h2>조회 시각에 해당하는 이번 달의 풀이</h2>' +
     '<p class="muted">조회 기준: ' + e(kst(selected.referenceDateTime)) +
     ' · 연구용 월별 적용 범위만 안내합니다.</p>' + focus +
+    (currentT9Source === undefined ? '' :
+      renderT9CurrentSourceOwnedMonthlyContext(currentT9Source)) +
     currentConditionalFact + '</section>' +
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
     '<p class="muted" id="reference-year-context">' + e(annualContext) + '</p>' +
