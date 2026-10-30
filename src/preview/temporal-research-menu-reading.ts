@@ -5,6 +5,10 @@ import {
 } from './t9-current-source-owned-monthly-context.js';
 import { buildAnnualPrimaryWitnessIdentityContext } from
   './annual-primary-witness-identity-context.js';
+import {
+  buildT9ClassicalAnnualDayunAlignment,
+  type T9ClassicalAnnualDayunAlignment,
+} from './t9-annual-dayun-classical-alignment.js';
 import type { GeneralAnnualMonthlyExplorationReport } from './general-annual-monthly-exploration-report.js';
 import type { LifeStageDayunResearchReport } from './life-stage-dayun-research-report.js';
 
@@ -73,6 +77,8 @@ export interface TemporalResearchMenuReading {
   referenceFocus?: TemporalMonthlyReferenceFocus;
   /** Current instant only: original monthly T9 theme + independent T9 clash Claims. */
   currentT9SourceContext?: T9CurrentSourceOwnedMonthlyContext;
+  /** Exact classical stem+branch comparison, not a T9 prognosis. */
+  historicalAnnualDayunAlignment?: T9ClassicalAnnualDayunAlignment;
   missing: readonly string[];
   provenance: {
     snapshotId?: string;
@@ -336,6 +342,15 @@ export function buildTemporalResearchMenuReadings(
       };
     }
   }
+  const historicalAnnualDayunAlignment = joined === undefined ? undefined
+    : buildT9ClassicalAnnualDayunAlignment(joined);
+  if (historicalAnnualDayunAlignment !== undefined && (
+      historicalAnnualDayunAlignment.snapshotId !== joined?.snapshotId ||
+      historicalAnnualDayunAlignment.calculationHash !== joined.calculationHash ||
+      historicalAnnualDayunAlignment.compositionalOutcomeAuthorized ||
+      historicalAnnualDayunAlignment.newlyEmittedT9Claims !== 0)) {
+    throw new TypeError('Classical temporal name must preserve natal chart and T9 HOLD');
+  }
   const currentT9SourceContext = joined === undefined ? undefined
     : buildT9CurrentSourceOwnedMonthlyContext(joined);
   if ((currentT9SourceContext !== undefined) !==
@@ -435,6 +450,9 @@ export function buildTemporalResearchMenuReadings(
       }),
       ...(referenceFocus === undefined ? {} : { referenceFocus }),
       ...(currentT9SourceContext === undefined ? {} : { currentT9SourceContext }),
+      ...(historicalAnnualDayunAlignment === undefined ? {} : {
+        historicalAnnualDayunAlignment,
+      }),
       missing: joined === undefined
         ? ['연도·월·출생정보를 입력하고 월운 연구 풀이를 실행해야 합니다.']
         : [
