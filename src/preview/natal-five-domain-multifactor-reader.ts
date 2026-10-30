@@ -484,6 +484,31 @@ function renderWealthInsufficientEvidence(report: WealthNatalMultifactorReport):
     '<p>기존 T5 관측만 보여 주며, 등록된 T8 재물 종합해석으로 승격하지 않습니다.</p></section>';
 }
 
+function renderWealthSourceBoundCrossChannel(
+  report: WealthNatalMultifactorReport,
+): string {
+  const comparison = report.crossChannelComparison;
+  if (comparison === undefined) return '';
+  guard(comparison.researchOnly && !comparison.mayPublish &&
+    !comparison.maySell && !comparison.interpretationAuthorityGranted &&
+    comparison.sourceIds.length >= 2 &&
+    comparison.upstreamClaimIds.length === 2 &&
+    comparison.observedFactPaths.length === comparison.observedPositions.length &&
+    comparison.observedFactPaths.length >= 2 &&
+    comparison.observedFactPaths.every(path => FACT_PATH.test(path)) &&
+    comparison.paragraph.includes('수익, 재산, 소비 성향') &&
+    comparison.ruleId === 'RULE-' + comparison.claimType,
+    'cross-channel T8 research cannot satisfy official wealth or MUR authority');
+  return '<section class="wealth-cross-channel-research">' +
+    '<h3>' + escapeHtml(comparison.headline) + '</h3>' +
+    '<p>' + escapeHtml(comparison.paragraph) + '</p>' +
+    '<details><summary>연구 전용 출처·실제 계산 경로</summary><p>' +
+    escapeHtml(comparison.ruleId) + '</p><p>' +
+    escapeHtml(comparison.sourceIds.join(' · ')) + '</p><p>' +
+    escapeHtml(comparison.observedFactPaths.join(' · ')) + '</p></details>' +
+    '<p>이 비교는 재물 종합풀이의 독립 근거 축으로 세지 않습니다.</p></section>';
+}
+
 function renderUnissuedDomainT5(
   domain: string,
   report: ResearchReport,
@@ -603,7 +628,9 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
     '<p>' + escapeHtml(report.introduction) + '</p>' +
-    firstMeaning + overlapping + displacedCore + additionalCareer + insufficientEvidence + details + missing +
+    firstMeaning + overlapping + displacedCore + additionalCareer + insufficientEvidence +
+    (domain === 'wealth' ? renderWealthSourceBoundCrossChannel(report as WealthNatalMultifactorReport) : '') +
+    details + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }
