@@ -1,5 +1,9 @@
 import type { CanonicalSajuSnapshot, HeavenlyStem, PillarSlot, TenGod } from '../contracts/calculation.js';
 import {
+  buildT9ClassicalAnnualDayunAlignment,
+  renderT9ClassicalAnnualDayunAlignment,
+} from './t9-annual-dayun-classical-alignment.js';
+import {
   buildT9CurrentSourceOwnedMonthlyContext,
   renderT9CurrentSourceOwnedMonthlyContext,
 } from './t9-current-source-owned-monthly-context.js';
@@ -381,6 +385,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       annualAt.civilYearAtReference + '년입니다. 아래 ' + report.targetYear +
       '년 연운은 현재 연도에 적용되는 풀이가 아니라 선택한 연도의 연구 비교 자료입니다.') +
       ' ' + annualReferenceBoundaryText(annualAt.ipchunBoundary);
+  const historicalAlignment = buildT9ClassicalAnnualDayunAlignment(report);
   const currentT9Source = buildT9CurrentSourceOwnedMonthlyContext(report);
   if ((currentT9Source !== undefined) !== (selected.state === 'in_period')) {
     throw new TypeError('Current monthly source bundle must match the selected reference period.');
@@ -441,6 +446,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     ' · 연구용 월별 적용 범위만 안내합니다.</p>' + focus +
     (currentT9Source === undefined ? '' :
       renderT9CurrentSourceOwnedMonthlyContext(currentT9Source)) +
+    renderT9ClassicalAnnualDayunAlignment(historicalAlignment) +
     currentConditionalFact + '</section>' +
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
     '<p class="muted" id="reference-year-context">' + e(annualContext) + '</p>' +
