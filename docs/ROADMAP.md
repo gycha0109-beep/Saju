@@ -92,11 +92,11 @@
 
 - **직접 근거:** 《三命通會》 권2 「論太歲」 전사본(https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83/%E5%8D%B7%E4%BA%8C)에 「又如甲子流年又是甲子運，謂之歲運並臨」 사례가 있다. 원문 甲子+甲子 사례와 다른 간지로 일반화한 비교를 구분한다. 역사적 명칭은 현대인의 미래 사건·길흉을 승인하지 않는다.
 - **수정:** `temporal-composition-conditional-context.ts`가 선택된 대운의 천간까지 보존하고 `t9-annual-dayun-classical-alignment.ts`가 조회 시각의 입춘 효력 연주 전체 간지와 현재 대운 전체 간지를 비교한다. 절입·대운 구간과 입춘 전·대상 월 외·대운 미확정을 구분한다. 지지만 같으면 세운병림으로 취급하지 않는다.
-- **화면:** 연월 연구 화면·3개 시기 메뉴·월운 모델에 출처, 원문 예시, 실제 간지, 적용 구간, Claim 발행 금지를 표시했다. 현대적 연운/월운 결과가 아니며 새 T9 Claim 발행 0, 공개·판매 권한 false를 유지한다.
+- **화면:** 연월 연구 화면과 3개 시기 메뉴의 **올해(annualMenu)** 영역에 출처, 원문 예시, 실제 간지, 조회 시각의 대운 적용 구간, Claim 발행 금지를 표시했다. 월운(monthlyMenu)에는 절입별 기존 T9 Claim·원국 충 근거만 남겼다. 현대적 연운/월운 결과가 아니며 새 T9 Claim 발행 0, 공개·판매 권한 false를 유지한다.
 - **검증 코드:** `test/t9-annual-dayun-classical-alignment.test.ts`에 실제 계산, 입춘, 조회 월 범위 밖, 미확정 대운, 위조 권한 검사를 추가했다. `scripts/saju-500-eight-menu-audit.mjs`에 원문 甲子 정확 일치와 다른 간지 일반화의 실측 집계를 별도로 추가했다.
-- **미검증:** 연결된 Windows Desktop Commander 월 사용 한도 소진으로 새 HEAD의 TypeScript·ESLint·빌드·Vitest·500건 감사를 **실행 검증하지 못했다**. PASS·실제 일치 건수·제품 완성을 추정하지 않는다. 재개 시 typecheck→lint→build→시기 관련 vitest→500건 감사를 확인해야 한다. 최종 PR·CI·병합은 수행하지 않았고 R153/R154 합성 해석 및 12메뉴 공식 수용 상태는 HOLD다.
+- **실행 검증:** Desktop Commander 연결 응답이 없어 GitHub Actions 브랜치 전용 CI로 대체했다. 최초 미사용 import/연운 메뉴 미노출 타입 오류를 실제 CI 로그로 확인해 수정했다. 최신 코드 커밋 `5ab3b309` 기준 [CI #41000364345](https://github.com/gycha0109-beep/Saju/actions/runs/41000364345)에서 TypeScript·ESLint·빌드·대상 시기 테스트·고정 500명 감사를 모두 통과했다. 전체 Vitest 전수·공식 제품 승인·최종 PR·병합은 미실행이며 R153/R154 합성 의미 HOLD다.
 
-- **실측·CI 확정:** [브랜치 검증 CI #40999687628](https://github.com/gycha0109-beep/Saju/actions/runs/40999687628)에서 TypeScript·ESLint·빌드·시기 테스트·500명 감사 PASS. 500명 중 원문 갑자+갑자 정확 일치 **0건**, 다른 간지의 전체 세운·대운 일치 **14건**, 확인 불가 **0건**, 새 T9 Claim **0건**. `saju-t9-branch-audit` 실행 아티팩트로 증거 보존. 새 연구 표기는 **월운이 아니라 올해 메뉴**로 배치하고 월운의 절입/충 근거는 별도로 유지했다. 이 추가 화면 변경은 후속 커밋 CI로 검증한다.
+- **실측 결과:** [최신 성공 CI #41000364345](https://github.com/gycha0109-beep/Saju/actions/runs/41000364345)의 500명 고정 감사에서 원문 갑자+갑자 정확 일치 **0건**, 다른 간지의 전체 세운·대운 일치 **14건**, 확인 불가 **0건**, 새 T9 Claim **0건**, 계산/메뉴 실행 오류 **0건**. `saju-t9-branch-audit` 아티팩트에 고정 시드 결과를 보존했다. 서로 다른 간지의 전체 일치를 공식 세운병림 길흉으로 승격하지 않고 연구 분류로만 유지한다.
 
 ## 0. 제품 목표와 동등한 12개 Reading
 
