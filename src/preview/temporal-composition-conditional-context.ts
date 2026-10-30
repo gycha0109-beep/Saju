@@ -1,5 +1,5 @@
 import type {
-  CanonicalSajuSnapshot, EarthlyBranch, PillarSlot,
+  CanonicalSajuSnapshot, EarthlyBranch, HeavenlyStem, PillarSlot,
 } from '../contracts/calculation.js';
 import {
   isStructuralBranchClash,
@@ -52,6 +52,8 @@ export interface CompositionSlice {
   annualBranch: EarthlyBranch;
   monthlyBranch: EarthlyBranch;
   dayunStatus: 'resolved' | 'unavailable';
+  /** Original selected Dayun heavenly stem; needed to verify full cycle equality, not only branch. */
+  dayunStem: HeavenlyStem | null;
   dayunBranch: EarthlyBranch | null;
   dayunContextId: string | null;
   dayunReason: string | null;
@@ -209,6 +211,7 @@ export function buildTemporalCompositionConditionalContext(
         annualBranch: annualPart.branch,
         monthlyBranch: monthlyPart.branch,
         dayunStatus: active ? 'resolved' as const : 'unavailable' as const,
+        dayunStem: active?.pillar.stem.value ?? null,
         dayunBranch: active?.pillar.branch.value ?? null,
         dayunContextId: dayun.status === 'resolved' ? dayun.contextId : null,
         dayunReason: active ? null : dayun.status === 'unavailable'
@@ -236,7 +239,7 @@ export function buildTemporalCompositionConditionalContext(
     sourceFactPaths: [
       'pillars.year.value.branch.value', 'pillars.month.value.branch.value',
       'pillars.day.value.branch.value', 'pillars.hour.value.branch.value',
-      'luckCycle.value.pillars', 'temporal.annualPillar.branch',
+      'luckCycle.value.pillars', 'temporal.annualPillar.stem', 'temporal.annualPillar.branch',
       'temporal.segmentsById.before_jeol.monthlyPillar.branch',
       'temporal.segmentsById.after_jeol.monthlyPillar.branch',
       'temporal.jeolBoundary.at',
