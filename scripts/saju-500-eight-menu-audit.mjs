@@ -254,6 +254,36 @@ function temporalEntries(result) {
          focusedLink.existingT9ClaimId !== (focus.theme?.claimId ?? null)))) {
     throw new Error('500-case T9 focus must be selected by the original Jeol and Dayun interval');
   }
+  const sourceOwnedCurrent = result.annualMonthly.monthlyMenu.currentT9SourceContext;
+  if ((focus.state === 'in_period') !== (sourceOwnedCurrent !== undefined) ||
+      (sourceOwnedCurrent !== undefined && (
+        sourceOwnedCurrent.snapshotId !== report.snapshotId ||
+        sourceOwnedCurrent.calculationHash !== report.calculationHash ||
+        sourceOwnedCurrent.referenceDateTime !== focus.referenceDateTime ||
+        sourceOwnedCurrent.sourceTheme.claimId !== focus.theme?.claimId ||
+        sourceOwnedCurrent.compositeOutcomeInferred ||
+        sourceOwnedCurrent.newT9ClaimsEmitted !== 0 ||
+        sourceOwnedCurrent.crossPeriodInheritance ||
+        sourceOwnedCurrent.mayPublish || sourceOwnedCurrent.maySell ||
+        sourceOwnedCurrent.sourceTensions.some(item =>
+          !monthly.some(section => section.kind === 'tension' &&
+            section.claimId === item.claimId && section.segmentId === sourceOwnedCurrent.segmentId)
+        )))) {
+    throw new Error('500-case original current T9 Claim co-reading violated exact period or authority');
+  }
+  if (sourceOwnedCurrent !== undefined) {
+    m.currentT9SourceBundle = {
+      originalThemeClaimId: sourceOwnedCurrent.sourceTheme.claimId,
+      segmentId: sourceOwnedCurrent.segmentId,
+      interval: [sourceOwnedCurrent.startsAt, sourceOwnedCurrent.endsAtExclusive],
+      originalTensionClaimIds: sourceOwnedCurrent.sourceTensions.map(item => item.claimId),
+      originalSourceIds: [...new Set([
+        ...sourceOwnedCurrent.sourceTheme.sourceIds,
+        ...sourceOwnedCurrent.sourceTensions.flatMap(item => item.sourceIds),
+      ])].sort(),
+      newT9Claims: 0, officialAuthority: false,
+    };
+  }
   m.currentT9Evidence = {
     state: evidenceFocus.state,
     referenceDateTime: evidenceFocus.referenceDateTime,
@@ -380,6 +410,15 @@ function summarize(rows) {
     generated: rows.length,
     withReadableText: nonEmpty.length,
     withoutReadableText: rows.length - nonEmpty.length,
+    ...(rows.some(row => row.currentT9SourceBundle) ? {
+      activeSourceT9Cases: rows.filter(row => row.currentT9SourceBundle).length,
+      casesWithCurrentT9Clash: rows.filter(row =>
+        (row.currentT9SourceBundle?.originalTensionClaimIds.length ?? 0) > 0).length,
+      originalCurrentT9ClashClaims: rows.reduce((n,row) =>
+        n + (row.currentT9SourceBundle?.originalTensionClaimIds.length ?? 0),0),
+      extraCurrentT9ClaimsEmitted: rows.reduce((n,row) =>
+        n + (row.currentT9SourceBundle?.newT9Claims ?? 0),0),
+    } : {}),
     ...(rows.some(row => row.existingT9EvidenceLinks) ? {
       existingT9LinkCoverage: rows.filter(row => row.existingT9EvidenceLinks).length,
       existingT9LinkTotal: rows.reduce((n,row) => n+(row.existingT9EvidenceLinks?.length??0),0),
