@@ -108,7 +108,10 @@ describe('R070 historical-parent source Rule/Claim admission boundary', () => {
     const snapshot = calculateAuthorizedMyeonghwaProductionSnapshot(unknown, { now }).snapshot;
     const original = observeR070ClassicalParentStemExample(snapshot);
     if (!original) {
-      expect(snapshot.derivedFacts.dayMaster.status).not.toBe('resolved');
+      expect(snapshot.derivedFacts.tenGods.status).not.toBe('resolved');
+      expect(buildFamilyBirthResearchReading(unknown, {
+        scope: 'parents', referenceDateTime,
+      }).parentExampleRuleBoundary).toBeUndefined();
       return;
     }
     const gate = assessR070ParentExampleRuleClaimBoundary(
