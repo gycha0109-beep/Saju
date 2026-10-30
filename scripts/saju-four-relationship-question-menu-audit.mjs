@@ -1,4 +1,5 @@
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { pathToFileURL } from 'node:url';
 import { resolve, dirname } from 'node:path';
@@ -45,7 +46,7 @@ const count = process.argv[3] === undefined ? 24 : Number(process.argv[3]);
 if (!Number.isInteger(count) || count < 1 || count > 200) {
   throw new RangeError('Four-menu audit expects 1..200 distinct person pairs');
 }
-const outputPath = resolve(process.argv[2] ?? '/tmp/saju-four-menu-audit.json');
+const outputPath = resolve(process.argv[2] ?? resolve(tmpdir(), 'saju-four-menu-audit.json'));
 const registries = {
   general: createGeneralNatalMultifactorRegistry(),
   career: createCareerMultifactorResearchRegistry(),
