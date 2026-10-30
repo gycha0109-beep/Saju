@@ -80,7 +80,10 @@ const audit = {
   menuCounts: {
     family: { parents: 0, children: 0, sourceMeaningIssued: 0,
       literalClassicalJiaYiExamples: 0, observedFatherStemLabels: 0,
-      observedMotherStemLabels: 0 },
+      observedMotherStemLabels: 0,
+      parentRuleContextGates: 0, parentSourceFamilyT8Claims: 0,
+      visibleStemExamplesConfirmed: 0, hiddenRawMembershipConfirmed: 0,
+      unresolvedOriginalMethod: 0 },
     spouse: { positionContext: 0, partnerTraitsIssued: 0 },
     compatibility: { twoPersonCalculated: 0, pairT10Issued: 0, pairingChangedContext: 0,
       differentPersonalT8Presentations: 0, samePersonalT8Presentations: 0,
@@ -175,6 +178,29 @@ for (let i = 0; i < count; i++) {
           !relations.family.parents.html.includes(r070Example.paragraph) ||
           !relations.html.includes(r070Example.paragraph)) {
         throw new Error('Historical parent example must keep source, subject and R070 HOLD');
+      }
+      const gate = relations.family.parents.parentExampleRuleBoundary;
+      if (gate === undefined || gate.snapshotId !== r070Example.snapshotId ||
+          gate.calculationHash !== r070Example.calculationHash ||
+          gate.sourceId !== r070Example.sourceId || gate.conditions.length !== 6 ||
+          gate.emittedT8Claims !== 0 || gate.sourceRuleAdmitted ||
+          gate.familyMeaningAuthorized || gate.originalConditionsFullyEstablished ||
+          gate.hiddenTenGodClassificationAuthorized || gate.strengthBasedOutcomeAuthorized ||
+          gate.configurationBasedOutcomeAuthorized ||
+          !relations.family.parents.html.includes(gate.explanation) ||
+          !relations.html.includes(gate.explanation)) {
+        throw new Error('R070 condition gate must preserve family source and no-T8 authority');
+      }
+      audit.menuCounts.family.parentRuleContextGates++;
+      audit.menuCounts.family.parentSourceFamilyT8Claims += gate.emittedT8Claims;
+      if (gate.conditions[1].state === 'confirmed') {
+        audit.menuCounts.family.visibleStemExamplesConfirmed++;
+      }
+      if (gate.conditions[2].state === 'confirmed') {
+        audit.menuCounts.family.hiddenRawMembershipConfirmed++;
+      }
+      if (gate.conditions.slice(3).every(item => item.state === 'not_authorized')) {
+        audit.menuCounts.family.unresolvedOriginalMethod++;
       }
       audit.menuCounts.family.literalClassicalJiaYiExamples++;
       audit.menuCounts.family.observedFatherStemLabels +=
