@@ -1,4 +1,4 @@
-import type { CanonicalSajuSnapshot, HeavenlyStem, PillarSlot } from '../contracts/calculation.js';
+import type { CanonicalSajuSnapshot, HeavenlyStem } from '../contracts/calculation.js';
 import type { FamilySourceScopeHandoff } from './family-pair-source-scope-handoff.js';
 import type { R070ClassicalParentStemExample } from './r070-classical-parent-stem-example.js';
 import { R070_CLASSICAL_PARENT_EXAMPLE_SOURCE } from './r070-classical-parent-stem-example.js';
