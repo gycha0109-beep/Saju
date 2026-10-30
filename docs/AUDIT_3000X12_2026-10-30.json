@@ -1,0 +1,453 @@
+{
+  "audit": "saju-3000x12-real-engine-synthetic-combined",
+  "revision": "3f079e8d",
+  "referenceDateTime": "2026-10-30T03:00:00.000Z",
+  "sampleSize": 3000,
+  "distinctSyntheticNatalInputs": 3000,
+  "menuExecutions": 36000,
+  "extraPairedBirthAndFamilyRuns": 6000,
+  "chunkCount": 12,
+  "fullEngineErrors": 0,
+  "elapsedComputeSeconds": 335,
+  "menus": {
+    "general": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 2810,
+      "emptyTextCases": 190,
+      "modeCounts": {
+        "partial": 1911,
+        "complete": 899,
+        "insufficient": 190
+      },
+      "meanParagraphs": 1.89,
+      "distinctExactParagraphs": 1782,
+      "distinctExactFullTextResults": 2451,
+      "distinctHeadlines": 6
+    },
+    "career": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 2810,
+      "emptyTextCases": 190,
+      "modeCounts": {
+        "partial": 2203,
+        "complete": 607,
+        "insufficient": 190
+      },
+      "meanParagraphs": 1.93,
+      "distinctExactParagraphs": 1503,
+      "distinctExactFullTextResults": 2431,
+      "distinctHeadlines": 5
+    },
+    "wealth": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 2861,
+      "emptyTextCases": 139,
+      "modeCounts": {
+        "partial": 2035,
+        "complete": 826,
+        "insufficient": 139
+      },
+      "meanParagraphs": 1.87,
+      "distinctExactParagraphs": 2262,
+      "distinctExactFullTextResults": 2319,
+      "distinctHeadlines": 9
+    },
+    "relationship": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 2947,
+      "emptyTextCases": 53,
+      "modeCounts": {
+        "complete": 1312,
+        "partial": 1635,
+        "insufficient": 53
+      },
+      "meanParagraphs": 2.19,
+      "distinctExactParagraphs": 2476,
+      "distinctExactFullTextResults": 2774,
+      "distinctHeadlines": 10
+    },
+    "business": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 2970,
+      "emptyTextCases": 30,
+      "modeCounts": {
+        "complete": 1726,
+        "partial": 1244,
+        "insufficient": 30
+      },
+      "meanParagraphs": 2.44,
+      "distinctExactParagraphs": 2580,
+      "distinctExactFullTextResults": 2870,
+      "distinctHeadlines": 10
+    },
+    "family": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 3000,
+      "emptyTextCases": 0,
+      "modeCounts": {
+        "family_t8_source_authority_not_established": 3000
+      },
+      "meanParagraphs": 3,
+      "distinctExactParagraphs": 157,
+      "distinctExactFullTextResults": 2979,
+      "distinctHeadlines": 0
+    },
+    "life_stage": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 2810,
+      "emptyTextCases": 190,
+      "modeCounts": {
+        "source_authority_not_established": 3000
+      },
+      "meanParagraphs": 1.98,
+      "distinctExactParagraphs": 1811,
+      "distinctExactFullTextResults": 2451,
+      "distinctHeadlines": 6
+    },
+    "annual": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 3000,
+      "emptyTextCases": 0,
+      "modeCounts": {
+        "observations_only": 3000
+      },
+      "meanParagraphs": 1.31,
+      "distinctExactParagraphs": 14,
+      "distinctExactFullTextResults": 88,
+      "distinctHeadlines": 14
+    },
+    "monthly": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 3000,
+      "emptyTextCases": 0,
+      "modeCounts": {
+        "in_period": 3000
+      },
+      "meanParagraphs": 2.67,
+      "distinctExactParagraphs": 28,
+      "distinctExactFullTextResults": 343,
+      "distinctHeadlines": 28
+    },
+    "spouse": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 0,
+      "emptyTextCases": 3000,
+      "modeCounts": {
+        "position_only_research_context": 3000
+      },
+      "meanParagraphs": 0,
+      "distinctExactParagraphs": 0,
+      "distinctExactFullTextResults": 1,
+      "distinctHeadlines": 0
+    },
+    "compatibility": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 2999,
+      "emptyTextCases": 1,
+      "modeCounts": {
+        "insufficient_interpersonal_meaning_authority": 3000
+      },
+      "meanParagraphs": 4.65,
+      "distinctExactParagraphs": 3471,
+      "distinctExactFullTextResults": 3000,
+      "distinctHeadlines": 10
+    },
+    "question": {
+      "attempted": 3000,
+      "executed": 3000,
+      "exceptions": 0,
+      "nonemptyTextCases": 983,
+      "emptyTextCases": 2017,
+      "modeCounts": {
+        "related_evidence": 983,
+        "insufficient": 517,
+        "unsupported": 1500
+      },
+      "meanParagraphs": 0.47,
+      "distinctExactParagraphs": 1062,
+      "distinctExactFullTextResults": 865,
+      "distinctHeadlines": 16
+    }
+  },
+  "metrics": {
+    "compatibilityT10Issued": 0,
+    "familyOutcomeIssued": 0,
+    "spouseTraitIssued": 0,
+    "monthlyInPeriod": 3000,
+    "monthlyT9Theme": 3000,
+    "annualSectionCount": 3934,
+    "compatibilityPairDistinct": 3000,
+    "compatibilityPersonalTextsDiffer": 2999,
+    "questionSections": 1407,
+    "questionStatuses": {
+      "직업에서 제 강점과 준비할 점이 궁금합니다": {
+        "related_evidence": 127,
+        "insufficient": 173
+      },
+      "재물 관리에서 어떤 관점을 살펴볼까요": {
+        "related_evidence": 99,
+        "insufficient": 201
+      },
+      "연애에서 관계 경계와 조율 관점을 알고 싶습니다": {
+        "insufficient": 80,
+        "related_evidence": 220
+      },
+      "사업 실행과 운영 관점이 궁금합니다": {
+        "insufficient": 46,
+        "related_evidence": 254
+      },
+      "사주 전반의 성향을 알고 싶습니다": {
+        "related_evidence": 283,
+        "insufficient": 17
+      },
+      "제가 언제 결혼할까요": {
+        "unsupported": 300
+      },
+      "부모님과의 관계가 좋아질까요": {
+        "unsupported": 300
+      },
+      "우리 둘의 궁합은 어떤가요": {
+        "unsupported": 300
+      },
+      "다음 달 수익률이 오를까요": {
+        "unsupported": 300
+      },
+      "건강이 위험한가요": {
+        "unsupported": 300
+      }
+    },
+    "familyContexts": {
+      "parents": 1500,
+      "children": 1500
+    },
+    "badSourceProof": 0
+  },
+  "samples": [
+    {
+      "id": 0,
+      "birth": {
+        "calendarType": "solar",
+        "date": {
+          "year": 1975,
+          "month": 1,
+          "day": 1
+        },
+        "time": {
+          "known": true,
+          "hour": 0,
+          "minute": 0
+        },
+        "sexForTraditionalCalculation": "male"
+      },
+      "domains": {
+        "general": {
+          "state": "partial",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 관성(역할·규범 기준): 월주 지지 대표 십신 편관 · 시주 지지 대표 십신 편관 / 인성(학습·수용): 연주 지지 대표 십신 정인입니다. 같은 지지 대표 십신에서 관측된 서로 다른 십신 계열을 '외부 기준과 배움·수용이 만나는 구조'라는 구조적 관점에서 함께 읽습니다. 지지 대표 십신에서 관측된 보조 조합입니다. 관성(요구·규칙)과 인성(학습·수용)이 같은 채널에서 관측됩니다. 외부의 조건과 지원·이해의 축을 연결해 읽는 전통적 해석 후보로, 실제 대처 능력이나 학업 결과를 단정하지 않습니다.",
+            "이 원국에서 확인된 근거는 재성(현실 자원·교환): 시주 천간 정재 / 인성(학습·수용): 연주 천간 정인입니다. 같은 천간에서 관측된 서로 다른 십신 계열을 '현실 실행과 학습·준비가 만나는 구조'라는 구조적 관점에서 함께 읽습니다. 천간에서 실제로 관측된 조합입니다. 재성(결과·자원)과 인성(학습·준비)이 함께 관측됩니다. 전통적 견제 관계를 현실화와 충분한 준비를 함께 살피는 축으로 제한하여 읽습니다. 개인의 투자·비용·행동을 예측하지 않습니다."
+          ]
+        },
+        "career": {
+          "state": "partial",
+          "paragraphs": [
+            "실제 명식에서 확인한 근거는 재성(현실 자원·교환): 시주 천간 정재 / 인성(학습·수용): 연주 천간 정인입니다. 시주 천간 정재의 재성(현실 자원·교환)와 연주 천간 정인의 인성(학습·수용)가 같은 천간 관찰 범위에서 확인되므로, 기존 출처에 연결된 ‘지금 실행할 일과 더 준비할 일 사이의 구조’이라는 구조적 해석 후보를 함께 살핍니다. 천간에 드러난 조합에서 관측되는 중심 해석 후보입니다. 재성(현실 결과·자원)과 인성(학습·준비)이 같은 관측 채널에 나타납니다. 기존 연구의 재성↔인성 견제 관계를 일의 실행과 준비 사이의 조율이라는 제한된 관점으로 읽습니다. 실제 비용·능력·성공을 판단하거나 사람의 행동을 단정하지 않습니다.",
+            "실제 명식에서 확인한 근거는 관성(역할·책임 기준): 월주 지지 대표 십신 편관 · 시주 지지 대표 십신 편관 / 인성(학습·수용): 연주 지지 대표 십신 정인입니다. 월주 지지 대표 십신 편관의 관성(역할·책임 기준)와 연주 지지 대표 십신 정인의 인성(학습·수용)가 같은 지지 대표 십신 관찰 범위에서 확인되므로, 기존 출처에 연결된 ‘요구와 학습·준비를 연결하는 일의 구조’이라는 구조적 해석 후보를 함께 살핍니다. 지지 대표 십신에서 관측되는 보조 맥락입니다. 관성(규칙·요구)과 인성(학습·준비)이 함께 관측됩니다. 전통적 관성→인성 관계에 근거하여 일의 요구와 체계적 준비를 연결해 읽는 한 축입니다. 실제 승진이나 업무 능력을 확정하지 않습니다."
+          ]
+        },
+        "wealth": {
+          "state": "partial",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 재성(현실 자원·교환): 시주 천간 정재 / 인성(준비·수용): 연주 천간 정인입니다. 같은 천간에서 관측된 서로 다른 십신 계열을 '지금 가진 자원과 준비·학습 사이를 조율하는 구조'라는 구조적 관점에서 함께 읽습니다. 천간에서 실제로 관측된 조합입니다. 재성(현실 자원)과 인성(준비·수용)이 함께 관측됩니다. 전통적인 견제 관계를 바탕으로 현재 활용할 자원과 준비에 배분할 자원을 함께 고려하는 구조로 읽습니다. 구체적인 지출 습관이나 투자 행동을 추정하지 않습니다.",
+            "이 원국에서 확인된 근거는 비겁(자기 기준·공유 관점): 월주 천간 겁재 / 재성(현실 자원·교환): 시주 천간 정재입니다. 같은 천간에서 관측된 서로 다른 십신 계열을 '자기 결정과 자원 배분이 마주하는 구조'라는 구조적 관점에서 함께 읽습니다. 천간에서 실제로 관측된 조합입니다. 비겁의 주도·공유 관점과 재성의 현실 자원 관점이 한 채널에 있습니다. 자기 기준과 자원을 어떻게 함께 배치할지를 해석의 질문으로 삼되, 소비 성향·채무·수입을 단정하지 않습니다."
+          ]
+        },
+        "business": {
+          "state": "complete",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 식상(표현·산출): 일주 지지 대표 십신 식신 / 관성(규범·역할 기준): 월주 지지 대표 십신 편관 · 시주 지지 대표 십신 편관입니다. 같은 지지 대표 십신에서 2개 십신 계열이 함께 확인되므로 '산출·실행과 역할 기준을 연결하는 구조'라는 구조적 관점으로 연결해 읽습니다. 지지 대표 십신에서 관측된 보조 조합입니다. 식상의 표현·산출과 관성의 규칙·역할이 함께 나타납니다. 사업의 실행 방향을 논할 때 산출 과정과 운영 기준을 구별해 살피는 해석 축이며 실제 사업 역량이나 성과를 판정하지 않습니다.",
+            "이 원국에서 확인된 근거는 재성(현실 자원·교환): 시주 천간 정재 / 인성(학습·준비): 연주 천간 정인입니다. 같은 천간에서 2개 십신 계열이 함께 확인되므로 '자원 운용과 학습·준비를 함께 보는 구조'라는 구조적 관점으로 연결해 읽습니다. 천간에서 실제로 관측된 조합입니다. 재성의 자원·교환과 인성의 수용·학습이 같은 관측 채널에 놓입니다. 사업을 준비하는 과정에서 이용할 자원과 사전에 검토할 내용을 나누어 살피는 전통적 관점일 뿐, 투자 적합성이나 창업 시점·수익을 판단하지 않습니다."
+          ]
+        },
+        "relationship": {
+          "state": "complete",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 식상(표현·발산): 일주 지지 대표 십신 식신 / 관성(역할·경계 기준): 월주 지지 대표 십신 편관 · 시주 지지 대표 십신 편관입니다. 같은 지지 대표 십신에서 2개 십신 계열이 함께 확인되므로 '표현하는 일과 역할 기준을 나누어 보는 구조'라는 구조적 관점으로 연결해 읽습니다. 지지 대표 십신에서 관측된 보조 조합입니다. 식상의 표현·발산과 관성의 역할·규범이 함께 관측됩니다. 관계 일반에서 표현의 관점과 책임·경계의 관점을 구별해 질문할 수 있으나, 실제 대인 갈등이나 연애·결혼 결과를 예견하지 않습니다.",
+            "이 원국에서 확인된 근거는 인성(수용·이해): 연주 지지 대표 십신 정인 / 식상(표현·발산): 일주 지지 대표 십신 식신 / 관성(역할·경계 기준): 월주 지지 대표 십신 편관 · 시주 지지 대표 십신 편관입니다. 같은 지지 대표 십신에서 3개 십신 계열이 함께 확인되므로 '받아들이기·표현하기·역할 기준의 세 관점'이라는 구조적 관점으로 연결해 읽습니다. 지지 대표 십신에서 관측된 보조 조합입니다. 인성의 수용·학습, 식상의 표현·산출, 관성의 역할·규범이 같은 관측 채널에서 함께 나타납니다. 관계 일반에서는 받아들인 것을 어떻게 표현하고 어떤 역할 기준과 구별할지 함께 검토하는 전통적 구조로만 읽습니다. 실제 성격이나 의사소통의 우열, 관계 성패를 판정하지 않습니다."
+          ]
+        }
+      },
+      "temporal": {
+        "yearSections": 3,
+        "monthStatus": "in_period",
+        "stageStatus": "source_authority_not_established"
+      },
+      "family": {
+        "status": "family_t8_source_authority_not_established",
+        "scope": "parents"
+      },
+      "compatibility": "insufficient_interpersonal_meaning_authority",
+      "question": "직업에서 제 강점과 준비할 점이 궁금합니다"
+    },
+    {
+      "id": 1,
+      "birth": {
+        "calendarType": "solar",
+        "date": {
+          "year": 1976,
+          "month": 1,
+          "day": 1
+        },
+        "time": {
+          "known": true,
+          "hour": 13,
+          "minute": 15
+        },
+        "sexForTraditionalCalculation": "female"
+      },
+      "domains": {
+        "general": {
+          "state": "complete",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 식상(표현·산출): 연주 천간 상관 / 재성(현실 자원·교환): 시주 천간 정재입니다. 같은 천간에서 관측된 서로 다른 십신 계열을 '표현과 현실 결과가 맞닿는 구조'라는 구조적 관점에서 함께 읽습니다. 천간에서 실제로 관측된 조합입니다. 식상(표현·생산)과 재성(현실 자원)이 같은 관측 채널에 나타납니다. 명리에서 표현한 것을 현실 자원과 연결하는 주제를 읽는 근거입니다. 개인이 반드시 그런 행동을 한다는 뜻은 아닙니다.",
+            "이 원국에서 확인된 근거는 식상(표현·산출): 연주 천간 상관 / 재성(현실 자원·교환): 시주 천간 정재 / 관성(역할·규범 기준): 월주 천간 편관입니다. 같은 천간에서 관측된 서로 다른 십신 계열을 '표현과 결과, 그에 따르는 기준까지 이어지는 구조'라는 구조적 관점에서 함께 읽습니다. 천간에서 실제로 관측된 조합입니다. 식상에서 재성, 재성에서 관성으로 이어지는 전통적 관계를 같은 관측 채널의 세 십신 축에서 함께 확인했습니다. 무엇을 만들어 내고, 현실 자원으로 다루고, 규범·책임과 연결할지를 원국 구조의 하나의 흐름으로 읽을 수 있습니다. 실제 성격이나 사회적 성공을 증명하지 않습니다."
+          ]
+        },
+        "career": {
+          "state": "complete",
+          "paragraphs": [
+            "실제 명식에서 확인한 근거는 식상(표현·산출): 연주 천간 상관 / 재성(현실 자원·교환): 시주 천간 정재입니다. 연주 천간 상관의 식상(표현·산출)와 시주 천간 정재의 재성(현실 자원·교환)가 같은 천간 관찰 범위에서 확인되므로, 기존 출처에 연결된 ‘만들어 낸 결과와 자원을 연결하는 일의 구조’이라는 구조적 해석 후보를 함께 살핍니다. 천간에 드러난 조합에서 관측되는 중심 해석 후보입니다. 식상(표현·산출)과 재성(자원·결과)이 함께 관측됩니다. 전통적 식상→재성 관계에 근거하여 일에서 산출물과 그 활용을 연결해 읽는 한 축입니다. 실제 수입이나 직업 적성을 확정하지 않습니다.",
+            "실제 명식에서 확인한 근거는 재성(현실 자원·교환): 시주 천간 정재 / 관성(역할·책임 기준): 월주 천간 편관입니다. 시주 천간 정재의 재성(현실 자원·교환)와 월주 천간 편관의 관성(역할·책임 기준)가 같은 천간 관찰 범위에서 확인되므로, 기존 출처에 연결된 ‘성과의 활용과 책임 경계를 연결하는 일의 구조’이라는 구조적 해석 후보를 함께 살핍니다. 천간에 드러난 조합에서 관측되는 중심 해석 후보입니다. 재성(결과·자원)과 관성(역할·규칙)이 같은 관측 채널에 나타납니다. 三命通會 卷五에 연결된 재성→관성의 제한된 구조 관계를 참고해 일의 결과를 어떤 기준과 책임 아래 관리하는지 생각해 볼 수 있습니다. 실제 지위나 승진·재정 결과를 예측하지 않습니다."
+          ]
+        },
+        "wealth": {
+          "state": "partial",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 식상(산출·표현): 연주 천간 상관 / 재성(현실 자원·교환): 시주 천간 정재입니다. 같은 천간에서 관측된 서로 다른 십신 계열을 '만든 결과와 자원의 교환을 함께 보는 구조'라는 구조적 관점에서 함께 읽습니다. 천간에서 실제로 관측된 조합입니다. 식상이 가리키는 생산·표현과 재성이 가리키는 현실 자원이 함께 놓입니다. 재물 해석에서는 산출한 것을 어떤 가치·자원으로 연결해 볼지에 주목하는 한정된 축이며, 소득 창출 능력이나 수익을 보증하지 않습니다.",
+            "이 원국에서 확인된 근거는 식상(산출·표현): 연주 천간 상관 / 재성(현실 자원·교환): 시주 천간 정재 / 관성(관리·책임 기준): 월주 천간 편관입니다. 같은 천간에서 관측된 서로 다른 십신 계열을 '만들어 낸 가치와 자원, 관리 기준이 이어지는 구조'라는 구조적 관점에서 함께 읽습니다. 천간에서 실제로 관측된 조합입니다. 식상(산출·표현), 재성(자원·교환), 관성(규범·책임)이 하나의 관측 채널에서 연결됩니다. 재물 영역에서는 무엇을 가치로 만들고, 어떤 자원으로 옮기며, 어떤 관리 원칙에 둘 것인지 세 질문을 함께 살피는 전통적 구조 해석입니다. 개인의 수입·성과를 예상하는 뜻은 아닙니다."
+          ]
+        },
+        "business": {
+          "state": "complete",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 식상(표현·산출): 연주 천간 상관 / 재성(현실 자원·교환): 시주 천간 정재 / 관성(규범·역할 기준): 월주 천간 편관입니다. 같은 천간에서 3개 십신 계열이 함께 확인되므로 '산출, 자원, 운영 기준을 함께 조망하는 사업 구조'라는 구조적 관점으로 연결해 읽습니다. 천간에서 실제로 관측된 조합입니다. 식상의 산출·표현, 재성의 교환·자원, 관성의 규범·책임이 동일 관측 채널에 함께 놓입니다. 사업이라는 해석 분야에서는 무엇을 제안하고 어떤 자원을 다루며 어떤 운영 기준을 적용할지를 연결해 읽는 제한된 전통 구조입니다. 실제 창업 적합성·매출·성공 여부를 단정하지 않습니다.",
+            "이 원국에서 확인된 근거는 비겁(자기 기준·동료 관점): 월주 지지 대표 십신 겁재 · 일주 지지 대표 십신 겁재 / 식상(표현·산출): 연주 지지 대표 십신 상관입니다. 같은 지지 대표 십신에서 2개 십신 계열이 함께 확인되므로 '자기 주도와 구체적 산출의 연결'이라는 구조적 관점으로 연결해 읽습니다. 지지 대표 십신에서 관측된 보조 조합입니다. 비겁의 주도·협업 관점과 식상의 생산·표현 관점이 함께 확인됩니다. 스스로 정하는 방식과 밖으로 내놓는 결과를 구별하여 읽는 구조이며 실제 실행력이나 사업가 기질을 단정하지 않습니다."
+          ]
+        },
+        "relationship": {
+          "state": "complete",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 비겁(자기 관점·동료): 월주 지지 대표 십신 겁재 · 일주 지지 대표 십신 겁재 / 식상(표현·발산): 연주 지지 대표 십신 상관 / 관성(역할·경계 기준): 시주 지지 대표 십신 정관입니다. 같은 지지 대표 십신에서 3개 십신 계열이 함께 확인되므로 '자기 관점·표현·관계의 기준을 함께 읽는 구조'라는 구조적 관점으로 연결해 읽습니다. 지지 대표 십신에서 관측된 보조 조합입니다. 비겁(자기 기준·동료 관점), 식상(표현·산출), 관성(역할·규범)이 같은 관측 채널에 함께 놓입니다. 관계 일반에서는 자신의 입장, 밖으로 전달하는 방식, 서로의 역할이라는 세 관점을 함께 살피는 구조적 독해입니다. 실제 소통 능력이나 관계 결과를 판정하지 않습니다.",
+            "이 원국에서 확인된 근거는 식상(표현·발산): 연주 천간 상관 / 재성(현실 자원·교환): 시주 천간 정재입니다. 같은 천간에서 2개 십신 계열이 함께 확인되므로 '표현과 교환의 구조적 관계'라는 구조적 관점으로 연결해 읽습니다. 천간에서 실제로 관측된 조합입니다. 식상의 표현·산출 관점과 재성의 교환·자원 관점이 같은 채널에 나타납니다. 관계 일반에서 표현과 주고받음이라는 서로 다른 상징을 비교해 볼 수 있으나 성별 역할, 연애·결혼 결과, 경제적 관계 또는 실제 호혜성을 단정하지 않습니다."
+          ]
+        }
+      },
+      "temporal": {
+        "yearSections": 3,
+        "monthStatus": "in_period",
+        "stageStatus": "source_authority_not_established"
+      },
+      "family": {
+        "status": "family_t8_source_authority_not_established",
+        "scope": "children"
+      },
+      "compatibility": "insufficient_interpersonal_meaning_authority",
+      "question": "재물 관리에서 어떤 관점을 살펴볼까요"
+    },
+    {
+      "id": 2,
+      "birth": {
+        "calendarType": "solar",
+        "date": {
+          "year": 1977,
+          "month": 1,
+          "day": 1
+        },
+        "time": {
+          "known": true,
+          "hour": 2,
+          "minute": 30
+        },
+        "sexForTraditionalCalculation": "male"
+      },
+      "domains": {
+        "general": {
+          "state": "partial",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 식상(표현·산출): 월주 천간 식신 / 재성(현실 자원·교환): 시주 천간 정재입니다. 같은 천간에서 관측된 서로 다른 십신 계열을 '표현과 현실 결과가 맞닿는 구조'라는 구조적 관점에서 함께 읽습니다. 천간에서 실제로 관측된 조합입니다. 식상(표현·생산)과 재성(현실 자원)이 같은 관측 채널에 나타납니다. 명리에서 표현한 것을 현실 자원과 연결하는 주제를 읽는 근거입니다. 개인이 반드시 그런 행동을 한다는 뜻은 아닙니다.",
+            "이 원국에서 확인된 근거는 재성(현실 자원·교환): 시주 천간 정재 / 인성(학습·수용): 연주 천간 편인입니다. 같은 천간에서 관측된 서로 다른 십신 계열을 '현실 실행과 학습·준비가 만나는 구조'라는 구조적 관점에서 함께 읽습니다. 천간에서 실제로 관측된 조합입니다. 재성(결과·자원)과 인성(학습·준비)이 함께 관측됩니다. 전통적 견제 관계를 현실화와 충분한 준비를 함께 살피는 축으로 제한하여 읽습니다. 개인의 투자·비용·행동을 예측하지 않습니다."
+          ]
+        },
+        "career": {
+          "state": "partial",
+          "paragraphs": [
+            "실제 명식에서 확인한 근거는 식상(표현·산출): 월주 천간 식신 / 재성(현실 자원·교환): 시주 천간 정재입니다. 월주 천간 식신의 식상(표현·산출)와 시주 천간 정재의 재성(현실 자원·교환)가 같은 천간 관찰 범위에서 확인되므로, 기존 출처에 연결된 ‘만들어 낸 결과와 자원을 연결하는 일의 구조’이라는 구조적 해석 후보를 함께 살핍니다. 천간에 드러난 조합에서 관측되는 중심 해석 후보입니다. 식상(표현·산출)과 재성(자원·결과)이 함께 관측됩니다. 전통적 식상→재성 관계에 근거하여 일에서 산출물과 그 활용을 연결해 읽는 한 축입니다. 실제 수입이나 직업 적성을 확정하지 않습니다.",
+            "실제 명식에서 확인한 근거는 재성(현실 자원·교환): 시주 천간 정재 / 인성(학습·수용): 연주 천간 편인입니다. 시주 천간 정재의 재성(현실 자원·교환)와 연주 천간 편인의 인성(학습·수용)가 같은 천간 관찰 범위에서 확인되므로, 기존 출처에 연결된 ‘지금 실행할 일과 더 준비할 일 사이의 구조’이라는 구조적 해석 후보를 함께 살핍니다. 천간에 드러난 조합에서 관측되는 중심 해석 후보입니다. 재성(현실 결과·자원)과 인성(학습·준비)이 같은 관측 채널에 나타납니다. 기존 연구의 재성↔인성 견제 관계를 일의 실행과 준비 사이의 조율이라는 제한된 관점으로 읽습니다. 실제 비용·능력·성공을 판단하거나 사람의 행동을 단정하지 않습니다."
+          ]
+        },
+        "wealth": {
+          "state": "complete",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 식상(산출·표현): 월주 천간 식신 / 재성(현실 자원·교환): 시주 천간 정재입니다. 같은 천간에서 관측된 서로 다른 십신 계열을 '만든 결과와 자원의 교환을 함께 보는 구조'라는 구조적 관점에서 함께 읽습니다. 천간에서 실제로 관측된 조합입니다. 식상이 가리키는 생산·표현과 재성이 가리키는 현실 자원이 함께 놓입니다. 재물 해석에서는 산출한 것을 어떤 가치·자원으로 연결해 볼지에 주목하는 한정된 축이며, 소득 창출 능력이나 수익을 보증하지 않습니다.",
+            "이 원국에서 확인된 근거는 재성(현실 자원·교환): 시주 천간 정재 / 인성(준비·수용): 연주 천간 편인입니다. 같은 천간에서 관측된 서로 다른 십신 계열을 '지금 가진 자원과 준비·학습 사이를 조율하는 구조'라는 구조적 관점에서 함께 읽습니다. 천간에서 실제로 관측된 조합입니다. 재성(현실 자원)과 인성(준비·수용)이 함께 관측됩니다. 전통적인 견제 관계를 바탕으로 현재 활용할 자원과 준비에 배분할 자원을 함께 고려하는 구조로 읽습니다. 구체적인 지출 습관이나 투자 행동을 추정하지 않습니다."
+          ]
+        },
+        "business": {
+          "state": "partial",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 식상(표현·산출): 월주 천간 식신 / 인성(학습·준비): 연주 천간 편인입니다. 같은 천간에서 2개 십신 계열이 함께 확인되므로 '실행에 앞선 학습·준비와 산출의 연결'이라는 구조적 관점으로 연결해 읽습니다. 천간에서 실제로 관측된 조합입니다. 식상의 표현·산출과 인성의 수용·준비가 함께 관측됩니다. 기획에서 실행까지 서로 다른 전통적 관점을 살펴볼 수 있다는 의미이며 실제 실행 속도, 창업 시점 또는 투자 여부를 예측하지 않습니다.",
+            "이 원국에서 확인된 근거는 비겁(자기 기준·동료 관점): 연주 지지 대표 십신 비견 · 시주 지지 대표 십신 겁재 / 재성(현실 자원·교환): 월주 지지 대표 십신 정재입니다. 같은 지지 대표 십신에서 2개 십신 계열이 함께 확인되므로 '주도권과 자원 교환을 함께 보는 구조'라는 구조적 관점으로 연결해 읽습니다. 지지 대표 십신에서 관측된 보조 조합입니다. 비겁의 자기 기준·동료 관점과 재성의 교환·자원 관점이 함께 관측됩니다. 운영상 선택의 주체와 자원에 관한 관점을 구별해 보는 제한된 독해이며 투자 성향, 수익, 동업 성공이나 실제 금전관계를 예측하지 않습니다."
+          ]
+        },
+        "relationship": {
+          "state": "partial",
+          "paragraphs": [
+            "이 원국에서 확인된 근거는 식상(표현·발산): 월주 천간 식신 / 재성(현실 자원·교환): 시주 천간 정재입니다. 같은 천간에서 2개 십신 계열이 함께 확인되므로 '표현과 교환의 구조적 관계'라는 구조적 관점으로 연결해 읽습니다. 천간에서 실제로 관측된 조합입니다. 식상의 표현·산출 관점과 재성의 교환·자원 관점이 같은 채널에 나타납니다. 관계 일반에서 표현과 주고받음이라는 서로 다른 상징을 비교해 볼 수 있으나 성별 역할, 연애·결혼 결과, 경제적 관계 또는 실제 호혜성을 단정하지 않습니다.",
+            "이 원국에서 확인된 근거는 인성(수용·이해): 연주 천간 편인 / 식상(표현·발산): 월주 천간 식신입니다. 같은 천간에서 2개 십신 계열이 함께 확인되므로 '받아들이는 과정과 밖으로 표현하는 과정'이라는 구조적 관점으로 연결해 읽습니다. 천간에서 실제로 관측된 조합입니다. 인성의 수용·준비와 식상의 표현·산출을 한 채널에서 함께 확인할 수 있습니다. 관계 일반에서 듣고 받아들이는 관점과 표현하는 관점을 나누어 살피는 제한적 독해이며 실제 공감 능력이나 친밀도를 측정하지 않습니다."
+          ]
+        }
+      },
+      "temporal": {
+        "yearSections": 2,
+        "monthStatus": "in_period",
+        "stageStatus": "source_authority_not_established"
+      },
+      "family": {
+        "status": "family_t8_source_authority_not_established",
+        "scope": "parents"
+      },
+      "compatibility": "insufficient_interpersonal_meaning_authority",
+      "question": "연애에서 관계 경계와 조율 관점을 알고 싶습니다"
+    }
+  ],
+  "evidence": "12 deterministic 250-person batches; subject birth year 1975..2010, solar birth, known time, sex alternates; separate synthetic partner and age-scoped family member for relationship runs; 2026-10-30T03:00Z fixed UTC lookup; only internal research codepaths.",
+  "limits": [
+    "A nonempty paragraph means text is shown, NOT that this menu has authorized meaning.",
+    "Exact text variety is not a measure of semantic personalization.",
+    "Annual sections are observation/hypothesis; monthly existing source T9 cannot grant new outcome.",
+    "Family and compatibility personal observations are not family T8 or pair T10.",
+    "Question uses ten rotating prompts, five deliberately unsupported.",
+    "No public product or prediction accuracy assessment."
+  ]
+}
