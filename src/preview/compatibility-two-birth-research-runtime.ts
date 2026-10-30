@@ -1,5 +1,10 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  observePairwiseClassicalDayStemCombination,
+  renderPairwiseClassicalDayStemObservationHtml,
+  type PairwiseDayStemPrimarySourceWitness,
+} from '../research/pairwise-day-stem-classical-combination-witness.js';
+import {
   evaluatePairwiseSourceScopeV1,
   type PairwiseSourceScopeHandoff,
 } from '../research/family-pair-source-scope-handoff.js';
@@ -47,6 +52,8 @@ export interface CompatibilityTwoBirthResearchReading {
   personalRelationship: CompatibilityPersonalRelationshipContext;
   /** R068/R069 original source applicability only, never pairwise T10 meaning. */
   sourceScopeHandoff: PairwiseSourceScopeHandoff;
+  /** Exact literary day-stem pair only, never dyadic T10 meaning. */
+  dayStemSourceWitness: PairwiseDayStemPrimarySourceWitness;
   html: string;
 }
 
@@ -199,6 +206,19 @@ export function buildCompatibilityTwoBirthResearchReading(
         item.eligiblePairwiseClaim !== false)) {
     throw new TypeError('R068/R069 source research cannot authorize two-person T10 meaning.');
   }
+  const dayStemSourceWitness = observePairwiseClassicalDayStemCombination(
+    { personRef: subjectRef, snapshot: subject },
+    { personRef: targetRef, snapshot: target },
+  );
+  if (dayStemSourceWitness.subject.snapshotId !== subject.snapshotId ||
+      dayStemSourceWitness.target.snapshotId !== target.snapshotId ||
+      dayStemSourceWitness.subject.calculationHash !== subject.calculationHash ||
+      dayStemSourceWitness.target.calculationHash !== target.calculationHash ||
+      dayStemSourceWitness.pairwiseT10Admitted ||
+      dayStemSourceWitness.relationshipCompatibilityEstablished ||
+      dayStemSourceWitness.mayGrantOfficialAuthority) {
+    throw new TypeError('Classical day-stem observation must preserve both charts and T10 HOLD');
+  }
   const personalRelationship: CompatibilityPersonalRelationshipContext = {
     subject: individualRelationshipContext(subject, subjectRef, now),
     target: individualRelationshipContext(target, targetRef, now),
@@ -221,6 +241,9 @@ export function buildCompatibilityTwoBirthResearchReading(
     report,
     personalRelationship,
     sourceScopeHandoff,
-    html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
+    dayStemSourceWitness,
+    html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship)
+      .replace('</main>', renderPairwiseClassicalDayStemObservationHtml(
+        dayStemSourceWitness) + '</main>'),
   };
 }
