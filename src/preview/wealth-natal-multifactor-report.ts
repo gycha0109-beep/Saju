@@ -66,6 +66,7 @@ export interface WealthCrossChannelSourceComparison {
   claimType: typeof WEALTH_NATAL_CROSS_CHANNEL_CLAIM_TYPE;
   ruleId: string;
   sourceIds: readonly string[];
+  sourceUrl: string;
   upstreamClaimIds: readonly string[];
   observedFactPaths: readonly string[];
   observedPositions: readonly string[];
@@ -525,6 +526,7 @@ function buildCrossChannelComparison(
     claimType: WEALTH_NATAL_CROSS_CHANNEL_CLAIM_TYPE,
     ruleId: rule.ruleId,
     sourceIds: [...claim.sourceRefs],
+    sourceUrl: WEALTH_NATAL_CROSS_CHANNEL_SOURCE.url!,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     observedPositions: positions.map(item => item.position),
     observedFactPaths: positions.map(item => item.path),
