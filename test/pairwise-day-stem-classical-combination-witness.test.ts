@@ -39,7 +39,7 @@ describe('primary-source day-stem pairs in the two-person T10 research boundary'
     expect(stemInputs.size).toBe(10);
     for (const [left, right] of [
       ['甲', '己'], ['乙', '庚'], ['丙', '辛'], ['丁', '壬'], ['戊', '癸'],
-    ]) {
+    ] as const) {
       const input = observePairwiseClassicalDayStemCombination(
         person(left, 'first'), person(right, 'second'));
       const swapped = observePairwiseClassicalDayStemCombination(
@@ -103,7 +103,7 @@ describe('primary-source day-stem pairs in the two-person T10 research boundary'
       person('甲', 'one'), person('己', 'two'));
     expect(() => renderPairwiseClassicalDayStemObservationHtml({
       ...base, pairwiseT10Admitted: true,
-    })).toThrow('not an authorized two-person T10');
+    } as unknown as typeof base)).toThrow('not an authorized two-person T10');
     expect(() => renderPairwiseClassicalDayStemObservationHtml({
       ...base, sourceUrl: 'https://fake.example/forged' as typeof base.sourceUrl,
     })).toThrow('not an authorized two-person T10');
