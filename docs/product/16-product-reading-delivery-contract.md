@@ -1,5 +1,7 @@
 # Product Reading Delivery Contract
 
+> **Commercial roster decision (2026-10-30):** [General menu retirement / shared natal analysis](./general-menu-retirement-policy.md). New purchases expose 11 independent menus; historical general readings and shared natal analysis remain supported.
+
 ## 1. Purpose
 
 This stage defines the final product-facing boundary for governed reading execution.
