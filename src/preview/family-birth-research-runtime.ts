@@ -1,5 +1,10 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  assessR070ParentExampleRuleClaimBoundary,
+  renderR070ParentExampleRuleClaimBoundaryHtml,
+  type R070ParentExampleSourceBoundary,
+} from '../research/r070-parent-example-rule-claim-boundary.js';
+import {
   observeR070ClassicalParentStemExample,
   renderR070ClassicalParentStemExampleHtml,
   type R070ClassicalParentStemExample,
@@ -49,6 +54,8 @@ export interface FamilyBirthResearchReading {
   researchUnavailability: R070FamilyResearchUnavailableExplanationKo;
   /** Exact historical Jia/Yi example; never a father/mother classification. */
   classicalParentExample?: R070ClassicalParentStemExample;
+  /** Rules that remain unadmitted after sex, hidden, strength and configuration checks. */
+  parentExampleRuleBoundary?: R070ParentExampleSourceBoundary;
   html: string;
 }
 
@@ -117,6 +124,8 @@ export function buildFamilyBirthResearchReading(
       !classicalParentExample.researchOnly)) {
     throw new TypeError('Historical parent example cannot be interpreted as R070 authority');
   }
+  const parentExampleRuleBoundary = classicalParentExample === undefined ? undefined :
+    assessR070ParentExampleRuleClaimBoundary(snapshot, sourceScope, classicalParentExample);
   const baseHtml = renderFamilyCanonicalObservationHtml(report);
   const closing = '</main></body></html>';
   if (classicalParentExample !== undefined && !baseHtml.endsWith(closing)) {
@@ -140,9 +149,11 @@ export function buildFamilyBirthResearchReading(
     report,
     researchUnavailability,
     ...(classicalParentExample === undefined ? {} : { classicalParentExample }),
+    ...(parentExampleRuleBoundary === undefined ? {} : { parentExampleRuleBoundary }),
     html: classicalParentExample === undefined ? baseHtml :
       baseHtml.slice(0, -closing.length) +
-      renderR070ClassicalParentStemExampleHtml(classicalParentExample) + closing,
+      renderR070ClassicalParentStemExampleHtml(classicalParentExample) +
+      renderR070ParentExampleRuleClaimBoundaryHtml(parentExampleRuleBoundary!) + closing,
   };
 }
 
