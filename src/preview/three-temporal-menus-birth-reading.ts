@@ -1,4 +1,6 @@
 import type { BirthInput } from '../contracts/calculation.js';
+import { renderT9CurrentSourceOwnedMonthlyContext } from
+  './t9-current-source-owned-monthly-context.js';
 import { annualReferenceBoundaryText } from '../reading/annual-reference-boundary.js';
 import { buildAnnualPrimaryWitnessIdentityContext } from
   './annual-primary-witness-identity-context.js';
@@ -73,6 +75,15 @@ function render(
   const life = lifeStage.report;
   const annualReference = report.annualReference;
   const monthlyFocus = report.monthly.referenceReading;
+  const currentT9 = annualMonthly.monthlyMenu.currentT9SourceContext;
+  if ((currentT9 !== undefined) !== (monthlyFocus.state === 'in_period') ||
+      (currentT9 !== undefined && (
+        currentT9.snapshotId !== report.snapshotId ||
+        currentT9.calculationHash !== report.calculationHash ||
+        currentT9.referenceDateTime !== monthlyFocus.referenceDateTime ||
+        currentT9.sourceTheme.claimId !== monthlyFocus.theme?.claimId))) {
+    throw new TypeError('Three time menus cannot borrow source-issued T9 facts from another instant.');
+  }
   const selectedRelation = report.t9EvidenceLinks.referenceEvidenceFocus;
   const selectedLink = selectedRelation.activeLink;
   const referenceInstant = Date.parse(monthlyFocus.referenceDateTime);
@@ -216,7 +227,9 @@ function render(
     annualWitnessHtml + annual +
     '</section>' +
     '<section id="monthly"><h2>이번 달 — ' + report.targetMonth + '월</h2>' +
-    '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth + selectedStructuralReading +
+    '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth +
+    (currentT9 === undefined ? '' : renderT9CurrentSourceOwnedMonthlyContext(currentT9)) +
+    selectedStructuralReading +
     '<h3>절입 전후 전체 풀이 (현재 해석이 아닌 구간도 포함)</h3>' +
     '<p>아래 두 구간은 출처 있는 비교 자료입니다. 현재 적용되는 해석은 위의 조회 시각 구간 하나뿐입니다.</p>' +
     observedMonthly + monthly +
