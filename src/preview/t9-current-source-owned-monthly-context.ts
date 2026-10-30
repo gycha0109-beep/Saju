@@ -1,8 +1,6 @@
 import type { PillarSlot, EarthlyBranch } from '../contracts/calculation.js';
 import type { GeneralAnnualMonthlyExplorationReport } from
   './general-annual-monthly-exploration-report.js';
-import type { GeneralMonthlyExplorationSection } from
-  './general-monthly-exploration-report.js';
 
 export const T9_CURRENT_SOURCE_OWNED_MONTHLY_CONTEXT_VERSION =
   't9-current-source-owned-theme-and-tension-v1' as const;
