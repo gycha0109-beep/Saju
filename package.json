@@ -56,6 +56,7 @@
     "preview:natal:audit": "npm run build && node scripts/natal-personalization-audit.mjs",
     "preview:natal:demo": "npm run build && node scripts/natal-personalized-preview.mjs",
     "saju:read": "npm run build && node scripts/natal-five-domain-multifactor-research-demo.mjs --read",
+    "audit:four-menu": "npm run build && node scripts/saju-four-relationship-question-menu-audit.mjs",
     "preview:research": "npm run build && node scripts/research-ux-preview.mjs",
     "research:r083:preflight": "npm run build && node scripts/r083-classical-replay-preflight.mjs",
     "preview:research:smoke": "MYEONGHWA_PREVIEW_SMOKE=1 node scripts/research-ux-preview.mjs",
