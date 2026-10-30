@@ -95,5 +95,8 @@ describe('actual classical Suiyun Binglin witness, not annual prognostic authori
     expect(() => renderT9ClassicalAnnualDayunAlignment({
       ...original, originalPassage: 'forged' as typeof original.originalPassage,
     })).toThrow('historical source name cannot establish');
+    expect(() => renderT9ClassicalAnnualDayunAlignment({
+      ...original, paragraph: '이 사주는 무조건 부자가 됩니다.',
+    })).toThrow('historical source name cannot establish');
   });
 });
