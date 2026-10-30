@@ -68,6 +68,7 @@ function verifiedInputs(
 ): { snapshotId: string; calculationHash: string } {
   const p = family.parents.report, c = family.children.report;
   const s = spouse.report, k = compatibility.report;
+  const witness = compatibility.dayStemSourceWitness;
   if ((familyMember !== undefined && (
         familyMember.scope !== familyMember.subject.scope ||
         familyMember.subject.report.snapshotId !== p.snapshotId ||
@@ -97,6 +98,17 @@ function verifiedInputs(
       spouse.report.mayInferPartnerTraits ||
       spouse.report.mayPredictMarriage ||
       spouse.report.mayGrantOfficialAuthority ||
+      witness.subject.personRef !== k.subject.personRef ||
+      witness.target.personRef !== k.target.personRef ||
+      witness.subject.snapshotId !== k.subject.snapshotId ||
+      witness.target.snapshotId !== k.target.snapshotId ||
+      witness.subject.calculationHash !== k.subject.calculationHash ||
+      witness.target.calculationHash !== k.target.calculationHash ||
+      !witness.historicalPairNameOnly ||
+      witness.transformationEstablished ||
+      witness.relationshipCompatibilityEstablished ||
+      witness.pairwiseT10Admitted ||
+      witness.mayMarkMenuAvailable || witness.mayPublish || witness.maySell ||
       compatibility.mayClaimInterpersonalMeaning ||
       compatibility.mayGrantOfficialAuthority ||
       compatibility.mayMarkMenuAvailable ||
