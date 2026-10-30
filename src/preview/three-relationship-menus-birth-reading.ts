@@ -1,4 +1,6 @@
 import type { BirthInput } from '../contracts/calculation.js';
+import { renderPairwiseClassicalDayStemObservationHtml } from
+  '../research/pairwise-day-stem-classical-combination-witness.js';
 import {
   buildFamilyBirthResearchReading,
   buildFamilyMemberBirthResearchReading,
@@ -214,7 +216,8 @@ function renderHtml(
     '<section id="spouse"><h2>배우자·관계 — 일지 위치만</h2>' + spouseHtml + '</section>' +
     '<section id="compatibility"><h2>궁합 — 두 명식의 독립 계산과 연구 풀이</h2>' +
     '<p class="limited">상호 궁합 점수·결혼 결과·두 사람의 상호작용 해석은 근거가 확립되지 않아 제공하지 않습니다.</p>' +
-    comparisons + personalHtml + '</section>' +
+    comparisons + renderPairwiseClassicalDayStemObservationHtml(
+      compatibility.dayStemSourceWitness) + personalHtml + '</section>' +
     '<aside><strong>권한 및 한계</strong><p>위 본문은 출처가 허용한 제한된 계산 사실과 독립 명식 연구만 보여줍니다. 가족·배우자 실제 관계, 상대의 성격, 궁합 결과는 추정하지 않습니다. ' +
     '공식 서비스·저장·공개·판매 권한은 없습니다.</p></aside></main></body></html>';
 }
