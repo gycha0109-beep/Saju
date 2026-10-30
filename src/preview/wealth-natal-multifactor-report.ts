@@ -1,4 +1,9 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
+import {
+  WEALTH_NATAL_CROSS_CHANNEL_CLAIM_TYPE,
+  WEALTH_NATAL_CROSS_CHANNEL_RULE,
+  WEALTH_NATAL_CROSS_CHANNEL_SOURCE,
+} from '../research/wealth-natal-cross-channel-source-candidate.js';
 import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -57,6 +62,20 @@ export interface WealthInsufficientT5Evidence {
   koreanExplanation: string;
 }
 
+export interface WealthCrossChannelSourceComparison {
+  claimType: typeof WEALTH_NATAL_CROSS_CHANNEL_CLAIM_TYPE;
+  ruleId: string;
+  sourceIds: readonly string[];
+  upstreamClaimIds: readonly string[];
+  observedFactPaths: readonly string[];
+  observedPositions: readonly string[];
+  headline: string;
+  paragraph: string;
+  interpretationAuthorityGranted: false;
+  researchOnly: true;
+  mayPublish: false;
+  maySell: false;
+}
 export interface WealthNatalMultifactorReport {
   snapshotId: string;
   calculationHash: string;
@@ -80,6 +99,7 @@ export interface WealthNatalMultifactorReport {
   })[];
   /** Original source-checked T5 observations, never a replacement for missing T8 meaning. */
   insufficientEvidence?: WealthInsufficientT5Evidence;
+  crossChannelComparison?: WealthCrossChannelSourceComparison;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -432,6 +452,95 @@ function buildWealthNatalReadingGuide(
   };
 }
 
+function buildCrossChannelComparison(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+): WealthCrossChannelSourceComparison | undefined {
+  const candidates = execution.claims.filter(c =>
+    c.claimType === WEALTH_NATAL_CROSS_CHANNEL_CLAIM_TYPE &&
+    c.taxonomy.tier === 'T8' && c.state === 'active');
+  guard(candidates.length <= 1, 'cross-channel research evidence must be unique');
+  const claim = candidates[0];
+  if (claim === undefined) return undefined;
+  const ref = claim.ruleRefs[0];
+  const rule = registry.rules.find(r => r.ruleId === ref?.ruleId &&
+    r.version === ref?.version);
+  const evaluation = execution.evaluations.find(e =>
+    e.evaluationId === ref?.evaluationId);
+  const expected = WEALTH_NATAL_CROSS_CHANNEL_RULE;
+  const value = claim.value as Record<string, unknown>;
+  guard(snapshot.completeness.birthTimeKnown &&
+    snapshot.derivedFacts.tenGods.status === 'resolved' &&
+    claim.snapshotId === snapshot.snapshotId && !claim.scenarioRef &&
+    rule?.ruleId === expected.ruleId && rule.status === 'research' &&
+    rule.output.predicate === claim.predicate &&
+    deterministicContentHash(rule.output.value) === deterministicContentHash(claim.value) &&
+    claim.methodologyRef.id === expected.methodologyRef.id &&
+    claim.methodologyRef.version === expected.methodologyRef.version &&
+    claim.ruleRefs.length === 1 &&
+    evaluation?.status === 'matched' &&
+    evaluation.emittedClaimIds.includes(claim.claimId) &&
+    claim.upstreamClaimRefs.length === 2 &&
+    new Set(claim.upstreamClaimRefs).size === 2 &&
+    expected.sourceRefs.every(source => claim.sourceRefs.includes(source.sourceId)) &&
+    claim.sourceRefs.every(sourceId => registry.sources.some(source =>
+      source.sourceId === sourceId)) &&
+    value.observedOnly === true &&
+    value.crossChannelSynthesisAuthorized === false &&
+    value.sourceConditionalSatisfied === false &&
+    value.completeWealthMeaningAuthorized === false &&
+    value.financialOutcomeAuthorized === false &&
+    value.officialPublicationAuthorized === false,
+    'cross-channel observation is not a source-approved wealth outcome');
+  const preceding = claim.upstreamClaimRefs.map(id =>
+    execution.claims.find(c => c.claimId === id));
+  guard(
+    preceding.every(c => c?.state === 'active' && c.snapshotId === snapshot.snapshotId &&
+      c.taxonomy.tier === 'T5' && !c.scenarioRef) &&
+    preceding.map(c => c!.claimType).sort().join('|') ===
+      ['TEN_GOD_OUTPUT_VISIBLE_STEMS_THEME','TEN_GOD_WEALTH_BRANCHES_THEME'].sort().join('|'),
+    'the comparison needs original same-chart T5 interpretations');
+  const facts = snapshot.derivedFacts.tenGods;
+  if (facts.status !== 'resolved') throw new TypeError('Ten Gods unavailable');
+  const stems = (['year', 'month', 'hour'] as const).flatMap(slot =>
+    facts.value[slot].stem?.status === 'resolved' &&
+      facts.value[slot].stem.value === '상관'
+      ? [{ position: SLOT_NAMES[slot] + ' 천간 상관',
+        path: 'derivedFacts.tenGods.value.' + slot + '.stem.value' }]
+      : []);
+  const branches = (['year', 'month', 'day', 'hour'] as const).flatMap(slot => {
+    const branch = facts.value[slot].branch;
+    return branch?.status === 'resolved' &&
+      (branch.value === '편재' || branch.value === '정재')
+      ? [{ position: SLOT_NAMES[slot] + ' 지지 대표 십신 ' + branch.value,
+        path: 'derivedFacts.tenGods.value.' + slot + '.branch.value' }]
+      : [];
+  });
+  guard(stems.length > 0 && branches.length > 0 &&
+    WEALTH_NATAL_CROSS_CHANNEL_SOURCE.locator?.section === '論傷官',
+    'the actual chart and registered primary source must be observable');
+  const positions = [...stems, ...branches];
+  return {
+    claimType: WEALTH_NATAL_CROSS_CHANNEL_CLAIM_TYPE,
+    ruleId: rule.ruleId,
+    sourceIds: [...claim.sourceRefs],
+    upstreamClaimIds: [...claim.upstreamClaimRefs],
+    observedPositions: positions.map(item => item.position),
+    observedFactPaths: positions.map(item => item.path),
+    headline: '상관의 산출 관점과 재성의 자원 관점 · 교차 채널 연구',
+    paragraph: '이 명식의 ' + stems.map(item => item.position).join(' · ') +
+      '과 ' + branches.map(item => item.position).join(' · ') +
+      '이 각각 확인됩니다. 《삼명통회》의 「논상관」은 상관과 재성의 관계를 ' +
+      '특정 전제 아래 논하지만, 천간과 지지 대표 십신의 동시 관측만으로 ' +
+      '그 전제(상관상진·일간 강약·재성의 실제 작용)가 충족됐다고 볼 수 없습니다. ' +
+      '따라서 산출과 자원이라는 서로 다른 관찰 축을 비교하는 연구용 설명만 ' +
+      '가능하며 수익, 재산, 소비 성향이나 올해의 재물운을 판단하지 않습니다.',
+    interpretationAuthorityGranted: false,
+    researchOnly: true, mayPublish: false, maySell: false,
+  };
+}
+
 export function buildWealthNatalMultifactorReport(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
@@ -578,6 +687,7 @@ export function buildWealthNatalMultifactorReport(
   const readingGuide = buildWealthNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
+  const crossChannelComparison = buildCrossChannelComparison(snapshot, execution, registry);
   const insufficientEvidence = state === 'insufficient' &&
     snapshot.completeness.birthTimeKnown
     ? inspectInsufficientT5Evidence(snapshot, execution, registry) : undefined;
@@ -597,6 +707,7 @@ export function buildWealthNatalMultifactorReport(
     ...(readingGuide === undefined ? {} : { readingGuide }),
     ...(overlappingPerspectives.length === 0 ? {} : { overlappingPerspectives }),
     ...(insufficientEvidence === undefined ? {} : { insufficientEvidence }),
+    ...(crossChannelComparison === undefined ? {} : { crossChannelComparison }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],
