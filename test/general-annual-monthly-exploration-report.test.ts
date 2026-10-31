@@ -94,6 +94,34 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).toContain('Official Reading, 공개 또는 판매 권한을 부여하지 않습니다');
   });
 
+  it('shows the same selected natal tension only in the current Jeol segment of the joined reading', () => {
+    let found = false;
+    for (let month = 1; month <= 12; month++) {
+      const baseline = run(month);
+      const tension = baseline.report.monthly.sections.find(item => item.kind === 'tension');
+      if (!tension) continue;
+      found = true;
+      const interval = baseline.facts.segmentsById[tension.segmentId];
+      const reference = new Date(Date.parse(interval.startsAt) + 1).toISOString();
+      const joined = run(month, 9, true, reference);
+      const selected = joined.report.referenceReading;
+      expect(selected.state).toBe('in_period');
+      expect(selected.segmentId).toBe(tension.segmentId);
+      expect(selected.sourceBoundTensions?.map(x => x.claimId)).toContain(tension.claimId);
+      expect(selected.sourceBoundTensions?.every(x =>
+        x.segmentId === tension.segmentId && x.sourceIds.length > 0 &&
+        x.calculatedInterval.startsAt === interval.startsAt)).toBe(true);
+      const html = renderGeneralAnnualMonthlyExplorationHtml(joined.report);
+      expect(html).toContain('aria-label="같은 절입 구간의 원국 관계"');
+      expect(html).toContain(tension.claimId);
+      expect(html).toContain(tension.text);
+      expect(joined.report.mayPublish).toBe(false);
+      expect(joined.report.maySell).toBe(false);
+      break;
+    }
+    expect(found).toBe(true);
+  }, 30000);
+
   it('keeps the same year meaning but changes the source-owned monthly reading by actual month', () => {
     const sep = run(9);
     const repeat = run(9);
