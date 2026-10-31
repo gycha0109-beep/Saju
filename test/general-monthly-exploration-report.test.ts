@@ -130,10 +130,46 @@ describe('real-calculated monthly Korean research consumer preview', () => {
     expect(october.report.snapshotId).toBe(september.report.snapshotId);
   });
 
+  it('shows only calculated natal-month clash branch pairs with their actual Jeol segment', () => {
+    let found = false;
+    for (let month = 1; month <= 12; month++) {
+      const { facts, report, execution } = run(month);
+      const tensions = report.sections.filter(section => section.kind === 'tension');
+      if (tensions.length === 0) continue;
+      found = true;
+      const html = renderGeneralMonthlyExplorationHtml(report);
+      for (const section of tensions) {
+        const slot = section.relatedPillar!;
+        const segment = facts.segmentsById[section.segmentId];
+        const observed = segment.monthlyBranchRelations[slot];
+        expect(observed.status).toBe('resolved');
+        if (observed.status !== 'resolved') continue;
+        expect(section.observedClash).toEqual({
+          natalBranch: observed.value.natalBranch,
+          monthlyBranch: observed.value.monthlyBranch,
+          relation: 'clash',
+        });
+        expect(observed.value.monthlyBranch).toBe(segment.monthlyPillar.branch);
+        expect(section.text).toContain(`지지 ${observed.value.natalBranch}`);
+        expect(section.text).toContain(`월주 지지 ${observed.value.monthlyBranch}`);
+        expect(section.text).toContain('실제 사건의 발생을 뜻하지 않습니다');
+        expect(section.factPaths).toContain(
+          `temporal.segmentsById.${section.segmentId}.monthlyBranchRelations.${slot}.relation`);
+        expect(html).toContain(section.text);
+        expect(execution.claims.some(claim => claim.claimId === section.claimId &&
+          claim.claimType === 'GENERAL_MONTHLY_BRANCH_CLASH_TENSION')).toBe(true);
+      }
+      break;
+    }
+    expect(found).toBe(true);
+  }, 30000);
+
   it('keeps genuine two-phase themes with unknown birth hour but never invents an hour tension', () => {
     const { report } = run(9, snapshot(9, false));
     expect(report.sections.filter(section => section.kind === 'theme')).toHaveLength(2);
     expect(report.sections.some(section => section.relatedPillar === 'hour')).toBe(false);
+    expect(report.sections.some(section => section.relatedPillar === 'hour' &&
+      section.observedClash !== undefined)).toBe(false);
     expect(report.missing.join(' ')).toContain('시주');
     expect(report.researchOnly).toBe(true);
     expect(report.usefulComplete).toBe(false);
