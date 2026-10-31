@@ -66,6 +66,24 @@ describe('three temporal menus preserve already source-bound natal interpretatio
     }
     expect(year).toContain(escaped(result.annualMonthly.report.annual.sections[0]!.text));
     expect(month).toContain('절입 전후 전체 풀이');
+    const monthlyReport = result.annualMonthly.report.monthly;
+    expect(monthlyReport.referenceReading.state).toBe('in_period');
+    const focus = monthlyReport.referenceReading.theme!;
+    const active = month.split('<h3>조회 시각에 해당하는 월운</h3>')[1]!
+      .split('<h3>절입 전후 전체 풀이</h3>')[0]!;
+    expect(active).toContain(escaped(focus.claimId));
+    expect(active).toContain(escaped(focus.methodologyId));
+    for (const path of focus.factPaths) expect(active).toContain(escaped(path));
+    for (const section of monthlyReport.sections) {
+      const kind = section.kind === 'theme' ? '절입 구간의 중심 주제' :
+        '해당 구간의 조건부 원국 충 관계';
+      expect(month).toContain(kind);
+      expect(month).toContain(escaped(section.claimId));
+      expect(month).toContain(escaped(section.methodologyId));
+      for (const ruleId of section.ruleIds) expect(month).toContain(escaped(ruleId));
+      for (const path of section.factPaths) expect(month).toContain(escaped(path));
+      for (const sourceId of section.sourceIds) expect(month).toContain(escaped(sourceId));
+    }
     expect(stage).toContain('대운의 간지·시각만 계산된 사실입니다');
   }, 30000);
 
@@ -111,6 +129,7 @@ describe('three temporal menus preserve already source-bound natal interpretatio
       expect(current).toContain(escaped(section.text));
       expect(current).toContain(escaped(section.claimId));
       expect(current).toContain(escaped(section.ruleIds[0]!));
+      expect(current).toContain(escaped(section.methodologyId));
       expect(current).toContain(escaped(section.sourceIds[0]!));
       expect(current).toContain(escaped(section.factPaths[0]!));
     }
