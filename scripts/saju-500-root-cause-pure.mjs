@@ -72,9 +72,16 @@ export function buildWealthRemediationGroups(cases) {
     const t5ThemeTypes = [...new Set(row.upstream.availableT5ClaimTypes)].sort();
     const eligibleRuleIds = [...new Set(row.rules.eligibleRuleIds)].sort();
     const remediationTarget = targets[row.cause] ?? 'unclassified_manual_review';
+    const memberships = row.existingSourceThemeContext?.hiddenWealthMembership;
+    const hiddenWealthEvidenceState = !Array.isArray(memberships)
+      ? 'not_assessed'
+      : memberships.length > 0
+        ? 'calculated_membership_observed_not_T5'
+        : 'not_observed_in_calculated_membership';
     const groupIdentity = {
       cause: row.cause,
       remediationTarget,
+      hiddenWealthEvidenceState,
       t5ThemeTypes,
       eligibleRuleIds,
       coverageState: row.selection.coverageState,
@@ -96,6 +103,12 @@ export function buildWealthRemediationGroups(cases) {
     largestGroupSize: sorted[0]?.count ?? 0,
     byRemediationTarget: frequency(cases.map(row =>
       targets[row.cause] ?? 'unclassified_manual_review')),
+    byHiddenWealthEvidenceState: frequency(cases.map(row => {
+      const observations = row.existingSourceThemeContext?.hiddenWealthMembership;
+      return !Array.isArray(observations) ? 'not_assessed'
+        : observations.length ? 'calculated_membership_observed_not_T5'
+          : 'not_observed_in_calculated_membership';
+    })),
     groups: sorted,
   };
 }
