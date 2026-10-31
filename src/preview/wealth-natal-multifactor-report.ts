@@ -511,13 +511,16 @@ export function buildWealthNatalMultifactorReport(
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly WealthNatalMultifactorSection[] = chosen;
-  // Indirect officer-resource/officer-peer T8 context can fill a research page
-  // without establishing a direct Wealth meaning. Do not hide the separately
-  // sourced individual T5 explanations just because that context T8 exists.
-  // A direct Wealth T8 core, however, must not be padded with T5 fallback copy.
-  const indirectOnly = sections.length > 0 &&
-    sections.every(section => section.axis === 'context');
-  const availableThemeContext = sections.length === 0 || indirectOnly
+  // Neither an indirect context T8 nor a tension-only T8 establishes the
+  // missing direct Wealth core. Preserve other independently sourced T5 themes,
+  // excluding the exact upstream T5 claims already consumed by the chosen T8.
+  // Never substitute fallback copy when a Wealth core has been selected.
+  const limitedWithoutCore = core === undefined && (
+    sections.length === 0 ||
+    sections.length === 1 &&
+      (sections[0]!.axis === 'context' || sections[0]!.axis === 'tension')
+  );
+  const availableThemeContext = limitedWithoutCore
     ? buildAvailableThemeContext(
         snapshot, execution, sections.flatMap(section => section.upstreamClaimIds),
       ) : undefined;
