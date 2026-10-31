@@ -1,5 +1,6 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
 import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { observeHiddenWealthMembership, type WealthHiddenStemObservation } from './wealth-hidden-stem-observations.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -32,6 +33,7 @@ export interface WealthNatalAvailableThemeContext {
   title: string;
   paragraph: string;
   wealthConclusionAuthorized: false;
+  hiddenWealthMembership: readonly WealthHiddenStemObservation[];
   themes: readonly {
     claimId: string;
     claimType: string;
@@ -229,13 +231,21 @@ function buildAvailableThemeContext(
     a.family.localeCompare(b.family));
   const paragraphs = sorted.map(theme =>
     `‘${theme.headline}’ — ${theme.observedPositions.join(' · ')}에서 확인됐습니다. ${theme.summary}`);
+  const hiddenWealthMembership = observeHiddenWealthMembership(snapshot);
+  const hiddenContext = hiddenWealthMembership.length
+    ? ' 지지의 지장간에 포함된 천간 중 일간을 기준으로 재성으로 분류되는 관측도 있습니다. ' +
+      hiddenWealthMembership.map(x =>
+        `${SLOT_NAMES[x.pillar]} 지지 ${x.branch}의 지장간 ${x.hiddenStem}은 ${x.derivedTenGod}로 계산됩니다.`).join(' ') +
+      ' 이는 지장간 구성원과 십신 계산 사실일 뿐 강약·투간·재물운의 유불리나 수입을 증명하지 않습니다.'
+    : '';
   return {
     title: '재물 종합 결론 이전에 확인된 원국의 십신 주제',
     paragraph: '아래는 기존 출처와 연결된 십신별 구조 설명입니다. ' +
-      paragraphs.join(' ') +
+      paragraphs.join(' ') + hiddenContext +
       ' 이 관측들은 현재 등록된 재물 분야의 복합 해석 근거를 충족하지 못했습니다. ' +
       '따라서 재물의 많고 적음, 소득, 투자 성과, 향후 재물운을 판단하는 해석으로 읽어서는 안 됩니다.',
     wealthConclusionAuthorized: false,
+    hiddenWealthMembership,
     themes: sorted,
   };
 }
