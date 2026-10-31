@@ -345,6 +345,13 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
         context.hiddenWealthMembership.length === 0 &&
         !!context.hiddenWealthUnavailableReason)),
     'existing theme context must not become a Wealth synthesis');
+  const alreadyInterpreted = new Set(report.sections.flatMap(section =>
+    section.upstreamClaimIds));
+  guard(context.themes.every(theme => !alreadyInterpreted.has(theme.claimId)),
+    'existing theme context repeats an already interpreted T8 upstream claim');
+  const currentGap = report.missing[0];
+  guard(typeof currentGap === 'string' && currentGap.trim().length > 0,
+    'partial Wealth context requires an exact missing-evidence reason');
   const hidden = context.hiddenWealthMembership.map(item => {
     guard(['year', 'month', 'day', 'hour'].includes(item.pillar) &&
       item.meaningAuthority === 'calculated_membership_only' &&
@@ -397,6 +404,8 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
   return '<section class="bounded-source-context" aria-label="재물운 근거 있는 부분 설명">' +
     '<h3>' + escapeHtml(context.title) + '</h3>' +
     '<p><strong>재물운 종합 해석 아님 · 기존 십신 관측만 설명</strong></p>' +
+    '<p class="source-gap"><strong>현재 종합 풀이가 보류된 이유: </strong>' +
+    escapeHtml(currentGap) + '</p>' +
     '<p>' + escapeHtml(context.paragraph) + '</p>' +
     '<details><summary>주제별 계산 근거·출처 보기</summary><ul>' +
     themes + '</ul></details>' + hiddenSection + '</section>';
