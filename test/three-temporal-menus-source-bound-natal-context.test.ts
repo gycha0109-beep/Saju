@@ -37,6 +37,9 @@ describe('three temporal menus preserve already source-bound natal interpretatio
     const html = result.html;
     expect(html).toContain('id="natal-reference"');
     expect(html).toContain('href="#natal-reference"');
+    expect(html).toContain('<h1>올해 · 이번 달 · 삶의 단계</h1>');
+    expect(html).toContain('<section id="annual"><h2>올해 — 2026년</h2>');
+    expect(html).toContain('<section id="monthly"><h2>이번 달 — 10월</h2>');
     expect(html).toContain('연운·월운과 원국의 의미 연결은 별도 출처·방법론이 확인되기 전까지 보류');
     expect(html.indexOf('id="natal-reference"')).toBeLessThan(html.indexOf('id="annual"'));
     expect(html.indexOf('id="annual"')).toBeLessThan(html.indexOf('id="monthly"'));
@@ -142,6 +145,28 @@ describe('three temporal menus preserve already source-bound natal interpretatio
     expect(reading.mayPublish).toBe(false);
     expect(reading.maySell).toBe(false);
   }, 60_000);
+
+  it('labels comparison year/month independently of the actual reference instant', () => {
+    const result = buildThreeTemporalMenusBirthReading({
+      calendarType: 'solar', date: { year: 1996, month: 1, day: 9 },
+      time: { known: true, hour: 9, minute: 30 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, {
+      ...TARGET, targetYear: 2027, targetMonth: 12,
+    });
+    expect(result.annualMonthly.report.annualReference.state)
+      .toBe('outside_target_civil_year');
+    expect(result.annualMonthly.report.monthly.referenceReading.state)
+      .toBe('outside_target_month');
+    expect(result.html).toContain('<h1>선택한 연도 · 선택한 월 · 삶의 단계</h1>');
+    expect(result.html).toContain('<section id="annual"><h2>선택한 연도 — 2027년</h2>');
+    expect(result.html).toContain('<section id="monthly"><h2>선택한 월 — 12월</h2>');
+    expect(result.html).toContain('현재 연운으로 적용하지 않고 비교만 합니다');
+    expect(result.html).toContain('조회 시각이 선택한 월 밖입니다');
+    expect(result.html).not.toContain('<section id="annual"><h2>올해 — 2027년</h2>');
+    expect(result.mayPublish).toBe(false);
+    expect(result.maySell).toBe(false);
+  }, 30000);
 
   it('never displays a research month as current outside its requested Seoul month', () => {
     const reading = buildThreeTemporalMenusBirthReading({
