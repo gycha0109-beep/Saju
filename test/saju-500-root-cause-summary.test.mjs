@@ -5,7 +5,7 @@ import {
   analyzeTemporalRepetition,
   buildWealthRemediationGroups,
   summarizeMissingWealthCauses,
-} from '../scripts/saju-500-root-cause.mjs';
+} from '../scripts/saju-500-root-cause-pure.mjs';
 
 const wealthCase = (birth, calculationHash, cause, themeTypes = [], eligibleRuleIds = []) => ({
   birth,
