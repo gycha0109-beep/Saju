@@ -25,7 +25,10 @@ describe('source-grounded hidden wealth membership; not a new interpretation', (
     let positive = 0;
     for (const month of [1, 2, 4, 6, 8, 10, 12]) {
       const snapshot = sample(month, 10);
-      const memberships = observeHiddenWealthMembership(snapshot);
+      const assessment = observeHiddenWealthMembership(snapshot);
+      expect(assessment.status).toBe('resolved');
+      if (assessment.status !== 'resolved') continue;
+      const memberships = assessment.observations;
       const r27 = projectSnapshotBoundHiddenStemTenGodOccurrences(snapshot);
       expect(r27.status).toBe('resolved');
       if (r27.status !== 'resolved') continue;
@@ -83,7 +86,9 @@ describe('source-grounded hidden wealth membership; not a new interpretation', (
 
   it('keeps unknown birth hour unresolved and rejects invented hidden-stem membership', () => {
     const unknown = sample(2, 1, false);
-    expect(observeHiddenWealthMembership(unknown)).toHaveLength(0);
+    expect(observeHiddenWealthMembership(unknown)).toEqual({
+      status: 'unavailable', reasonCode: 'birth-time-unknown',
+    });
     const snapshot = sample(2, 1);
     const hidden = snapshot.derivedFacts.hiddenStems!;
     const forged = {
@@ -102,7 +107,10 @@ describe('source-grounded hidden wealth membership; not a new interpretation', (
       scenarioId: 'not-materialized', snapshotId: withUnmaterializedScenarios.snapshotId,
       factOverrides: [], reasonRefs: ['unresolved'],
     }];
-    expect(observeHiddenWealthMembership(withUnmaterializedScenarios)).toEqual([]);
+    expect(observeHiddenWealthMembership(withUnmaterializedScenarios)).toMatchObject({
+      status: 'unavailable',
+      reasonCode: 'hidden-stem-ten-god-occurrences-scenario-materialization-required',
+    });
     const inconsistentMaster = sample(2, 1);
     if (inconsistentMaster.derivedFacts.dayMaster.status !== 'resolved')
       throw new Error('expected day master');
