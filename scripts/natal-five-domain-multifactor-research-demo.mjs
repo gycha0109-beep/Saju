@@ -142,6 +142,18 @@ if (!readingMode) {
             theme.observedPositions.join(' · ') + ' · 출처: ' +
             theme.sourceIds.join(' · '));
         }
+        for (const stem of context.hiddenWealthMembership) {
+          if (stem.meaningAuthority !== 'calculated_membership_only' ||
+              stem.wealthConclusionAuthorized !== false ||
+              !['편재', '정재'].includes(stem.derivedTenGod) ||
+              stem.factPaths[0] !== 'derivedFacts.dayMaster' ||
+              stem.factPaths[1] !== 'derivedFacts.hiddenStems.' + stem.pillar) {
+            throw new TypeError('Hidden stem membership cannot replace source-grounded Wealth meaning.');
+          }
+          lines.push('지장간 관측(재물 종합 해석 아님): ' +
+            stem.pillar + ' 지지 ' + stem.branch + '의 ' + stem.hiddenStem +
+            ' · ' + stem.derivedTenGod + ' · 출처: ' + stem.membershipSourceUrl);
+        }
       }
     }
     for (const section of report.sections) {
