@@ -3,6 +3,7 @@ import {
   ROOT_CAUSE_AUDIT_VERSION,
   analyzeTemporalMeaningRepetition,
   analyzeTemporalStructuralEvidenceVariation,
+  analyzeTemporalNatalT5Variation,
   analyzeTemporalRepetition,
   buildWealthRemediationGroups,
   summarizeMissingWealthCauses,
@@ -30,7 +31,7 @@ describe('root-cause implementation groups', () => {
         ['TEN_GOD_WEALTH_VISIBLE_STEMS_THEME'], ['RULE-WEALTH']),
     ];
     const summary = summarizeMissingWealthCauses(cases);
-    expect(ROOT_CAUSE_AUDIT_VERSION).toBe('saju-eight-menu-root-cause-v2');
+    expect(ROOT_CAUSE_AUDIT_VERSION).toBe('saju-eight-menu-root-cause-v3');
     expect(summary.missingCaseCount).toBe(3);
     expect(summary.allCasesHaveExplicitCause).toBe(true);
     expect(summary.remediation.caseCount).toBe(3);
@@ -197,5 +198,65 @@ describe('temporal source-backed meaning clusters', () => {
   it('rejects cases with incomplete comparison keys', () => {
     expect(() => analyzeTemporalMeaningRepetition([{ meaningKey: 'a' }]))
       .toThrow('both existing audit keys');
+  });
+});
+
+describe('repeated temporal meaning versus genuinely different sourced natal T5 evidence', () => {
+  const sourceId = 'SRC-GENERAL-NATAL-YUANHAI-SEMANTICS-WIKISOURCE';
+  const theme = (claimType, factPath, tenGod) => ({
+    claimType, sourceIds:[sourceId],
+    observed:[{factPath,tenGod}],
+  });
+  const path = slot => 'derivedFacts.tenGods.value.' + slot + '.branch.value';
+  const record = (birth, meaningKey, natalT5) => ({
+    birth, meaningKey, exactKey:'same-reading',
+    calculationHash:'hash-' + birth,
+    sourceEvidence:{ natalT5, sections:[] },
+  });
+
+  it('finds real T5 differences hidden behind the same annual/monthly narrative profile', () => {
+    const officer = 'TEN_GOD_OFFICER_BRANCHES_THEME';
+    const resource = 'TEN_GOD_RESOURCE_BRANCHES_THEME';
+    const rows = [
+      record('A','same',[theme(officer,path('year'),'정관')]),
+      record('B','same',[theme(officer,path('month'),'편관')]),
+      record('C','same',[theme(officer,path('year'),'정관')]),
+      record('D','different',[theme(resource,path('year'),'편인')]),
+    ];
+    const result = analyzeTemporalNatalT5Variation(rows);
+    expect(result.assessed).toBe(4);
+    expect(result.unassessed).toBe(0);
+    expect(result.repeatedMeaningProfilesWithDifferentNatalT5Evidence).toBe(1);
+    expect(result.casesInSuchProfiles).toBe(3);
+    expect(result.groups[0].distinctNatalT5Signatures).toBe(2);
+    expect(result.groups[0].examples).toHaveLength(2);
+    expect(result.qualification).toContain('do not authorize distinct annual/monthly interpretations');
+    expect(analyzeTemporalMeaningRepetition(rows).distinctMeaningProfileCount).toBe(2);
+  });
+
+  it('does not credit source IDs, birth dates or chart hashes as new interpretation evidence', () => {
+    const a = theme('TEN_GOD_RESOURCE_BRANCHES_THEME',path('year'),'정인');
+    const b = {...a, sourceIds:['ANOTHER-REGISTERED-SOURCE']};
+    const rows = [record('A','same',[a]),record('B','same',[b])];
+    const result = analyzeTemporalNatalT5Variation(rows);
+    expect(result.repeatedMeaningProfilesWithDifferentNatalT5Evidence).toBe(0);
+    expect(result.casesInSuchProfiles).toBe(0);
+  });
+
+  it('does not compare invented T5 sources or missing actual chart positions', () => {
+    const good = record('A','same',[
+      theme('TEN_GOD_PEER_BRANCHES_THEME',path('day'),'비견'),
+    ]);
+    const bad = record('B','same',[
+      {...theme('TEN_GOD_PEER_BRANCHES_THEME',path('hour'),'겁재'), sourceIds:[]},
+    ]);
+    const invalidPath = record('C','same',[
+      theme('TEN_GOD_PEER_BRANCHES_THEME','fictional.natal.position','겁재'),
+    ]);
+    const absent = record('D','same',[]);
+    const result = analyzeTemporalNatalT5Variation([good,bad,invalidPath,absent]);
+    expect(result.assessed).toBe(1);
+    expect(result.unassessed).toBe(3);
+    expect(result.repeatedMeaningProfilesWithDifferentNatalT5Evidence).toBe(0);
   });
 });
