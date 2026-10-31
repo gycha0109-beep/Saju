@@ -72,6 +72,12 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(wealthCard).toContain('aria-label="재물운 근거 있는 부분 설명"');
     expect(wealthCard).toContain('재물운 종합 해석 아님');
     expect(wealthCard).toContain(context.paragraph);
+    for (const membership of context.hiddenWealthMembership) {
+      expect(wealthCard).toContain('지장간의 재성 계열 구성 관측');
+      expect(wealthCard).toContain(membership.hiddenStem);
+      expect(wealthCard).toContain(membership.derivedTenGod);
+      expect(wealthCard).toContain(membership.membershipSourceUrl);
+    }
     for (const theme of context.themes) {
       expect(wealthCard).toContain(theme.headline);
       expect(wealthCard).toContain(theme.claimType);
