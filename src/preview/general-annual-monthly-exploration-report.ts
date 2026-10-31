@@ -218,7 +218,13 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     ? '<p class="muted">해당 절입 구간: ' + e(SEGMENT_LABEL[selected.segmentId!]) +
       ' · ' + e(kst(selected.theme.calculatedInterval.startsAt)) + '부터 ' +
       e(kst(selected.theme.calculatedInterval.endsAt)) + ' 전까지</p>' +
-      monthlyCard(selected.theme)
+      monthlyCard(selected.theme) +
+      (selected.sourceBoundTensions?.length
+        ? '<section class="active-natal-relations" aria-label="같은 절입 구간의 원국 관계">' +
+          '<h4>이 구간에서 함께 확인된 원국 관계</h4>' +
+          selected.sourceBoundTensions.map(monthlyCard).join('') +
+          '</section>'
+        : '')
     : selected.state === 'insufficient_evidence'
       ? '<p>이 조회 시각에 적용되는 ' + e(SEGMENT_LABEL[selected.segmentId!]) +
         ' 구간의 개인별 연구 해석 근거는 아직 충분하지 않습니다.</p>'
