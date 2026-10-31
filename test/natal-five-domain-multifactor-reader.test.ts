@@ -54,6 +54,44 @@ function reports(snapshot: ReturnType<typeof sample>): NatalFiveDomainMultifacto
 }
 
 describe('same-chart five-domain multifactor Korean research reading', () => {
+  it('actually displays existing source-qualified Ten-God context for an insufficient Wealth reading', () => {
+    const chart = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 1981, month: 2, day: 1 },
+      time: { known: true, hour: 13, minute: 52 },
+      sexForTraditionalCalculation: 'male',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const reading = reports(chart);
+    expect(reading.wealth.state).toBe('insufficient');
+    expect(reading.wealth.sections).toHaveLength(0);
+    const context = reading.wealth.availableThemeContext!;
+    expect(context.wealthConclusionAuthorized).toBe(false);
+    expect(context.themes.length).toBeGreaterThan(0);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reading);
+    const wealthCard = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+    expect(wealthCard).toContain('aria-label="재물운 근거 있는 부분 설명"');
+    expect(wealthCard).toContain('재물운 종합 해석 아님');
+    expect(wealthCard).toContain(context.paragraph);
+    for (const theme of context.themes) {
+      expect(wealthCard).toContain(theme.headline);
+      expect(wealthCard).toContain(theme.claimType);
+      expect(wealthCard).toContain(theme.sourceIds[0]!);
+      expect(wealthCard).toContain(theme.observedPositions[0]!);
+    }
+    const forged = {
+      ...reading,
+      wealth: {
+        ...reading.wealth,
+        availableThemeContext: {
+          ...context,
+          themes: [{ ...context.themes[0]!, observedFactPaths: ['not-a-canonical-path'] }],
+        },
+      },
+    };
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
+      .toThrow('existing theme context has no actual sourced calculation evidence');
+  }, 30000);
+
   it('renders five source-owned Korean meanings and evidence scopes on one real canonical chart', () => {
     const chart = sample(3, 10);
     const sections = reports(chart);
