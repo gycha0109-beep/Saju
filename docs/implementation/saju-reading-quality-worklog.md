@@ -6,6 +6,20 @@
 > 기록 규칙: **실제 수정한 작업 단위마다 이 파일에 변경 내용, 결과물, 확인된 검증, 미완료 항목을 추가한다.** 계획만 있는 작업은 완료로 기록하지 않는다.
 
 
+## 2026-10-31 — 후속 구현: 재성 T5 분포의 채널 분리 진단 정확화 (단계 1·2·5 일부)
+
+### 작업 17 — 재물 17건 중 1건을 일반 규칙 누락과 구별
+- **실측 사례:** 이전 통과 500건 감사 `#41209214013`의 `1955-10-31 19:35` 명식. 지지 대표 십신에 `TEN_GOD_WEALTH_BRANCHES_THEME`, 천간에 `TEN_GOD_OUTPUT_VISIBLE_STEMS_THEME` 및 `TEN_GOD_PEER_VISIBLE_STEMS_THEME`가 있었지만, 동일한 관측 범위에는 재성+다른 계열이 함께 존재하지 않았다.
+- **원인 보정:** 재성이 있다는 사실만으로 단순히 새로운 2계열 복합 규칙이 빠졌다고 분류하지 않는다. 기존 룰은 채널별 두 계열 이상을 입력으로 요구하며, 서로 다른 채널 사이 T5를 결합하는 승인 방법론은 이 연구 경로에 없다.
+- **한 것:** 실제 실행된 T5 Claim 유형을 기준으로 `wealth_t5_and_other_families_split_across_channels`를 구분한다. 수정 대상은 `cross_channel_methodology_review_required`로 격리해 무단 규칙 추가를 방지한다. 기존 동일 채널 조합이 실제 있지만 규칙이 없는 경우와 구별한다.
+- **한국어 풀이:** 재물 종합 문단이 비어 있는 해당 유형에 관측 범위가 갈라져 있어 결합할 수 없다는 실제 이유를 표시한다. 기존 T5 개별 설명과 계산 부록은 유지하고 `state: insufficient`, `wealthConclusionAuthorized: false`를 변경하지 않는다.
+- **테스트:** 실제 1955년 사례의 `재성(branches)+식상·비겁(visible_stems)`, 종합 문단 미생성, 부분 설명, 출판·판매 불가와 진단 집계의 변경된 분류를 검증한다.
+- **구현 파일:** `scripts/saju-500-root-cause.mjs`, `scripts/saju-500-root-cause-pure.mjs`, `src/preview/wealth-natal-multifactor-report.ts`, `test/saju-500-root-cause-summary.test.mjs`, `test/natal-five-domain-multifactor-reader.test.ts`.
+- **커밋:** `603622a2821f0fc1f01f598ffa636bed49aff1a0`, `0f5e979a2bb2d82ec30e3f193d0e6493d937f6f8`, `bf98ecfb9e0c79d04b12c145c33f6cd164343040`, `8cfd3a39af7132965f70307ce1fdfbc8faad3dd0`, `9edf573fb28832c7b38fb05377e7b82e6cbb4310`.
+- **검증 상태:** 이번 새 코드의 CI·동일 시드 500건 재실측은 기록 시점 미확인. 기존 17건 부족 전체가 해소됐거나 신설 재물 T8 의미가 생겼다고 주장하지 않는다.
+- **남은 작업:** 해당 관측 채널을 넘나드는 결합을 출처가 허용하는지 별도 방법론 검토 필요. 다른 16건의 직접 재성 T5 부재와 지장간 연구 계산 관측은 해석으로 대체 불가.
+
+
 ## 2026-10-31 — 후속 구현: 실제 원국 충 관계를 올해의 첫 읽기와 연결 (단계 3·5 일부)
 
 ### 작업 16 — 연운 중심 주제와 기존 조건부 원국 충 근거의 같은 화면 연결
