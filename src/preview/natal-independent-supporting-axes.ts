@@ -38,5 +38,24 @@ export function selectIndependentNatalSupportingAxes<T extends ObservedNatalAxis
     axes.add(candidate.axis);
     candidate.observedFactPaths.forEach(path => usedPaths.add(path));
   }
+  // Greedy choice may consume every fact path needed by two later distinct
+  // axes. The normal MUR limit is two: only when greedy leaves an avoidable gap,
+  // search for a source-existing pair with genuinely incremental T0 evidence.
+  // Preserve earlier successful choices and the original rule/axis priority.
+  if (maximum === 2 && supporting.length < 2) {
+    const corePaths = new Set(core.observedFactPaths);
+    for (let i = 0; i < candidates.length; i++) {
+      const first = candidates[i]!;
+      if (first.axis === core.axis ||
+          !first.observedFactPaths.some(path => !corePaths.has(path))) continue;
+      const firstPaths = new Set([...corePaths, ...first.observedFactPaths]);
+      for (let j = i + 1; j < candidates.length; j++) {
+        const second = candidates[j]!;
+        if (second.axis === core.axis || second.axis === first.axis ||
+            !second.observedFactPaths.some(path => !firstPaths.has(path))) continue;
+        return { supporting: [first, second], overlapOnlyCount };
+      }
+    }
+  }
   return { supporting, overlapOnlyCount };
 }
