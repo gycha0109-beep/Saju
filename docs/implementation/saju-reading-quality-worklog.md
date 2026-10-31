@@ -35,6 +35,8 @@
 - **한 것:** 새 계산 절차를 제거하고 R27이 생성한 지장간 십신 관측 중 **편재·정재 구성에 해당하는 위치만 연구용 계산 근거**로 전달하도록 재구현했다. 기존 R27과 동일한 구성·위치·출처 ID·근거 경로·권한 해시를 사용하고 위조/불일치 입력은 차단한다.
 - **권한 준수:** R27의 `hiddenSupportAuthorized:false`, `interpretationClaimEmissionAuthorized:false`, `narrativeMaterialityAuthorized:false`, `productionAuthorityAuthorized:false` 경계를 그대로 유지한다. 지장간 구성 사실은 재물 분야의 T5/T8 결론 문장으로 승격하지 않고 **읽기 화면의 별도 계산 관측 영역**에만 표시한다. 수입·재산·용신·투간·지장간 강약 결론은 생성하지 않는다.
 - **상태 구분:** R27이 `unavailable`을 반환한 입력을 '지장간 재성이 0개'라고 잘못 분류하지 않도록 `resolved / unavailable` 상태와 사유를 보존하고, 기존 500명 원인 분류에서도 **관측 없음 / 관측 있음 / 조사 불가**를 각각 구분한다. 출생시각 미상과 시나리오 미확정은 재성 부재로 취급하지 않는다.
+- **권한 경계 추가 수정:** 재물운 `missing` 안내 문장에서도 지장간 관측 수를 제거해, 원국의 T5/T8 미충족 사유와 연구 계산 관측을 혼합하지 않는다. 확인된 지장간 자료는 오직 근거 부록과 500건 진단에 기록한다. 수정 커밋: `88e6d399ac10e1ec54a092172b1068d67eebd9f8`, `625baf4cc23246f1ecc5d7166634d60fc548024b`.
+
 - **실제 변경:** `src/preview/wealth-hidden-stem-observations.ts`, `src/preview/wealth-natal-multifactor-report.ts`, `src/preview/natal-five-domain-multifactor-reader.ts`, `scripts/saju-500-root-cause.mjs`, `scripts/saju-500-root-cause-pure.mjs`, 관련 검증 테스트.
 - **검증 상태:** 이전 커밋의 [500명 감사 #41206737134](https://github.com/gycha0109-beep/Saju/actions/runs/41206737134)에서 재물 T8 부족 17건, 지장간 재성 구성 관측 15명·30개. **이번 R27 통합 커밋의 전체 CI와 동일 실측 재현 여부는 아직 확인 전**. 숫자를 개선 실적으로 중복 집계하지 않는다.
 - **다음 구현:** R27이 허용하는 명식 관측과 해석 권한이 미확립된 지장간 역할 판단을 구분한 상태에서, 기존 재물운 T8에 실제로 사용 가능한 출처 승인 규칙이 있는지 검토하고 연운·월운의 의미 차이 개선을 이어간다.
