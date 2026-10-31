@@ -323,6 +323,45 @@ function renderFirstScreenSelectedInterpretations(
     '<p class="bounded-note">' + escapeHtml(scope) + '</p></section>';
 }
 
+/**
+ * Existing sourced T5 observations can still be read when Wealth T8 is
+ * insufficient. This renders a bounded explanation, never a Wealth claim.
+ */
+function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport): string {
+  const context = report.availableThemeContext;
+  if (context === undefined) return '';
+  guard(report.sections.length === 0 && report.state === 'insufficient' &&
+    context.wealthConclusionAuthorized === false &&
+    context.themes.length > 0 && context.title.trim().length > 0 &&
+    context.paragraph.trim().length > 0,
+    'existing theme context must not become a Wealth synthesis');
+  const themes = context.themes.map(theme => {
+    guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+      .test(theme.claimType) && theme.claimId.trim().length > 0 &&
+      theme.headline.trim().length > 0 && theme.summary.trim().length > 0 &&
+      theme.sourceIds.length > 0 && theme.observedPositions.length > 0 &&
+      theme.observedFactPaths.length === theme.observedPositions.length &&
+      theme.observedFactPaths.every(path => FACT_PATH.test(path)) &&
+      context.paragraph.includes(theme.summary) &&
+      theme.observedPositions.every(position => context.paragraph.includes(position)),
+      'existing theme context has no actual sourced calculation evidence');
+    return '<li><strong>' + escapeHtml(theme.headline) + '</strong>' +
+      '<details><summary>확인된 십신 위치와 기존 출처</summary>' +
+      '<p>계산된 위치</p>' + renderList(theme.observedPositions) +
+      '<p>계산 근거 경로</p>' + renderList(theme.observedFactPaths) +
+      '<p>기존 십신 주장: ' + escapeHtml(theme.claimType) + '</p>' +
+      '<p>근거 식별자: ' + escapeHtml(theme.claimId) + '</p>' +
+      '<p>출처</p>' + renderList(theme.sourceIds) +
+      '</details></li>';
+  }).join('');
+  return '<section class="bounded-source-context" aria-label="재물운 근거 있는 부분 설명">' +
+    '<h3>' + escapeHtml(context.title) + '</h3>' +
+    '<p><strong>재물운 종합 해석 아님 · 기존 십신 관측만 설명</strong></p>' +
+    '<p>' + escapeHtml(context.paragraph) + '</p>' +
+    '<details><summary>주제별 계산 근거·출처 보기</summary><ul>' +
+    themes + '</ul></details></section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -350,6 +389,8 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
         ? renderBusinessReadingGuide(report as BusinessNatalMultifactorReport)
         : domain === 'relationship'
           ? renderRelationshipReadingGuide(report as RelationshipNatalMultifactorReport) : '';
+  const existingWealthContext = domain === 'wealth'
+    ? renderWealthAvailableThemeContext(report as WealthNatalMultifactorReport) : '';
   const firstMeaning = renderFirstScreenSelectedInterpretations(domain, report);
   const details = firstMeaning === '' ? readingGuide + originalText
     : '<details class="full-claim-evidence"><summary>원국 풀이의 상세 설명·명식 근거와 출처</summary>' +
@@ -357,7 +398,7 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
   return '<article aria-labelledby="domain-' + domain + '" class="domain">' +
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
-    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning + details + missing +
+    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning + existingWealthContext + details + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }
