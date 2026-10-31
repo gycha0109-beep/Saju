@@ -235,17 +235,13 @@ function buildAvailableThemeContext(
     a.family.localeCompare(b.family));
   const paragraphs = sorted.map(theme =>
     `‘${theme.headline}’ — ${theme.observedPositions.join(' · ')}에서 확인됐습니다. ${theme.summary}`);
+  // R27 denies narrative materiality; its observations remain a separate
+  // calculated-facts appendix, never part of T5/T8 interpretive prose.
   const hiddenWealthMembership = observeHiddenWealthMembership(snapshot);
-  const hiddenContext = hiddenWealthMembership.length
-    ? ' 지지의 지장간에 포함된 천간 중 일간을 기준으로 재성으로 분류되는 관측도 있습니다. ' +
-      hiddenWealthMembership.map(x =>
-        `${SLOT_NAMES[x.pillar]} 지지 ${x.branch}의 지장간 ${x.hiddenStem}은 ${x.derivedTenGod}로 계산됩니다.`).join(' ') +
-      ' 이는 지장간 구성원과 십신 계산 사실일 뿐 강약·투간·재물운의 유불리나 수입을 증명하지 않습니다.'
-    : '';
   return {
     title: '재물 종합 결론 이전에 확인된 원국의 십신 주제',
     paragraph: '아래는 기존 출처와 연결된 십신별 구조 설명입니다. ' +
-      paragraphs.join(' ') + hiddenContext +
+      paragraphs.join(' ') +
       ' 이 관측들은 현재 등록된 재물 분야의 복합 해석 근거를 충족하지 못했습니다. ' +
       '따라서 재물의 많고 적음, 소득, 투자 성과, 향후 재물운을 판단하는 해석으로 읽어서는 안 됩니다.',
     wealthConclusionAuthorized: false,
