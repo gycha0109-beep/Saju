@@ -6,6 +6,7 @@ export {
   analyzeTemporalRepetition,
   buildWealthRemediationGroups,
   analyzeTemporalMeaningRepetition,
+  analyzeTemporalConsumedT9Meaning,
   analyzeTemporalStructuralEvidenceVariation,
   analyzeTemporalNatalT5Variation,
   summarizeMissingWealthCauses,
