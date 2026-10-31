@@ -5,6 +5,17 @@
 > 범위: 계산·기존 Claim/Methodology/Source 권한을 유지하는 연구용 해석 품질 개선. AI 신규 Claim 생성과 Official/판매 승격은 범위 밖.
 > 기록 규칙: **실제 수정한 작업 단위마다 이 파일에 변경 내용, 결과물, 확인된 검증, 미완료 항목을 추가한다.** 계획만 있는 작업은 완료로 기록하지 않는다.
 
+## 2026-10-31 — 후속 구현: 기존 지장간 근거 계산과 통합 및 근거 권한 준수
+
+### 작업 13 — 중복 지장간 계산 제거와 명식 일치 검증 통일
+- **발견:** 신규 `src/preview/wealth-hidden-stem-observations.ts`가 지장간 구성과 십신을 직접 다시 계산하고 있었으나, 저장소에는 이미 `src/research/snapshot-bound-hidden-stem-ten-god-occurrences.ts`의 **R27 명식 결박 십신 관측**이 구현돼 있었다. 해당 계산은 명식 ID/해시, 일간·일주 일치, 지장간 배열·지지 대응, 시나리오 미확정 및 기존 `manseryeok` 십신 계산기까지 검증한다.
+- **한 것:** 새 계산 절차를 제거하고 R27이 생성한 지장간 십신 관측 중 **편재·정재 구성에 해당하는 위치만 연구용 계산 근거**로 전달하도록 재구현했다. 기존 R27과 동일한 구성·위치·출처 ID·근거 경로·권한 해시를 사용하고 위조/불일치 입력은 차단한다.
+- **권한 준수:** R27의 `hiddenSupportAuthorized:false`, `interpretationClaimEmissionAuthorized:false`, `narrativeMaterialityAuthorized:false`, `productionAuthorityAuthorized:false` 경계를 그대로 유지한다. 지장간 구성 사실은 재물 분야의 T5/T8 결론 문장으로 승격하지 않고 **읽기 화면의 별도 계산 관측 영역**에만 표시한다. 수입·재산·용신·투간·지장간 강약 결론은 생성하지 않는다.
+- **상태 구분:** R27이 `unavailable`을 반환한 입력을 '지장간 재성이 0개'라고 잘못 분류하지 않도록 `resolved / unavailable` 상태와 사유를 보존하고, 기존 500명 원인 분류에서도 **관측 없음 / 관측 있음 / 조사 불가**를 각각 구분한다. 출생시각 미상과 시나리오 미확정은 재성 부재로 취급하지 않는다.
+- **실제 변경:** `src/preview/wealth-hidden-stem-observations.ts`, `src/preview/wealth-natal-multifactor-report.ts`, `src/preview/natal-five-domain-multifactor-reader.ts`, `scripts/saju-500-root-cause.mjs`, `scripts/saju-500-root-cause-pure.mjs`, 관련 검증 테스트.
+- **검증 상태:** 이전 커밋의 [500명 감사 #41206737134](https://github.com/gycha0109-beep/Saju/actions/runs/41206737134)에서 재물 T8 부족 17건, 지장간 재성 구성 관측 15명·30개. **이번 R27 통합 커밋의 전체 CI와 동일 실측 재현 여부는 아직 확인 전**. 숫자를 개선 실적으로 중복 집계하지 않는다.
+- **다음 구현:** R27이 허용하는 명식 관측과 해석 권한이 미확립된 지장간 역할 판단을 구분한 상태에서, 기존 재물운 T8에 실제로 사용 가능한 출처 승인 규칙이 있는지 검토하고 연운·월운의 의미 차이 개선을 이어간다.
+
 ## 2026-10-31 — 후속 구현: 지장간 재성 관측의 누락 역추적
 
 ### 작업 11 — 기존 계산값에서 누락된 재성 관측 후보 찾기
