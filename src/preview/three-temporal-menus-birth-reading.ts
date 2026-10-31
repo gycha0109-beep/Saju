@@ -110,6 +110,12 @@ function render(
   const life = lifeStage.report;
   const annualReference = report.annualReference;
   const monthlyFocus = report.monthly.referenceReading;
+  // Product menu names are stable, but a comparison year/month must not be
+  // displayed as if it were the year/month of the supplied reference instant.
+  const annualLabel = annualReference.state === 'in_target_civil_year'
+    ? '올해' : '선택한 연도';
+  const monthlyLabel = monthlyFocus.state === 'outside_target_month'
+    ? '선택한 월' : '이번 달';
   const yearNote = annualReference.state === 'in_target_civil_year'
     ? '조회 시각의 서울 달력 연도에 해당하는 연구용 연운입니다.'
     : '선택한 ' + report.targetYear +
@@ -212,18 +218,21 @@ function render(
     '.current{border:2px solid #42755c}details,aside,small{font-size:13px;color:#555;overflow-wrap:anywhere}' +
     'aside{background:#ebe6df;padding:18px;border-radius:12px}h3{margin:0 0 8px}</style>' +
     '</head><body><main><header><small style="color:#e2eee9">명하 · 내부 연구 결과 · Official 아님</small>' +
-    '<h1>올해 · 이번 달 · 삶의 단계</h1><p>조회 시각: ' +
+    '<h1>' + e(annualLabel) + ' · ' + e(monthlyLabel) + ' · 삶의 단계</h1><p>조회 시각: ' +
     e(life.referenceLocalDateTime) + ' KST / 선택: ' +
     report.targetYear + '년 ' + report.targetMonth + '월</p>' +
-    '</header><nav><a href="#annual">올해</a><a href="#monthly">이번 달</a>' +
+    '</header><nav><a href="#annual">' + e(annualLabel) +
+    '</a><a href="#monthly">' + e(monthlyLabel) + '</a>' +
     '<a href="#natal-reference">명식의 기존 근거</a>' +
     '<a href="#life-stage">삶의 단계</a></nav>' +
     natalPanel +
-    '<section id="annual"><h2>올해 — ' + report.targetYear + '년</h2><p>' +
+    '<section id="annual"><h2>' + e(annualLabel) + ' — ' +
+    report.targetYear + '년</h2><p>' +
     e(yearNote) + '</p>' +
     '<p>올해 주제와 별개로 확인된 <a href="#natal-reference">원국의 연구 근거</a>는 ' +
     '연운 해석 결론으로 합산하지 않습니다.</p>' + annual + '</section>' +
-    '<section id="monthly"><h2>이번 달 — ' + report.targetMonth + '월</h2>' +
+    '<section id="monthly"><h2>' + e(monthlyLabel) + ' — ' +
+    report.targetMonth + '월</h2>' +
     '<p>절입 전·후 월간 주제와 <a href="#natal-reference">같은 명식의 원국 근거</a>는 ' +
     '서로 다른 해석 범위입니다. 확인되지 않은 상호작용은 주장하지 않습니다.</p>' +
     '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth +
