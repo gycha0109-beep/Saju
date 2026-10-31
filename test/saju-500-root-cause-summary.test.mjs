@@ -62,6 +62,25 @@ describe('root-cause implementation groups', () => {
     expect(summary.remediation.groupCount).toBe(2);
   });
 
+  it('separates T5 wealth across observation channels from a missing same-channel rule', () => {
+    const separated = wealthCase('1955-10-31 19:35', 'real-channel-split',
+      'wealth_t5_and_other_families_split_across_channels', [
+        'TEN_GOD_WEALTH_BRANCHES_THEME',
+        'TEN_GOD_OUTPUT_VISIBLE_STEMS_THEME',
+        'TEN_GOD_PEER_VISIBLE_STEMS_THEME',
+      ]);
+    const result = summarizeMissingWealthCauses([separated]);
+    expect(result.byCause).toEqual({
+      wealth_t5_and_other_families_split_across_channels: 1,
+    });
+    expect(result.remediation.byRemediationTarget).toEqual({
+      cross_channel_methodology_review_required: 1,
+    });
+    expect(result.remediation.groups[0].t5ThemeTypes).toContain(
+      'TEN_GOD_WEALTH_BRANCHES_THEME');
+    expect(result.remediation.groups[0].eligibleRuleIds).toEqual([]);
+  });
+
   it('counts canonical hidden wealth membership separately from actual Wealth T8 coverage', () => {
     const hiddenCase = wealthCase('H', 'hash-hidden',
       'no_active_wealth_t5_in_either_observation_channel');
