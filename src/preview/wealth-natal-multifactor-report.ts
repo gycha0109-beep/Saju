@@ -28,7 +28,9 @@ export interface WealthNatalMultifactorSection {
   observedPositions: readonly string[];
   observedFactPaths: readonly string[];
 }
-/** Existing source-qualified T5 observations, NOT a Wealth T8 synthesis. */
+/** Existing source-qualified T5 observations, NOT a Wealth T8 synthesis.
+ * Available both when no Wealth T8 is selected and when the only selected T8
+ * describes indirect context without a direct Wealth-family core. */
 export interface WealthNatalAvailableThemeContext {
   title: string;
   paragraph: string;
@@ -182,9 +184,10 @@ function explainMissingWealthT8(
 }
 
 /**
- * Preserve the actual, individually sourced upstream T5 meanings when no
- * authorized Wealth T8 paragraph exists. This is an observation aid, not a
- * new Wealth claim or a workaround for the EvidenceSelector.
+ * Preserve actual, individually sourced T5 meanings when no direct Wealth
+ * synthesis is selected. An indirect context-only T8 is not a Wealth conclusion.
+ * T5 remains independently sourced observation, not a new T8 or a substitute
+ * for the existing EvidenceSelector.
  */
 function buildAvailableThemeContext(
   snapshot: CanonicalSajuSnapshot,
@@ -500,7 +503,13 @@ export function buildWealthNatalMultifactorReport(
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly WealthNatalMultifactorSection[] = chosen;
-  const availableThemeContext = sections.length === 0
+  // Indirect officer-resource/officer-peer T8 context can fill a research page
+  // without establishing a direct Wealth meaning. Do not hide the separately
+  // sourced individual T5 explanations just because that context T8 exists.
+  // A direct Wealth T8 core, however, must not be padded with T5 fallback copy.
+  const indirectOnly = sections.length > 0 &&
+    sections.every(section => section.axis === 'context');
+  const availableThemeContext = sections.length === 0 || indirectOnly
     ? buildAvailableThemeContext(snapshot, execution) : undefined;
   const readingGuide = buildWealthNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
