@@ -131,7 +131,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
   const annualRegistry = createGeneralAnnualReadingCandidateRegistry(facts.referenceDateTime);
   const annualExecution = runInterpretation(snapshot, annualRegistry, {
     requestId: annualRequest.requestId,
-    temporalFacts: annualFacts,
+    temporalFacts: { ...annualFacts },
     now: new Date(facts.referenceDateTime),
   });
   requireLinkedPeriod(
