@@ -107,7 +107,8 @@ describe('source-grounded hidden wealth membership; not a new interpretation', (
     if (inconsistentMaster.derivedFacts.dayMaster.status !== 'resolved')
       throw new Error('expected day master');
     inconsistentMaster.derivedFacts.dayMaster = resolved({
-      ...inconsistentMaster.derivedFacts.dayMaster.value, value: '갑',
+      ...inconsistentMaster.derivedFacts.dayMaster.value,
+      value: inconsistentMaster.derivedFacts.dayMaster.value.value === '갑' ? '을' : '갑',
     });
     expect(() => observeHiddenWealthMembership(inconsistentMaster))
       .toThrow('actual canonical branch membership');
