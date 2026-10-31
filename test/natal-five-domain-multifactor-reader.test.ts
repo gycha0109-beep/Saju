@@ -171,6 +171,49 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     }
   }, 30000);
 
+  it('keeps the actual Wealth tension and unused T5 themes distinct in the reader', () => {
+    let chart: ReturnType<typeof sample> | undefined;
+    for (let year = 1950; year <= 2005 && chart === undefined; year++) {
+      for (const month of [1, 3, 5, 7, 9, 11]) {
+        const current = calculateCanonicalSajuSnapshot({
+          calendarType: 'solar',
+          date: { year, month, day: 14 },
+          time: { known: true, hour: 12, minute: 0 },
+          sexForTraditionalCalculation: 'unspecified',
+        }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+        const run = runInterpretation(current, registry.wealth, { now: NOW });
+        const wealth = buildWealthNatalMultifactorReport(current, run, registry.wealth);
+        if (wealth.sections.length === 1 &&
+            wealth.sections[0]?.axis === 'tension' &&
+            (wealth.availableThemeContext?.themes.length ?? 0) > 0) {
+          chart = current;
+          break;
+        }
+      }
+    }
+    expect(chart).toBeDefined();
+    const reading = reports(chart!);
+    const wealth = reading.wealth;
+    expect(wealth.sections[0]?.axis).toBe('tension');
+    const context = wealth.availableThemeContext!;
+    expect(context.wealthConclusionAuthorized).toBe(false);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart!, reading);
+    const wealthCard = html.split('<h2 id="domain-wealth">')[1]!
+      .split('</article>')[0]!;
+    expect(wealthCard).toContain('aria-label="재물운 근거 있는 부분 설명"');
+    expect(wealthCard).toContain(context.paragraph);
+    expect(wealthCard).toContain(wealth.missing[0]!);
+    expect(wealthCard).toContain('재물운 종합 해석 아님');
+    expect(wealthCard).toContain(wealth.sections[0]!.headline);
+    for (const theme of context.themes) {
+      expect(wealth.sections[0]!.upstreamClaimIds).not.toContain(theme.claimId);
+      expect(wealthCard).toContain(theme.sourceIds[0]!);
+      expect(wealthCard).toContain(theme.observedPositions[0]!);
+    }
+    expect(wealth.mayPublish).toBe(false);
+    expect(wealth.maySell).toBe(false);
+  }, 30000);
+
   it('explains the actual cross-channel Wealth gap without claiming synthesis', () => {
     const chart = calculateCanonicalSajuSnapshot({
       calendarType: 'solar',
