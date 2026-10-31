@@ -33,8 +33,12 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(report.state).toBe('partial');
     const partialContext = report.availableThemeContext;
     expect(partialContext?.wealthConclusionAuthorized).toBe(false);
-    expect(partialContext?.themes.length).toBeGreaterThanOrEqual(2);
+    expect(partialContext?.themes.length).toBeGreaterThan(0);
     expect(partialContext?.themes.some(theme => theme.family === 'wealth')).toBe(false);
+    expect(partialContext?.themes.every(theme =>
+      !report.sections[0]!.upstreamClaimIds.includes(theme.claimId))).toBe(true);
+    expect(partialContext?.paragraph).toContain(
+      '위의 간접 구조 풀이에 이미 사용된 십신 근거는 반복하지 않았습니다');
     for (const theme of partialContext?.themes ?? []) {
       expect(theme.sourceIds.length).toBeGreaterThan(0);
       expect(theme.observedPositions.length).toBeGreaterThan(0);
@@ -62,8 +66,10 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(report.sections[0]?.observedPositions.length).toBeGreaterThanOrEqual(2);
     expect(report.state).toBe('partial');
     expect(report.availableThemeContext?.wealthConclusionAuthorized).toBe(false);
-    expect(report.availableThemeContext?.themes.length).toBeGreaterThanOrEqual(2);
+    expect(report.availableThemeContext?.themes.length).toBeGreaterThan(0);
     expect(report.availableThemeContext?.themes.some(theme => theme.family === 'wealth')).toBe(false);
+    expect(report.availableThemeContext?.themes.every(theme =>
+      !report.sections[0]!.upstreamClaimIds.includes(theme.claimId))).toBe(true);
     expect(report.missing.join(' ')).toContain('재성 중심 재물운 종합 해석이 아니며');
     expect(report.usefulComplete).toBe(false);
     expect(report.mayPublish).toBe(false);
