@@ -129,6 +129,7 @@ function temporalEntries(result) {
       ruleIds: [...s.ruleIds],
       factPaths: [...s.factPaths],
       relatedPillar: s.relatedPillar ?? null,
+      observedClash: s.observedClash ?? null,
     })),
   };
   const l = entry(
