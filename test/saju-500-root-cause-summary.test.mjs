@@ -359,6 +359,7 @@ describe('executed annual/monthly T9 meaning is not a changed date or generic pr
   });
   const row=(birth, meaningKey, consumedT9) => ({
     birth,meaningKey,exactKey:'text-'+birth,calculationHash:'chart-'+birth,
+    text:'검증된 연구 풀이 ' + birth,
     sourceEvidence:{consumedT9,natalT5:[{unconsumed:true,birth}]},
   });
   it('detects different selected research meaning hidden by identical annual display profile', () => {
@@ -373,6 +374,15 @@ describe('executed annual/monthly T9 meaning is not a changed date or generic pr
     expect(r.casesInRepeatedExecutedMeaningGroups).toBe(2);
     expect(r.oldDisplayProfilesHidingDistinctExecutedMeaning).toBe(1);
     expect(r.conflictingOldProfiles[0].cases).toBe(3);
+    expect(r.actualEvidencePatternCount).toBe(3);
+    expect(r.actualEvidencePatterns).toHaveLength(3);
+    expect(r.actualEvidencePatterns.every(p =>
+      p.representatives[0].actualKoreanText.includes('검증된 연구 풀이') &&
+      p.sourceBindings.every(x => x.sourceIds.length > 0 && x.ruleIds.length > 0)))
+      .toBe(true);
+    expect(r.sameMeaningPairs).toHaveLength(1);
+    expect(r.sameMeaningPairs[0].inputs).toHaveLength(2);
+    expect(r.contrastingMeaningPairs.length).toBeGreaterThan(0);
   });
   it('does not turn a different birth, timestamp, Claim ID, source ID or unused T5 into new meaning', () => {
     const first=monthlyTheme();
@@ -395,6 +405,35 @@ describe('executed annual/monthly T9 meaning is not a changed date or generic pr
     const r=analyzeTemporalConsumedT9Meaning(rows,'monthly');
     expect(r.distinctExecutedMeaningSignatures).toBe(3);
     expect(r.oldDisplayProfilesHidingDistinctExecutedMeaning).toBe(1);
+  });
+  it('pinpoints display fragmentation when two old profile labels share exactly one executed meaning', () => {
+    const t=monthlyTheme();
+    const rows=[
+      row('A','profile-A',[t]),
+      row('B','profile-B',[{...t,sourceIds:['SRC-OTHER-SAME-METHOD']}]),
+      row('C','profile-A',[t]),
+    ];
+    const result=analyzeTemporalConsumedT9Meaning(rows,'monthly');
+    expect(result.distinctLegacyDisplayProfiles).toBe(2);
+    expect(result.distinctExecutedMeaningSignatures).toBe(1);
+    expect(result.excessDisplayProfileVariants).toBe(1);
+    expect(result.executedMeaningsSplitAcrossDisplayProfiles).toBe(1);
+    expect(result.displaySplits[0].distinctDisplayProfiles).toBe(2);
+    expect(result.displaySplits[0].representatives).toHaveLength(2);
+    expect(result.actualEvidencePatternCount).toBe(1);
+    expect(result.actualEvidencePatterns[0].caseCount).toBe(3);
+    expect(result.sameMeaningPairs[0].inputs[0].actualKoreanText)
+      .toContain('검증된 연구 풀이');
+  });
+  it('requires real rendered text rather than evaluating a T9-only placeholder', () => {
+    const missingText=row('A','same',[monthlyTheme()]);
+    delete missingText.text;
+    const result=analyzeTemporalConsumedT9Meaning([
+      missingText,row('B','same',[monthlyTheme()]),
+    ],'monthly');
+    expect(result.assessed).toBe(1);
+    expect(result.unassessed).toBe(1);
+    expect(result.actualEvidencePatternCount).toBe(1);
   });
   it('does not count unselected, unsourced or invalid T9 values as executed meanings', () => {
     const bad=row('B','same',[{...monthlyTheme(),ruleIds:[]}]);
