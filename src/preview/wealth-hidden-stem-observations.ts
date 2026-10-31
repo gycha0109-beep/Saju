@@ -61,7 +61,7 @@ export function observeHiddenWealthMembership(
       branch: o.branch,
       hiddenStem: o.hiddenStem,
       derivedTenGod: o.tenGod as '편재' | '정재',
-      factPaths: [projection.dayMasterSourceFactRef, o.sourceFactRef],
+      factPaths: [projection.dayMasterSourceFactRef, o.sourceFactRef] as const,
       sourcePillarRef: o.sourcePillarRef,
       occurrenceId: o.occurrenceId,
       membershipSourceUrl: authority.sourceBindings.hiddenMembershipSource.url,
