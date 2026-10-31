@@ -61,6 +61,33 @@ describe('root-cause implementation groups', () => {
     expect(summary.remediation.groupCount).toBe(2);
   });
 
+  it('counts canonical hidden wealth membership separately from actual Wealth T8 coverage', () => {
+    const hiddenCase = wealthCase('H', 'hash-hidden',
+      'no_active_wealth_t5_in_either_observation_channel');
+    hiddenCase.existingSourceThemeContext = {
+      themeCount: 3,
+      wealthConclusionAuthorized: false,
+      hiddenWealthMembership: [
+        { pillar: 'year', hiddenStem: '경', derivedTenGod: '정재',
+          meaningAuthority: 'calculated_membership_only',
+          wealthConclusionAuthorized: false },
+        { pillar: 'month', hiddenStem: '신', derivedTenGod: '편재',
+          meaningAuthority: 'calculated_membership_only',
+          wealthConclusionAuthorized: false },
+      ],
+    };
+    const none = wealthCase('N', 'hash-none',
+      'no_active_wealth_t5_in_either_observation_channel');
+    const summary = summarizeMissingWealthCauses([hiddenCase, none]);
+    expect(summary.missingCaseCount).toBe(2);
+    expect(summary.casesWithExistingSourceContext).toBe(1);
+    expect(summary.casesWithHiddenWealthMembership).toBe(1);
+    expect(summary.hiddenWealthObservationCount).toBe(2);
+    expect(summary.remediation.byRemediationTarget).toEqual({
+      direct_wealth_t5_evidence_unavailable: 2,
+    });
+  });
+
   it('keeps unrecognized diagnostics visible for manual review instead of fabricating a cause', () => {
     const grouped = buildWealthRemediationGroups([
       wealthCase('D', 'hash-d', 'not_yet_classified'),
