@@ -164,7 +164,11 @@ function explainMissingWealthT8(
   const reason = hasWealth
     ? '재성 관련 십신 관점은 있지만 기존 재물 종합 규칙이 요구하는 같은 관측 범위 안의 다른 십신 계열과 결합되지 않아, 출처가 있는 재물 종합 결론을 만들 수 없습니다. '
     : '기존 십신 관점 규칙에서 재성 계열의 활성 근거가 확인되지 않아, 등록된 재물 복합 해석 규칙을 적용할 수 없습니다. ';
-  return sourceNote + reason +
+  const hidden = observeHiddenWealthMembership(snapshot);
+  const hiddenNote = hidden.length > 0
+    ? `한편 지장간에는 재성으로 계산되는 천간이 ${hidden.length}개 관측됩니다. 이는 지장간 구성의 계산 사실로, 현재의 천간·지지 대표 십신 T5 또는 재물 종합 T8 활성 근거를 대신하지 않습니다. `
+    : '';
+  return sourceNote + reason + hiddenNote +
     '이는 재성이 없거나 돈이 없다는 판정이 아니며, 실제 소득·재산·재물운의 좋고 나쁨을 뜻하지 않습니다.';
 }
 
