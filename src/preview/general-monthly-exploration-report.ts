@@ -28,6 +28,9 @@ export interface GeneralMonthlyExplorationSection {
   text: string;
   calculatedInterval: { startsAt: string; endsAt: string };
   tenGod: string;
+  /** Exact previously selected T9 Claim meaning, never synthesized by this view. */
+  claimType: string;
+  semanticKey: string;
   claimId: string;
   ruleIds: readonly string[];
   methodologyId: string;
@@ -167,6 +170,8 @@ export function buildGeneralMonthlyExplorationReport(
       title: copy.title, text: copy.text,
       calculatedInterval: { startsAt: segment.startsAt, endsAt: segment.endsAt },
       tenGod: segment.monthlyStemTenGod,
+      claimType: theme.claimType,
+      semanticKey: value.semanticKey,
       claimId: theme.claimId,
       ruleIds: theme.ruleRefs.map(x => x.ruleId),
       methodologyId: theme.methodologyRef.id,
@@ -196,6 +201,8 @@ export function buildGeneralMonthlyExplorationReport(
         ` 실제 관측된 관계는 ${SLOT_KO[slot]} 지지 ${relation.value.natalBranch}와 ${SEGMENT_KO[value.segmentId]} 월주 지지 ${relation.value.monthlyBranch} 사이의 충입니다. 해당 절입 구간의 계산 관계를 설명하는 것이며, 실제 사건의 발생을 뜻하지 않습니다.`,
       calculatedInterval: { startsAt: segment.startsAt, endsAt: segment.endsAt },
       tenGod: segment.monthlyStemTenGod,
+      claimType: claim.claimType,
+      semanticKey: value.semanticKey,
       claimId: claim.claimId,
       ruleIds: claim.ruleRefs.map(x => x.ruleId),
       methodologyId: claim.methodologyRef.id,
