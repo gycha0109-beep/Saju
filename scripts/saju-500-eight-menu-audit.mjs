@@ -22,6 +22,7 @@ import {
   analyzeTemporalStructuralEvidenceVariation,
   analyzeTemporalNatalT5Variation,
   summarizeMissingWealthCauses,
+  summarizeWealthConsumerEvidence,
   ROOT_CAUSE_AUDIT_VERSION,
 } from './saju-500-root-cause.mjs';
 
@@ -233,6 +234,7 @@ export function runFiveHundredSajuAudit() {
   const chartHashGroups = new Map();
   const failures = [];
   const wealthMissingCases = [];
+  const wealthConsumerCases = [];
   const startedAt = Date.now();
   for (let i=0; i<COUNT; i++) {
     const {stamp, birth} = sampleBirth(inputs);
@@ -255,6 +257,24 @@ export function runFiveHundredSajuAudit() {
           general:'전체 사주', career:'직업·커리어', wealth:'재물',
           relationship:'연애·관계', business:'사업',
         })[domain]].push({...natalEntry(report),birth:stamp,calculationHash:chartKey});
+        if (domain === 'wealth') {
+          wealthConsumerCases.push({
+            ...natalEntry(report), birth:stamp, calculationHash:chartKey,
+            missingReason:report.missing[0] ?? null,
+            ...(report.availableThemeContext === undefined ? {} : {
+              boundedT5Context: {
+                paragraph:report.availableThemeContext.paragraph,
+                wealthConclusionAuthorized:report.availableThemeContext.wealthConclusionAuthorized,
+                themes:report.availableThemeContext.themes.map(theme => ({
+                  claimId:theme.claimId,
+                  claimType:theme.claimType,
+                  sourceIds:[...theme.sourceIds],
+                  observedFactPaths:[...theme.observedFactPaths],
+                })),
+              },
+            }),
+          });
+        }
         if (domain === 'wealth' && report.sections.length === 0) {
           wealthMissingCases.push(
             diagnoseMissingWealthReading(snapshot, interpretation, registry, report, stamp),
@@ -293,6 +313,7 @@ export function runFiveHundredSajuAudit() {
     rootCauseDiagnostics: {
       version: ROOT_CAUSE_AUDIT_VERSION,
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
+      wealthConsumerEvidence: summarizeWealthConsumerEvidence(wealthConsumerCases),
       annualRepetition: analyzeTemporalRepetition(rows['올해']),
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
       annualMeaningRepetition: analyzeTemporalMeaningRepetition(rows['올해']),
@@ -302,13 +323,15 @@ export function runFiveHundredSajuAudit() {
       annualNatalT5Variation: analyzeTemporalNatalT5Variation(rows['올해']),
       monthlyNatalT5Variation: analyzeTemporalNatalT5Variation(rows['이번 달']),
     },
-    interpretationCaveat:'Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
+    interpretationCaveat:'Wealth withReadableText records T8 only, while wealthConsumerEvidence separately counts existing sourced T5 partial context. Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
     permissions:{mayPublish:false,maySell:false,mayCallOfficial:false},
   };
   const outfile=process.argv[2];
   if(outfile) writeFileSync(outfile,JSON.stringify(result,null,2)+'\n','utf8');
   process.stdout.write('SAJU500_ROOT_CAUSE_SUMMARY '+JSON.stringify({
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
+    wealthNoT8ButSourcedT5: result.rootCauseDiagnostics.wealthConsumerEvidence.withBoundedT5ContextInstead,
+    wealthNoSourceBoundInterpretiveText: result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText,
     missingCauses: result.rootCauseDiagnostics.wealth.byCause,
     missingWithSourceContext: result.rootCauseDiagnostics.wealth.casesWithExistingSourceContext,
     missingWithHiddenWealthMembership: result.rootCauseDiagnostics.wealth.casesWithHiddenWealthMembership,
@@ -332,6 +355,12 @@ export function runFiveHundredSajuAudit() {
       !result.rootCauseDiagnostics.wealth.allCasesHaveExplicitCause ||
       result.rootCauseDiagnostics.wealth.missingCaseCount !==
         result.menuResults['재물'].withoutReadableText ||
+      result.rootCauseDiagnostics.wealthConsumerEvidence.examined !== COUNT ||
+      result.rootCauseDiagnostics.wealthConsumerEvidence.withoutWealthT8 !==
+        result.rootCauseDiagnostics.wealth.missingCaseCount ||
+      result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText +
+        result.rootCauseDiagnostics.wealthConsumerEvidence.withBoundedT5ContextInstead !==
+          result.rootCauseDiagnostics.wealth.missingCaseCount ||
       result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups !==
         result.menuResults['올해'].exactText.casesInRepeatedGroups ||
       result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups !==
