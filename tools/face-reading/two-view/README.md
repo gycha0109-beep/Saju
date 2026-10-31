@@ -1,6 +1,6 @@
 # Local two-view job and visible metric preview
 
-Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local experiment), #2606 (full-frame preservation), #2607 (instance routing), #2608 (region screening/profile ratios), #2698 (source-linked eye observation), #2729 (multi-region morphology assessment). Watchtower-Track: face-observation-engine.
+Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local experiment), #2606 (full-frame preservation), #2607 (instance routing), #2608 (region screening/profile ratios), #2698 (source-linked eye observation), #2729 (multi-region morphology assessment), #2743 (explicitly fictional experience). Watchtower-Track: face-observation-engine.
 
 This implements P0/P1 and the P2 parsing comparison of the two-view design. Users can select a frontal and a
 profile image, execute the supported jobs together, cancel work, and inspect
@@ -8,6 +8,59 @@ every existing local engineering capture in one batch. The profile slot is
 managed and parsed, with separate engineering visible-class ratios for profile slots.
 
 ## Run
+
+### Fictional entertainment flow
+
+The experience can run without the private photo inventory or model assets:
+
+```powershell
+node tools/face-reading/two-view/experience-server.mjs
+```
+
+Open `http://127.0.0.1:8769/two-view/experience`. This static-only server binds
+to loopback, verifies Host, accepts GET only, serves an exact asset allowlist
+and has no photo/model/data dependency. Both servers reuse `experienceAssets()`;
+there is no duplicate route definition. This separation was required after the
+old private review server failed startup with a missing local prerequisite.
+Its privacy/pin/inventory guards were preserved rather than relaxed. Existing
+full review runtime restoration must be checked separately when those private
+prerequisites are available.
+
+`/two-view/experience` is a separate, explicitly fictional prototype: select a
+topic and story direction → build authored scenario → show a title, composite
+narrative and two story scenes. `experience.mjs` accepts exactly `topic` and
+`direction`; photo/metric/identity fields and unknown selections reject. Nine
+curated scenarios are authored fiction, not attributed to traditional source
+rules, model analysis or future events. The disclosure appears before input
+and inside the result. No invented analysis progress or inference animation is
+shown. This experience is not a completed personal physiognomy reading.
+
+The optional photograph is a browser-only object URL preview, explicitly
+unrelated to the result. It never enters the builder, server, model, network
+payload, source catalogue, saved observation batch or storage. Page exit,
+replacement, removal and decode error revoke the URL. CSP blocks connection
+requests from this page. No API key, paid API, payment flow, database or
+authority change is added. Existing observation routes, masks, schemas and
+source-rule flags remain unchanged. New topic/direction selections are only
+local fiction inputs, not canonical semantic categories or aliases.
+
+The end-to-end story is form input → pure selection-only builder → DOM result.
+The server serves static assets only for this new route. There is no result
+API or persistence path. Verification must cover all nine combinations,
+clear result provenance, photo independence, invalid-image recovery/reset,
+responsive rendering, and zero upload/storage requests. The original
+observation page links to the experience without merging either data path.
+
+Local verification for #2743: 14 targeted tests, TypeScript, scoped ESLint,
+Prettier and diff checks passed. The actual standalone browser flow rendered
+all nine scenarios at three widths (27 result views), with zero page errors.
+Photo replacement/removal, decode/type rejection, reset/reload, selection
+invalidation and photo-independent results passed. Browser storage stayed
+empty; no upload, model or result API requests occurred. Host/method/asset/
+malformed-URL guards returned 403/405/404/400 respectively. The full private
+review integration is **IMPLEMENTED_UNVERIFIED** because its existing startup
+returned `ENOENT`; its private prerequisite checks were not bypassed. This does
+not affect the independently verified static experience.
 
 From the repository root, with locked dependencies installed and an existing
 private intake/render inventory:

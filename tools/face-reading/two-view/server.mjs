@@ -21,6 +21,7 @@ import {
 import { validateParsingBatch } from './parsing-storage.mjs';
 import { INSTANCE_PIN } from './instance-frame.mjs';
 import { readingCatalogue } from './reading-catalogue.mjs';
+import { experienceAssets } from './experience-server.mjs';
 
 const sourceDir = dirname(fileURLToPath(import.meta.url));
 const repository = resolve(sourceDir, '../../..');
@@ -325,6 +326,7 @@ export async function createLocalReviewServer({
       'morphology-assessment.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
+  for (const [route, asset] of experienceAssets()) assets.set(route, asset);
   for (const name of [
     'ort.wasm.bundle.min.mjs',
     'ort-wasm-simd-threaded.mjs',
