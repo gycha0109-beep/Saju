@@ -254,9 +254,17 @@ describe('repeated temporal meaning versus genuinely different sourced natal T5 
       theme('TEN_GOD_PEER_BRANCHES_THEME','fictional.natal.position','겁재'),
     ]);
     const absent = record('D','same',[]);
-    const result = analyzeTemporalNatalT5Variation([good,bad,invalidPath,absent]);
+    const mismatchedChannel = record('E','same',[
+      theme('TEN_GOD_PEER_BRANCHES_THEME','derivedFacts.tenGods.value.year.stem.value','비견'),
+    ]);
+    const mismatchedGod = record('F','same',[
+      theme('TEN_GOD_PEER_BRANCHES_THEME',path('year'),'편재'),
+    ]);
+    const result = analyzeTemporalNatalT5Variation([
+      good,bad,invalidPath,absent,mismatchedChannel,mismatchedGod,
+    ]);
     expect(result.assessed).toBe(1);
-    expect(result.unassessed).toBe(3);
+    expect(result.unassessed).toBe(5);
     expect(result.repeatedMeaningProfilesWithDifferentNatalT5Evidence).toBe(0);
   });
 });
