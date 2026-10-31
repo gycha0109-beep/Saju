@@ -45,6 +45,7 @@ export interface GeneralAnnualExplorationSection {
   policySourceId: typeof GENERAL_ANNUAL_POLICY_SOURCE.sourceId;
   methodologyId: typeof GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId;
   relatedPillar?: PillarSlot;
+  observedClash?: Readonly<{ natalBranch: string; annualBranch: string; relation: 'clash' }>;
 }
 
 export interface GeneralAnnualExplorationReport {
@@ -137,7 +138,8 @@ export function buildGeneralAnnualExplorationReport(
       kind: 'tension',
       id: key,
       title: copy.headline,
-      text: copy.summary,
+      text: copy.summary +
+        ` 실제 관측된 관계는 ${SLOT_LABELS[slot]} 지지 ${state.value.natalBranch}와 ${facts.targetYear}년 지지 ${state.value.annualBranch} 사이의 충입니다. 이는 원국·연운의 계산 관계를 설명하는 것이며 실제 사건의 발생을 뜻하지 않습니다.`,
       interpretationStatus: 'internal_research',
       evidenceStatus: 'research_profile_projection_not_an_executed_official_claim',
       researchProfileId: copy.profileId,
@@ -149,6 +151,8 @@ export function buildGeneralAnnualExplorationReport(
       policySourceId: GENERAL_ANNUAL_POLICY_SOURCE.sourceId,
       methodologyId: GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId,
       relatedPillar: slot,
+      observedClash: { natalBranch: state.value.natalBranch,
+        annualBranch: state.value.annualBranch, relation: 'clash' },
     });
   }
 
