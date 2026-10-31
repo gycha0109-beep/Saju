@@ -18,6 +18,7 @@ import { buildThreeTemporalMenusBirthReading } from '../dist/preview/three-tempo
 import {
   diagnoseMissingWealthReading,
   analyzeTemporalRepetition,
+  analyzeTemporalMeaningRepetition,
   summarizeMissingWealthCauses,
   ROOT_CAUSE_AUDIT_VERSION,
 } from './saju-500-root-cause.mjs';
@@ -253,6 +254,8 @@ export function runFiveHundredSajuAudit() {
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
       annualRepetition: analyzeTemporalRepetition(rows['올해']),
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
+      annualMeaningRepetition: analyzeTemporalMeaningRepetition(rows['올해']),
+      monthlyMeaningRepetition: analyzeTemporalMeaningRepetition(rows['이번 달']),
     },
     interpretationCaveat:'Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
     permissions:{mayPublish:false,maySell:false,mayCallOfficial:false},
@@ -262,6 +265,8 @@ export function runFiveHundredSajuAudit() {
   process.stdout.write('SAJU500_ROOT_CAUSE_SUMMARY '+JSON.stringify({
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
     missingCauses: result.rootCauseDiagnostics.wealth.byCause,
+    remediationGroups: result.rootCauseDiagnostics.wealth.remediation.groupCount,
+    remediationTargets: result.rootCauseDiagnostics.wealth.remediation.byRemediationTarget,
     annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
     monthlyRepeated: result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups,
   })+'\n');
@@ -273,7 +278,12 @@ export function runFiveHundredSajuAudit() {
       result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups !==
         result.menuResults['올해'].exactText.casesInRepeatedGroups ||
       result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups !==
-        result.menuResults['이번 달'].exactText.casesInRepeatedGroups) {
+        result.menuResults['이번 달'].exactText.casesInRepeatedGroups ||
+      result.rootCauseDiagnostics.annualMeaningRepetition.casesInRepeatedGroups !==
+        result.menuResults['올해'].meaningProfile.casesInRepeatedGroups ||
+      result.rootCauseDiagnostics.monthlyMeaningRepetition.casesInRepeatedGroups !==
+        result.menuResults['이번 달'].meaningProfile.casesInRepeatedGroups ||
+      result.rootCauseDiagnostics.wealth.remediation.caseCount !== wealthMissingCases.length) {
     process.exitCode=1;
   }
   return result;
