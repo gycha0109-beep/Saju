@@ -1,8 +1,16 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
-import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
+import { runInterpretation, type InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import { buildAnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
+import { buildReadingCompositionEvidence } from '../reading/reading-intent-composition.js';
+import {
+  createGeneralAnnualReadingCandidateRegistry,
+  GENERAL_ANNUAL_THEME_CLAIM_TYPE,
+  GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
+  GENERAL_ANNUAL_POLICY_SOURCE,
+  GENERAL_ANNUAL_READING_METHODOLOGY,
+} from '../research/general-annual-reading-candidate.js';
 import type { MonthlyInterpretationFacts, MonthlySegmentId } from '../reading/monthly-interpretation-facts.js';
 import { buildTemporalReadingContext } from '../reading/temporal-reading-context.js';
 import {
@@ -32,6 +40,16 @@ export interface GeneralAnnualMonthlyExplorationReport {
   targetYear: number;
   targetMonth: number;
   annual: GeneralAnnualExplorationReport;
+  /** Executed research-only annual T9 evidence, matched 1:1 to projected copy. */
+  annualExecutedEvidence: readonly Readonly<{
+    semanticKey: string;
+    claimId: string;
+    claimType: string;
+    ruleIds: readonly string[];
+    methodologyId: string;
+    sourceIds: readonly string[];
+    factPaths: readonly string[];
+  }>[];
   monthly: GeneralMonthlyExplorationReport;
   periodComparison: string;
   /** The yearly profile is for a Seoul civil calendar year, not an Ipchun annual pillar. */
@@ -104,9 +122,72 @@ export function buildGeneralAnnualMonthlyExplorationReport(
   };
   const annualContext = buildTemporalReadingContext(annualRequest);
   requireLinkedPeriod(annualContext?.scope === 'annual', 'annual context unavailable');
-  const annual = buildGeneralAnnualExplorationReport(
-    buildAnnualInterpretationFacts(snapshot, annualContext),
+  const annualFacts = buildAnnualInterpretationFacts(snapshot, annualContext);
+  const annual = buildGeneralAnnualExplorationReport(annualFacts);
+  // Unlike the legacy projection alone, this must execute the actual
+  // registered annual T9 Claim and EvidenceSelector for the SAME snapshot.
+  // Existing Korean research copy is displayed only with matching engine
+  // evidence; the annual Claim remains research-only, never Official.
+  const annualRegistry = createGeneralAnnualReadingCandidateRegistry(facts.referenceDateTime);
+  const annualExecution = runInterpretation(snapshot, annualRegistry, {
+    requestId: annualRequest.requestId,
+    temporalFacts: annualFacts,
+    now: new Date(facts.referenceDateTime),
+  });
+  requireLinkedPeriod(
+    annualExecution.integrity.valid &&
+    annualExecution.run.status !== 'failed' &&
+    annualExecution.run.snapshotId === snapshot.snapshotId &&
+    annualExecution.run.snapshotHash === snapshot.calculationHash &&
+    annualExecution.run.registrySnapshotId === annualRegistry.snapshot.registrySnapshotId &&
+    annualRegistry.pack.status === 'research',
+    'annual T9 execution must have the same natal snapshot and research registry',
   );
+  const annualSelection = buildReadingCompositionEvidence(
+    snapshot, annualExecution, annualRegistry, annualRequest,
+  );
+  requireLinkedPeriod(annualSelection.selection.coverageState === 'complete' &&
+    annualSelection.evidence !== undefined,
+    'annual projection requires source-selected executed period evidence');
+  const selectedAnnualClaims = new Set(annualSelection.selection.selectedClaimIds);
+  const annualClaims = annualExecution.claims.filter(claim =>
+    claim.state === 'active' && claim.snapshotId === snapshot.snapshotId &&
+    claim.taxonomy.tier === 'T9' && claim.taxonomy.category === 'general' &&
+    claim.taxonomy.subcategory === 'annual' &&
+    selectedAnnualClaims.has(claim.claimId));
+  requireLinkedPeriod(annualClaims.length === annual.sections.length,
+    'all projected annual meanings require exactly one selected T9 Claim');
+  const annualExecutedEvidence = annual.sections.map(section => {
+    const matches = annualClaims.filter(claim => {
+      const value = claim.value as { semanticKey?: string; tenGod?: string;
+        natalPillar?: string; relation?: string };
+      return claim.claimType === section.candidateClaimType &&
+        value.semanticKey === section.id &&
+        (section.kind === 'core'
+          ? claim.claimType === GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType &&
+            value.tenGod === annualFacts.annualStemTenGod
+          : claim.claimType === GENERAL_ANNUAL_TENSION_CLAIM_TYPE.claimType &&
+            value.natalPillar === section.relatedPillar && value.relation === 'clash');
+    });
+    requireLinkedPeriod(matches.length === 1,
+      'projected annual profile does not match an executed annual Claim');
+    const claim = matches[0]!;
+    requireLinkedPeriod(
+      claim.methodologyRef.id === GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId &&
+      section.methodologyId === claim.methodologyRef.id &&
+      section.policySourceId === GENERAL_ANNUAL_POLICY_SOURCE.sourceId &&
+      claim.sourceRefs.includes(GENERAL_ANNUAL_POLICY_SOURCE.sourceId) &&
+      claim.ruleRefs.length > 0 &&
+      section.calculationFactPaths.every(path => claim.factRefs.includes(path)),
+      'annual Claim is missing selected method, source or exact calculation facts',
+    );
+    return {
+      semanticKey: section.id, claimId: claim.claimId, claimType: claim.claimType,
+      ruleIds: claim.ruleRefs.map(rule => rule.ruleId),
+      methodologyId: claim.methodologyRef.id,
+      sourceIds: [...claim.sourceRefs], factPaths: [...claim.factRefs],
+    };
+  });
   requireLinkedPeriod(
     annual.targetYear === monthly.targetYear &&
     annual.referenceDateTime === facts.referenceDateTime &&
@@ -180,7 +261,8 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     researchOnly: true, usefulComplete: false, mayPublish: false, maySell: false,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     targetYear: monthly.targetYear, targetMonth: monthly.targetMonth,
-    annual, monthly, periodComparison, annualReference, referenceReading, annualCurrentReading,
+    annual, annualExecutedEvidence, monthly, periodComparison,
+    annualReference, referenceReading, annualCurrentReading,
     caveats: [
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
       '이 연결 화면은 별도 통합 운세 규칙이 아니라 기존 연운 연구 문구와 월운 T9 근거를 순서대로 보여줍니다.',
@@ -224,15 +306,27 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   report: GeneralAnnualMonthlyExplorationReport,
 ): string {
   const e = escapeHtml;
-  const annual = report.annual.sections.map(section =>
+  if (report.annualExecutedEvidence.length !== report.annual.sections.length ||
+      report.annual.sections.some((section, i) =>
+        report.annualExecutedEvidence[i]?.semanticKey !== section.id ||
+        report.annualExecutedEvidence[i]?.claimType !== section.candidateClaimType ||
+        report.annualExecutedEvidence[i]?.methodologyId !== section.methodologyId ||
+        !report.annualExecutedEvidence[i]?.sourceIds.includes(section.policySourceId) ||
+        !section.calculationFactPaths.every(path =>
+          report.annualExecutedEvidence[i]!.factPaths.includes(path)))) {
+    throw new TypeError('Annual/monthly HTML requires matched executed annual T9 research evidence.');
+  }
+  const annual = report.annual.sections.map((section, i) =>
     '<article class="reading-card"><small>' +
     (section.kind === 'core' ? '올해의 중심 관점' : '연운의 조건부 충 관계') +
     '</small><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
     '<details><summary>올해 문구의 계산 근거와 연구 출처</summary>' +
-    '<p>해석 범위: 내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)</p>' +
+    '<p>해석 범위: 기존 연구 프로필의 한국어 문구 + 별도 실행된 연구 T9 Claim (Official 승인 아님)</p>' +
     '<p>문구 프로필: ' + e(section.researchProfileId) + '</p>' +
     '<p>후보 Claim 유형: ' + e(section.candidateClaimType) + '</p>' +
-    '<p>계산 경로: ' + e(section.calculationFactPaths.join(' · ')) + '</p>' +
+    '<p>실행된 연구 Claim: ' + e(report.annualExecutedEvidence[i]!.claimId) + '</p>' +
+    '<p>실행된 연구 규칙: ' + e(report.annualExecutedEvidence[i]!.ruleIds.join(' · ')) + '</p>' +
+    '<p>계산 경로: ' + e(report.annualExecutedEvidence[i]!.factPaths.join(' · ')) + '</p>' +
     '<p>연구 방법론: ' + e(section.methodologyId) + '</p>' +
     '<p>출처: ' + e(section.policySourceId) + ' (명하 내부 연구 정책, 독립 고전 근거 아님)</p>' +
     '</details></article>',
