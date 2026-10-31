@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ROOT_CAUSE_AUDIT_VERSION,
   analyzeTemporalMeaningRepetition,
+  analyzeTemporalConsumedT9Meaning,
   analyzeTemporalStructuralEvidenceVariation,
   analyzeTemporalNatalT5Variation,
   analyzeTemporalRepetition,
@@ -322,3 +323,91 @@ describe('Wealth T8 coverage is not the same as user-visible T5 partial evidence
     ])).toThrow('contradict each other');
   });
 });
+
+describe('executed annual/monthly T9 meaning is not a changed date or generic profile', () => {
+  const annualTheme=(semanticKey='ANNUAL_PEER_SELF_DIRECTION')=>({
+    kind:'core',claimType:'GENERAL_ANNUAL_THEME_ACTIVATION',
+    semanticKey,tenGod:'비견',
+    ruleIds:['RULE-ANNUAL-TEST'],methodologyId:'M-ANNUAL-TEST',
+    sourceIds:['SRC-ANNUAL-RESEARCH'],
+    factPaths:['temporal.annualStemTenGod'],
+  });
+  const monthlyTheme=(semanticKey='PEER_SELF_DIRECTION')=>({
+    kind:'theme',segmentId:'before_jeol',
+    claimType:'GENERAL_MONTHLY_SEGMENT_THEME_ACTIVATION',
+    semanticKey,tenGod:'비견',
+    ruleIds:['RULE-MONTH-TEST'],methodologyId:'M-MONTH-TEST',
+    sourceIds:['SRC-MONTH-RESEARCH'],
+    factPaths:['temporal.segmentsById.before_jeol.monthlyStemTenGod'],
+  });
+  const annualClash=(relatedPillar='year')=>({
+    kind:'tension',claimType:'GENERAL_ANNUAL_BRANCH_CLASH_TENSION',
+    semanticKey:'ANNUAL_NATAL_BRANCH_CLASH',
+    relatedPillar,relation:'clash',
+    ruleIds:['RULE-ANNUAL-CLASH'],methodologyId:'M-ANNUAL-TEST',
+    sourceIds:['SRC-ANNUAL-RESEARCH'],factPaths:['temporal.annualBranchRelations.'+relatedPillar],
+  });
+  const monthlyClash=(relatedPillar='year')=>({
+    kind:'tension',segmentId:'after_jeol',
+    claimType:'GENERAL_MONTHLY_SEGMENT_BRANCH_CLASH_TENSION',
+    semanticKey:'MONTHLY_NATAL_BRANCH_CLASH',
+    relatedPillar,relation:'clash',
+    ruleIds:['RULE-MONTH-CLASH'],methodologyId:'M-MONTH-TEST',
+    sourceIds:['SRC-MONTH-RESEARCH'],factPaths:[
+      'temporal.segmentsById.after_jeol.monthlyBranchRelations.'+relatedPillar+'.relation',
+    ],
+  });
+  const row=(birth, meaningKey, consumedT9) => ({
+    birth,meaningKey,exactKey:'text-'+birth,calculationHash:'chart-'+birth,
+    sourceEvidence:{consumedT9,natalT5:[{unconsumed:true,birth}]},
+  });
+  it('detects different selected research meaning hidden by identical annual display profile', () => {
+    const a=row('A','same',[annualTheme(),annualClash('year')]);
+    const b=row('B','same',[annualTheme(),annualClash('month')]);
+    const c=row('C','same',[annualClash('year'),annualTheme()]);
+    const d=row('D','other',[annualTheme('ANNUAL_PEER_COMPETITION_COORDINATION')]);
+    const r=analyzeTemporalConsumedT9Meaning([a,b,c,d],'annual');
+    expect(r.assessed).toBe(4);
+    expect(r.unassessed).toBe(0);
+    expect(r.distinctExecutedMeaningSignatures).toBe(3);
+    expect(r.casesInRepeatedExecutedMeaningGroups).toBe(2);
+    expect(r.oldDisplayProfilesHidingDistinctExecutedMeaning).toBe(1);
+    expect(r.conflictingOldProfiles[0].cases).toBe(3);
+  });
+  it('does not turn a different birth, timestamp, Claim ID, source ID or unused T5 into new meaning', () => {
+    const first=monthlyTheme();
+    const changed={...first,sourceIds:['SRC-ALTERNATIVE-RESEARCH'],
+      claimId:'another-claim',factPaths:['another.valid.fact.path']};
+    const rows=[row('A','same',[first,monthlyClash()]),
+      row('B','same',[monthlyClash(),changed])];
+    const r=analyzeTemporalConsumedT9Meaning(rows,'monthly');
+    expect(r.distinctExecutedMeaningSignatures).toBe(1);
+    expect(r.oldDisplayProfilesHidingDistinctExecutedMeaning).toBe(0);
+    expect(r.casesInRepeatedExecutedMeaningGroups).toBe(2);
+    expect(r.qualification).toContain('not unconsumed natal T5');
+  });
+  it('distinguishes selected monthly segment and actual rule meaning, not just the title', () => {
+    const base=monthlyTheme();
+    const changeSegment={...base,segmentId:'after_jeol'};
+    const changeRule={...base,ruleIds:['RULE-MONTH-OTHER']};
+    const rows=[row('A','same',[base]),row('B','same',[changeSegment]),
+      row('C','same',[changeRule])];
+    const r=analyzeTemporalConsumedT9Meaning(rows,'monthly');
+    expect(r.distinctExecutedMeaningSignatures).toBe(3);
+    expect(r.oldDisplayProfilesHidingDistinctExecutedMeaning).toBe(1);
+  });
+  it('does not count unselected, unsourced or invalid T9 values as executed meanings', () => {
+    const bad=row('B','same',[{...monthlyTheme(),ruleIds:[]}]);
+    const mismatched=row('C','same',[{...monthlyTheme(),claimType:'TEN_GOD_WEALTH_BRANCHES_THEME'}]);
+    const missing=row('D','same',[]);
+    const result=analyzeTemporalConsumedT9Meaning([
+      row('A','same',[monthlyTheme()]),bad,mismatched,missing,
+    ],'monthly');
+    expect(result.assessed).toBe(1);
+    expect(result.unassessed).toBe(3);
+    expect(result.distinctExecutedMeaningSignatures).toBe(1);
+    expect(() => analyzeTemporalConsumedT9Meaning([], 'life_stage'))
+      .toThrow('annual or monthly scope');
+  });
+});
+
