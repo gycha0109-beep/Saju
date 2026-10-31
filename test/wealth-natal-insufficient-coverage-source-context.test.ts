@@ -57,16 +57,21 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(report.maySell).toBe(false);
   });
 
-  it('distinguishes a present wealth T5 with no eligible same-channel combination', () => {
+  it('explains channel-split wealth T5 evidence without manufacturing a same-channel synthesis', () => {
     const { execution, report } = wealthReading(1955, 10, 31, 19, 35);
     expect(execution.claims.some(c => c.state === 'active' &&
       c.claimType.startsWith('TEN_GOD_WEALTH_'))).toBe(true);
     expect(report.sections).toHaveLength(0);
     expect(report.state).toBe('insufficient');
     const reason = report.missing.join(' ');
-    expect(reason).toContain('재성 관련 십신 관점은 있지만');
-    expect(reason).toContain('같은 관측 범위');
+    expect(reason).toContain('천간: 비겁·식상 / 지지 대표 십신: 재성');
+    expect(reason).toContain('천간과 지지 대표 십신으로 나뉘어 있습니다');
+    expect(reason).toContain('동일 관측 범위의 복합 근거');
+    expect(reason).toContain('서로 다른 채널을 임의로 결합해 재물 종합 결론을 만들 수 없습니다');
     expect(reason).toContain('실제 소득·재산·재물운의 좋고 나쁨을 뜻하지 않습니다');
+    expect(report.availableThemeContext?.wealthConclusionAuthorized).toBe(false);
     expect(report.usefulComplete).toBe(false);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
   });
 });
