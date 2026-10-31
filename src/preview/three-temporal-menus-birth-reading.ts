@@ -133,9 +133,11 @@ function render(
       e(theme.text) + '</p><details><summary>이 구간의 T9 근거</summary><p>Claim: ' +
       e(theme.claimId) + '</p><p>계산 구간: ' +
       e(theme.calculatedInterval.startsAt) + ' — ' +
-      e(theme.calculatedInterval.endsAt) + '</p><p>출처: ' +
+      e(theme.calculatedInterval.endsAt) + '</p><p>실제 계산 경로: ' +
+      e(theme.factPaths.join(' · ')) + '</p><p>출처: ' +
       e(theme.sourceIds.join(' · ')) + '</p><p>규칙: ' +
-      e(theme.ruleIds.join(' · ')) + '</p></details></article>' +
+      e(theme.ruleIds.join(' · ')) + '</p><p>연구 방법론: ' +
+      e(theme.methodologyId) + '</p></details></article>' +
       (monthlyFocus.sourceBoundTensions?.length
         ? '<div class="active-month-relations" aria-label="조회 시각 절입 구간의 실제 원국 충 관계">' +
           '<h4>이 절입 구간에서 함께 확인된 원국의 충 관계</h4>' +
@@ -145,6 +147,7 @@ function render(
             '</p><details><summary>현재 구간에 선택된 월운 T9 근거</summary>' +
             '<p>Claim: ' + e(section.claimId) +
             '</p><p>규칙: ' + e(section.ruleIds.join(' · ')) +
+            '</p><p>연구 방법론: ' + e(section.methodologyId) +
             '</p><p>계산: ' + e(section.factPaths.join(' · ')) +
             '</p><p>출처: ' + e(section.sourceIds.join(' · ')) +
             '</p><p>적용 기간: ' + e(section.calculatedInterval.startsAt) +
@@ -153,12 +156,16 @@ function render(
           '<p>관측된 지지 충의 연구용 설명이며 실제 사건·길흉을 예측하지 않습니다.</p></div>'
         : '');
   const monthly = report.monthly.sections.map(section =>
-    '<article><h3>' + (section.segmentId === 'before_jeol'
+    '<article><small>' + (section.kind === 'theme'
+      ? '절입 구간의 중심 주제' : '해당 구간의 조건부 원국 충 관계') +
+      '</small><h3>' + (section.segmentId === 'before_jeol'
       ? '절입 전 · ' : '절입 이후 · ') + e(section.title) + '</h3><p>' +
       e(section.text) + '</p><details><summary>절입 기간·T9 Claim과 출처</summary>' +
       '<p>기간: ' + e(section.calculatedInterval.startsAt) + ' — ' +
       e(section.calculatedInterval.endsAt) + '</p><p>Claim: ' +
       e(section.claimId) + '</p><p>계산: ' + e(section.factPaths.join(' · ')) +
+      '</p><p>규칙: ' + e(section.ruleIds.join(' · ')) +
+      '</p><p>연구 방법론: ' + e(section.methodologyId) +
       '</p><p>출처: ' + e(section.sourceIds.join(' · ')) +
       '</p></details></article>',
   ).join('') || '<p>선택한 월에 읽을 수 있는 출처 연결 풀이가 없습니다.</p>';
