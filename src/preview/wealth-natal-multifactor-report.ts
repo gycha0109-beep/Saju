@@ -27,6 +27,23 @@ export interface WealthNatalMultifactorSection {
   observedPositions: readonly string[];
   observedFactPaths: readonly string[];
 }
+/** Existing source-qualified T5 observations, NOT a Wealth T8 synthesis. */
+export interface WealthNatalAvailableThemeContext {
+  title: string;
+  paragraph: string;
+  wealthConclusionAuthorized: false;
+  themes: readonly {
+    claimId: string;
+    claimType: string;
+    channel: Channel;
+    family: string;
+    headline: string;
+    summary: string;
+    sourceIds: readonly string[];
+    observedPositions: readonly string[];
+    observedFactPaths: readonly string[];
+  }[];
+}
 export interface WealthNatalReadingGuide {
   title: string;
   paragraph: string;
@@ -46,6 +63,7 @@ export interface WealthNatalMultifactorReport {
   introduction: string;
   sections: readonly WealthNatalMultifactorSection[];
   readingGuide?: WealthNatalReadingGuide;
+  availableThemeContext?: WealthNatalAvailableThemeContext;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -146,6 +164,80 @@ function explainMissingWealthT8(
     : '기존 십신 관점 규칙에서 재성 계열의 활성 근거가 확인되지 않아, 등록된 재물 복합 해석 규칙을 적용할 수 없습니다. ';
   return sourceNote + reason +
     '이는 재성이 없거나 돈이 없다는 판정이 아니며, 실제 소득·재산·재물운의 좋고 나쁨을 뜻하지 않습니다.';
+}
+
+/**
+ * Preserve the actual, individually sourced upstream T5 meanings when no
+ * authorized Wealth T8 paragraph exists. This is an observation aid, not a
+ * new Wealth claim or a workaround for the EvidenceSelector.
+ */
+function buildAvailableThemeContext(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+): WealthNatalAvailableThemeContext | undefined {
+  if (!snapshot.completeness.birthTimeKnown ||
+      snapshot.derivedFacts.tenGods.status !== 'resolved') return undefined;
+  const themes: WealthNatalAvailableThemeContext['themes'][number][] = [];
+  const claims = execution.claims.filter(c => c.state === 'active' &&
+    c.snapshotId === snapshot.snapshotId && c.scenarioRef === undefined &&
+    c.taxonomy.tier === 'T5' && c.predicate === 'ten_god_theme' &&
+    c.sourceRefs.length > 0)
+    .sort((a, b) => a.claimType.localeCompare(b.claimType));
+  for (const claim of claims) {
+    const match = /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+      .exec(claim.claimType);
+    if (!match) continue;
+    const family = match[1]!.toLowerCase();
+    const channel = match[2]!.toLowerCase() as Channel;
+    const value = claim.value as Record<string, unknown>;
+    guard(value.family === family && value.channel === channel &&
+      value.fortunePolarity === 'not_determined' &&
+      value.dominance === 'not_scored' &&
+      typeof value.headline === 'string' && value.headline.length > 0 &&
+      typeof value.summary === 'string' && value.summary.length > 0,
+      'T5 source theme is not a bounded same-chart observation');
+    const key = channel === 'visible_stems' ? 'stem' : 'branch';
+    const slots: readonly PillarSlot[] = channel === 'visible_stems'
+      ? ['year', 'month', 'hour'] : ['year', 'month', 'day', 'hour'];
+    const observations = slots.flatMap(slot => {
+      const tenGod = snapshot.derivedFacts.tenGods.value[slot][key];
+      if (tenGod?.status !== 'resolved' ||
+          !FAMILIES[family]?.includes(tenGod.value)) return [];
+      return [{
+        display: `${SLOT_NAMES[slot]} ${channel === 'visible_stems' ? '천간' : '지지 대표 십신'} ${tenGod.value}`,
+        factPath: `derivedFacts.tenGods.value.${slot}.${key}.value`,
+      }];
+    });
+    guard(observations.length > 0, 'T5 theme has no actual supporting chart position');
+    themes.push({
+      claimId: claim.claimId,
+      claimType: claim.claimType,
+      channel,
+      family,
+      headline: value.headline,
+      summary: value.summary,
+      sourceIds: [...claim.sourceRefs],
+      observedPositions: observations.map(x => x.display),
+      observedFactPaths: observations.map(x => x.factPath),
+    });
+  }
+  if (!themes.length) return undefined;
+  const sorted = themes.sort((a,b) =>
+    (a.family === 'wealth' ? -1 : 0) - (b.family === 'wealth' ? -1 : 0) ||
+    (a.channel === 'visible_stems' ? -1 : 0) -
+      (b.channel === 'visible_stems' ? -1 : 0) ||
+    a.family.localeCompare(b.family));
+  const paragraphs = sorted.map(theme =>
+    `‘${theme.headline}’ — ${theme.observedPositions.join(' · ')}에서 확인됐습니다. ${theme.summary}`);
+  return {
+    title: '재물 종합 결론 이전에 확인된 원국의 십신 주제',
+    paragraph: '아래는 기존 출처와 연결된 십신별 구조 설명입니다. ' +
+      paragraphs.join(' ') +
+      ' 이 관측들은 현재 등록된 재물 분야의 복합 해석 근거를 충족하지 못했습니다. ' +
+      '따라서 재물의 많고 적음, 소득, 투자 성과, 향후 재물운을 판단하는 해석으로 읽어서는 안 됩니다.',
+    wealthConclusionAuthorized: false,
+    themes: sorted,
+  };
 }
 
 function textFor(claimType: string, key: 'headline'|'summary') {
@@ -384,6 +476,8 @@ export function buildWealthNatalMultifactorReport(
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly WealthNatalMultifactorSection[] = chosen;
+  const availableThemeContext = sections.length === 0
+    ? buildAvailableThemeContext(snapshot, execution) : undefined;
   const readingGuide = buildWealthNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
@@ -400,6 +494,7 @@ export function buildWealthNatalMultifactorReport(
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(availableThemeContext === undefined ? {} : { availableThemeContext }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],
