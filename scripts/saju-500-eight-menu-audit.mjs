@@ -379,6 +379,11 @@ export function runFiveHundredSajuAudit() {
     monthlyExecutedMeaningSignatures: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.distinctExecutedMeaningSignatures,
     annualDisplayProfilesHidingExecutedMeaning: result.rootCauseDiagnostics.annualConsumedT9Meaning.oldDisplayProfilesHidingDistinctExecutedMeaning,
     monthlyDisplayProfilesHidingExecutedMeaning: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.oldDisplayProfilesHidingDistinctExecutedMeaning,
+    annualActualUsedEvidencePatterns: result.rootCauseDiagnostics.annualConsumedT9Meaning.actualEvidencePatternCount,
+    monthlyActualUsedEvidencePatterns: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.actualEvidencePatternCount,
+    monthlyExtraDisplayProfilesWithoutNewMeaning: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.excessDisplayProfileVariants,
+    annualActualMeaningControlledPairs: result.rootCauseDiagnostics.annualConsumedT9Meaning.contrastingMeaningPairs.length,
+    monthlyActualMeaningControlledPairs: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.contrastingMeaningPairs.length,
     annualProfilesWithDifferentObservedRelations:
       result.rootCauseDiagnostics.annualStructuralVariation.repeatedMeaningProfilesWithDifferentVerifiedRelations,
     monthlyProfilesWithDifferentObservedRelations:
@@ -411,6 +416,13 @@ export function runFiveHundredSajuAudit() {
       result.rootCauseDiagnostics.monthlyNatalT5Variation.unassessed !== 0 ||
       result.rootCauseDiagnostics.annualConsumedT9Meaning.unassessed !== 0 ||
       result.rootCauseDiagnostics.monthlyConsumedT9Meaning.unassessed !== 0 ||
+      result.rootCauseDiagnostics.annualConsumedT9Meaning.actualEvidencePatternCount !==
+        result.rootCauseDiagnostics.annualConsumedT9Meaning.distinctExecutedMeaningSignatures ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.actualEvidencePatternCount !==
+        result.rootCauseDiagnostics.monthlyConsumedT9Meaning.distinctExecutedMeaningSignatures ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.actualEvidencePatternCount < 100 ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.sameMeaningPairs.length === 0 ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.contrastingMeaningPairs.length === 0 ||
       result.rootCauseDiagnostics.wealth.remediation.caseCount !== wealthMissingCases.length) {
     process.exitCode=1;
   }
