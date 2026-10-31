@@ -19,6 +19,7 @@ import {
   diagnoseMissingWealthReading,
   analyzeTemporalRepetition,
   analyzeTemporalMeaningRepetition,
+  analyzeTemporalConsumedT9Meaning,
   analyzeTemporalStructuralEvidenceVariation,
   analyzeTemporalNatalT5Variation,
   summarizeMissingWealthCauses,
@@ -143,6 +144,24 @@ function temporalEntries(result, natalT5) {
   // as distinct life-stage interpretations.
   a.sourceEvidence = {
     natalT5,
+    consumedT9:annual.map((section, index) => {
+      const evidence=report.annualExecutedEvidence[index];
+      if (!evidence || evidence.semanticKey !== section.id) {
+        throw new Error('Annual audit cannot guess missing selected T9 semantics');
+      }
+      return {
+        kind:section.kind,
+        claimType:evidence.claimType,
+        semanticKey:evidence.semanticKey,
+        ...(section.kind === 'core' ? {tenGod:report.annual.annualStemTenGod} : {
+          relatedPillar:section.relatedPillar, relation:section.observedClash?.relation,
+        }),
+        ruleIds:[...evidence.ruleIds],
+        methodologyId:evidence.methodologyId,
+        sourceIds:[...evidence.sourceIds],
+        factPaths:[...evidence.factPaths],
+      };
+    }),
     annualStemTenGod: report.annual.annualStemTenGod,
     annualCalendarPolicy: report.annual.calendarPolicy,
     sections: annual.map(s => ({
@@ -156,6 +175,19 @@ function temporalEntries(result, natalT5) {
   };
   m.sourceEvidence = {
     natalT5,
+    consumedT9:monthly.map(section => ({
+      kind:section.kind,
+      segmentId:section.segmentId,
+      claimType:section.claimType,
+      semanticKey:section.semanticKey,
+      ...(section.kind === 'theme' ? {tenGod:section.tenGod} : {
+        relatedPillar:section.relatedPillar, relation:section.observedClash?.relation,
+      }),
+      ruleIds:[...section.ruleIds],
+      methodologyId:section.methodologyId,
+      sourceIds:[...section.sourceIds],
+      factPaths:[...section.factPaths],
+    })),
     referenceState: focus.state,
     referenceSegment: focus.segmentId ?? null,
     sections: monthly.map(s => ({
@@ -318,6 +350,8 @@ export function runFiveHundredSajuAudit() {
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
       annualMeaningRepetition: analyzeTemporalMeaningRepetition(rows['올해']),
       monthlyMeaningRepetition: analyzeTemporalMeaningRepetition(rows['이번 달']),
+      annualConsumedT9Meaning: analyzeTemporalConsumedT9Meaning(rows['올해'],'annual'),
+      monthlyConsumedT9Meaning: analyzeTemporalConsumedT9Meaning(rows['이번 달'],'monthly'),
       annualStructuralVariation: analyzeTemporalStructuralEvidenceVariation(rows['올해']),
       monthlyStructuralVariation: analyzeTemporalStructuralEvidenceVariation(rows['이번 달']),
       annualNatalT5Variation: analyzeTemporalNatalT5Variation(rows['올해']),
@@ -341,6 +375,10 @@ export function runFiveHundredSajuAudit() {
     remediationTargets: result.rootCauseDiagnostics.wealth.remediation.byRemediationTarget,
     annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
     monthlyRepeated: result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups,
+    annualExecutedMeaningSignatures: result.rootCauseDiagnostics.annualConsumedT9Meaning.distinctExecutedMeaningSignatures,
+    monthlyExecutedMeaningSignatures: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.distinctExecutedMeaningSignatures,
+    annualDisplayProfilesHidingExecutedMeaning: result.rootCauseDiagnostics.annualConsumedT9Meaning.oldDisplayProfilesHidingDistinctExecutedMeaning,
+    monthlyDisplayProfilesHidingExecutedMeaning: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.oldDisplayProfilesHidingDistinctExecutedMeaning,
     annualProfilesWithDifferentObservedRelations:
       result.rootCauseDiagnostics.annualStructuralVariation.repeatedMeaningProfilesWithDifferentVerifiedRelations,
     monthlyProfilesWithDifferentObservedRelations:
@@ -371,6 +409,8 @@ export function runFiveHundredSajuAudit() {
         result.menuResults['이번 달'].meaningProfile.casesInRepeatedGroups ||
       result.rootCauseDiagnostics.annualNatalT5Variation.unassessed !== 0 ||
       result.rootCauseDiagnostics.monthlyNatalT5Variation.unassessed !== 0 ||
+      result.rootCauseDiagnostics.annualConsumedT9Meaning.unassessed !== 0 ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.unassessed !== 0 ||
       result.rootCauseDiagnostics.wealth.remediation.caseCount !== wealthMissingCases.length) {
     process.exitCode=1;
   }
