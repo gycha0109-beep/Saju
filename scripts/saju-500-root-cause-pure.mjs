@@ -236,6 +236,69 @@ export function analyzeTemporalStructuralEvidenceVariation(rows) {
   };
 }
 
+/**
+ * Source-backed natal evidence may differ behind an identical annual/monthly
+ * reading profile. This is a diagnostic of UNUSED existing chart evidence,
+ * never an extra temporal Claim or proof that the period meanings differ.
+ * Compare T5 claim types AND their actual observed Ten-God positions, not
+ * chart IDs, birth dates, raw strings, or invented variability.
+ */
+export function analyzeTemporalNatalT5Variation(rows) {
+  const byMeaning = new Map();
+  let unassessed = 0;
+  for (const row of rows) {
+    const themes = row.sourceEvidence?.natalT5;
+    if (typeof row.meaningKey !== 'string' || !Array.isArray(themes) ||
+        !themes.every(t => t && typeof t.claimType === 'string' &&
+          /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(t.claimType) &&
+          Array.isArray(t.sourceIds) && t.sourceIds.length > 0 &&
+          t.sourceIds.every(s => typeof s === 'string' && s.length > 0) &&
+          Array.isArray(t.observed) && t.observed.length > 0 &&
+          t.observed.every(p => typeof p.factPath === 'string' &&
+            /^derivedFacts\\.tenGods\\.value\\.(year|month|day|hour)\\.(stem|branch)\\.value$/u.test(p.factPath) &&
+            typeof p.tenGod === 'string' && p.tenGod.length > 0))) {
+      unassessed++;
+      continue;
+    }
+    const observed = themes.map(t => ({
+      claimType: t.claimType,
+      positions: [...t.observed]
+        .map(p => [p.factPath, p.tenGod])
+        .sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
+    })).sort((a,b) => a.claimType.localeCompare(b.claimType));
+    const signature = JSON.stringify(observed);
+    const group = byMeaning.get(row.meaningKey) ?? [];
+    group.push({birth:row.birth, calculationHash:row.calculationHash, signature, observed});
+    byMeaning.set(row.meaningKey, group);
+  }
+  const groups = [...byMeaning.entries()]
+    .filter(([, members]) => members.length > 1 &&
+      new Set(members.map(m => m.signature)).size > 1)
+    .sort((a,b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
+    .map(([meaningProfileKey, members]) => {
+      const variants = new Map();
+      for (const m of members) {
+        if (!variants.has(m.signature)) variants.set(m.signature, m);
+      }
+      return {
+        meaningProfileKey,
+        caseCount: members.length,
+        distinctNatalT5Signatures: variants.size,
+        examples: [...variants.values()].slice(0, 3).map(m => ({
+          birth:m.birth, calculationHash:m.calculationHash, observed:m.observed,
+        })),
+      };
+    });
+  return {
+    assessed: rows.length - unassessed,
+    unassessed,
+    repeatedMeaningProfilesWithDifferentNatalT5Evidence: groups.length,
+    casesInSuchProfiles: groups.reduce((n,g)=>n+g.caseCount,0),
+    groups,
+    qualification: 'Different source-backed natal Ten-God observations do not authorize distinct annual/monthly interpretations',
+  };
+}
+
 export function summarizeMissingWealthCauses(cases) {
   const byCause = frequency(cases.map(row => row.cause));
   return {
