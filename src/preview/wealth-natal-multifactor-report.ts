@@ -175,8 +175,8 @@ function buildAvailableThemeContext(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
 ): WealthNatalAvailableThemeContext | undefined {
-  if (!snapshot.completeness.birthTimeKnown ||
-      snapshot.derivedFacts.tenGods.status !== 'resolved') return undefined;
+  const tenGodFact = snapshot.derivedFacts.tenGods;
+  if (!snapshot.completeness.birthTimeKnown || tenGodFact.status !== 'resolved') return undefined;
   const themes: WealthNatalAvailableThemeContext['themes'][number][] = [];
   const claims = execution.claims.filter(c => c.state === 'active' &&
     c.snapshotId === snapshot.snapshotId && c.scenarioRef === undefined &&
@@ -200,7 +200,7 @@ function buildAvailableThemeContext(
     const slots: readonly PillarSlot[] = channel === 'visible_stems'
       ? ['year', 'month', 'hour'] : ['year', 'month', 'day', 'hour'];
     const observations = slots.flatMap(slot => {
-      const tenGod = snapshot.derivedFacts.tenGods.value[slot][key];
+      const tenGod = tenGodFact.value[slot][key];
       if (tenGod?.status !== 'resolved' ||
           !FAMILIES[family]?.includes(tenGod.value)) return [];
       return [{
