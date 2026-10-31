@@ -72,12 +72,14 @@ export function buildWealthRemediationGroups(cases) {
     const t5ThemeTypes = [...new Set(row.upstream.availableT5ClaimTypes)].sort();
     const eligibleRuleIds = [...new Set(row.rules.eligibleRuleIds)].sort();
     const remediationTarget = targets[row.cause] ?? 'unclassified_manual_review';
-    const memberships = row.existingSourceThemeContext?.hiddenWealthMembership;
-    const hiddenWealthEvidenceState = !Array.isArray(memberships)
-      ? 'not_assessed'
-      : memberships.length > 0
-        ? 'calculated_membership_observed_not_T5'
-        : 'not_observed_in_calculated_membership';
+    const evidence = row.existingSourceThemeContext;
+    const memberships = evidence?.hiddenWealthMembership;
+    const hiddenWealthEvidenceState =
+      evidence?.hiddenWealthEvidenceStatus !== 'resolved' || !Array.isArray(memberships)
+        ? 'not_assessed'
+        : memberships.length > 0
+          ? 'calculated_membership_observed_not_T5'
+          : 'not_observed_in_calculated_membership';
     const groupIdentity = {
       cause: row.cause,
       remediationTarget,
@@ -104,8 +106,11 @@ export function buildWealthRemediationGroups(cases) {
     byRemediationTarget: frequency(cases.map(row =>
       targets[row.cause] ?? 'unclassified_manual_review')),
     byHiddenWealthEvidenceState: frequency(cases.map(row => {
-      const observations = row.existingSourceThemeContext?.hiddenWealthMembership;
-      return !Array.isArray(observations) ? 'not_assessed'
+      const evidence = row.existingSourceThemeContext;
+      const observations = evidence?.hiddenWealthMembership;
+      return evidence?.hiddenWealthEvidenceStatus !== 'resolved' ||
+        !Array.isArray(observations)
+        ? 'not_assessed'
         : observations.length ? 'calculated_membership_observed_not_T5'
           : 'not_observed_in_calculated_membership';
     })),
@@ -161,9 +166,11 @@ export function summarizeMissingWealthCauses(cases) {
     remediation: buildWealthRemediationGroups(cases),
     casesWithHiddenWealthMembership: cases.filter(row =>
       row.existingSourceThemeContext?.wealthConclusionAuthorized === false &&
+      row.existingSourceThemeContext?.hiddenWealthEvidenceStatus === 'resolved' &&
       row.existingSourceThemeContext?.hiddenWealthMembership?.length > 0).length,
     hiddenWealthObservationCount: cases.reduce((sum, row) =>
-      sum + (row.existingSourceThemeContext?.hiddenWealthMembership?.length ?? 0), 0),
+      sum + (row.existingSourceThemeContext?.hiddenWealthEvidenceStatus === 'resolved'
+        ? row.existingSourceThemeContext.hiddenWealthMembership?.length ?? 0 : 0), 0),
     casesWithExistingSourceContext: cases.filter(row =>
       row.existingSourceThemeContext?.themeCount > 0 &&
       row.existingSourceThemeContext.wealthConclusionAuthorized === false).length,
