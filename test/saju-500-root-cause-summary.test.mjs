@@ -7,6 +7,7 @@ import {
   analyzeTemporalRepetition,
   buildWealthRemediationGroups,
   summarizeMissingWealthCauses,
+  summarizeWealthConsumerEvidence,
 } from '../scripts/saju-500-root-cause-pure.mjs';
 
 const wealthCase = (birth, calculationHash, cause, themeTypes = [], eligibleRuleIds = []) => ({
@@ -266,5 +267,58 @@ describe('repeated temporal meaning versus genuinely different sourced natal T5 
     expect(result.assessed).toBe(1);
     expect(result.unassessed).toBe(5);
     expect(result.repeatedMeaningProfilesWithDifferentNatalT5Evidence).toBe(0);
+  });
+});
+
+describe('Wealth T8 coverage is not the same as user-visible T5 partial evidence', () => {
+  const sourced = {
+    wealthConclusionAuthorized:false,
+    paragraph:'기존 근거가 확인된 십신의 제한적인 원국 부분 풀이입니다.',
+    themes:[{
+      claimId:'claim_source_t5',
+      claimType:'TEN_GOD_WEALTH_BRANCHES_THEME',
+      sourceIds:['SRC-GENERAL-NATAL-YUANHAI-SEMANTICS-WIKISOURCE'],
+      observedFactPaths:['derivedFacts.tenGods.value.month.branch.value'],
+    }],
+  };
+  const row = (birth, sectionCount, boundedT5Context) => ({
+    birth, calculationHash:'hash-'+birth,
+    sectionCount,
+    state:sectionCount ? 'partial':'insufficient',
+    text:sectionCount ? '등록된 재물 T8 문단':'',
+    missingReason:sectionCount ? null:'재물 T8 중심 근거 부족',
+    ...(boundedT5Context === undefined ? {} : {boundedT5Context}),
+  });
+
+  it('retains missing T8 counts while separately acknowledging actual source-bound T5 partials', () => {
+    const result = summarizeWealthConsumerEvidence([
+      row('no-T8-with-T5',0,sourced),
+      row('no-T8-no-T5',0),
+      row('indirect-T8-with-T5',1,sourced),
+      row('direct-T8',2),
+    ]);
+    expect(result.examined).toBe(4);
+    expect(result.withWealthT8).toBe(2);
+    expect(result.withoutWealthT8).toBe(2);
+    expect(result.withBoundedT5ContextInstead).toBe(1);
+    expect(result.withoutAnySourceBoundInterpretiveText).toBe(1);
+    expect(result.withBothWealthT8AndT5Context).toBe(1);
+    expect(result.researchOnlyNoWealthOutcomeAuthorized).toBe(true);
+    expect(result.noSynthesisCases).toEqual([
+      expect.objectContaining({birth:'no-T8-with-T5',hasSourceBoundT5Partial:true,themeCount:1}),
+      expect.objectContaining({birth:'no-T8-no-T5',hasSourceBoundT5Partial:false,themeCount:0}),
+    ]);
+  });
+
+  it('refuses a fake Wealth conclusion or source-less T5 paragraph as coverage', () => {
+    expect(() => summarizeWealthConsumerEvidence([
+      row('fake-conclusion',0,{...sourced,wealthConclusionAuthorized:true}),
+    ])).toThrow('cannot be counted');
+    expect(() => summarizeWealthConsumerEvidence([
+      row('no-source',0,{...sourced,themes:[{...sourced.themes[0],sourceIds:[]}]}),
+    ])).toThrow('cannot be counted');
+    expect(() => summarizeWealthConsumerEvidence([
+      {...row('contradictory',0),text:'fabricated T8 prose'},
+    ])).toThrow('contradict each other');
   });
 });
