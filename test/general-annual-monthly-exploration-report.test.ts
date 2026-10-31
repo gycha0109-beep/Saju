@@ -81,9 +81,19 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html.indexOf('id="reference-year-reading"'))
       .toBeLessThan(html.indexOf('full-year-profile-evidence'));
     expect(html).toContain('올해 문구의 계산 근거와 연구 출처');
-    expect(html).toContain('내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)');
+    expect(html).toContain('기존 연구 프로필의 한국어 문구 + 별도 실행된 연구 T9 Claim (Official 승인 아님)');
     expect(html).toContain('명하 내부 연구 정책, 독립 고전 근거 아님');
-    for (const section of report.annual.sections) {
+    expect(report.annualExecutedEvidence).toHaveLength(report.annual.sections.length);
+    for (const [index, section] of report.annual.sections.entries()) {
+      const executed = report.annualExecutedEvidence[index]!;
+      expect(executed.semanticKey).toBe(section.id);
+      expect(executed.claimType).toBe(section.candidateClaimType);
+      expect(executed.ruleIds.length).toBeGreaterThan(0);
+      expect(executed.sourceIds).toContain(section.policySourceId);
+      expect(executed.methodologyId).toBe(section.methodologyId);
+      expect(executed.factPaths).toEqual(expect.arrayContaining(section.calculationFactPaths));
+      expect(html).toContain(executed.claimId);
+      expect(html).toContain(executed.ruleIds[0]!);
       expect(html).toContain(section.researchProfileId);
       expect(html).toContain(section.candidateClaimType);
       expect(html).toContain(section.policySourceId);
@@ -97,6 +107,25 @@ describe('one-person annual to monthly source-bound research reading', () => {
     }
     expect(html).toContain('계산 근거와 출처');
     expect(html).toContain('Official Reading, 공개 또는 판매 권한을 부여하지 않습니다');
+  });
+
+  it('blocks invented annual evidence and preserves existing T9 research-only scope', () => {
+    const { report } = run(9);
+    const first = report.annualExecutedEvidence[0]!;
+    const forged = {
+      ...report,
+      annualExecutedEvidence: [{
+        ...first,
+        claimId: 'forged-claim',
+        sourceIds: ['UNREGISTERED-SOURCE'],
+      }, ...report.annualExecutedEvidence.slice(1)],
+    };
+    expect(() => renderGeneralAnnualMonthlyExplorationHtml(forged))
+      .toThrow('matched executed annual T9 research evidence');
+    expect(report.annual.permissions.mayPublish).toBe(false);
+    expect(report.annual.permissions.maySell).toBe(false);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
   });
 
   it('shows the same selected natal tension only in the current Jeol segment of the joined reading', () => {
