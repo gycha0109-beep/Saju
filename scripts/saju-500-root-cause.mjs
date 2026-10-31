@@ -62,10 +62,21 @@ export function diagnoseMissingWealthReading(snapshot, execution, registry, repo
   } else if (t5.length === 0) {
     cause = 'no_active_upstream_t5_theme';
   } else if (inputEligibleRules.length === 0 && activeT8.length === 0) {
-    const hasWealthTheme = t5.some(claim => claim.claimType.startsWith('TEN_GOD_WEALTH_'));
-    cause = hasWealthTheme
-      ? 'wealth_t5_exists_but_no_registered_same_channel_combination'
-      : 'no_active_wealth_t5_in_either_observation_channel';
+    const wealthChannels = ['VISIBLE_STEMS', 'BRANCHES']
+      .filter(channel => existingTypes.has('TEN_GOD_WEALTH_' + channel + '_THEME'));
+    const hasSameChannelCompanion = wealthChannels.some(channel =>
+      [...existingTypes].some(type => type.endsWith('_' + channel + '_THEME') &&
+        !type.startsWith('TEN_GOD_WEALTH_')));
+    const hasOtherChannelCompanion = wealthChannels.length === 1 &&
+      [...existingTypes].some(type =>
+        type.endsWith('_' + (wealthChannels[0] === 'VISIBLE_STEMS'
+          ? 'BRANCHES' : 'VISIBLE_STEMS') + '_THEME') &&
+        !type.startsWith('TEN_GOD_WEALTH_'));
+    cause = wealthChannels.length === 0
+      ? 'no_active_wealth_t5_in_either_observation_channel'
+      : !hasSameChannelCompanion && hasOtherChannelCompanion
+        ? 'wealth_t5_and_other_families_split_across_channels'
+        : 'wealth_t5_exists_but_no_registered_same_channel_combination';
   } else if (activeT8.length === 0) {
     cause = 'eligible_rule_did_not_emit_wealth_claim';
   } else if (selectedT8.length === 0) {
