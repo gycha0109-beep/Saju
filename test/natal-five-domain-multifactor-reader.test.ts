@@ -133,13 +133,13 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         expect(wealthCard).toContain(theme.observedPositions[0]!);
       }
       // Injecting fallback T5 material alongside a real Wealth T8 core is forbidden.
-      const validWealth = reports(sample(3, 10));
+      const coreChart = sample(3, 10);
+      const validWealth = reports(coreChart);
       expect(validWealth.wealth.readingGuide).toBeDefined();
       const forged = {
         ...validWealth,
         wealth: { ...validWealth.wealth, availableThemeContext: context },
       };
-      const coreChart = sample(3, 10);
       expect(() => renderNatalFiveDomainMultifactorResearchHtml(coreChart, forged))
         .toThrow('existing theme context must not become a Wealth synthesis');
       expect(wealth.mayPublish).toBe(false);
