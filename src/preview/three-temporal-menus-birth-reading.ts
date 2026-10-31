@@ -57,7 +57,17 @@ function enforceSourceScope(
       lifeStage.natalContext.snapshotId !== joined.snapshotId ||
       lifeStage.natalContext.calculationHash !== joined.calculationHash ||
       joined.monthly.referenceReading.referenceDateTime !== reference ||
-      stage.referenceDateTime !== reference) {
+      stage.referenceDateTime !== reference ||
+      !['bounded_natal_t8_research','insufficient_evidence'].includes(
+        lifeStage.natalContext.availability) ||
+      (lifeStage.natalContext.availability === 'insufficient_evidence') !==
+        (lifeStage.natalContext.sections.length === 0) ||
+      lifeStage.natalContext.sections.some(section =>
+        !section.title.trim() || !section.paragraph.trim() ||
+        !section.paragraph.includes('이 원국에서 확인된 근거는') ||
+        section.sourceIds.length < 2 || section.factPaths.length < 2 ||
+        section.factPaths.some(path =>
+          !/^derivedFacts\\.tenGods\\.value\\.(year|month|day|hour)\\.(stem|branch)\\.value$/u.test(path)))) {
     throw new TypeError('Three time menus require the same authorized chart, instant and research-only source.');
   }
 }
@@ -113,12 +123,27 @@ function render(
       e(life.policyHash) + '</p></details></article>',
   ).join('') || '<p>' + e(life.missing.join(' · ') ||
     '이 명식에 확정된 현재·다음 대운 구간이 없습니다.') + '</p>';
+  // This is the SAME person's already executed and source-bound natal T8
+  // reading, not an annual/monthly T9 meaning or a Dayun event prediction.
+  // Display it only once as shared context, never duplicate its interpretation
+  // in the period sections or count it as a new temporal semantic profile.
   const natal = lifeStage.natalContext.sections.map(section =>
     '<article><h3>' + e(section.title) + '</h3><p>' +
       e(section.paragraph) + '</p><details><summary>원국 해석 출처</summary><p>' +
       e(section.sourceIds.join(' · ')) + '</p><p>' +
       e(section.factPaths.join(' · ')) + '</p></details></article>',
   ).join('');
+  const natalPanel = natal
+    ? '<section id="natal-reference" aria-label="연운과 월운에서 분리된 출처 있는 원국 근거">' +
+      '<h2>대운과 분리된 원국 연구 풀이</h2>' +
+      '<p>이 명식에서 이미 확인된 개별 원국 구조입니다. 올해·이번 달 풀이와 나란히 ' +
+      '살펴볼 수 있지만 기간별 원인·결과·길흉을 결론 내린 것은 아닙니다. ' +
+      '연운·월운과 원국의 의미 연결은 별도 출처·방법론이 확인되기 전까지 보류합니다.</p>' +
+      natal + '</section>'
+    : '<section id="natal-reference" aria-label="원국 해석 근거 부족">' +
+      '<h2>원국과 기간별 해석의 구분</h2><p>현재 같은 명식에서 ' +
+      '출처가 있는 원국 종합 풀이를 확인하지 못했습니다. 연·월운 풀이를 ' +
+      '원국의 성격이나 사건 판단으로 확장하지 않습니다.</p></section>';
   const gaps = [...report.annual.caveats, ...report.monthly.missing,
     ...report.monthly.caveats, ...life.missing, ...life.caveats]
     .map(item => '<li>' + e(item) + '</li>').join('');
@@ -136,15 +161,21 @@ function render(
     e(life.referenceLocalDateTime) + ' KST / 선택: ' +
     report.targetYear + '년 ' + report.targetMonth + '월</p>' +
     '</header><nav><a href="#annual">올해</a><a href="#monthly">이번 달</a>' +
+    '<a href="#natal-reference">명식의 기존 근거</a>' +
     '<a href="#life-stage">삶의 단계</a></nav>' +
+    natalPanel +
     '<section id="annual"><h2>올해 — ' + report.targetYear + '년</h2><p>' +
-    e(yearNote) + '</p>' + annual + '</section>' +
+    e(yearNote) + '</p>' +
+    '<p>올해 주제와 별개로 확인된 <a href="#natal-reference">원국의 연구 근거</a>는 ' +
+    '연운 해석 결론으로 합산하지 않습니다.</p>' + annual + '</section>' +
     '<section id="monthly"><h2>이번 달 — ' + report.targetMonth + '월</h2>' +
+    '<p>절입 전·후 월간 주제와 <a href="#natal-reference">같은 명식의 원국 근거</a>는 ' +
+    '서로 다른 해석 범위입니다. 확인되지 않은 상호작용은 주장하지 않습니다.</p>' +
     '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth +
     '<h3>절입 전후 전체 풀이</h3>' + monthly + '</section>' +
     '<section id="life-stage"><h2>삶의 단계 — 계산된 대운</h2><p>' +
     '대운의 간지·시각만 계산된 사실입니다. 길흉이나 사건 시기를 해석하지 않습니다.</p>' +
-    periods + (natal ? '<h3>대운과 분리된 원국 연구 풀이</h3>' + natal : '') +
+    periods +
     '</section><aside><h2>아직 허가되지 않은 내용과 한계</h2><ul>' +
     gaps + '</ul><p>공식 공개·저장·판매·결제 권한은 없습니다.</p></aside>' +
     '</main></body></html>';
