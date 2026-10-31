@@ -180,7 +180,17 @@ export function buildGeneralMonthlyExplorationReport(
     });
   }
 
-  for (const claim of claims.filter(x => x.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType)) {
+  // Selected tensions can arrive in registry execution order rather than reader order.
+  // Keep research semantics intact while rendering identical selected axes consistently.
+  const orderedTensions = claims
+    .filter(claim => claim.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType)
+    .sort((left, right) => {
+      const a = claimValue(left);
+      const b = claimValue(right);
+      return SEGMENTS.indexOf(a.segmentId) - SEGMENTS.indexOf(b.segmentId) ||
+        SLOTS.indexOf(a.natalPillar as PillarSlot) - SLOTS.indexOf(b.natalPillar as PillarSlot);
+    });
+  for (const claim of orderedTensions) {
     const value = claimValue(claim);
     const segment = facts.segmentsById[value.segmentId];
     const slot = value.natalPillar;

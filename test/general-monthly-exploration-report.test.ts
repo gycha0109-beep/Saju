@@ -193,6 +193,43 @@ describe('real-calculated monthly Korean research consumer preview', () => {
     expect(found).toBe(true);
   }, 30000);
 
+  it('renders the same selected T9 monthly meanings in a stable segment and natal-pillar order', () => {
+    const examples = [
+      [[1974, 11, 10, 5, 32], [1983, 7, 26, 5, 14]],
+      [[1955, 3, 20, 23, 38], [1998, 4, 3, 1, 16]],
+      [[1999, 3, 29, 23, 44], [1975, 4, 4, 13, 15]],
+    ] as const;
+    const segmentOrder = ['before_jeol', 'after_jeol'];
+    const pillarOrder = ['year', 'month', 'day', 'hour'];
+    const read = (parts: readonly [number, number, number, number, number]) => {
+      const [year, month, day, hour, minute] = parts;
+      const natal = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar',
+        date: { year, month, day },
+        time: { known: true, hour, minute },
+        sexForTraditionalCalculation: 'unspecified',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      return run(10, natal, '2026-10-25T00:00:00.000Z').report;
+    };
+    for (const [leftBirth, rightBirth] of examples) {
+      const left = read(leftBirth);
+      const right = read(rightBirth);
+      const ordered = (report: typeof left) => report.sections
+        .filter(section => section.kind === 'tension')
+        .map(section => [section.segmentId, section.relatedPillar] as const);
+      const actualOrder = ordered(left);
+      expect(actualOrder.length).toBeGreaterThan(1);
+      expect(actualOrder).toEqual([...actualOrder].sort((a, b) =>
+        segmentOrder.indexOf(a[0]) - segmentOrder.indexOf(b[0]) ||
+        pillarOrder.indexOf(a[1]!) - pillarOrder.indexOf(b[1]!)));
+      expect(ordered(right)).toEqual(actualOrder);
+      expect(left.sections.map(section => section.title + '\n' + section.text))
+        .toEqual(right.sections.map(section => section.title + '\n' + section.text));
+      expect(left.mayPublish).toBe(false);
+      expect(right.maySell).toBe(false);
+    }
+  });
+
   it('keeps genuine two-phase themes with unknown birth hour but never invents an hour tension', () => {
     const { report } = run(9, snapshot(9, false));
     expect(report.sections.filter(section => section.kind === 'theme')).toHaveLength(2);
