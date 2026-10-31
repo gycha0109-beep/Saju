@@ -5,6 +5,18 @@
 > 범위: 계산·기존 Claim/Methodology/Source 권한을 유지하는 연구용 해석 품질 개선. AI 신규 Claim 생성과 Official/판매 승격은 범위 밖.
 > 기록 규칙: **실제 수정한 작업 단위마다 이 파일에 변경 내용, 결과물, 확인된 검증, 미완료 항목을 추가한다.** 계획만 있는 작업은 완료로 기록하지 않는다.
 
+## 2026-10-31 — 후속 구현: 적용 중인 월운의 검증된 원국 관계를 첫 화면에 표시
+
+### 작업 14 — 현재 월운에서 실제 선택된 충 관계 누락 복구 (단계 4)
+- **발견:** 기존 `general-monthly-exploration-report`는 절입 전·후의 개별 충 관계를 계산하고 T9/EvidenceSelector로 선택하지만, `referenceReading`은 현재 적용되는 월운의 중심 주제만 전달했다. 따라서 해당 절입 구간의 실제 원국 충 관계가 첫 화면에서 빠지고 아래의 전체 구간 목록에만 나타났다.
+- **한 것:** 이미 발행된 연구 T9 중 조회 시각과 동일한 절입 구간·월주·출처·규칙의 충 관계만 `referenceReading.sourceBoundTensions`로 전달한다. 원국과 월운의 의미를 새롭게 조합하거나, 다른 구간의 관계를 현재 시점의 운세로 표시하지 않는다.
+- **소비 화면:** `src/preview/general-monthly-exploration-report.ts`의 단일 월운 HTML과 `src/preview/general-annual-monthly-exploration-report.ts`의 연·월 통합 HTML에 현재 구간의 기존 Claim·한국어 원문·계산 근거·출처를 추가했다. 기존 월별 전체 목록은 유지한다.
+- **검증 항목:** 실제 T9 충 관계가 존재하는 월을 검사하여 기준 시각에 맞는 절입 구간에서만 선택되고, 반대 구간의 Claim을 현재 시점으로 표시하지 않는지 확인한다. 연·월 통합 읽기 화면의 동일 T9 재사용, 판매/공식 권한 유지도 확인하도록 테스트를 추가했다.
+- **실제 변경:** `src/preview/general-monthly-exploration-report.ts`, `src/preview/general-annual-monthly-exploration-report.ts`, `test/general-monthly-exploration-report.test.ts`, `test/general-annual-monthly-exploration-report.test.ts`.
+- **구현 커밋:** `efe7e97c843eed14cb5960dce61fa3b4f0db606b`, `49ca78500c33ae79700ca98b3f51174b069702e8`, `ad0d91ffe9b4d027051928a3533e70f08799dde0`, `2f323f2c7a6007dca65ea634e7e67cb49aa258ea`.
+- **검증 상태:** 신규 커밋의 CI 결과 확인 전. 의미 프로필 131종에서 증가했다거나 4단계 전체 개선 완료를 주장하지 않는다.
+- **다음 작업:** 현재 연구 출처가 승인한 원국-월운 결합의 해석 의미를 더 정밀히 검토하고, 실제 명식별 내용 차이를 검증한다.
+
 ## 2026-10-31 — 후속 구현: 기존 지장간 근거 계산과 통합 및 근거 권한 준수
 
 ### 작업 13 — 중복 지장간 계산 제거와 명식 일치 검증 통일
