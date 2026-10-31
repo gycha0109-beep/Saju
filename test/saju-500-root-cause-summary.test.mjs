@@ -44,6 +44,23 @@ describe('root-cause implementation groups', () => {
     expect(summary.remediation.groups[0].remediationTarget).toBe('source_backed_rule_coverage');
   });
 
+  it('does not treat missing Wealth T5 evidence as a missing combination rule', () => {
+    const missingDirectEvidence = wealthCase('D', 'chart-no-wealth',
+      'no_active_wealth_t5_in_either_observation_channel',
+      ['TEN_GOD_OUTPUT_BRANCHES_THEME', 'TEN_GOD_PEER_VISIBLE_STEMS_THEME']);
+    const summary = summarizeMissingWealthCauses([
+      missingDirectEvidence,
+      wealthCase('E', 'chart-with-wealth',
+        'wealth_t5_exists_but_no_registered_same_channel_combination',
+        ['TEN_GOD_WEALTH_BRANCHES_THEME']),
+    ]);
+    expect(summary.remediation.byRemediationTarget).toEqual({
+      direct_wealth_t5_evidence_unavailable: 1,
+      source_backed_rule_coverage: 1,
+    });
+    expect(summary.remediation.groupCount).toBe(2);
+  });
+
   it('keeps unrecognized diagnostics visible for manual review instead of fabricating a cause', () => {
     const grouped = buildWealthRemediationGroups([
       wealthCase('D', 'hash-d', 'not_yet_classified'),
