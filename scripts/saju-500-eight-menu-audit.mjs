@@ -268,6 +268,8 @@ export function runFiveHundredSajuAudit() {
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
     missingCauses: result.rootCauseDiagnostics.wealth.byCause,
     missingWithSourceContext: result.rootCauseDiagnostics.wealth.casesWithExistingSourceContext,
+    missingWithHiddenWealthMembership: result.rootCauseDiagnostics.wealth.casesWithHiddenWealthMembership,
+    observedHiddenWealthStems: result.rootCauseDiagnostics.wealth.hiddenWealthObservationCount,
     remediationGroups: result.rootCauseDiagnostics.wealth.remediation.groupCount,
     remediationTargets: result.rootCauseDiagnostics.wealth.remediation.byRemediationTarget,
     annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
