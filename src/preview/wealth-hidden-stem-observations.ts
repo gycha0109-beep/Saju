@@ -2,15 +2,15 @@ import type {
   CanonicalSajuSnapshot, EarthlyBranch, HeavenlyStem, PillarSlot,
 } from '../contracts/calculation.js';
 import {
-  getHiddenStemMembership,
-  HIDDEN_STEM_MEMBERSHIP_SOURCE,
-} from '../calculation/hidden-stems.js';
-import { deriveAnnualStemTenGod } from '../reading/annual-interpretation-facts.js';
+  projectSnapshotBoundHiddenStemTenGodOccurrences,
+  SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY,
+} from '../research/snapshot-bound-hidden-stem-ten-god-occurrences.js';
 
 /**
- * Canonical hidden-stem MEMBERSHIP observations only. A hidden wealth stem
- * does not prove a strong, active, favourable, or even usable Wealth T5/T8
- * interpretation. Do not use this output to satisfy a T8 rule input.
+ * Evidence-only projection of the existing, snapshot-bound R27 primitive.
+ * The primitive already verifies all hidden stems, source pillars, day-master
+ * parity, scenario completeness, mapper provenance and membership order.
+ * No second Ten-God calculation or hidden activation interpretation is allowed.
  */
 export interface WealthHiddenStemObservation {
   pillar: PillarSlot;
@@ -18,45 +18,55 @@ export interface WealthHiddenStemObservation {
   hiddenStem: HeavenlyStem;
   derivedTenGod: '편재' | '정재';
   factPaths: readonly [string, string];
+  sourcePillarRef: `pillars.${PillarSlot}`;
+  occurrenceId: `${PillarSlot}:${HeavenlyStem}`;
   membershipSourceUrl: string;
+  mappingAuthorityDefinitionHash: string;
   meaningAuthority: 'calculated_membership_only';
   wealthConclusionAuthorized: false;
 }
 
-const SLOTS = ['year', 'month', 'day', 'hour'] as const satisfies readonly PillarSlot[];
-
 export function observeHiddenWealthMembership(
   snapshot: CanonicalSajuSnapshot,
 ): readonly WealthHiddenStemObservation[] {
-  const master = snapshot.derivedFacts.dayMaster;
-  const hidden = snapshot.derivedFacts.hiddenStems;
-  if (!snapshot.completeness.birthTimeKnown ||
-      master.status !== 'resolved' || hidden === undefined) return [];
-
-  const observations: WealthHiddenStemObservation[] = [];
-  for (const pillar of SLOTS) {
-    const state = snapshot.pillars[pillar];
-    const members = hidden[pillar];
-    if (state.status !== 'resolved' || members.status !== 'resolved') continue;
-    const canonical = getHiddenStemMembership(state.value.branch.value);
-    if (members.value.length !== canonical.length ||
-        members.value.some(stem => !canonical.includes(stem))) {
-      throw new TypeError('Hidden wealth observation requires actual canonical branch membership');
+  if (!snapshot.completeness.birthTimeKnown) return [];
+  const result = projectSnapshotBoundHiddenStemTenGodOccurrences(snapshot);
+  if (result.status === 'unavailable') {
+    // An invalid *resolved* canonical payload is not an absence of wealth.
+    if (/parity-failed|branch-invalid/u.test(result.reasonCode)) {
+      throw new TypeError(
+        'Hidden wealth observation requires actual canonical branch membership: ' +
+          result.reasonCode,
+      );
     }
-    for (const stem of members.value) {
-      const tenGod = deriveAnnualStemTenGod(master.value, stem);
-      if (tenGod !== '편재' && tenGod !== '정재') continue;
-      observations.push({
-        pillar,
-        branch: state.value.branch.value,
-        hiddenStem: stem,
-        derivedTenGod: tenGod,
-        factPaths: ['derivedFacts.dayMaster', `derivedFacts.hiddenStems.${pillar}`],
-        membershipSourceUrl: HIDDEN_STEM_MEMBERSHIP_SOURCE.url,
-        meaningAuthority: 'calculated_membership_only',
-        wealthConclusionAuthorized: false,
-      });
-    }
+    return [];
   }
-  return observations;
+  const projection = result.projection;
+  const authority = SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY;
+  if (projection.snapshotId !== snapshot.snapshotId ||
+      projection.snapshotHash !== snapshot.calculationHash ||
+      projection.authorityDefinitionHash !== authority.definitionHash ||
+      projection.constraints.definitionHash !== authority.definitionHash ||
+      authority.authority !== 'structural_mapping_only' ||
+      authority.interpretationClaimEmissionAuthorized !== false ||
+      authority.narrativeMaterialityAuthorized !== false ||
+      authority.hiddenSupportAuthorized !== false ||
+      authority.productionAuthorityAuthorized !== false) {
+    throw new TypeError('Hidden wealth observations require bounded R27 structural authority');
+  }
+  return projection.occurrences
+    .filter((o) => o.tenGod === '편재' || o.tenGod === '정재')
+    .map((o) => ({
+      pillar: o.pillarSlot,
+      branch: o.branch,
+      hiddenStem: o.hiddenStem,
+      derivedTenGod: o.tenGod as '편재' | '정재',
+      factPaths: [projection.dayMasterSourceFactRef, o.sourceFactRef],
+      sourcePillarRef: o.sourcePillarRef,
+      occurrenceId: o.occurrenceId,
+      membershipSourceUrl: authority.sourceBindings.hiddenMembershipSource.url,
+      mappingAuthorityDefinitionHash: projection.authorityDefinitionHash,
+      meaningAuthority: 'calculated_membership_only' as const,
+      wealthConclusionAuthorized: false as const,
+    }));
 }
