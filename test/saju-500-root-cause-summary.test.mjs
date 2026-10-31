@@ -83,6 +83,12 @@ describe('root-cause implementation groups', () => {
     expect(summary.casesWithExistingSourceContext).toBe(1);
     expect(summary.casesWithHiddenWealthMembership).toBe(1);
     expect(summary.hiddenWealthObservationCount).toBe(2);
+    expect(summary.remediation.byHiddenWealthEvidenceState).toEqual({
+      calculated_membership_observed_not_T5: 1,
+      not_assessed: 1,
+    });
+    expect(summary.remediation.groups.map(x => x.hiddenWealthEvidenceState).sort())
+      .toEqual(['calculated_membership_observed_not_T5', 'not_assessed']);
     expect(summary.remediation.byRemediationTarget).toEqual({
       direct_wealth_t5_evidence_unavailable: 2,
     });
