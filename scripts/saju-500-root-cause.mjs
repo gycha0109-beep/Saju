@@ -9,6 +9,7 @@ export {
   analyzeTemporalStructuralEvidenceVariation,
   analyzeTemporalNatalT5Variation,
   summarizeMissingWealthCauses,
+  summarizeWealthConsumerEvidence,
 } from './saju-500-root-cause-pure.mjs';
 
 const WEALTH_FILTER = claim =>
