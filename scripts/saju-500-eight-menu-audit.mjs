@@ -19,6 +19,7 @@ import {
   diagnoseMissingWealthReading,
   analyzeTemporalRepetition,
   analyzeTemporalMeaningRepetition,
+  analyzeTemporalStructuralEvidenceVariation,
   summarizeMissingWealthCauses,
   ROOT_CAUSE_AUDIT_VERSION,
 } from './saju-500-root-cause.mjs';
@@ -258,6 +259,8 @@ export function runFiveHundredSajuAudit() {
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
       annualMeaningRepetition: analyzeTemporalMeaningRepetition(rows['올해']),
       monthlyMeaningRepetition: analyzeTemporalMeaningRepetition(rows['이번 달']),
+      annualStructuralVariation: analyzeTemporalStructuralEvidenceVariation(rows['올해']),
+      monthlyStructuralVariation: analyzeTemporalStructuralEvidenceVariation(rows['이번 달']),
     },
     interpretationCaveat:'Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
     permissions:{mayPublish:false,maySell:false,mayCallOfficial:false},
@@ -275,6 +278,10 @@ export function runFiveHundredSajuAudit() {
     remediationTargets: result.rootCauseDiagnostics.wealth.remediation.byRemediationTarget,
     annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
     monthlyRepeated: result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups,
+    annualProfilesWithDifferentObservedRelations:
+      result.rootCauseDiagnostics.annualStructuralVariation.repeatedMeaningProfilesWithDifferentVerifiedRelations,
+    monthlyProfilesWithDifferentObservedRelations:
+      result.rootCauseDiagnostics.monthlyStructuralVariation.repeatedMeaningProfilesWithDifferentVerifiedRelations,
   })+'\n');
   process.stdout.write('SAJU500_RESULT_JSON '+JSON.stringify(result)+'\n');
   if(inputs.size!==COUNT || failures.length || DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
