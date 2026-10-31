@@ -188,8 +188,10 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(context.themes.length).toBeGreaterThan(0);
     expect(context.hiddenWealthMembership).toEqual(observeHiddenWealthMembership(snapshot));
     for (const membership of context.hiddenWealthMembership) {
-      expect(context.paragraph).toContain(membership.hiddenStem);
-      expect(context.paragraph).toContain(membership.derivedTenGod);
+      expect(context.paragraph).not.toContain(
+        `지장간 ${membership.hiddenStem}은 ${membership.derivedTenGod}로 계산됩니다`);
+      expect(membership.occurrenceId).toBe(
+        `${membership.pillar}:${membership.hiddenStem}`);
       expect(membership.meaningAuthority).toBe('calculated_membership_only');
       expect(membership.wealthConclusionAuthorized).toBe(false);
     }
