@@ -39,6 +39,25 @@ function enforceSourceScope(
 ): void {
   const joined = annualMonthly.report;
   const stage = lifeStage.report;
+  const monthFocus = joined.monthly.referenceReading;
+  const theme = monthFocus.theme;
+  const currentTensions = monthFocus.sourceBoundTensions ?? [];
+  const invalidCurrentTheme = monthFocus.state === 'in_period'
+    ? theme === undefined || !joined.monthly.sections.includes(theme) ||
+      theme.kind !== 'theme' || theme.segmentId !== monthFocus.segmentId
+    : theme !== undefined || currentTensions.length > 0;
+  const invalidCurrentTensions = currentTensions.some(section =>
+    monthFocus.state !== 'in_period' || theme === undefined ||
+    !joined.monthly.sections.includes(section) ||
+    section.kind !== 'tension' || section.segmentId !== monthFocus.segmentId ||
+    section.calculatedInterval.startsAt !== theme.calculatedInterval.startsAt ||
+    section.calculatedInterval.endsAt !== theme.calculatedInterval.endsAt ||
+    section.sourceIds.length === 0 || section.ruleIds.length === 0 ||
+    section.relatedPillar === undefined || section.observedClash?.relation !== 'clash' ||
+    !section.factPaths.includes(
+      'temporal.segmentsById.' + section.segmentId +
+      '.monthlyBranchRelations.' + section.relatedPillar + '.relation',
+    ));
   if (annualMonthly.lifecycle !== 'internal_research_only' ||
       lifeStage.lifecycle !== 'internal_research_only' ||
       annualMonthly.mayPublish || annualMonthly.maySell ||
@@ -58,6 +77,7 @@ function enforceSourceScope(
       lifeStage.natalContext.calculationHash !== joined.calculationHash ||
       joined.monthly.referenceReading.referenceDateTime !== reference ||
       stage.referenceDateTime !== reference ||
+      invalidCurrentTheme || invalidCurrentTensions ||
       joined.annualExecutedEvidence.length !== joined.annual.sections.length ||
       joined.annual.sections.some((section,i) => {
         const actual = joined.annualExecutedEvidence[i];
@@ -115,7 +135,23 @@ function render(
       e(theme.calculatedInterval.startsAt) + ' — ' +
       e(theme.calculatedInterval.endsAt) + '</p><p>출처: ' +
       e(theme.sourceIds.join(' · ')) + '</p><p>규칙: ' +
-      e(theme.ruleIds.join(' · ')) + '</p></details></article>';
+      e(theme.ruleIds.join(' · ')) + '</p></details></article>' +
+      (monthlyFocus.sourceBoundTensions?.length
+        ? '<div class="active-month-relations" aria-label="조회 시각 절입 구간의 실제 원국 충 관계">' +
+          '<h4>이 절입 구간에서 함께 확인된 원국의 충 관계</h4>' +
+          monthlyFocus.sourceBoundTensions.map(section =>
+            '<article class="current-tension"><h4>' + e(section.title) +
+            '</h4><p>' + e(section.text) +
+            '</p><details><summary>현재 구간에 선택된 월운 T9 근거</summary>' +
+            '<p>Claim: ' + e(section.claimId) +
+            '</p><p>규칙: ' + e(section.ruleIds.join(' · ')) +
+            '</p><p>계산: ' + e(section.factPaths.join(' · ')) +
+            '</p><p>출처: ' + e(section.sourceIds.join(' · ')) +
+            '</p><p>적용 기간: ' + e(section.calculatedInterval.startsAt) +
+            ' — ' + e(section.calculatedInterval.endsAt) +
+            '</p></details></article>').join('') +
+          '<p>관측된 지지 충의 연구용 설명이며 실제 사건·길흉을 예측하지 않습니다.</p></div>'
+        : '');
   const monthly = report.monthly.sections.map(section =>
     '<article><h3>' + (section.segmentId === 'before_jeol'
       ? '절입 전 · ' : '절입 이후 · ') + e(section.title) + '</h3><p>' +
