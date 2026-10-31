@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'scripts/saju-500-eight-menu-audit.mjs'
+      - 'scripts/saju-500-root-cause.mjs'
+      - 'test/saju-500-root-cause-summary.test.mjs'
       - '.github/workflows/saju-500-reading-audit.yml'
   workflow_dispatch:
 
