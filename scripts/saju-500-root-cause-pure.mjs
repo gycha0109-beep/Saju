@@ -55,6 +55,7 @@ export function buildWealthRemediationGroups(cases) {
     birth_time_unresolved: 'input_completeness',
     no_active_upstream_t5_theme: 'upstream_t5_availability',
     wealth_t5_exists_but_no_registered_same_channel_combination: 'source_backed_rule_coverage',
+    wealth_t5_and_other_families_split_across_channels: 'cross_channel_methodology_review_required',
     no_active_wealth_t5_in_either_observation_channel: 'direct_wealth_t5_evidence_unavailable',
     eligible_rule_did_not_emit_wealth_claim: 'rule_execution',
     wealth_claim_not_selected_by_reading_profile: 'evidence_selection',
