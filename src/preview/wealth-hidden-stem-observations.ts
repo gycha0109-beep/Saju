@@ -26,10 +26,14 @@ export interface WealthHiddenStemObservation {
   wealthConclusionAuthorized: false;
 }
 
+export type WealthHiddenStemObservationResult =
+  | { readonly status: 'unavailable'; readonly reasonCode: string }
+  | { readonly status: 'resolved'; readonly observations: readonly WealthHiddenStemObservation[] };
+
 export function observeHiddenWealthMembership(
   snapshot: CanonicalSajuSnapshot,
-): readonly WealthHiddenStemObservation[] {
-  if (!snapshot.completeness.birthTimeKnown) return [];
+): WealthHiddenStemObservationResult {
+  if (!snapshot.completeness.birthTimeKnown) return { status: 'unavailable', reasonCode: 'birth-time-unknown' };
   const result = projectSnapshotBoundHiddenStemTenGodOccurrences(snapshot);
   if (result.status === 'unavailable') {
     // An invalid *resolved* canonical payload is not an absence of wealth.
@@ -39,7 +43,7 @@ export function observeHiddenWealthMembership(
           result.reasonCode,
       );
     }
-    return [];
+    return { status: 'unavailable', reasonCode: result.reasonCode };
   }
   const projection = result.projection;
   const authority = SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY;
@@ -54,7 +58,7 @@ export function observeHiddenWealthMembership(
       authority.productionAuthorityAuthorized !== false) {
     throw new TypeError('Hidden wealth observations require bounded R27 structural authority');
   }
-  return projection.occurrences
+  const observations = projection.occurrences
     .filter((o) => o.tenGod === '편재' || o.tenGod === '정재')
     .map((o) => ({
       pillar: o.pillarSlot,
@@ -69,4 +73,5 @@ export function observeHiddenWealthMembership(
       meaningAuthority: 'calculated_membership_only' as const,
       wealthConclusionAuthorized: false as const,
     }));
+  return { status: 'resolved', observations };
 }
