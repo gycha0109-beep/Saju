@@ -265,6 +265,7 @@ export function runFiveHundredSajuAudit() {
   process.stdout.write('SAJU500_ROOT_CAUSE_SUMMARY '+JSON.stringify({
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
     missingCauses: result.rootCauseDiagnostics.wealth.byCause,
+    missingWithSourceContext: result.rootCauseDiagnostics.wealth.casesWithExistingSourceContext,
     remediationGroups: result.rootCauseDiagnostics.wealth.remediation.groupCount,
     remediationTargets: result.rootCauseDiagnostics.wealth.remediation.byRemediationTarget,
     annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
