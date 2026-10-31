@@ -331,7 +331,12 @@ function renderFirstScreenSelectedInterpretations(
 function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport): string {
   const context = report.availableThemeContext;
   if (context === undefined) return '';
-  guard(report.sections.length === 0 && report.state === 'insufficient' &&
+  // The fallback may accompany either an empty Wealth reading or a strictly
+  // indirect context-only T8. It must never supplement an actual Wealth core.
+  guard((report.sections.length === 0 && report.state === 'insufficient' ||
+      report.state === 'partial' && report.sections.length === 1 &&
+        report.sections[0]!.axis === 'context' &&
+        report.sections[0]!.pattern.endsWith('_CONTEXT')) &&
     context.wealthConclusionAuthorized === false &&
     context.themes.length > 0 && context.title.trim().length > 0 &&
     context.paragraph.trim().length > 0 &&
