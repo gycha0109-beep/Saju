@@ -146,6 +146,9 @@ export function summarizeMissingWealthCauses(cases) {
     missingCaseCount: cases.length,
     byCause,
     remediation: buildWealthRemediationGroups(cases),
+    casesWithExistingSourceContext: cases.filter(row =>
+      row.existingSourceThemeContext?.themeCount > 0 &&
+      row.existingSourceThemeContext.wealthConclusionAuthorized === false).length,
     allCasesHaveExplicitCause: cases.every(row =>
       row.cause && row.cause !== 'unknown' && row.calculationHash &&
       row.selection?.coverageState && row.rules?.totalRegistered > 0),
