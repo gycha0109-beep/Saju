@@ -432,7 +432,11 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     (birthTimeKnown || report.state === 'insufficient' && report.sections.length === 0),
     'a domain is not a bounded source-qualified research reading');
   const originalText = report.sections.map(renderSection).join('') ||
-    '<p>현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.</p>';
+    (domain === 'wealth' &&
+      (report as WealthNatalMultifactorReport).availableThemeContext !== undefined
+      ? '<p>재물운의 중심 복합 해석 근거는 아직 확인되지 않았습니다. ' +
+        '아래에는 출처 있는 개별 십신 관점만 부분적으로 설명합니다.</p>'
+      : '<p>현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.</p>');
   const missing = report.missing.length > 0
     ? '<section class="missing"><h3>아직 설명하지 못하는 부분</h3>' + renderList(report.missing) + '</section>'
     : '';
