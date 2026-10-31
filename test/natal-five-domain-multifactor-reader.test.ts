@@ -233,6 +233,9 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reading);
     const wealthHtml = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
     expect(wealthHtml).toContain('재물운 종합 해석 아님');
+    expect(wealthHtml).toContain('재물운의 중심 복합 해석 근거는 아직 확인되지 않았습니다');
+    expect(wealthHtml).toContain('아래에는 출처 있는 개별 십신 관점만 부분적으로 설명합니다');
+    expect(wealthHtml).not.toContain('현재 이 명식에서 근거가 확인된 해석 문단은 없습니다');
     expect(wealthHtml).toContain('서로 다른 채널을 임의로 결합');
     expect(wealth.mayPublish).toBe(false);
     expect(wealth.maySell).toBe(false);
