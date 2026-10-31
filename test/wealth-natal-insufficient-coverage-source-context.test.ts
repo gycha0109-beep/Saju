@@ -31,6 +31,16 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(report.sections[0]?.upstreamClaimIds.length).toBe(2);
     expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
     expect(report.state).toBe('partial');
+    const partialContext = report.availableThemeContext;
+    expect(partialContext?.wealthConclusionAuthorized).toBe(false);
+    expect(partialContext?.themes.length).toBeGreaterThanOrEqual(2);
+    expect(partialContext?.themes.some(theme => theme.family === 'wealth')).toBe(false);
+    for (const theme of partialContext?.themes ?? []) {
+      expect(theme.sourceIds.length).toBeGreaterThan(0);
+      expect(theme.observedPositions.length).toBeGreaterThan(0);
+      expect(partialContext?.paragraph).toContain(theme.summary);
+      expect(partialContext?.paragraph).toContain(theme.observedPositions[0]!);
+    }
     const reason = report.missing.join(' ');
     expect(reason).toContain('재성 중심 재물운 종합 해석이 아니며');
     expect(reason).toContain('현재 실제로 확인된 출처 연결 십신 관점');
@@ -51,6 +61,9 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(report.sections[0]?.pattern).toBe('OFFICER_PEER_CONTEXT');
     expect(report.sections[0]?.observedPositions.length).toBeGreaterThanOrEqual(2);
     expect(report.state).toBe('partial');
+    expect(report.availableThemeContext?.wealthConclusionAuthorized).toBe(false);
+    expect(report.availableThemeContext?.themes.length).toBeGreaterThanOrEqual(2);
+    expect(report.availableThemeContext?.themes.some(theme => theme.family === 'wealth')).toBe(false);
     expect(report.missing.join(' ')).toContain('재성 중심 재물운 종합 해석이 아니며');
     expect(report.usefulComplete).toBe(false);
     expect(report.mayPublish).toBe(false);
