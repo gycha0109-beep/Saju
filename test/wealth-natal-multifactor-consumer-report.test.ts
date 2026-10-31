@@ -190,7 +190,7 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
       expect(theme.observedPositions.length).toBeGreaterThan(0);
       expect(theme.observedFactPaths).toHaveLength(theme.observedPositions.length);
       expect(theme.observedFactPaths.every(path =>
-        /^derivedFacts\\.tenGods\\.value\\.(year|month|day|hour)\\.(stem|branch)\\.value$/u.test(path)))
+        /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path)))
         .toBe(true);
       expect(context.paragraph).toContain(theme.summary);
       expect(theme.observedPositions.every(pos => context.paragraph.includes(pos))).toBe(true);
