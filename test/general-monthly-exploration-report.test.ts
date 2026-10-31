@@ -157,7 +157,7 @@ describe('real-calculated monthly Korean research consumer preview', () => {
           `temporal.segmentsById.${section.segmentId}.monthlyBranchRelations.${slot}.relation`);
         expect(html).toContain(section.text);
         expect(execution.claims.some(claim => claim.claimId === section.claimId &&
-          claim.claimType === 'GENERAL_MONTHLY_BRANCH_CLASH_TENSION')).toBe(true);
+          claim.claimType === 'GENERAL_MONTHLY_SEGMENT_BRANCH_CLASH_TENSION')).toBe(true);
       }
       break;
     }
