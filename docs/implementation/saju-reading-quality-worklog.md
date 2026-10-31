@@ -5,6 +5,16 @@
 > 범위: 계산·기존 Claim/Methodology/Source 권한을 유지하는 연구용 해석 품질 개선. AI 신규 Claim 생성과 Official/판매 승격은 범위 밖.
 > 기록 규칙: **실제 수정한 작업 단위마다 이 파일에 변경 내용, 결과물, 확인된 검증, 미완료 항목을 추가한다.** 계획만 있는 작업은 완료로 기록하지 않는다.
 
+## 2026-10-31 — 후속 구현: 부분 재물 근거의 실제 읽기 경로 연결
+
+### 작업 10 — 내부 독자 화면·읽기 명령의 근거 표시 복구
+- **문제:** 재물 분야 T8 `sections`가 없는 17개 명식은 `availableThemeContext`에 기존 T5 십신 근거 설명이 있어도, 다섯 분야 연구용 HTML 화면과 `saju:read` 명령은 여전히 빈 풀이 안내만 표시했다.
+- **한 것:** 기존 `availableThemeContext`의 한국어 설명·실제 계산 위치·Claim ID·출처를 연구용 5분야 HTML과 읽기 명령에 노출한다. 근거를 별도 대체 T8 `sections`로 승격하지 않으며 `state: insufficient`와 비상용 권한을 유지한다.
+- **실제 수정:** `src/preview/natal-five-domain-multifactor-reader.ts`, `scripts/natal-five-domain-multifactor-research-demo.mjs`. 서면 화면에는 '재물운 종합 해석 아님' 표시, 위치·출처 펼쳐 보기, 잘못된 근거 경로에 대한 차단 검사를 추가했다.
+- **테스트:** `test/natal-five-domain-multifactor-reader.test.ts`에서 실제 1981-02-01 13:52 명식의 부족한 재물운 문단과 확인 가능한 근거 설명의 분리, HTML 표시, 위조된 사실 경로 차단을 검증한다.
+- **커밋:** `e846e951c30a0ac81fe7d5cde7434b556f25b914`, `99c265e6cc1243152295e7714e7e02ad0a9b37d2`, `ff20633eef80184a647976985c722bcfe69ccb7d`.
+- **검증 상태:** 이 변경 이후 CI 결과 미확인. 기존 500건의 재물 T8 누락 17건이 해결됐다는 뜻은 아니다.
+
 ## 2026-10-31 — 후속 구현: CI 수정 및 월운·원국 관계의 실제 근거 연결
 
 ### 작업 8 — 이전 CI 테스트 실패 수정
