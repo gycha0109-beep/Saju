@@ -313,6 +313,70 @@ export function analyzeTemporalNatalT5Variation(rows) {
   };
 }
 
+/**
+ * Existing 500-menu "withoutReadableText" counts selected Wealth T8 prose.
+ * It cannot be called an empty consumer page when the reader also renders
+ * independently sourced T5 context. Measure the two evidence tiers separately
+ * without crediting T5 observations as a Wealth synthesis.
+ */
+export function summarizeWealthConsumerEvidence(rows) {
+  let withoutWealthT8 = 0;
+  let withBoundedT5ContextInstead = 0;
+  let withoutAnySourceBoundInterpretiveText = 0;
+  let withBothWealthT8AndT5Context = 0;
+  let withWealthT8 = 0;
+  const noSynthesisCases = [];
+  for (const row of rows) {
+    if (!Number.isInteger(row.sectionCount) || row.sectionCount < 0 ||
+        typeof row.text !== 'string' || !['complete','partial','insufficient'].includes(row.state)) {
+      throw new TypeError('Wealth consumer evidence needs actual report sections and state');
+    }
+    const hasT8 = row.sectionCount > 0;
+    if (hasT8 !== (row.text.trim().length > 0)) {
+      throw new TypeError('Wealth audit T8 prose and selected section count contradict each other');
+    }
+    const context = row.boundedT5Context;
+    if (context !== undefined) {
+      if (hasT8 || context.wealthConclusionAuthorized !== false ||
+          typeof context.paragraph !== 'string' || !context.paragraph.trim() ||
+          !Array.isArray(context.themes) || context.themes.length === 0 ||
+          !context.themes.every(theme =>
+            typeof theme.claimId === 'string' && !!theme.claimId &&
+            /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(theme.claimType) &&
+            Array.isArray(theme.sourceIds) && theme.sourceIds.length > 0 &&
+            Array.isArray(theme.observedFactPaths) && theme.observedFactPaths.length > 0)) {
+        throw new TypeError('Wealth T5 context cannot be counted as authorized Wealth T8');
+      }
+    }
+    if (hasT8) {
+      withWealthT8++;
+    } else {
+      withoutWealthT8++;
+      if (context) withBoundedT5ContextInstead++;
+      else withoutAnySourceBoundInterpretiveText++;
+      noSynthesisCases.push({
+        birth:row.birth,
+        calculationHash:row.calculationHash,
+        hasSourceBoundT5Partial:context !== undefined,
+        themeCount:context?.themes.length ?? 0,
+        missingReason:row.missingReason,
+      });
+    }
+    if (hasT8 && context) withBothWealthT8AndT5Context++;
+  }
+  return {
+    examined:rows.length,
+    withWealthT8,
+    withoutWealthT8,
+    withBoundedT5ContextInstead,
+    withoutAnySourceBoundInterpretiveText,
+    withBothWealthT8AndT5Context,
+    /** T5 partial explanation is real but cannot qualify as a Wealth T8. */
+    researchOnlyNoWealthOutcomeAuthorized:true,
+    noSynthesisCases,
+  };
+}
+
 export function summarizeMissingWealthCauses(cases) {
   const byCause = frequency(cases.map(row => row.cause));
   return {
