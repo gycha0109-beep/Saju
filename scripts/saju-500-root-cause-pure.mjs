@@ -225,7 +225,17 @@ export function analyzeTemporalConsumedT9Meaning(rows, scope) {
       methodologyId:section.methodologyId,
     })).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
     const signature=JSON.stringify(actual);
-    const record={birth:row.birth,calculationHash:row.calculationHash,signature,selectedSemantics:actual};
+    const record={
+      birth:row.birth, calculationHash:row.calculationHash, signature,
+      selectedSemantics:actual, legacyMeaningKey:row.meaningKey,
+      exactKey:row.exactKey, actualKoreanText:row.text,
+      sourceBindings:sections.map(section => ({
+        claimType:section.claimType, semanticKey:section.semanticKey,
+        ruleIds:[...section.ruleIds],
+        methodologyId:section.methodologyId,
+        sourceIds:[...section.sourceIds], factPaths:[...section.factPaths],
+      })),
+    };
     const group=signatures.get(signature) ?? [];
     group.push(record);
     signatures.set(signature,group);
@@ -242,6 +252,70 @@ export function analyzeTemporalConsumedT9Meaning(rows, scope) {
     }));
   const repeated=[...signatures.values()].filter(members=>members.length>1)
     .sort((a,b)=>b.length-a.length);
+  // A display-profile change does not establish a new executed T9 meaning.
+  // Keep the actual counterexamples (not only aggregate counts) inspectable.
+  const displaySplits=[...signatures.values()].filter(members =>
+    new Set(members.map(m=>m.legacyMeaningKey)).size>1)
+    .map(members=>({
+      cases:members.length,
+      distinctDisplayProfiles:new Set(members.map(m=>m.legacyMeaningKey)).size,
+      distinctExactTexts:new Set(members.map(m=>m.exactKey)).size,
+      executedMeaning:members[0].selectedSemantics,
+      representatives:[...new Map(members.map(m=>[m.legacyMeaningKey,m])).values()]
+        .slice(0,4).map(m=>({
+          birth:m.birth, calculationHash:m.calculationHash,
+          legacyMeaningKey:m.legacyMeaningKey, actualKoreanText:m.actualKoreanText,
+        })),
+    })).sort((a,b)=>b.cases-a.cases);
+  // Retain every distinct actually used Rule/Method/T9 semantic pattern, not
+  // just the first five or an invented cartesian product of candidate rules.
+  const actualEvidencePatterns=[...signatures.values()].map(members=>({
+    selectedSemantics:members[0].selectedSemantics,
+    sourceBindings:members[0].sourceBindings,
+    caseCount:members.length,
+    representatives:members.slice(0,2).map(m=>({
+      birth:m.birth, calculationHash:m.calculationHash,
+      actualKoreanText:m.actualKoreanText,
+      legacyMeaningKey:m.legacyMeaningKey,
+    })),
+  }));
+  const sameMeaningPairs=repeated.filter(members =>
+    members.some(m=>m.calculationHash!==members[0].calculationHash))
+    .slice(0,8).map(members=>{
+      const a=members[0];
+      const b=members.find(m=>m.calculationHash!==a.calculationHash);
+      return {selectedSemantics:a.selectedSemantics,
+        inputs:[a,b].map(m=>({
+          birth:m.birth,calculationHash:m.calculationHash,
+          actualKoreanText:m.actualKoreanText,
+        }))};
+    });
+  // A controlled contrast changes exactly one sourced T9 section and holds
+  // another selected section constant. It proves a distinguishable executed
+  // research meaning, not real-life predictive validity.
+  const contrastingMeaningPairs=[];
+  const groups=[...signatures.values()];
+  for(let i=0;i<groups.length && contrastingMeaningPairs.length<12;i++){
+    for(let j=i+1;j<groups.length && contrastingMeaningPairs.length<12;j++){
+      const a=groups[i][0], b=groups[j][0];
+      const aa=new Set(a.selectedSemantics.map(x=>JSON.stringify(x)));
+      const bb=new Set(b.selectedSemantics.map(x=>JSON.stringify(x)));
+      const common=[...aa].filter(x=>bb.has(x));
+      const different=[...aa].filter(x=>!bb.has(x)).length+
+        [...bb].filter(x=>!aa.has(x)).length;
+      if(common.length===0 || different===0 || different>2 ||
+          a.actualKoreanText===b.actualKoreanText) continue;
+      contrastingMeaningPairs.push({
+        commonSelectedSectionCount:common.length,
+        differentSelectedSectionCount:different,
+        inputs:[a,b].map(m=>({
+          birth:m.birth,calculationHash:m.calculationHash,
+          selectedSemantics:m.selectedSemantics,
+          actualKoreanText:m.actualKoreanText,
+        })),
+      });
+    }
+  }
   return {
     scope,
     assessed:rows.length-unassessed,
@@ -251,6 +325,14 @@ export function analyzeTemporalConsumedT9Meaning(rows, scope) {
     casesInRepeatedExecutedMeaningGroups:repeated.reduce((n,m)=>n+m.length,0),
     oldDisplayProfilesHidingDistinctExecutedMeaning:conflictingOldProfiles.length,
     conflictingOldProfiles,
+    distinctLegacyDisplayProfiles:byOldMeaning.size,
+    executedMeaningsSplitAcrossDisplayProfiles:displaySplits.length,
+    excessDisplayProfileVariants:byOldMeaning.size-signatures.size,
+    displaySplits,
+    actualEvidencePatternCount:actualEvidencePatterns.length,
+    actualEvidencePatterns,
+    sameMeaningPairs,
+    contrastingMeaningPairs,
     examples:[...signatures.values()].slice(0,5).map(members=>({
       birth:members[0].birth,
       selectedSemantics:members[0].selectedSemantics,
