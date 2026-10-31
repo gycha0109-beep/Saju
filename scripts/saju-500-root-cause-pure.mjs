@@ -337,7 +337,7 @@ export function summarizeWealthConsumerEvidence(rows) {
     }
     const context = row.boundedT5Context;
     if (context !== undefined) {
-      if (hasT8 || context.wealthConclusionAuthorized !== false ||
+      if (context.wealthConclusionAuthorized !== false ||
           typeof context.paragraph !== 'string' || !context.paragraph.trim() ||
           !Array.isArray(context.themes) || context.themes.length === 0 ||
           !context.themes.every(theme =>
