@@ -71,6 +71,12 @@ describe('real-calculated monthly Korean research consumer preview', () => {
       expect(section.sourceIds.length).toBeGreaterThan(0);
       expect(section.ruleIds.length).toBeGreaterThan(0);
       expect(section.factPaths.length).toBeGreaterThanOrEqual(3);
+      const exact = execution.claims.find(claim => claim.claimId === section.claimId);
+      expect(exact).toBeDefined();
+      expect(section.claimType).toBe(exact!.claimType);
+      expect(section.semanticKey).toBe((exact!.value as {semanticKey:string}).semanticKey);
+      expect(section.methodologyId).toBe(exact!.methodologyRef.id);
+      expect(section.ruleIds).toEqual(exact!.ruleRefs.map(ref => ref.ruleId));
       expect(execution.claims.some(claim => claim.claimId === section.claimId &&
         claim.sourceRefs.some(id => section.sourceIds.includes(id)))).toBe(true);
       expect(section.calculatedInterval).toEqual({
