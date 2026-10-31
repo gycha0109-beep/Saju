@@ -58,6 +58,16 @@ function enforceSourceScope(
       lifeStage.natalContext.calculationHash !== joined.calculationHash ||
       joined.monthly.referenceReading.referenceDateTime !== reference ||
       stage.referenceDateTime !== reference ||
+      joined.annualExecutedEvidence.length !== joined.annual.sections.length ||
+      joined.annual.sections.some((section,i) => {
+        const actual = joined.annualExecutedEvidence[i];
+        return actual?.semanticKey !== section.id ||
+          actual.claimType !== section.candidateClaimType ||
+          actual.methodologyId !== section.methodologyId ||
+          !actual.sourceIds.includes(section.policySourceId) ||
+          !section.calculationFactPaths.every(path => actual.factPaths.includes(path)) ||
+          actual.ruleIds.length === 0;
+      }) ||
       !['bounded_natal_t8_research','insufficient_evidence'].includes(
         lifeStage.natalContext.availability) ||
       (lifeStage.natalContext.availability === 'insufficient_evidence') !==
@@ -84,13 +94,15 @@ function render(
     ? '조회 시각의 서울 달력 연도에 해당하는 연구용 연운입니다.'
     : '선택한 ' + report.targetYear +
       '년은 조회 시각의 현재 연도가 아닙니다. 현재 연운으로 적용하지 않고 비교만 합니다.';
-  const annual = report.annual.sections.map(section =>
+  const annual = report.annual.sections.map((section, i) =>
     '<article><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
     '<details><summary>연운 원문 출처와 계산 근거</summary><p>후보 프로필: ' +
-    e(section.researchProfileId) + '</p><p>계산 경로: ' +
-    e(section.calculationFactPaths.join(' · ')) + '</p><p>정책: ' +
+    e(section.researchProfileId) + '</p><p>실제 실행된 연구 Claim: ' +
+    e(report.annualExecutedEvidence[i]!.claimId) + '</p><p>실제 적용 규칙: ' +
+    e(report.annualExecutedEvidence[i]!.ruleIds.join(' · ')) + '</p><p>계산 경로: ' +
+    e(report.annualExecutedEvidence[i]!.factPaths.join(' · ')) + '</p><p>정책: ' +
     e(section.policySourceId) + ' · 방법론: ' + e(section.methodologyId) +
-    '</p><p>독립 고전 근거가 아닌 내부 연구 정책입니다.</p></details></article>',
+    '</p><p>독립 고전 근거가 아닌 내부 연구 정책이며 Official 승인은 아닙니다.</p></details></article>',
   ).join('') || '<p>이 연도에 적용할 개인별 연운 연구 문구가 없습니다.</p>';
   const theme = monthlyFocus.state === 'in_period' ? monthlyFocus.theme : undefined;
   const currentMonth = theme === undefined
