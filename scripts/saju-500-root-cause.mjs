@@ -118,6 +118,16 @@ export function diagnoseMissingWealthReading(snapshot, execution, registry, repo
       ? {
           themeCount: report.availableThemeContext.themes.length,
           wealthConclusionAuthorized: report.availableThemeContext.wealthConclusionAuthorized,
+          hiddenWealthMembership: report.availableThemeContext.hiddenWealthMembership.map(member => ({
+            pillar: member.pillar,
+            branch: member.branch,
+            hiddenStem: member.hiddenStem,
+            derivedTenGod: member.derivedTenGod,
+            factPaths: [...member.factPaths],
+            membershipSourceUrl: member.membershipSourceUrl,
+            meaningAuthority: member.meaningAuthority,
+            wealthConclusionAuthorized: member.wealthConclusionAuthorized,
+          })),
           themes: report.availableThemeContext.themes.map(theme => ({
             claimId: theme.claimId,
             claimType: theme.claimType,
