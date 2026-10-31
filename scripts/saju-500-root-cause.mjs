@@ -118,6 +118,8 @@ export function diagnoseMissingWealthReading(snapshot, execution, registry, repo
       ? {
           themeCount: report.availableThemeContext.themes.length,
           wealthConclusionAuthorized: report.availableThemeContext.wealthConclusionAuthorized,
+          hiddenWealthEvidenceStatus: report.availableThemeContext.hiddenWealthEvidenceStatus,
+          hiddenWealthUnavailableReason: report.availableThemeContext.hiddenWealthUnavailableReason ?? null,
           hiddenWealthMembership: report.availableThemeContext.hiddenWealthMembership.map(member => ({
             pillar: member.pillar,
             branch: member.branch,
