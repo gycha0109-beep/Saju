@@ -159,6 +159,29 @@ describe('real-calculated monthly Korean research consumer preview', () => {
         expect(execution.claims.some(claim => claim.claimId === section.claimId &&
           claim.claimType === 'GENERAL_MONTHLY_SEGMENT_BRANCH_CLASH_TENSION')).toBe(true);
       }
+      const chosen = tensions[0]!;
+      const interval = facts.segmentsById[chosen.segmentId];
+      const inPeriod = new Date(Date.parse(interval.startsAt) + 1).toISOString();
+      const active = run(month, snapshot(), inPeriod);
+      const selected = active.report.referenceReading;
+      expect(selected.state).toBe('in_period');
+      expect(selected.segmentId).toBe(chosen.segmentId);
+      expect(selected.sourceBoundTensions?.map(item => item.claimId))
+        .toContain(chosen.claimId);
+      expect(selected.sourceBoundTensions?.every(item =>
+        item.kind === 'tension' &&
+        item.segmentId === chosen.segmentId &&
+        item.calculatedInterval.startsAt === interval.startsAt &&
+        item.sourceIds.length > 0)).toBe(true);
+      const activeHtml = renderGeneralMonthlyExplorationHtml(active.report);
+      expect(activeHtml).toContain('aria-label="조회 시각에 적용되는 원국 충 관계"');
+      expect(activeHtml).toContain(chosen.claimId);
+      const otherId = chosen.segmentId === 'before_jeol' ? 'after_jeol' : 'before_jeol';
+      const other = facts.segmentsById[otherId];
+      const otherReading = run(month, snapshot(),
+        new Date(Date.parse(other.startsAt) + 1).toISOString()).report.referenceReading;
+      expect(otherReading.sourceBoundTensions?.some(x => x.claimId === chosen.claimId) ?? false)
+        .toBe(false);
       break;
     }
     expect(found).toBe(true);
