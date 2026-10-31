@@ -79,7 +79,7 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
   it('preserves unused source-bound T5 themes when only a Wealth tension is selected', () => {
     let partial: ReturnType<typeof wealthReading> | undefined;
     for (let year = 1950; year <= 2005 && !partial; year++) {
-      for (const month of [1, 3, 5, 7, 9, 11]) {
+      for (const month of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
         const candidate = wealthReading(year, month, 14, 12, 0);
         if (candidate.report.sections.length === 1 &&
             candidate.report.sections[0]?.axis === 'tension' &&
