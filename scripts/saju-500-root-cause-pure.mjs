@@ -168,6 +168,98 @@ export function analyzeTemporalMeaningRepetition(rows) {
  * Snapshot hashes, Claim IDs, dates and literal text are intentionally
  * excluded from signatures; otherwise this would inflate personalization.
  */
+/**
+ * Count semantic combinations actually CONSUMED from selected annual/monthly
+ * T9 research claims. Existing display-profile uniqueness is not evidence of
+ * independently selected meanings. Ignore birth IDs, calculation hashes,
+ * exact Korean text, dates, claim IDs and unconsumed natal T5 observations.
+ * Required source/rule/fact records are verified, but their incidental
+ * identifiers do not create extra meanings on their own.
+ */
+export function analyzeTemporalConsumedT9Meaning(rows, scope) {
+  if (scope !== 'annual' && scope !== 'monthly') {
+    throw new TypeError('Consumed period semantics require an annual or monthly scope');
+  }
+  const typeFor = scope === 'annual'
+    ? { theme:'GENERAL_ANNUAL_THEME_ACTIVATION', tension:'GENERAL_ANNUAL_BRANCH_CLASH_TENSION' }
+    : { theme:'GENERAL_MONTHLY_SEGMENT_THEME_ACTIVATION', tension:'GENERAL_MONTHLY_SEGMENT_BRANCH_CLASH_TENSION' };
+  const signatures = new Map();
+  const byOldMeaning = new Map();
+  let unassessed = 0;
+  for (const row of rows) {
+    const sections = row.sourceEvidence?.consumedT9;
+    if (typeof row.meaningKey !== 'string' || !Array.isArray(sections) ||
+        sections.length === 0 || sections.some(section => {
+          const kind = section?.kind === 'core' ? 'theme' : section?.kind;
+          return (kind !== 'theme' && kind !== 'tension') ||
+            section.claimType !== typeFor[kind] ||
+            typeof section.semanticKey !== 'string' || !section.semanticKey ||
+            (scope === 'monthly' &&
+              !['before_jeol','after_jeol'].includes(section.segmentId)) ||
+            (scope === 'annual' && section.segmentId != null) ||
+            !Array.isArray(section.ruleIds) || section.ruleIds.length === 0 ||
+            !section.ruleIds.every(v => typeof v === 'string' && v.length > 0) ||
+            typeof section.methodologyId !== 'string' || !section.methodologyId ||
+            !Array.isArray(section.sourceIds) || section.sourceIds.length === 0 ||
+            !section.sourceIds.every(v => typeof v === 'string' && v.length > 0) ||
+            !Array.isArray(section.factPaths) || section.factPaths.length === 0 ||
+            !section.factPaths.every(v => typeof v === 'string' && v.length > 0) ||
+            (kind === 'theme'
+              ? typeof section.tenGod !== 'string' || !section.tenGod ||
+                section.relatedPillar != null || section.relation != null
+              : !['year','month','day','hour'].includes(section.relatedPillar) ||
+                section.relation !== 'clash');
+        })) {
+      unassessed++;
+      continue;
+    }
+    const actual = sections.map(section => ({
+      kind:section.kind === 'core' ? 'theme' : section.kind,
+      ...(scope === 'monthly' ? {segmentId:section.segmentId} : {}),
+      claimType:section.claimType,
+      semanticKey:section.semanticKey,
+      ...(section.kind === 'core' || section.kind === 'theme'
+        ? {tenGod:section.tenGod}
+        : {relatedPillar:section.relatedPillar, relation:section.relation}),
+      ruleIds:[...new Set(section.ruleIds)].sort(),
+      methodologyId:section.methodologyId,
+    })).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
+    const signature=JSON.stringify(actual);
+    const record={birth:row.birth,calculationHash:row.calculationHash,signature,selectedSemantics:actual};
+    const group=signatures.get(signature) ?? [];
+    group.push(record);
+    signatures.set(signature,group);
+    const previous=byOldMeaning.get(row.meaningKey) ?? new Map();
+    previous.set(signature,(previous.get(signature)??0)+1);
+    byOldMeaning.set(row.meaningKey,previous);
+  }
+  const conflictingOldProfiles=[...byOldMeaning.entries()]
+    .filter(([,variants])=>variants.size>1)
+    .map(([meaningProfileKey,variants])=>({
+      meaningProfileKey,
+      distinctExecutedMeanings:variants.size,
+      cases:[...variants.values()].reduce((a,b)=>a+b,0),
+    }));
+  const repeated=[...signatures.values()].filter(members=>members.length>1)
+    .sort((a,b)=>b.length-a.length);
+  return {
+    scope,
+    assessed:rows.length-unassessed,
+    unassessed,
+    distinctExecutedMeaningSignatures:signatures.size,
+    repeatedExecutedMeaningGroups:repeated.length,
+    casesInRepeatedExecutedMeaningGroups:repeated.reduce((n,m)=>n+m.length,0),
+    oldDisplayProfilesHidingDistinctExecutedMeaning:conflictingOldProfiles.length,
+    conflictingOldProfiles,
+    examples:[...signatures.values()].slice(0,5).map(members=>({
+      birth:members[0].birth,
+      selectedSemantics:members[0].selectedSemantics,
+      caseCount:members.length,
+    })),
+    qualification:'Only source-selected annual/monthly T9 research semantics are counted, not unconsumed natal T5 or changed birth/time labels',
+  };
+}
+
 export function analyzeTemporalStructuralEvidenceVariation(rows) {
   const byMeaning = new Map();
   let unassessed = 0;
