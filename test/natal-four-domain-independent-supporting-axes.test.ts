@@ -34,6 +34,54 @@ describe('four different consumer natal menus require independently observed T0 
     expect(picked.overlapOnlyCount).toBe(2);
   });
 
+  it('recovers two independent sourced supports hidden by an earlier broad axis', () => {
+    const year = 'derivedFacts.tenGods.value.year.stem.value';
+    const month = 'derivedFacts.tenGods.value.month.stem.value';
+    const hour = 'derivedFacts.tenGods.value.hour.stem.value';
+    const core = { axis: 'core', observedFactPaths: [year] };
+    const broad = { axis: 'management', observedFactPaths: [month, hour] };
+    const narrowFirst = { axis: 'planning', observedFactPaths: [month] };
+    const narrowSecond = { axis: 'tension', observedFactPaths: [hour] };
+    const candidates = [broad, narrowFirst, narrowSecond];
+    const chosen = selectIndependentNatalSupportingAxes(core, candidates);
+    expect(chosen.supporting.map(section => section.axis))
+      .toEqual(['planning', 'tension']);
+    const used = new Set(core.observedFactPaths);
+    for (const section of chosen.supporting) {
+      expect(section.observedFactPaths.some(path => !used.has(path))).toBe(true);
+      section.observedFactPaths.forEach(path => used.add(path));
+    }
+    // A one-axis request retains the original documented source ordering.
+    expect(selectIndependentNatalSupportingAxes(core, candidates, 1)
+      .supporting.map(section => section.axis)).toEqual(['management']);
+    // No new Claim, source, or calculation fact is created by selection.
+    expect(chosen.supporting.every(section => candidates.includes(section))).toBe(true);
+  });
+
+  it('does not invent two independent supports from repeated paths or the same axis', () => {
+    const year = 'derivedFacts.tenGods.value.year.stem.value';
+    const month = 'derivedFacts.tenGods.value.month.stem.value';
+    const core = { axis: 'core', observedFactPaths: [year] };
+    const candidates = [
+      { axis: 'management', observedFactPaths: [month] },
+      { axis: 'planning', observedFactPaths: [month] },
+      { axis: 'management', observedFactPaths: [year, month] },
+      { axis: 'tension', observedFactPaths: [year] },
+    ];
+    const chosen = selectIndependentNatalSupportingAxes(core, candidates);
+    expect(chosen.supporting.map(section => section.axis)).toEqual(['management']);
+    expect(chosen.overlapOnlyCount).toBeGreaterThan(0);
+  });
+
+  it('preserves existing successful source priority when greedy already finds two supports', () => {
+    const core = { axis: 'core', observedFactPaths: ['a'] };
+    const broad = { axis: 'management', observedFactPaths: ['b', 'c'] };
+    const other = { axis: 'tension', observedFactPaths: ['d'] };
+    const later = { axis: 'planning', observedFactPaths: ['b'] };
+    const result = selectIndependentNatalSupportingAxes(core, [broad, other, later]);
+    expect(result.supporting).toEqual([broad, other]);
+  });
+
   it('applies incremental actual chart fact-paths across all four distinct domain reports', () => {
     const charts = [[3, 10], [4, 11], [6, 3], [7, 17], [9, 23]] as const;
     for (const [month, day] of charts) {
