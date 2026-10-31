@@ -20,6 +20,7 @@ import {
   analyzeTemporalRepetition,
   analyzeTemporalMeaningRepetition,
   analyzeTemporalStructuralEvidenceVariation,
+  analyzeTemporalNatalT5Variation,
   summarizeMissingWealthCauses,
   ROOT_CAUSE_AUDIT_VERSION,
 } from './saju-500-root-cause.mjs';
@@ -85,7 +86,40 @@ function natalEntry(report) {
     'sourced_natal_research',
   );
 }
-function temporalEntries(result) {
+/**
+ * Existing source-qualified T5 Claims from the SAME natal engine execution.
+ * Do not combine channels, inspect unauthorized hidden stems, or derive new
+ * period interpretations. Store only actually observed qualified positions.
+ */
+function sourceBoundNatalT5(snapshot, execution) {
+  const fact = snapshot.derivedFacts.tenGods;
+  if (fact.status !== 'resolved') return [];
+  const families = {
+    PEER: ['비견', '겁재'], RESOURCE: ['정인', '편인'],
+    OUTPUT: ['식신', '상관'], WEALTH: ['정재', '편재'],
+    OFFICER: ['정관', '편관'],
+  };
+  return execution.claims.filter(c => c.state === 'active' &&
+    c.taxonomy.tier === 'T5' && c.snapshotId === snapshot.snapshotId &&
+    c.scenarioRef === undefined && c.sourceRefs.length > 0 &&
+    /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(c.claimType))
+    .map(claim => {
+      const match = /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.exec(claim.claimType);
+      const family = match[1], channel = match[2];
+      const key = channel === 'VISIBLE_STEMS' ? 'stem' : 'branch';
+      const slots = channel === 'VISIBLE_STEMS' ? ['year', 'month', 'hour'] : ['year', 'month', 'day', 'hour'];
+      const observed = slots.flatMap(slot => {
+        const tenGod = fact.value[slot][key];
+        return tenGod?.status === 'resolved' && families[family].includes(tenGod.value)
+          ? [{factPath: 'derivedFacts.tenGods.value.' + slot + '.' + key + '.value', tenGod:tenGod.value}]
+          : [];
+      });
+      if (!observed.length) throw new Error('T5 source audit has no matching observed natal evidence: ' + claim.claimType);
+      return {claimType:claim.claimType, sourceIds:[...claim.sourceRefs], observed};
+    }).sort((a,b)=>a.claimType.localeCompare(b.claimType));
+}
+
+function temporalEntries(result, natalT5) {
   const report = result.annualMonthly.report;
   const annual = report.annual.sections;
   const monthly = report.monthly.sections;
@@ -107,6 +141,7 @@ function temporalEntries(result) {
   // forecasts; report life-stage's structural uniqueness but DO NOT count it
   // as distinct life-stage interpretations.
   a.sourceEvidence = {
+    natalT5,
     annualStemTenGod: report.annual.annualStemTenGod,
     annualCalendarPolicy: report.annual.calendarPolicy,
     sections: annual.map(s => ({
@@ -119,6 +154,7 @@ function temporalEntries(result) {
     })),
   };
   m.sourceEvidence = {
+    natalT5,
     referenceState: focus.state,
     referenceSegment: focus.segmentId ?? null,
     sections: monthly.map(s => ({
@@ -206,9 +242,11 @@ export function runFiveHundredSajuAudit() {
       const existing = chartHashGroups.get(chartKey) ?? [];
       existing.push(stamp);
       chartHashGroups.set(chartKey,existing);
+      let natalT5 = [];
       for (const domain of NATAL) {
         const registry = registries[domain];
         const interpretation = runInterpretation(snapshot,registry,{now});
+        if (domain === 'general') natalT5 = sourceBoundNatalT5(snapshot, interpretation);
         const report = renderers[domain](snapshot, interpretation, registry);
         if (report.snapshotId !== snapshot.snapshotId || report.calculationHash !== chartKey) {
           throw new Error(domain + ' did not use the same exact natal snapshot');
@@ -232,7 +270,7 @@ export function runFiveHundredSajuAudit() {
       if (temporal.calculationHash !== chartKey) {
         throw new Error('Time menus did not preserve canonical calculation hash');
       }
-      const three = temporalEntries(temporal);
+      const three = temporalEntries(temporal, natalT5);
       for (let t=0;t<3;t++) rows[DOMAIN_NAMES[5+t]].push({...three[t],birth:stamp,calculationHash:chartKey});
     } catch(error) {
       failures.push({birth:stamp,error:String(error?.stack ?? error).slice(0,1200)});
@@ -261,6 +299,8 @@ export function runFiveHundredSajuAudit() {
       monthlyMeaningRepetition: analyzeTemporalMeaningRepetition(rows['이번 달']),
       annualStructuralVariation: analyzeTemporalStructuralEvidenceVariation(rows['올해']),
       monthlyStructuralVariation: analyzeTemporalStructuralEvidenceVariation(rows['이번 달']),
+      annualNatalT5Variation: analyzeTemporalNatalT5Variation(rows['올해']),
+      monthlyNatalT5Variation: analyzeTemporalNatalT5Variation(rows['이번 달']),
     },
     interpretationCaveat:'Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
     permissions:{mayPublish:false,maySell:false,mayCallOfficial:false},
@@ -282,6 +322,10 @@ export function runFiveHundredSajuAudit() {
       result.rootCauseDiagnostics.annualStructuralVariation.repeatedMeaningProfilesWithDifferentVerifiedRelations,
     monthlyProfilesWithDifferentObservedRelations:
       result.rootCauseDiagnostics.monthlyStructuralVariation.repeatedMeaningProfilesWithDifferentVerifiedRelations,
+    annualProfilesWithDifferentObservedNatalT5:
+      result.rootCauseDiagnostics.annualNatalT5Variation.repeatedMeaningProfilesWithDifferentNatalT5Evidence,
+    monthlyProfilesWithDifferentObservedNatalT5:
+      result.rootCauseDiagnostics.monthlyNatalT5Variation.repeatedMeaningProfilesWithDifferentNatalT5Evidence,
   })+'\n');
   process.stdout.write('SAJU500_RESULT_JSON '+JSON.stringify(result)+'\n');
   if(inputs.size!==COUNT || failures.length || DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
@@ -296,6 +340,8 @@ export function runFiveHundredSajuAudit() {
         result.menuResults['올해'].meaningProfile.casesInRepeatedGroups ||
       result.rootCauseDiagnostics.monthlyMeaningRepetition.casesInRepeatedGroups !==
         result.menuResults['이번 달'].meaningProfile.casesInRepeatedGroups ||
+      result.rootCauseDiagnostics.annualNatalT5Variation.unassessed !== 0 ||
+      result.rootCauseDiagnostics.monthlyNatalT5Variation.unassessed !== 0 ||
       result.rootCauseDiagnostics.wealth.remediation.caseCount !== wealthMissingCases.length) {
     process.exitCode=1;
   }
