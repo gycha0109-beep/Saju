@@ -34,6 +34,8 @@ export interface WealthNatalAvailableThemeContext {
   paragraph: string;
   wealthConclusionAuthorized: false;
   hiddenWealthMembership: readonly WealthHiddenStemObservation[];
+  hiddenWealthEvidenceStatus: 'resolved' | 'unavailable';
+  hiddenWealthUnavailableReason?: string;
   themes: readonly {
     claimId: string;
     claimType: string;
@@ -164,7 +166,8 @@ function explainMissingWealthT8(
   const reason = hasWealth
     ? '재성 관련 십신 관점은 있지만 기존 재물 종합 규칙이 요구하는 같은 관측 범위 안의 다른 십신 계열과 결합되지 않아, 출처가 있는 재물 종합 결론을 만들 수 없습니다. '
     : '기존 십신 관점 규칙에서 재성 계열의 활성 근거가 확인되지 않아, 등록된 재물 복합 해석 규칙을 적용할 수 없습니다. ';
-  const hidden = observeHiddenWealthMembership(snapshot);
+  const assessment = observeHiddenWealthMembership(snapshot);
+  const hidden = assessment.status === 'resolved' ? assessment.observations : [];
   const hiddenNote = hidden.length > 0
     ? `한편 지장간에는 재성으로 계산되는 천간이 ${hidden.length}개 관측됩니다. 이는 지장간 구성의 계산 사실로, 현재의 천간·지지 대표 십신 T5 또는 재물 종합 T8 활성 근거를 대신하지 않습니다. `
     : '';
@@ -237,7 +240,9 @@ function buildAvailableThemeContext(
     `‘${theme.headline}’ — ${theme.observedPositions.join(' · ')}에서 확인됐습니다. ${theme.summary}`);
   // R27 denies narrative materiality; its observations remain a separate
   // calculated-facts appendix, never part of T5/T8 interpretive prose.
-  const hiddenWealthMembership = observeHiddenWealthMembership(snapshot);
+  const hiddenAssessment = observeHiddenWealthMembership(snapshot);
+  const hiddenWealthMembership = hiddenAssessment.status === 'resolved'
+    ? hiddenAssessment.observations : [];
   return {
     title: '재물 종합 결론 이전에 확인된 원국의 십신 주제',
     paragraph: '아래는 기존 출처와 연결된 십신별 구조 설명입니다. ' +
@@ -246,6 +251,9 @@ function buildAvailableThemeContext(
       '따라서 재물의 많고 적음, 소득, 투자 성과, 향후 재물운을 판단하는 해석으로 읽어서는 안 됩니다.',
     wealthConclusionAuthorized: false,
     hiddenWealthMembership,
+    hiddenWealthEvidenceStatus: hiddenAssessment.status,
+    ...(hiddenAssessment.status === 'unavailable'
+      ? { hiddenWealthUnavailableReason: hiddenAssessment.reasonCode } : {}),
     themes: sorted,
   };
 }
