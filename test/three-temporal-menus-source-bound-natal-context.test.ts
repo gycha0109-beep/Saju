@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildAnnualMonthlyBirthResearchReading,
+} from '../src/preview/annual-monthly-birth-research-runtime.js';
+import {
   buildThreeTemporalMenusBirthReading,
 } from '../src/preview/three-temporal-menus-birth-reading.js';
 
@@ -65,6 +68,77 @@ describe('three temporal menus preserve already source-bound natal interpretatio
     expect(month).toContain('절입 전후 전체 풀이');
     expect(stage).toContain('대운의 간지·시각만 계산된 사실입니다');
   }, 30000);
+
+  it('shows only the already selected natal clash in the active Jeol segment of the three-menu first screen', () => {
+    const birth = {
+      calendarType: 'solar' as const,
+      date: { year: 1996, month: 1, day: 9 },
+      time: { known: true as const, hour: 9, minute: 30 },
+      sexForTraditionalCalculation: 'unspecified' as const,
+    };
+    let selected: ReturnType<typeof buildThreeTemporalMenusBirthReading> | undefined;
+    for (let month = 1; month <= 12; month++) {
+      const target = {
+        ...TARGET, targetMonth: month,
+        referenceDateTime: '2026-' + String(month).padStart(2, '0') + '-01T12:00:00.000Z',
+      };
+      const scan = buildAnnualMonthlyBirthResearchReading(birth, target);
+      const tension = scan.report.monthly.sections.find(section => section.kind === 'tension');
+      if (!tension) continue;
+      const activeTarget = {
+        ...target,
+        referenceDateTime: new Date(
+          Date.parse(tension.calculatedInterval.startsAt) + 60_000,
+        ).toISOString(),
+      };
+      selected = buildThreeTemporalMenusBirthReading(birth, activeTarget);
+      break;
+    }
+    expect(selected).toBeDefined();
+    const reading = selected!;
+    const focus = reading.annualMonthly.report.monthly.referenceReading;
+    expect(focus.state).toBe('in_period');
+    expect(focus.sourceBoundTensions?.length).toBeGreaterThan(0);
+    const current = reading.html.split('<h3>조회 시각에 해당하는 월운</h3>')[1]!
+      .split('<h3>절입 전후 전체 풀이</h3>')[0]!;
+    expect(current).toContain('aria-label="조회 시각 절입 구간의 실제 원국 충 관계"');
+    expect(current).toContain('실제 사건·길흉을 예측하지 않습니다');
+    expect(current).toContain(escaped(focus.theme!.claimId));
+    for (const section of focus.sourceBoundTensions ?? []) {
+      expect(section.segmentId).toBe(focus.segmentId);
+      expect(section.calculatedInterval).toEqual(focus.theme!.calculatedInterval);
+      expect(section.observedClash?.relation).toBe('clash');
+      expect(current).toContain(escaped(section.text));
+      expect(current).toContain(escaped(section.claimId));
+      expect(current).toContain(escaped(section.ruleIds[0]!));
+      expect(current).toContain(escaped(section.sourceIds[0]!));
+      expect(current).toContain(escaped(section.factPaths[0]!));
+    }
+    const unrelated = reading.annualMonthly.report.monthly.sections.filter(section =>
+      section.kind === 'tension' && section.segmentId !== focus.segmentId);
+    for (const other of unrelated) {
+      expect(current).not.toContain(escaped(other.claimId));
+      expect(current).not.toContain(escaped(other.text));
+    }
+    expect(reading.mayPublish).toBe(false);
+    expect(reading.maySell).toBe(false);
+  }, 60_000);
+
+  it('never displays a research month as current outside its requested Seoul month', () => {
+    const reading = buildThreeTemporalMenusBirthReading({
+      calendarType: 'solar', date: { year: 1996, month: 1, day: 9 },
+      time: { known: true, hour: 9, minute: 30 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, { ...TARGET, referenceDateTime: '2026-09-03T13:00:00.000Z' });
+    expect(reading.annualMonthly.report.monthly.referenceReading.state)
+      .toBe('outside_target_month');
+    const current = reading.html.split('<h3>조회 시각에 해당하는 월운</h3>')[1]!
+      .split('<h3>절입 전후 전체 풀이</h3>')[0]!;
+    expect(current).toContain('조회 시각이 선택한 월 밖입니다');
+    expect(current).not.toContain('현재 구간에 선택된 월운 T9 근거');
+    expect(current).not.toContain('active-month-relations');
+    expect(reading.maySell).toBe(false);
+  }, 30_000);
 
   it('does not invent original-chart interpretations when birth time is unknown', () => {
     const result = buildThreeTemporalMenusBirthReading({
