@@ -5,6 +5,19 @@
 > 범위: 계산·기존 Claim/Methodology/Source 권한을 유지하는 연구용 해석 품질 개선. AI 신규 Claim 생성과 Official/판매 승격은 범위 밖.
 > 기록 규칙: **실제 수정한 작업 단위마다 이 파일에 변경 내용, 결과물, 확인된 검증, 미완료 항목을 추가한다.** 계획만 있는 작업은 완료로 기록하지 않는다.
 
+## 2026-11-01 — 올해 운세의 기존 한국어 풀이를 실제 선택된 연운 연구 Claim에 결박 (단계 3·5 일부)
+
+### 작업 26 — 정적 연운 투영의 실행·근거 선택 연결 복구
+- **실제 문제:** `buildGeneralAnnualMonthlyExplorationReport`는 월운은 해석 엔진 → EvidenceSelector → 연구 프로필을 거쳤지만, 연운은 연주·십신 계산값으로 `buildGeneralAnnualExplorationReport`의 정적 연구 프로필만 직접 표시했다. 같은 코드베이스에 **이미 등록·실행 가능한** 연간 T9 십신 주제와 원국 지지 충 후보 규칙·출처·실제 Claim 선택 경로가 있었음에도 소비자가 이를 확인할 수 없었다.
+- **구현:** 같은 명식의 Canonical Snapshot, 선택 연도와 조회시각으로 기존 연간 연구 레지스트리를 실행하고, 실제 연간 `ReadingIntent`에 대한 `buildReadingCompositionEvidence`로 **선택된 활성 T9 Claim**을 검증한다. 기존 출력 연운 연구 프로필의 중심 주제와 모든 조건부 충 문단은 각자 대응하는 Claim 유형·의미 키·연간 십신·원국 기둥·실제 계산 사실 경로·규칙·방법론·내부 연구 출처와 정확히 일치할 때에만 허용한다. 실행된 Claim이 없거나 숫자가 다르면 투영만으로 출력하지 않는다.
+- **한국어 출력:** 기존 연운 문구 자체는 유지한다. 월별 연결 화면과 3가지 시간 메뉴의 연운 영역에서 **실제 실행된 연구 Claim·규칙·계산 경로·출처**를 확인할 수 있게 했다. 정적 프로필은 여전히 Official 해석이 아니라 기존 후보 문구이며, 실행된 T9도 연구용이다.
+- **검증 코드:** 선택된 연간 T9 Claim이 각 연구 프로필과 1:1 대응하고 계산 경로·출처·규칙이 존재하는지 확인한다. 가짜 출처로 바꾼 연간 근거는 HTML 출력 단계에서 거부하고, 실제 생년월일시로 생성한 통합 3메뉴 HTML에도 연구 Claim/Rule이 표시되는지 검사한다.
+- **구현 파일:** `src/preview/general-annual-monthly-exploration-report.ts`, `src/preview/three-temporal-menus-birth-reading.ts`, `test/general-annual-monthly-exploration-report.test.ts`, `test/three-temporal-menus-source-bound-natal-context.test.ts`.
+- **구현 커밋:** `0d746c09686ba60764f7fbcc6db6d88d68808e59`, `b997efcae106fc01eb7e94722bcce9aee06be392`, `64bb5ae6f88bb3220c917038042ea87e31e4ea83`, `ab03e7c9c19e0712203e64d423ad981ac0f5508a`.
+- **검증 상태:** 직전 작업 25의 `86ffcb1a`에 연결된 CI·500명 감사·컨테이너·PIE Shadow는 모두 성공했다. **이번 신규 변경의 전체 CI는 기록 시점 미확인**. 본 작업을 독립 연·월운 의미 다양성 증가로 계산하지 않는다.
+- **남은 과제:** 연·월운의 실제 원국 상호작용을 해석할 독립적 출처·조건, 재물운 직접 종합근거가 없는 17명, 의미 대조/최종 500명 품질 기준 미완료. Official/공개/판매/결제 권한 계속 비활성.
+
+
 ## 2026-11-01 — 기존 출처 있는 원국 풀이를 연·월운 옆에 독립 맥락으로 노출 (단계 3·4·5 일부)
 
 ### 작업 25 — 한 명식의 연·월운·대운 통합 읽기에서 원국 연구 풀이 재사용
