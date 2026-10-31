@@ -1,5 +1,6 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { findSharedNatalFactLinks } from './natal-five-domain-shared-evidence.js';
+import { SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY } from '../research/snapshot-bound-hidden-stem-ten-god-occurrences.js';
 import type { GeneralNatalMultifactorReport, GeneralNatalMultifactorSection } from './general-natal-multifactor-report.js';
 import type { CareerMultifactorReport, CareerMultifactorReportSection } from './career-natal-multifactor-report.js';
 import type { WealthNatalMultifactorReport, WealthNatalMultifactorSection } from './wealth-natal-multifactor-report.js';
@@ -323,6 +324,79 @@ function renderFirstScreenSelectedInterpretations(
     '<p class="bounded-note">' + escapeHtml(scope) + '</p></section>';
 }
 
+/**
+ * Existing sourced T5 observations can still be read when Wealth T8 is
+ * insufficient. This renders a bounded explanation, never a Wealth claim.
+ */
+function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport): string {
+  const context = report.availableThemeContext;
+  if (context === undefined) return '';
+  guard(report.sections.length === 0 && report.state === 'insufficient' &&
+    context.wealthConclusionAuthorized === false &&
+    context.themes.length > 0 && context.title.trim().length > 0 &&
+    context.paragraph.trim().length > 0 &&
+    (context.hiddenWealthEvidenceStatus === 'resolved' ||
+      (context.hiddenWealthEvidenceStatus === 'unavailable' &&
+        context.hiddenWealthMembership.length === 0 &&
+        !!context.hiddenWealthUnavailableReason)),
+    'existing theme context must not become a Wealth synthesis');
+  const hidden = context.hiddenWealthMembership.map(item => {
+    guard(['year', 'month', 'day', 'hour'].includes(item.pillar) &&
+      item.meaningAuthority === 'calculated_membership_only' &&
+      item.wealthConclusionAuthorized === false &&
+      (item.derivedTenGod === '편재' || item.derivedTenGod === '정재') &&
+      item.factPaths.length === 2 &&
+      item.factPaths[0] === 'derivedFacts.dayMaster' &&
+      item.factPaths[1] === 'derivedFacts.hiddenStems.' + item.pillar &&
+      item.sourcePillarRef === 'pillars.' + item.pillar &&
+      item.occurrenceId === item.pillar + ':' + item.hiddenStem &&
+      item.mappingAuthorityDefinitionHash ===
+        SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY.definitionHash &&
+      item.membershipSourceUrl ===
+        SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY
+          .sourceBindings.hiddenMembershipSource.url,
+      'unverified hidden stem membership cannot be represented as an interpretation');
+    return '<li>' + escapeHtml(item.pillar + ' 지지 ' + item.branch +
+      '의 지장간 ' + item.hiddenStem + ' · ' + item.derivedTenGod) +
+      ' (지장간 구성의 계산 기록 · 별도 해석 아님)' +
+      '<details><summary>계산 경로와 지장간 구성 출처</summary>' +
+      renderList(item.factPaths) + '<p>' +
+      escapeHtml(item.membershipSourceUrl) + '</p></details></li>';
+  }).join('');
+  const hiddenSection = hidden.length
+    ? '<details><summary>지장간의 재성 계열 구성 관측</summary><ul>' +
+      hidden + '</ul></details>'
+    : context.hiddenWealthEvidenceStatus === 'unavailable'
+      ? '<p>지장간 십신 관계는 현재 명식에서 확정할 수 없어 구성 관측을 표시하지 않습니다. ' +
+        '구성 미확정은 재성 부재의 증거가 아닙니다.</p>'
+      : '';
+  const themes = context.themes.map(theme => {
+    guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+      .test(theme.claimType) && theme.claimId.trim().length > 0 &&
+      theme.headline.trim().length > 0 && theme.summary.trim().length > 0 &&
+      theme.sourceIds.length > 0 && theme.observedPositions.length > 0 &&
+      theme.observedFactPaths.length === theme.observedPositions.length &&
+      theme.observedFactPaths.every(path => FACT_PATH.test(path)) &&
+      context.paragraph.includes(theme.summary) &&
+      theme.observedPositions.every(position => context.paragraph.includes(position)),
+      'existing theme context has no actual sourced calculation evidence');
+    return '<li><strong>' + escapeHtml(theme.headline) + '</strong>' +
+      '<details><summary>확인된 십신 위치와 기존 출처</summary>' +
+      '<p>계산된 위치</p>' + renderList(theme.observedPositions) +
+      '<p>계산 근거 경로</p>' + renderList(theme.observedFactPaths) +
+      '<p>기존 십신 주장: ' + escapeHtml(theme.claimType) + '</p>' +
+      '<p>근거 식별자: ' + escapeHtml(theme.claimId) + '</p>' +
+      '<p>출처</p>' + renderList(theme.sourceIds) +
+      '</details></li>';
+  }).join('');
+  return '<section class="bounded-source-context" aria-label="재물운 근거 있는 부분 설명">' +
+    '<h3>' + escapeHtml(context.title) + '</h3>' +
+    '<p><strong>재물운 종합 해석 아님 · 기존 십신 관측만 설명</strong></p>' +
+    '<p>' + escapeHtml(context.paragraph) + '</p>' +
+    '<details><summary>주제별 계산 근거·출처 보기</summary><ul>' +
+    themes + '</ul></details>' + hiddenSection + '</section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -350,6 +424,8 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
         ? renderBusinessReadingGuide(report as BusinessNatalMultifactorReport)
         : domain === 'relationship'
           ? renderRelationshipReadingGuide(report as RelationshipNatalMultifactorReport) : '';
+  const existingWealthContext = domain === 'wealth'
+    ? renderWealthAvailableThemeContext(report as WealthNatalMultifactorReport) : '';
   const firstMeaning = renderFirstScreenSelectedInterpretations(domain, report);
   const details = firstMeaning === '' ? readingGuide + originalText
     : '<details class="full-claim-evidence"><summary>원국 풀이의 상세 설명·명식 근거와 출처</summary>' +
@@ -357,7 +433,7 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
   return '<article aria-labelledby="domain-' + domain + '" class="domain">' +
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
-    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning + details + missing +
+    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning + existingWealthContext + details + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }

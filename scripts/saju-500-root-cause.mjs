@@ -1,17 +1,20 @@
 import { buildReadingCompositionEvidence } from '../dist/reading/reading-intent-composition.js';
 
-export const ROOT_CAUSE_AUDIT_VERSION = 'saju-eight-menu-root-cause-v1';
+import { frequency } from './saju-500-root-cause-pure.mjs';
+export {
+  ROOT_CAUSE_AUDIT_VERSION,
+  analyzeTemporalRepetition,
+  buildWealthRemediationGroups,
+  analyzeTemporalMeaningRepetition,
+  analyzeTemporalStructuralEvidenceVariation,
+  summarizeMissingWealthCauses,
+} from './saju-500-root-cause-pure.mjs';
 
 const WEALTH_FILTER = claim =>
   claim.state === 'active' && claim.taxonomy.tier === 'T8' &&
   claim.taxonomy.category === 'wealth' &&
   claim.predicate === 'wealth_multifactor_structure';
 
-function frequency(values) {
-  const result = {};
-  for (const value of values) result[value] = (result[value] ?? 0) + 1;
-  return result;
-}
 
 /**
  * Observe the engine's real T5 -> wealth T8 -> EvidenceSelector -> report
@@ -59,10 +62,21 @@ export function diagnoseMissingWealthReading(snapshot, execution, registry, repo
   } else if (t5.length === 0) {
     cause = 'no_active_upstream_t5_theme';
   } else if (inputEligibleRules.length === 0 && activeT8.length === 0) {
-    const hasWealthTheme = t5.some(claim => claim.claimType.startsWith('TEN_GOD_WEALTH_'));
-    cause = hasWealthTheme
-      ? 'wealth_t5_exists_but_no_registered_same_channel_combination'
-      : 'no_active_wealth_t5_in_either_observation_channel';
+    const wealthChannels = ['VISIBLE_STEMS', 'BRANCHES']
+      .filter(channel => existingTypes.has('TEN_GOD_WEALTH_' + channel + '_THEME'));
+    const hasSameChannelCompanion = wealthChannels.some(channel =>
+      [...existingTypes].some(type => type.endsWith('_' + channel + '_THEME') &&
+        !type.startsWith('TEN_GOD_WEALTH_')));
+    const hasOtherChannelCompanion = wealthChannels.length === 1 &&
+      [...existingTypes].some(type =>
+        type.endsWith('_' + (wealthChannels[0] === 'VISIBLE_STEMS'
+          ? 'BRANCHES' : 'VISIBLE_STEMS') + '_THEME') &&
+        !type.startsWith('TEN_GOD_WEALTH_'));
+    cause = wealthChannels.length === 0
+      ? 'no_active_wealth_t5_in_either_observation_channel'
+      : !hasSameChannelCompanion && hasOtherChannelCompanion
+        ? 'wealth_t5_and_other_families_split_across_channels'
+        : 'wealth_t5_exists_but_no_registered_same_channel_combination';
   } else if (activeT8.length === 0) {
     cause = 'eligible_rule_did_not_emit_wealth_claim';
   } else if (selectedT8.length === 0) {
@@ -112,54 +126,29 @@ export function diagnoseMissingWealthReading(snapshot, execution, registry, repo
       selectedWealthClaimIds: selectedT8.map(claim => claim.claimId),
     },
     reportSectionCount: report.sections.length,
-  };
-}
-
-/**
- * Group the *actual delivered text* and keep its exact temporal T9 or annual
- * profile evidence. Same wording across different chart hashes is visible;
- * it must not be confused with different source-grounded meanings.
- */
-export function analyzeTemporalRepetition(rows) {
-  const clusters = new Map();
-  for (const row of rows) {
-    const members = clusters.get(row.exactKey) ?? [];
-    members.push({
-      birth: row.birth,
-      calculationHash: row.calculationHash,
-      meaningKey: row.meaningKey,
-      sourceEvidence: row.sourceEvidence,
-    });
-    clusters.set(row.exactKey, members);
-  }
-  const repeated = [...clusters.entries()]
-    .filter(([,members]) => members.length > 1)
-    .sort((a,b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
-    .map(([textHash,members]) => ({
-      textHash,
-      count: members.length,
-      distinctChartCount: new Set(members.map(m => m.calculationHash)).size,
-      distinctMeaningProfileCount: new Set(members.map(m => m.meaningKey)).size,
-      members,
-    }));
-  const casesInRepeatedGroups = repeated.reduce((sum,x)=>sum+x.count,0);
-  return {
-    generated: rows.length,
-    repeatedGroupCount: repeated.length,
-    casesInRepeatedGroups,
-    largestGroupSize: repeated[0]?.count ?? 0,
-    repeatedGroups: repeated,
-  };
-}
-
-export function summarizeMissingWealthCauses(cases) {
-  const byCause = frequency(cases.map(row => row.cause));
-  return {
-    missingCaseCount: cases.length,
-    byCause,
-    allCasesHaveExplicitCause: cases.every(row =>
-      row.cause && row.cause !== 'unknown' && row.calculationHash &&
-      row.selection?.coverageState && row.rules?.totalRegistered > 0),
-    cases,
+    existingSourceThemeContext: report.availableThemeContext
+      ? {
+          themeCount: report.availableThemeContext.themes.length,
+          wealthConclusionAuthorized: report.availableThemeContext.wealthConclusionAuthorized,
+          hiddenWealthEvidenceStatus: report.availableThemeContext.hiddenWealthEvidenceStatus,
+          hiddenWealthUnavailableReason: report.availableThemeContext.hiddenWealthUnavailableReason ?? null,
+          hiddenWealthMembership: report.availableThemeContext.hiddenWealthMembership.map(member => ({
+            pillar: member.pillar,
+            branch: member.branch,
+            hiddenStem: member.hiddenStem,
+            derivedTenGod: member.derivedTenGod,
+            factPaths: [...member.factPaths],
+            membershipSourceUrl: member.membershipSourceUrl,
+            meaningAuthority: member.meaningAuthority,
+            wealthConclusionAuthorized: member.wealthConclusionAuthorized,
+          })),
+          themes: report.availableThemeContext.themes.map(theme => ({
+            claimId: theme.claimId,
+            claimType: theme.claimType,
+            sourceIds: [...theme.sourceIds],
+            observedFactPaths: [...theme.observedFactPaths],
+          })),
+        }
+      : null,
   };
 }

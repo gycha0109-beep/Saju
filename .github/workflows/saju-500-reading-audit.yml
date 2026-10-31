@@ -4,6 +4,15 @@ on:
   pull_request:
     paths:
       - 'scripts/saju-500-eight-menu-audit.mjs'
+      - 'scripts/saju-500-root-cause.mjs'
+      - 'scripts/saju-500-root-cause-pure.mjs'
+      - 'test/saju-500-root-cause-summary.test.mjs'
+      - 'src/preview/wealth-hidden-stem-observations.ts'
+      - 'src/preview/wealth-natal-multifactor-report.ts'
+      - 'src/preview/natal-five-domain-multifactor-reader.ts'
+      - 'src/research/wealth-natal-multifactor-candidate.ts'
+      - 'test/wealth-hidden-stem-observations.test.ts'
+      - 'test/wealth-natal-multifactor-consumer-report.test.ts'
       - '.github/workflows/saju-500-reading-audit.yml'
   workflow_dispatch:
 

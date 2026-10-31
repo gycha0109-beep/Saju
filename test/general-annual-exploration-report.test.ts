@@ -55,6 +55,7 @@ describe('opt-in consumer Annual exploration', () => {
       kind: 'core',
       interpretationStatus: 'internal_research',
     });
+    expect(result.sections[0]?.observedClash).toBeUndefined();
     expect(result.sections[0]?.text.length).toBeGreaterThan(30);
     expect(result.sections.every((section) => section.text.trim().length > 0)).toBe(true);
     expect(result.sections[0]).toMatchObject({
@@ -126,6 +127,14 @@ describe('opt-in consumer Annual exploration', () => {
     expect(tension?.kind).toBe('tension');
     expect(tension?.title).toContain('일주');
     expect(tension?.text).toContain('특정 사건의 예고로 보지');
+    expect(tension?.observedClash).toEqual({
+      natalBranch: '자',
+      annualBranch: value.annualPillar.branch,
+      relation: 'clash',
+    });
+    expect(tension?.text).toContain('태어난 날 지지 자');
+    expect(tension?.text).toContain(`${value.targetYear}년 지지 ${value.annualPillar.branch}`);
+    expect(tension?.text).toContain('실제 사건의 발생을 뜻하지 않습니다');
     expect(tension?.candidateClaimType).toBe('GENERAL_ANNUAL_BRANCH_CLASH_TENSION');
     expect(tension?.calculationFactPaths).toEqual([
       'temporal.targetYear', 'temporal.annualPillar',

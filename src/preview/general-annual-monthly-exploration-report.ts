@@ -8,6 +8,7 @@ import { buildTemporalReadingContext } from '../reading/temporal-reading-context
 import {
   buildGeneralAnnualExplorationReport,
   type GeneralAnnualExplorationReport,
+  type GeneralAnnualExplorationSection,
 } from './general-annual-exploration-report.js';
 import {
   buildGeneralMonthlyExplorationReport,
@@ -41,6 +42,15 @@ export interface GeneralAnnualMonthlyExplorationReport {
   };
   /** Shared with the exact single-month research result. */
   referenceReading: GeneralMonthlyExplorationReport['referenceReading'];
+  /** Existing annual research profiles only, scoped to the requested Seoul civil year. */
+  annualCurrentReading:
+    | {
+        state: 'in_target_civil_year';
+        referenceDateTime: string;
+        theme: GeneralAnnualExplorationSection;
+        sourceBoundTensions: readonly GeneralAnnualExplorationSection[];
+      }
+    | { state: 'outside_target_civil_year'; referenceDateTime: string };
   caveats: readonly string[];
 }
 
@@ -129,6 +139,34 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       ? 'in_target_civil_year' as const : 'outside_target_civil_year' as const,
   };
 
+  const annualTheme = annual.sections[0];
+  requireLinkedPeriod(annualTheme?.kind === 'core' &&
+    annualTheme.interpretationStatus === 'internal_research' &&
+    annualTheme.evidenceStatus === 'research_profile_projection_not_an_executed_official_claim',
+    'the annual focus requires its existing source-owned research theme');
+  const annualTensions = annual.sections.filter(section =>
+    section.kind === 'tension' && section.observedClash?.relation === 'clash' &&
+    section.relatedPillar !== undefined &&
+    section.calculationFactPaths.includes(
+      'temporal.annualBranchRelations.' + section.relatedPillar,
+    ) &&
+    section.policySourceId === annualTheme.policySourceId &&
+    section.methodologyId === annualTheme.methodologyId);
+  requireLinkedPeriod(annualTensions.length === annual.sections.length - 1,
+    'the annual focus cannot silently drop an unsupported relation');
+  const annualCurrentReading: GeneralAnnualMonthlyExplorationReport['annualCurrentReading'] =
+    annualReference.state === 'in_target_civil_year'
+      ? {
+          state: 'in_target_civil_year',
+          referenceDateTime: annualReference.referenceDateTime,
+          theme: annualTheme,
+          sourceBoundTensions: annualTensions,
+        }
+      : {
+          state: 'outside_target_civil_year',
+          referenceDateTime: annualReference.referenceDateTime,
+        };
+
   const periodComparison =
     String(annual.targetYear) + '년 전체 미리보기는 ' + annual.annualStemTenGod +
     '을(를) 기준으로 읽습니다. ' + String(monthly.targetMonth) + '월은 ' +
@@ -142,7 +180,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     researchOnly: true, usefulComplete: false, mayPublish: false, maySell: false,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     targetYear: monthly.targetYear, targetMonth: monthly.targetMonth,
-    annual, monthly, periodComparison, annualReference, referenceReading,
+    annual, monthly, periodComparison, annualReference, referenceReading, annualCurrentReading,
     caveats: [
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
       '이 연결 화면은 별도 통합 운세 규칙이 아니라 기존 연운 연구 문구와 월운 T9 근거를 순서대로 보여줍니다.',
@@ -208,17 +246,50 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
         (annualAt.civilYearAtReference === report.targetYear)) {
     throw new TypeError('Annual/monthly HTML requires matching civil-year reference context.');
   }
+  const annualFocus = report.annualCurrentReading;
+  if (annualFocus.referenceDateTime !== annualAt.referenceDateTime ||
+      annualFocus.state !== annualAt.state ||
+      (annualFocus.state === 'in_target_civil_year' &&
+        (annualFocus.theme !== report.annual.sections[0] ||
+         annualFocus.sourceBoundTensions.length !== report.annual.sections.length - 1 ||
+         annualFocus.sourceBoundTensions.some(section =>
+           section.kind !== 'tension' ||
+           !section.observedClash ||
+           !report.annual.sections.includes(section))))) {
+    throw new TypeError('Annual/monthly HTML requires the exact source-bound annual focus.');
+  }
   const annualContext = annualAt.state === 'in_target_civil_year'
     ? '조회 시각 ' + kst(annualAt.referenceDateTime) + '은 서울 달력 ' +
       report.targetYear + '년에 속합니다. 이 연운은 해당 선택 연도의 연구용 풀이입니다.'
     : '조회 시각 ' + kst(annualAt.referenceDateTime) + '은 서울 달력 ' +
       annualAt.civilYearAtReference + '년입니다. 아래 ' + report.targetYear +
       '년 연운은 현재 연도에 적용되는 풀이가 아니라 선택한 연도의 연구 비교 자료입니다.';
+  const annualReadingFocus = annualFocus.state === 'in_target_civil_year'
+    ? '<section class="annual-focus" id="reference-year-reading" aria-label="올해의 원국 근거가 연결된 풀이">' +
+      '<h3>올해의 중심 주제와 실제 원국 관계</h3>' +
+      '<p class="muted">선택 연도의 내부 연구 풀이이며 입춘 효력 연주 또는 실제 사건의 예고가 아닙니다.</p>' +
+      '<article class="reading-card"><small>기존 연운 중심 주제</small><h4>' +
+      e(annualFocus.theme.title) + '</h4><p>' + e(annualFocus.theme.text) + '</p></article>' +
+      (annualFocus.sourceBoundTensions.length
+        ? '<div aria-label="확인된 연운 원국 충 관계">' +
+          annualFocus.sourceBoundTensions.map(section =>
+            '<article class="reading-card"><small>기존 출처에 연결된 조건부 충 관계</small><h4>' +
+            e(section.title) + '</h4><p>' + e(section.text) + '</p></article>').join('') +
+          '</div>'
+        : '<p>이번 명식에서 기존 연운 연구 규칙에 해당하는 원국 충 관계는 추가로 확인되지 않았습니다. 다른 관계의 부재나 길흉을 뜻하지 않습니다.</p>') +
+      '</section>'
+    : '';
   const focus = selected.state === 'in_period' && selected.theme !== undefined
     ? '<p class="muted">해당 절입 구간: ' + e(SEGMENT_LABEL[selected.segmentId!]) +
       ' · ' + e(kst(selected.theme.calculatedInterval.startsAt)) + '부터 ' +
       e(kst(selected.theme.calculatedInterval.endsAt)) + ' 전까지</p>' +
-      monthlyCard(selected.theme)
+      monthlyCard(selected.theme) +
+      (selected.sourceBoundTensions?.length
+        ? '<section class="active-natal-relations" aria-label="같은 절입 구간의 원국 관계">' +
+          '<h4>이 구간에서 함께 확인된 원국 관계</h4>' +
+          selected.sourceBoundTensions.map(monthlyCard).join('') +
+          '</section>'
+        : '')
     : selected.state === 'insufficient_evidence'
       ? '<p>이 조회 시각에 적용되는 ' + e(SEGMENT_LABEL[selected.segmentId!]) +
         ' 구간의 개인별 연구 해석 근거는 아직 충분하지 않습니다.</p>'
@@ -271,7 +342,9 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
     '<p class="muted" id="reference-year-context">' + e(annualContext) + '</p>' +
     '<p class="muted">서울 달력 연도 기준 · 연간 ' + e(report.annual.annualPillarLabel) +
-    ' · 십신 ' + e(report.annual.annualStemTenGod) + '</p>' + annual + '</section>' +
+    ' · 십신 ' + e(report.annual.annualStemTenGod) + '</p>' + annualReadingFocus +
+    '<details class="full-year-profile-evidence"><summary>연운 전체 연구 문구와 계산 근거·출처</summary>' +
+    annual + '</details></section>' +
     '<section id="monthly-reading"><h2>' + e(report.monthly.headline) + '</h2>' +
     '<p>' + e(report.periodComparison) + '</p>' +
     '<p class="muted">' + e(report.monthly.jeolBoundary.name) + ' 절입: ' +

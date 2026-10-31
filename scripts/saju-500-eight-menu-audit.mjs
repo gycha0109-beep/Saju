@@ -18,6 +18,8 @@ import { buildThreeTemporalMenusBirthReading } from '../dist/preview/three-tempo
 import {
   diagnoseMissingWealthReading,
   analyzeTemporalRepetition,
+  analyzeTemporalMeaningRepetition,
+  analyzeTemporalStructuralEvidenceVariation,
   summarizeMissingWealthCauses,
   ROOT_CAUSE_AUDIT_VERSION,
 } from './saju-500-root-cause.mjs';
@@ -113,6 +115,7 @@ function temporalEntries(result) {
       candidateClaimType: s.candidateClaimType,
       calculatedFactPaths: [...s.calculationFactPaths],
       relatedPillar: s.relatedPillar ?? null,
+      observedClash: s.observedClash ?? null,
     })),
   };
   m.sourceEvidence = {
@@ -127,6 +130,7 @@ function temporalEntries(result) {
       ruleIds: [...s.ruleIds],
       factPaths: [...s.factPaths],
       relatedPillar: s.relatedPillar ?? null,
+      observedClash: s.observedClash ?? null,
     })),
   };
   const l = entry(
@@ -253,6 +257,10 @@ export function runFiveHundredSajuAudit() {
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
       annualRepetition: analyzeTemporalRepetition(rows['올해']),
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
+      annualMeaningRepetition: analyzeTemporalMeaningRepetition(rows['올해']),
+      monthlyMeaningRepetition: analyzeTemporalMeaningRepetition(rows['이번 달']),
+      annualStructuralVariation: analyzeTemporalStructuralEvidenceVariation(rows['올해']),
+      monthlyStructuralVariation: analyzeTemporalStructuralEvidenceVariation(rows['이번 달']),
     },
     interpretationCaveat:'Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
     permissions:{mayPublish:false,maySell:false,mayCallOfficial:false},
@@ -262,8 +270,18 @@ export function runFiveHundredSajuAudit() {
   process.stdout.write('SAJU500_ROOT_CAUSE_SUMMARY '+JSON.stringify({
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
     missingCauses: result.rootCauseDiagnostics.wealth.byCause,
+    missingWithSourceContext: result.rootCauseDiagnostics.wealth.casesWithExistingSourceContext,
+    missingWithHiddenWealthMembership: result.rootCauseDiagnostics.wealth.casesWithHiddenWealthMembership,
+    observedHiddenWealthStems: result.rootCauseDiagnostics.wealth.hiddenWealthObservationCount,
+    hiddenWealthEvidenceStates: result.rootCauseDiagnostics.wealth.remediation.byHiddenWealthEvidenceState,
+    remediationGroups: result.rootCauseDiagnostics.wealth.remediation.groupCount,
+    remediationTargets: result.rootCauseDiagnostics.wealth.remediation.byRemediationTarget,
     annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
     monthlyRepeated: result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups,
+    annualProfilesWithDifferentObservedRelations:
+      result.rootCauseDiagnostics.annualStructuralVariation.repeatedMeaningProfilesWithDifferentVerifiedRelations,
+    monthlyProfilesWithDifferentObservedRelations:
+      result.rootCauseDiagnostics.monthlyStructuralVariation.repeatedMeaningProfilesWithDifferentVerifiedRelations,
   })+'\n');
   process.stdout.write('SAJU500_RESULT_JSON '+JSON.stringify(result)+'\n');
   if(inputs.size!==COUNT || failures.length || DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
@@ -273,7 +291,12 @@ export function runFiveHundredSajuAudit() {
       result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups !==
         result.menuResults['올해'].exactText.casesInRepeatedGroups ||
       result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups !==
-        result.menuResults['이번 달'].exactText.casesInRepeatedGroups) {
+        result.menuResults['이번 달'].exactText.casesInRepeatedGroups ||
+      result.rootCauseDiagnostics.annualMeaningRepetition.casesInRepeatedGroups !==
+        result.menuResults['올해'].meaningProfile.casesInRepeatedGroups ||
+      result.rootCauseDiagnostics.monthlyMeaningRepetition.casesInRepeatedGroups !==
+        result.menuResults['이번 달'].meaningProfile.casesInRepeatedGroups ||
+      result.rootCauseDiagnostics.wealth.remediation.caseCount !== wealthMissingCases.length) {
     process.exitCode=1;
   }
   return result;

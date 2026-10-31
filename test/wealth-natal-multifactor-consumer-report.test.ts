@@ -9,6 +9,7 @@ import {
   createWealthNatalMultifactorRegistry,
 } from '../src/research/wealth-natal-multifactor-candidate.js';
 import { buildWealthNatalMultifactorReport } from '../src/preview/wealth-natal-multifactor-report.js';
+import { observeHiddenWealthMembership } from '../src/preview/wealth-hidden-stem-observations.js';
 import { createGeneralNatalMultifactorRegistry } from '../src/research/general-natal-multifactor-candidate.js';
 import { buildGeneralNatalMultifactorReport } from '../src/preview/general-natal-multifactor-report.js';
 
@@ -165,12 +166,83 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(found).toBe(true);
   }, 60000);
 
+  it('exposes existing T5 source meaning with chart facts when no Wealth T8 section can be established', () => {
+    const birth = {
+      calendarType: 'solar' as const,
+      date: { year: 1981, month: 2, day: 1 },
+      time: { known: true as const, hour: 13, minute: 52 },
+      sexForTraditionalCalculation: 'male' as const,
+    };
+    const snapshot = calculateCanonicalSajuSnapshot(
+      birth, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW },
+    );
+    const execution = runInterpretation(snapshot, registry, { now: NOW });
+    const report = buildWealthNatalMultifactorReport(snapshot, execution, registry);
+    expect(report.sections).toHaveLength(0);
+    expect(report.state).toBe('insufficient');
+    expect(report.availableThemeContext).toBeDefined();
+    expect(report.missing.join(' ')).not.toContain('지장간에는 재성으로 계산되는 천간');
+    expect(report.missing.join(' ')).toContain('기존 십신 관점 규칙에서 재성 계열의 활성 근거');
+    const context = report.availableThemeContext!;
+    expect(context.wealthConclusionAuthorized).toBe(false);
+    expect(context.themes.length).toBeGreaterThan(0);
+    const hiddenAssessment = observeHiddenWealthMembership(snapshot);
+    expect(hiddenAssessment.status).toBe('resolved');
+    if (hiddenAssessment.status !== 'resolved') throw new Error('expected resolved R27');
+    expect(context.hiddenWealthEvidenceStatus).toBe('resolved');
+    expect(context.hiddenWealthUnavailableReason).toBeUndefined();
+    expect(context.hiddenWealthMembership).toEqual(hiddenAssessment.observations);
+    for (const membership of context.hiddenWealthMembership) {
+      expect(context.paragraph).not.toContain(
+        `지장간 ${membership.hiddenStem}은 ${membership.derivedTenGod}로 계산됩니다`);
+      expect(membership.occurrenceId).toBe(
+        `${membership.pillar}:${membership.hiddenStem}`);
+      expect(membership.meaningAuthority).toBe('calculated_membership_only');
+      expect(membership.wealthConclusionAuthorized).toBe(false);
+    }
+    expect(context.paragraph).toContain('재물의 많고 적음');
+    expect(context.paragraph).toContain('재물 분야의 복합 해석 근거를 충족하지 못했습니다');
+    for (const theme of context.themes) {
+      expect(theme.sourceIds.length).toBeGreaterThan(0);
+      expect(theme.observedPositions.length).toBeGreaterThan(0);
+      expect(theme.observedFactPaths).toHaveLength(theme.observedPositions.length);
+      expect(theme.observedFactPaths.every(path =>
+        /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path)))
+        .toBe(true);
+      expect(context.paragraph).toContain(theme.summary);
+      expect(theme.observedPositions.every(pos => context.paragraph.includes(pos))).toBe(true);
+      expect(execution.claims.some(claim => claim.claimId === theme.claimId &&
+        claim.claimType === theme.claimType && claim.taxonomy.tier === 'T5' &&
+        claim.state === 'active')).toBe(true);
+    }
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+    expect(report.usefulComplete).toBe(false);
+    expect(buildWealthNatalMultifactorReport(snapshot, execution, registry)).toEqual(report);
+  });
+
+  it('keeps existing T5 context distinct from a Wealth section even if a wealth theme is observed', () => {
+    const snapshot = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 1955, month: 10, day: 31 },
+      time: { known: true, hour: 19, minute: 35 },
+      sexForTraditionalCalculation: 'male',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const execution = runInterpretation(snapshot, registry, { now: NOW });
+    const report = buildWealthNatalMultifactorReport(snapshot, execution, registry);
+    expect(report.sections).toHaveLength(0);
+    expect(report.state).toBe('insufficient');
+    expect(report.availableThemeContext?.themes.some(theme => theme.family === 'wealth')).toBe(true);
+    expect(report.availableThemeContext?.wealthConclusionAuthorized).toBe(false);
+  });
+
   it('keeps T8 meaning blocked with unknown birth hour but displays only verified chart facts', () => {
     const result = run(3, 10, false);
     const report = result.report;
     expect(result.snapshot.derivedFacts.tenGods.status).toBe('unavailable');
     expect(report.state).toBe('insufficient');
     expect(report.sections).toHaveLength(0);
+    expect(report.availableThemeContext).toBeUndefined();
     expect(report.missing.join(' ')).toContain('십신(T5) 전체가 미확정');
     expect(report.introduction).toContain('출생시각이 없어도 확인 가능한');
     expect(report.introduction).toContain('재물의 많고 적음이나 다중 근거 T8 풀이를 뜻하지 않습니다');

@@ -75,6 +75,11 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).toContain(report.referenceReading.theme!.text);
     expect(html).toContain(report.referenceReading.theme!.claimId);
     expect(html).toContain(report.annual.sections[0]!.text);
+    expect(report.annualCurrentReading.state).toBe('in_target_civil_year');
+    expect(html).toContain('id="reference-year-reading"');
+    expect(html).toContain('올해의 중심 주제와 실제 원국 관계');
+    expect(html.indexOf('id="reference-year-reading"'))
+      .toBeLessThan(html.indexOf('full-year-profile-evidence'));
     expect(html).toContain('올해 문구의 계산 근거와 연구 출처');
     expect(html).toContain('내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)');
     expect(html).toContain('명하 내부 연구 정책, 독립 고전 근거 아님');
@@ -93,6 +98,65 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).toContain('계산 근거와 출처');
     expect(html).toContain('Official Reading, 공개 또는 판매 권한을 부여하지 않습니다');
   });
+
+  it('shows the same selected natal tension only in the current Jeol segment of the joined reading', () => {
+    let found = false;
+    for (let month = 1; month <= 12; month++) {
+      const baseline = run(month);
+      const tension = baseline.report.monthly.sections.find(item => item.kind === 'tension');
+      if (!tension) continue;
+      found = true;
+      const interval = baseline.facts.segmentsById[tension.segmentId];
+      const reference = new Date(Date.parse(interval.startsAt) + 1).toISOString();
+      const joined = run(month, 9, true, reference);
+      const selected = joined.report.referenceReading;
+      expect(selected.state).toBe('in_period');
+      expect(selected.segmentId).toBe(tension.segmentId);
+      expect(selected.sourceBoundTensions?.map(x => x.claimId)).toContain(tension.claimId);
+      expect(selected.sourceBoundTensions?.every(x =>
+        x.segmentId === tension.segmentId && x.sourceIds.length > 0 &&
+        x.calculatedInterval.startsAt === interval.startsAt)).toBe(true);
+      const html = renderGeneralAnnualMonthlyExplorationHtml(joined.report);
+      expect(html).toContain('aria-label="같은 절입 구간의 원국 관계"');
+      expect(html).toContain(tension.claimId);
+      expect(html).toContain(tension.text);
+      expect(joined.report.mayPublish).toBe(false);
+      expect(joined.report.maySell).toBe(false);
+      break;
+    }
+    expect(found).toBe(true);
+  }, 30000);
+
+  it('shows only existing natal-year clash research next to the current annual theme', () => {
+    let found = false;
+    for (let day = 1; day <= 14; day++) {
+      const { report } = run(9, day);
+      const tensions = report.annual.sections.filter(section => section.kind === 'tension');
+      if (!tensions.length) continue;
+      found = true;
+      const current = report.annualCurrentReading;
+      expect(current.state).toBe('in_target_civil_year');
+      if (current.state !== 'in_target_civil_year') throw new Error('Missing current year');
+      expect(current.theme).toEqual(report.annual.sections[0]);
+      expect(current.sourceBoundTensions).toEqual(tensions);
+      const html = renderGeneralAnnualMonthlyExplorationHtml(report);
+      const focus = html.split('id="reference-year-reading"')[1]!
+        .split('class="full-year-profile-evidence"')[0]!;
+      expect(focus).toContain(current.theme.text);
+      for (const tension of tensions) {
+        expect(tension.observedClash?.relation).toBe('clash');
+        expect(focus).toContain(tension.title);
+        expect(focus).toContain(tension.text);
+        expect(tension.calculationFactPaths).toContain(
+          'temporal.annualBranchRelations.' + tension.relatedPillar);
+      }
+      expect(report.researchOnly).toBe(true);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+      break;
+    }
+    expect(found).toBe(true);
+  }, 30000);
 
   it('keeps the same year meaning but changes the source-owned monthly reading by actual month', () => {
     const sep = run(9);
@@ -146,6 +210,12 @@ describe('one-person annual to monthly source-bound research reading', () => {
     const inYear = run(9, 9, true, '2025-12-31T15:00:00.000Z');
     const beforeYear = run(9, 9, true, '2025-12-31T14:59:59.999Z');
     const nextYear = run(9, 9, true, '2026-12-31T15:00:00.000Z');
+    expect(inYear.report.annualCurrentReading.state).toBe('in_target_civil_year');
+    expect(beforeYear.report.annualCurrentReading).toEqual({
+      state: 'outside_target_civil_year',
+      referenceDateTime: '2025-12-31T14:59:59.999Z',
+    });
+    expect(nextYear.report.annualCurrentReading.state).toBe('outside_target_civil_year');
     expect(inYear.report.annualReference).toEqual({
       referenceDateTime: '2025-12-31T15:00:00.000Z',
       civilYearAtReference: 2026,
@@ -178,6 +248,7 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(outsideHtml).toContain('서울 달력 2027년입니다');
     expect(outsideHtml).toContain('2026년 연운은 현재 연도에 적용되는 풀이가 아니라');
     expect(outsideHtml).toContain(nextYear.report.annual.sections[0]!.text);
+    expect(outsideHtml).not.toContain('id="reference-year-reading"');
     expect(outsideHtml).toContain('월 밖에 있어 현재 적용 구간을 정하지 않았습니다.');
   });
 
@@ -198,6 +269,27 @@ describe('one-person annual to monthly source-bound research reading', () => {
         state: 'outside_target_civil_year',
       },
     })).toThrow('civil-year reference');
+  });
+
+  it('rejects a forged current-year relation instead of silently changing annual meaning', () => {
+    const { report } = run(9);
+    if (report.annualCurrentReading.state !== 'in_target_civil_year') {
+      throw new Error('Expected current annual research context');
+    }
+    const original = report.annualCurrentReading;
+    const fabricated = {
+      ...report,
+      annualCurrentReading: {
+        ...original,
+        sourceBoundTensions: [{
+          ...original.theme,
+          kind: 'tension' as const,
+          observedClash: { natalBranch: '자', annualBranch: '오', relation: 'clash' as const },
+        }],
+      },
+    };
+    expect(() => renderGeneralAnnualMonthlyExplorationHtml(fabricated))
+      .toThrow('exact source-bound annual focus');
   });
 
   it('keeps genuine monthly phases but suppresses unsupported birth-hour relations', () => {

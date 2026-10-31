@@ -34,6 +34,11 @@ export interface GeneralMonthlyExplorationSection {
   sourceIds: readonly string[];
   factPaths: readonly string[];
   relatedPillar?: PillarSlot;
+  observedClash?: Readonly<{
+    natalBranch: string;
+    monthlyBranch: string;
+    relation: 'clash';
+  }>;
 }
 
 export interface GeneralMonthlyExplorationReport {
@@ -61,6 +66,7 @@ export interface GeneralMonthlyExplorationReport {
     state: 'in_period' | 'insufficient_evidence' | 'outside_target_month';
     segmentId?: MonthlySegmentId;
     theme?: GeneralMonthlyExplorationSection;
+    sourceBoundTensions?: readonly GeneralMonthlyExplorationSection[];
   }>;
 }
 
@@ -177,13 +183,17 @@ export function buildGeneralMonthlyExplorationReport(
       'monthly tension must refer to an actual natal pillar');
     const relation = segment.monthlyBranchRelations[slot];
     requireEvidence(relation.status === 'resolved' &&
+      relation.value.pillar === slot &&
+      relation.value.monthlyBranch === segment.monthlyPillar.branch &&
       relation.value.relation === 'clash' &&
       claim.factRefs.includes(`temporal.segmentsById.${value.segmentId}.monthlyBranchRelations.${slot}.relation`) &&
       claim.sourceRefs.length > 0, 'unresolved or foreign monthly tension');
     const copy = researchCopy(claim);
     sections.push({
       kind: 'tension', segmentId: value.segmentId,
-      title: copy.title, text: copy.text,
+      title: copy.title,
+      text: copy.text +
+        ` 실제 관측된 관계는 ${SLOT_KO[slot]} 지지 ${relation.value.natalBranch}와 ${SEGMENT_KO[value.segmentId]} 월주 지지 ${relation.value.monthlyBranch} 사이의 충입니다. 해당 절입 구간의 계산 관계를 설명하는 것이며, 실제 사건의 발생을 뜻하지 않습니다.`,
       calculatedInterval: { startsAt: segment.startsAt, endsAt: segment.endsAt },
       tenGod: segment.monthlyStemTenGod,
       claimId: claim.claimId,
@@ -192,6 +202,11 @@ export function buildGeneralMonthlyExplorationReport(
       sourceIds: claim.sourceRefs,
       factPaths: claim.factRefs,
       relatedPillar: slot,
+      observedClash: {
+        natalBranch: relation.value.natalBranch,
+        monthlyBranch: relation.value.monthlyBranch,
+        relation: 'clash',
+      },
     });
   }
 
@@ -213,6 +228,12 @@ export function buildGeneralMonthlyExplorationReport(
     section.calculatedInterval.endsAt === segment.endsAt);
   requireEvidence(applicableThemes.length <= 1,
     'only one source-qualified theme can apply at a reference instant');
+  const applicableTensions = segment === undefined ? [] : sections.filter(section =>
+    section.kind === 'tension' && section.segmentId === segment.segmentId &&
+    section.calculatedInterval.startsAt === segment.startsAt &&
+    section.calculatedInterval.endsAt === segment.endsAt &&
+    section.sourceIds.length > 0 && section.ruleIds.length > 0 &&
+    section.relatedPillar !== undefined && section.observedClash?.relation === 'clash');
   const referenceReading: GeneralMonthlyExplorationReport['referenceReading'] =
     segment === undefined
       ? { referenceDateTime: facts.referenceDateTime, state: 'outside_target_month' }
@@ -227,6 +248,8 @@ export function buildGeneralMonthlyExplorationReport(
             state: 'in_period',
             segmentId: segment.segmentId,
             theme: applicableThemes[0]!,
+            ...(applicableTensions.length
+              ? { sourceBoundTensions: applicableTensions } : {}),
           };
   return {
     version: GENERAL_MONTHLY_EXPLORATION_VERSION,
@@ -274,7 +297,19 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
       '<p>규칙: ' + escapeHtml(theme.ruleIds.join(' · ')) +
       ' / 방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
       '<p>출처: ' + escapeHtml(theme.sourceIds.join(' · ')) +
-      '</p></details>'
+      '</p></details>' +
+      (reference.sourceBoundTensions?.length
+        ? '<section class="active-natal-relations" aria-label="조회 시각에 적용되는 원국 충 관계">' +
+          '<h4>같은 구간에서 확인된 원국 관계</h4>' +
+          reference.sourceBoundTensions.map(item =>
+            '<p><strong>' + escapeHtml(item.title) + '</strong> · ' +
+              escapeHtml(item.text) + '</p>' +
+              '<details><summary>해당 관계의 기존 Claim·계산 근거·출처</summary>' +
+              '<p>Claim: ' + escapeHtml(item.claimId) + '</p>' +
+              '<p>계산: ' + escapeHtml(item.factPaths.join(' · ')) + '</p>' +
+              '<p>출처: ' + escapeHtml(item.sourceIds.join(' · ')) +
+              '</p></details>').join('') + '</section>'
+        : '')
     : reference.state === 'insufficient_evidence'
       ? '<p>' + escapeHtml(SEGMENT_KO[reference.segmentId!]) +
         '의 한국어 해석 근거가 아직 충분하지 않습니다.</p>'
