@@ -126,7 +126,23 @@ if (!readingMode) {
   for (const [domain, report] of Object.entries(reports)) {
     lines.push('', '━━ ' + labels[domain] + ' ━━');
     if (report.sections.length === 0) {
-      lines.push('현재 이 명식에서 출처가 확인된 풀이 문단이 없습니다.');
+      lines.push('현재 이 명식에서 출처가 확인된 종합 풀이 문단은 없습니다.');
+      if (domain === 'wealth' && report.availableThemeContext !== undefined) {
+        const context = report.availableThemeContext;
+        if (context.wealthConclusionAuthorized !== false || context.themes.length === 0 ||
+            context.themes.some(theme => theme.sourceIds.length === 0 ||
+              theme.observedPositions.length === 0 ||
+              theme.observedFactPaths.length !== theme.observedPositions.length)) {
+          throw new TypeError('Cannot present an ungrounded Wealth context as a reading.');
+        }
+        lines.push('기존 십신 근거만 설명하며 재물운 종합 결론이 아닙니다.',
+          context.title, context.paragraph);
+        for (const theme of context.themes) {
+          lines.push('근거: ' + theme.headline + ' · ' +
+            theme.observedPositions.join(' · ') + ' · 출처: ' +
+            theme.sourceIds.join(' · '));
+        }
+      }
     }
     for (const section of report.sections) {
       if (typeof section.headline !== 'string' || !section.headline.trim() ||
