@@ -91,7 +91,7 @@ describe('one-person annual to monthly source-bound research reading', () => {
       expect(executed.ruleIds.length).toBeGreaterThan(0);
       expect(executed.sourceIds).toContain(section.policySourceId);
       expect(executed.methodologyId).toBe(section.methodologyId);
-      expect(executed.factPaths).toEqual(expect.arrayContaining(section.calculationFactPaths));
+      expect(executed.factPaths).toEqual(expect.arrayContaining([...section.calculationFactPaths]));
       expect(html).toContain(executed.claimId);
       expect(html).toContain(executed.ruleIds[0]!);
       expect(html).toContain(section.researchProfileId);
