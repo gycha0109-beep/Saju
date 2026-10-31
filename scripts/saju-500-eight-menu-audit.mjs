@@ -114,6 +114,7 @@ function temporalEntries(result) {
       candidateClaimType: s.candidateClaimType,
       calculatedFactPaths: [...s.calculationFactPaths],
       relatedPillar: s.relatedPillar ?? null,
+      observedClash: s.observedClash ?? null,
     })),
   };
   m.sourceEvidence = {
