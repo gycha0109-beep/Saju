@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ROOT_CAUSE_AUDIT_VERSION,
   analyzeTemporalMeaningRepetition,
+  analyzeTemporalStructuralEvidenceVariation,
   analyzeTemporalRepetition,
   buildWealthRemediationGroups,
   summarizeMissingWealthCauses,
@@ -106,6 +107,48 @@ describe('root-cause implementation groups', () => {
   it('rejects missing source/evidence fields rather than silently inventing a group', () => {
     expect(() => buildWealthRemediationGroups([{ cause: 'no_active_upstream_t5_theme' }]))
       .toThrow('real per-case diagnostic evidence');
+  });
+});
+
+describe('temporal evidence variation is not new semantic diversity', () => {
+  const clash = (natalBranch, annualBranch) => ({
+    kind: 'tension',
+    relatedPillar: 'day',
+    observedClash: { natalBranch, annualBranch, relation: 'clash' },
+    sourceProfileId: 'same-source-profile',
+  });
+  const base = (birth, meaningKey, sections) => ({
+    birth, calculationHash: 'chart-' + birth, meaningKey,
+    exactKey: 'text-' + birth, sourceEvidence: { sections },
+  });
+
+  it('finds differing verified clash facts behind the same meaning profile without counting new meanings', () => {
+    const rows = [
+      base('A', 'same-meaning', [clash('자', '오')]),
+      base('B', 'same-meaning', [clash('묘', '유')]),
+      base('C', 'same-meaning', [clash('자', '오')]),
+      base('D', 'other-meaning', []),
+      { ...base('E', 'same-meaning', [{ kind: 'tension', relatedPillar: 'day' }]) },
+    ];
+    const result = analyzeTemporalStructuralEvidenceVariation(rows);
+    expect(result.assessed).toBe(4);
+    expect(result.unassessed).toBe(1);
+    expect(result.repeatedMeaningProfilesWithDifferentVerifiedRelations).toBe(1);
+    expect(result.casesInSuchProfiles).toBe(3);
+    expect(result.groups[0].distinctStructuralSignatures).toBe(2);
+    expect(result.groups[0].examples).toHaveLength(3);
+    expect(result.qualification).toContain('not newly authorized interpretive meanings');
+    expect(analyzeTemporalMeaningRepetition(rows).distinctMeaningProfileCount).toBe(2);
+  });
+
+  it('does not treat chart hashes, dates or Claim IDs alone as different structural evidence', () => {
+    const rows = [
+      base('A', 'same', [clash('자', '오')]),
+      base('B', 'same', [clash('자', '오')]),
+      base('C', 'same', [clash('자', '오')]),
+    ];
+    expect(analyzeTemporalStructuralEvidenceVariation(rows)
+      .repeatedMeaningProfilesWithDifferentVerifiedRelations).toBe(0);
   });
 });
 
