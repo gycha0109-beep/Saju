@@ -1,5 +1,6 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { findSharedNatalFactLinks } from './natal-five-domain-shared-evidence.js';
+import { SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY } from '../research/snapshot-bound-hidden-stem-ten-god-occurrences.js';
 import type { GeneralNatalMultifactorReport, GeneralNatalMultifactorSection } from './general-natal-multifactor-report.js';
 import type { CareerMultifactorReport, CareerMultifactorReportSection } from './career-natal-multifactor-report.js';
 import type { WealthNatalMultifactorReport, WealthNatalMultifactorSection } from './wealth-natal-multifactor-report.js';
@@ -343,13 +344,17 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
       item.factPaths.length === 2 &&
       item.factPaths[0] === 'derivedFacts.dayMaster' &&
       item.factPaths[1] === 'derivedFacts.hiddenStems.' + item.pillar &&
-      item.membershipSourceUrl.trim().length > 0 &&
-      context.paragraph.includes(item.hiddenStem) &&
-      context.paragraph.includes(item.derivedTenGod),
+      item.sourcePillarRef === 'pillars.' + item.pillar &&
+      item.occurrenceId === item.pillar + ':' + item.hiddenStem &&
+      item.mappingAuthorityDefinitionHash ===
+        SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY.definitionHash &&
+      item.membershipSourceUrl ===
+        SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY
+          .sourceBindings.hiddenMembershipSource.url,
       'unverified hidden stem membership cannot be represented as an interpretation');
     return '<li>' + escapeHtml(item.pillar + ' 지지 ' + item.branch +
       '의 지장간 ' + item.hiddenStem + ' · ' + item.derivedTenGod) +
-      ' (구성 관측만, 재물 종합 근거 아님)' +
+      ' (지장간 구성의 계산 기록 · 별도 해석 아님)' +
       '<details><summary>계산 경로와 지장간 구성 출처</summary>' +
       renderList(item.factPaths) + '<p>' +
       escapeHtml(item.membershipSourceUrl) + '</p></details></li>';
