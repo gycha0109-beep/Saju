@@ -67,6 +67,7 @@ describe('root-cause implementation groups', () => {
     hiddenCase.existingSourceThemeContext = {
       themeCount: 3,
       wealthConclusionAuthorized: false,
+      hiddenWealthEvidenceStatus: 'resolved',
       hiddenWealthMembership: [
         { pillar: 'year', hiddenStem: '경', derivedTenGod: '정재',
           meaningAuthority: 'calculated_membership_only',
