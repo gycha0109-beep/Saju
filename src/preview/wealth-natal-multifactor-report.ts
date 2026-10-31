@@ -163,9 +163,20 @@ function explainMissingWealthT8(
     : '현재 적용 가능한 출처 연결 십신 관점이 확인되지 않습니다. ';
   const hasWealth = activeFamilies.get('visible_stems')!.has('wealth') ||
     activeFamilies.get('branches')!.has('wealth');
-  const reason = hasWealth
-    ? '재성 관련 십신 관점은 있지만 기존 재물 종합 규칙이 요구하는 같은 관측 범위 안의 다른 십신 계열과 결합되지 않아, 출처가 있는 재물 종합 결론을 만들 수 없습니다. '
-    : '기존 십신 관점 규칙에서 재성 계열의 활성 근거가 확인되지 않아, 등록된 재물 복합 해석 규칙을 적용할 수 없습니다. ';
+  const wealthOnlyAcrossChannels =
+    (['visible_stems', 'branches'] as const).some(channel =>
+      activeFamilies.get(channel)!.has('wealth') &&
+      activeFamilies.get(channel)!.size === 1 &&
+      [...activeFamilies.get(channel === 'visible_stems' ? 'branches' : 'visible_stems')!]
+        .some(family => family !== 'wealth')) &&
+    !(['visible_stems', 'branches'] as const).some(channel =>
+      activeFamilies.get(channel)!.has('wealth') &&
+      [...activeFamilies.get(channel)!].some(family => family !== 'wealth'));
+  const reason = wealthOnlyAcrossChannels
+    ? '재성 관련 십신 근거와 다른 십신 계열의 근거가 천간과 지지 대표 십신으로 나뉘어 있습니다. 기존 재물 종합 규칙은 동일 관측 범위의 복합 근거를 요구하므로, 서로 다른 채널을 임의로 결합해 재물 종합 결론을 만들 수 없습니다. '
+    : hasWealth
+      ? '재성 관련 십신 관점은 있지만 기존 재물 종합 규칙이 요구하는 같은 관측 범위 안의 다른 십신 계열과 결합되지 않아, 출처가 있는 재물 종합 결론을 만들 수 없습니다. '
+      : '기존 십신 관점 규칙에서 재성 계열의 활성 근거가 확인되지 않아, 등록된 재물 복합 해석 규칙을 적용할 수 없습니다. ';
   return sourceNote + reason +
     '이는 재성이 없거나 돈이 없다는 판정이 아니며, 실제 소득·재산·재물운의 좋고 나쁨을 뜻하지 않습니다.';
 }
