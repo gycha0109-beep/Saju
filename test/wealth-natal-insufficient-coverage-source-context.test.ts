@@ -38,7 +38,7 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(partialContext?.themes.every(theme =>
       !report.sections[0]!.upstreamClaimIds.includes(theme.claimId))).toBe(true);
     expect(partialContext?.paragraph).toContain(
-      '위의 간접 구조 풀이에 이미 사용된 십신 근거는 반복하지 않았습니다');
+      '위의 부분 풀이에 이미 사용된 십신 근거는 반복하지 않았습니다');
     for (const theme of partialContext?.themes ?? []) {
       expect(theme.sourceIds.length).toBeGreaterThan(0);
       expect(theme.observedPositions.length).toBeGreaterThan(0);
@@ -75,6 +75,41 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(report.mayPublish).toBe(false);
     expect(report.maySell).toBe(false);
   });
+
+  it('preserves unused source-bound T5 themes when only a Wealth tension is selected', () => {
+    let partial: ReturnType<typeof wealthReading> | undefined;
+    for (let year = 1950; year <= 2005 && !partial; year++) {
+      for (const month of [1, 3, 5, 7, 9, 11]) {
+        const candidate = wealthReading(year, month, 14, 12, 0);
+        if (candidate.report.sections.length === 1 &&
+            candidate.report.sections[0]?.axis === 'tension' &&
+            (candidate.report.availableThemeContext?.themes.length ?? 0) > 0) {
+          partial = candidate;
+          break;
+        }
+      }
+    }
+    expect(partial).toBeDefined();
+    const report = partial!.report;
+    expect(report.state).toBe('partial');
+    expect(report.sections[0]?.axis).toBe('tension');
+    expect(report.readingGuide).toBeUndefined();
+    expect(report.missing.join(' ')).toContain('중심 종합 근거 없이');
+    const context = report.availableThemeContext!;
+    expect(context.wealthConclusionAuthorized).toBe(false);
+    expect(context.paragraph).toContain('위의 부분 풀이에 이미 사용된 십신 근거는 반복하지 않았습니다');
+    expect(context.themes.length).toBeGreaterThan(0);
+    expect(context.themes.every(theme =>
+      !report.sections[0]!.upstreamClaimIds.includes(theme.claimId))).toBe(true);
+    for (const theme of context.themes) {
+      expect(theme.sourceIds.length).toBeGreaterThan(0);
+      expect(theme.observedPositions.length).toBeGreaterThan(0);
+      expect(context.paragraph).toContain(theme.summary);
+    }
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+    expect(report.usefulComplete).toBe(false);
+  }, 30000);
 
   it('explains channel-split wealth T5 evidence without manufacturing a same-channel synthesis', () => {
     const { execution, report } = wealthReading(1955, 10, 31, 19, 35);
