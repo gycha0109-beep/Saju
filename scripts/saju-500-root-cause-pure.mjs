@@ -244,20 +244,33 @@ export function analyzeTemporalStructuralEvidenceVariation(rows) {
  * chart IDs, birth dates, raw strings, or invented variability.
  */
 export function analyzeTemporalNatalT5Variation(rows) {
+  const familyTenGods = {
+    PEER: ['비견','겁재'], RESOURCE: ['정인','편인'],
+    OUTPUT: ['식신','상관'], WEALTH: ['정재','편재'],
+    OFFICER: ['정관','편관'],
+  };
+  const validSourceTheme = t => {
+    if (!t || typeof t.claimType !== 'string') return false;
+    const match = /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.exec(t.claimType);
+    if (!match) return false;
+    const [family, channel] = [match[1], match[2]];
+    const key = channel === 'VISIBLE_STEMS' ? 'stem' : 'branch';
+    const allowedSlots = channel === 'VISIBLE_STEMS'
+      ? ['year','month','hour'] : ['year','month','day','hour'];
+    return Array.isArray(t.sourceIds) && t.sourceIds.length > 0 &&
+      t.sourceIds.every(id => typeof id === 'string' && id.length > 0) &&
+      Array.isArray(t.observed) && t.observed.length > 0 &&
+      t.observed.every(p => allowedSlots.some(slot =>
+        p?.factPath === 'derivedFacts.tenGods.value.' + slot + '.' + key + '.value') &&
+        familyTenGods[family].includes(p.tenGod));
+  };
   const byMeaning = new Map();
   let unassessed = 0;
   for (const row of rows) {
     const themes = row.sourceEvidence?.natalT5;
     if (typeof row.meaningKey !== 'string' || !Array.isArray(themes) ||
         themes.length === 0 ||
-        !themes.every(t => t && typeof t.claimType === 'string' &&
-          /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(t.claimType) &&
-          Array.isArray(t.sourceIds) && t.sourceIds.length > 0 &&
-          t.sourceIds.every(s => typeof s === 'string' && s.length > 0) &&
-          Array.isArray(t.observed) && t.observed.length > 0 &&
-          t.observed.every(p => typeof p.factPath === 'string' &&
-            /^derivedFacts\\.tenGods\\.value\\.(year|month|day|hour)\\.(stem|branch)\\.value$/u.test(p.factPath) &&
-            typeof p.tenGod === 'string' && p.tenGod.length > 0))) {
+        !themes.every(validSourceTheme)) {
       unassessed++;
       continue;
     }
