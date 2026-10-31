@@ -5,6 +5,17 @@
 > 범위: 계산·기존 Claim/Methodology/Source 권한을 유지하는 연구용 해석 품질 개선. AI 신규 Claim 생성과 Official/판매 승격은 범위 밖.
 > 기록 규칙: **실제 수정한 작업 단위마다 이 파일에 변경 내용, 결과물, 확인된 검증, 미완료 항목을 추가한다.** 계획만 있는 작업은 완료로 기록하지 않는다.
 
+## 2026-11-01 — 연운 연구 Claim 연결 후 CI에서 드러난 타입 불일치 수정 (단계 3·5 일부)
+
+### 작업 27 — 단일 연운 자료 전달·테스트 비교 형식 수정
+- **실패한 대상:** 커밋 `5a2a2c29ac200d2acbeb266f4210fb947c582e8b`의 `Saju 500 Birth Eight-Menu Differentiation Audit` 실행 [41228775968](https://github.com/gycha0109-beep/Saju/actions/runs/41228775968), `[WT:saju] Production Calculation Container` 실행 [41228775934](https://github.com/gycha0109-beep/Saju/actions/runs/41228775934), `CI` 실행 [41228775827](https://github.com/gycha0109-beep/Saju/actions/runs/41228775827). `PIE Prospective Shadow`는 통과.
+- **실제 원인:** 연운 `AnnualInterpretationFacts`를 엔진이 요구하는 `Readonly<Record<string,unknown>>`에 타입 호환되지 않는 형태로 전달해 TypeScript TS2322로 빌드가 중단됐다. 별도 `general-annual-monthly-exploration-report.test.ts`에서 읽기 전용 `calculationFactPaths`를 가변 배열 타입을 요구하는 `expect.arrayContaining`에 그대로 전달해 TS2345가 발생했다. 500명 본검사나 컨테이너 구동이 실행돼서 실패한 것이 아니다.
+- **수정:** 엔진 호출 시 `temporalFacts: { ...annualFacts }`로 전달하고, 비교 테스트는 `[...section.calculationFactPaths]`로 복사해 타입 계약을 충족시켰다. 계산·출처·해석 의미·권한·기존 문구 변경 없음.
+- **수정 커밋:** `d2ccfab34763186eb69724c6f6ecea6d1a4dcb03`, `573dc0a8554b6647ddac21af6197f305fb88f953`.
+- **검증 상태:** 원래 실패 로그를 확인하고 수정 완료. **본 수정 커밋의 재실행 결과는 아직 확인되지 않았다.** 신규 CI 통과 전까지 기능 정상 동작이나 500명 감사 성공을 추정하지 않는다.
+- **남은 작업:** 수정본 CI 결과 확인, 오류가 남으면 해당 원인만 해소, 실제 500명 풀이 감사·7단계 로드맵 작업 계속.
+
+
 ## 2026-11-01 — 올해 운세의 기존 한국어 풀이를 실제 선택된 연운 연구 Claim에 결박 (단계 3·5 일부)
 
 ### 작업 26 — 정적 연운 투영의 실행·근거 선택 연결 복구
