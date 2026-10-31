@@ -9,6 +9,7 @@ import {
   createWealthNatalMultifactorRegistry,
 } from '../src/research/wealth-natal-multifactor-candidate.js';
 import { buildWealthNatalMultifactorReport } from '../src/preview/wealth-natal-multifactor-report.js';
+import { observeHiddenWealthMembership } from '../src/preview/wealth-hidden-stem-observations.js';
 import { createGeneralNatalMultifactorRegistry } from '../src/research/general-natal-multifactor-candidate.js';
 import { buildGeneralNatalMultifactorReport } from '../src/preview/general-natal-multifactor-report.js';
 
@@ -183,6 +184,13 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     const context = report.availableThemeContext!;
     expect(context.wealthConclusionAuthorized).toBe(false);
     expect(context.themes.length).toBeGreaterThan(0);
+    expect(context.hiddenWealthMembership).toEqual(observeHiddenWealthMembership(snapshot));
+    for (const membership of context.hiddenWealthMembership) {
+      expect(context.paragraph).toContain(membership.hiddenStem);
+      expect(context.paragraph).toContain(membership.derivedTenGod);
+      expect(membership.meaningAuthority).toBe('calculated_membership_only');
+      expect(membership.wealthConclusionAuthorized).toBe(false);
+    }
     expect(context.paragraph).toContain('재물의 많고 적음');
     expect(context.paragraph).toContain('재물 분야의 복합 해석 근거를 충족하지 못했습니다');
     for (const theme of context.themes) {
