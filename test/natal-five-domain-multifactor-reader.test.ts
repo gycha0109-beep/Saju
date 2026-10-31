@@ -174,7 +174,7 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
   it('keeps the actual Wealth tension and unused T5 themes distinct in the reader', () => {
     let chart: ReturnType<typeof sample> | undefined;
     for (let year = 1950; year <= 2005 && chart === undefined; year++) {
-      for (const month of [1, 3, 5, 7, 9, 11]) {
+      for (const month of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
         const current = calculateCanonicalSajuSnapshot({
           calendarType: 'solar',
           date: { year, month, day: 14 },
