@@ -53,6 +53,14 @@ describe('three temporal menus preserve already source-bound natal interpretatio
     }
     expect(html.match(/<summary>원국 해석 출처<\/summary>/gu))
       .toHaveLength(natal.sections.length);
+    expect(result.annualMonthly.report.annualExecutedEvidence)
+      .toHaveLength(result.annualMonthly.report.annual.sections.length);
+    for (const evidence of result.annualMonthly.report.annualExecutedEvidence) {
+      expect(evidence.claimId).toMatch(/^claim_/u);
+      expect(evidence.ruleIds.length).toBeGreaterThan(0);
+      expect(year).toContain(evidence.claimId);
+      expect(year).toContain(evidence.ruleIds[0]!);
+    }
     expect(year).toContain(escaped(result.annualMonthly.report.annual.sections[0]!.text));
     expect(month).toContain('절입 전후 전체 풀이');
     expect(stage).toContain('대운의 간지·시각만 계산된 사실입니다');
