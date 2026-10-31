@@ -98,6 +98,30 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       .toThrow('existing theme context has no actual sourced calculation evidence');
   }, 30000);
 
+  it('explains the actual cross-channel Wealth gap without claiming synthesis', () => {
+    const chart = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 1955, month: 10, day: 31 },
+      time: { known: true, hour: 19, minute: 35 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const reading = reports(chart);
+    const wealth = reading.wealth;
+    expect(wealth.state).toBe('insufficient');
+    expect(wealth.sections).toHaveLength(0);
+    expect(wealth.availableThemeContext?.wealthConclusionAuthorized).toBe(false);
+    expect(wealth.availableThemeContext?.themes.map(theme => theme.claimType))
+      .toContain('TEN_GOD_WEALTH_BRANCHES_THEME');
+    expect(wealth.missing.join(' ')).toContain('천간과 지지 대표 십신으로 나뉘어');
+    expect(wealth.missing.join(' ')).toContain('서로 다른 채널을 임의로 결합');
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reading);
+    const wealthHtml = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+    expect(wealthHtml).toContain('재물운 종합 해석 아님');
+    expect(wealthHtml).toContain('서로 다른 채널을 임의로 결합');
+    expect(wealth.mayPublish).toBe(false);
+    expect(wealth.maySell).toBe(false);
+  }, 30000);
+
   it('renders five source-owned Korean meanings and evidence scopes on one real canonical chart', () => {
     const chart = sample(3, 10);
     const sections = reports(chart);
