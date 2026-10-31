@@ -192,11 +192,14 @@ function explainMissingWealthT8(
 function buildAvailableThemeContext(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
+  alreadyExplainedClaimIds: readonly string[] = [],
 ): WealthNatalAvailableThemeContext | undefined {
   const tenGodFact = snapshot.derivedFacts.tenGods;
   if (!snapshot.completeness.birthTimeKnown || tenGodFact.status !== 'resolved') return undefined;
   const themes: WealthNatalAvailableThemeContext['themes'][number][] = [];
+  const alreadyExplained = new Set(alreadyExplainedClaimIds);
   const claims = execution.claims.filter(c => c.state === 'active' &&
+    !alreadyExplained.has(c.claimId) &&
     c.snapshotId === snapshot.snapshotId && c.scenarioRef === undefined &&
     c.taxonomy.tier === 'T5' && c.predicate === 'ten_god_theme' &&
     c.sourceRefs.length > 0)
@@ -253,8 +256,13 @@ function buildAvailableThemeContext(
   const hiddenWealthMembership = hiddenAssessment.status === 'resolved'
     ? hiddenAssessment.observations : [];
   return {
-    title: '재물 종합 결론 이전에 확인된 원국의 십신 주제',
+    title: alreadyExplained.size
+      ? '간접 구조 해석과 구별되는 원국의 십신 주제'
+      : '재물 종합 결론 이전에 확인된 원국의 십신 주제',
     paragraph: '아래는 기존 출처와 연결된 십신별 구조 설명입니다. ' +
+      (alreadyExplained.size
+        ? '위의 간접 구조 풀이에 이미 사용된 십신 근거는 반복하지 않았습니다. '
+        : '') +
       paragraphs.join(' ') +
       ' 이 관측들은 현재 등록된 재물 분야의 복합 해석 근거를 충족하지 못했습니다. ' +
       '따라서 재물의 많고 적음, 소득, 투자 성과, 향후 재물운을 판단하는 해석으로 읽어서는 안 됩니다.',
@@ -510,7 +518,9 @@ export function buildWealthNatalMultifactorReport(
   const indirectOnly = sections.length > 0 &&
     sections.every(section => section.axis === 'context');
   const availableThemeContext = sections.length === 0 || indirectOnly
-    ? buildAvailableThemeContext(snapshot, execution) : undefined;
+    ? buildAvailableThemeContext(
+        snapshot, execution, sections.flatMap(section => section.upstreamClaimIds),
+      ) : undefined;
   const readingGuide = buildWealthNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
