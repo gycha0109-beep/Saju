@@ -181,8 +181,8 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(report.sections).toHaveLength(0);
     expect(report.state).toBe('insufficient');
     expect(report.availableThemeContext).toBeDefined();
-    expect(report.missing.join(' ')).toContain('한편 지장간에는 재성으로 계산되는 천간이');
-    expect(report.missing.join(' ')).toContain('T8 활성 근거를 대신하지 않습니다');
+    expect(report.missing.join(' ')).not.toContain('지장간에는 재성으로 계산되는 천간');
+    expect(report.missing.join(' ')).toContain('기존 십신 관점 규칙에서 재성 계열의 활성 근거');
     const context = report.availableThemeContext!;
     expect(context.wealthConclusionAuthorized).toBe(false);
     expect(context.themes.length).toBeGreaterThan(0);
