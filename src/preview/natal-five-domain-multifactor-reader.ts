@@ -335,6 +335,29 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
     context.themes.length > 0 && context.title.trim().length > 0 &&
     context.paragraph.trim().length > 0,
     'existing theme context must not become a Wealth synthesis');
+  const hidden = context.hiddenWealthMembership.map(item => {
+    guard(['year', 'month', 'day', 'hour'].includes(item.pillar) &&
+      item.meaningAuthority === 'calculated_membership_only' &&
+      item.wealthConclusionAuthorized === false &&
+      (item.derivedTenGod === '편재' || item.derivedTenGod === '정재') &&
+      item.factPaths.length === 2 &&
+      item.factPaths[0] === 'derivedFacts.dayMaster' &&
+      item.factPaths[1] === 'derivedFacts.hiddenStems.' + item.pillar &&
+      item.membershipSourceUrl.trim().length > 0 &&
+      context.paragraph.includes(item.hiddenStem) &&
+      context.paragraph.includes(item.derivedTenGod),
+      'unverified hidden stem membership cannot be represented as an interpretation');
+    return '<li>' + escapeHtml(item.pillar + ' 지지 ' + item.branch +
+      '의 지장간 ' + item.hiddenStem + ' · ' + item.derivedTenGod) +
+      ' (구성 관측만, 재물 종합 근거 아님)' +
+      '<details><summary>계산 경로와 지장간 구성 출처</summary>' +
+      renderList(item.factPaths) + '<p>' +
+      escapeHtml(item.membershipSourceUrl) + '</p></details></li>';
+  }).join('');
+  const hiddenSection = hidden.length
+    ? '<details><summary>지장간의 재성 계열 구성 관측</summary><ul>' +
+      hidden + '</ul></details>'
+    : '';
   const themes = context.themes.map(theme => {
     guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
       .test(theme.claimType) && theme.claimId.trim().length > 0 &&
@@ -359,7 +382,7 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
     '<p><strong>재물운 종합 해석 아님 · 기존 십신 관측만 설명</strong></p>' +
     '<p>' + escapeHtml(context.paragraph) + '</p>' +
     '<details><summary>주제별 계산 근거·출처 보기</summary><ul>' +
-    themes + '</ul></details></section>';
+    themes + '</ul></details>' + hiddenSection + '</section>';
 }
 
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
