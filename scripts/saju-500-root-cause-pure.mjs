@@ -1,4 +1,4 @@
-export const ROOT_CAUSE_AUDIT_VERSION = 'saju-eight-menu-root-cause-v2';
+export const ROOT_CAUSE_AUDIT_VERSION = 'saju-eight-menu-root-cause-v3';
 
 export function frequency(values) {
   const result = {};
@@ -249,6 +249,7 @@ export function analyzeTemporalNatalT5Variation(rows) {
   for (const row of rows) {
     const themes = row.sourceEvidence?.natalT5;
     if (typeof row.meaningKey !== 'string' || !Array.isArray(themes) ||
+        themes.length === 0 ||
         !themes.every(t => t && typeof t.claimType === 'string' &&
           /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(t.claimType) &&
           Array.isArray(t.sourceIds) && t.sourceIds.length > 0 &&
