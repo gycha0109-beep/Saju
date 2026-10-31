@@ -186,7 +186,12 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     const context = report.availableThemeContext!;
     expect(context.wealthConclusionAuthorized).toBe(false);
     expect(context.themes.length).toBeGreaterThan(0);
-    expect(context.hiddenWealthMembership).toEqual(observeHiddenWealthMembership(snapshot));
+    const hiddenAssessment = observeHiddenWealthMembership(snapshot);
+    expect(hiddenAssessment.status).toBe('resolved');
+    if (hiddenAssessment.status !== 'resolved') throw new Error('expected resolved R27');
+    expect(context.hiddenWealthEvidenceStatus).toBe('resolved');
+    expect(context.hiddenWealthUnavailableReason).toBeUndefined();
+    expect(context.hiddenWealthMembership).toEqual(hiddenAssessment.observations);
     for (const membership of context.hiddenWealthMembership) {
       expect(context.paragraph).not.toContain(
         `지장간 ${membership.hiddenStem}은 ${membership.derivedTenGod}로 계산됩니다`);
