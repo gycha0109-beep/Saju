@@ -146,6 +146,11 @@ export function summarizeMissingWealthCauses(cases) {
     missingCaseCount: cases.length,
     byCause,
     remediation: buildWealthRemediationGroups(cases),
+    casesWithHiddenWealthMembership: cases.filter(row =>
+      row.existingSourceThemeContext?.wealthConclusionAuthorized === false &&
+      row.existingSourceThemeContext?.hiddenWealthMembership?.length > 0).length,
+    hiddenWealthObservationCount: cases.reduce((sum, row) =>
+      sum + (row.existingSourceThemeContext?.hiddenWealthMembership?.length ?? 0), 0),
     casesWithExistingSourceContext: cases.filter(row =>
       row.existingSourceThemeContext?.themeCount > 0 &&
       row.existingSourceThemeContext.wealthConclusionAuthorized === false).length,
