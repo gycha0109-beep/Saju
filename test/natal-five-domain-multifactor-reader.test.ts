@@ -98,6 +98,55 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       .toThrow('existing theme context has no actual sourced calculation evidence');
   }, 30000);
 
+  it('displays already sourced T5 meanings alongside an indirect-only Wealth T8 paragraph', () => {
+    for (const birth of [
+      { year: 1964, month: 11, day: 14, hour: 14, minute: 59, pattern: 'OFFICER_RESOURCE_CONTEXT' },
+      { year: 1962, month: 5, day: 5, hour: 0, minute: 3, pattern: 'OFFICER_PEER_CONTEXT' },
+    ]) {
+      const chart = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar', date: {
+          year: birth.year, month: birth.month, day: birth.day,
+        },
+        time: { known: true, hour: birth.hour, minute: birth.minute },
+        sexForTraditionalCalculation: 'unspecified',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const reading = reports(chart);
+      const wealth = reading.wealth;
+      expect(wealth.state).toBe('partial');
+      expect(wealth.sections).toHaveLength(1);
+      expect(wealth.sections[0]?.pattern).toBe(birth.pattern);
+      expect(wealth.sections[0]?.axis).toBe('context');
+      expect(wealth.readingGuide).toBeUndefined();
+      const context = wealth.availableThemeContext!;
+      expect(context.wealthConclusionAuthorized).toBe(false);
+      expect(context.themes.length).toBeGreaterThanOrEqual(2);
+      const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reading);
+      const wealthCard = html.split('<h2 id="domain-wealth">')[1]!
+        .split('</article>')[0]!;
+      expect(wealthCard).toContain('aria-label="재물운 근거 있는 부분 설명"');
+      expect(wealthCard).toContain(context.paragraph);
+      expect(wealthCard).toContain(wealth.sections[0]!.paragraph);
+      expect(wealthCard).toContain('재물운 종합 해석 아님');
+      for (const theme of context.themes) {
+        expect(wealthCard).toContain(theme.headline);
+        expect(wealthCard).toContain(theme.sourceIds[0]!);
+        expect(wealthCard).toContain(theme.observedPositions[0]!);
+      }
+      // Injecting fallback T5 material alongside a real Wealth T8 core is forbidden.
+      const validWealth = reports(sample(3, 10));
+      expect(validWealth.wealth.readingGuide).toBeDefined();
+      const forged = {
+        ...validWealth,
+        wealth: { ...validWealth.wealth, availableThemeContext: context },
+      };
+      const coreChart = sample(3, 10);
+      expect(() => renderNatalFiveDomainMultifactorResearchHtml(coreChart, forged))
+        .toThrow('existing theme context must not become a Wealth synthesis');
+      expect(wealth.mayPublish).toBe(false);
+      expect(wealth.maySell).toBe(false);
+    }
+  }, 30000);
+
   it('explains the actual cross-channel Wealth gap without claiming synthesis', () => {
     const chart = calculateCanonicalSajuSnapshot({
       calendarType: 'solar',
