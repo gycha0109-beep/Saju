@@ -334,7 +334,11 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
   guard(report.sections.length === 0 && report.state === 'insufficient' &&
     context.wealthConclusionAuthorized === false &&
     context.themes.length > 0 && context.title.trim().length > 0 &&
-    context.paragraph.trim().length > 0,
+    context.paragraph.trim().length > 0 &&
+    (context.hiddenWealthEvidenceStatus === 'resolved' ||
+      (context.hiddenWealthEvidenceStatus === 'unavailable' &&
+        context.hiddenWealthMembership.length === 0 &&
+        !!context.hiddenWealthUnavailableReason)),
     'existing theme context must not become a Wealth synthesis');
   const hidden = context.hiddenWealthMembership.map(item => {
     guard(['year', 'month', 'day', 'hour'].includes(item.pillar) &&
@@ -362,7 +366,10 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
   const hiddenSection = hidden.length
     ? '<details><summary>지장간의 재성 계열 구성 관측</summary><ul>' +
       hidden + '</ul></details>'
-    : '';
+    : context.hiddenWealthEvidenceStatus === 'unavailable'
+      ? '<p>지장간 십신 관계는 현재 명식에서 확정할 수 없어 구성 관측을 표시하지 않습니다. ' +
+        '구성 미확정은 재성 부재의 증거가 아닙니다.</p>'
+      : '';
   const themes = context.themes.map(theme => {
     guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
       .test(theme.claimType) && theme.claimId.trim().length > 0 &&
