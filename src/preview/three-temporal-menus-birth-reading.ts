@@ -67,7 +67,7 @@ function enforceSourceScope(
         !section.paragraph.includes('이 원국에서 확인된 근거는') ||
         section.sourceIds.length < 2 || section.factPaths.length < 2 ||
         section.factPaths.some(path =>
-          !/^derivedFacts\\.tenGods\\.value\\.(year|month|day|hour)\\.(stem|branch)\\.value$/u.test(path)))) {
+          !/^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path)))) {
     throw new TypeError('Three time menus require the same authorized chart, instant and research-only source.');
   }
 }
