@@ -125,7 +125,12 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         .split('</article>')[0]!;
       expect(wealthCard).toContain('aria-label="재물운 근거 있는 부분 설명"');
       expect(wealthCard).toContain(context.paragraph);
-      expect(wealthCard).toContain(wealth.sections[0]!.paragraph);
+      // Rendered source paragraph is safely HTML-escaped (including quotes).
+      const escapedParagraph = wealth.sections[0]!.paragraph
+        .replace(/&/gu, '&amp;')
+        .replace(/</gu, '&lt;').replace(/>/gu, '&gt;')
+        .replace(/"/gu, '&quot;').replace(/'/gu, '&#39;');
+      expect(wealthCard).toContain('<p>' + escapedParagraph + '</p>');
       expect(wealthCard).toContain('재물운 종합 해석 아님');
       for (const theme of context.themes) {
         expect(wealthCard).toContain(theme.headline);
