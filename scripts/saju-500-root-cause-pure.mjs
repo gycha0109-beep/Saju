@@ -158,6 +158,83 @@ export function analyzeTemporalMeaningRepetition(rows) {
   };
 }
 
+/**
+ * Diagnose when the SAME registered semantic profile is applied to different
+ * *verified* natal-versus-period clash facts. Such differences are not new
+ * interpretations: they locate which source-owned profiles still explain
+ * structurally distinct charts with the same generic wording.
+ *
+ * Snapshot hashes, Claim IDs, dates and literal text are intentionally
+ * excluded from signatures; otherwise this would inflate personalization.
+ */
+export function analyzeTemporalStructuralEvidenceVariation(rows) {
+  const byMeaning = new Map();
+  let unassessed = 0;
+  for (const row of rows) {
+    if (typeof row.meaningKey !== 'string' ||
+        !Array.isArray(row.sourceEvidence?.sections)) {
+      unassessed++;
+      continue;
+    }
+    const relationships = [];
+    let valid = true;
+    for (const section of row.sourceEvidence.sections) {
+      if (section.kind !== 'tension') continue;
+      const clash = section.observedClash;
+      const timeBranch = clash?.annualBranch ?? clash?.monthlyBranch;
+      if (clash?.relation !== 'clash' ||
+          typeof clash.natalBranch !== 'string' ||
+          typeof timeBranch !== 'string' ||
+          typeof section.relatedPillar !== 'string') {
+        valid = false;
+        break;
+      }
+      relationships.push({
+        kind: 'verified_natal_period_branch_clash',
+        segmentId: section.segmentId ?? null,
+        natalPillar: section.relatedPillar,
+        natalBranch: clash.natalBranch,
+        periodBranch: timeBranch,
+      });
+    }
+    if (!valid) {
+      unassessed++;
+      continue;
+    }
+    relationships.sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+    const signature = JSON.stringify(relationships);
+    const group = byMeaning.get(row.meaningKey) ?? [];
+    group.push({
+      birth: row.birth,
+      calculationHash: row.calculationHash,
+      signature,
+      observedRelations: relationships,
+    });
+    byMeaning.set(row.meaningKey, group);
+  }
+  const groups = [...byMeaning.entries()]
+    .filter(([, members]) =>
+      members.length > 1 && new Set(members.map(m => m.signature)).size > 1)
+    .sort((a,b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
+    .map(([meaningProfileKey, members]) => ({
+      meaningProfileKey,
+      caseCount: members.length,
+      distinctStructuralSignatures: new Set(members.map(m => m.signature)).size,
+      examples: members.slice(0, 5).map(m => ({
+        birth: m.birth, calculationHash: m.calculationHash,
+        observedRelations: m.observedRelations,
+      })),
+    }));
+  return {
+    assessed: rows.length - unassessed,
+    unassessed,
+    repeatedMeaningProfilesWithDifferentVerifiedRelations: groups.length,
+    casesInSuchProfiles: groups.reduce((n,g) => n+g.caseCount,0),
+    groups,
+    qualification: 'Structural relation differences are calculation context only; not newly authorized interpretive meanings',
+  };
+}
+
 export function summarizeMissingWealthCauses(cases) {
   const byCause = frequency(cases.map(row => row.cause));
   return {
