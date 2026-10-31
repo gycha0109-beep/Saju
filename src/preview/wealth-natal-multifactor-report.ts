@@ -257,11 +257,11 @@ function buildAvailableThemeContext(
     ? hiddenAssessment.observations : [];
   return {
     title: alreadyExplained.size
-      ? '간접 구조 해석과 구별되는 원국의 십신 주제'
+      ? '앞서 선택된 부분 풀이와 구별되는 원국의 십신 주제'
       : '재물 종합 결론 이전에 확인된 원국의 십신 주제',
     paragraph: '아래는 기존 출처와 연결된 십신별 구조 설명입니다. ' +
       (alreadyExplained.size
-        ? '위의 간접 구조 풀이에 이미 사용된 십신 근거는 반복하지 않았습니다. '
+        ? '위의 부분 풀이에 이미 사용된 십신 근거는 반복하지 않았습니다. '
         : '') +
       paragraphs.join(' ') +
       ' 이 관측들은 현재 등록된 재물 분야의 복합 해석 근거를 충족하지 못했습니다. ' +
