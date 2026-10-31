@@ -114,5 +114,17 @@ export function diagnoseMissingWealthReading(snapshot, execution, registry, repo
       selectedWealthClaimIds: selectedT8.map(claim => claim.claimId),
     },
     reportSectionCount: report.sections.length,
+    existingSourceThemeContext: report.availableThemeContext
+      ? {
+          themeCount: report.availableThemeContext.themes.length,
+          wealthConclusionAuthorized: report.availableThemeContext.wealthConclusionAuthorized,
+          themes: report.availableThemeContext.themes.map(theme => ({
+            claimId: theme.claimId,
+            claimType: theme.claimType,
+            sourceIds: [...theme.sourceIds],
+            observedFactPaths: [...theme.observedFactPaths],
+          })),
+        }
+      : null,
   };
 }
