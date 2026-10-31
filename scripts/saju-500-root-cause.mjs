@@ -7,6 +7,7 @@ export {
   buildWealthRemediationGroups,
   analyzeTemporalMeaningRepetition,
   analyzeTemporalStructuralEvidenceVariation,
+  analyzeTemporalNatalT5Variation,
   summarizeMissingWealthCauses,
 } from './saju-500-root-cause-pure.mjs';
 
