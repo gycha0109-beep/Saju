@@ -188,7 +188,10 @@ export function analyzeTemporalConsumedT9Meaning(rows, scope) {
   let unassessed = 0;
   for (const row of rows) {
     const sections = row.sourceEvidence?.consumedT9;
-    if (typeof row.meaningKey !== 'string' || !Array.isArray(sections) ||
+    if (typeof row.meaningKey !== 'string' ||
+        typeof row.exactKey !== 'string' ||
+        typeof row.text !== 'string' || !row.text.trim() ||
+        !Array.isArray(sections) ||
         sections.length === 0 || sections.some(section => {
           const kind = section?.kind === 'core' ? 'theme' : section?.kind;
           return (kind !== 'theme' && kind !== 'tension') ||
