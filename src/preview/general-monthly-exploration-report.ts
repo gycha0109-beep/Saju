@@ -303,6 +303,7 @@ function kst(instant: string): string {
 /** Internal-only HTML: every displayed interpretive sentence is original profile copy. */
 export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplorationReport): string {
   const reference = report.referenceReading;
+  const periodLabel = reference.state === 'outside_target_month' ? '선택한 월' : '이번 달';
   const theme = reference.state === 'in_period' ? reference.theme : undefined;
   const focus = theme !== undefined
     ? '<p class="muted">실제 적용 구간: ' + escapeHtml(SEGMENT_KO[theme.segmentId]) +
@@ -310,7 +311,9 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
       kst(theme.calculatedInterval.endsAt) + ' 전까지</p>' +
       '<h3>' + escapeHtml(theme.title) + '</h3><p>' + escapeHtml(theme.text) + '</p>' +
       '<details><summary>이 구간의 기존 Claim·규칙·출처</summary>' +
-      '<p>Claim: ' + escapeHtml(theme.claimId) + '</p>' +
+      '<p>Claim: ' + escapeHtml(theme.claimId) + ' · 의미: ' +
+       escapeHtml(theme.semanticKey) + '</p>' +
+       '<p>계산: ' + escapeHtml(theme.factPaths.join(' · ')) + '</p>' +
       '<p>규칙: ' + escapeHtml(theme.ruleIds.join(' · ')) +
       ' / 방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
       '<p>출처: ' + escapeHtml(theme.sourceIds.join(' · ')) +
@@ -322,8 +325,11 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
             '<p><strong>' + escapeHtml(item.title) + '</strong> · ' +
               escapeHtml(item.text) + '</p>' +
               '<details><summary>해당 관계의 기존 Claim·계산 근거·출처</summary>' +
-              '<p>Claim: ' + escapeHtml(item.claimId) + '</p>' +
+              '<p>Claim: ' + escapeHtml(item.claimId) + ' · 의미: ' +
+               escapeHtml(item.semanticKey) + '</p>' +
               '<p>계산: ' + escapeHtml(item.factPaths.join(' · ')) + '</p>' +
+               '<p>규칙: ' + escapeHtml(item.ruleIds.join(' · ')) +
+               ' / 방법론: ' + escapeHtml(item.methodologyId) + '</p>' +
               '<p>출처: ' + escapeHtml(item.sourceIds.join(' · ')) +
               '</p></details>').join('') + '</section>'
         : '')
@@ -353,7 +359,7 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
   }).join('');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${escapeHtml(report.headline)} · 내부 시제품</title>
+  <title>${escapeHtml(report.headline.replace('이번 달', periodLabel))} · 내부 시제품</title>
   <style>
   body{margin:0;background:#f6f1e9;color:#2b2925;font-family:system-ui,'Malgun Gothic',sans-serif;line-height:1.7}
   main{max-width:820px;margin:auto;padding:36px 20px 70px}
@@ -365,7 +371,7 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
   details{font-size:12px;color:#6b6259;overflow-wrap:anywhere}
   .muted{font-size:13px;color:#71695e}.focus{background:#e9f2ed;padding:20px 24px;border-radius:16px;margin-top:22px}.focus h3{margin:8px 0}.limits{background:#eee6d9;padding:20px;border-radius:14px;margin-top:30px;font-size:13px}
   </style></head><body><main><header><small>MYEONGHA · INTERNAL RESEARCH PREVIEW</small>
-  <h1>${escapeHtml(report.headline)}</h1><p>서울 시간 기준 · ${escapeHtml(report.jeolBoundary.name)} 절입 ${kst(report.jeolBoundary.at)}</p>
+  <h1>${escapeHtml(report.headline.replace('이번 달', periodLabel))}</h1><p>서울 시간 기준 · ${escapeHtml(report.jeolBoundary.name)} 절입 ${kst(report.jeolBoundary.at)}</p>
   </header><section class="focus" id="reference-month-reading"><h2>조회 시각에 해당하는 월별 풀이</h2><p class="muted">기준: ${kst(reference.referenceDateTime)} · 내부 연구 미리보기</p>${focus}</section>${sections}<aside class="limits"><strong>해석 범위와 아직 모르는 부분</strong>
   <ul>${[...report.missing, ...report.caveats].map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>
   </aside></main></body></html>`;

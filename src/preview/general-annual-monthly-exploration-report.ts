@@ -364,17 +364,31 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     : '조회 시각 ' + kst(annualAt.referenceDateTime) + '은 서울 달력 ' +
       annualAt.civilYearAtReference + '년입니다. 아래 ' + report.targetYear +
       '년 연운은 현재 연도에 적용되는 풀이가 아니라 선택한 연도의 연구 비교 자료입니다.';
+  const annualFocusEvidence = (section: GeneralAnnualExplorationSection): string => {
+    const index = report.annual.sections.indexOf(section);
+    if (index < 0) throw new TypeError('Annual focus has no selected section.');
+    const evidence = report.annualExecutedEvidence[index]!;
+    return '<details class="annual-focus-evidence"><summary>이 풀이의 실제 연구 Claim·계산 근거</summary>' +
+      '<p>Claim: ' + e(evidence.claimId) + ' · 의미: ' + e(evidence.semanticKey) + '</p>' +
+      '<p>규칙: ' + e(evidence.ruleIds.join(' · ')) + '</p>' +
+      '<p>방법론: ' + e(evidence.methodologyId) + '</p>' +
+      '<p>계산: ' + e(evidence.factPaths.join(' · ')) + '</p>' +
+      '<p>출처: ' + e(evidence.sourceIds.join(' · ')) +
+      ' (명하 내부 연구 정책, 독립 고전 근거 아님)</p></details>';
+  };
   const annualReadingFocus = annualFocus.state === 'in_target_civil_year'
     ? '<section class="annual-focus" id="reference-year-reading" aria-label="올해의 원국 근거가 연결된 풀이">' +
       '<h3>올해의 중심 주제와 실제 원국 관계</h3>' +
       '<p class="muted">선택 연도의 내부 연구 풀이이며 입춘 효력 연주 또는 실제 사건의 예고가 아닙니다.</p>' +
       '<article class="reading-card"><small>기존 연운 중심 주제</small><h4>' +
-      e(annualFocus.theme.title) + '</h4><p>' + e(annualFocus.theme.text) + '</p></article>' +
+      e(annualFocus.theme.title) + '</h4><p>' + e(annualFocus.theme.text) +
+       '</p>' + annualFocusEvidence(annualFocus.theme) + '</article>' +
       (annualFocus.sourceBoundTensions.length
         ? '<div aria-label="확인된 연운 원국 충 관계">' +
           annualFocus.sourceBoundTensions.map(section =>
             '<article class="reading-card"><small>기존 출처에 연결된 조건부 충 관계</small><h4>' +
-            e(section.title) + '</h4><p>' + e(section.text) + '</p></article>').join('') +
+            e(section.title) + '</h4><p>' + e(section.text) +
+             '</p>' + annualFocusEvidence(section) + '</article>').join('') +
           '</div>'
         : '<p>이번 명식에서 기존 연운 연구 규칙에 해당하는 원국 충 관계는 추가로 확인되지 않았습니다. 다른 관계의 부재나 길흉을 뜻하지 않습니다.</p>') +
       '</section>'

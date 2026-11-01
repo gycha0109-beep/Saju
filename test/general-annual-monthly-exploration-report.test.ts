@@ -78,6 +78,13 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(report.annualCurrentReading.state).toBe('in_target_civil_year');
     expect(html).toContain('id="reference-year-reading"');
     expect(html).toContain('올해의 중심 주제와 실제 원국 관계');
+    const currentAnnual = html.split('id="reference-year-reading"')[1]!
+      .split('class="full-year-profile-evidence"')[0]!;
+    const evidence = report.annualExecutedEvidence[0]!;
+    for (const token of [evidence.claimId, evidence.semanticKey, evidence.ruleIds[0]!,
+      evidence.methodologyId, evidence.factPaths[0]!, evidence.sourceIds[0]!]) {
+      expect(currentAnnual).toContain(token);
+    }
     expect(html.indexOf('id="reference-year-reading"'))
       .toBeLessThan(html.indexOf('full-year-profile-evidence'));
     expect(html).toContain('올해 문구의 계산 근거와 연구 출처');
@@ -173,6 +180,11 @@ describe('one-person annual to monthly source-bound research reading', () => {
         .split('class="full-year-profile-evidence"')[0]!;
       expect(focus).toContain(current.theme.text);
       for (const tension of tensions) {
+        const evidence = report.annualExecutedEvidence[report.annual.sections.indexOf(tension)]!;
+        for (const token of [evidence.claimId, evidence.semanticKey, evidence.ruleIds[0]!,
+          evidence.methodologyId, evidence.factPaths[0]!, evidence.sourceIds[0]!]) {
+          expect(focus).toContain(token);
+        }
         expect(tension.observedClash?.relation).toBe('clash');
         expect(focus).toContain(tension.title);
         expect(focus).toContain(tension.text);

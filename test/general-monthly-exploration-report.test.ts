@@ -89,6 +89,7 @@ describe('real-calculated monthly Korean research consumer preview', () => {
     expect(html).toContain('절입 전');
     expect(html).toContain('절입 이후');
     expect(html).toContain('근거와 출처');
+    expect(html).toContain('<h1>2026년 9월 — 이번 달의 흐름</h1>');
     themes.forEach(section => {
       expect(html).toContain(section.title);
       expect(html).toContain(section.text);
@@ -107,7 +108,12 @@ describe('real-calculated monthly Korean research consumer preview', () => {
     const html = renderGeneralMonthlyExplorationHtml(after.report);
     expect(html).toContain('id="reference-month-reading"');
     expect(html).toContain(after.report.referenceReading.theme!.text);
-    expect(html).toContain(after.report.referenceReading.theme!.sourceIds[0]!);
+    const current = html.split('id="reference-month-reading"')[1]!.split('<section><h2>절입 전</h2>')[0]!;
+    const focus = after.report.referenceReading.theme!;
+    for (const evidence of [focus.claimId, focus.semanticKey, focus.factPaths[0]!,
+      focus.ruleIds[0]!, focus.methodologyId, focus.sourceIds[0]!]) {
+      expect(current).toContain(evidence);
+    }
     expect(after.report.mayPublish).toBe(false);
     expect(after.report.maySell).toBe(false);
   });
@@ -119,6 +125,8 @@ describe('real-calculated monthly Korean research consumer preview', () => {
     });
     const html = renderGeneralMonthlyExplorationHtml(report);
     expect(html).toContain('선택한 달 밖에 있습니다');
+    expect(html).toContain('<h1>2026년 10월 — 선택한 월의 흐름</h1>');
+    expect(html).not.toContain('<h1>2026년 10월 — 이번 달의 흐름</h1>');
     expect(html).toContain('절입 전');
     expect(html).toContain('절입 이후');
   });
@@ -181,7 +189,12 @@ describe('real-calculated monthly Korean research consumer preview', () => {
         item.sourceIds.length > 0)).toBe(true);
       const activeHtml = renderGeneralMonthlyExplorationHtml(active.report);
       expect(activeHtml).toContain('aria-label="조회 시각에 적용되는 원국 충 관계"');
-      expect(activeHtml).toContain(chosen.claimId);
+      const current = activeHtml.split('id="reference-month-reading"')[1]!
+        .split('<section><h2>절입 전</h2>')[0]!;
+      for (const evidence of [chosen.claimId, chosen.semanticKey, chosen.factPaths[0]!,
+        chosen.ruleIds[0]!, chosen.methodologyId, chosen.sourceIds[0]!]) {
+        expect(current).toContain(evidence);
+      }
       const otherId = chosen.segmentId === 'before_jeol' ? 'after_jeol' : 'before_jeol';
       const other = facts.segmentsById[otherId];
       const otherReading = run(month, snapshot(),
