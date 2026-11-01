@@ -5,6 +5,13 @@
 > 범위: 계산·기존 Claim/Methodology/Source 권한을 유지하는 연구용 해석 품질 개선. AI 신규 Claim 생성과 Official/판매 승격은 범위 밖.
 > 기록 규칙: **실제 수정한 작업 단위마다 이 파일에 변경 내용, 결과물, 확인된 검증, 미완료 항목을 추가한다.** 계획만 있는 작업은 완료로 기록하지 않는다.
 
+## 2026-11-01 — 작업 40 CI 실패 보정 · 기존 정상 독립 근거 우선순위 복원
+
+- **실패 근거:** [커밋 939fe354 CI](https://github.com/gycha0109-beep/Saju/actions/runs/41305319175)에서 `CI Tests (11/16)`의 [실패 테스트](https://github.com/gycha0109-beep/Saju/actions/runs/41305319175/job/124845590423) 단 1건 실패(해당 묶음 712 통과/1 실패). 기존 독립 축 조합 `planning → tension`이 유효한데 신규 역순 탐색 `planning → management`를 그보다 먼저 반환해, 기존 우선순위를 깨뜨렸다. 별도 500명 감사·Production Calculation Container·PIE Shadow는 모두 성공했다.
+- **원인/수정:** 작업 40에서 기존 순서의 모든 유효 후보를 찾기 전에 역순 후보를 섞어 탐색했다. 기존 **정방향 독립 후보 탐색을 끝까지 우선 실행**하고, 실제 두 축을 확보하지 못한 경우에만 별도 역순 후보를 확인하도록 수정했다. 기존 유효한 선택은 유지하고, 진짜 부족한 사례에서만 기존 출처 T8의 역순 연결을 허용한다.
+- **검증 추가:** 기존 3개 후보에서 `planning → tension`이 `planning → management`보다 우선됨을 명시하고, 유효 정방향 후보가 아예 없는 2개 후보 사례는 기존 T0 독립성 판정에 따라 역순을 허용하는 테스트를 유지한다. 새 근거·의미·Claim 생성, 공식 승격, 판매 기능 변경 없음.
+- **변경 파일:** `src/preview/natal-independent-supporting-axes.ts`, `test/natal-four-domain-independent-supporting-axes.test.ts`, 본 워크로그. 보정 커밋에 연결된 신규 CI는 결과 확인 전까지 미확인.
+
 ## 2026-11-01 — 작업 40 · 기존 출처의 독립 보조해석 순서 복구 (단계 2·5·6)
 - **직전 검증:** `db52840db07c7bce4fccb808e55183440d4dcab8` CI·500명 감사·Production Calculation Container·PIE Shadow 4개 모두 성공. 고정 500건의 재물 T8 중심 근거 부족 17명, 출처 T5 부분 풀이 17/17명, 연운 56종·월운 128종의 실행 의미 유지.
 - **실제 결함:** 독립 보조축 선택은 먼저 넓은 해석 축의 계산 근거를 소비하면 나중에 좁은 축에서 새로운 위치를 추가할 수 없더라도, **좁은 축부터 선택하면 둘 다 독립적인** 후보 순서를 고려하지 못했다.

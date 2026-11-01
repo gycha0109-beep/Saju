@@ -47,6 +47,8 @@ describe('four different consumer natal menus require independently observed T0 
     const narrowSecond = { axis: 'tension', observedFactPaths: [hour] };
     const candidates = [broad, narrowFirst, narrowSecond];
     const chosen = selectIndependentNatalSupportingAxes(core, candidates);
+    // The existing valid forward pair has priority over the newer reverse
+    // alternative ['planning', 'management'].
     expect(chosen.supporting.map(section => section.axis))
       .toEqual(['planning', 'tension']);
     const used = new Set(core.observedFactPaths);
@@ -59,6 +61,7 @@ describe('four different consumer natal menus require independently observed T0 
       .supporting.map(section => section.axis)).toEqual(['management']);
     // No new Claim, source, or calculation fact is created by selection.
     expect(chosen.supporting.every(section => candidates.includes(section))).toBe(true);
+    expect(chosen.supporting).toEqual([narrowFirst, narrowSecond]);
   });
 
   it('rescues existing independent source axes that must be read in reverse order', () => {

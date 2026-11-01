@@ -44,6 +44,8 @@ export function selectIndependentNatalSupportingAxes<T extends ObservedNatalAxis
   // Preserve earlier successful choices and the original rule/axis priority.
   if (maximum === 2 && supporting.length < 2) {
     const corePaths = new Set(core.observedFactPaths);
+    // First exhaust the original forward pair search. A newly possible
+    // reverse pair must never displace a source-priority-preserving forward pair.
     for (let i = 0; i < candidates.length; i++) {
       const first = candidates[i]!;
       if (first.axis === core.axis ||
@@ -51,17 +53,24 @@ export function selectIndependentNatalSupportingAxes<T extends ObservedNatalAxis
       const firstPaths = new Set([...corePaths, ...first.observedFactPaths]);
       for (let j = i + 1; j < candidates.length; j++) {
         const second = candidates[j]!;
-        if (second.axis === core.axis || second.axis === first.axis) continue;
-        if (second.observedFactPaths.some(path => !firstPaths.has(path))) {
-          return { supporting: [first, second], overlapOnlyCount };
-        }
-        // A broad earlier axis can consume the narrow later one's evidence.
-        // Reverse only if EACH source-existing axis then adds a new exact T0 path.
-        if (second.observedFactPaths.some(path => !corePaths.has(path))) {
-          const reversePaths = new Set([...corePaths, ...second.observedFactPaths]);
-          if (first.observedFactPaths.some(path => !reversePaths.has(path))) {
-            return { supporting: [second, first], overlapOnlyCount };
-          }
+        if (second.axis === core.axis || second.axis === first.axis ||
+            !second.observedFactPaths.some(path => !firstPaths.has(path))) continue;
+        return { supporting: [first, second], overlapOnlyCount };
+      }
+    }
+    // Only when NO existing forward pair works, try an evidence-valid reverse
+    // order of already emitted T8 axes. Each must add an unused Canonical fact.
+    for (let i = 0; i < candidates.length; i++) {
+      const broad = candidates[i]!;
+      if (broad.axis === core.axis ||
+          !broad.observedFactPaths.some(path => !corePaths.has(path))) continue;
+      for (let j = i + 1; j < candidates.length; j++) {
+        const narrow = candidates[j]!;
+        if (narrow.axis === core.axis || narrow.axis === broad.axis ||
+            !narrow.observedFactPaths.some(path => !corePaths.has(path))) continue;
+        const narrowFirstPaths = new Set([...corePaths, ...narrow.observedFactPaths]);
+        if (broad.observedFactPaths.some(path => !narrowFirstPaths.has(path))) {
+          return { supporting: [narrow, broad], overlapOnlyCount };
         }
       }
     }
