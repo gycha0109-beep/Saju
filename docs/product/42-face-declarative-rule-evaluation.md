@@ -193,21 +193,76 @@ execute successfully. Invalid stdin is rejected without echoing its private
 marker. No real capture or human review was consumed. Hosted exact-head checks
 remain required before merging this continuation.
 
+## Semantic/Character data boundary (#2750)
+
+The existing V3 semantic contract is enforced before Character projection. The
+previous six-name JSON search accepted an extra `explanation` field, and the
+projection could forward a free sentence from `FaceClaim.semanticKey` into
+`CharacterFaceGrounding.semanticClaims[].key`. Both bypasses were reproduced in
+the built module and as two failing direct tests before the fix.
+
+`assertNoConsumerProseInSemanticReading` now checks the existing required V3
+fields, verdict, six optional module slots, lens records and string lists.
+Unknown fields are rejected at each level, including rendered/prose fields under
+names outside the old denylist. Observation State and Diagnosis Resolution retain
+their distinct existing enums; neither is inferred from the other.
+
+The Character projection invokes this validation itself and checks the FaceClaim
+record structure, tier/salience/disposition enums and semantic identifier fields
+before selecting/forwarding claims. Coded semantic positions (`semanticKey`,
+module/lens keys, axis/pattern, comparison group, unavailable-section and
+prohibition keys) use `[A-Za-z0-9][A-Za-z0-9._:@/-]*`. They cannot contain a free
+sentence or prose object. Opaque reading/snapshot/claim/source/version references
+retain their existing non-empty string meaning; they are never normalized or
+replaced with aliases. This syntax validation does **not** authorize an unknown
+claim family or semantic key; source/registry/narrative-profile admission still
+belongs to the existing upstream authorities.
+
+Validation operates on plain data records/arrays instead of serializing the
+supplied object, so getters and `toJSON` hooks cannot hide fields or run during
+validation. Missing required fields and malformed/sparse collections fail as
+`FaceAuthorityValidationError`. The original duplicate/missing claim-reference
+checks remain. Forwarded unavailable/prohibition arrays are copied so later
+source mutation cannot alter that metadata in a completed projection.
+
+The existing research producer, its issued-grounding path, source metadata and
+separate approved narrative blocks remain intact. No reading is rendered here,
+and no method/source review, claim issuance or Character publication authority is
+added. Existing V3 producer/consumer outputs remain valid; malformed payloads are
+now rejected. No field/category/storage schema is added.
+
+Local semantic-boundary verification: 83 tests pass across the direct boundary,
+common evaluator, static snapshot and three existing topic authority suites.
+The frozen migration-source `face-reading-authority.test.ts` also passes all 15
+tests against this package, including its original grounding output expectation.
+Root/Face typechecks, Face build, scoped ESLint, formatting and migration integrity
+checks pass. Both bypasses are rejected by the compiled package entry point; the
+existing static snapshot CLI self-check also passes.
+The existing Face Reading CI runs the new direct suite and retains its original
+frozen-source regression. No workflow is added.
+
+The planned real-observation connection remains gated independently: FR319's
+runtime bundle explicitly has `crossReferenceSubtractionAuthorityIssued=false`
+and `threeDivisionsSpanExecutionReady=false`. Neither a complete neutral bundle
+nor a passing schema/Character check authorizes subtracting those references into
+traditional lengths. #2343/#2213 still require real private evidence, human review
+and exact-target governance before the actual producer connection can advance.
+
 Roadmap markers below describe inspected implementation surfaces, not percentages
 or end-to-end completion. `partial` means code exists with authority/runtime work
 remaining; `unassessed` means no completion claim is made in this bounded audit.
 
-| Existing stage | Current audited state                                                                                  |
-| -------------- | ------------------------------------------------------------------------------------------------------ |
-| FR-0 / FR-0.5  | Source/claim/methodology contracts present; real traditional authority partial                         |
-| FR-1 / FR-2    | Observation/adapter/metric and binding code present; hairline evidence blocked                         |
-| FR-3           | Shared evaluator and static research snapshot caller implemented; real semantic rule admission remains |
-| FR-4 / FR-4.5  | Research assertion tension and comparison contracts present; full production unassessed                |
-| FR-5           | F7 contracts present; governed dependency resolution unassessed                                        |
-| FR-6 / FR-7    | Semantic/grounding and research narrative code present; real source activation blocked                 |
-| FR-8           | Full product UX unassessed; no UI change here                                                          |
-| FR-9           | Source-owned governed Character handoff present; publication remains gated                             |
-| FR-10 / FR-11  | Compatibility contracts present; bridge activation/future scope unassessed                             |
+| Existing stage | Current audited state                                                                                          |
+| -------------- | -------------------------------------------------------------------------------------------------------------- |
+| FR-0 / FR-0.5  | Source/claim/methodology contracts present; real traditional authority partial                                 |
+| FR-1 / FR-2    | Observation/adapter/metric and binding code present; hairline evidence blocked                                 |
+| FR-3           | Shared evaluator and static research snapshot caller implemented; real semantic rule admission remains         |
+| FR-4 / FR-4.5  | Research assertion tension and comparison contracts present; full production unassessed                        |
+| FR-5           | F7 contracts present; governed dependency resolution unassessed                                                |
+| FR-6 / FR-7    | Semantic-only V3/Character input boundary enforced; research narrative present; real source activation blocked |
+| FR-8           | Full product UX unassessed; no UI change here                                                                  |
+| FR-9           | Source-owned governed Character handoff present; publication remains gated                                     |
+| FR-10 / FR-11  | Compatibility contracts present; bridge activation/future scope unassessed                                     |
 
 The research snapshot caller is implemented; an admitted static observation and
 operationalization producer must still be connected with exact snapshot provenance.
@@ -220,7 +275,8 @@ Architecture Check:
 - Docs updated: yes
 - Ghost-code risk: passed for registered rule -> condition -> semantic template,
   plus static snapshot -> existing relative-order operation -> rule evaluation,
-  with direct execution and compiled-entry checks. Product activation is excluded.
+  with direct execution and compiled-entry checks. Semantic validation now runs
+  at the existing Character projection entry. Product activation is excluded.
 - Notes: additive `all`/`any` expression nodes and scoped `$item` binding extend the
   existing language. The static research caller reuses the existing adapter,
   relative-order function, source validator and rule/pack identities.

@@ -28,6 +28,15 @@
       "changeClass": "additive_authority_governed_core_extension",
       "historicalProvenanceMutation": false,
       "methodologySemanticChange": false
+    },
+    {
+      "path": "packages/face-reading/src/semantic-projection.ts",
+      "sourceBlobSha": "6b4f26eaad57ed8726a90ba648b0410f0eb1d0e7",
+      "targetBlobSha": "53b384cff8f6b3a304ae51970ee0e01b85993fd1",
+      "authorityRef": "face-reading#2750",
+      "changeClass": "additive_authority_governed_core_extension",
+      "historicalProvenanceMutation": false,
+      "methodologySemanticChange": false
     }
   ]
 }
