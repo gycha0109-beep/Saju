@@ -148,8 +148,16 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
           !axes.includes('tension')) continue;
         found = true;
         expect(report.state).toBe('partial');
-        expect(report.sections).toHaveLength(1);
+        expect(report.sections.length).toBeGreaterThanOrEqual(1);
+        expect(report.sections.length).toBeLessThanOrEqual(2);
         expect(report.sections[0]?.axis).toBe('tension');
+        if (report.sections.length === 2) {
+          expect(report.sections[1]?.axis).toBe('context');
+          expect(report.sections[1]!.observedFactPaths.some(path =>
+            !report.sections[0]!.observedFactPaths.includes(path))).toBe(true);
+          expect(report.readingGuide).toBeUndefined();
+          expect(report.missing.join(' ')).toContain('각각 부분적으로 보여줍니다');
+        }
         expect(report.sections[0]?.observedPositions.length).toBeGreaterThanOrEqual(2);
         expect(report.sections[0]?.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);

@@ -331,17 +331,21 @@ function renderFirstScreenSelectedInterpretations(
 function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport): string {
   const context = report.availableThemeContext;
   if (context === undefined) return '';
-  // Only an empty report or a context/tension-only T8 can be supplemented.
-  // The extra T5 observations can never stand in for a Wealth synthesis core.
-  const limitedWithoutCore = report.sections.length === 0 &&
-      report.state === 'insufficient' ||
-    report.state === 'partial' && report.sections.length === 1 && (
-      report.sections[0]!.axis === 'context' &&
-        report.sections[0]!.pattern.endsWith('_CONTEXT') ||
-      report.sections[0]!.axis === 'tension' &&
-        (report.sections[0]!.pattern === 'PEER_WEALTH' ||
-         report.sections[0]!.pattern === 'PEER_WEALTH_RESOURCE')
-    );
+  // Preserve unconsumed sourced T5 even when independent tension + indirect
+  // context partial T8 Claims coexist. They must NEVER form a Wealth core.
+  const partialAxes = report.sections.map(section => section.axis);
+  const limitedWithoutCore = report.sections.length === 0
+    ? report.state === 'insufficient'
+    : report.state === 'partial' &&
+      partialAxes.length <= 2 && new Set(partialAxes).size === partialAxes.length &&
+      report.sections.every(section =>
+        section.axis === 'context' && section.pattern.endsWith('_CONTEXT') ||
+        section.axis === 'tension' &&
+          (section.pattern === 'PEER_WEALTH' ||
+           section.pattern === 'PEER_WEALTH_RESOURCE')) &&
+      (report.sections.length !== 2 ||
+        report.sections[1]!.observedFactPaths.some(path =>
+          !report.sections[0]!.observedFactPaths.includes(path)));
   guard(limitedWithoutCore &&
     context.wealthConclusionAuthorized === false &&
     context.themes.length > 0 && context.title.trim().length > 0 &&

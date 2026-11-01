@@ -79,6 +79,21 @@ describe('four different consumer natal menus require independently observed T0 
       .supporting).toEqual([broad]);
   });
 
+  it('retains an independently observed indirect context alongside tension without promoting a core', () => {
+    const tension = { axis: 'tension', observedFactPaths: ['year.branch', 'month.branch'] };
+    const overlapping = { axis: 'context', observedFactPaths: ['year.branch'] };
+    const independent = { axis: 'context', observedFactPaths: ['hour.stem', 'month.branch'] };
+    const selected = selectIndependentNatalSupportingAxes(
+      tension, [overlapping, independent], 1,
+    );
+    expect(selected.supporting).toEqual([independent]);
+    expect(selected.overlapOnlyCount).toBe(1);
+    expect(selectIndependentNatalSupportingAxes(tension, [overlapping], 1).supporting)
+      .toHaveLength(0);
+    expect(selected.supporting[0]?.observedFactPaths.some(path =>
+      !tension.observedFactPaths.includes(path))).toBe(true);
+  });
+
   it('does not invent two independent supports from repeated paths or the same axis', () => {
     const year = 'derivedFacts.tenGods.value.year.stem.value';
     const month = 'derivedFacts.tenGods.value.month.stem.value';

@@ -1,5 +1,5 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
-import { selectBestNatalCoreWithinPriorityAxis } from './natal-independent-supporting-axes.js';
+import { selectBestNatalCoreWithinPriorityAxis, selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
 import { observeHiddenWealthMembership, type WealthHiddenStemObservation } from './wealth-hidden-stem-observations.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -488,9 +488,18 @@ export function buildWealthNatalMultifactorReport(
   const supportSelection = selectedCore?.support;
   const tensionOnly = result.filter(section => section.axis === 'tension').slice(0, 1);
   const contextOnly = result.filter(section => section.axis === 'context').slice(0, 1);
+  // With no direct Wealth core, a real tension and an independent indirect
+  // source-owned T8 context may coexist. The previous either/or fallback
+  // silently discarded the context even when it had unused Canonical paths.
+  // These are TWO bounded partial interpretations, NEVER a synthesis core.
+  const independentIndirectContext = tensionOnly.length
+    ? selectIndependentNatalSupportingAxes(
+        tensionOnly[0]!, result.filter(section => section.axis === 'context'), 1,
+      ).supporting
+    : [];
   const chosen: WealthNatalMultifactorSection[] = core
     ? [core, ...(supportSelection?.supporting ?? [])]
-    : tensionOnly.length ? tensionOnly : contextOnly;
+    : tensionOnly.length ? [...tensionOnly, ...independentIndirectContext] : contextOnly;
   const missing: string[] = [];
   // Every no-core report needs the actual same-chart T5 coverage explanation.
   // A tension-only T8 is not a Wealth core and must not hide that reason.
@@ -501,7 +510,9 @@ export function buildWealthNatalMultifactorReport(
   }
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
   if(!core && chosen[0]?.axis === 'tension') {
-    missing.push('중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.');
+    missing.push(independentIndirectContext.length
+      ? '재물 중심 종합근거는 없지만, 서로 다른 계산 위치에서 확인된 긴장 관계와 간접 구조 관점을 각각 부분적으로 보여줍니다. 이를 하나의 재물 종합 결론으로 결합하거나 실제 소득·재산·투자 결과로 확장하지 않습니다.'
+      : '중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.');
   }
   if(!core && chosen[0]?.axis === 'context') {
     missing.push('관성·인성 또는 관성·비겁의 간접적인 구조 설명만 확인됩니다. 이것은 재성 중심 재물운 종합 해석이 아니며 결과를 부분 연구 관점으로 제한합니다.');
@@ -525,11 +536,8 @@ export function buildWealthNatalMultifactorReport(
   // missing direct Wealth core. Preserve other independently sourced T5 themes,
   // excluding the exact upstream T5 claims already consumed by the chosen T8.
   // Never substitute fallback copy when a Wealth core has been selected.
-  const limitedWithoutCore = core === undefined && (
-    sections.length === 0 ||
-    sections.length === 1 &&
-      (sections[0]!.axis === 'context' || sections[0]!.axis === 'tension')
-  );
+  const limitedWithoutCore = core === undefined &&
+    sections.every(section => section.axis === 'context' || section.axis === 'tension');
   const availableThemeContext = limitedWithoutCore
     ? buildAvailableThemeContext(
         snapshot, execution, sections.flatMap(section => section.upstreamClaimIds),
