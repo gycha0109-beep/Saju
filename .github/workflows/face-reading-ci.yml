@@ -63,6 +63,10 @@ jobs:
           npm ci --no-audit --no-fund --ignore-scripts
           npm run check:face-reading
 
+      - name: Verify deterministic registered Face rule evaluation
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/rule-evaluation.test.ts
+
       - name: Verify FR61 provider candidate boundary
         working-directory: target
         run: npx vitest run packages/face-reading/src/production-neutral-observation-provider-fr61.test.ts

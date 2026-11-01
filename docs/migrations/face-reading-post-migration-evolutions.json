@@ -14,8 +14,17 @@
     {
       "path": "packages/face-reading/src/index.ts",
       "sourceBlobSha": "97151f021e3c8b7eb4e1178dbb6bb29fb77f9909",
-      "targetBlobSha": "a8caf2a4d816c55ed7e71487eb7307e47f3b0c97",
-      "authorityRef": "FACE-ENGINE-1639",
+      "targetBlobSha": "56c64b9d45c87003f490bb01fa2d65a4f521cc54",
+      "authorityRef": "FACE-ENGINE-1639; face-reading#2746",
+      "changeClass": "additive_authority_governed_core_extension",
+      "historicalProvenanceMutation": false,
+      "methodologySemanticChange": false
+    },
+    {
+      "path": "packages/face-reading/src/contracts.ts",
+      "sourceBlobSha": "29bb0d2820aa304eb714acdda1ffbd8d60b53b7c",
+      "targetBlobSha": "8134445c324abd85d1b8bbde78c4eef7fdd96daa",
+      "authorityRef": "face-reading#2746",
       "changeClass": "additive_authority_governed_core_extension",
       "historicalProvenanceMutation": false,
       "methodologySemanticChange": false

@@ -164,6 +164,7 @@ export type FaceRuleExpression =
   | { readonly op: 'lt' | 'lte' | 'gt' | 'gte'; readonly input: string; readonly value: number }
   | { readonly op: 'between'; readonly input: string; readonly min: number; readonly max: number }
   | { readonly op: 'exists'; readonly input: string }
+  | { readonly op: 'all' | 'any'; readonly input: string; readonly expression: FaceRuleExpression }
   | { readonly op: 'not'; readonly expression: FaceRuleExpression }
   | { readonly op: 'and' | 'or'; readonly expressions: readonly FaceRuleExpression[] };
 
