@@ -51,11 +51,39 @@ export function selectIndependentNatalSupportingAxes<T extends ObservedNatalAxis
       const firstPaths = new Set([...corePaths, ...first.observedFactPaths]);
       for (let j = i + 1; j < candidates.length; j++) {
         const second = candidates[j]!;
-        if (second.axis === core.axis || second.axis === first.axis ||
-            !second.observedFactPaths.some(path => !firstPaths.has(path))) continue;
-        return { supporting: [first, second], overlapOnlyCount };
+        if (second.axis === core.axis || second.axis === first.axis) continue;
+        if (second.observedFactPaths.some(path => !firstPaths.has(path))) {
+          return { supporting: [first, second], overlapOnlyCount };
+        }
+        // A broad earlier axis can consume the narrow later one's evidence.
+        // Reverse only if EACH source-existing axis then adds a new exact T0 path.
+        if (second.observedFactPaths.some(path => !corePaths.has(path))) {
+          const reversePaths = new Set([...corePaths, ...second.observedFactPaths]);
+          if (first.observedFactPaths.some(path => !reversePaths.has(path))) {
+            return { supporting: [second, first], overlapOnlyCount };
+          }
+        }
       }
     }
   }
   return { supporting, overlapOnlyCount };
+}
+
+/** Choose the most independently evidenced pre-existing Wealth core
+ * without reducing the registered meaning-axis priority or inventing claims. */
+export function selectBestNatalCoreWithinPriorityAxis<T extends ObservedNatalAxis>(
+  orderedCores: readonly T[],
+  candidates: readonly T[],
+): { core: T; support: IndependentNatalSupports<T> } | undefined {
+  const first = orderedCores[0];
+  if (!first) return undefined;
+  let best = { core: first, support: selectIndependentNatalSupportingAxes(first, candidates) };
+  for (const candidate of orderedCores.slice(1)) {
+    if (candidate.axis !== first.axis) continue;
+    const support = selectIndependentNatalSupportingAxes(candidate, candidates);
+    if (support.supporting.length > best.support.supporting.length) {
+      best = { core: candidate, support };
+    }
+  }
+  return best;
 }

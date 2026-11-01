@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
-import { selectIndependentNatalSupportingAxes } from '../src/preview/natal-independent-supporting-axes.js';
+import {
+  selectIndependentNatalSupportingAxes,
+  selectBestNatalCoreWithinPriorityAxis,
+} from '../src/preview/natal-independent-supporting-axes.js';
 import { buildGeneralNatalMultifactorReport } from '../src/preview/general-natal-multifactor-report.js';
 import { buildWealthNatalMultifactorReport } from '../src/preview/wealth-natal-multifactor-report.js';
 import { buildBusinessNatalMultifactorReport } from '../src/preview/business-natal-multifactor-report.js';
@@ -58,6 +61,21 @@ describe('four different consumer natal menus require independently observed T0 
     expect(chosen.supporting.every(section => candidates.includes(section))).toBe(true);
   });
 
+  it('rescues existing independent source axes that must be read in reverse order', () => {
+    const core = { axis: 'core', observedFactPaths: ['year'] };
+    const broad = { axis: 'management', observedFactPaths: ['month', 'hour'] };
+    const narrow = { axis: 'planning', observedFactPaths: ['month'] };
+    const selected = selectIndependentNatalSupportingAxes(core, [broad, narrow]);
+    expect(selected.supporting).toEqual([narrow, broad]);
+    const used = new Set(core.observedFactPaths);
+    for (const axis of selected.supporting) {
+      expect(axis.observedFactPaths.some(path => !used.has(path))).toBe(true);
+      axis.observedFactPaths.forEach(path => used.add(path));
+    }
+    expect(selectIndependentNatalSupportingAxes(core, [broad, narrow], 1)
+      .supporting).toEqual([broad]);
+  });
+
   it('does not invent two independent supports from repeated paths or the same axis', () => {
     const year = 'derivedFacts.tenGods.value.year.stem.value';
     const month = 'derivedFacts.tenGods.value.month.stem.value';
@@ -80,6 +98,23 @@ describe('four different consumer natal menus require independently observed T0 
     const later = { axis: 'planning', observedFactPaths: ['b'] };
     const result = selectIndependentNatalSupportingAxes(core, [broad, other, later]);
     expect(result.supporting).toEqual([broad, other]);
+  });
+
+  it('prefers a more independently supported same-axis Wealth core without lowering core priority', () => {
+    const visible = { axis: 'core', observedFactPaths: ['year', 'month', 'hour'] };
+    const alternate = { axis: 'core', observedFactPaths: ['year'] };
+    const lowerPriority = { axis: 'creation', observedFactPaths: ['month'] };
+    const management = { axis: 'management', observedFactPaths: ['hour'] };
+    const candidates = [visible, alternate, lowerPriority, management];
+    const selected = selectBestNatalCoreWithinPriorityAxis(candidates, candidates);
+    expect(selected?.core).toBe(alternate);
+    expect(selected?.support.supporting).toEqual([lowerPriority, management]);
+    expect(selected?.support.supporting.every(item => candidates.includes(item))).toBe(true);
+    expect(selectBestNatalCoreWithinPriorityAxis([visible, lowerPriority], candidates)?.core)
+      .toBe(visible);
+    expect(selectBestNatalCoreWithinPriorityAxis([alternate, { ...alternate }], candidates)?.core)
+      .toBe(alternate);
+    expect(selectBestNatalCoreWithinPriorityAxis([], candidates)).toBeUndefined();
   });
 
   it('applies incremental actual chart fact-paths across all four distinct domain reports', () => {

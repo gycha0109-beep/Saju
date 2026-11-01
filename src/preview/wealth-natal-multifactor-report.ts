@@ -1,5 +1,5 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
-import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { selectBestNatalCoreWithinPriorityAxis } from './natal-independent-supporting-axes.js';
 import { observeHiddenWealthMembership, type WealthHiddenStemObservation } from './wealth-hidden-stem-observations.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -472,17 +472,17 @@ export function buildWealthNatalMultifactorReport(
         .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
           (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
     : [];
-  // Prefer the 3-input core. When not observed, a narrower two-input core can
-  // still be rendered, but completion needs two OTHER independently grounded axes.
-  const core = result.find(s => s.axis === 'core') ??
-    result.find(s => s.axis === 'creation') ??
-    result.find(s => s.axis === 'management') ??
-    result.find(s => s.axis === 'planning');
-  // Actual Wealth relations take priority. Context-only T8 may fill an otherwise
-  // empty research page, but never establishes the missing Wealth synthesis.
-  const supportSelection = core
-    ? selectIndependentNatalSupportingAxes(core, result.filter(section => section.axis !== 'context'))
-    : undefined;
+  // Preserve core > creation > management > planning. Within the FIRST
+  // available axis only, prefer a real T8 core yielding more independent supports.
+  const eligibleCores = result.filter(section =>
+    ['core', 'creation', 'management', 'planning'].includes(section.axis));
+  const selectedCore = selectBestNatalCoreWithinPriorityAxis(
+    eligibleCores,
+    result.filter(section => section.axis !== 'context'),
+  );
+  const core = selectedCore?.core;
+  // An indirect T8 context still cannot replace the missing direct Wealth core.
+  const supportSelection = selectedCore?.support;
   const tensionOnly = result.filter(section => section.axis === 'tension').slice(0, 1);
   const contextOnly = result.filter(section => section.axis === 'context').slice(0, 1);
   const chosen: WealthNatalMultifactorSection[] = core
