@@ -127,7 +127,10 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       ...all,
       wealth: {
         ...wealth,
-        sections: [{ ...wealth.sections[0]!, paragraph: '' }],
+        // Keep every valid T8 paragraph and chart position intact. Remove
+        // only the required selected-core guide so that the first-screen
+        // contract, not the earlier section guard, is exercised.
+        readingGuide: undefined,
       },
     };
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
