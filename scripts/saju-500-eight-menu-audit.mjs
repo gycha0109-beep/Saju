@@ -369,7 +369,13 @@ export function runFiveHundredSajuAudit() {
         }
         const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
         const wealthCard = html.split('<h2 id="domain-wealth">')[1]?.split('</article>')[0];
-        if (!wealthCard || partial.some(item =>
+        const wealthFirstScreen = wealthCard?.split('<details class="full-claim-evidence"')[0];
+        if (!wealthCard || !wealthFirstScreen ||
+          !wealthFirstScreen.includes('aria-label="재물운 명식별 풀이 본문"') ||
+          !wealthFirstScreen.includes('재물운 중심 결론이 확립되지 않았습니다') ||
+          partial.some(item =>
+          !wealthFirstScreen.includes('<p>' + escapedHtmlText(item.paragraph) + '</p>')) ||
+          partial.some(item =>
           !wealthCard.includes('<h3>' + escapedHtmlText(item.headline) + '</h3>') ||
           !wealthCard.includes('<p>' + escapedHtmlText(item.paragraph) + '</p>')) ||
           selectedWealth.availableThemeContext !== undefined &&

@@ -263,7 +263,7 @@ function renderRelationshipReadingGuide(report: RelationshipNatalMultifactorRepo
 }
 
 /**
- * General, Business and Relationship first-screen reading is the EXACT Korean
+ * General, Wealth, Business and Relationship first-screen reading is the EXACT Korean
  * text of their selected, source-bounded T8 Claims, not a headline-only
  * explanation or a freshly inferred cross-Claim synthesis.
  *
@@ -298,6 +298,42 @@ function renderFirstScreenSelectedInterpretations(
         : '실제 확인된 부분 해석만 보여줍니다. 부족한 독립 보조 근거는 종합 결론으로 채우지 않습니다.';
     return '<section class="first-meaning" aria-label="총운 명식별 풀이 본문">' +
       '<h3>이 명식에서 먼저 읽을 실제 총운 풀이</h3>' + items +
+      '<p class="bounded-note">' + escapeHtml(scope) + '</p></section>';
+  }
+  if (domain === 'wealth') {
+    const scoped = report as WealthNatalMultifactorReport;
+    const sections = scoped.sections;
+    if (sections.length === 0) return '';
+    const core = sections[0]!;
+    const hasCore = ['core', 'creation', 'management', 'planning'].includes(core.axis);
+    guard(sections.every(section =>
+      section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
+      section.observedFactPaths.length >= 2 &&
+      section.observedPositions.length === section.observedFactPaths.length &&
+      section.paragraph.trim().length > 0) &&
+      (hasCore
+        ? scoped.readingGuide?.coreClaimType === core.claimType &&
+          sections.slice(1).every(section => section.axis !== 'context')
+        : scoped.readingGuide === undefined && scoped.state === 'partial' &&
+          sections.length <= 2 && sections.every(section =>
+            section.axis === 'tension' || section.axis === 'context')),
+      'Wealth first-screen requires only the source-owned selected T8 reading');
+    const items = sections.map((section, i) => {
+      const label = hasCore
+        ? (i === 0 ? '중심 관점 · ' : '독립 보조 관점 · ')
+        : section.axis === 'tension'
+          ? '확인된 긴장 부분 관점 · ' : '재성 중심 결론이 아닌 간접 맥락 · ';
+      return '<section class="first-claim"><h4>' +
+        escapeHtml(label + section.headline) + '</h4><p>' +
+        escapeHtml(section.paragraph) + '</p></section>';
+    }).join('');
+    const scope = !hasCore
+      ? '이 명식에서는 재물운 중심 결론이 확립되지 않았습니다. 긴장 또는 간접 맥락의 기존 부분풀이만 보여주며 소득·투자 결과를 판단하지 않습니다.'
+      : scoped.state === 'complete'
+        ? '중심 하나와 서로 독립적인 보조 두 가지를 확인한 연구용 풀이입니다. 실제 재산이나 미래 수익을 판정하지 않습니다.'
+        : '재물과 관련된 기존 중심 풀이가 있지만 독립적인 추가 근거가 부족하여 종합 판단은 보류합니다.';
+    return '<section class="first-meaning" aria-label="재물운 명식별 풀이 본문">' +
+      '<h3>이 명식에서 먼저 읽을 실제 재물 풀이</h3>' + items +
       '<p class="bounded-note">' + escapeHtml(scope) + '</p></section>';
   }
   if (domain !== 'business' && domain !== 'relationship') return '';

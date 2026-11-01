@@ -77,7 +77,13 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       const html = renderNatalFiveDomainMultifactorResearchHtml(chart, all);
       const card = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
       expect(card).toContain('아직 설명하지 못하는 부분');
+      expect(card).toContain('aria-label="재물운 명식별 풀이 본문"');
+      expect(card).toContain('재물운 중심 결론이 확립되지 않았습니다');
+      expect(card).toContain('확인된 긴장 부분 관점');
+      expect(card).toContain('재성 중심 결론이 아닌 간접 맥락');
+      const firstReading = card.split('<details class="full-claim-evidence"')[0]!;
       for (const section of wealth.sections) {
+        expect(firstReading).toContain('<p>' + escaped(section.paragraph) + '</p>');
         expect(section.sourceIds.length).toBeGreaterThan(0);
         expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(card).toContain('<h3>' + escaped(section.headline) + '</h3>');
@@ -92,6 +98,41 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     }
   }, 60000);
 
+
+  it('puts actual selected Wealth core and supports on the first screen without inventing extra meaning', () => {
+    const chart = sample(3, 10);
+    const all = reports(chart);
+    const wealth = all.wealth;
+    expect(wealth.readingGuide).toBeDefined();
+    expect(wealth.sections.length).toBeGreaterThan(0);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, all);
+    const wealthCard = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+    const firstReading = wealthCard.split('<details class="full-claim-evidence"')[0]!;
+    const escaped = (value: string) => value.replace(/[&<>"']/gu, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char]!);
+    expect(firstReading).toContain('aria-label="재물운 명식별 풀이 본문"');
+    expect(firstReading).toContain('중심 관점 · ');
+    expect(firstReading).not.toContain('긴장 부분 관점');
+    expect(firstReading).not.toContain('재성 중심 결론이 아닌 간접 맥락');
+    for (const section of wealth.sections) {
+      expect(firstReading).toContain('<p>' + escaped(section.paragraph) + '</p>');
+      expect(firstReading).toContain(escaped(section.headline));
+    }
+    expect(html).toContain('<details class="full-claim-evidence"');
+    expect(wealth.mayPublish).toBe(false);
+    expect(wealth.maySell).toBe(false);
+    expect(wealth.usefulComplete).toBe(false);
+    const forged = {
+      ...all,
+      wealth: {
+        ...wealth,
+        sections: [{ ...wealth.sections[0]!, paragraph: '' }],
+      },
+    };
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
+      .toThrow('Wealth first-screen requires only the source-owned selected T8 reading');
+  });
 
   it('shows unconsumed original T5 meanings beside a source-bound General tension without claiming a core', () => {
     let verified = false;
