@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { readFile } from 'node:fs/promises';
 import { buildFaceAuthorityCoverageSnapshot } from '../src/face-topic/authority.js';
 import { planFaceTopicExecution } from '../src/face-topic/execution.js';
 import { resolveFaceTopicReadiness } from '../src/face-topic/readiness.js';
@@ -7,6 +8,10 @@ import { buildFaceGovernedInterpretationHandoffV1 } from '../src/face-topic/gove
 import { deterministicContentHash } from '../src/interpretation/rule-registry.js';
 import { FACE_TRADITIONAL_T3_SUCCESSOR_PASSAGES } from '../packages/face-reading/src/traditional-three-divisions-source-witnesses-t3.js';
 import { FACE_TRADITIONAL_T4_METHODOLOGIES } from '../packages/face-reading/src/traditional-three-divisions-methodology-t4.js';
+import {
+  MAYI_THREE_DIVISIONS_METHODOLOGY_REVIEW_DECISION,
+  getReviewedMayiThreeDivisionsMethodology,
+} from '../packages/face-reading/src/mayi-three-divisions-reviewed-methodology.js';
 import {
   FACE_TRADITIONAL_T6_PACK_CANDIDATE,
   FACE_TRADITIONAL_T6_PROMOTION_GATES,
@@ -25,7 +30,7 @@ const request = {
 };
 
 describe('TOPIC-FACE-005L real source authority closure audit', () => {
-  it('pins a concrete review packet without issuing a reviewed successor or production authority', async () => {
+  it('preserves the exact historical proposal and binds the separately approved reviewed successor to it', async () => {
     const methodology = FACE_TRADITIONAL_T4_METHODOLOGIES.find(
       (entry) => entry.methodologyId === 'method.mayi.face_three_divisions.fr261',
     )!;
@@ -56,6 +61,32 @@ describe('TOPIC-FACE-005L real source authority closure audit', () => {
       ...packet,
       reviewPacketHash: `face-traditional-review-packet:${deterministicContentHash(packet)}`,
     };
+    const decision = MAYI_THREE_DIVISIONS_METHODOLOGY_REVIEW_DECISION;
+    expect(decision.targetMethodologyRef).toBe(packet.researchMethodologyRef);
+    expect(decision.proposedSuccessorRef).toBe(packet.proposedReviewedSuccessorRef);
+    expect(decision.sourceSnapshotHash).toBe(packet.sourceSnapshotHash);
+    expect(decision.reviewPacketHash).toBe(addressedPacket.reviewPacketHash);
+    expect(decision.explicitProjectOwnerDecisionEvidencePresent).toBe(true);
+    expect(getReviewedMayiThreeDivisionsMethodology()).toEqual(
+      packet.proposedReviewedSuccessorNotIssued,
+    );
+    const approvalRecord = await readFile(
+      new URL(
+        '../governance/face-reading/mayi-three-divisions-project-owner-methodology-approval-v1.md',
+        import.meta.url,
+      ),
+      'utf8',
+    );
+    for (const ref of [
+      decision.targetMethodologyRef,
+      decision.proposedSuccessorRef,
+      decision.sourceSnapshotHash,
+      decision.reviewPacketHash,
+      decision.decisionScope,
+      'Status: approved',
+    ]) {
+      expect(approvalRecord).toContain(ref);
+    }
     await expect(JSON.stringify(addressedPacket, null, 2) + '\n').toMatchFileSnapshot(
       './fixtures/face-traditional-authority-review-packet.json',
     );
@@ -95,17 +126,15 @@ describe('TOPIC-FACE-005L real source authority closure audit', () => {
     );
 
     expect(receipt.traditional.characterPublicationDecision).toBeUndefined();
+    expect(receipt.traditional.methodologyRefs).toContain(
+      'method.mayi.face_three_divisions.fr261@0.3.0',
+    );
+    expect(T7_METHODOLOGY_SCOPED_BINDING_LEDGER_FRB005.admittedTraditionalBindingCount).toBe(0);
     expect(
-      T7_METHODOLOGY_SCOPED_BINDING_LEDGER_FRB005
-        .admittedTraditionalBindingCount,
-    ).toBe(0);
-    expect(
-      T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006
-        .admittedTraditionalBindingCount,
+      T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006.admittedTraditionalBindingCount,
     ).toBe(13);
     expect(
-      T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006
-        .blockedTraditionalBindingCount,
+      T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006.blockedTraditionalBindingCount,
     ).toBe(3);
   });
 

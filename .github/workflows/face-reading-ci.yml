@@ -72,6 +72,10 @@ jobs:
           npx vitest run packages/face-reading/src/semantic-projection.test.ts
           node scripts/run-face-static-research-rules.mjs --self-check
 
+      - name: Verify explicitly approved Mayi methodology review only
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/mayi-three-divisions-reviewed-methodology.test.ts test/face-topic-traditional-authority-closeout.test.ts
+
       - name: Verify FR61 provider candidate boundary
         working-directory: target
         run: npx vitest run packages/face-reading/src/production-neutral-observation-provider-fr61.test.ts
