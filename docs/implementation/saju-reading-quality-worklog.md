@@ -7,6 +7,12 @@
 
 
 
+## 2026-11-02 — 작업 56 · 재물운 부분 해석의 실행 규칙·방법론 출처 경로 복구 (단계 2·5·6)
+- **실제 누락:** 기존 재물운 T8 종합근거가 부족한 명식의 기존 T5 십신 풀이에는 Claim ID·출처·명식 계산 위치는 표시됐지만, 그 설명을 실제로 발생시킨 Rule과 Methodology ID는 보고서와 사용자 HTML에서 빠져 있었다. 원국 총운 T5에는 이미 있는 출처 결박이 재물운 부분풀이 화면에서만 소실됐다.
+- **구현:** 재물운 부분풀이가 기존 등록 T5 Rule·실제 matched 실행 평가·Claim·방법론·출처에 연결되는지 확인하고, 기존 실제 Claim의 Rule ID/Methodology ID를 원문·명식 위치와 함께 표시한다. 중복 사용된 T5 제외와 종합/부분/불충분 상태는 그대로 유지한다.
+- **검증:** 실제 원국의 활성 T5 Claim이 가진 Rule/Methodology/Source와 보고서의 일치, 한국어 HTML에 증거 식별자 표시, 방법론 제거·잘못된 계산 경로 삽입 거부, 고정 500명 감사의 재물 T5 근거 항목 기록. 이는 새 해석 의미나 T8/연·월 T9 Claim, 재물운 17건 중심근거 확보가 아니다.
+- **변경 파일:** `src/preview/wealth-natal-multifactor-report.ts`, `src/preview/natal-five-domain-multifactor-reader.ts`, `test/wealth-natal-multifactor-consumer-report.test.ts`, `test/natal-five-domain-multifactor-reader.test.ts`, `scripts/saju-500-eight-menu-audit.mjs`, 본 워크로그. 직전 작업 55의 네 CI는 성공했으며 신규 CI 결과는 아직 미확인.
+
 ## 2026-11-02 — 작업 55 · 연·월운 비교 문단에서 실제 실행된 T9 한국어 해석을 사용 (단계 3·4·5·6)
 - **확인된 의미 전달 누락:** 연·월운 연결 화면의 상단 기간 비교 문단은 연운의 십신 이름과 월운 절입 전·후의 십신 이름만 표시했다. 실제 실행·선택된 연·월운 T9 한국어 풀이와 원국 충 관계 해석은 상세 카드에 존재했으나, 비교 안내에서는 소실되어 명식별 의미 차이를 한눈에 읽기 어려웠다.
 - **구현:** 동일 스냅샷에서 기선택·검증된 연간 T9 주제/충 관계와 절입 전·후 월간 T9 주제/충 관계의 **원래 제목·한국어 문장**을 기간별 비교에 재사용한다. 연간 문구는 실제 실행 Claim과 일대일 대조하며 월간은 기존 EvidenceSelector가 선택한 T9 결과만 사용한다. 근거가 없는 구간은 불충분으로 유지한다.

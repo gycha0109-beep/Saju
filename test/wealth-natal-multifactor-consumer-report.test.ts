@@ -215,6 +215,13 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(context.paragraph).toContain('재물의 많고 적음');
     expect(context.paragraph).toContain('재물 분야의 복합 해석 근거를 충족하지 못했습니다');
     for (const theme of context.themes) {
+      const boundClaim = execution.claims.find(c => c.claimId === theme.claimId);
+      expect(boundClaim).toBeDefined();
+      expect(theme.ruleIds).toEqual(boundClaim!.ruleRefs.map(x => x.ruleId));
+      expect(theme.methodologyId).toBe(boundClaim!.methodologyRef.id);
+      expect(theme.sourceIds).toEqual(boundClaim!.sourceRefs);
+      expect(theme.ruleIds.length).toBeGreaterThan(0);
+      expect(theme.methodologyId.length).toBeGreaterThan(0);
       expect(theme.sourceIds.length).toBeGreaterThan(0);
       expect(theme.observedPositions.length).toBeGreaterThan(0);
       expect(theme.observedFactPaths).toHaveLength(theme.observedPositions.length);

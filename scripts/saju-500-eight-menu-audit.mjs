@@ -342,6 +342,8 @@ export function runFiveHundredSajuAudit() {
                   claimId:theme.claimId,
                   claimType:theme.claimType,
                   sourceIds:[...theme.sourceIds],
+                  ruleIds:[...theme.ruleIds],
+                  methodologyId:theme.methodologyId,
                   observedFactPaths:[...theme.observedFactPaths],
                 })),
               },

@@ -221,6 +221,8 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       expect(wealthCard).toContain(theme.headline);
       expect(wealthCard).toContain(theme.claimType);
       expect(wealthCard).toContain(theme.sourceIds[0]!);
+      expect(wealthCard).toContain(theme.ruleIds[0]!);
+      expect(wealthCard).toContain(theme.methodologyId);
       expect(wealthCard).toContain(theme.observedPositions[0]!);
     }
     const forged = {
@@ -234,6 +236,18 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       },
     };
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
+      .toThrow('existing theme context has no actual sourced calculation evidence');
+    const missingMethod = {
+      ...reading,
+      wealth: {
+        ...reading.wealth,
+        availableThemeContext: {
+          ...context,
+          themes: [{ ...context.themes[0]!, methodologyId: '' }],
+        },
+      },
+    };
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, missingMethod))
       .toThrow('existing theme context has no actual sourced calculation evidence');
   }, 30000);
 
@@ -292,6 +306,8 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         .toThrow('existing theme context repeats an already interpreted T8 upstream claim');
       for (const theme of context.themes) {
         expect(wealthCard).toContain(theme.headline);
+        expect(wealthCard).toContain(theme.ruleIds[0]!);
+        expect(wealthCard).toContain(theme.methodologyId);
         expect(wealthCard).toContain(theme.sourceIds[0]!);
         expect(wealthCard).toContain(theme.observedPositions[0]!);
       }

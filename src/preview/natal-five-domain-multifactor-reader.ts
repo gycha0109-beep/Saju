@@ -396,7 +396,10 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
     guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
       .test(theme.claimType) && theme.claimId.trim().length > 0 &&
       theme.headline.trim().length > 0 && theme.summary.trim().length > 0 &&
-      theme.sourceIds.length > 0 && theme.observedPositions.length > 0 &&
+      theme.sourceIds.length > 0 &&
+      theme.ruleIds.length > 0 && theme.ruleIds.every(rule => rule.trim().length > 0) &&
+      theme.methodologyId.trim().length > 0 &&
+      theme.observedPositions.length > 0 &&
       theme.observedFactPaths.length === theme.observedPositions.length &&
       theme.observedFactPaths.every(path => FACT_PATH.test(path)) &&
       context.paragraph.includes(theme.summary) &&
@@ -408,6 +411,8 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
       '<p>계산 근거 경로</p>' + renderList(theme.observedFactPaths) +
       '<p>기존 십신 주장: ' + escapeHtml(theme.claimType) + '</p>' +
       '<p>근거 식별자: ' + escapeHtml(theme.claimId) + '</p>' +
+      '<p>실행된 규칙</p>' + renderList(theme.ruleIds) +
+      '<p>해석 방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
       '<p>출처</p>' + renderList(theme.sourceIds) +
       '</details></li>';
   }).join('');

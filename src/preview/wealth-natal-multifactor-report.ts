@@ -46,6 +46,8 @@ export interface WealthNatalAvailableThemeContext {
     headline: string;
     summary: string;
     sourceIds: readonly string[];
+    ruleIds: readonly string[];
+    methodologyId: string;
     observedPositions: readonly string[];
     observedFactPaths: readonly string[];
   }[];
@@ -195,6 +197,7 @@ function explainMissingWealthT8(
 function buildAvailableThemeContext(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
   alreadyExplainedClaimIds: readonly string[] = [],
 ): WealthNatalAvailableThemeContext | undefined {
   const tenGodFact = snapshot.derivedFacts.tenGods;
@@ -233,6 +236,30 @@ function buildAvailableThemeContext(
       }];
     });
     guard(observations.length > 0, 'T5 theme has no actual supporting chart position');
+    // Only expose the exact registered T5 rule and executed methodology:
+    // a real Claim must be traceable through its matching evaluation and source.
+    const ruleRef = claim.ruleRefs[0];
+    const sourceRule = registry.rules.find(rule =>
+      rule.ruleId === ruleRef?.ruleId && rule.version === ruleRef.version);
+    const evaluation = execution.evaluations.find(item =>
+      item.evaluationId === ruleRef?.evaluationId);
+    guard(claim.ruleRefs.length === 1 && sourceRule !== undefined &&
+      sourceRule.status === 'research' &&
+      sourceRule.taxonomy.tier === 'T5' &&
+      sourceRule.output.claimType === claim.claimType &&
+      sourceRule.methodologyRef.id === claim.methodologyRef.id &&
+      sourceRule.methodologyRef.version === claim.methodologyRef.version &&
+      claim.methodologyRef.id.length > 0 &&
+      evaluation?.status === 'matched' &&
+      evaluation.snapshotId === snapshot.snapshotId &&
+      evaluation.ruleRef.id === ruleRef?.ruleId &&
+      evaluation.ruleRef.version === ruleRef?.version &&
+      evaluation.emittedClaimIds.includes(claim.claimId) &&
+      claim.sourceRefs.every(sourceId =>
+        registry.sources.some(source => source.sourceId === sourceId)) &&
+      sourceRule.sourceRefs.every(source =>
+        claim.sourceRefs.includes(source.sourceId)),
+      'T5 partial meaning lacks an executed registered rule, method or source');
     themes.push({
       claimId: claim.claimId,
       claimType: claim.claimType,
@@ -241,6 +268,8 @@ function buildAvailableThemeContext(
       headline: value.headline,
       summary: value.summary,
       sourceIds: [...claim.sourceRefs],
+      ruleIds: claim.ruleRefs.map(ref => ref.ruleId),
+      methodologyId: claim.methodologyRef.id,
       observedPositions: observations.map(x => x.display),
       observedFactPaths: observations.map(x => x.factPath),
     });
@@ -540,7 +569,8 @@ export function buildWealthNatalMultifactorReport(
     sections.every(section => section.axis === 'context' || section.axis === 'tension');
   const availableThemeContext = limitedWithoutCore
     ? buildAvailableThemeContext(
-        snapshot, execution, sections.flatMap(section => section.upstreamClaimIds),
+        snapshot, execution, registry,
+        sections.flatMap(section => section.upstreamClaimIds),
       ) : undefined;
   const readingGuide = buildWealthNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
