@@ -231,6 +231,10 @@ describe('one-person annual to monthly source-bound research reading', () => {
     const html = renderGeneralAnnualMonthlyExplorationHtml(report);
     expect(html).toContain('월 밖에 있어 현재 적용 구간을 정하지 않았습니다.');
     expect(html).toContain('10월 절입 전·후');
+    expect(html).toContain('선택한 월의 조회 시각 적용 여부');
+    expect(html).toContain('2026년 10월 — 선택한 월의 흐름');
+    expect(html).not.toContain('<h2>조회 시각에 해당하는 이번 달의 풀이</h2>');
+    expect(html).not.toContain('2026년 10월 — 이번 달의 흐름</h2>');
     expect(html).not.toContain(' · 조회 시각 구간');
   });
 
@@ -270,10 +274,18 @@ describe('one-person annual to monthly source-bound research reading', () => {
       expect(report.maySell).toBe(false);
     }
     const insideHtml = renderGeneralAnnualMonthlyExplorationHtml(inYear.report);
+    expect(insideHtml).toContain('href="#year-reading">올해의 흐름</a>');
+    expect(insideHtml).toContain('올해 문구의 계산 근거와 연구 출처');
     expect(insideHtml).toContain('id="reference-year-context"');
     expect(insideHtml).toContain('서울 달력 2026년에 속합니다');
     expect(insideHtml).not.toContain('현재 연도에 적용되는 풀이가 아니라');
     const outsideHtml = renderGeneralAnnualMonthlyExplorationHtml(nextYear.report);
+    expect(outsideHtml).toContain('href="#year-reading">선택한 연도의 흐름</a>');
+    expect(outsideHtml).toContain('선택한 연도 문구의 계산 근거와 연구 출처');
+    expect(outsideHtml).toContain('<small>선택한 연도의 중심 관점</small>');
+    expect(outsideHtml).toContain('선택한 월의 조회 시각 적용 여부');
+    expect(outsideHtml).not.toContain('href="#year-reading">올해의 흐름</a>');
+    expect(outsideHtml).not.toContain('<small>올해의 중심 관점</small>');
     expect(outsideHtml).toContain('서울 달력 2027년입니다');
     expect(outsideHtml).toContain('2026년 연운은 현재 연도에 적용되는 풀이가 아니라');
     expect(outsideHtml).toContain(nextYear.report.annual.sections[0]!.text);

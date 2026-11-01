@@ -306,6 +306,12 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   report: GeneralAnnualMonthlyExplorationReport,
 ): string {
   const e = escapeHtml;
+  // These are display labels only; the source-owned annual/monthly claims
+  // and their applicability are determined before rendering this report.
+  const annualLabel = report.annualReference.state === 'in_target_civil_year'
+    ? '올해' : '선택한 연도';
+  const monthlyLabel = report.referenceReading.state === 'outside_target_month'
+    ? '선택한 월' : '이번 달';
   if (report.annualExecutedEvidence.length !== report.annual.sections.length ||
       report.annual.sections.some((section, i) =>
         report.annualExecutedEvidence[i]?.semanticKey !== section.id ||
@@ -318,9 +324,9 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   }
   const annual = report.annual.sections.map((section, i) =>
     '<article class="reading-card"><small>' +
-    (section.kind === 'core' ? '올해의 중심 관점' : '연운의 조건부 충 관계') +
+    (section.kind === 'core' ? e(annualLabel) + '의 중심 관점' : '연운의 조건부 충 관계') +
     '</small><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
-    '<details><summary>올해 문구의 계산 근거와 연구 출처</summary>' +
+    '<details><summary>' + e(annualLabel) + ' 문구의 계산 근거와 연구 출처</summary>' +
     '<p>해석 범위: 기존 연구 프로필의 한국어 문구 + 별도 실행된 연구 T9 Claim (Official 승인 아님)</p>' +
     '<p>문구 프로필: ' + e(section.researchProfileId) + '</p>' +
     '<p>후보 Claim 유형: ' + e(section.candidateClaimType) + '</p>' +
@@ -426,11 +432,13 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '</style></head><body><main><header><small>MYEONGHA · INTERNAL RESEARCH ONLY</small>' +
     '<h1>' + report.targetYear + '년 전체 흐름 → ' + report.targetMonth + '월의 흐름</h1>' +
     '<p class="lead">한 사람의 실제 명식에서 계산된 연간·월간 사실을, 각각 허용된 연구 해석 범위 안에서 함께 읽습니다.</p></header>' +
-    '<nav aria-label="풀이 기간 바로가기"><a href="#year-reading">올해의 흐름</a>' +
+    '<nav aria-label="풀이 기간 바로가기"><a href="#year-reading">' + e(annualLabel) + '의 흐름</a>' +
     '<a href="#monthly-reading">' + report.targetMonth + '월 절입 전·후</a>' +
     '<a href="#reference-month-reading">조회 시각의 풀이</a></nav>' +
     '<section class="current-reading" id="reference-month-reading">' +
-    '<h2>조회 시각에 해당하는 이번 달의 풀이</h2>' +
+    '<h2>' + (monthlyLabel === '이번 달'
+      ? '조회 시각에 해당하는 이번 달의 풀이'
+      : '선택한 월의 조회 시각 적용 여부') + '</h2>' +
     '<p class="muted">조회 기준: ' + e(kst(selected.referenceDateTime)) +
     ' · 연구용 월별 적용 범위만 안내합니다.</p>' + focus + '</section>' +
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
@@ -439,7 +447,9 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     ' · 십신 ' + e(report.annual.annualStemTenGod) + '</p>' + annualReadingFocus +
     '<details class="full-year-profile-evidence"><summary>연운 전체 연구 문구와 계산 근거·출처</summary>' +
     annual + '</details></section>' +
-    '<section id="monthly-reading"><h2>' + e(report.monthly.headline) + '</h2>' +
+    '<section id="monthly-reading"><h2>' + e(
+      report.monthly.headline.replace('이번 달', monthlyLabel),
+    ) + '</h2>' +
     '<p>' + e(report.periodComparison) + '</p>' +
     '<p class="muted">' + e(report.monthly.jeolBoundary.name) + ' 절입: ' +
     e(kst(report.monthly.jeolBoundary.at)) + '</p>' + monthly + '</section>' +
