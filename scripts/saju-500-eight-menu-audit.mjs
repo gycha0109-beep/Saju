@@ -63,6 +63,13 @@ function sampleBirth(used) {
   }
 }
 function digest(v) { return createHash('sha256').update(String(v)).digest('hex'); }
+/** The consumer HTML safely escapes the original source-owned Korean prose.
+ * Audit the actual rendered representation, not an unescaped JS string. */
+function escapedHtmlText(value) {
+  return value.replace(/[&<>"']/gu, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char]);
+}
 function entry(text, meaning, state, sectionCount, kind) {
   const str = text.trim();
   return {
@@ -353,9 +360,11 @@ export function runFiveHundredSajuAudit() {
         const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
         const wealthCard = html.split('<h2 id="domain-wealth">')[1]?.split('</article>')[0];
         if (!wealthCard || partial.some(item =>
-          !wealthCard.includes(item.paragraph) || !wealthCard.includes(item.headline)) ||
+          !wealthCard.includes('<h3>' + escapedHtmlText(item.headline) + '</h3>') ||
+          !wealthCard.includes('<p>' + escapedHtmlText(item.paragraph) + '</p>')) ||
           selectedWealth.availableThemeContext !== undefined &&
-          !wealthCard.includes(selectedWealth.availableThemeContext.paragraph)) {
+          !wealthCard.includes('<p>' +
+            escapedHtmlText(selectedWealth.availableThemeContext.paragraph) + '</p>')) {
           throw new Error('Selected Wealth partial interpretation was lost at consumer rendering');
         }
         wealthIndependentLimitedCases.push({

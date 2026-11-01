@@ -54,6 +54,44 @@ function reports(snapshot: ReturnType<typeof sample>): NatalFiveDomainMultifacto
 }
 
 describe('same-chart five-domain multifactor Korean research reading', () => {
+  it('renders both source-qualified Wealth partial T8 paragraphs for the two real 500-case audit births', () => {
+    const examples = [
+      { year: 1960, month: 11, day: 15, hour: 12, minute: 41 },
+      { year: 1977, month: 6, day: 8, hour: 9, minute: 48 },
+    ] as const;
+    const escaped = (value: string) => value.replace(/[&<>"']/gu, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char]!);
+    for (const birth of examples) {
+      const chart = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar',
+        date: { year: birth.year, month: birth.month, day: birth.day },
+        time: { known: true, hour: birth.hour, minute: birth.minute },
+        sexForTraditionalCalculation: 'male',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const all = reports(chart);
+      const wealth = all.wealth;
+      expect(wealth.state).toBe('partial');
+      expect(wealth.readingGuide).toBeUndefined();
+      expect(wealth.sections.map(section => section.axis)).toEqual(['tension', 'context']);
+      const html = renderNatalFiveDomainMultifactorResearchHtml(chart, all);
+      const card = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+      expect(card).toContain('아직 설명하지 못하는 부분');
+      for (const section of wealth.sections) {
+        expect(section.sourceIds.length).toBeGreaterThan(0);
+        expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
+        expect(card).toContain('<h3>' + escaped(section.headline) + '</h3>');
+        expect(card).toContain('<p>' + escaped(section.paragraph) + '</p>');
+        expect(card).toContain(section.ruleId);
+        expect(card).toContain(section.sourceIds[0]!);
+      }
+      expect(wealth.researchOnly).toBe(true);
+      expect(wealth.usefulComplete).toBe(false);
+      expect(wealth.mayPublish).toBe(false);
+      expect(wealth.maySell).toBe(false);
+    }
+  }, 60000);
+
   it('recovers actual existing T5 Korean partial meaning when whole-chart T8 is absent', () => {
     let found = false;
     for (let month = 1; month <= 12 && !found; month++) {
