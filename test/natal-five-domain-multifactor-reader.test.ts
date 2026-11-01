@@ -127,10 +127,12 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       ...all,
       wealth: {
         ...wealth,
-        // Keep every valid T8 paragraph and chart position intact. Remove
-        // only the required selected-core guide so that the first-screen
-        // contract, not the earlier section guard, is exercised.
-        readingGuide: undefined,
+        // Keep the existing report and all original T8 source bindings;
+        // a falsified indirect axis must not be shown as a selected core.
+        sections: [
+          { ...wealth.sections[0]!, axis: 'context' as const },
+          ...wealth.sections.slice(1),
+        ],
       },
     };
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
