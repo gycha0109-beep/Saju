@@ -15,6 +15,7 @@ import { buildWealthNatalMultifactorReport } from '../dist/preview/wealth-natal-
 import { buildBusinessNatalMultifactorReport } from '../dist/preview/business-natal-multifactor-report.js';
 import { buildRelationshipNatalMultifactorReport } from '../dist/preview/relationship-natal-multifactor-report.js';
 import { buildThreeTemporalMenusBirthReading } from '../dist/preview/three-temporal-menus-birth-reading.js';
+import { renderNatalFiveDomainMultifactorResearchHtml } from '../dist/preview/natal-five-domain-multifactor-reader.js';
 import {
   diagnoseMissingWealthReading,
   analyzeTemporalRepetition,
@@ -268,6 +269,7 @@ export function runFiveHundredSajuAudit() {
   const wealthMissingCases = [];
   const wealthConsumerCases = [];
   const generalT5ContextCases = [];
+  const wealthIndependentLimitedCases = [];
   const startedAt = Date.now();
   for (let i=0; i<COUNT; i++) {
     const {stamp, birth} = sampleBirth(inputs);
@@ -278,11 +280,13 @@ export function runFiveHundredSajuAudit() {
       existing.push(stamp);
       chartHashGroups.set(chartKey,existing);
       let natalT5 = [];
+      const natalReports = {};
       for (const domain of NATAL) {
         const registry = registries[domain];
         const interpretation = runInterpretation(snapshot,registry,{now});
         if (domain === 'general') natalT5 = sourceBoundNatalT5(snapshot, interpretation);
         const report = renderers[domain](snapshot, interpretation, registry);
+        natalReports[domain] = report;
         if (report.snapshotId !== snapshot.snapshotId || report.calculationHash !== chartKey) {
           throw new Error(domain + ' did not use the same exact natal snapshot');
         }
@@ -335,6 +339,41 @@ export function runFiveHundredSajuAudit() {
           );
         }
       }
+      const selectedWealth = natalReports.wealth;
+      const partial = selectedWealth.sections;
+      if (partial[0]?.axis === 'tension' && partial[1]?.axis === 'context') {
+        const firstPaths = new Set(partial[0].observedFactPaths);
+        const genuinelyNew = partial[1].observedFactPaths.filter(path => !firstPaths.has(path));
+        if (selectedWealth.state !== 'partial' || selectedWealth.readingGuide !== undefined ||
+            partial.length !== 2 || genuinelyNew.length === 0 ||
+            partial.some(item => item.sourceIds.length === 0 ||
+              item.upstreamClaimIds.length < 2 || item.observedFactPaths.length < 2)) {
+          throw new Error('Wealth dual partial meaning is not independent source-owned T8');
+        }
+        const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+        const wealthCard = html.split('<h2 id="domain-wealth">')[1]?.split('</article>')[0];
+        if (!wealthCard || partial.some(item =>
+          !wealthCard.includes(item.paragraph) || !wealthCard.includes(item.headline)) ||
+          selectedWealth.availableThemeContext !== undefined &&
+          !wealthCard.includes(selectedWealth.availableThemeContext.paragraph)) {
+          throw new Error('Selected Wealth partial interpretation was lost at consumer rendering');
+        }
+        wealthIndependentLimitedCases.push({
+          birth: stamp,
+          calculationHash: chartKey,
+          status: selectedWealth.state,
+          tension: {
+            claimType: partial[0].claimType, sourceIds: partial[0].sourceIds,
+            factPaths: partial[0].observedFactPaths,
+          },
+          independentContext: {
+            claimType: partial[1].claimType, sourceIds: partial[1].sourceIds,
+            newFactPaths: genuinelyNew,
+          },
+          unusedSourcedT5Themes: selectedWealth.availableThemeContext?.themes.length ?? 0,
+          renderedBoth: true,
+        });
+      }
       const temporal = buildThreeTemporalMenusBirthReading(birth,{
         requestId:'500-sample-audit-' + i,
         targetYear:2026,
@@ -368,6 +407,11 @@ export function runFiveHundredSajuAudit() {
       version: ROOT_CAUSE_AUDIT_VERSION,
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
       wealthConsumerEvidence: summarizeWealthConsumerEvidence(wealthConsumerCases),
+      wealthIndependentLimitedContext: {
+        examined: COUNT,
+        count: wealthIndependentLimitedCases.length,
+        cases: wealthIndependentLimitedCases,
+      },
       generalBoundedT5OnNoT8: {
         examined: generalT5ContextCases.length,
         withoutGeneralT8: generalT5ContextCases.filter(c => c.withoutGeneralT8).length,
@@ -401,6 +445,7 @@ export function runFiveHundredSajuAudit() {
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
     wealthNoT8ButSourcedT5: result.rootCauseDiagnostics.wealthConsumerEvidence.withBoundedT5ContextInstead,
     wealthNoSourceBoundInterpretiveText: result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText,
+    wealthIndependentLimitedInterpretations: result.rootCauseDiagnostics.wealthIndependentLimitedContext.count,
     missingCauses: result.rootCauseDiagnostics.wealth.byCause,
     missingWithSourceContext: result.rootCauseDiagnostics.wealth.casesWithExistingSourceContext,
     missingWithHiddenWealthMembership: result.rootCauseDiagnostics.wealth.casesWithHiddenWealthMembership,
@@ -440,6 +485,9 @@ export function runFiveHundredSajuAudit() {
       result.rootCauseDiagnostics.wealth.missingCaseCount !==
         result.menuResults['재물'].withoutReadableText ||
       result.rootCauseDiagnostics.wealthConsumerEvidence.examined !== COUNT ||
+      result.rootCauseDiagnostics.wealthIndependentLimitedContext.examined !== COUNT ||
+      result.rootCauseDiagnostics.wealthIndependentLimitedContext.cases.length !==
+        result.rootCauseDiagnostics.wealthIndependentLimitedContext.count ||
       result.rootCauseDiagnostics.wealthConsumerEvidence.withoutWealthT8 !==
         result.rootCauseDiagnostics.wealth.missingCaseCount ||
       result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText +
