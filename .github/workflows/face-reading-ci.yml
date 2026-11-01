@@ -69,6 +69,7 @@ jobs:
         working-directory: target
         run: |
           npx vitest run packages/face-reading/src/rule-evaluation.test.ts packages/face-reading/src/static-research-rule-runtime.test.ts
+          npx vitest run packages/face-reading/src/semantic-projection.test.ts
           node scripts/run-face-static-research-rules.mjs --self-check
 
       - name: Verify FR61 provider candidate boundary
