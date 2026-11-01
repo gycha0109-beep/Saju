@@ -222,11 +222,18 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     'annual context must match the same monthly research period',
   );
   const themes = monthly.sections.filter(section => section.kind === 'theme');
+  // The comparison must use the original selected T9 meanings, not merely
+  // restate the Ten-God names or invent a year-to-month synthesis.
   const phase = (id: MonthlySegmentId, label: string) => {
     const found = themes.find(section => section.segmentId === id);
-    return found === undefined
-      ? label + '의 개인별 해석 근거는 아직 충분하지 않습니다'
-      : label + '에는 ' + found.tenGod + ' 십신에 근거한 별도 월별 관점이 있습니다';
+    if (found === undefined) return label + '의 개인별 해석 근거는 아직 충분하지 않습니다';
+    const tensions = monthly.sections.filter(section =>
+      section.kind === 'tension' && section.segmentId === id);
+    return label + '에는 실제 실행·선택된 ' + found.tenGod +
+      ' 연구 주제 ‘' + found.title + '’가 있습니다. ' + found.text +
+      (tensions.length === 0 ? '' :
+        ' 같은 절입 구간에서 별도 확인된 원국 충 관계의 기존 풀이: ' +
+        tensions.map(section => '‘' + section.title + '’ ' + section.text).join(' '));
   };
   // Reuse the exact single-month selection; joining Annual never reinterprets it.
   const referenceReading = monthly.referenceReading;
@@ -272,12 +279,18 @@ export function buildGeneralAnnualMonthlyExplorationReport(
           referenceDateTime: annualReference.referenceDateTime,
         };
 
+  const annualTensionComparison = annualTensions.length === 0 ? '' :
+    ' 같은 연운에서 별도 관측된 원국 충 관계의 기존 풀이: ' +
+    annualTensions.map(section => '‘' + section.title + '’ ' + section.text).join(' ');
   const periodComparison =
-    String(annual.targetYear) + '년 전체 미리보기는 ' + annual.annualStemTenGod +
-    '을(를) 기준으로 읽습니다. ' + String(monthly.targetMonth) + '월은 ' +
-    phase('before_jeol', '절입 전') + ', ' +
+    String(annual.targetYear) + '년 기존 연운 T9 연구 주제는 ‘' +
+    annualTheme.title + '’입니다. ' + annualTheme.text +
+    annualTensionComparison + ' ' +
+    String(monthly.targetMonth) + '월의 기존 월운 T9 연구 주제는 구간별로 나뉩니다. ' +
+    phase('before_jeol', '절입 전') + ' ' +
     phase('after_jeol', '절입 이후') + '. ' +
-    '이는 서로 다른 기간의 연구 해석 후보를 나란히 읽는 안내이며, 한쪽 결과로 다른 기간의 사건을 예측하지 않습니다.';
+    '위 문장은 각 기간에 실제 선택된 기존 한국어 연구 풀이를 나란히 인용합니다. ' +
+    '연운·월운·원국을 하나의 새 운세 결론으로 합성하거나 특정 사건을 예측하지 않습니다.';
 
   return {
     version: GENERAL_ANNUAL_MONTHLY_EXPLORATION_VERSION,

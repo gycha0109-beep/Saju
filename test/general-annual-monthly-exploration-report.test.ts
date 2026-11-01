@@ -96,6 +96,17 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(report.monthly.coverage).toBe('complete');
     expect(report.periodComparison).toContain('절입 전');
     expect(report.periodComparison).toContain('절입 이후');
+    expect(report.periodComparison).toContain(report.annual.sections[0]!.title);
+    expect(report.periodComparison).toContain(report.annual.sections[0]!.text);
+    for (const section of report.annual.sections.filter(section => section.kind === 'tension')) {
+      expect(report.periodComparison).toContain(section.title);
+      expect(report.periodComparison).toContain(section.text);
+    }
+    for (const section of report.monthly.sections) {
+      expect(report.periodComparison).toContain(section.title);
+      expect(report.periodComparison).toContain(section.text);
+    }
+    expect(report.periodComparison).toContain('하나의 새 운세 결론으로 합성하거나');
     expect(report.referenceReading.state).toBe('in_period');
     expect(report.referenceReading.segmentId).toBe('before_jeol');
     const themes = report.monthly.sections.filter(x => x.kind === 'theme');
@@ -253,6 +264,15 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(oct.report.monthly.jeolBoundary.at).not.toBe(sep.report.monthly.jeolBoundary.at);
     expect(oct.report.monthly.sections.filter(x => x.kind === 'theme').map(x => x.title))
       .not.toEqual(sep.report.monthly.sections.filter(x => x.kind === 'theme').map(x => x.title));
+    // A different selected monthly T9 research meaning must change the
+    // on-screen comparison while an unchanged annual T9 remains identical.
+    expect(oct.report.periodComparison).not.toBe(sep.report.periodComparison);
+    expect(sep.report.periodComparison).toContain(sep.report.annual.sections[0]!.text);
+    expect(oct.report.periodComparison).toContain(oct.report.annual.sections[0]!.text);
+    for (const phase of oct.report.monthly.sections.filter(x => x.kind === 'theme')) {
+      expect(oct.report.periodComparison).toContain(phase.text);
+    }
+    expect(repeat.report.periodComparison).toBe(sep.report.periodComparison);
   });
 
   it('selects the exact source-owned Korean reading across the real Jeol instant', () => {
