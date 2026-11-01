@@ -303,12 +303,19 @@ export function runFiveHundredSajuAudit() {
         })[domain]].push({...natalEntry(report),birth:stamp,calculationHash:chartKey});
         if (domain === 'general') {
           const context = report.availableThemeContext;
+          const noGeneralT8 = report.sections.length === 0 &&
+            report.state === 'insufficient';
+          const tensionOnly = report.state === 'partial' &&
+            report.sections.length === 1 && report.sections[0]?.axis === 'tension';
+          const alreadyUsedT5 = new Set(
+            report.sections.flatMap(section => section.upstreamClaimIds));
           if (context !== undefined && (
-            report.sections.length !== 0 || report.state !== 'insufficient' ||
+            !(noGeneralT8 || tensionOnly) ||
             context.wholeChartSynthesisAuthorized !== false ||
             context.themes.length === 0 ||
             context.themes.some(theme =>
-              !theme.claimId || !theme.claimType.startsWith('TEN_GOD_') ||
+              !theme.claimId || alreadyUsedT5.has(theme.claimId) ||
+              !theme.claimType.startsWith('TEN_GOD_') ||
               theme.sourceIds.length === 0 || theme.ruleIds.length === 0 ||
               !theme.methodologyId || theme.observedFactPaths.length === 0 ||
               theme.observedFactPaths.length !== theme.observedPositions.length)
@@ -316,6 +323,7 @@ export function runFiveHundredSajuAudit() {
           generalT5ContextCases.push({
             birth: stamp,
             withoutGeneralT8: report.sections.length === 0,
+            partialTensionWithUnusedT5: tensionOnly && context !== undefined,
             withSourcedT5Context: context !== undefined,
             sourceThemeCount: context?.themes.length ?? 0,
             sourceClaimTypes: context?.themes.map(theme => theme.claimType) ?? [],
@@ -431,6 +439,12 @@ export function runFiveHundredSajuAudit() {
         examples: generalT5ContextCases.filter(c => c.withoutGeneralT8)
           .slice(0, 6),
       },
+      generalPartialTensionWithUnusedT5: {
+        examined: generalT5ContextCases.length,
+        count: generalT5ContextCases.filter(c => c.partialTensionWithUnusedT5).length,
+        examples: generalT5ContextCases.filter(c => c.partialTensionWithUnusedT5)
+          .slice(0, 6),
+      },
       annualRepetition: analyzeTemporalRepetition(rows['올해']),
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
       annualMeaningRepetition: analyzeTemporalMeaningRepetition(rows['올해']),
@@ -451,6 +465,7 @@ export function runFiveHundredSajuAudit() {
     generalWithoutT8: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8,
     generalNoT8WithSourcedT5: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only,
     generalNoT8WithoutSourcedT5: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutAnySourcedT5,
+    generalPartialTensionWithUnusedT5: result.rootCauseDiagnostics.generalPartialTensionWithUnusedT5.count,
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
     wealthNoT8ButSourcedT5: result.rootCauseDiagnostics.wealthConsumerEvidence.withBoundedT5ContextInstead,
     wealthNoSourceBoundInterpretiveText: result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText,
@@ -490,6 +505,7 @@ export function runFiveHundredSajuAudit() {
       result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only +
         result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutAnySourcedT5 !==
           result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8 ||
+      result.rootCauseDiagnostics.generalPartialTensionWithUnusedT5.examined !== COUNT ||
       !result.rootCauseDiagnostics.wealth.allCasesHaveExplicitCause ||
       result.rootCauseDiagnostics.wealth.missingCaseCount !==
         result.menuResults['재물'].withoutReadableText ||
