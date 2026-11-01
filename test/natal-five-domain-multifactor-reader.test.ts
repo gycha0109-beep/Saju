@@ -246,7 +246,9 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     const wealth = reading.wealth;
     expect(wealth.sections[0]?.axis).toBe('tension');
     expect(wealth.missing[0]).toContain('현재 실제로 확인된 출처 연결 십신 관점');
-    expect(wealth.missing[0]).toContain('재성 관련 십신 관점은 있지만');
+    expect(wealth.missing[0]).toContain('같은 관측 범위 안에서 비겁·재성의 긴장 관계는 실제 확인됐지만');
+    expect(wealth.missing[0]).toContain('등록된 재물 중심 복합 해석 축이 아니라 제한된 긴장 관점');
+    expect(wealth.missing[0]).not.toContain('같은 관측 범위에서 다른 십신 계열과 결합되지 않았다');
     expect(wealth.missing.join(' ')).not.toContain('추가 구조 축');
     const context = wealth.availableThemeContext!;
     expect(context.wealthConclusionAuthorized).toBe(false);
