@@ -43,6 +43,47 @@ function run(month: number, day = 9, known = true, referenceDateTime = NOW.toISO
 }
 
 describe('one-person annual to monthly source-bound research reading', () => {
+  it('keeps actual same-chart natal T8 and bounded T5 separate from the temporal meaning', () => {
+    const readings = Array.from({ length: 14 }, (_, index) => run(9, index + 1));
+    const withT8 = readings.find(item => item.report.natalContext.sections.length > 0);
+    expect(withT8).toBeDefined();
+    if (!withT8) return;
+    const { natal, report } = withT8;
+    expect(report.natalContext).toMatchObject({
+      snapshotId: natal.snapshotId,
+      calculationHash: natal.calculationHash,
+      researchOnly: true,
+      mayPublish: false,
+      maySell: false,
+      usefulComplete: false,
+    });
+    const html = renderGeneralAnnualMonthlyExplorationHtml(report);
+    expect(html).toContain('id="natal-reading"');
+    expect(html).toContain('원국의 확인된 구조');
+    expect(html).toContain('올해·이번 달에 새로 작용한다는 뜻이 아니며');
+    for (const section of report.natalContext.sections) {
+      expect(section.sourceIds.length).toBeGreaterThan(0);
+      expect(section.observedPositions.length).toBeGreaterThanOrEqual(2);
+      for (const detail of [section.headline, section.paragraph, section.ruleId,
+        section.sourceIds[0]!, section.observedFactPaths[0]!]) {
+        expect(html).toContain(detail);
+      }
+    }
+    const forged = {
+      ...report,
+      natalContext: { ...report.natalContext, calculationHash: 'foreign-chart' },
+    };
+    expect(() => renderGeneralAnnualMonthlyExplorationHtml(forged))
+      .toThrow('same-chart natal research context');
+
+    const unknown = run(9, 9, false);
+    expect(unknown.report.natalContext.sections).toHaveLength(0);
+    expect(unknown.report.natalContext.availableThemeContext).toBeUndefined();
+    expect(renderGeneralAnnualMonthlyExplorationHtml(unknown.report))
+      .toContain('확정된 원국 종합해석 또는 기존 십신 부분풀이 근거가 아직 충분하지 않습니다.');
+    expect(unknown.report.mayPublish).toBe(false);
+  }, 60000);
+
   it('joins actual annual themes and both T9 monthly phases in a single Korean reading', () => {
     const { natal, report } = run(9);
     expect(report.snapshotId).toBe(natal.snapshotId);

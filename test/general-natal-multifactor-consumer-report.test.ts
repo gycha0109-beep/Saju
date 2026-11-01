@@ -119,6 +119,7 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
     expect(found.report.sections.every(s => s.axis === 'tension')).toBe(true);
     expect(new Set(found.report.sections.map(s => s.pattern)).size).toBe(found.report.sections.length);
     expect(found.report.missing.join(' ')).toContain('중심 결론을 세울 수 없어');
+    expect(found.report.missing.join(' ')).not.toContain('추가 구조 축');
     for(const section of found.report.sections) {
       expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
       expect(section.observedPositions.every(p => section.paragraph.includes(p))).toBe(true);
@@ -155,6 +156,7 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
     expect(x.report.state).toBe('insufficient');
     expect(x.report.sections).toHaveLength(0);
     expect(x.report.missing.join(' ')).toContain('십신(T5) 전체가 미확정');
+    expect(x.report.missing.join(' ')).not.toContain('추가 구조 축');
     expect(x.report.introduction).toContain('출생시각이 없어도 확인 가능한');
     expect(x.report.introduction).toContain('다중 근거 T8 해석을 뜻하지 않습니다');
     for (const [slot, label] of [

@@ -11,6 +11,11 @@ import {
   GENERAL_ANNUAL_POLICY_SOURCE,
   GENERAL_ANNUAL_READING_METHODOLOGY,
 } from '../research/general-annual-reading-candidate.js';
+import { createGeneralNatalMultifactorRegistry } from '../research/general-natal-multifactor-candidate.js';
+import {
+  buildGeneralNatalMultifactorReport,
+  type GeneralNatalMultifactorReport,
+} from './general-natal-multifactor-report.js';
 import type { MonthlyInterpretationFacts, MonthlySegmentId } from '../reading/monthly-interpretation-facts.js';
 import { buildTemporalReadingContext } from '../reading/temporal-reading-context.js';
 import {
@@ -51,6 +56,8 @@ export interface GeneralAnnualMonthlyExplorationReport {
     factPaths: readonly string[];
   }>[];
   monthly: GeneralMonthlyExplorationReport;
+  /** Same-chart governed T5/T8 natal research reading. Never a T9 time synthesis. */
+  natalContext: GeneralNatalMultifactorReport;
   periodComparison: string;
   /** The yearly profile is for a Seoul civil calendar year, not an Ipchun annual pillar. */
   annualReference: {
@@ -102,6 +109,23 @@ export function buildGeneralAnnualMonthlyExplorationReport(
   );
   const monthly = buildGeneralMonthlyExplorationReport(
     snapshot, facts, execution, registry, request,
+  );
+  // Reuse the existing source-qualified General T5/T8 reading as a separate
+  // natal context. Do not infer any Annual/Monthly temporal relation from it.
+  const natalRegistry = createGeneralNatalMultifactorRegistry();
+  const natalExecution = runInterpretation(snapshot, natalRegistry, {
+    requestId: request.requestId + ':natal-context',
+    now: new Date(facts.referenceDateTime),
+  });
+  const natalContext = buildGeneralNatalMultifactorReport(
+    snapshot, natalExecution, natalRegistry,
+  );
+  requireLinkedPeriod(
+    natalContext.snapshotId === snapshot.snapshotId &&
+    natalContext.calculationHash === snapshot.calculationHash &&
+    natalContext.researchOnly && !natalContext.mayPublish && !natalContext.maySell &&
+    !natalContext.usefulComplete,
+    'natal source context must be from the same research-only chart',
   );
   requireLinkedPeriod(
     monthly.snapshotId === snapshot.snapshotId &&
@@ -261,7 +285,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     researchOnly: true, usefulComplete: false, mayPublish: false, maySell: false,
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     targetYear: monthly.targetYear, targetMonth: monthly.targetMonth,
-    annual, annualExecutedEvidence, monthly, periodComparison,
+    annual, annualExecutedEvidence, monthly, natalContext, periodComparison,
     annualReference, referenceReading, annualCurrentReading,
     caveats: [
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
@@ -322,6 +346,62 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
           report.annualExecutedEvidence[i]!.factPaths.includes(path)))) {
     throw new TypeError('Annual/monthly HTML requires matched executed annual T9 research evidence.');
   }
+  const natal = report.natalContext;
+  if (natal.snapshotId !== report.snapshotId ||
+      natal.calculationHash !== report.calculationHash ||
+      !natal.researchOnly || natal.mayPublish || natal.maySell ||
+      natal.usefulComplete ||
+      (natal.sections.length > 0 && natal.availableThemeContext !== undefined)) {
+    throw new TypeError('Annual/monthly HTML requires source-bound same-chart natal research context.');
+  }
+  const natalT8 = natal.sections.map(section => {
+    if (!section.sourceIds.length || !section.ruleId ||
+        section.upstreamClaimIds.length < 2 ||
+        section.observedFactPaths.length < 2 ||
+        section.observedFactPaths.length !== section.observedPositions.length) {
+      throw new TypeError('Natal T8 context lacks governed claims or observed chart facts.');
+    }
+    return '<article class="reading-card"><small>기존 원국 T8 연구용 해석</small>' +
+      '<h3>' + e(section.headline) + '</h3><p>' + e(section.paragraph) + '</p>' +
+      '<details><summary>원국 해석에 실제 사용된 출처와 계산 위치</summary>' +
+      '<p>Claim 유형: ' + e(section.claimType) + '</p>' +
+      '<p>원국 상위 Claim: ' + e(section.upstreamClaimIds.join(' · ')) + '</p>' +
+      '<p>규칙: ' + e(section.ruleId) + '</p>' +
+      '<p>출처: ' + e(section.sourceIds.join(' · ')) + '</p>' +
+      '<p>관측: ' + e(section.observedPositions.join(' · ')) + '</p>' +
+      '<p>계산: ' + e(section.observedFactPaths.join(' · ')) + '</p>' +
+      '</details></article>';
+  }).join('');
+  const t5 = natal.availableThemeContext;
+  if (t5 !== undefined && (
+      t5.wholeChartSynthesisAuthorized !== false ||
+      t5.themes.length === 0 ||
+      t5.themes.some(theme => !theme.claimId || !theme.sourceIds.length ||
+        !theme.ruleIds.length || !theme.methodologyId ||
+        !theme.observedFactPaths.length ||
+        theme.observedPositions.length !== theme.observedFactPaths.length))) {
+    throw new TypeError('Natal partial T5 context lacks validated source and chart positions.');
+  }
+  const natalT5 = natal.sections.length === 0 && t5 !== undefined
+    ? '<article class="reading-card"><small>원국 T8 부족 · 기존 T5 부분 해석</small>' +
+      '<h3>' + e(t5.title) + '</h3><p>' + e(t5.paragraph) + '</p>' +
+      t5.themes.map(theme => '<details><summary>' + e(theme.headline) +
+        ' · 기존 십신 근거</summary><p>' + e(theme.summary) + '</p>' +
+        '<p>Claim: ' + e(theme.claimId) + ' · 규칙: ' +
+        e(theme.ruleIds.join(' · ')) + '</p>' +
+        '<p>방법론: ' + e(theme.methodologyId) + '</p>' +
+        '<p>출처: ' + e(theme.sourceIds.join(' · ')) + '</p>' +
+        '<p>관측: ' + e(theme.observedPositions.join(' · ')) + '</p>' +
+        '<p>계산: ' + e(theme.observedFactPaths.join(' · ')) +
+        '</p></details>').join('') + '</article>'
+    : '';
+  const natalCard = '<section id="natal-reading" aria-label="실제 원국 해석과 연월운 별도 구분">' +
+    '<h2>이 명식에서 실제 확인된 원국 해석</h2>' +
+    '<p class="muted">아래 내용은 기존 출처를 사용한 원국 T5/T8 연구용 풀이입니다. ' +
+    '올해·이번 달에 새로 작용한다는 뜻이 아니며, 시기 해석의 추가 근거로 계산하지 않습니다.</p>' +
+    (natalT8 || natalT5 ||
+      '<p>확정된 원국 종합해석 또는 기존 십신 부분풀이 근거가 아직 충분하지 않습니다.</p>') +
+    '</section>';
   const annual = report.annual.sections.map((section, i) =>
     '<article class="reading-card"><small>' +
     (section.kind === 'core' ? e(annualLabel) + '의 중심 관점' : '연운의 조건부 충 관계') +
@@ -447,6 +527,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<h1>' + report.targetYear + '년 전체 흐름 → ' + report.targetMonth + '월의 흐름</h1>' +
     '<p class="lead">한 사람의 실제 명식에서 계산된 연간·월간 사실을, 각각 허용된 연구 해석 범위 안에서 함께 읽습니다.</p></header>' +
     '<nav aria-label="풀이 기간 바로가기"><a href="#year-reading">' + e(annualLabel) + '의 흐름</a>' +
+    '<a href="#natal-reading">원국의 확인된 구조</a>' +
     '<a href="#monthly-reading">' + report.targetMonth + '월 절입 전·후</a>' +
     '<a href="#reference-month-reading">조회 시각의 풀이</a></nav>' +
     '<section class="current-reading" id="reference-month-reading">' +
@@ -460,7 +541,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<p class="muted">서울 달력 연도 기준 · 연간 ' + e(report.annual.annualPillarLabel) +
     ' · 십신 ' + e(report.annual.annualStemTenGod) + '</p>' + annualReadingFocus +
     '<details class="full-year-profile-evidence"><summary>연운 전체 연구 문구와 계산 근거·출처</summary>' +
-    annual + '</details></section>' +
+    annual + '</details></section>' + natalCard +
     '<section id="monthly-reading"><h2>' + e(
       report.monthly.headline.replace('이번 달', monthlyLabel),
     ) + '</h2>' +

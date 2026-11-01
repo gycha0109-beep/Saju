@@ -353,7 +353,7 @@ export function buildGeneralNatalMultifactorReport(
     missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
   }
   const missingSupportingAxes = 2 - Math.max(0, chosen.length - 1);
-  if(missingSupportingAxes > 0) missing.push(
+  if(core && missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
   const state: Status = snapshot.completeness.birthTimeKnown && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
