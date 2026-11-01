@@ -489,8 +489,9 @@ export function buildWealthNatalMultifactorReport(
     ? [core, ...(supportSelection?.supporting ?? [])]
     : tensionOnly.length ? tensionOnly : contextOnly;
   const missing: string[] = [];
-  if (snapshot.completeness.birthTimeKnown &&
-    (chosen.length === 0 || chosen[0]?.axis === 'context')) {
+  // Every no-core report needs the actual same-chart T5 coverage explanation.
+  // A tension-only T8 is not a Wealth core and must not hide that reason.
+  if (snapshot.completeness.birthTimeKnown && core === undefined) {
     const sourceBoundReason = explainMissingWealthT8(snapshot, execution);
     if (sourceBoundReason) missing.push(sourceBoundReason);
   }
@@ -504,9 +505,14 @@ export function buildWealthNatalMultifactorReport(
   if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
     missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
   }
-  const missingSupportingAxes = 2 - (core ? chosen.length - 1 : chosen.filter(s => s.axis === 'tension').length);
-  if(missingSupportingAxes > 0) missing.push(
-    `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
+  // A supporting-axis deficit only makes sense after a Wealth core exists.
+  // With no core, "two additional axes missing" wrongly suggests a core
+  // conclusion is already established, even for the 17 no-T8 audit cases.
+  if (core !== undefined) {
+    const missingSupportingAxes = 2 - (chosen.length - 1);
+    if (missingSupportingAxes > 0) missing.push(
+      `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
+  }
   const state: Status = snapshot.completeness.birthTimeKnown &&
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';

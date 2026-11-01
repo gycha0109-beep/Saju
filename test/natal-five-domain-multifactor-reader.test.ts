@@ -64,6 +64,8 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     const reading = reports(chart);
     expect(reading.wealth.state).toBe('insufficient');
     expect(reading.wealth.sections).toHaveLength(0);
+    expect(reading.wealth.missing[0]).toContain('실제로 확인된 출처 연결 십신 관점');
+    expect(reading.wealth.missing.join(' ')).not.toContain('추가 구조 축');
     const context = reading.wealth.availableThemeContext!;
     expect(context.wealthConclusionAuthorized).toBe(false);
     expect(context.themes.length).toBeGreaterThan(0);
@@ -195,6 +197,9 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     const reading = reports(chart!);
     const wealth = reading.wealth;
     expect(wealth.sections[0]?.axis).toBe('tension');
+    expect(wealth.missing[0]).toContain('현재 실제로 확인된 출처 연결 십신 관점');
+    expect(wealth.missing[0]).toContain('재성 관련 십신 관점은 있지만');
+    expect(wealth.missing.join(' ')).not.toContain('추가 구조 축');
     const context = wealth.availableThemeContext!;
     expect(context.wealthConclusionAuthorized).toBe(false);
     const html = renderNatalFiveDomainMultifactorResearchHtml(chart!, reading);
@@ -230,6 +235,7 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       .toContain('TEN_GOD_WEALTH_BRANCHES_THEME');
     expect(wealth.missing.join(' ')).toContain('천간과 지지 대표 십신으로 나뉘어');
     expect(wealth.missing.join(' ')).toContain('서로 다른 채널을 임의로 결합');
+    expect(wealth.missing.join(' ')).not.toContain('추가 구조 축');
     const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reading);
     const wealthHtml = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
     expect(wealthHtml).toContain('재물운 종합 해석 아님');
