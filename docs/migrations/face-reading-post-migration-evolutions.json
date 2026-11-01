@@ -14,8 +14,8 @@
     {
       "path": "packages/face-reading/src/index.ts",
       "sourceBlobSha": "97151f021e3c8b7eb4e1178dbb6bb29fb77f9909",
-      "targetBlobSha": "56c64b9d45c87003f490bb01fa2d65a4f521cc54",
-      "authorityRef": "FACE-ENGINE-1639; face-reading#2746",
+      "targetBlobSha": "fc186c5f193bf2d6a02244bd47ddd9778072029e",
+      "authorityRef": "FACE-ENGINE-1639; face-reading#2746; face-reading#2748",
       "changeClass": "additive_authority_governed_core_extension",
       "historicalProvenanceMutation": false,
       "methodologySemanticChange": false
