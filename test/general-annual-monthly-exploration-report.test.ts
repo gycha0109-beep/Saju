@@ -64,9 +64,12 @@ describe('one-person annual to monthly source-bound research reading', () => {
     for (const section of report.natalContext.sections) {
       expect(section.sourceIds.length).toBeGreaterThan(0);
       expect(section.observedPositions.length).toBeGreaterThanOrEqual(2);
+      const escaped = (value: string) => value.replace(/[&<>"']/gu, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      })[char]!);
       for (const detail of [section.headline, section.paragraph, section.ruleId,
         section.sourceIds[0]!, section.observedFactPaths[0]!]) {
-        expect(html).toContain(detail);
+        expect(html).toContain(escaped(detail));
       }
     }
     const forged = {
