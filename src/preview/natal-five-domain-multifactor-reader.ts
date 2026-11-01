@@ -1,4 +1,5 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { NatalExistingT5SourceContext } from './natal-existing-t5-source-context.js';
 import { findSharedNatalFactLinks } from './natal-five-domain-shared-evidence.js';
 import { SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY } from '../research/snapshot-bound-hidden-stem-ten-god-occurrences.js';
 import type { GeneralNatalMultifactorReport, GeneralNatalMultifactorSection } from './general-natal-multifactor-report.js';
@@ -417,6 +418,41 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
     themes + '</ul></details>' + hiddenSection + '</section>';
 }
 
+/** A source-owned T5 partial reading is not a missing General T8 synthesis. */
+function renderGeneralExistingT5Context(report: GeneralNatalMultifactorReport): string {
+  const context = report.availableThemeContext;
+  if (context === undefined) return '';
+  guard(report.state === 'insufficient' && report.sections.length === 0 &&
+    context.wholeChartSynthesisAuthorized === false && context.themes.length > 0 &&
+    report.researchOnly && !report.mayPublish && !report.maySell &&
+    context.title.length > 0 && context.paragraph.length > 0,
+    'General T5 context cannot substitute for a source-qualified T8 synthesis');
+  const items = context.themes.map(theme => {
+    guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+      .test(theme.claimType) && theme.claimId.length > 0 &&
+      theme.sourceIds.length > 0 && theme.ruleIds.length > 0 &&
+      theme.methodologyId.length > 0 && theme.observedPositions.length > 0 &&
+      theme.observedPositions.length === theme.observedFactPaths.length &&
+      theme.observedFactPaths.every(path => FACT_PATH.test(path)) &&
+      context.paragraph.includes(theme.summary) &&
+      theme.observedPositions.every(position => context.paragraph.includes(position)),
+      'General T5 partial reading lacks original rule, source, or calculated chart facts');
+    return '<li><strong>' + escapeHtml(theme.headline) + '</strong>' +
+      '<p>' + escapeHtml(theme.summary) + '</p>' +
+      '<p>확인된 명식 위치: ' + escapeHtml(theme.observedPositions.join(' · ')) + '</p>' +
+      '<details><summary>기존 십신 해석의 실제 근거</summary>' +
+      '<p>Claim: ' + escapeHtml(theme.claimId) + ' · ' + escapeHtml(theme.claimType) + '</p>' +
+      '<p>계산 경로</p>' + renderList(theme.observedFactPaths) +
+      '<p>규칙</p>' + renderList(theme.ruleIds) +
+      '<p>방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
+      '<p>출처</p>' + renderList(theme.sourceIds) + '</details></li>';
+  }).join('');
+  return '<section class="bounded-general-t5" aria-label="전체 원국의 기존 십신 부분 해석">' +
+    '<h3>' + escapeHtml(context.title) + '</h3>' +
+    '<p><strong>원국 종합해석 아님 · 등록된 개별 십신 해석만 확인</strong></p>' +
+    '<p>' + escapeHtml(context.paragraph) + '</p><ul>' + items + '</ul></section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -450,6 +486,8 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
           ? renderRelationshipReadingGuide(report as RelationshipNatalMultifactorReport) : '';
   const existingWealthContext = domain === 'wealth'
     ? renderWealthAvailableThemeContext(report as WealthNatalMultifactorReport) : '';
+  const existingGeneralContext = domain === 'general' && birthTimeKnown
+    ? renderGeneralExistingT5Context(report as GeneralNatalMultifactorReport) : '';
   const firstMeaning = renderFirstScreenSelectedInterpretations(domain, report);
   const details = firstMeaning === '' ? readingGuide + originalText
     : '<details class="full-claim-evidence"><summary>원국 풀이의 상세 설명·명식 근거와 출처</summary>' +
@@ -457,7 +495,8 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
   return '<article aria-labelledby="domain-' + domain + '" class="domain">' +
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
-    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning + existingWealthContext + details + missing +
+    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning +
+    existingGeneralContext + existingWealthContext + details + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }

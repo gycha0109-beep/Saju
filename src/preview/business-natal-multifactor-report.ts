@@ -1,5 +1,5 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
-import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { selectBestNatalCoreWithinPriorityAxis } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -295,15 +295,13 @@ export function buildBusinessNatalMultifactorReport(
         .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
           (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
     : [];
-  // Prefer the 3-input core. When not observed, a narrower two-input core can
-  // still be rendered, but completion needs two OTHER independently grounded axes.
-  const core = result.find(s => s.axis === 'core') ??
-    result.find(s => s.axis === 'execution') ??
-    result.find(s => s.axis === 'governance') ??
-    result.find(s => s.axis === 'preparation');
-  // A genuine source-bound coordination-only observation is visible as a PARTIAL
-  // reading, never promoted to a MUR core or a consumer product completion.
-  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
+  // Preserve the registered four-axis core priority. Within the FIRST
+  // available axis, select the original sourced T8 that admits more truly
+  // independent Canonical observations. Coordination alone never becomes a core.
+  const selectedCore = selectBestNatalCoreWithinPriorityAxis(
+    result.filter(section => section.axis !== 'coordination'), result);
+  const core = selectedCore?.core;
+  const supportSelection = selectedCore?.support;
   const chosen: BusinessNatalMultifactorSection[] = core
     ? [core, ...(supportSelection?.supporting ?? [])]
     : result.filter(section => section.axis === 'coordination').slice(0, 1);

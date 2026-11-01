@@ -1,5 +1,9 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
-import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { selectBestNatalCoreWithinPriorityAxis } from './natal-independent-supporting-axes.js';
+import {
+  buildNatalExistingT5SourceContext,
+  type NatalExistingT5SourceContext,
+} from './natal-existing-t5-source-context.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -53,6 +57,8 @@ export interface GeneralNatalMultifactorReport {
   introduction: string;
   sections: readonly GeneralNatalMultifactorSection[];
   readingGuide?: GeneralNatalSourceBoundReadingGuide;
+  /** Bounded T5-only material; never substitutes for the missing whole-chart T8. */
+  availableThemeContext?: NatalExistingT5SourceContext;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -324,13 +330,12 @@ export function buildGeneralNatalMultifactorReport(
         .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
           (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
     : [];
-  // Prefer the 3-input core. When not observed, a narrower two-input core can
-  // still be rendered, but completion needs two OTHER independently grounded axes.
-  const core = result.find(s => s.axis === 'core') ??
-    result.find(s => s.axis === 'expression') ??
-    result.find(s => s.axis === 'response') ??
-    result.find(s => s.axis === 'responsibility');
-  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
+  // Retain core > expression > response > responsibility. A competing core
+  // may replace the first only within its original, source-owned axis priority.
+  const selectedCore = selectBestNatalCoreWithinPriorityAxis(
+    result.filter(s => s.axis !== 'tension'), result);
+  const core = selectedCore?.core;
+  const supportSelection = selectedCore?.support;
   const chosen: GeneralNatalMultifactorSection[] = core
     ? [core, ...(supportSelection?.supporting ?? [])] : [];
   // Tension-only source-qualified T8 is useful partial evidence, but never
@@ -354,6 +359,10 @@ export function buildGeneralNatalMultifactorReport(
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly GeneralNatalMultifactorSection[] = core ? chosen : partialTension;
   const readingGuide = generalSourceBoundReadingGuide(core, sections);
+  // Only a wholly absent T8 can expose standalone, pre-existing T5 themes.
+  // Tension-only T8 already supplies its own distinct partial meaning.
+  const availableThemeContext = sections.length === 0
+    ? buildNatalExistingT5SourceContext(snapshot, execution) : undefined;
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 원국 전체의 다중 근거 T8 해석은 보류합니다.');
   }
@@ -368,6 +377,7 @@ export function buildGeneralNatalMultifactorReport(
       (readingGuide === undefined ? '' : ' ' + readingGuide.paragraph),
     sections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(availableThemeContext === undefined ? {} : { availableThemeContext }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],

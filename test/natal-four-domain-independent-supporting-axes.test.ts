@@ -120,6 +120,19 @@ describe('four different consumer natal menus require independently observed T0 
     expect(selectBestNatalCoreWithinPriorityAxis([], candidates)).toBeUndefined();
   });
 
+  it('keeps source-priority core selection across general, business and relationship axes', () => {
+    for (const coreAxis of ['core', 'expression', 'execution'] as const) {
+      const original = { axis: coreAxis, observedFactPaths: ['year', 'month', 'hour'] };
+      const alternate = { axis: coreAxis, observedFactPaths: ['year'] };
+      const firstSupport = { axis: 'preparation', observedFactPaths: ['month'] };
+      const secondSupport = { axis: 'coordination', observedFactPaths: ['hour'] };
+      const selected = selectBestNatalCoreWithinPriorityAxis(
+        [original, alternate], [original, alternate, firstSupport, secondSupport]);
+      expect(selected?.core).toBe(alternate);
+      expect(selected?.support.supporting).toEqual([firstSupport, secondSupport]);
+    }
+  });
+
   it('applies incremental actual chart fact-paths across all four distinct domain reports', () => {
     const charts = [[3, 10], [4, 11], [6, 3], [7, 17], [9, 23]] as const;
     for (const [month, day] of charts) {

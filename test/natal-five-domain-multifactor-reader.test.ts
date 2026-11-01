@@ -54,6 +54,54 @@ function reports(snapshot: ReturnType<typeof sample>): NatalFiveDomainMultifacto
 }
 
 describe('same-chart five-domain multifactor Korean research reading', () => {
+  it('recovers actual existing T5 Korean partial meaning when whole-chart T8 is absent', () => {
+    let found = false;
+    for (let month = 1; month <= 12 && !found; month++) {
+      for (let day = 1; day <= 28 && !found; day++) {
+        for (const hour of [0, 12, 20]) {
+          const chart = sample(month, day, hour);
+          const execution = runInterpretation(chart, registry.general, { now: NOW });
+          const general = buildGeneralNatalMultifactorReport(chart, execution, registry.general);
+          if (general.sections.length !== 0 || !general.availableThemeContext) continue;
+          found = true;
+          expect(general.state).toBe('insufficient');
+          expect(general.readingGuide).toBeUndefined();
+          expect(general.availableThemeContext.wholeChartSynthesisAuthorized).toBe(false);
+          const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reports(chart));
+          const own = html.split('<h2 id="domain-general">')[1]!.split('</article>')[0]!;
+          expect(own).toContain('전체 원국의 기존 십신 부분 해석');
+          expect(own).toContain('원국 종합해석 아님');
+          for (const theme of general.availableThemeContext.themes) {
+            expect(own).toContain(theme.summary);
+            expect(own).toContain(theme.claimId);
+            expect(own).toContain(theme.sourceIds[0]!);
+            expect(own).toContain(theme.observedPositions[0]!);
+            expect(own).toContain(theme.observedFactPaths[0]!);
+          }
+          expect(general.usefulComplete).toBe(false);
+          expect(general.mayPublish).toBe(false);
+          expect(general.maySell).toBe(false);
+          const forged = reports(chart);
+          expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, {
+            ...forged,
+            general: {
+              ...forged.general,
+              availableThemeContext: {
+                ...general.availableThemeContext!,
+                themes: [{
+                  ...general.availableThemeContext!.themes[0]!,
+                  observedFactPaths: ['invented.fact.path'],
+                }],
+              },
+            },
+          })).toThrow('General T5 partial reading lacks original rule');
+          break;
+        }
+      }
+    }
+    expect(found).toBe(true);
+  }, 60000);
+
   it('actually displays existing source-qualified Ten-God context for an insufficient Wealth reading', () => {
     const chart = calculateCanonicalSajuSnapshot({
       calendarType: 'solar',

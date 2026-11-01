@@ -5,6 +5,20 @@
 > 범위: 계산·기존 Claim/Methodology/Source 권한을 유지하는 연구용 해석 품질 개선. AI 신규 Claim 생성과 Official/판매 승격은 범위 밖.
 > 기록 규칙: **실제 수정한 작업 단위마다 이 파일에 변경 내용, 결과물, 확인된 검증, 미완료 항목을 추가한다.** 계획만 있는 작업은 완료로 기록하지 않는다.
 
+## 2026-11-01 — 작업 42 · 원국 종합 근거가 없을 때 실제 십신 개별 풀이 제공 (단계 1·5·6)
+- **기준 검증:** 직전 커밋 `e60ea65982336fafa6aa954b9ae9ac7f95e33a65`의 CI, 고정 500명 8메뉴 감사, Production Calculation Container, PIE Shadow **4개 통과**. 기존 재물 중심 종합근거 미확립 17건, 개별 T5 부분 풀이 17/17건 유지. 단, 이번 변경의 실제 신규 CI는 미확인이다.
+- **문제:** 전체 원국 연구 보고서에서 독립 복합 T8이 없으면, 같은 명식에 이미 활성화된 T5 십신 주제가 있더라도 소비자 연구 화면에서 기존 한국어 의미까지 전부 숨겨졌다.
+- **구현:** 기존 `general` 연구 Registry의 실행된 동일 명식 T5 Claim만 이용해, 십신 주제의 **원래 한국어 headline·summary, 실제 관측된 십신 위치, Claim·Rule·Methodology·Source 경로**를 `availableThemeContext`로 보존하고 다섯 분야 연구 화면의 전체 원국 카드에 표시한다. T8이 하나라도 표시되거나 출생시각이 없어 T5가 확정되지 않으면 이 별도 부분 풀이를 생성하지 않는다. 직업·사업·관계 해석으로 T5를 임의 전용하지 않는다.
+- **검증:** 실제 계산 명식에서 T8이 0개·T5가 활성화된 사례를 찾아, 기존 출처·의미·계산 위치가 사용자 연구 HTML에 나타나고 `insufficient`/비공개/판매 불가 상태는 유지되는지 검사한다. 조작된 계산 경로는 거부한다. 원국 500명에서 원래 T8 풀이 누락 22건을 이 변경만으로 해결했다고 계산하지 않는다.
+- **파일:** `src/preview/natal-existing-t5-source-context.ts`, `src/preview/general-natal-multifactor-report.ts`, `src/preview/natal-five-domain-multifactor-reader.ts`, `test/natal-five-domain-multifactor-reader.test.ts`.
+
+## 2026-11-01 — 작업 43 · 총운·사업·관계의 동급 중심 후보 간 독립 근거 선택 개선 (단계 2·5·6)
+- **문제:** 원국 총운·사업·관계 T8은 천간/지지 등 같은 의미 축 후보가 여럿 있어도 항상 첫 번째만 중심으로 선택했다. 그보다 실제 독립적 T0 계산 근거를 더 추가할 수 있는 동일 해석 축 중심 후보가 있어도 사용하지 못할 수 있었다.
+- **구현:** 재물운에서 먼저 적용한 공통 선별기를 기존 총운·사업·관계 연구 경로에 적용한다. **기존 축 우선순위와 출처 연결을 유지한 채**, 가장 먼저 관측된 축 안에서만 보조 근거 2개를 최대한 확보할 수 있는 기존 중심 T8을 선택한다. 동률이면 이전 순서를 유지하며, 긴장/조율 단독 T8을 중심으로 승격하지 않는다.
+- **검증:** 동급 중심 후보가 실제 서로 다른 계산 근거를 더 많이 활용할 때 선택되고, 원래 해석 축 우선순위와 같은 명식의 결정론적 결과가 보존되는지 검사한다. 기존 4개 분야의 독립 계산 위치/상위 Claim/출처·연구용 권한 회귀 테스트 유지. 가짜 의미 다양성 수치 증가 또는 Official 승격 불허.
+- **파일:** `src/preview/general-natal-multifactor-report.ts`, `src/preview/business-natal-multifactor-report.ts`, `src/preview/relationship-natal-multifactor-report.ts`, `test/natal-four-domain-independent-supporting-axes.test.ts`.
+- **실행:** 작업 42·43을 **하나의 커밋으로 묶어 한 번의 CI 4종으로 검증**. 검증 성공과 실제 500건 출력 개선은 결과 확인 전까지 확정하지 않는다.
+
 ## 2026-11-01 — 작업 40 CI 실패 보정 · 기존 정상 독립 근거 우선순위 복원
 
 - **실패 근거:** [커밋 939fe354 CI](https://github.com/gycha0109-beep/Saju/actions/runs/41305319175)에서 `CI Tests (11/16)`의 [실패 테스트](https://github.com/gycha0109-beep/Saju/actions/runs/41305319175/job/124845590423) 단 1건 실패(해당 묶음 712 통과/1 실패). 기존 독립 축 조합 `planning → tension`이 유효한데 신규 역순 탐색 `planning → management`를 그보다 먼저 반환해, 기존 우선순위를 깨뜨렸다. 별도 500명 감사·Production Calculation Container·PIE Shadow는 모두 성공했다.
