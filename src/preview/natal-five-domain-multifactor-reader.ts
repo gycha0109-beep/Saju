@@ -1,5 +1,4 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
-import type { NatalExistingT5SourceContext } from './natal-existing-t5-source-context.js';
 import { findSharedNatalFactLinks } from './natal-five-domain-shared-evidence.js';
 import { SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY } from '../research/snapshot-bound-hidden-stem-ten-god-occurrences.js';
 import type { GeneralNatalMultifactorReport, GeneralNatalMultifactorSection } from './general-natal-multifactor-report.js';
