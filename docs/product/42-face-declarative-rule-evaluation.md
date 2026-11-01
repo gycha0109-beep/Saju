@@ -109,7 +109,7 @@ real authority. The test runs in the existing Face Reading CI. No workflow added
 The existing migration evolution ledger records additive contract/index changes
 without rewriting historical source hashes or any methodology definition.
 
-Local verification (Node 24.14.0; locked dependencies installed with `npm ci`):
+Evaluator baseline local verification (PR #2747, Node 24.14.0; locked dependencies installed with `npm ci`):
 
 - Direct evaluator plus three existing topic/grounding authority files: 58 tests pass.
 - Root and Face TypeScript checks, Face build, migration manifest, scoped ESLint,
@@ -122,26 +122,95 @@ Local verification (Node 24.14.0; locked dependencies installed with `npm ci`):
   alias printed `Python` and exited 1. The same candidate self-check passed with
   `python tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py --self-check`;
   the final review-packet self-check also passed separately. No unrelated launcher
-  or dependency was changed. Hosted Linux aggregate verification remains a CI gate.
+  or dependency was changed. PR #2747 subsequently passed all 44 hosted checks,
+  including the Linux aggregate and required Integration, and merged as `57efc7d3`.
+
+## Static snapshot continuation (#2748)
+
+`evaluateStaticFaceResearchRules` in `static-research-rule-runtime.ts` now connects:
+
+```text
+SharedFaceObservationBundleV3 (explicit research assertion)
+-> existing adaptMyeongHaStaticFaceObservation
+-> exact three legacy Shenxiang research length metrics
+-> existing evaluateThreeDivisionRelativeOrder
+-> fixed existing relative_order_v0 operationalization + five registered rules
+-> research_only rule/template report
+```
+
+This is a research integration of existing definitions, not an admitted FaceLab
+production observation or a new neutral-to-traditional binding. It requires the
+existing explicit `research_fixture` or `human_label_assertion` authority. The
+caller cannot supply a registry, replacement operation or production mode. Exact
+metric key/version and registered unit are required. Neutral/FR293 metrics are
+never substituted by similarity. No source passage, formula, tolerance or rule
+definition is changed. No claims, ranking, narrative or Character handoff is issued.
+
+The report carries the supplied snapshot reference, all four observation version
+fields, evidence references, producer Observation State and unavailable regions.
+The reference is a caller-owned provenance coordinate; it is not a cryptographic
+content identity, proof of same-capture acquisition, provider admission or source
+authenticity. Real FR318/FR319 registration/evidence gates remain necessary.
+An executable producer admission contract must precede any later production path.
+
+Missing or wrong-version lengths withhold this three-input operation and all five
+dependent rules. Declared unavailability of the existing research map's exact
+`upper`, `middle` or `lower` region withholds its length even if a value is present.
+Other unavailable regions are preserved without suppressing this unrelated
+operation. No region aliases or automatic face-quality thresholds are invented.
+Producer `ineligible` state is preserved as `recapture_required`; this runner does
+not judge image quality or request a retake. Confidence/view agreement are not
+converted to cutoffs, ranks or fortune scores. Duplicate metric identity, unit
+drift, nonfinite values, nonpositive operation lengths and numeric overflow fail.
+
+Only version/evidence metadata, existing research relative class, operation refs
+and rule/template results are returned. Raw values, landmarks, arbitrary/color
+observation payloads, images and image digests are not copied into the report.
+No original image is read, uploaded, hashed or persisted. Array/input size bounds
+are execution resource limits only. No new canonical observation schema is issued.
+
+The existing Face Reading CI runs the direct snapshot tests and a compiled CLI
+self-check. Local use after the existing build:
+
+```powershell
+npm run face:build
+node scripts/run-face-static-research-rules.mjs --self-check
+Get-Content -Raw test/fixtures/face-static-research-snapshot.json | node scripts/run-face-static-research-rules.mjs
+```
+
+The fixture is explicitly synthetic and contains no real face data. Default CLI
+input is bounded JSON stdin; it does not accept file-path or production arguments.
+Output is JSON stdout, with no default disk persistence. Rejected input emits only a
+generic rejection code, never the supplied input. Self-check reads only the fixed
+repository synthetic fixture. This path demonstrates snapshot-to-rule execution,
+not real-photo validation or traditional meaning validity.
+
+Snapshot continuation local verification: 73 tests pass across the snapshot
+runtime, common evaluator and three existing topic/grounding authority suites.
+Root/Face typechecks, Face build, migration ledger, scoped ESLint and formatting
+pass. The compiled public index, CLI self-check and default synthetic stdin path
+execute successfully. Invalid stdin is rejected without echoing its private
+marker. No real capture or human review was consumed. Hosted exact-head checks
+remain required before merging this continuation.
 
 Roadmap markers below describe inspected implementation surfaces, not percentages
 or end-to-end completion. `partial` means code exists with authority/runtime work
 remaining; `unassessed` means no completion claim is made in this bounded audit.
 
-| Existing stage | Current audited state                                                                   |
-| -------------- | --------------------------------------------------------------------------------------- |
-| FR-0 / FR-0.5  | Source/claim/methodology contracts present; real traditional authority partial          |
-| FR-1 / FR-2    | Observation/adapter/metric and binding code present; hairline evidence blocked          |
-| FR-3           | Shared declarative evaluator implemented here; real semantic rule admission remains     |
-| FR-4 / FR-4.5  | Research assertion tension and comparison contracts present; full production unassessed |
-| FR-5           | F7 contracts present; governed dependency resolution unassessed                         |
-| FR-6 / FR-7    | Semantic/grounding and research narrative code present; real source activation blocked  |
-| FR-8           | Full product UX unassessed; no UI change here                                           |
-| FR-9           | Source-owned governed Character handoff present; publication remains gated              |
-| FR-10 / FR-11  | Compatibility contracts present; bridge activation/future scope unassessed              |
+| Existing stage | Current audited state                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| FR-0 / FR-0.5  | Source/claim/methodology contracts present; real traditional authority partial                         |
+| FR-1 / FR-2    | Observation/adapter/metric and binding code present; hairline evidence blocked                         |
+| FR-3           | Shared evaluator and static research snapshot caller implemented; real semantic rule admission remains |
+| FR-4 / FR-4.5  | Research assertion tension and comparison contracts present; full production unassessed                |
+| FR-5           | F7 contracts present; governed dependency resolution unassessed                                        |
+| FR-6 / FR-7    | Semantic/grounding and research narrative code present; real source activation blocked                 |
+| FR-8           | Full product UX unassessed; no UI change here                                                          |
+| FR-9           | Source-owned governed Character handoff present; publication remains gated                             |
+| FR-10 / FR-11  | Compatibility contracts present; bridge activation/future scope unassessed                             |
 
-Next bounded implementation should connect an admitted static observation and
-operationalization producer to the evaluator with exact snapshot provenance.
+The research snapshot caller is implemented; an admitted static observation and
+operationalization producer must still be connected with exact snapshot provenance.
 Do not introduce a second source of semantic truth or automatically convert
 research thresholds/labels into production values. The #2343/#2213 external
 evidence and exact-target approval requirements remain independent.
@@ -150,8 +219,10 @@ Architecture Check:
 
 - Docs updated: yes
 - Ghost-code risk: passed for registered rule -> condition -> semantic template,
+  plus static snapshot -> existing relative-order operation -> rule evaluation,
   with direct execution and compiled-entry checks. Product activation is excluded.
 - Notes: additive `all`/`any` expression nodes and scoped `$item` binding extend the
-  existing language. Existing source validator and rule/pack identities are reused.
+  existing language. The static research caller reuses the existing adapter,
+  relative-order function, source validator and rule/pack identities.
   No new stage, methodology, alias for a measured feature, fallback classifier,
   normalization path, DB contract or second rule engine is introduced.

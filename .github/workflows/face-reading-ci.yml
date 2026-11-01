@@ -9,6 +9,8 @@ on:
       - 'tools/face-reading/hairline/**'
       - 'docs/migrations/face-reading-from-myeongha.manifest.json'
       - 'scripts/verify-face-reading-migration.mjs'
+      - 'scripts/run-face-static-research-rules.mjs'
+      - 'test/fixtures/face-static-research-snapshot.json'
       - 'scripts/verify-fr76-mediapipe-parity.mjs'
       - 'scripts/verify-fr77-governed-metric-runtime.mjs'
       - 'scripts/verify-fr78-governed-metric-lips-surface.mjs'
@@ -65,7 +67,9 @@ jobs:
 
       - name: Verify deterministic registered Face rule evaluation
         working-directory: target
-        run: npx vitest run packages/face-reading/src/rule-evaluation.test.ts
+        run: |
+          npx vitest run packages/face-reading/src/rule-evaluation.test.ts packages/face-reading/src/static-research-rule-runtime.test.ts
+          node scripts/run-face-static-research-rules.mjs --self-check
 
       - name: Verify FR61 provider candidate boundary
         working-directory: target

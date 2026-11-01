@@ -77,6 +77,7 @@ export * from './provider-release-attestation-fr18.js';
 export * from './research-diagnosis-runtime.js';
 export * from './research-pack-v0.js';
 export * from './rule-evaluation.js';
+export * from './static-research-rule-runtime.js';
 export * from './semantic-anchor-authority-fr13.js';
 export * from './semantic-anchor-registry-fr13.js';
 export * from './semantic-projection.js';
