@@ -267,6 +267,7 @@ export function runFiveHundredSajuAudit() {
   const failures = [];
   const wealthMissingCases = [];
   const wealthConsumerCases = [];
+  const generalT5ContextCases = [];
   const startedAt = Date.now();
   for (let i=0; i<COUNT; i++) {
     const {stamp, birth} = sampleBirth(inputs);
@@ -289,6 +290,27 @@ export function runFiveHundredSajuAudit() {
           general:'전체 사주', career:'직업·커리어', wealth:'재물',
           relationship:'연애·관계', business:'사업',
         })[domain]].push({...natalEntry(report),birth:stamp,calculationHash:chartKey});
+        if (domain === 'general') {
+          const context = report.availableThemeContext;
+          if (context !== undefined && (
+            report.sections.length !== 0 || report.state !== 'insufficient' ||
+            context.wholeChartSynthesisAuthorized !== false ||
+            context.themes.length === 0 ||
+            context.themes.some(theme =>
+              !theme.claimId || !theme.claimType.startsWith('TEN_GOD_') ||
+              theme.sourceIds.length === 0 || theme.ruleIds.length === 0 ||
+              !theme.methodologyId || theme.observedFactPaths.length === 0 ||
+              theme.observedFactPaths.length !== theme.observedPositions.length)
+          )) throw new Error('General bounded T5 context must be sourced and never replace T8');
+          generalT5ContextCases.push({
+            birth: stamp,
+            withoutGeneralT8: report.sections.length === 0,
+            withSourcedT5Context: context !== undefined,
+            sourceThemeCount: context?.themes.length ?? 0,
+            sourceClaimTypes: context?.themes.map(theme => theme.claimType) ?? [],
+            sourceFactPaths: context?.themes.flatMap(theme => theme.observedFactPaths) ?? [],
+          });
+        }
         if (domain === 'wealth') {
           wealthConsumerCases.push({
             ...natalEntry(report), birth:stamp, calculationHash:chartKey,
@@ -346,6 +368,16 @@ export function runFiveHundredSajuAudit() {
       version: ROOT_CAUSE_AUDIT_VERSION,
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
       wealthConsumerEvidence: summarizeWealthConsumerEvidence(wealthConsumerCases),
+      generalBoundedT5OnNoT8: {
+        examined: generalT5ContextCases.length,
+        withoutGeneralT8: generalT5ContextCases.filter(c => c.withoutGeneralT8).length,
+        withActualSourcedT5Only: generalT5ContextCases.filter(c =>
+          c.withoutGeneralT8 && c.withSourcedT5Context).length,
+        withoutAnySourcedT5: generalT5ContextCases.filter(c =>
+          c.withoutGeneralT8 && !c.withSourcedT5Context).length,
+        examples: generalT5ContextCases.filter(c => c.withoutGeneralT8)
+          .slice(0, 6),
+      },
       annualRepetition: analyzeTemporalRepetition(rows['올해']),
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
       annualMeaningRepetition: analyzeTemporalMeaningRepetition(rows['올해']),
@@ -357,12 +389,15 @@ export function runFiveHundredSajuAudit() {
       annualNatalT5Variation: analyzeTemporalNatalT5Variation(rows['올해']),
       monthlyNatalT5Variation: analyzeTemporalNatalT5Variation(rows['이번 달']),
     },
-    interpretationCaveat:'Wealth withReadableText records T8 only, while wealthConsumerEvidence separately counts existing sourced T5 partial context. Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
+    interpretationCaveat:'Natal withReadableText counts selected source-bound T8 sections, not bounded General/Wealth T5-only partial explanations. General and Wealth T5 are reported separately without upgrading T8 completion. Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
     permissions:{mayPublish:false,maySell:false,mayCallOfficial:false},
   };
   const outfile=process.argv[2];
   if(outfile) writeFileSync(outfile,JSON.stringify(result,null,2)+'\n','utf8');
   process.stdout.write('SAJU500_ROOT_CAUSE_SUMMARY '+JSON.stringify({
+    generalWithoutT8: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8,
+    generalNoT8WithSourcedT5: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only,
+    generalNoT8WithoutSourcedT5: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutAnySourcedT5,
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
     wealthNoT8ButSourcedT5: result.rootCauseDiagnostics.wealthConsumerEvidence.withBoundedT5ContextInstead,
     wealthNoSourceBoundInterpretiveText: result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText,
@@ -395,6 +430,12 @@ export function runFiveHundredSajuAudit() {
   })+'\n');
   process.stdout.write('SAJU500_RESULT_JSON '+JSON.stringify(result)+'\n');
   if(inputs.size!==COUNT || failures.length || DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
+      result.rootCauseDiagnostics.generalBoundedT5OnNoT8.examined !== COUNT ||
+      result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8 !==
+        result.menuResults['전체 사주'].withoutReadableText ||
+      result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only +
+        result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutAnySourcedT5 !==
+          result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8 ||
       !result.rootCauseDiagnostics.wealth.allCasesHaveExplicitCause ||
       result.rootCauseDiagnostics.wealth.missingCaseCount !==
         result.menuResults['재물'].withoutReadableText ||

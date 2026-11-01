@@ -155,6 +155,8 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
         expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
         expect(report.missing.join(' ')).toContain('중심 종합 근거 없이');
         expect(report.missing[0]).toContain('현재 실제로 확인된 출처 연결 십신 관점');
+        expect(report.missing[0]).toContain('비겁·재성의 긴장 관계는 실제 확인됐지만');
+        expect(report.missing[0]).not.toContain('결합되지 않아');
         expect(report.missing.join(' ')).toContain('출처 있는 원국 중심 복합 해석 축');
         expect(report.missing.join(' ')).not.toContain('추가 구조 축');
         expect(report.researchOnly).toBe(true);
