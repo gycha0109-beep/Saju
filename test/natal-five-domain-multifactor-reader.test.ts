@@ -92,6 +92,57 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     }
   }, 60000);
 
+
+  it('shows unconsumed original T5 meanings beside a source-bound General tension without claiming a core', () => {
+    let verified = false;
+    outer: for (const month of [2,3,4,5,6,7,8,9,10,11,12,1]) {
+      for (const day of [3,7,11,17,23,27]) {
+        for (const hour of [0,12,20]) {
+          const chart = sample(month, day, hour);
+          const execution = runInterpretation(chart, registry.general, { now: NOW });
+          const general = buildGeneralNatalMultifactorReport(chart, execution, registry.general);
+          if (general.state !== 'partial' || general.sections.length !== 1 ||
+              general.sections[0]?.axis !== 'tension' ||
+              general.availableThemeContext === undefined) continue;
+          const consumed = new Set(general.sections.flatMap(section => section.upstreamClaimIds));
+          expect(general.availableThemeContext.themes.length).toBeGreaterThan(0);
+          expect(general.availableThemeContext.themes.every(theme =>
+            !consumed.has(theme.claimId))).toBe(true);
+          const all = reports(chart);
+          const html = renderNatalFiveDomainMultifactorResearchHtml(chart, all);
+          const card = html.split('<h2 id="domain-general">')[1]!.split('</article>')[0]!;
+          expect(card).toContain('확인된 부분 관점');
+          expect(card).toContain('원국 종합해석 아님');
+          for (const theme of general.availableThemeContext.themes) {
+            expect(card).toContain(theme.headline);
+            expect(card).toContain(theme.claimId);
+            expect(card).toContain(theme.summary);
+            expect(card).toContain(theme.observedFactPaths[0]!);
+            expect(card).toContain(theme.sourceIds[0]!);
+          }
+          expect(general.usefulComplete).toBe(false);
+          expect(general.mayPublish).toBe(false);
+          expect(general.maySell).toBe(false);
+          expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, {
+            ...all, general: {
+              ...all.general,
+              availableThemeContext: {
+                ...all.general.availableThemeContext!,
+                themes: [{
+                  ...all.general.availableThemeContext!.themes[0]!,
+                  claimId: all.general.sections[0]!.upstreamClaimIds[0]!,
+                }],
+              },
+            },
+          })).toThrow('General T5 context cannot substitute');
+          verified = true;
+          break outer;
+        }
+      }
+    }
+    expect(verified, 'at least one calculated tension-only General chart has independent unused T5 evidence').toBe(true);
+  }, 60000);
+
   it('recovers actual existing T5 Korean partial meaning when whole-chart T8 is absent', () => {
     let found = false;
     for (let month = 1; month <= 12 && !found; month++) {

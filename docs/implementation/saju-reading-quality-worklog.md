@@ -5,6 +5,15 @@
 > 범위: 계산·기존 Claim/Methodology/Source 권한을 유지하는 연구용 해석 품질 개선. AI 신규 Claim 생성과 Official/판매 승격은 범위 밖.
 > 기록 규칙: **실제 수정한 작업 단위마다 이 파일에 변경 내용, 결과물, 확인된 검증, 미완료 항목을 추가한다.** 계획만 있는 작업은 완료로 기록하지 않는다.
 
+
+## 2026-11-01 — 작업 54 · 긴장 부분풀이에 사용되지 않은 원국 십신 의미 전달 복구 (단계 3·4·5·6)
+- **확인한 누락:** 기존 총운에서 원국 T8의 중심 근거가 없고 T8 긴장 관점만 선택돼도 기존 T5 부분 해석 전체가 숨겨졌다. 같은 원국 해석을 보여 주는 연·월운 통합 연구 화면은 T8이 한 개라도 존재하면 T5 카드를 함께 표시할 수 없었다.
+- **실제 수정:** General 원국 T8이 중심 없이 긴장 부분풀이만 선택된 경우, 그 T8이 이미 소비한 T5 Claim ID를 제외하고 남은 원래 T5 한국어 문장·실제 십신 위치·Claim·Rule·Methodology·Source를 함께 제공한다. 원국 종합 T8이 아예 없던 기존 fallback은 유지한다. 새 T5/T8/T9 Claim이나 명리 의미를 창작하지 않는다.
+- **화면 연결:** 기존 5분야 원국 화면과 연·월운 통합 연구 화면이 위 제한된 부분 해석을 동시 표시한다. 원국 T8과 미사용 T5를 별도 읽기로 유지하고, 현재 연·월 운세에 작용하는 새로운 인과·합성 결과로 해석하지 않는다.
+- **검증 경계:** 실제 계산 명식에서 미사용 T5의 출처/계산 경로와 T8 소비 근거 비중복, 잘못된 중복 Claim 주입 거부, 연구·공개/판매 불가, 기존 30명 의미검증과 500명 고정 감사 유지. 17건 직접 재물 종합근거 부족이나 연·월운 자체 T9 의미 다양성 증가로 계산하지 않는다.
+- **변경 파일:** `src/preview/natal-existing-t5-source-context.ts`, `src/preview/general-natal-multifactor-report.ts`, `src/preview/natal-five-domain-multifactor-reader.ts`, `src/preview/general-annual-monthly-exploration-report.ts`, `test/general-natal-multifactor-consumer-report.test.ts`, `test/natal-five-domain-multifactor-reader.test.ts`, 본 워크로그.
+- **검증 상태:** 직전 작업 53 CI 4종 성공 [PR #2745](https://github.com/gycha0109-beep/Saju/pull/2745/checks). 이번 변경은 신규 CI 검증 전이며 성공을 추정하지 않는다.
+
 ## 2026-11-01 — 작업 53 · 원국 중심근거 미확립 상태의 30명 의미 검증 CI 보정 (단계 5·6)
 - **실패 확인:** [커밋 `f49a1377` 전체 CI](https://github.com/gycha0109-beep/Saju/actions/runs/41314226292/job/124871984267)에서 `test/natal-five-domain-semantic-matrix.test.ts`의 30명 검증 1건 실패(677 통과/1 실패). 작업 50은 원국 T8 중심 결론이 없을 때 '추가 구조 축 2개 부족'이라는 잘못된 안내를 제거했지만, 의미 행렬 테스트가 기존 안내를 필수로 요구했다.
 - **수정:** 원국 총운은 실제로 선택된 중심 T8 해석 축(core/expression/response/responsibility)이 있을 때만 보조 구조 부족 수를 검사한다. 중심 없이 긴장 근거만 있는 경우에는 중심 해석 미확립 사유를 확인하고, 보조축 부족 문구가 나타나지 않음을 검증한다. 재물운 중심 T8 확인·독립축 검증과 30개 실제 명식의 의미 차별화 기준은 유지한다.

@@ -120,6 +120,12 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
     expect(new Set(found.report.sections.map(s => s.pattern)).size).toBe(found.report.sections.length);
     expect(found.report.missing.join(' ')).toContain('중심 결론을 세울 수 없어');
     expect(found.report.missing.join(' ')).not.toContain('추가 구조 축');
+    const alreadyUsedT5 = new Set(found.report.sections.flatMap(s => s.upstreamClaimIds));
+    for (const theme of found.report.availableThemeContext?.themes ?? []) {
+      expect(alreadyUsedT5.has(theme.claimId)).toBe(false);
+      expect(theme.sourceIds.length).toBeGreaterThan(0);
+      expect(theme.observedFactPaths.length).toBeGreaterThan(0);
+    }
     for(const section of found.report.sections) {
       expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
       expect(section.observedPositions.every(p => section.paragraph.includes(p))).toBe(true);

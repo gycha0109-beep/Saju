@@ -33,6 +33,7 @@ export interface NatalExistingT5SourceContext {
 export function buildNatalExistingT5SourceContext(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
+  alreadyConsumedT5ClaimIds: readonly string[] = [],
 ): NatalExistingT5SourceContext | undefined {
   const facts = snapshot.derivedFacts.tenGods;
   if (!snapshot.completeness.birthTimeKnown || facts.status !== 'resolved') return undefined;
@@ -41,7 +42,9 @@ export function buildNatalExistingT5SourceContext(
     throw new TypeError('Existing T5 source context requires the exact validated natal execution.');
   }
   const themes: NatalExistingT5SourceContext['themes'][number][] = [];
+  const consumed = new Set(alreadyConsumedT5ClaimIds);
   for (const claim of execution.claims) {
+    if (consumed.has(claim.claimId)) continue;
     if (claim.state !== 'active' || claim.snapshotId !== snapshot.snapshotId ||
         claim.scenarioRef !== undefined || claim.taxonomy.tier !== 'T5' ||
         claim.predicate !== 'ten_god_theme' || claim.sourceRefs.length === 0 ||

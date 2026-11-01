@@ -351,7 +351,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       natal.calculationHash !== report.calculationHash ||
       !natal.researchOnly || natal.mayPublish || natal.maySell ||
       natal.usefulComplete ||
-      (natal.sections.length > 0 && natal.availableThemeContext !== undefined)) {
+      (natal.availableThemeContext !== undefined &&
+        natal.sections.some(section => section.axis !== 'tension'))) {
     throw new TypeError('Annual/monthly HTML requires source-bound same-chart natal research context.');
   }
   const natalT8 = natal.sections.map(section => {
@@ -373,8 +374,10 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       '</details></article>';
   }).join('');
   const t5 = natal.availableThemeContext;
+  const consumedNatalT5 = new Set(natal.sections.flatMap(section => section.upstreamClaimIds));
   if (t5 !== undefined && (
       t5.wholeChartSynthesisAuthorized !== false ||
+      t5.themes.some(theme => consumedNatalT5.has(theme.claimId)) ||
       t5.themes.length === 0 ||
       t5.themes.some(theme => !theme.claimId || !theme.sourceIds.length ||
         !theme.ruleIds.length || !theme.methodologyId ||
@@ -382,8 +385,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
         theme.observedPositions.length !== theme.observedFactPaths.length))) {
     throw new TypeError('Natal partial T5 context lacks validated source and chart positions.');
   }
-  const natalT5 = natal.sections.length === 0 && t5 !== undefined
-    ? '<article class="reading-card"><small>원국 T8 부족 · 기존 T5 부분 해석</small>' +
+  const natalT5 = t5 !== undefined
+    ? '<article class="reading-card"><small>원국 중심 T8 부족 · 미사용 T5 부분 해석</small>' +
       '<h3>' + e(t5.title) + '</h3><p>' + e(t5.paragraph) + '</p>' +
       t5.themes.map(theme => '<details><summary>' + e(theme.headline) +
         ' · 기존 십신 근거</summary><p>' + e(theme.summary) + '</p>' +
@@ -399,7 +402,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<h2>이 명식에서 실제 확인된 원국 해석</h2>' +
     '<p class="muted">아래 내용은 기존 출처를 사용한 원국 T5/T8 연구용 풀이입니다. ' +
     '올해·이번 달에 새로 작용한다는 뜻이 아니며, 시기 해석의 추가 근거로 계산하지 않습니다.</p>' +
-    (natalT8 || natalT5 ||
+    (natalT8 + natalT5 ||
       '<p>확정된 원국 종합해석 또는 기존 십신 부분풀이 근거가 아직 충분하지 않습니다.</p>') +
     '</section>';
   const annual = report.annual.sections.map((section, i) =>
