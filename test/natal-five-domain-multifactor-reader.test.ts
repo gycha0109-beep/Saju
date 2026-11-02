@@ -426,6 +426,51 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       .toThrow('existing theme context has no actual sourced calculation evidence');
   }, 30000);
 
+  it('separates hidden-stem wealth membership from absent direct T5 in the actual insufficient charts', () => {
+    for (const birth of [
+      { year: 1981, month: 2, day: 1, hour: 13, minute: 52, expected: 'membership_only' },
+      { year: 1971, month: 3, day: 28, hour: 22, minute: 44,
+        expected: 'no_membership_observed' },
+    ] as const) {
+      const chart = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar', date: {
+          year: birth.year, month: birth.month, day: birth.day,
+        }, time: { known: true, hour: birth.hour, minute: birth.minute },
+        sexForTraditionalCalculation: 'unspecified',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const domainReports = reports(chart);
+      const wealth = domainReports.wealth;
+      expect(wealth.state).toBe('insufficient');
+      expect(wealth.sections).toHaveLength(0);
+      expect(wealth.availableThemeContext?.hiddenWealthT5Boundary).toBe(birth.expected);
+      expect(wealth.availableThemeContext?.hiddenWealthMembership.length === 0)
+        .toBe(birth.expected === 'no_membership_observed');
+      const html = renderNatalFiveDomainMultifactorResearchHtml(chart, domainReports);
+      const wealthCard = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+      expect(wealthCard).toContain('aria-label="지장간 계산과 재물운 해석의 구분"');
+      expect(wealthCard).toContain('새로운 운세 주장이 아닙니다');
+      expect(wealthCard).toContain(birth.expected === 'membership_only'
+        ? '재성 해석 근거(T5)가 아닙니다'
+        : '이 사실은 재산이나 돈이 없다는 뜻이 아니며');
+      expect(wealth.missing.join(' ')).toContain('재성 계열의 활성 근거가 확인되지 않아');
+      expect(wealth.mayPublish).toBe(false);
+      expect(wealth.maySell).toBe(false);
+      const altered = {
+        ...domainReports,
+        wealth: {
+          ...wealth,
+          availableThemeContext: {
+            ...wealth.availableThemeContext!,
+            hiddenWealthT5Boundary: birth.expected === 'membership_only'
+              ? 'no_membership_observed' as const : 'membership_only' as const,
+          },
+        },
+      };
+      expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, altered))
+        .toThrow('hidden wealth evidence is not an executed direct Wealth T5 theme');
+    }
+  });
+
   it('displays already sourced T5 meanings alongside an indirect-only Wealth T8 paragraph', () => {
     for (const birth of [
       { year: 1964, month: 11, day: 14, hour: 14, minute: 59, pattern: 'OFFICER_RESOURCE_CONTEXT' },

@@ -40,6 +40,8 @@ export interface WealthNatalAvailableThemeContext {
   hiddenWealthMembership: readonly WealthHiddenStemObservation[];
   hiddenWealthEvidenceStatus: 'resolved' | 'unavailable';
   hiddenWealthUnavailableReason?: string;
+  /** Calculated hidden membership only: never a source for Wealth T5/T8. */
+  hiddenWealthT5Boundary?: 'membership_only' | 'no_membership_observed' | 'membership_unavailable';
   themes: readonly {
     claimId: string;
     claimType: string;
@@ -310,6 +312,18 @@ function buildAvailableThemeContext(
   const hiddenAssessment = observeHiddenWealthMembership(snapshot);
   const hiddenWealthMembership = hiddenAssessment.status === 'resolved'
     ? hiddenAssessment.observations : [];
+  const hasExecutedDirectWealthT5 = execution.claims.some(claim =>
+    claim.state === 'active' && claim.snapshotId === snapshot.snapshotId &&
+    claim.taxonomy.tier === 'T5' && claim.predicate === 'ten_god_theme' &&
+    /^TEN_GOD_WEALTH_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(claim.claimType));
+  // R27 allows an appendix with hidden-stem MEMBERSHIP, not activation or
+  // interpretation. State the reason for withholding T8 when T5 is absent.
+  const hiddenWealthT5Boundary = !hasSelectedCore && !hasExecutedDirectWealthT5
+    ? hiddenAssessment.status === 'unavailable'
+      ? 'membership_unavailable' as const
+      : hiddenWealthMembership.length > 0
+        ? 'membership_only' as const : 'no_membership_observed' as const
+    : undefined;
   return {
     title: hasSelectedCore
       ? '재물 중심 부분풀이와 구별되는 원국의 십신 주제'
@@ -328,6 +342,7 @@ function buildAvailableThemeContext(
     wealthConclusionAuthorized: false,
     hiddenWealthMembership,
     hiddenWealthEvidenceStatus: hiddenAssessment.status,
+    ...(hiddenWealthT5Boundary === undefined ? {} : { hiddenWealthT5Boundary }),
     ...(hiddenAssessment.status === 'unavailable'
       ? { hiddenWealthUnavailableReason: hiddenAssessment.reasonCode } : {}),
     themes: sorted,

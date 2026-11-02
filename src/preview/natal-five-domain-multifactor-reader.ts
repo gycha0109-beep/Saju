@@ -446,6 +446,28 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
       renderList(item.factPaths) + '<p>' +
       escapeHtml(item.membershipSourceUrl) + '</p></details></li>';
   }).join('');
+  const inferredBoundary = report.sections.every(section => section.axis === 'context') &&
+    context.themes.every(theme => theme.family !== 'wealth')
+    ? context.hiddenWealthEvidenceStatus === 'unavailable'
+      ? 'membership_unavailable'
+      : context.hiddenWealthMembership.length > 0
+        ? 'membership_only' : 'no_membership_observed'
+    : undefined;
+  guard(context.hiddenWealthT5Boundary === inferredBoundary,
+    'hidden wealth evidence is not an executed direct Wealth T5 theme');
+  const hiddenBoundaryNote = inferredBoundary === undefined ? ''
+    : '<aside class="hidden-wealth-fact-boundary" aria-label="지장간 계산과 재물운 해석의 구분">' +
+      '<strong>지장간 계산과 재물운 풀이의 차이</strong><p>' +
+      (inferredBoundary === 'membership_only'
+        ? '지장간 구성에는 재성 계열로 계산되는 천간이 실제로 포함됩니다. ' +
+          '그러나 이는 지장간의 구성 기록이며, 기존 천간·지지 대표 십신의 재성 해석 근거(T5)가 아닙니다. ' +
+          '따라서 이를 재물 중심 복합 풀이(T8)로 자동 연결하지 않습니다.'
+        : inferredBoundary === 'no_membership_observed'
+          ? '현재 계산된 지장간 구성에서도 재성 계열 항목은 관측되지 않았습니다. ' +
+            '이 사실은 재산이나 돈이 없다는 뜻이 아니며, 직접 재성 해석 근거(T5)의 부족을 대신 설명하지도 않습니다.'
+          : '현재 지장간 구성이 미확정이어서 재성 계열 포함 여부를 판단하지 않습니다. ' +
+            '미확정 구성으로 재물 복합 해석을 보완하지 않습니다.') +
+      '</p><p>위 설명은 계산 사실과 해석 권한의 경계이지 새로운 운세 주장이 아닙니다.</p></aside>';
   const hiddenSection = hidden.length
     ? '<details><summary>지장간의 재성 계열 구성 관측</summary><ul>' +
       hidden + '</ul></details>'
@@ -483,6 +505,7 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
     '<p class="source-gap"><strong>현재 종합 풀이가 보류된 이유: </strong>' +
     escapeHtml(currentGap) + '</p>' +
     '<p>' + escapeHtml(context.paragraph) + '</p>' +
+    hiddenBoundaryNote +
     '<details><summary>주제별 계산 근거·출처 보기</summary><ul>' +
     themes + '</ul></details>' + hiddenSection + '</section>';
 }
