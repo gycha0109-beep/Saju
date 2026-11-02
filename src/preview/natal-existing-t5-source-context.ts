@@ -1,5 +1,6 @@
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
+import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 
 type Channel = 'visible_stems' | 'branches';
 type Family = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
@@ -33,13 +34,18 @@ export interface NatalExistingT5SourceContext {
 export function buildNatalExistingT5SourceContext(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
   alreadyConsumedT5ClaimIds: readonly string[] = [],
   hasSelectedPartialCore = false,
 ): NatalExistingT5SourceContext | undefined {
   const facts = snapshot.derivedFacts.tenGods;
   if (!snapshot.completeness.birthTimeKnown || facts.status !== 'resolved') return undefined;
   if (!execution.integrity.valid || execution.run.snapshotId !== snapshot.snapshotId ||
-      execution.run.snapshotHash !== snapshot.calculationHash || execution.run.status === 'failed') {
+      execution.run.snapshotHash !== snapshot.calculationHash || execution.run.status === 'failed' ||
+      execution.run.registrySnapshotId !== registry.snapshot.registrySnapshotId ||
+      execution.run.packRef.id !== registry.pack.packId ||
+      execution.run.packRef.version !== registry.pack.version ||
+      registry.pack.status !== 'research') {
     throw new TypeError('Existing T5 source context requires the exact validated natal execution.');
   }
   const themes: NatalExistingT5SourceContext['themes'][number][] = [];
@@ -61,6 +67,47 @@ export function buildNatalExistingT5SourceContext(
         typeof value.headline !== 'string' || value.headline.length === 0 ||
         typeof value.summary !== 'string' || value.summary.length === 0) {
       throw new TypeError('T5 partial source context contains an unauthorized meaning.');
+    }
+    // A reported T5 theme must be the ORIGINAL result of a matched research
+    // rule, its registered semantic copy, method and source. An active Claim
+    // with a plausible name alone is not enough to authorize interpretation.
+    const ruleRef = claim.ruleRefs[0];
+    const rule = registry.rules.find(item =>
+      item.ruleId === ruleRef?.ruleId && item.version === ruleRef.version);
+    const evaluation = execution.evaluations.find(item =>
+      item.evaluationId === ruleRef?.evaluationId);
+    const method = registry.methodologies.find(item =>
+      item.methodologyId === claim.methodologyRef.id &&
+      item.version === claim.methodologyRef.version);
+    const registeredMeaning = rule?.output.value as Record<string, unknown> | undefined;
+    const allowedSources = new Set(rule?.sourceRefs.map(ref => ref.sourceId) ?? []);
+    if (claim.ruleRefs.length !== 1 || rule === undefined ||
+        rule.status !== 'research' || rule.taxonomy.tier !== 'T5' ||
+        rule.taxonomy.category !== 'ten_gods' ||
+        rule.output.claimType !== claim.claimType ||
+        rule.output.predicate !== claim.predicate ||
+        rule.output.subject !== claim.subject ||
+        rule.methodologyRef.id !== claim.methodologyRef.id ||
+        rule.methodologyRef.version !== claim.methodologyRef.version ||
+        registeredMeaning?.family !== family ||
+        registeredMeaning?.channel !== channel ||
+        registeredMeaning?.headline !== value.headline ||
+        registeredMeaning?.summary !== value.summary ||
+        method?.status !== 'research' ||
+        !method.sourceIds.every(id => allowedSources.has(id)) ||
+        evaluation?.status !== 'matched' ||
+        evaluation.snapshotId !== snapshot.snapshotId ||
+        evaluation.scenarioRef !== undefined ||
+        evaluation.ruleRef.id !== ruleRef?.ruleId ||
+        evaluation.ruleRef.version !== ruleRef?.version ||
+        evaluation.interpretationPackRef.id !== registry.pack.packId ||
+        evaluation.interpretationPackRef.version !== registry.pack.version ||
+        !evaluation.emittedClaimIds.includes(claim.claimId) ||
+        allowedSources.size === 0 ||
+        claim.sourceRefs.length !== allowedSources.size ||
+        !claim.sourceRefs.every(id => allowedSources.has(id) &&
+          registry.sources.some(source => source.sourceId === id))) {
+      throw new TypeError('T5 partial meaning lacks its executed registered rule, method, source or original copy.');
     }
     const key = channel === 'visible_stems' ? 'stem' : 'branch';
     const slots: readonly PillarSlot[] = channel === 'visible_stems'

@@ -365,7 +365,8 @@ export function buildGeneralNatalMultifactorReport(
   const hasSelectedPartialCore = core !== undefined && state === 'partial';
   const availableThemeContext = core === undefined || hasSelectedPartialCore
     ? buildNatalExistingT5SourceContext(
-        snapshot, execution, sections.flatMap(section => section.upstreamClaimIds),
+        snapshot, execution, registry,
+        sections.flatMap(section => section.upstreamClaimIds),
         hasSelectedPartialCore,
       ) : undefined;
   if(!snapshot.completeness.birthTimeKnown) {

@@ -9,6 +9,7 @@ import {
   createGeneralNatalMultifactorRegistry,
 } from '../src/research/general-natal-multifactor-candidate.js';
 import { buildGeneralNatalMultifactorReport } from '../src/preview/general-natal-multifactor-report.js';
+import { buildNatalExistingT5SourceContext } from '../src/preview/natal-existing-t5-source-context.js';
 
 const registry = createGeneralNatalMultifactorRegistry();
 const NOW = new Date('2026-10-19T00:00:00.000Z');
@@ -119,6 +120,49 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
     }
     expect(verified).toBe(true);
   }, 60000);
+
+  it('refuses a fabricated T5 claim, unmatched evaluation or altered Korean copy', () => {
+    const { snapshot, execution } = run(3, 10);
+    const selected = execution.claims.find(claim =>
+      claim.state === 'active' && claim.taxonomy.tier === 'T5' &&
+      claim.predicate === 'ten_god_theme');
+    expect(selected).toBeDefined();
+    if (!selected) return;
+    const original = buildNatalExistingT5SourceContext(snapshot, execution, registry);
+    expect(original?.themes.some(theme => theme.claimId === selected.claimId)).toBe(true);
+    const corruptEvaluation = {
+      ...execution,
+      claims: execution.claims.map(claim =>
+        claim.claimId === selected.claimId ? {
+          ...claim,
+          ruleRefs: claim.ruleRefs.map(ref => ({
+            ...ref, evaluationId: 'forged-unmatched-evaluation',
+          })),
+        } : claim),
+    };
+    expect(() => buildNatalExistingT5SourceContext(snapshot, corruptEvaluation, registry))
+      .toThrow('T5 partial meaning lacks its executed registered rule');
+    const alteredMeaning = {
+      ...execution,
+      claims: execution.claims.map(claim =>
+        claim.claimId === selected.claimId ? {
+          ...claim,
+          value: { ...(claim.value as Record<string, unknown>),
+            summary: '원래 등록되지 않은 개인별 판단입니다.' },
+        } : claim),
+    };
+    expect(() => buildNatalExistingT5SourceContext(snapshot, alteredMeaning, registry))
+      .toThrow('T5 partial meaning lacks its executed registered rule');
+    const foreignSource = {
+      ...execution,
+      claims: execution.claims.map(claim =>
+        claim.claimId === selected.claimId ? {
+          ...claim, sourceRefs: ['UNREGISTERED-SOURCE'],
+        } : claim),
+    };
+    expect(() => buildNatalExistingT5SourceContext(snapshot, foreignSource, registry))
+      .toThrow('T5 partial meaning lacks its executed registered rule');
+  }, 30000);
 
   it('requires distinct actual General interpretation axes for MUR complete', () => {
     const x = run(3,10);
