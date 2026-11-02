@@ -5,6 +5,7 @@ import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/product
 import { inspectMyeonghwaProductionComposition } from '../src/production/production-composition.js';
 import {
   WEALTH_NATAL_MULTIFACTOR_RULES,
+  WEALTH_NATAL_CROSS_CHANNEL_RULES,
   WEALTH_NATAL_MULTIFACTOR_PACK,
   createWealthNatalMultifactorRegistry,
 } from '../src/research/wealth-natal-multifactor-candidate.js';
@@ -34,7 +35,12 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(registry.pack.packId).toBe(WEALTH_NATAL_MULTIFACTOR_PACK.packId);
     expect(WEALTH_NATAL_MULTIFACTOR_RULES).toHaveLength(18);
     expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(18);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(20);
+    expect(WEALTH_NATAL_CROSS_CHANNEL_RULES).toHaveLength(2);
+    expect(WEALTH_NATAL_CROSS_CHANNEL_RULES.every(rule =>
+      rule.status === 'research' && rule.inputs.length === 2 &&
+      rule.inputs.every(i => i.required && i.cardinality === 'exactly_one') &&
+      rule.sourceRefs.length === 2)).toBe(true);
     expect(registry.rules.filter(r => r.taxonomy.subcategory === 'self_baseline')).toHaveLength(0);
     for(const rule of WEALTH_NATAL_MULTIFACTOR_RULES) {
       expect(rule.taxonomy.category).toBe('wealth');
@@ -90,7 +96,7 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
         expect(s.observedPositions).toHaveLength(s.observedFactPaths.length);
         expect(s.paragraph).toContain('이 원국에서 확인된 근거는');
         expect(s.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
-        expect(s.paragraph).toMatch(/같은 (천간|지지 대표 십신)에서 관측된/u);
+        expect(s.paragraph).toMatch(/(같은 (천간|지지 대표 십신)에서 관측된|서로 다른 관측 범위)/u);
         expect(s.paragraph).toContain(s.headline);
         expect(s.observedPositions.every(p=>s.paragraph.includes(p))).toBe(true);
         expect(s.observedFactPaths.every(path =>

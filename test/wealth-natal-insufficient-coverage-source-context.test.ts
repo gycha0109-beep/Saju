@@ -111,21 +111,28 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(report.usefulComplete).toBe(false);
   }, 30000);
 
-  it('explains channel-split wealth T5 evidence without manufacturing a same-channel synthesis', () => {
+  it('reads only the source-bounded whole-chart output/wealth relation across T5 channels', () => {
     const { execution, report } = wealthReading(1955, 10, 31, 19, 35);
-    expect(execution.claims.some(c => c.state === 'active' &&
-      c.claimType.startsWith('TEN_GOD_WEALTH_'))).toBe(true);
-    expect(report.sections).toHaveLength(0);
-    expect(report.state).toBe('insufficient');
-    const reason = report.missing.join(' ');
-    expect(reason).toContain('천간: 비겁·식상 / 지지 대표 십신: 재성');
-    expect(reason).toContain('천간과 지지 대표 십신으로 나뉘어 있습니다');
-    expect(reason).toContain('동일 관측 범위의 복합 근거');
-    expect(reason).toContain('서로 다른 채널을 임의로 결합해 재물 종합 결론을 만들 수 없습니다');
-    expect(reason).toContain('실제 소득·재산·재물운의 좋고 나쁨을 뜻하지 않습니다');
+    const core = report.sections[0]!;
+    expect(core).toBeDefined();
+    expect(core.axis).toBe('creation');
+    expect(core.channel).toBe('cross_channel');
+    expect(core.pattern).toBe('OUTPUT_WEALTH');
+    expect(core.claimType).toContain('OUTPUT_VISIBLE_STEMS_CROSS_CHANNEL');
+    expect(core.upstreamClaimIds).toHaveLength(2);
+    expect(core.upstreamClaimIds.map(id => execution.claims.find(c => c.claimId === id)?.claimType).sort())
+      .toEqual(['TEN_GOD_OUTPUT_VISIBLE_STEMS_THEME', 'TEN_GOD_WEALTH_BRANCHES_THEME'].sort());
+    expect(core.observedFactPaths.some(path => path.endsWith('.stem.value'))).toBe(true);
+    expect(core.observedFactPaths.some(path => path.endsWith('.branch.value'))).toBe(true);
+    expect(core.paragraph).toContain('천간과 지지 대표 십신의 서로 다른 관측 범위');
+    expect(core.paragraph).not.toContain('같은 천간에서 관측된');
+    expect(core.sourceIds.length).toBe(2);
+    expect(report.state).toBe('partial');
+    expect(report.readingGuide?.paragraph).toContain('독립적인 보조 관점');
     expect(report.availableThemeContext?.wealthConclusionAuthorized).toBe(false);
     expect(report.usefulComplete).toBe(false);
     expect(report.mayPublish).toBe(false);
     expect(report.maySell).toBe(false);
+    expect(wealthReading(1955, 10, 31, 19, 35).report).toEqual(report);
   });
 });

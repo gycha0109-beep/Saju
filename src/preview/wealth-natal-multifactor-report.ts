@@ -9,12 +9,14 @@ import { buildReadingCompositionEvidence } from '../reading/reading-intent-compo
 import {
   WEALTH_NATAL_MULTIFACTOR_PACK,
   WEALTH_NATAL_MULTIFACTOR_NARRATIVES,
+  WEALTH_NATAL_CROSS_CHANNEL_NARRATIVES,
 } from '../research/wealth-natal-multifactor-candidate.js';
 
 export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
 type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension' | 'context';
 type Status = 'complete' | 'partial' | 'insufficient';
-type Channel = 'visible_stems' | 'branches';
+type ObservationChannel = 'visible_stems' | 'branches';
+type Channel = ObservationChannel | 'cross_channel';
 export interface WealthNatalMultifactorSection {
   claimType: string;
   pattern: string;
@@ -131,7 +133,7 @@ function explainMissingWealthT8(
   hasSourceBoundTension: boolean,
 ): string | undefined {
   if (!snapshot.completeness.birthTimeKnown) return undefined;
-  const activeFamilies = new Map<Channel, Set<string>>([
+  const activeFamilies = new Map<ObservationChannel, Set<string>>([
     ['visible_stems', new Set<string>()],
     ['branches', new Set<string>()],
   ]);
@@ -150,7 +152,7 @@ function explainMissingWealthT8(
       .exec(claim.claimType);
     if (!match) continue;
     const family = match[1]!.toLowerCase();
-    const channel = match[2]!.toLowerCase() as Channel;
+    const channel = match[2]!.toLowerCase() as ObservationChannel;
     activeFamilies.get(channel)!.add(family);
   }
 
@@ -216,7 +218,7 @@ function buildAvailableThemeContext(
       .exec(claim.claimType);
     if (!match) continue;
     const family = match[1]!.toLowerCase();
-    const channel = match[2]!.toLowerCase() as Channel;
+    const channel = match[2]!.toLowerCase() as ObservationChannel;
     const value = claim.value as Record<string, unknown>;
     guard(value.family === family && value.channel === channel &&
       value.fortunePolarity === 'not_determined' &&
@@ -313,15 +315,16 @@ function buildAvailableThemeContext(
 }
 
 function textFor(claimType: string, key: 'headline'|'summary') {
-  const profile = WEALTH_NATAL_MULTIFACTOR_NARRATIVES.find(p => p.claimType === claimType);
+  const profile = [...WEALTH_NATAL_MULTIFACTOR_NARRATIVES, ...WEALTH_NATAL_CROSS_CHANNEL_NARRATIVES]
+    .find(p => p.claimType === claimType);
   guard(profile, 'ClaimNarrativeProfile missing: ' + claimType);
   const matches = profile.templates?.filter(t => t.templateKey === key && t.language === 'ko') ?? [];
   guard(matches.length === 1 && matches[0]!.text.length > 0, 'Korean narrative template missing');
   return matches[0]!.text;
 }
-function positions(snapshot: CanonicalSajuSnapshot, channel: Channel, families: readonly string[]) {
+function positions(snapshot: CanonicalSajuSnapshot, channel: ObservationChannel, families: readonly string[]) {
   const fact = snapshot.derivedFacts.tenGods;
-  guard(fact.status === 'resolved' && families.length >= 2 &&
+  guard(fact.status === 'resolved' && families.length >= 1 &&
     families.length <= 3 && new Set(families).size === families.length &&
     families.every(f => FAMILIES[f] !== undefined),
     'unresolved or unsupported exact chart input');
@@ -350,9 +353,16 @@ function toSection(
   registry: ResolvedRuleRegistrySnapshot,
 ): WealthNatalMultifactorSection {
   const value = claim.value as Record<string, unknown>;
+  const cross = value?.channel === 'cross_channel';
+  const channels = value?.familyChannels as Record<string, unknown> | undefined;
+  const validCross = cross && value.pattern === 'OUTPUT_WEALTH' &&
+    JSON.stringify(value.families) === JSON.stringify(['output', 'wealth']) &&
+    channels !== undefined &&
+    ((channels.output === 'visible_stems' && channels.wealth === 'branches') ||
+      (channels.output === 'branches' && channels.wealth === 'visible_stems'));
   guard(value && typeof value === 'object' && typeof value.pattern === 'string' &&
     AXES.includes(value.axis as Axis) &&
-    (value.channel === 'visible_stems' || value.channel === 'branches') &&
+    (value.channel === 'visible_stems' || value.channel === 'branches' || validCross) &&
     Array.isArray(value.families) &&
     value.realLifeOutcomeAuthorized === false && value.futureTimingAuthorized === false &&
     value.healthOrMoneyOutcomeAuthorized === false && value.numericScoringAuthorized === false &&
@@ -361,7 +371,8 @@ function toSection(
     'invalid or overclaiming structured T8 meaning');
   const upstream = claim.upstreamClaimRefs.map(id => execution.claims.find(c => c.claimId === id));
   guard(claim.scenarioRef === undefined && claim.methodologyRef.id ===
-    'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1' &&
+    (cross ? 'M-WEALTH-NATAL-WHOLE-CHART-OUTPUT-WEALTH-V1' :
+      'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1') &&
     new Set(claim.upstreamClaimRefs).size === claim.upstreamClaimRefs.length &&
     upstream.every(c => c && c.state === 'active' && c.taxonomy.tier === 'T5' &&
       c.snapshotId === snapshot.snapshotId && c.scenarioRef === undefined),
@@ -396,7 +407,12 @@ function toSection(
     rule.sourceRefs.every(x => claim.sourceRefs.includes(x.sourceId)) &&
     claim.sourceRefs.every(id => registry.sources.some(x => x.sourceId === id)),
     'not exactly source-bound to Wealth T5 family and method inputs');
-  const locations = positions(snapshot, value.channel as Channel, value.families as string[]);
+  const locations = cross
+    ? [
+        ...positions(snapshot, channels!.output as ObservationChannel, ['output']),
+        ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
+      ]
+    : positions(snapshot, value.channel as ObservationChannel, value.families as string[]);
   const observedByFamily = (value.families as string[]).map(family => {
     const actual = locations.filter(location => location.family === family);
     guard(actual.length > 0 && EVIDENCE_ROLES[family] !== undefined,
@@ -404,6 +420,9 @@ function toSection(
     return `${EVIDENCE_ROLES[family]}: ${actual.map(x => x.display).join(' · ')}`;
   });
   const observedChannel = value.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
+  const observation = cross
+    ? '천간과 지지 대표 십신의 서로 다른 관측 범위에서 확인된 두 십신 계열을'
+    : '같은 ' + observedChannel + '에서 관측된 서로 다른 십신 계열을';
   const headline = textFor(claim.claimType, 'headline');
   return {
     claimType: claim.claimType,
@@ -411,7 +430,7 @@ function toSection(
     axis: value.axis as Axis,
     channel: value.channel as Channel,
     headline: textFor(claim.claimType,'headline'),
-    paragraph: `이 원국에서 확인된 근거는 ${observedByFamily.join(' / ')}입니다. 같은 ${observedChannel}에서 관측된 서로 다른 십신 계열을 ${describeQuotedReadingAxis(headline)} 구조적 관점에서 함께 읽습니다. ${textFor(claim.claimType,'summary')}`,
+    paragraph: `이 원국에서 확인된 근거는 ${observedByFamily.join(' / ')}입니다. ${observation} ${describeQuotedReadingAxis(headline)} 구조적 관점에서 함께 읽습니다. ${textFor(claim.claimType,'summary')}`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
