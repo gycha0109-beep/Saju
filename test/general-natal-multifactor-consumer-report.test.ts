@@ -81,6 +81,45 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
     expect(run(3,10).report).toEqual(run(3,10).report);
   }, 30000);
 
+  it('preserves actual unconsumed T5 meanings beside a partial General core without inventing supports', () => {
+    let verified = false;
+    outer: for (const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
+      for (const day of [3,7,11,17,23]) {
+        const { snapshot, execution, report } = run(month, day);
+        if (report.state !== 'partial' || !report.readingGuide ||
+            report.sections.length === 0 || report.sections[0]!.axis === 'tension' ||
+            !report.availableThemeContext) continue;
+        const context = report.availableThemeContext;
+        expect(report.sections.length).toBeLessThan(3);
+        expect(report.readingGuide.sourceClaimType).toBe(report.sections[0]!.claimType);
+        expect(context.title).toContain('총운 중심 부분풀이와 구별되는');
+        expect(context.paragraph).toContain('부족한 독립 보조 복합 해석을 대신하지 않습니다');
+        expect(context.wholeChartSynthesisAuthorized).toBe(false);
+        const consumed = new Set(report.sections.flatMap(section => section.upstreamClaimIds));
+        const usedPaths = new Set(report.sections.flatMap(section => section.observedFactPaths));
+        const executedT5 = new Set(execution.claims.filter(claim =>
+          claim.state === 'active' && claim.taxonomy.tier === 'T5' &&
+          claim.snapshotId === snapshot.snapshotId).map(claim => claim.claimId));
+        for (const theme of context.themes) {
+          expect(executedT5.has(theme.claimId)).toBe(true);
+          expect(consumed.has(theme.claimId)).toBe(false);
+          expect(theme.observedFactPaths.every(path => !usedPaths.has(path))).toBe(true);
+          expect(context.paragraph).toContain(theme.summary);
+          expect(theme.ruleIds.length).toBeGreaterThan(0);
+          expect(theme.sourceIds.length).toBeGreaterThan(0);
+          expect(theme.methodologyId.length).toBeGreaterThan(0);
+        }
+        expect(report.mayPublish).toBe(false);
+        expect(report.maySell).toBe(false);
+        expect(report.usefulComplete).toBe(false);
+        expect(report).toEqual(buildGeneralNatalMultifactorReport(snapshot, execution, registry));
+        verified = true;
+        break outer;
+      }
+    }
+    expect(verified).toBe(true);
+  }, 60000);
+
   it('requires distinct actual General interpretation axes for MUR complete', () => {
     const x = run(3,10);
     if(x.report.state === 'complete') {

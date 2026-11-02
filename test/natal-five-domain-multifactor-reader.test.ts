@@ -190,6 +190,52 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(checked).toBe(true);
   }, 60000);
 
+  it('shows unconsumed source-owned General T5 beside a partial core and blocks duplicate claims', () => {
+    let verified = false;
+    outer: for (const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
+      for (const day of [3,7,11,17,23]) {
+        const chart = sample(month, day, 12);
+        const execution = runInterpretation(chart, registry.general, { now: NOW });
+        const general = buildGeneralNatalMultifactorReport(chart, execution, registry.general);
+        if (general.state !== 'partial' || general.sections.length === 0 ||
+            general.sections[0]!.axis === 'tension' || !general.availableThemeContext) continue;
+        const reading = reports(chart);
+        const card = renderNatalFiveDomainMultifactorResearchHtml(chart, reading)
+          .split('<h2 id="domain-general">')[1]!.split('</article>')[0]!;
+        expect(card).toContain('총운 중심 부분풀이와 구별되는 기존 십신 관점');
+        expect(card).toContain('원국 종합해석 아님');
+        const consumed = new Set(general.sections.flatMap(section => section.upstreamClaimIds));
+        for (const theme of general.availableThemeContext.themes) {
+          expect(consumed.has(theme.claimId)).toBe(false);
+          expect(card).toContain(theme.summary);
+          expect(card).toContain(theme.ruleIds[0]!);
+          expect(card).toContain(theme.sourceIds[0]!);
+          expect(card).toContain(theme.methodologyId);
+          expect(card).toContain(theme.observedFactPaths[0]!);
+        }
+        const duplicate = {
+          ...reading,
+          general: {
+            ...general,
+            availableThemeContext: {
+              ...general.availableThemeContext,
+              themes: [{
+                ...general.availableThemeContext.themes[0]!,
+                claimId: general.sections[0]!.upstreamClaimIds[0]!,
+              }],
+            },
+          },
+        };
+        expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, duplicate))
+          .toThrow('General T5 context cannot substitute');
+        expect(general.usefulComplete).toBe(false);
+        verified = true;
+        break outer;
+      }
+    }
+    expect(verified).toBe(true);
+  }, 60000);
+
   it('shows unconsumed original T5 meanings beside a source-bound General tension without claiming a core', () => {
     let verified = false;
     outer: for (const month of [2,3,4,5,6,7,8,9,10,11,12,1]) {

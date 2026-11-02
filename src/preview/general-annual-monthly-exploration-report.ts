@@ -365,7 +365,13 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       !natal.researchOnly || natal.mayPublish || natal.maySell ||
       natal.usefulComplete ||
       (natal.availableThemeContext !== undefined &&
-        natal.sections.some(section => section.axis !== 'tension'))) {
+        !(natal.sections.length === 0 && natal.state === 'insufficient' ||
+          natal.sections.length === 1 && natal.sections[0]!.axis === 'tension' &&
+            natal.state === 'partial' ||
+          natal.state === 'partial' && natal.readingGuide !== undefined &&
+            natal.sections.length > 0 && natal.sections.length < 3 &&
+            natal.sections[0]!.axis !== 'tension' &&
+            natal.readingGuide.sourceClaimType === natal.sections[0]!.claimType))) {
     throw new TypeError('Annual/monthly HTML requires source-bound same-chart natal research context.');
   }
   const natalT8 = natal.sections.map(section => {
@@ -391,9 +397,13 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   }).join('');
   const t5 = natal.availableThemeContext;
   const consumedNatalT5 = new Set(natal.sections.flatMap(section => section.upstreamClaimIds));
+  const usedNatalT8Paths = new Set(natal.sections.flatMap(section => section.observedFactPaths));
+  const partialNatalCore = natal.state === 'partial' &&
+    natal.sections.length > 0 && natal.sections[0]!.axis !== 'tension';
   if (t5 !== undefined && (
       t5.wholeChartSynthesisAuthorized !== false ||
-      t5.themes.some(theme => consumedNatalT5.has(theme.claimId)) ||
+      t5.themes.some(theme => consumedNatalT5.has(theme.claimId) ||
+        theme.observedFactPaths.some(path => usedNatalT8Paths.has(path))) ||
       t5.themes.length === 0 ||
       t5.themes.some(theme => !theme.claimId || !theme.sourceIds.length ||
         !theme.ruleIds.length || !theme.methodologyId ||
@@ -402,7 +412,10 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     throw new TypeError('Natal partial T5 context lacks validated source and chart positions.');
   }
   const natalT5 = t5 !== undefined
-    ? '<article class="reading-card"><small>원국 중심 T8 부족 · 미사용 T5 부분 해석</small>' +
+    ? '<article class="reading-card"><small>' +
+      (partialNatalCore
+        ? '원국 중심 부분풀이와 별개의 미사용 십신 해석 · 독립 보조 근거 아님'
+        : '원국 중심 T8 부족 · 미사용 T5 부분 해석') + '</small>' +
       '<h3>' + e(t5.title) + '</h3><p>' + e(t5.paragraph) + '</p>' +
       t5.themes.map(theme => '<details><summary>' + e(theme.headline) +
         ' · 기존 십신 근거</summary><p>' + e(theme.summary) + '</p>' +

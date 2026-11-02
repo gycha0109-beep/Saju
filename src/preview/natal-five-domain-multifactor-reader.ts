@@ -494,9 +494,16 @@ function renderGeneralExistingT5Context(report: GeneralNatalMultifactorReport): 
   const noT8 = report.state === 'insufficient' && report.sections.length === 0;
   const tensionOnly = report.state === 'partial' && report.sections.length === 1 &&
     report.sections[0]?.axis === 'tension';
+  const partialCore = report.state === 'partial' && report.readingGuide !== undefined &&
+    report.sections.length > 0 && report.sections.length < 3 &&
+    report.sections[0]!.axis !== 'tension' &&
+    report.readingGuide.sourceClaimType === report.sections[0]!.claimType;
   const consumedT5 = new Set(report.sections.flatMap(section => section.upstreamClaimIds));
-  guard((noT8 || tensionOnly) &&
-    context.themes.every(theme => !consumedT5.has(theme.claimId)) &&
+  const usedFactPaths = new Set(report.sections.flatMap(section => section.observedFactPaths));
+  guard((noT8 || tensionOnly || partialCore) &&
+    context.themes.every(theme =>
+      !consumedT5.has(theme.claimId) &&
+      theme.observedFactPaths.every(path => !usedFactPaths.has(path))) &&
     context.wholeChartSynthesisAuthorized === false && context.themes.length > 0 &&
     report.researchOnly && !report.mayPublish && !report.maySell &&
     context.title.length > 0 && context.paragraph.length > 0,

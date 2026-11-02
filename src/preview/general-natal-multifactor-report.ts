@@ -359,12 +359,14 @@ export function buildGeneralNatalMultifactorReport(
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly GeneralNatalMultifactorSection[] = core ? chosen : partialTension;
   const readingGuide = generalSourceBoundReadingGuide(core, sections);
-  // A source-qualified tension is not a whole-chart core. Preserve only
-  // existing T5 meanings that its T8 interpretation did not consume.
-  // They cannot become independent T8 support or a whole-chart conclusion.
-  const availableThemeContext = core === undefined
+  // Preserve unused, source-owned T5 meanings when the selected research
+  // T8 is incomplete: no core, tension-only, or a core lacking two independent
+  // T8 supports. These T5 meanings never count as new T8 supports.
+  const hasSelectedPartialCore = core !== undefined && state === 'partial';
+  const availableThemeContext = core === undefined || hasSelectedPartialCore
     ? buildNatalExistingT5SourceContext(
         snapshot, execution, sections.flatMap(section => section.upstreamClaimIds),
+        hasSelectedPartialCore,
       ) : undefined;
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 원국 전체의 다중 근거 T8 해석은 보류합니다.');

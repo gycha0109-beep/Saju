@@ -34,6 +34,7 @@ export function buildNatalExistingT5SourceContext(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
   alreadyConsumedT5ClaimIds: readonly string[] = [],
+  hasSelectedPartialCore = false,
 ): NatalExistingT5SourceContext | undefined {
   const facts = snapshot.derivedFacts.tenGods;
   if (!snapshot.completeness.birthTimeKnown || facts.status !== 'resolved') return undefined;
@@ -89,12 +90,19 @@ export function buildNatalExistingT5SourceContext(
   themes.sort((a,b) => a.claimType.localeCompare(b.claimType));
   return {
     wholeChartSynthesisAuthorized: false,
-    title: '원국 종합 결론이 없을 때 확인된 기존 십신 부분 해석',
-    paragraph: '이번 명식에는 전체 원국의 복합 해석을 승인할 독립 근거가 부족합니다. ' +
+    title: hasSelectedPartialCore
+      ? '총운 중심 부분풀이와 구별되는 기존 십신 관점'
+      : '원국 종합 결론이 없을 때 확인된 기존 십신 부분 해석',
+    paragraph: (hasSelectedPartialCore
+      ? '이번 명식에는 출처가 확인된 총운 중심 부분풀이가 있지만 독립 보조 근거가 아직 부족합니다. '
+      : '이번 명식에는 전체 원국의 복합 해석을 승인할 독립 근거가 부족합니다. ') +
       '아래에는 이미 실행된 십신 주제의 원래 한국어 설명과 실제 계산 위치만 보여줍니다. ' +
       themes.map(theme =>
         '‘' + theme.headline + '’ — ' + theme.observedPositions.join(' · ') +
         '에서 확인된 범위입니다. ' + theme.summary).join(' ') +
+      (hasSelectedPartialCore
+        ? ' 이 십신 관점은 중심 부분풀이에 쓰인 계산 근거를 반복하지 않으며, 부족한 독립 보조 복합 해석을 대신하지 않습니다.'
+        : '') +
       ' 서로 다른 주제가 함께 있다는 사실만으로 그 관계나 개인의 성격·사건·운세 결과를 새로 추론하지 않습니다.',
     themes,
   };
