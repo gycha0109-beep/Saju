@@ -369,17 +369,23 @@ export function runFiveHundredSajuAudit() {
               context.themes.some(theme => theme.family === 'wealth')) {
             throw new Error('Missing Wealth T8 must distinguish hidden membership from direct T5');
           }
-          const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
-          const card = html.split('<h2 id="domain-wealth">')[1]?.split('</article>')[0];
-          if (!card || !card.includes('aria-label="지장간 계산과 재물운 해석의 구분"') ||
-              !card.includes('새로운 운세 주장이 아닙니다') ||
-              (expected === 'membership_only' && !card.includes('재성 해석 근거(T5)가 아닙니다')) ||
-              (expected === 'no_membership_observed' && !card.includes('재산이나 돈이 없다는 뜻이 아니며'))) {
-            throw new Error('Missing Wealth T8 hidden membership boundary was not visible');
-          }
           wealthMissingCases.push(
             diagnoseMissingWealthReading(snapshot, interpretation, registry, report, stamp),
           );
+        }
+      }
+      // The five-domain HTML can only be checked after all five reports exist.
+      const missingWealthReport = natalReports.wealth;
+      if (missingWealthReport.sections.length === 0) {
+        const hiddenContext = missingWealthReport.availableThemeContext;
+        const expected = hiddenContext?.hiddenWealthT5Boundary;
+        const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+        const card = html.split('<h2 id="domain-wealth">')[1]?.split('</article>')[0];
+        if (!card || !card.includes('aria-label="지장간 계산과 재물운 해석의 구분"') ||
+            !card.includes('새로운 운세 주장이 아닙니다') ||
+            (expected === 'membership_only' && !card.includes('재성 해석 근거(T5)가 아닙니다')) ||
+            (expected === 'no_membership_observed' && !card.includes('재산이나 돈이 없다는 뜻이 아니며'))) {
+          throw new Error('Missing Wealth T8 hidden membership boundary was not visible');
         }
       }
       const generalPartial = natalReports.general;
