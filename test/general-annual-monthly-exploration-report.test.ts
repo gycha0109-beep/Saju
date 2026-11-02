@@ -62,6 +62,9 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).toContain('원국의 확인된 구조');
     expect(html).toContain('올해·이번 달에 새로 작용한다는 뜻이 아니며');
     for (const section of report.natalContext.sections) {
+      if (section.axis === 'tension') {
+        expect(html).toContain('총운 중심 결론이 아닌 기존 원국 T8 긴장 부분풀이');
+      }
       expect(section.sourceIds.length).toBeGreaterThan(0);
       expect(section.observedPositions.length).toBeGreaterThanOrEqual(2);
       const escaped = (value: string) => value.replace(/[&<>"']/gu, char => ({

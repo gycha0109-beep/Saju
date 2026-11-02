@@ -375,7 +375,10 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
         section.observedFactPaths.length !== section.observedPositions.length) {
       throw new TypeError('Natal T8 context lacks governed claims or observed chart facts.');
     }
-    return '<article class="reading-card"><small>기존 원국 T8 연구용 해석</small>' +
+    return '<article class="reading-card"><small>' +
+      (section.axis === 'tension'
+        ? '총운 중심 결론이 아닌 기존 원국 T8 긴장 부분풀이'
+        : '기존 원국 T8 연구용 해석') + '</small>' +
       '<h3>' + e(section.headline) + '</h3><p>' + e(section.paragraph) + '</p>' +
       '<details><summary>원국 해석에 실제 사용된 출처와 계산 위치</summary>' +
       '<p>Claim 유형: ' + e(section.claimType) + '</p>' +

@@ -210,6 +210,17 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
           const card = html.split('<h2 id="domain-general">')[1]!.split('</article>')[0]!;
           expect(card).toContain('확인된 부분 관점');
           expect(card).toContain('원국 종합해석 아님');
+          const firstMeaning = card.split('<details class="full-claim-evidence"')[0]!;
+          expect(firstMeaning).toContain('aria-label="총운 명식별 풀이 본문"');
+          expect(firstMeaning).toContain('총운의 중심 결론은 보류합니다');
+          expect(firstMeaning).toContain(general.sections[0]!.headline);
+          const escapedParagraph = general.sections[0]!.paragraph.replace(/[&<>"']/gu, char => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+          })[char]!);
+          expect(firstMeaning).toContain('<p>' + escapedParagraph + '</p>');
+          expect(firstMeaning).not.toContain('중심 관점 · ');
+          expect(card).toContain(general.sections[0]!.ruleId);
+          expect(card).toContain(general.sections[0]!.sourceIds[0]!);
           for (const theme of general.availableThemeContext.themes) {
             expect(card).toContain(theme.headline);
             expect(card).toContain(theme.claimId);

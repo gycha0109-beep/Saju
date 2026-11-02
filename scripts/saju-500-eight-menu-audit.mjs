@@ -276,6 +276,7 @@ export function runFiveHundredSajuAudit() {
   const wealthMissingCases = [];
   const wealthConsumerCases = [];
   const generalT5ContextCases = [];
+  const generalTensionFirstScreenCases = [];
   const wealthIndependentLimitedCases = [];
   const wealthPartialCoreUnusedT5Cases = [];
   const startedAt = Date.now();
@@ -356,6 +357,33 @@ export function runFiveHundredSajuAudit() {
             diagnoseMissingWealthReading(snapshot, interpretation, registry, report, stamp),
           );
         }
+      }
+      const generalPartial = natalReports.general;
+      if (generalPartial.state === 'partial' &&
+          generalPartial.sections.length === 1 &&
+          generalPartial.sections[0].axis === 'tension') {
+        if (generalPartial.readingGuide !== undefined) {
+          throw new Error('General tension-only reading must not have a core guide');
+        }
+        if (generalTensionFirstScreenCases.length < 5) {
+          const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+          const generalCard = html.split('<h2 id="domain-general">')[1]?.split('</article>')[0];
+          const firstScreen = generalCard?.split('<details class="full-claim-evidence"')[0];
+          const chosen = generalPartial.sections[0];
+          if (!firstScreen ||
+              !firstScreen.includes('총운의 중심 결론은 보류합니다') ||
+              !firstScreen.includes('<p>' + escapedHtmlText(chosen.paragraph) + '</p>') ||
+              !generalCard.includes(chosen.ruleId) ||
+              !generalCard.includes(chosen.sourceIds[0])) {
+            throw new Error('General source-owned tension T8 was lost on the first screen');
+          }
+        }
+        generalTensionFirstScreenCases.push({
+          birth:stamp, calculationHash:chartKey,
+          claimType:generalPartial.sections[0].claimType,
+          sourceIds:generalPartial.sections[0].sourceIds,
+          factPaths:generalPartial.sections[0].observedFactPaths,
+        });
       }
       const selectedWealth = natalReports.wealth;
       const partial = selectedWealth.sections;
@@ -486,6 +514,11 @@ export function runFiveHundredSajuAudit() {
         examples: generalT5ContextCases.filter(c => c.withoutGeneralT8)
           .slice(0, 6),
       },
+      generalTensionFirstScreen: {
+        examined: COUNT,
+        count: generalTensionFirstScreenCases.length,
+        examples: generalTensionFirstScreenCases.slice(0, 6),
+      },
       generalPartialTensionWithUnusedT5: {
         examined: generalT5ContextCases.length,
         count: generalT5ContextCases.filter(c => c.partialTensionWithUnusedT5).length,
@@ -513,6 +546,7 @@ export function runFiveHundredSajuAudit() {
     generalNoT8WithSourcedT5: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only,
     generalNoT8WithoutSourcedT5: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutAnySourcedT5,
     generalPartialTensionWithUnusedT5: result.rootCauseDiagnostics.generalPartialTensionWithUnusedT5.count,
+    generalTensionFirstScreen: result.rootCauseDiagnostics.generalTensionFirstScreen.count,
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
     wealthNoT8ButSourcedT5: result.rootCauseDiagnostics.wealthConsumerEvidence.withBoundedT5ContextInstead,
     wealthNoSourceBoundInterpretiveText: result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText,

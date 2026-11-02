@@ -278,14 +278,24 @@ function renderFirstScreenSelectedInterpretations(
   if (domain === 'general') {
     const scoped = report as GeneralNatalMultifactorReport;
     const guide = scoped.readingGuide;
-    if (guide === undefined || scoped.sections.length === 0) return '';
     const sections = scoped.sections;
-    guard(sections[0]?.claimType === guide.sourceClaimType &&
+    if (sections.length === 0) return '';
+    // Source-owned tension-only T8 is a real partial interpretation but has
+    // no core reading guide. Its existing paragraph must not disappear from
+    // the first screen or be mislabelled as a whole-chart conclusion.
+    const tensionOnly = sections.length === 1 && sections[0]!.axis === 'tension';
+    guard((tensionOnly
+      ? guide === undefined && scoped.state === 'partial' &&
+        scoped.missing.includes('출처 있는 원국 중심 복합 해석 축')
+      : guide !== undefined && sections[0]?.claimType === guide.sourceClaimType &&
+        guide.sourceIds.length > 0 &&
+        guide.sourceIds.every(id => id.trim().length > 0)) &&
       sections.every(section => section.sourceIds.length > 0 &&
-        section.upstreamClaimIds.length >= 2 && section.paragraph.trim().length > 0 &&
-        guide.sourceIds.every(id => id.trim().length > 0)),
+        section.upstreamClaimIds.length >= 2 &&
+        section.observedFactPaths.length >= 2 &&
+        section.observedPositions.length === section.observedFactPaths.length &&
+        section.paragraph.trim().length > 0),
       'General first-screen reading requires exact selected T8 evidence');
-    const tensionOnly = sections.every(section => section.axis === 'tension');
     const items = sections.map((section, i) =>
       '<section class="first-claim"><h4>' +
       escapeHtml(tensionOnly ? '확인된 부분 관점 · ' + section.headline :
