@@ -1,3 +1,4 @@
+import { getSolarTerm } from 'manseryeok';
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import { runInterpretation, type InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -17,7 +18,7 @@ import {
   type GeneralNatalMultifactorReport,
 } from './general-natal-multifactor-report.js';
 import type { MonthlyInterpretationFacts, MonthlySegmentId } from '../reading/monthly-interpretation-facts.js';
-import { buildTemporalReadingContext } from '../reading/temporal-reading-context.js';
+import { annualSexagenaryPillar, buildTemporalReadingContext } from '../reading/temporal-reading-context.js';
 import {
   buildGeneralAnnualExplorationReport,
   type GeneralAnnualExplorationReport,
@@ -76,6 +77,14 @@ export interface GeneralAnnualMonthlyExplorationReport {
     civilYearAtReference: number;
     state: 'in_target_civil_year' | 'outside_target_civil_year';
   };
+  /** Independent calendar calculation: never used to produce T9 meaning. */
+  annualEffectiveContext: {
+    ipchunAt: string;
+    beforeIpchunPillar: string;
+    afterIpchunPillar: string;
+    state: 'before_ipchun' | 'from_ipchun' | 'outside_target_civil_year';
+    effectivePillarAtReference?: string;
+  };
   /** Shared with the exact single-month research result. */
   referenceReading: GeneralMonthlyExplorationReport['referenceReading'];
   /** Existing annual research profiles only, scoped to the requested Seoul civil year. */
@@ -86,6 +95,7 @@ export interface GeneralAnnualMonthlyExplorationReport {
         theme: GeneralAnnualExplorationSection;
         sourceBoundTensions: readonly GeneralAnnualExplorationSection[];
       }
+    | { state: 'before_ipchun'; referenceDateTime: string }
     | { state: 'outside_target_civil_year'; referenceDateTime: string };
   caveats: readonly string[];
 }
@@ -292,6 +302,33 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       ? 'in_target_civil_year' as const : 'outside_target_civil_year' as const,
   };
 
+  // Annual T9 is a CIVIL-YEAR research projection. It cannot be described
+  // as the effective Ipchun-year pillar before the actual solar-term instant.
+  // Reuse the same manseryeok solar-term authority as the monthly engine;
+  // never mint an additional T9 claim for the preceding year here.
+  const ipchun = getSolarTerm(annual.targetYear, 2);
+  const ipchunAt = ipchun.date.toISOString();
+  requireLinkedPeriod(ipchun.index === 2 && ipchun.name === '입춘' &&
+    Number.isFinite(ipchun.date.getTime()),
+    'effective annual pillar requires a calculated Ipchun boundary');
+  const previousPillar = annualSexagenaryPillar(annual.targetYear - 1);
+  const currentPillar = annualSexagenaryPillar(annual.targetYear);
+  requireLinkedPeriod(annual.annualPillarLabel === currentPillar.stem + currentPillar.branch,
+    'civil-year candidate pillar differs from the calculated annual pillar');
+  const annualEffectiveState = annualReference.state === 'outside_target_civil_year'
+    ? 'outside_target_civil_year' as const
+    : atReference < ipchun.date.getTime() ? 'before_ipchun' as const : 'from_ipchun' as const;
+  const annualEffectiveContext = {
+    ipchunAt,
+    beforeIpchunPillar: previousPillar.stem + previousPillar.branch,
+    afterIpchunPillar: currentPillar.stem + currentPillar.branch,
+    state: annualEffectiveState,
+    ...(annualEffectiveState === 'outside_target_civil_year'
+      ? {} : { effectivePillarAtReference: annualEffectiveState === 'before_ipchun'
+        ? previousPillar.stem + previousPillar.branch
+        : currentPillar.stem + currentPillar.branch }),
+  };
+
   const annualTheme = annual.sections[0];
   requireLinkedPeriod(annualTheme?.kind === 'core' &&
     annualTheme.interpretationStatus === 'internal_research' &&
@@ -308,17 +345,16 @@ export function buildGeneralAnnualMonthlyExplorationReport(
   requireLinkedPeriod(annualTensions.length === annual.sections.length - 1,
     'the annual focus cannot silently drop an unsupported relation');
   const annualCurrentReading: GeneralAnnualMonthlyExplorationReport['annualCurrentReading'] =
-    annualReference.state === 'in_target_civil_year'
-      ? {
-          state: 'in_target_civil_year',
-          referenceDateTime: annualReference.referenceDateTime,
-          theme: annualTheme,
-          sourceBoundTensions: annualTensions,
-        }
-      : {
-          state: 'outside_target_civil_year',
-          referenceDateTime: annualReference.referenceDateTime,
-        };
+    annualReference.state === 'outside_target_civil_year'
+      ? { state: 'outside_target_civil_year', referenceDateTime: annualReference.referenceDateTime }
+      : annualEffectiveState === 'before_ipchun'
+        ? { state: 'before_ipchun', referenceDateTime: annualReference.referenceDateTime }
+        : {
+            state: 'in_target_civil_year',
+            referenceDateTime: annualReference.referenceDateTime,
+            theme: annualTheme,
+            sourceBoundTensions: annualTensions,
+          };
 
   const annualTensionComparison = annualTensions.length === 0 ? '' :
     ' 같은 연운에서 별도 관측된 원국 충 관계의 기존 풀이: ' +
@@ -340,7 +376,8 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     targetYear: monthly.targetYear, targetMonth: monthly.targetMonth,
     annual, annualExecutedEvidence, monthly, natalContext, periodComparison,
-    monthlyPhaseContrast, annualReference, referenceReading, annualCurrentReading,
+    monthlyPhaseContrast, annualReference, annualEffectiveContext,
+    referenceReading, annualCurrentReading,
     caveats: [
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
       '이 연결 화면은 별도 통합 운세 규칙이 아니라 기존 연운 연구 문구와 월운 T9 근거를 순서대로 보여줍니다.',
@@ -499,9 +536,30 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
         (annualAt.civilYearAtReference === report.targetYear)) {
     throw new TypeError('Annual/monthly HTML requires matching civil-year reference context.');
   }
+  const effective = report.annualEffectiveContext;
+  const computedIpchun = getSolarTerm(report.targetYear, 2);
+  const prevPillar = annualSexagenaryPillar(report.targetYear - 1);
+  const thisPillar = annualSexagenaryPillar(report.targetYear);
+  const actualEffectiveState = annualAt.state === 'outside_target_civil_year'
+    ? 'outside_target_civil_year'
+    : Date.parse(selected.referenceDateTime) < computedIpchun.date.getTime()
+      ? 'before_ipchun' : 'from_ipchun';
+  const expectedEffectivePillar = actualEffectiveState === 'outside_target_civil_year'
+    ? undefined : actualEffectiveState === 'before_ipchun'
+      ? prevPillar.stem + prevPillar.branch : thisPillar.stem + thisPillar.branch;
+  if (computedIpchun.index !== 2 || computedIpchun.name !== '입춘' ||
+      effective.ipchunAt !== computedIpchun.date.toISOString() ||
+      effective.beforeIpchunPillar !== prevPillar.stem + prevPillar.branch ||
+      effective.afterIpchunPillar !== thisPillar.stem + thisPillar.branch ||
+      effective.state !== actualEffectiveState ||
+      effective.effectivePillarAtReference !== expectedEffectivePillar) {
+    throw new TypeError('Annual/monthly HTML requires the exact Ipchun-effective year calculation.');
+  }
   const annualFocus = report.annualCurrentReading;
+  const expectedFocusState = effective.state === 'before_ipchun'
+    ? 'before_ipchun' : annualAt.state;
   if (annualFocus.referenceDateTime !== annualAt.referenceDateTime ||
-      annualFocus.state !== annualAt.state ||
+      annualFocus.state !== expectedFocusState ||
       (annualFocus.state === 'in_target_civil_year' &&
         (annualFocus.theme !== report.annual.sections[0] ||
          annualFocus.sourceBoundTensions.length !== report.annual.sections.length - 1 ||
@@ -513,10 +571,21 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   }
   const annualContext = annualAt.state === 'in_target_civil_year'
     ? '조회 시각 ' + kst(annualAt.referenceDateTime) + '은 서울 달력 ' +
-      report.targetYear + '년에 속합니다. 이 연운은 해당 선택 연도의 연구용 풀이입니다.'
+      report.targetYear + '년에 속합니다. ' +
+      (effective.state === 'before_ipchun'
+        ? '다만 입춘 전이므로 효력 연주는 ' + effective.effectivePillarAtReference +
+          '이고, 선택한 ' + report.targetYear + '년 연운 T9 ' +
+          effective.afterIpchunPillar + ' 풀이를 현재 효력의 풀이로 적용하지 않습니다.'
+        : '입춘 이후 효력 연주는 ' + effective.effectivePillarAtReference +
+          '입니다. 이 연운은 해당 선택 연도의 연구용 풀이입니다.')
     : '조회 시각 ' + kst(annualAt.referenceDateTime) + '은 서울 달력 ' +
       annualAt.civilYearAtReference + '년입니다. 아래 ' + report.targetYear +
       '년 연운은 현재 연도에 적용되는 풀이가 아니라 선택한 연도의 연구 비교 자료입니다.';
+  const effectiveBoundary = '<p class="muted" id="ipchun-effective-year">' +
+    '입춘 기준: ' + e(kst(effective.ipchunAt)) + ' 이전 ' +
+    e(effective.beforeIpchunPillar) + ' → 이후 ' +
+    e(effective.afterIpchunPillar) +
+    '. 위 연운 연구 주제는 선택한 달력연도 기준이며 입춘 전 효력 연주로 대체되지 않습니다.</p>';
   const annualFocusEvidence = (section: GeneralAnnualExplorationSection): string => {
     const index = report.annual.sections.indexOf(section);
     if (index < 0) throw new TypeError('Annual focus has no selected section.');
@@ -529,7 +598,14 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       '<p>출처: ' + e(evidence.sourceIds.join(' · ')) +
       ' (명하 내부 연구 정책, 독립 고전 근거 아님)</p></details>';
   };
-  const annualReadingFocus = annualFocus.state === 'in_target_civil_year'
+  const annualReadingFocus = annualFocus.state === 'before_ipchun'
+    ? '<section id="reference-year-before-ipchun" aria-label="입춘 전 연운 적용 보류">' +
+      '<h3>입춘 전 — 선택 연도의 연운 적용 보류</h3>' +
+      '<p>현재 효력 연주는 ' + e(effective.effectivePillarAtReference!) +
+      '입니다. ' + e(effective.afterIpchunPillar) +
+      '에 대한 기존 T9 연구 주제와 충 관계는 입춘 이전의 현재 풀이로 사용하지 않습니다. ' +
+      '선택 연도 연구 문구는 아래 출처 영역에서 별도로 확인할 수 있습니다.</p></section>'
+    : annualFocus.state === 'in_target_civil_year'
     ? '<section class="annual-focus" id="reference-year-reading" aria-label="올해의 원국 근거가 연결된 풀이">' +
       '<h3>올해의 중심 주제와 실제 원국 관계</h3>' +
       '<p class="muted">선택 연도의 내부 연구 풀이이며 입춘 효력 연주 또는 실제 사건의 예고가 아닙니다.</p>' +
@@ -681,7 +757,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<section id="year-reading"><h2>' + e(report.annual.headline) + '</h2>' +
     '<p class="muted" id="reference-year-context">' + e(annualContext) + '</p>' +
     '<p class="muted">서울 달력 연도 기준 · 연간 ' + e(report.annual.annualPillarLabel) +
-    ' · 십신 ' + e(report.annual.annualStemTenGod) + '</p>' + annualReadingFocus +
+    ' · 십신 ' + e(report.annual.annualStemTenGod) + '</p>' +
+    effectiveBoundary + annualReadingFocus +
     '<details class="full-year-profile-evidence"><summary>연운 전체 연구 문구와 계산 근거·출처</summary>' +
     annual + '</details></section>' + natalCard +
     '<section id="monthly-reading"><h2>' + e(

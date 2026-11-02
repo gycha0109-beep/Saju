@@ -418,7 +418,7 @@ describe('one-person annual to monthly source-bound research reading', () => {
     const inYear = run(9, 9, true, '2025-12-31T15:00:00.000Z');
     const beforeYear = run(9, 9, true, '2025-12-31T14:59:59.999Z');
     const nextYear = run(9, 9, true, '2026-12-31T15:00:00.000Z');
-    expect(inYear.report.annualCurrentReading.state).toBe('in_target_civil_year');
+    expect(inYear.report.annualCurrentReading.state).toBe('before_ipchun');
     expect(beforeYear.report.annualCurrentReading).toEqual({
       state: 'outside_target_civil_year',
       referenceDateTime: '2025-12-31T14:59:59.999Z',
@@ -453,6 +453,9 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(insideHtml).toContain('올해 문구의 계산 근거와 연구 출처');
     expect(insideHtml).toContain('id="reference-year-context"');
     expect(insideHtml).toContain('서울 달력 2026년에 속합니다');
+    expect(insideHtml).toContain('입춘 전이므로 효력 연주는 을사');
+    expect(insideHtml).toContain('id="reference-year-before-ipchun"');
+    expect(insideHtml).not.toContain('id="reference-year-reading"');
     expect(insideHtml).not.toContain('현재 연도에 적용되는 풀이가 아니라');
     const outsideHtml = renderGeneralAnnualMonthlyExplorationHtml(nextYear.report);
     expect(outsideHtml).toContain('href="#year-reading">선택한 연도의 흐름</a>');
@@ -466,6 +469,44 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(outsideHtml).toContain(nextYear.report.annual.sections[0]!.text);
     expect(outsideHtml).not.toContain('id="reference-year-reading"');
     expect(outsideHtml).toContain('월 밖에 있어 현재 적용 구간을 정하지 않았습니다.');
+  });
+
+  it('uses the exact Ipchun instant before treating a civil-year T9 as current', () => {
+    const initial = run(2, 9, true, '2026-02-03T00:00:00.000Z');
+    const ipchunMs = Date.parse(initial.report.annualEffectiveContext.ipchunAt);
+    const before = run(2, 9, true, new Date(ipchunMs - 1).toISOString());
+    const after = run(2, 9, true, new Date(ipchunMs).toISOString());
+    expect(before.report.annualReference.state).toBe('in_target_civil_year');
+    expect(after.report.annualReference.state).toBe('in_target_civil_year');
+    expect(before.report.annualEffectiveContext.state).toBe('before_ipchun');
+    expect(before.report.annualEffectiveContext.effectivePillarAtReference).toBe('을사');
+    expect(before.report.annualCurrentReading.state).toBe('before_ipchun');
+    expect(after.report.annualEffectiveContext.state).toBe('from_ipchun');
+    expect(after.report.annualEffectiveContext.effectivePillarAtReference).toBe('병오');
+    expect(after.report.annualCurrentReading.state).toBe('in_target_civil_year');
+    expect(before.report.annual.sections).toEqual(after.report.annual.sections);
+    expect(before.report.annualExecutedEvidence.map(item => item.semanticKey))
+      .toEqual(after.report.annualExecutedEvidence.map(item => item.semanticKey));
+    const beforeHtml = renderGeneralAnnualMonthlyExplorationHtml(before.report);
+    const afterHtml = renderGeneralAnnualMonthlyExplorationHtml(after.report);
+    expect(beforeHtml).toContain('입춘 전 — 선택 연도의 연운 적용 보류');
+    expect(beforeHtml).toContain('현재 효력 연주는 을사');
+    expect(beforeHtml).not.toContain('id="reference-year-reading"');
+    expect(afterHtml).toContain('id="reference-year-reading"');
+    expect(afterHtml).toContain('입춘 이후 효력 연주는 병오');
+    expect(before.report.researchOnly).toBe(true);
+    expect(before.report.maySell).toBe(false);
+    expect(after.report.maySell).toBe(false);
+    expect(() => renderGeneralAnnualMonthlyExplorationHtml({
+      ...after.report,
+      annualEffectiveContext: { ...after.report.annualEffectiveContext,
+        state: 'before_ipchun' },
+    })).toThrow('Ipchun-effective year calculation');
+    expect(() => renderGeneralAnnualMonthlyExplorationHtml({
+      ...after.report,
+      annualEffectiveContext: { ...after.report.annualEffectiveContext,
+        effectivePillarAtReference: '을사' },
+    })).toThrow('Ipchun-effective year calculation');
   });
 
   it('rejects a manipulated annual civil reference instead of mislabeling current year', () => {
