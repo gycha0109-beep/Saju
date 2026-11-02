@@ -110,6 +110,53 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(run(3,10).report).toEqual(run(3,10).report);
   }, 30000);
 
+  it('rejects altered Korean T5 meaning in an incomplete Wealth reading', () => {
+    const snapshot = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 1981, month: 2, day: 1 },
+      time: { known: true, hour: 13, minute: 52 },
+      sexForTraditionalCalculation: 'male',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const execution = runInterpretation(snapshot, registry, { now: NOW });
+    const base = buildWealthNatalMultifactorReport(snapshot, execution, registry);
+    expect(base.state).toBe('insufficient');
+    expect(base.sections).toHaveLength(0);
+    expect(base.availableThemeContext?.themes.length).toBeGreaterThan(0);
+    const relevant = base.availableThemeContext!.themes[0]!;
+    const active = execution.claims.find(claim => claim.claimId === relevant.claimId);
+    expect(active).toBeDefined();
+    const sourceRule = registry.rules.find(rule =>
+      rule.ruleId === active?.ruleRefs[0]?.ruleId);
+    expect(sourceRule?.output.value).toMatchObject({
+      headline: relevant.headline, summary: relevant.summary,
+    });
+    const forged = {
+      ...execution,
+      claims: execution.claims.map(claim =>
+        claim.claimId === relevant.claimId
+          ? { ...claim, value: {
+            ...(claim.value as Record<string, unknown>),
+            summary: '이 명식의 투자 수익은 확실히 증가합니다.',
+          } }
+          : claim),
+    };
+    expect(() => buildWealthNatalMultifactorReport(snapshot, forged, registry))
+      .toThrow('T5 partial meaning lacks its executed registered rule, method, source or original copy');
+    const withoutMethod = {
+      ...execution,
+      claims: execution.claims.map(claim =>
+        claim.claimId === relevant.claimId
+          ? { ...claim, methodologyRef: { id: 'INVENTED', version: '0.1.0' } }
+          : claim),
+    };
+    expect(() => buildWealthNatalMultifactorReport(snapshot, withoutMethod, registry))
+      .toThrow('T5 partial meaning lacks its executed registered rule, method, source or original copy');
+    expect(base.availableThemeContext!.themes[0]!.summary).not.toContain('투자 수익');
+    expect(base.mayPublish).toBe(false);
+    expect(base.maySell).toBe(false);
+    expect(base.usefulComplete).toBe(false);
+  });
+
   it('retains distinct existing T5 meanings beside a source-owned but incomplete Wealth core', () => {
     let verified = false;
     outer: for (const hour of [0, 6, 12, 18]) {

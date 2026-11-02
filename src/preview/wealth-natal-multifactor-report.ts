@@ -246,23 +246,43 @@ function buildAvailableThemeContext(
       rule.ruleId === ruleRef?.ruleId && rule.version === ruleRef.version);
     const evaluation = execution.evaluations.find(item =>
       item.evaluationId === ruleRef?.evaluationId);
+    const method = registry.methodologies.find(item =>
+      item.methodologyId === claim.methodologyRef.id &&
+      item.version === claim.methodologyRef.version);
+    const registeredMeaning = sourceRule?.output.value as Record<string, unknown> | undefined;
+    const registeredSources = new Set(sourceRule?.sourceRefs.map(ref => ref.sourceId) ?? []);
+    // Partial Wealth T5 copy must be the actual registered Claim meaning,
+    // not merely a plausible-looking active claim with nonempty source IDs.
+    // This is the same authority check applied to existing General T5 copy.
     guard(claim.ruleRefs.length === 1 && sourceRule !== undefined &&
       sourceRule.status === 'research' &&
       sourceRule.taxonomy.tier === 'T5' &&
+      sourceRule.taxonomy.category === 'ten_gods' &&
       sourceRule.output.claimType === claim.claimType &&
+      sourceRule.output.predicate === claim.predicate &&
+      sourceRule.output.subject === claim.subject &&
       sourceRule.methodologyRef.id === claim.methodologyRef.id &&
       sourceRule.methodologyRef.version === claim.methodologyRef.version &&
-      claim.methodologyRef.id.length > 0 &&
+      registeredMeaning?.family === family &&
+      registeredMeaning?.channel === channel &&
+      registeredMeaning?.headline === value.headline &&
+      registeredMeaning?.summary === value.summary &&
+      method?.status === 'research' &&
+      method.sourceIds.every(id => registeredSources.has(id)) &&
       evaluation?.status === 'matched' &&
       evaluation.snapshotId === snapshot.snapshotId &&
+      evaluation.scenarioRef === undefined &&
       evaluation.ruleRef.id === ruleRef?.ruleId &&
       evaluation.ruleRef.version === ruleRef?.version &&
+      evaluation.interpretationPackRef.id === registry.pack.packId &&
+      evaluation.interpretationPackRef.version === registry.pack.version &&
       evaluation.emittedClaimIds.includes(claim.claimId) &&
-      claim.sourceRefs.every(sourceId =>
-        registry.sources.some(source => source.sourceId === sourceId)) &&
-      sourceRule.sourceRefs.every(source =>
-        claim.sourceRefs.includes(source.sourceId)),
-      'T5 partial meaning lacks an executed registered rule, method or source');
+      registeredSources.size > 0 &&
+      claim.sourceRefs.length === registeredSources.size &&
+      claim.sourceRefs.every(id =>
+        registeredSources.has(id) &&
+        registry.sources.some(source => source.sourceId === id)),
+      'T5 partial meaning lacks its executed registered rule, method, source or original copy');
     themes.push({
       claimId: claim.claimId,
       claimType: claim.claimType,
