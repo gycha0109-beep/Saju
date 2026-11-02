@@ -598,6 +598,13 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       '<p>출처: ' + e(evidence.sourceIds.join(' · ')) +
       ' (명하 내부 연구 정책, 독립 고전 근거 아님)</p></details>';
   };
+  const annualUncertainty = annualFocus.state !== 'in_target_civil_year' ||
+    report.annual.unavailablePillars.length === 0 ? '' :
+    '<p class="muted" aria-label="올해 미확정 원국 충 관계">' +
+    '올해 연운에서 ' + e(report.annual.unavailablePillars.map(slot =>
+      ({ year: '연주', month: '월주', day: '일주', hour: '시주' })[slot]).join('·')) +
+    ' 지지와의 충 관계는 아직 확정할 수 없습니다. ' +
+    '이는 충이 없다는 뜻이 아닙니다.</p>';
   const annualReadingFocus = annualFocus.state === 'before_ipchun'
     ? '<section id="reference-year-before-ipchun" aria-label="입춘 전 연운 적용 보류">' +
       '<h3>입춘 전 — 선택 연도의 연운 적용 보류</h3>' +
@@ -619,9 +626,17 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
             e(section.title) + '</h4><p>' + e(section.text) +
              '</p>' + annualFocusEvidence(section) + '</article>').join('') +
           '</div>'
-        : '<p>이번 명식에서 기존 연운 연구 규칙에 해당하는 원국 충 관계는 추가로 확인되지 않았습니다. 다른 관계의 부재나 길흉을 뜻하지 않습니다.</p>') +
-      '</section>'
+        : '<p>현재 확인된 원국 기둥에서는 추가로 선택된 연운 충 관계가 없습니다. ' +
+          '미확정 기둥의 관계나 다른 관계의 부재를 뜻하지 않습니다.</p>') +
+      annualUncertainty + '</section>'
     : '';
+  const monthlyUncertainty = selected.state === 'outside_target_month' ||
+    (selected.unavailableNatalPillars?.length ?? 0) === 0 ? '' :
+    '<p class="muted" aria-label="조회 절입 구간의 미확정 원국 관계">' +
+    '선택된 절입 구간에서 ' + e(selected.unavailableNatalPillars!.map(slot =>
+      ({ year: '연주', month: '월주', day: '일주', hour: '시주' })[slot]).join('·')) +
+    ' 지지와의 월운 충 관계는 아직 계산 근거가 부족합니다. ' +
+    '다른 원국 관계가 없다는 뜻이 아닙니다.</p>';
   const focus = selected.state === 'in_period' && selected.theme !== undefined
     ? '<p class="muted">해당 절입 구간: ' + e(SEGMENT_LABEL[selected.segmentId!]) +
       ' · ' + e(kst(selected.theme.calculatedInterval.startsAt)) + '부터 ' +
@@ -632,10 +647,10 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
           '<h4>이 구간에서 함께 확인된 원국 관계</h4>' +
           selected.sourceBoundTensions.map(monthlyCard).join('') +
           '</section>'
-        : '')
+        : '') + monthlyUncertainty
     : selected.state === 'insufficient_evidence'
       ? '<p>이 조회 시각에 적용되는 ' + e(SEGMENT_LABEL[selected.segmentId!]) +
-        ' 구간의 개인별 연구 해석 근거는 아직 충분하지 않습니다.</p>'
+        ' 구간의 개인별 연구 해석 근거는 아직 충분하지 않습니다.</p>' + monthlyUncertainty
       : '<p>조회 기준 시각이 선택한 ' + report.targetYear + '년 ' +
         report.targetMonth + '월 밖에 있어 현재 적용 구간을 정하지 않았습니다. ' +
         '아래의 월별 두 구간을 비교할 수 있습니다.</p>';

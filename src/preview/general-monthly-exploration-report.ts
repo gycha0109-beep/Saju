@@ -70,6 +70,8 @@ export interface GeneralMonthlyExplorationReport {
     segmentId?: MonthlySegmentId;
     theme?: GeneralMonthlyExplorationSection;
     sourceBoundTensions?: readonly GeneralMonthlyExplorationSection[];
+    /** This segment alone: unresolved natal relations are not absent clashes. */
+    unavailableNatalPillars?: readonly PillarSlot[];
   }>;
 }
 
@@ -239,6 +241,8 @@ export function buildGeneralMonthlyExplorationReport(
     instant < Date.parse(segment.endsAt));
   requireEvidence(atReference.length <= 1, 'reference instant overlaps monthly segments');
   const segment = atReference[0];
+  const unavailableAtReference = segment === undefined ? [] : SLOTS.filter(slot =>
+    facts.segmentsById[segment.segmentId].monthlyBranchRelations[slot].status !== 'resolved');
   const applicableThemes = segment === undefined ? [] : sections.filter(section =>
     section.kind === 'theme' && section.segmentId === segment.segmentId &&
     section.calculatedInterval.startsAt === segment.startsAt &&
@@ -259,11 +263,13 @@ export function buildGeneralMonthlyExplorationReport(
             referenceDateTime: facts.referenceDateTime,
             state: 'insufficient_evidence',
             segmentId: segment.segmentId,
+            unavailableNatalPillars: unavailableAtReference,
           }
         : {
             referenceDateTime: facts.referenceDateTime,
             state: 'in_period',
             segmentId: segment.segmentId,
+            unavailableNatalPillars: unavailableAtReference,
             theme: applicableThemes[0]!,
             ...(applicableTensions.length
               ? { sourceBoundTensions: applicableTensions } : {}),
@@ -305,6 +311,13 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
   const reference = report.referenceReading;
   const periodLabel = reference.state === 'outside_target_month' ? '선택한 월' : '이번 달';
   const theme = reference.state === 'in_period' ? reference.theme : undefined;
+  const uncertainPositions = reference.state === 'outside_target_month'
+    ? [] : reference.unavailableNatalPillars ?? [];
+  const uncertaintyNote = uncertainPositions.length === 0 ? ''
+    : '<p class="muted" aria-label="현재 절입 구간의 미확정 원국 관계">' +
+      '이 구간에서 ' + escapeHtml(uncertainPositions.map(slot => SLOT_KO[slot]).join('·')) +
+      ' 지지와 월운 사이의 충 관계는 원국 정보가 미확정이라 판단하지 않습니다. ' +
+      '확인된 충 관계가 없다는 결론이 아닙니다.</p>';
   const focus = theme !== undefined
     ? '<p class="muted">실제 적용 구간: ' + escapeHtml(SEGMENT_KO[theme.segmentId]) +
       ' · ' + kst(theme.calculatedInterval.startsAt) + '부터 ' +
@@ -332,10 +345,10 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
                ' / 방법론: ' + escapeHtml(item.methodologyId) + '</p>' +
               '<p>출처: ' + escapeHtml(item.sourceIds.join(' · ')) +
               '</p></details>').join('') + '</section>'
-        : '')
+        : '') + uncertaintyNote
     : reference.state === 'insufficient_evidence'
       ? '<p>' + escapeHtml(SEGMENT_KO[reference.segmentId!]) +
-        '의 한국어 해석 근거가 아직 충분하지 않습니다.</p>'
+        '의 한국어 해석 근거가 아직 충분하지 않습니다.</p>' + uncertaintyNote
       : '<p>조회 시각이 선택한 달 밖에 있습니다. 실제 적용 중인 월운으로 표시하지 않고, ' +
         '선택한 달의 절입 전·후 구간만 아래에 보여줍니다.</p>';
   const sections = SEGMENTS.map(id => {

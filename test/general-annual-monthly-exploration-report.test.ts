@@ -6,6 +6,7 @@ import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/product
 import { buildMonthlyInterpretationFacts } from '../src/reading/monthly-interpretation-facts.js';
 import { buildTemporalReadingContext } from '../src/reading/temporal-reading-context.js';
 import { createGeneralMonthlyReadingCandidateRegistry } from '../src/research/general-monthly-reading-candidate.js';
+import { renderGeneralMonthlyExplorationHtml } from '../src/preview/general-monthly-exploration-report.js';
 import {
   buildGeneralAnnualMonthlyExplorationReport,
   renderGeneralAnnualMonthlyExplorationHtml,
@@ -89,6 +90,29 @@ describe('one-person annual to monthly source-bound research reading', () => {
       .toContain('확정된 원국 종합해석 또는 기존 십신 부분풀이 근거가 아직 충분하지 않습니다.');
     expect(unknown.report.mayPublish).toBe(false);
   }, 60000);
+
+  it('distinguishes uncalculated natal relations from genuinely absent selected clashes', () => {
+    const unknown = run(9, 9, false);
+    const known = run(9, 9, true);
+    expect(unknown.report.annual.unavailablePillars).toContain('hour');
+    expect(known.report.annual.unavailablePillars).not.toContain('hour');
+    expect(unknown.report.referenceReading.state).toBe('in_period');
+    expect(unknown.report.referenceReading.unavailableNatalPillars).toContain('hour');
+    expect(known.report.referenceReading.unavailableNatalPillars).not.toContain('hour');
+    expect(unknown.report.monthly.referenceReading.unavailableNatalPillars)
+      .toEqual(unknown.report.referenceReading.unavailableNatalPillars);
+    const joined = renderGeneralAnnualMonthlyExplorationHtml(unknown.report);
+    const single = renderGeneralMonthlyExplorationHtml(unknown.report.monthly);
+    expect(joined).toContain('aria-label="올해 미확정 원국 충 관계"');
+    expect(joined).toContain('aria-label="조회 절입 구간의 미확정 원국 관계"');
+    expect(joined).toContain('미확정 기둥의 관계나 다른 관계의 부재를 뜻하지 않습니다');
+    expect(joined).toContain('아직 계산 근거가 부족합니다');
+    expect(single).toContain('aria-label="현재 절입 구간의 미확정 원국 관계"');
+    expect(single).toContain('확인된 충 관계가 없다는 결론이 아닙니다');
+    expect(joined).not.toContain('시주 지지와의 충이 확정되었습니다');
+    expect(unknown.report.mayPublish).toBe(false);
+    expect(unknown.report.maySell).toBe(false);
+  });
 
   it('keeps unconsumed natal T5 separate from the annual and monthly meanings when a General core is partial', () => {
     let verified = false;
