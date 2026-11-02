@@ -277,6 +277,7 @@ export function runFiveHundredSajuAudit() {
   const wealthConsumerCases = [];
   const generalT5ContextCases = [];
   const wealthIndependentLimitedCases = [];
+  const wealthPartialCoreUnusedT5Cases = [];
   const startedAt = Date.now();
   for (let i=0; i<COUNT; i++) {
     const {stamp, birth} = sampleBirth(inputs);
@@ -358,6 +359,39 @@ export function runFiveHundredSajuAudit() {
       }
       const selectedWealth = natalReports.wealth;
       const partial = selectedWealth.sections;
+      const hasPartialCore = selectedWealth.state === 'partial' &&
+        selectedWealth.readingGuide !== undefined &&
+        partial.length > 0 && partial.length < 3 &&
+        ['core','creation','management','planning'].includes(partial[0].axis);
+      const unusedT5 = selectedWealth.availableThemeContext;
+      if (hasPartialCore && unusedT5 !== undefined) {
+        const consumed = new Set(partial.flatMap(section => section.upstreamClaimIds));
+        const usedPaths = new Set(partial.flatMap(section => section.observedFactPaths));
+        if (unusedT5.wealthConclusionAuthorized !== false ||
+            !unusedT5.paragraph.includes('부족한 독립 보조 근거를 채우지 않으며') ||
+            unusedT5.themes.length === 0 ||
+            unusedT5.themes.some(theme =>
+              consumed.has(theme.claimId) ||
+              theme.observedFactPaths.some(path => usedPaths.has(path)) ||
+              theme.ruleIds.length === 0 || !theme.methodologyId ||
+              theme.sourceIds.length === 0)) {
+          throw new Error('Wealth partial core reused T8 as a new unsupported T5 support');
+        }
+        if (wealthPartialCoreUnusedT5Cases.length < 5) {
+          const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+          const wealthCard = html.split('<h2 id="domain-wealth">')[1]?.split('</article>')[0];
+          if (!wealthCard || !wealthCard.includes(
+            '<p>' + escapedHtmlText(unusedT5.paragraph) + '</p>')) {
+            throw new Error('Wealth partial-core unconsumed T5 was lost at consumer rendering');
+          }
+        }
+        wealthPartialCoreUnusedT5Cases.push({
+          birth:stamp, calculationHash:chartKey,
+          coreClaimType:partial[0].claimType, selectedT8Count:partial.length,
+          unconsumedT5Count:unusedT5.themes.length,
+          sourceClaimTypes:unusedT5.themes.map(theme=>theme.claimType),
+        });
+      }
       if (partial[0]?.axis === 'tension' && partial[1]?.axis === 'context') {
         const firstPaths = new Set(partial[0].observedFactPaths);
         const genuinelyNew = partial[1].observedFactPaths.filter(path => !firstPaths.has(path));
@@ -437,6 +471,11 @@ export function runFiveHundredSajuAudit() {
         count: wealthIndependentLimitedCases.length,
         cases: wealthIndependentLimitedCases,
       },
+      wealthPartialCoreUnusedT5: {
+        examined: COUNT,
+        count: wealthPartialCoreUnusedT5Cases.length,
+        examples: wealthPartialCoreUnusedT5Cases.slice(0, 6),
+      },
       generalBoundedT5OnNoT8: {
         examined: generalT5ContextCases.length,
         withoutGeneralT8: generalT5ContextCases.filter(c => c.withoutGeneralT8).length,
@@ -478,6 +517,7 @@ export function runFiveHundredSajuAudit() {
     wealthNoT8ButSourcedT5: result.rootCauseDiagnostics.wealthConsumerEvidence.withBoundedT5ContextInstead,
     wealthNoSourceBoundInterpretiveText: result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText,
     wealthIndependentLimitedInterpretations: result.rootCauseDiagnostics.wealthIndependentLimitedContext.count,
+    wealthPartialCoreUnusedT5: result.rootCauseDiagnostics.wealthPartialCoreUnusedT5.count,
     missingCauses: result.rootCauseDiagnostics.wealth.byCause,
     missingWithSourceContext: result.rootCauseDiagnostics.wealth.casesWithExistingSourceContext,
     missingWithHiddenWealthMembership: result.rootCauseDiagnostics.wealth.casesWithHiddenWealthMembership,

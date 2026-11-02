@@ -104,6 +104,50 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(run(3,10).report).toEqual(run(3,10).report);
   }, 30000);
 
+  it('retains distinct existing T5 meanings beside a source-owned but incomplete Wealth core', () => {
+    let verified = false;
+    outer: for (const hour of [0, 6, 12, 18]) {
+      for (const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
+        for (const day of [3,7,11,17,23]) {
+          const { report, execution, snapshot } = run(month, day, true, hour);
+          if (report.state !== 'partial' || !report.readingGuide ||
+              !report.availableThemeContext) continue;
+          const core = report.sections[0]!;
+          const context = report.availableThemeContext;
+          expect(['core','creation','management','planning']).toContain(core.axis);
+          expect(report.sections.length).toBeLessThan(3);
+          expect(report.readingGuide.coreClaimType).toBe(core.claimType);
+          expect(context.title).toContain('재물 중심 부분풀이');
+          expect(context.paragraph).toContain('부족한 독립 보조 근거를 채우지 않으며');
+          expect(context.wealthConclusionAuthorized).toBe(false);
+          expect(context.themes.length).toBeGreaterThan(0);
+          const selectedIds = new Set(report.sections.flatMap(section => section.upstreamClaimIds));
+          const observed = new Set(report.sections.flatMap(section => section.observedFactPaths));
+          const activeT5 = new Set(execution.claims.filter(claim =>
+            claim.state === 'active' && claim.taxonomy.tier === 'T5' &&
+            claim.snapshotId === snapshot.snapshotId).map(claim => claim.claimId));
+          for (const theme of context.themes) {
+            expect(activeT5.has(theme.claimId)).toBe(true);
+            expect(selectedIds.has(theme.claimId)).toBe(false);
+            expect(theme.observedFactPaths.every(path => !observed.has(path))).toBe(true);
+            expect(theme.ruleIds.length).toBeGreaterThan(0);
+            expect(theme.methodologyId.length).toBeGreaterThan(0);
+            expect(theme.sourceIds.length).toBeGreaterThan(0);
+            expect(context.paragraph).toContain(theme.summary);
+          }
+          expect(report.usefulComplete).toBe(false);
+          expect(report.mayPublish).toBe(false);
+          expect(report.maySell).toBe(false);
+          expect(report).toEqual(
+            buildWealthNatalMultifactorReport(snapshot, execution, registry));
+          verified = true;
+          break outer;
+        }
+      }
+    }
+    expect(verified, 'real chart must have an incomplete Wealth core and unconsumed T5').toBe(true);
+  }, 60000);
+
   it('requires distinct actual Wealth interpretation axes for MUR complete', () => {
     const x = run(3,10);
     if(x.report.state === 'complete') {

@@ -199,6 +199,7 @@ function buildAvailableThemeContext(
   execution: InterpretationExecutionResult,
   registry: ResolvedRuleRegistrySnapshot,
   alreadyExplainedClaimIds: readonly string[] = [],
+  hasSelectedCore = false,
 ): WealthNatalAvailableThemeContext | undefined {
   const tenGodFact = snapshot.derivedFacts.tenGods;
   if (!snapshot.completeness.birthTimeKnown || tenGodFact.status !== 'resolved') return undefined;
@@ -288,15 +289,19 @@ function buildAvailableThemeContext(
   const hiddenWealthMembership = hiddenAssessment.status === 'resolved'
     ? hiddenAssessment.observations : [];
   return {
-    title: alreadyExplained.size
-      ? '앞서 선택된 부분 풀이와 구별되는 원국의 십신 주제'
-      : '재물 종합 결론 이전에 확인된 원국의 십신 주제',
+    title: hasSelectedCore
+      ? '재물 중심 부분풀이와 구별되는 원국의 십신 주제'
+      : alreadyExplained.size
+        ? '앞서 선택된 부분 풀이와 구별되는 원국의 십신 주제'
+        : '재물 종합 결론 이전에 확인된 원국의 십신 주제',
     paragraph: '아래는 기존 출처와 연결된 십신별 구조 설명입니다. ' +
       (alreadyExplained.size
         ? '위의 부분 풀이에 이미 사용된 십신 근거는 반복하지 않았습니다. '
         : '') +
       paragraphs.join(' ') +
-      ' 이 관측들은 현재 등록된 재물 분야의 복합 해석 근거를 충족하지 못했습니다. ' +
+      (hasSelectedCore
+        ? ' 이 별도 관측은 선택된 재물 중심 풀이의 부족한 독립 보조 근거를 채우지 않으며, 새로운 재물 종합 결론이 아닙니다. '
+        : ' 이 관측들은 현재 등록된 재물 분야의 복합 해석 근거를 충족하지 못했습니다. ') +
       '따라서 재물의 많고 적음, 소득, 투자 성과, 향후 재물운을 판단하는 해석으로 읽어서는 안 됩니다.',
     wealthConclusionAuthorized: false,
     hiddenWealthMembership,
@@ -561,16 +566,17 @@ export function buildWealthNatalMultifactorReport(
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly WealthNatalMultifactorSection[] = chosen;
-  // Neither an indirect context T8 nor a tension-only T8 establishes the
-  // missing direct Wealth core. Preserve other independently sourced T5 themes,
-  // excluding the exact upstream T5 claims already consumed by the chosen T8.
-  // Never substitute fallback copy when a Wealth core has been selected.
-  const limitedWithoutCore = core === undefined &&
+  // Preserve source-qualified, unconsumed T5 in any uncompleted Wealth reading.
+  // For a selected partial core this is separate context ONLY; it cannot
+  // supply the missing independent T8 supports or change the report state.
+  const boundedNoCore = core === undefined &&
     sections.every(section => section.axis === 'context' || section.axis === 'tension');
-  const availableThemeContext = limitedWithoutCore
+  const boundedPartialCore = core !== undefined && state === 'partial';
+  const availableThemeContext = boundedNoCore || boundedPartialCore
     ? buildAvailableThemeContext(
         snapshot, execution, registry,
         sections.flatMap(section => section.upstreamClaimIds),
+        boundedPartialCore,
       ) : undefined;
   const readingGuide = buildWealthNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,

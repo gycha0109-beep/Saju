@@ -139,6 +139,57 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       .toThrow('Wealth first-screen requires only the source-owned selected T8 reading');
   });
 
+  it('renders unused sourced T5 beside a partial Wealth core without treating it as a supporting T8', () => {
+    let checked = false;
+    outer: for (const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
+      for (const day of [3,7,11,17,23]) {
+        for (const hour of [0,6,12,18]) {
+          const chart = sample(month, day, hour);
+          const execution = runInterpretation(chart, registry.wealth, { now: NOW });
+          const wealth = buildWealthNatalMultifactorReport(chart, execution, registry.wealth);
+          if (wealth.state !== 'partial' || wealth.readingGuide === undefined ||
+              wealth.availableThemeContext === undefined) continue;
+          const rendered = reports(chart);
+          const html = renderNatalFiveDomainMultifactorResearchHtml(chart, rendered);
+          const card = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+          expect(card).toContain('재물 중심 부분풀이와 구별되는 원국의 십신 주제');
+          expect(card).toContain('재물운 종합 해석 아님');
+          expect(card).toContain('중심 관점 · ');
+          expect(card).toContain('독립 보조 근거를 채우지 않으며');
+          const coreIds = new Set(wealth.sections.flatMap(section => section.upstreamClaimIds));
+          for (const theme of wealth.availableThemeContext.themes) {
+            expect(coreIds.has(theme.claimId)).toBe(false);
+            expect(card).toContain(theme.summary);
+            expect(card).toContain(theme.ruleIds[0]!);
+            expect(card).toContain(theme.methodologyId);
+            expect(card).toContain(theme.observedPositions[0]!);
+          }
+          expect(wealth.usefulComplete).toBe(false);
+          expect(wealth.mayPublish).toBe(false);
+          expect(wealth.maySell).toBe(false);
+          const forged = {
+            ...rendered,
+            wealth: {
+              ...wealth,
+              availableThemeContext: {
+                ...wealth.availableThemeContext,
+                themes: [{
+                  ...wealth.availableThemeContext.themes[0]!,
+                  claimId: wealth.sections[0]!.upstreamClaimIds[0]!,
+                }],
+              },
+            },
+          };
+          expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
+            .toThrow('existing theme context repeats an already interpreted T8 upstream claim');
+          checked = true;
+          break outer;
+        }
+      }
+    }
+    expect(checked).toBe(true);
+  }, 60000);
+
   it('shows unconsumed original T5 meanings beside a source-bound General tension without claiming a core', () => {
     let verified = false;
     outer: for (const month of [2,3,4,5,6,7,8,9,10,11,12,1]) {

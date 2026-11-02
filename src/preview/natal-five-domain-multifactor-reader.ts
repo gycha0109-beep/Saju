@@ -367,12 +367,17 @@ function renderFirstScreenSelectedInterpretations(
 function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport): string {
   const context = report.availableThemeContext;
   if (context === undefined) return '';
-  // Preserve unconsumed sourced T5 even when independent tension + indirect
-  // context partial T8 Claims coexist. They must NEVER form a Wealth core.
+  // Only a bounded incomplete report may show unconsumed T5. With an
+  // actual selected core, these are independent T5 notes, NOT new T8 supports.
   const partialAxes = report.sections.map(section => section.axis);
+  const partialCore = report.state === 'partial' &&
+    report.readingGuide !== undefined && report.sections.length > 0 &&
+    ['core', 'creation', 'management', 'planning'].includes(report.sections[0]!.axis) &&
+    report.readingGuide.coreClaimType === report.sections[0]!.claimType &&
+    report.sections.length < 3;
   const limitedWithoutCore = report.sections.length === 0
     ? report.state === 'insufficient'
-    : report.state === 'partial' &&
+    : report.state === 'partial' && report.readingGuide === undefined &&
       partialAxes.length <= 2 && new Set(partialAxes).size === partialAxes.length &&
       report.sections.every(section =>
         section.axis === 'context' && section.pattern.endsWith('_CONTEXT') ||
@@ -382,7 +387,7 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
       (report.sections.length !== 2 ||
         report.sections[1]!.observedFactPaths.some(path =>
           !report.sections[0]!.observedFactPaths.includes(path)));
-  guard(limitedWithoutCore &&
+  guard((limitedWithoutCore || partialCore) &&
     context.wealthConclusionAuthorized === false &&
     context.themes.length > 0 && context.title.trim().length > 0 &&
     context.paragraph.trim().length > 0 &&
@@ -393,7 +398,11 @@ function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport)
     'existing theme context must not become a Wealth synthesis');
   const alreadyInterpreted = new Set(report.sections.flatMap(section =>
     section.upstreamClaimIds));
-  guard(context.themes.every(theme => !alreadyInterpreted.has(theme.claimId)),
+  const alreadyObserved = new Set(report.sections.flatMap(section =>
+    section.observedFactPaths));
+  guard(context.themes.every(theme =>
+    !alreadyInterpreted.has(theme.claimId) &&
+    theme.observedFactPaths.every(path => !alreadyObserved.has(path))),
     'existing theme context repeats an already interpreted T8 upstream claim');
   const currentGap = report.missing[0];
   guard(typeof currentGap === 'string' && currentGap.trim().length > 0,
