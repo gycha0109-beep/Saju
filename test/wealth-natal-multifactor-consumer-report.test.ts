@@ -182,51 +182,34 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
   });
 
 
-  it('shows actual tension-only T8 evidence as partial Korean interpretation without inventing a core', () => {
-    let found = false;
-    // A fixed noon birth hour misses rare combinations. Sweep four actual
-    // birth times while keeping each generated chart fully canonical.
-    outer: for(const hour of [0,6,12,18]) {
-      for(const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
-        for(const day of [3,7,11,17,23]) {
-          const { execution, report } = run(month, day, true, hour);
-        const active = execution.claims.filter(c => c.taxonomy.tier === 'T8' &&
-          c.taxonomy.category === 'wealth' &&
-          c.predicate === 'wealth_multifactor_structure' && c.state === 'active');
-        const axes = active.map(c => (c.value as {axis?:string}).axis);
-        if(axes.length === 0 || axes.some(axis => ['core','creation','management','planning'].includes(axis ?? '')) ||
-          !axes.includes('tension')) continue;
-        found = true;
-        expect(report.state).toBe('partial');
-        expect(report.sections.length).toBeGreaterThanOrEqual(1);
-        expect(report.sections.length).toBeLessThanOrEqual(2);
-        expect(report.sections[0]?.axis).toBe('tension');
-        if (report.sections.length === 2) {
-          expect(report.sections[1]?.axis).toBe('context');
-          expect(report.sections[1]!.observedFactPaths.some(path =>
-            !report.sections[0]!.observedFactPaths.includes(path))).toBe(true);
-          expect(report.readingGuide).toBeUndefined();
-          expect(report.missing.join(' ')).toContain('각각 부분적으로 보여줍니다');
-        }
-        expect(report.sections[0]?.observedPositions.length).toBeGreaterThanOrEqual(2);
-        expect(report.sections[0]?.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
-        expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
-        expect(report.missing.join(' ')).toContain('중심 종합 근거 없이');
-        expect(report.missing[0]).toContain('현재 실제로 확인된 출처 연결 십신 관점');
-        expect(report.missing[0]).toContain('비겁·재성의 긴장 관계는 실제 확인됐지만');
-        expect(report.missing[0]).not.toContain('결합되지 않아');
-        expect(report.missing.join(' ')).toContain('출처 있는 원국 중심 복합 해석 축');
-        expect(report.missing.join(' ')).not.toContain('추가 구조 축');
-        expect(report.researchOnly).toBe(true);
-        expect(report.usefulComplete).toBe(false);
-        expect(report.mayPublish).toBe(false);
-        expect(report.maySell).toBe(false);
-          break outer;
-        }
-      }
-    }
-    expect(found).toBe(true);
-  }, 60000);
+  it('keeps the original tension T8 executed when a sourced whole-chart core becomes available', () => {
+    const snapshot = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar', date: { year: 1960, month: 11, day: 15 },
+      time: { known: true, hour: 12, minute: 41 },
+      sexForTraditionalCalculation: 'male',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const execution = runInterpretation(snapshot, registry, { now: NOW });
+    const report = buildWealthNatalMultifactorReport(snapshot, execution, registry);
+    const active = execution.claims.filter(claim =>
+      claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'wealth' &&
+      claim.predicate === 'wealth_multifactor_structure' && claim.state === 'active');
+    expect(active.some(claim => (claim.value as { axis?: string }).axis === 'tension')).toBe(true);
+    expect(active.some(claim => (claim.value as { channel?: string }).channel === 'cross_channel'))
+      .toBe(true);
+    expect(report.sections[0]?.axis).toBe('creation');
+    expect(report.sections[0]?.channel).toBe('cross_channel');
+    expect(report.sections[0]?.paragraph).toContain('서로 다른 관측 범위');
+    expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
+    expect(report.sections[0]?.upstreamClaimIds.length).toBe(2);
+    expect(report.readingGuide?.coreClaimType).toBe(report.sections[0]?.claimType);
+    expect(report.state).toBe('partial');
+    expect(report.missing.join(' ')).toContain('추가 구조 축');
+    expect(report.researchOnly).toBe(true);
+    expect(report.usefulComplete).toBe(false);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+  });
+
 
   it('exposes existing T5 source meaning with chart facts when no Wealth T8 section can be established', () => {
     const birth = {

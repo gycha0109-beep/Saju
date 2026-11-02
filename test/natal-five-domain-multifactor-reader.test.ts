@@ -54,7 +54,7 @@ function reports(snapshot: ReturnType<typeof sample>): NatalFiveDomainMultifacto
 }
 
 describe('same-chart five-domain multifactor Korean research reading', () => {
-  it('renders both source-qualified Wealth partial T8 paragraphs for the two real 500-case audit births', () => {
+  it('keeps both actual 500-case Wealth readings when one gains a sourced whole-chart core', () => {
     const examples = [
       { year: 1960, month: 11, day: 15, hour: 12, minute: 41 },
       { year: 1977, month: 6, day: 8, hour: 9, minute: 48 },
@@ -62,6 +62,8 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     const escaped = (value: string) => value.replace(/[&<>"']/gu, char => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
     })[char]!);
+    let sourcedCrossCore = 0;
+    let originalLimitedTension = 0;
     for (const birth of examples) {
       const chart = calculateCanonicalSajuSnapshot({
         calendarType: 'solar',
@@ -69,25 +71,36 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         time: { known: true, hour: birth.hour, minute: birth.minute },
         sexForTraditionalCalculation: 'male',
       }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const wealth = reports(chart).wealth;
       const all = reports(chart);
-      const wealth = all.wealth;
       expect(wealth.state).toBe('partial');
-      expect(wealth.readingGuide).toBeUndefined();
-      expect(wealth.sections.map(section => section.axis)).toEqual(['tension', 'context']);
       const html = renderNatalFiveDomainMultifactorResearchHtml(chart, all);
       const card = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+      const firstReading = card.split('<details class="full-claim-evidence"')[0]!;
       expect(card).toContain('아직 설명하지 못하는 부분');
       expect(card).toContain('aria-label="재물운 명식별 풀이 본문"');
-      expect(card).toContain('재물운 중심 결론이 확립되지 않았습니다');
-      expect(card).toContain('확인된 긴장 부분 관점');
-      expect(card).toContain('재성 중심 결론이 아닌 간접 맥락');
-      const firstReading = card.split('<details class="full-claim-evidence"')[0]!;
+      if (wealth.sections[0]?.channel === 'cross_channel') {
+        sourcedCrossCore++;
+        expect(wealth.sections[0]?.axis).toBe('creation');
+        expect(wealth.sections[0]?.pattern).toBe('OUTPUT_WEALTH');
+        expect(wealth.readingGuide?.coreClaimType).toBe(wealth.sections[0]?.claimType);
+        expect(wealth.sections[0]?.paragraph).toContain('서로 다른 관측 범위');
+        expect(card).toContain('중심 관점 · ');
+        expect(card).toContain('독립적인 추가 근거가 부족하여 종합 판단은 보류합니다');
+        expect(card).not.toContain('재물운 중심 결론이 확립되지 않았습니다');
+      } else {
+        originalLimitedTension++;
+        expect(wealth.readingGuide).toBeUndefined();
+        expect(wealth.sections.map(section => section.axis)).toEqual(['tension', 'context']);
+        expect(card).toContain('재물운 중심 결론이 확립되지 않았습니다');
+        expect(card).toContain('확인된 긴장 부분 관점');
+        expect(card).toContain('재성 중심 결론이 아닌 간접 맥락');
+      }
       for (const section of wealth.sections) {
         expect(firstReading).toContain('<p>' + escaped(section.paragraph) + '</p>');
         expect(section.sourceIds.length).toBeGreaterThan(0);
         expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(card).toContain('<h3>' + escaped(section.headline) + '</h3>');
-        expect(card).toContain('<p>' + escaped(section.paragraph) + '</p>');
         expect(card).toContain(section.ruleId);
         expect(card).toContain(section.sourceIds[0]!);
       }
@@ -96,6 +109,8 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       expect(wealth.mayPublish).toBe(false);
       expect(wealth.maySell).toBe(false);
     }
+    expect(sourcedCrossCore).toBe(1);
+    expect(originalLimitedTension).toBe(1);
   }, 60000);
 
 
@@ -534,33 +549,46 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(wealth.maySell).toBe(false);
   }, 30000);
 
-  it('explains the actual cross-channel Wealth gap without claiming synthesis', () => {
+  it('renders the actual cross-channel 食傷→財 T8 as a limited sourced reading', () => {
     const chart = calculateCanonicalSajuSnapshot({
       calendarType: 'solar',
       date: { year: 1955, month: 10, day: 31 },
       time: { known: true, hour: 19, minute: 35 },
       sexForTraditionalCalculation: 'unspecified',
     }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
-    const reading = reports(chart);
-    const wealth = reading.wealth;
-    expect(wealth.state).toBe('insufficient');
-    expect(wealth.sections).toHaveLength(0);
+    const wealth = reports(chart).wealth;
+    expect(wealth.state).toBe('partial');
+    expect(wealth.sections).toHaveLength(1);
+    const section = wealth.sections[0]!;
+    expect(section.channel).toBe('cross_channel');
+    expect(section.axis).toBe('creation');
+    expect(section.pattern).toBe('OUTPUT_WEALTH');
+    expect(section.paragraph).toContain('서로 다른 관측 범위');
+    expect(section.observedFactPaths.some(path => path.endsWith('.stem.value'))).toBe(true);
+    expect(section.observedFactPaths.some(path => path.endsWith('.branch.value'))).toBe(true);
+    expect(section.sourceIds).toHaveLength(2);
+    expect(wealth.readingGuide?.coreClaimType).toBe(section.claimType);
+    expect(wealth.missing.join(' ')).toContain('추가 구조 축');
     expect(wealth.availableThemeContext?.wealthConclusionAuthorized).toBe(false);
     expect(wealth.availableThemeContext?.themes.map(theme => theme.claimType))
-      .toContain('TEN_GOD_WEALTH_BRANCHES_THEME');
-    expect(wealth.missing.join(' ')).toContain('천간과 지지 대표 십신으로 나뉘어');
-    expect(wealth.missing.join(' ')).toContain('서로 다른 채널을 임의로 결합');
-    expect(wealth.missing.join(' ')).not.toContain('추가 구조 축');
-    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reading);
+      .not.toContain('TEN_GOD_WEALTH_BRANCHES_THEME');
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reports(chart));
     const wealthHtml = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+    const escapedParagraph = section.paragraph.replace(/[&<>"']/gu, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char]!);
+    expect(wealthHtml).toContain('aria-label="재물운 명식별 풀이 본문"');
+    expect(wealthHtml).toContain('중심 관점 · ');
+    expect(wealthHtml).toContain(escapedParagraph);
+    expect(wealthHtml).toContain(section.ruleId);
+    expect(wealthHtml).toContain(section.sourceIds[0]!);
     expect(wealthHtml).toContain('재물운 종합 해석 아님');
-    expect(wealthHtml).toContain('재물운의 중심 복합 해석 근거는 아직 확인되지 않았습니다');
-    expect(wealthHtml).toContain('아래에는 출처 있는 개별 십신 관점만 부분적으로 설명합니다');
-    expect(wealthHtml).not.toContain('현재 이 명식에서 근거가 확인된 해석 문단은 없습니다');
-    expect(wealthHtml).toContain('서로 다른 채널을 임의로 결합');
+    expect(wealthHtml).not.toContain('서로 다른 채널을 임의로 결합');
+    expect(wealth.usefulComplete).toBe(false);
     expect(wealth.mayPublish).toBe(false);
     expect(wealth.maySell).toBe(false);
   }, 30000);
+
 
   it('renders five source-owned Korean meanings and evidence scopes on one real canonical chart', () => {
     const chart = sample(3, 10);
