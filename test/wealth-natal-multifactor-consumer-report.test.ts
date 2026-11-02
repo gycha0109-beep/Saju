@@ -290,7 +290,7 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(buildWealthNatalMultifactorReport(snapshot, execution, registry)).toEqual(report);
   });
 
-  it('keeps existing T5 context distinct from a Wealth section even if a wealth theme is observed', () => {
+  it('keeps unused T5 meanings separate after source-bound cross-channel Wealth T8 selection', () => {
     const snapshot = calculateCanonicalSajuSnapshot({
       calendarType: 'solar',
       date: { year: 1955, month: 10, day: 31 },
@@ -299,10 +299,15 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
     const execution = runInterpretation(snapshot, registry, { now: NOW });
     const report = buildWealthNatalMultifactorReport(snapshot, execution, registry);
-    expect(report.sections).toHaveLength(0);
-    expect(report.state).toBe('insufficient');
-    expect(report.availableThemeContext?.themes.some(theme => theme.family === 'wealth')).toBe(true);
+    expect(report.sections).toHaveLength(1);
+    expect(report.sections[0]?.axis).toBe('creation');
+    expect(report.sections[0]?.channel).toBe('cross_channel');
+    expect(report.state).toBe('partial');
     expect(report.availableThemeContext?.wealthConclusionAuthorized).toBe(false);
+    expect(report.availableThemeContext?.themes.some(theme => theme.family === 'wealth')).toBe(false);
+    expect(report.availableThemeContext?.themes.some(theme => theme.family === 'peer')).toBe(true);
+    expect(report.availableThemeContext?.themes.every(theme =>
+      !report.sections[0]!.upstreamClaimIds.includes(theme.claimId))).toBe(true);
   });
 
   it('keeps T8 meaning blocked with unknown birth hour but displays only verified chart facts', () => {
