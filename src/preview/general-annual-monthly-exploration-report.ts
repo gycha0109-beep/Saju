@@ -59,6 +59,17 @@ export interface GeneralAnnualMonthlyExplorationReport {
   /** Same-chart governed T5/T8 natal research reading. Never a T9 time synthesis. */
   natalContext: GeneralNatalMultifactorReport;
   periodComparison: string;
+  /** Selected T9 meanings and natal clash signals compared without temporal synthesis. */
+  monthlyPhaseContrast:
+    | {
+        state: 'source_bound_comparison';
+        beforeTheme: GeneralMonthlyExplorationSection;
+        afterTheme: GeneralMonthlyExplorationSection;
+        sameTenGod: boolean;
+        beforeTensions: readonly GeneralMonthlyExplorationSection[];
+        afterTensions: readonly GeneralMonthlyExplorationSection[];
+      }
+    | { state: 'insufficient_evidence' };
   /** The yearly profile is for a Seoul civil calendar year, not an Ipchun annual pillar. */
   annualReference: {
     referenceDateTime: string;
@@ -222,6 +233,36 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     'annual context must match the same monthly research period',
   );
   const themes = monthly.sections.filter(section => section.kind === 'theme');
+  // Compare only the two actually selected T9 research themes and the
+  // separately selected natal-branch clash claims of each calculated phase.
+  // The change of Ten-God is a difference in the source-owned reading axis,
+  // never a claim about better/worse fortune or real-world events.
+  const beforeThemes = themes.filter(section => section.segmentId === 'before_jeol');
+  const afterThemes = themes.filter(section => section.segmentId === 'after_jeol');
+  requireLinkedPeriod(beforeThemes.length <= 1 && afterThemes.length <= 1 &&
+    themes.length === beforeThemes.length + afterThemes.length,
+    'month phase contrast requires at most one original T9 theme per segment');
+  const phaseTensions = (id: MonthlySegmentId) => monthly.sections.filter(section =>
+    section.kind === 'tension' && section.segmentId === id);
+  const beforeTensions = phaseTensions('before_jeol');
+  const afterTensions = phaseTensions('after_jeol');
+  requireLinkedPeriod([...beforeTensions, ...afterTensions].every(section =>
+    section.sourceIds.length > 0 && section.ruleIds.length > 0 &&
+    section.methodologyId.length > 0 && section.claimId.length > 0 &&
+    section.relatedPillar !== undefined &&
+    section.observedClash?.relation === 'clash' &&
+    section.factPaths.includes('temporal.segmentsById.' + section.segmentId +
+      '.monthlyBranchRelations.' + section.relatedPillar + '.relation')),
+    'phase contrast must retain original executed natal-branch research evidence');
+  const monthlyPhaseContrast: GeneralAnnualMonthlyExplorationReport['monthlyPhaseContrast'] =
+    beforeThemes.length === 1 && afterThemes.length === 1
+      ? {
+          state: 'source_bound_comparison',
+          beforeTheme: beforeThemes[0]!, afterTheme: afterThemes[0]!,
+          sameTenGod: beforeThemes[0]!.tenGod === afterThemes[0]!.tenGod,
+          beforeTensions, afterTensions,
+        }
+      : { state: 'insufficient_evidence' };
   // The comparison must use the original selected T9 meanings, not merely
   // restate the Ten-God names or invent a year-to-month synthesis.
   const phase = (id: MonthlySegmentId, label: string) => {
@@ -299,7 +340,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     targetYear: monthly.targetYear, targetMonth: monthly.targetMonth,
     annual, annualExecutedEvidence, monthly, natalContext, periodComparison,
-    annualReference, referenceReading, annualCurrentReading,
+    monthlyPhaseContrast, annualReference, referenceReading, annualCurrentReading,
     caveats: [
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
       '이 연결 화면은 별도 통합 운세 규칙이 아니라 기존 연운 연구 문구와 월운 T9 근거를 순서대로 보여줍니다.',
@@ -522,6 +563,75 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       : '<p>조회 기준 시각이 선택한 ' + report.targetYear + '년 ' +
         report.targetMonth + '월 밖에 있어 현재 적용 구간을 정하지 않았습니다. ' +
         '아래의 월별 두 구간을 비교할 수 있습니다.</p>';
+  const contrast = report.monthlyPhaseContrast;
+  const originalTheme = (id: MonthlySegmentId) => report.monthly.sections.filter(section =>
+    section.kind === 'theme' && section.segmentId === id);
+  const originalTensions = (id: MonthlySegmentId) => report.monthly.sections.filter(section =>
+    section.kind === 'tension' && section.segmentId === id);
+  const originalBefore = originalTheme('before_jeol');
+  const originalAfter = originalTheme('after_jeol');
+  if (contrast.state === 'source_bound_comparison') {
+    const exactTensions = (id: MonthlySegmentId, selected: readonly GeneralMonthlyExplorationSection[]) => {
+      const actual = originalTensions(id);
+      return selected.length === actual.length && selected.every((section, i) =>
+        section === actual[i] && section.kind === 'tension' &&
+        section.sourceIds.length > 0 && section.ruleIds.length > 0 &&
+        section.relatedPillar !== undefined && section.observedClash?.relation === 'clash');
+    };
+    if (originalBefore.length !== 1 || originalAfter.length !== 1 ||
+        contrast.beforeTheme !== originalBefore[0] ||
+        contrast.afterTheme !== originalAfter[0] ||
+        contrast.sameTenGod !== (contrast.beforeTheme.tenGod === contrast.afterTheme.tenGod) ||
+        !exactTensions('before_jeol', contrast.beforeTensions) ||
+        !exactTensions('after_jeol', contrast.afterTensions)) {
+      throw new TypeError('Annual/monthly HTML requires exactly selected T9 phase contrast evidence.');
+    }
+  } else if (contrast.state !== 'insufficient_evidence' ||
+      originalBefore.length === 1 && originalAfter.length === 1) {
+    throw new TypeError('Annual/monthly HTML cannot fabricate a missing T9 phase contrast.');
+  }
+  const contrastTension = (
+    label: string, tensions: readonly GeneralMonthlyExplorationSection[],
+  ) => tensions.length
+    ? '<div><h4>' + e(label) + '에 별도로 확인된 원국 충 관계</h4>' +
+      tensions.map(section =>
+        '<article class="reading-card"><h4>' + e(section.title) + '</h4><p>' +
+        e(section.text) + '</p><details><summary>실제 원국·월운 근거</summary>' +
+        '<p>Claim: ' + e(section.claimId) + '</p>' +
+        '<p>규칙: ' + e(section.ruleIds.join(' · ')) + '</p>' +
+        '<p>출처: ' + e(section.sourceIds.join(' · ')) + '</p>' +
+        '<p>계산: ' + e(section.factPaths.join(' · ')) +
+        '</p></details></article>').join('') + '</div>'
+    : '<p>' + e(label) +
+      '에 선택된 원국 충 관계 연구 Claim은 없습니다. 다른 관계의 부재를 뜻하지 않습니다.</p>';
+  const phaseContrast = contrast.state === 'source_bound_comparison'
+    ? '<section id="monthly-phase-contrast" aria-label="절입 전후 기존 월운 해석 근거 비교">' +
+      '<h3>절입 전·후, 실제 선택된 해석 주제의 차이</h3>' +
+      '<p>' + (contrast.sameTenGod
+        ? '두 구간에서 실제 선택된 중심 십신 주제는 ' +
+          e(contrast.beforeTheme.tenGod) + '으로 같습니다.'
+        : '절입 전의 중심 십신 ' + e(contrast.beforeTheme.tenGod) +
+          '과 절입 이후의 중심 십신 ' + e(contrast.afterTheme.tenGod) +
+          '이 달라, 기존 연구 풀이의 중심 관점도 서로 다릅니다.') +
+      ' 이는 기존 연구 주제의 차이이며 운세의 상승·하락 또는 사건을 뜻하지 않습니다.</p>' +
+      '<div class="phase-contrast"><article class="reading-card"><small>절입 전 기존 T9 주제</small>' +
+      '<h4>' + e(contrast.beforeTheme.title) + '</h4><p>' +
+      e(contrast.beforeTheme.text) + '</p><details><summary>실행 근거</summary><p>Claim: ' +
+      e(contrast.beforeTheme.claimId) + '</p><p>규칙: ' +
+      e(contrast.beforeTheme.ruleIds.join(' · ')) + '</p><p>출처: ' +
+      e(contrast.beforeTheme.sourceIds.join(' · ')) + '</p></details></article>' +
+      '<article class="reading-card"><small>절입 이후 기존 T9 주제</small><h4>' +
+      e(contrast.afterTheme.title) + '</h4><p>' +
+      e(contrast.afterTheme.text) + '</p><details><summary>실행 근거</summary><p>Claim: ' +
+      e(contrast.afterTheme.claimId) + '</p><p>규칙: ' +
+      e(contrast.afterTheme.ruleIds.join(' · ')) + '</p><p>출처: ' +
+      e(contrast.afterTheme.sourceIds.join(' · ')) + '</p></details></article></div>' +
+      contrastTension('절입 전', contrast.beforeTensions) +
+      contrastTension('절입 이후', contrast.afterTensions) +
+      '<p class="muted">원국 충 관계는 각 구간에 실제 실행된 T9 부분풀이로만 표시합니다. ' +
+      '두 구간의 결과를 하나의 새 예측으로 합성하지 않습니다.</p></section>'
+    : '<section id="monthly-phase-contrast"><h3>절입 전·후 풀이 비교 보류</h3>' +
+      '<p>두 구간 중 실제 선택된 기존 월운 해석 근거가 부족해 차이를 판단하지 않습니다.</p></section>';
   const monthly = SEGMENTS.map(id => {
     const sections = report.monthly.sections.filter(section => section.segmentId === id);
     const interval = sections[0]?.calculatedInterval;
@@ -579,7 +689,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     ) + '</h2>' +
     '<p>' + e(report.periodComparison) + '</p>' +
     '<p class="muted">' + e(report.monthly.jeolBoundary.name) + ' 절입: ' +
-    e(kst(report.monthly.jeolBoundary.at)) + '</p>' + monthly + '</section>' +
+    e(kst(report.monthly.jeolBoundary.at)) + '</p>' + phaseContrast +
+    monthly + '</section>' +
     '<aside><strong>해석 범위와 아직 모르는 부분</strong><ul>' + caveats + '</ul></aside>' +
     '</main></body></html>';
 }

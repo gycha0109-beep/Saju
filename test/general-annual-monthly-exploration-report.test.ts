@@ -322,6 +322,58 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(repeat.report.periodComparison).toBe(sep.report.periodComparison);
   });
 
+  it('compares actual selected T9 month themes and natal clash meanings across Jeol without inventing a forecast', () => {
+    for (const month of [3, 9, 10]) {
+      const { report } = run(month);
+      const contrast = report.monthlyPhaseContrast;
+      expect(contrast.state).toBe('source_bound_comparison');
+      if (contrast.state !== 'source_bound_comparison') continue;
+      const before = report.monthly.sections.find(section =>
+        section.kind === 'theme' && section.segmentId === 'before_jeol')!;
+      const after = report.monthly.sections.find(section =>
+        section.kind === 'theme' && section.segmentId === 'after_jeol')!;
+      expect(contrast.beforeTheme).toBe(before);
+      expect(contrast.afterTheme).toBe(after);
+      expect(contrast.sameTenGod).toBe(before.tenGod === after.tenGod);
+      expect(contrast.beforeTensions).toEqual(report.monthly.sections.filter(section =>
+        section.kind === 'tension' && section.segmentId === 'before_jeol'));
+      expect(contrast.afterTensions).toEqual(report.monthly.sections.filter(section =>
+        section.kind === 'tension' && section.segmentId === 'after_jeol'));
+      const html = renderGeneralAnnualMonthlyExplorationHtml(report);
+      const comparison = html.split('id="monthly-phase-contrast"')[1]!
+        .split('id="phase-before_jeol"')[0]!;
+      expect(comparison).toContain('실제 선택된 해석 주제의 차이');
+      expect(comparison).toContain('운세의 상승·하락 또는 사건을 뜻하지 않습니다');
+      for (const section of [before, after, ...contrast.beforeTensions, ...contrast.afterTensions]) {
+        expect(comparison).toContain(section.claimId);
+        expect(comparison).toContain(section.ruleIds[0]!);
+        expect(comparison).toContain(section.sourceIds[0]!);
+        expect(comparison).toContain(section.title);
+        expect(comparison).toContain(section.text);
+      }
+      for (const section of [...contrast.beforeTensions, ...contrast.afterTensions]) {
+        expect(comparison).toContain(section.factPaths[0]!);
+      }
+      expect(report.researchOnly).toBe(true);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+      const forged = {
+        ...report,
+        monthlyPhaseContrast: {
+          ...contrast, afterTheme: before,
+        },
+      };
+      expect(() => renderGeneralAnnualMonthlyExplorationHtml(forged))
+        .toThrow('exactly selected T9 phase contrast evidence');
+      const forgedState = {
+        ...report,
+        monthlyPhaseContrast: { state: 'insufficient_evidence' as const },
+      };
+      expect(() => renderGeneralAnnualMonthlyExplorationHtml(forgedState))
+        .toThrow('cannot fabricate a missing T9 phase contrast');
+    }
+  }, 60000);
+
   it('selects the exact source-owned Korean reading across the real Jeol instant', () => {
     const jeolAt = run(9).facts.jeolBoundary.at;
     const before = run(9, 9, true, new Date(Date.parse(jeolAt) - 1).toISOString());
