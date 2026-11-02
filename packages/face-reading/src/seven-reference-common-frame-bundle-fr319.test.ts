@@ -435,6 +435,117 @@ function input(
 }
 
 describe('FR319 exact-capture seven-reference common-frame bundle', () => {
+  // Contract fixtures only: these are not real capture or review evidence.
+  const hairlineDriftCases = [
+    ['schemaVersion', 'unsupported-result-v9'],
+    ['repoSafeReceipt.schemaVersion', 'unsupported-receipt-v9'],
+    ['repoSafeReceipt.contractVersion', 'unsupported-contract-v9'],
+    ['repoSafeReceipt.exactSameCaptureBindingRevalidated', false],
+    ['repoSafeReceipt.metricScaleAuthorityRevalidated', false],
+    ['repoSafeReceipt.sourceBoundaryCardinalityPreserved', false],
+    ['repoSafeReceipt.sourceBoundaryPointOrderPreserved', false],
+    ['repoSafeReceipt.hairlineSupportRegionStayedWithinValidatedEnvelope', false],
+    ['repoSafeReceipt.sourceImageDigestPubliclyPersisted', true],
+    ['repoSafeReceipt.threeDivisionsSpanExecutionReady', true],
+    ['authorityBoundary.productionActivated', true],
+    ['authorityBoundary.threeDivisionsBoundaryIssued', true],
+    ['runtimeOnlyMetricVerticalReference.schemaVersion', 'unsupported-runtime-v9'],
+    ['runtimeOnlyMetricVerticalReference.sourceObservationRef', 'neutral.unrelated@0.1.0'],
+    ['runtimeOnlyMetricVerticalReference.axisConvention', 'x_right_y_down'],
+    ['runtimeOnlyMetricVerticalReference.selectionRule', 'top_face_oval_vertex'],
+    ['runtimeOnlyMetricVerticalReference.registrationMethod', 'unknown_scale_fit'],
+    ['runtimeOnlyMetricVerticalReference.sourceBoundaryCardinalityPreserved', false],
+    ['runtimeOnlyMetricVerticalReference.sourceBoundaryPointOrderPreserved', false],
+    [
+      'runtimeOnlyMetricVerticalReference.noExtrapolationBeyondValidatedHairlineSupportRegion',
+      false,
+    ],
+    ['runtimeOnlyMetricVerticalReference.failClosedWhenUnavailable', false],
+  ] as const;
+
+  it.each(hairlineDriftCases)('rejects FR318 drift at %s', (path, value) => {
+    const candidate = input();
+    let target = candidate.hairline as unknown as Record<string, unknown>;
+    const parts = path.split('.');
+    for (const key of parts.slice(0, -1)) target = target[key] as Record<string, unknown>;
+    target[parts.at(-1)!] = value;
+    expect(() => assembleExactCaptureSevenReferenceCommonFrameBundleFR319(candidate)).toThrow(
+      /FR318/,
+    );
+  });
+
+  it('does not echo private values or digests when rejecting a predecessor version', () => {
+    const candidate = input();
+    (candidate.hairline as unknown as Record<string, unknown>).schemaVersion = DIGEST;
+    let error: unknown;
+    try {
+      assembleExactCaptureSevenReferenceCommonFrameBundleFR319(candidate);
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toBeInstanceOf(Error);
+    expect(String(error)).not.toContain(DIGEST);
+  });
+
+  it('accepts both existing FR316 registration methods without changing capture requirements', () => {
+    const candidate = input();
+    if (candidate.hairline.status !== 'available') throw new Error('expected available fixture');
+    const result = assembleExactCaptureSevenReferenceCommonFrameBundleFR319(
+      input({
+        hairline: {
+          ...candidate.hairline,
+          runtimeOnlyMetricVerticalReference: {
+            ...candidate.hairline.runtimeOnlyMetricVerticalReference,
+            registrationMethod: 'independent_correspondence_registration',
+          },
+        },
+      }),
+    );
+    expect(result.status).toBe('available');
+    expect(JSON.stringify(result.repoSafeReceipt)).not.toContain(DIGEST);
+    expect(result.authorityBoundary.threeDivisionsSpanIssued).toBe(false);
+  });
+
+  it('keeps a valid unavailable FR318 result unavailable instead of demanding success flags', () => {
+    const source = hairline();
+    const candidate = input({
+      hairline: {
+        schemaVersion: source.schemaVersion,
+        status: 'unavailable',
+        reason: 'real_local_metric_mapping_execution_unavailable',
+        predecessorDisposition: 'eligible_for_local_hairline_metric_mapping_execution',
+        fallbackInvented: false,
+        repoSafeReceipt: {
+          ...source.repoSafeReceipt,
+          localMetricMappingExecuted: false,
+          metricNeutralReferenceAvailable: false,
+          sourceBoundaryCardinalityPreserved: false,
+          sourceBoundaryPointOrderPreserved: false,
+          hairlineMetricReferenceReadyForSevenReferenceAssembly: false,
+        },
+        authorityBoundary: source.authorityBoundary,
+      },
+    });
+    const result = assembleExactCaptureSevenReferenceCommonFrameBundleFR319(candidate);
+    expect(result.status).toBe('unavailable');
+    expect(result.repoSafeReceipt.sevenReferenceRuntimeBundleAvailable).toBe(false);
+  });
+
+  it('revalidates FR318 version even when a different reference is unavailable', () => {
+    const candidate = input();
+    const raw = candidate as unknown as Record<string, Record<string, unknown>>;
+    raw.lowerFace!.status = 'unavailable';
+    raw.lowerFace!.reason = 'fr260_neutral_reference_unavailable';
+    raw.lowerFace!.sourceUnavailableReason = 'fixture unavailable';
+    raw.lowerFace!.fallbackInvented = false;
+    raw.lowerFace!.bridgeReviewState = 'neutral_observation_not_available_for_binding_review';
+    (raw.lowerFace!.source as Record<string, unknown>).sourceStatus = 'unavailable';
+    raw.hairline!.schemaVersion = 'unsupported-result-v9';
+    expect(() => assembleExactCaptureSevenReferenceCommonFrameBundleFR319(candidate)).toThrow(
+      /FR318 hairline predecessor version drift/,
+    );
+  });
+
   it('assembles exactly seven neutral metric references for one exact capture', () => {
     const result =
       assembleExactCaptureSevenReferenceCommonFrameBundleFR319(
