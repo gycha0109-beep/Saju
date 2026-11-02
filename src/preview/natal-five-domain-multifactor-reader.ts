@@ -280,13 +280,19 @@ function renderFirstScreenSelectedInterpretations(
     const guide = scoped.readingGuide;
     const sections = scoped.sections;
     if (sections.length === 0) return '';
-    // Source-owned tension-only T8 is a real partial interpretation but has
-    // no core reading guide. Its existing paragraph must not disappear from
-    // the first screen or be mislabelled as a whole-chart conclusion.
+    // Tension-only T8 already has a source-bound partial reading guide.
+    // Keep that exact Claim/Rule/Source, but never promote it to a core.
     const tensionOnly = sections.length === 1 && sections[0]!.axis === 'tension';
     guard((tensionOnly
-      ? guide === undefined && scoped.state === 'partial' &&
-        scoped.missing.includes('출처 있는 원국 중심 복합 해석 축')
+      ? guide !== undefined && scoped.state === 'partial' &&
+        scoped.missing.includes('출처 있는 원국 중심 복합 해석 축') &&
+        guide.sourceClaimType === sections[0]!.claimType &&
+        guide.supporting.length === 0 &&
+        guide.sourceIds.length === sections[0]!.sourceIds.length &&
+        sections[0]!.sourceIds.every(id => guide.sourceIds.includes(id)) &&
+        guide.ruleIds.length === 1 && guide.ruleIds[0] === sections[0]!.ruleId &&
+        guide.paragraph.includes(sections[0]!.headline) &&
+        guide.paragraph.includes(sections[0]!.paragraph)
       : guide !== undefined && sections[0]?.claimType === guide.sourceClaimType &&
         guide.sourceIds.length > 0 &&
         guide.sourceIds.every(id => id.trim().length > 0)) &&

@@ -201,6 +201,12 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
           if (general.state !== 'partial' || general.sections.length !== 1 ||
               general.sections[0]?.axis !== 'tension' ||
               general.availableThemeContext === undefined) continue;
+          expect(general.readingGuide).toBeDefined();
+          expect(general.readingGuide!.sourceClaimType).toBe(general.sections[0]!.claimType);
+          expect(general.readingGuide!.supporting).toHaveLength(0);
+          expect(general.readingGuide!.sourceIds).toEqual(general.sections[0]!.sourceIds);
+          expect(general.readingGuide!.ruleIds).toEqual([general.sections[0]!.ruleId]);
+          expect(general.readingGuide!.paragraph).toContain(general.sections[0]!.paragraph);
           const consumed = new Set(general.sections.flatMap(section => section.upstreamClaimIds));
           expect(general.availableThemeContext.themes.length).toBeGreaterThan(0);
           expect(general.availableThemeContext.themes.every(theme =>

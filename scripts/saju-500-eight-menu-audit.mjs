@@ -362,14 +362,20 @@ export function runFiveHundredSajuAudit() {
       if (generalPartial.state === 'partial' &&
           generalPartial.sections.length === 1 &&
           generalPartial.sections[0].axis === 'tension') {
-        if (generalPartial.readingGuide !== undefined) {
-          throw new Error('General tension-only reading must not have a core guide');
+        const guide = generalPartial.readingGuide;
+        const chosen = generalPartial.sections[0];
+        if (guide === undefined || guide.sourceClaimType !== chosen.claimType ||
+            guide.supporting.length !== 0 ||
+            guide.ruleIds.length !== 1 || guide.ruleIds[0] !== chosen.ruleId ||
+            guide.sourceIds.length !== chosen.sourceIds.length ||
+            chosen.sourceIds.some(id => !guide.sourceIds.includes(id)) ||
+            !guide.paragraph.includes(chosen.paragraph)) {
+          throw new Error('General tension-only reading must retain its original limited guide');
         }
         if (generalTensionFirstScreenCases.length < 5) {
           const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
           const generalCard = html.split('<h2 id="domain-general">')[1]?.split('</article>')[0];
           const firstScreen = generalCard?.split('<details class="full-claim-evidence"')[0];
-          const chosen = generalPartial.sections[0];
           if (!firstScreen ||
               !firstScreen.includes('총운의 중심 결론은 보류합니다') ||
               !firstScreen.includes('<p>' + escapedHtmlText(chosen.paragraph) + '</p>') ||
