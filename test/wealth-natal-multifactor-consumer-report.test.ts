@@ -10,6 +10,8 @@ import {
   WEALTH_NATAL_CROSS_CHANNEL_OFFICER_METHODOLOGY,
   WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_RULES,
   WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_METHODOLOGY,
+  WEALTH_NATAL_CROSS_CHANNEL_PEER_RULES,
+  WEALTH_NATAL_CROSS_CHANNEL_PEER_METHODOLOGY,
   WEALTH_NATAL_MULTIFACTOR_PACK,
   createWealthNatalMultifactorRegistry,
 } from '../src/research/wealth-natal-multifactor-candidate.js';
@@ -39,10 +41,20 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(registry.pack.packId).toBe(WEALTH_NATAL_MULTIFACTOR_PACK.packId);
     expect(WEALTH_NATAL_MULTIFACTOR_RULES).toHaveLength(18);
     expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(24);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(26);
     expect(WEALTH_NATAL_CROSS_CHANNEL_RULES).toHaveLength(2);
     expect(WEALTH_NATAL_CROSS_CHANNEL_OFFICER_RULES).toHaveLength(2);
     expect(WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_RULES).toHaveLength(2);
+    expect(WEALTH_NATAL_CROSS_CHANNEL_PEER_RULES).toHaveLength(2);
+    expect(registry.methodologies.some(m =>
+      m.methodologyId === WEALTH_NATAL_CROSS_CHANNEL_PEER_METHODOLOGY.methodologyId &&
+      m.status === 'research')).toBe(true);
+    expect(WEALTH_NATAL_CROSS_CHANNEL_PEER_RULES.every(rule =>
+      rule.status === 'research' && rule.inputs.length === 2 &&
+      rule.inputs.every(input => input.source === 'interpretation_claim' &&
+        input.required && input.cardinality === 'exactly_one') &&
+      rule.sourceRefs.length === 2 &&
+      (rule.output.value as { axis?: string }).axis === 'tension')).toBe(true);
     expect(registry.methodologies.some(m =>
       m.methodologyId === WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_METHODOLOGY.methodologyId &&
       m.status === 'research')).toBe(true);
@@ -329,6 +341,51 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(report.usefulComplete).toBe(false);
     expect(report.mayPublish).toBe(false);
     expect(report.maySell).toBe(false);
+  });
+
+
+  it('emits only source-executed opposite-channel Peer/Wealth T8 tension', () => {
+    let found: ReturnType<typeof run> | undefined;
+    for (let month = 1; month <= 12 && found === undefined; month++) {
+      for (let day = 1; day <= 28 && found === undefined; day++) {
+        const candidate = run(month, day);
+        if (candidate.execution.claims.some(claim =>
+          claim.state === 'active' &&
+          claim.claimType.startsWith('WEALTH_NATAL_MULTIFACTOR_PEER_WEALTH_PEER_') &&
+          claim.claimType.endsWith('_CROSS_CHANNEL'))) found = candidate;
+      }
+    }
+    expect(found).toBeDefined();
+    if (!found) return;
+    const active = found.execution.claims.find(claim =>
+      claim.state === 'active' &&
+      claim.claimType.startsWith('WEALTH_NATAL_MULTIFACTOR_PEER_WEALTH_PEER_') &&
+      claim.claimType.endsWith('_CROSS_CHANNEL'))!;
+    const value = active.value as { axis: string;
+      familyChannels: { peer: 'visible_stems' | 'branches'; wealth: 'visible_stems' | 'branches' } };
+    expect(value.axis).toBe('tension');
+    expect(value.familyChannels.peer).not.toBe(value.familyChannels.wealth);
+    expect(active.upstreamClaimRefs.map(id =>
+      found!.execution.claims.find(claim => claim.claimId === id)?.claimType).sort()).toEqual([
+      'TEN_GOD_PEER_' + value.familyChannels.peer.toUpperCase() + '_THEME',
+      'TEN_GOD_WEALTH_' + value.familyChannels.wealth.toUpperCase() + '_THEME',
+    ].sort());
+    expect(active.sourceRefs).toContain(
+      'SRC-SAMYEONG-TONGHOE-V5-FOUR-LIBRARIES-TENGOD-RELATIONS');
+    const rule = registry.rules.find(item => item.ruleId === active.ruleRefs[0]?.ruleId);
+    expect(rule?.methodologyRef.id).toBe('M-WEALTH-NATAL-WHOLE-CHART-PEER-WEALTH-V1');
+    const chosen = found.report.sections.find(section => section.claimType === active.claimType);
+    if (chosen) {
+      expect(chosen.axis).toBe('tension');
+      expect(chosen.channel).toBe('cross_channel');
+      expect(chosen.paragraph).toContain('비겁과 재성은 동일 관측 채널이 아니라');
+      expect(chosen.paragraph).toContain('실제 자산 손실');
+      expect(chosen.observedFactPaths.some(x => x.endsWith('.stem.value'))).toBe(true);
+      expect(chosen.observedFactPaths.some(x => x.endsWith('.branch.value'))).toBe(true);
+    }
+    expect(found.report.researchOnly).toBe(true);
+    expect(found.report.mayPublish).toBe(false);
+    expect(found.report.maySell).toBe(false);
   });
 
   it('keeps the original tension T8 executed when a sourced whole-chart core becomes available', () => {
