@@ -283,7 +283,8 @@ export function buildTemporalResearchMenuReadings(
         section.factPaths.join('|') === original.factPaths.join('|');
       if (sourceTensions.length !== eligibleTensions.length ||
           new Set(sourceTensions.map(section => section.claimId)).size !== sourceTensions.length ||
-          sourceTensions.some(section => !eligibleTensions.includes(section))) {
+          sourceTensions.some(section =>
+            !eligibleTensions.some(eligible => eligible.claimId === section.claimId))) {
         throw new TypeError('Monthly reference must retain all actually selected current T9 tensions.');
       }
       const currentTensions = sourceTensions.map(original => {
