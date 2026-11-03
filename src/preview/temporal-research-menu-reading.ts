@@ -53,6 +53,7 @@ export interface TemporalMonthlyReferenceFocus {
   currentSection?: TemporalResearchMenuSection;
   /** Already executed and selected in the SAME current Jeol interval. */
   currentTensions?: readonly TemporalResearchMenuSection[];
+  currentSupports?: readonly TemporalResearchMenuSection[];
   /** Unresolved natal relations are not negative evidence of no clash. */
   unavailableNatalPillars?: readonly ('year' | 'month' | 'day' | 'hour')[];
   message: string;
@@ -202,7 +203,8 @@ export function buildTemporalResearchMenuReadings(
   const monthly = joined?.monthly.sections.map(section => {
     const startsAt = Date.parse(section.calculatedInterval.startsAt);
     const endsAt = Date.parse(section.calculatedInterval.endsAt);
-    if ((section.kind !== 'theme' && section.kind !== 'tension') ||
+    if ((section.kind !== 'theme' && section.kind !== 'tension' &&
+         section.kind !== 'support') ||
         (section.segmentId !== 'before_jeol' && section.segmentId !== 'after_jeol') ||
         !section.title.trim() || !section.text.trim() ||
         !section.claimId.trim() || !section.claimType.trim() ||
@@ -299,6 +301,37 @@ export function buildTemporalResearchMenuReadings(
         }
         return matches[0]!;
       });
+      const sourceSupports = reference.sourceBoundSupports ?? [];
+      const eligibleSupports = joined.monthly.sections.filter(section =>
+        section.kind === 'support' && section.segmentId === reference.segmentId &&
+        section.calculatedInterval.startsAt === theme.calculatedInterval.startsAt &&
+        section.calculatedInterval.endsAt === theme.calculatedInterval.endsAt);
+      if (sourceSupports.length !== eligibleSupports.length ||
+          new Set(sourceSupports.map(section => section.claimId)).size !== sourceSupports.length ||
+          sourceSupports.some(section =>
+            !eligibleSupports.some(item => item.claimId === section.claimId))) {
+        throw new TypeError('Monthly reference must retain exact source-qualified six-combination supports.');
+      }
+      const currentSupports = sourceSupports.map(original => {
+        const matches = monthly.filter(section =>
+          section.interpretationRole === 'support' &&
+          section.claimId === original.claimId &&
+          section.claimType === original.claimType &&
+          section.semanticKey === original.semanticKey &&
+          section.title.endsWith(original.title) && section.text === original.text &&
+          section.interval?.startsAt === original.calculatedInterval.startsAt &&
+          section.interval?.endsAtExclusive === original.calculatedInterval.endsAt &&
+          section.ruleIds?.join('|') === original.ruleIds.join('|') &&
+          section.methodologyId === original.methodologyId &&
+          section.sourceIds.join('|') === original.sourceIds.join('|') &&
+          section.sourceIds.includes('SRC-T0-XUANZE-YAOLUE-UPPER') &&
+          section.factPaths.join('|') === original.factPaths.join('|'));
+        if (matches.length !== 1 ||
+            original.observedCombination?.relation !== 'six_combination') {
+          throw new TypeError('Monthly current six-combination lost exact selected T9 provenance.');
+        }
+        return matches[0]!;
+      });
       const unavailable = reference.unavailableNatalPillars ?? [];
       if (new Set(unavailable).size !== unavailable.length ||
           unavailable.some(slot => !['year', 'month', 'day', 'hour'].includes(slot))) {
@@ -310,6 +343,7 @@ export function buildTemporalResearchMenuReadings(
         segmentId: reference.segmentId,
         currentSection: matched[0]!,
         currentTensions,
+        currentSupports,
         unavailableNatalPillars: [...unavailable],
         message: '조회 시각에 해당하는 절입 구간의 기존 T9 연구 풀이입니다. 다른 구간의 문구는 현재 풀이가 아닙니다.' +
           (unavailable.length ? ' 원국의 일부 기둥 관계는 미확정이므로 충이 없다고 판단하지 않습니다.' : ''),
