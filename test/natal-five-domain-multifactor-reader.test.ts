@@ -366,6 +366,28 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(found).toBe(true);
   }, 60000);
 
+  it('labels a real context-only Wealth T8 as indirect rather than a direct Wealth core in overview', () => {
+    const chart = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 1964, month: 11, day: 14 },
+      time: { known: true, hour: 14, minute: 59 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const reading = reports(chart);
+    expect(reading.wealth.state).toBe('partial');
+    expect(reading.wealth.sections[0]?.axis).toBe('context');
+    expect(reading.wealth.readingGuide).toBeUndefined();
+    const overview = renderNatalFiveDomainMultifactorResearchHtml(chart, reading)
+      .split('</nav>')[0]!;
+    expect(overview).toContain('재물 종합 결론 보류 · 기존 간접 구조 부분풀이: ' +
+      reading.wealth.sections[0]!.headline);
+    expect(overview).toContain('아직 설명하지 못하는 부분:');
+    expect(overview).not.toContain('확인된 부분 해석: ' +
+      reading.wealth.sections[0]!.headline);
+    expect(reading.wealth.usefulComplete).toBe(false);
+    expect(reading.wealth.maySell).toBe(false);
+  });
+
   it('actually displays existing source-qualified Ten-God context for an insufficient Wealth reading', () => {
     const chart = calculateCanonicalSajuSnapshot({
       calendarType: 'solar',
@@ -382,6 +404,11 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(context.wealthConclusionAuthorized).toBe(false);
     expect(context.themes.length).toBeGreaterThan(0);
     const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reading);
+    const overview = html.split('</nav>')[0]!;
+    expect(overview).toContain('재물 종합 결론 보류 · 출처 있는 십신 부분풀이: ');
+    expect(overview).toContain(context.themes[0]!.headline);
+    expect(overview).toContain(context.themes[0]!.summary);
+    expect(overview).not.toContain('재물 종합 결론 확보');
     const wealthCard = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
     expect(wealthCard).toContain('aria-label="재물운 근거 있는 부분 설명"');
     expect(wealthCard).toContain('재물운 종합 해석 아님');
@@ -697,7 +724,11 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       expect(overview.indexOf(link)).toBeGreaterThan(previousLink);
       previousLink = overview.indexOf(link);
       const report = sections[domain];
-      expect(overview).toContain(report.sections[0]?.headline ??
+      const wealthT5 = domain === 'wealth' && report.sections.length === 0
+        ? (report as NatalFiveDomainMultifactorReports['wealth'])
+          .availableThemeContext?.themes[0] : undefined;
+      expect(overview).toContain(wealthT5?.headline ??
+        report.sections[0]?.headline ??
         report.missing[0] ?? '현재 확인된 해석 문단이 없습니다.');
     }
     expect(html).toContain('다섯 분야의 근거 기반 요약');
