@@ -37,7 +37,7 @@ export const GENERAL_ANNUAL_SIX_COMBINATION_SOURCE: SourceReference = Object.fre
   url: 'https://zh.wikisource.org/zh-hant/%E9%81%B8%E6%93%87%E8%A6%81%E7%95%A5/%E4%B8%8A',
   accessedAt: '2026-11-03',
   provenanceTier: 'cross_reference',
-  rights: { copyrightStatus: 'public_domain', reusePolicy: 'paraphrase_only' },
+  rights: { copyrightStatus: 'public_domain' as const, reusePolicy: 'paraphrase_only' as const },
   notes: 'Existing canonical T0 catalog source for 地支六合 pair classification only. No 合化, transformation, luck polarity or real-world relationship outcome is inferred.',
 });
 
@@ -187,9 +187,9 @@ export const GENERAL_ANNUAL_COMBINATION_METHODOLOGY: MethodologyDefinition = Obj
   optionalFactTypes: ['temporal.annualBranchRelations'],
   inputContract: {
     factInputs: [
-      { source: 'temporal_fact', pathPattern: 'targetYear', mode: 'required',
+      { source: 'temporal_fact' as const, pathPattern: 'targetYear', mode: 'required' as const,
         rationale: 'The observed combination must belong to the exact target year.' },
-      { source: 'temporal_fact', pathPattern: 'annualPillar', mode: 'required',
+      { source: 'temporal_fact' as const, pathPattern: 'annualPillar', mode: 'required' as const,
         rationale: 'The annual branch must be part of the same request-scoped pillar.' },
       ...PILLAR_SLOTS.map(slot => ({
         source: 'temporal_fact' as const,
