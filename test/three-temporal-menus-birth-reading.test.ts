@@ -70,6 +70,30 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
     expect(outside.researchOnly).toBe(true);
   });
 
+  it('shows pre-Ipchun annual research only as selected-year material in the three-menu reader', () => {
+    const early = buildThreeTemporalMenusBirthReading(
+      BIRTH, target(2026, 2, '2026-02-03T00:00:00.000Z'),
+    );
+    const atIpchun = early.annualMonthly.report.annualEffectiveContext.ipchunAt;
+    const before = buildThreeTemporalMenusBirthReading(BIRTH, target(
+      2026, 2, new Date(Date.parse(atIpchun) - 1).toISOString(),
+    ));
+    const after = buildThreeTemporalMenusBirthReading(BIRTH, target(
+      2026, 2, atIpchun,
+    ));
+    expect(before.annualMonthly.report.annualCurrentReading.state).toBe('before_ipchun');
+    expect(before.html).toContain('<section id="annual"><h2>선택한 연도 — 2026년</h2>');
+    expect(before.html).toContain('아래 연운은 비교 자료로만 제공합니다');
+    expect(before.html).not.toContain('<section id="annual"><h2>올해 — 2026년</h2>');
+    expect(after.annualMonthly.report.annualCurrentReading.state).toBe('in_target_civil_year');
+    expect(after.html).toContain('<section id="annual"><h2>올해 — 2026년</h2>');
+    expect(after.html).toContain('입춘 이후 효력 연주는 병오');
+    expect(before.annualMonthly.report.annual.sections)
+      .toEqual(after.annualMonthly.report.annual.sections);
+    expect(before.maySell).toBe(false);
+    expect(after.maySell).toBe(false);
+  });
+
   it('preserves birth-time HOLD and rejects invalid temporal scopes', () => {
     const missingTime = buildThreeTemporalMenusBirthReading(
       { ...BIRTH, time: { known: false } }, target(),

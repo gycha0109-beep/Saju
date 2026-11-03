@@ -119,6 +119,39 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     expect(monthly.statusMessage).toContain('월운 Official 해석은 미승인');
   });
 
+  it('does not transfer pre-Ipchun annual research copy into the active annual menu focus', () => {
+    const before = reports(true, 1990, '2030-01-15T12:00:00.000Z').annualMonthly;
+    const after = reports(true, 1990, '2030-09-03T12:00:00.000Z').annualMonthly;
+    const outside = reports().annualMonthly;
+    const beforeCard = buildTemporalResearchMenuReadings({ annualMonthly: before })[0]!;
+    const afterCard = buildTemporalResearchMenuReadings({ annualMonthly: after })[0]!;
+    const outsideCard = buildTemporalResearchMenuReadings({ annualMonthly: outside })[0]!;
+    expect(before.annualEffectiveContext.state).toBe('before_ipchun');
+    expect(beforeCard.annualReferenceFocus?.state).toBe('before_ipchun');
+    expect(beforeCard.annualReferenceFocus?.message).toContain('현재 연운으로 적용하지 않고');
+    expect(beforeCard.annualReferenceFocus?.effectivePillarAtReference)
+      .toBe(before.annualEffectiveContext.beforeIpchunPillar);
+    expect(beforeCard.statusMessage).toContain('현재 연운으로 적용하지 않습니다');
+    expect(afterCard.annualReferenceFocus?.state).toBe('from_ipchun');
+    expect(afterCard.annualReferenceFocus?.effectivePillarAtReference)
+      .toBe(after.annual.annualPillarLabel);
+    expect(outsideCard.annualReferenceFocus?.state).toBe('outside_target_civil_year');
+    expect(outsideCard.annualReferenceFocus?.effectivePillarAtReference).toBeUndefined();
+    expect(beforeCard.sections).toEqual(afterCard.sections);
+    expect(beforeCard.availability).toBe('partial');
+    expect(beforeCard.authority.mayMarkMenuAvailable).toBe(false);
+    expect(beforeCard.authority.maySell).toBe(false);
+    expect(() => buildTemporalResearchMenuReadings({
+      annualMonthly: {
+        ...before,
+        annualEffectiveContext: {
+          ...before.annualEffectiveContext,
+          state: 'from_ipchun',
+        },
+      },
+    })).toThrow('Annual menu requires the exact joined Ipchun applicability');
+  });
+
   it('selects only the exact T9 theme for the real reference instant inside the requested month', () => {
     const { annualMonthly } = reports(true, 1990, '2030-06-02T12:00:00.000Z');
     const actual = annualMonthly.monthly.referenceReading;

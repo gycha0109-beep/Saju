@@ -109,17 +109,26 @@ function render(
   const report = annualMonthly.report;
   const life = lifeStage.report;
   const annualReference = report.annualReference;
+  const annualEffective = report.annualEffectiveContext;
   const monthlyFocus = report.monthly.referenceReading;
   // Product menu names are stable, but a comparison year/month must not be
   // displayed as if it were the year/month of the supplied reference instant.
-  const annualLabel = annualReference.state === 'in_target_civil_year'
-    ? '올해' : '선택한 연도';
+  const annualAppliesNow = annualReference.state === 'in_target_civil_year' &&
+    annualEffective.state === 'from_ipchun';
+  const annualLabel = annualAppliesNow ? '올해' : '선택한 연도';
   const monthlyLabel = monthlyFocus.state === 'outside_target_month'
     ? '선택한 월' : '이번 달';
-  const yearNote = annualReference.state === 'in_target_civil_year'
-    ? '조회 시각의 서울 달력 연도에 해당하는 연구용 연운입니다.'
-    : '선택한 ' + report.targetYear +
-      '년은 조회 시각의 현재 연도가 아닙니다. 현재 연운으로 적용하지 않고 비교만 합니다.';
+  const yearNote = annualAppliesNow
+    ? '입춘 이후 효력 연주는 ' + annualEffective.effectivePillarAtReference +
+      '입니다. 조회 시각의 서울 달력연도에 해당하는 내부 연구용 연운 문구입니다.'
+    : annualEffective.state === 'before_ipchun'
+      ? '서울 달력연도는 ' + report.targetYear + '년이지만 아직 입춘 전입니다. ' +
+        '현재 효력 연주는 ' + annualEffective.effectivePillarAtReference +
+        '이며 ' + annualEffective.ipchunAt +
+        ' 입춘 전에는 선택한 연도의 연운 연구 문구를 현재 풀이로 적용하지 않습니다. ' +
+        '아래 연운은 비교 자료로만 제공합니다.'
+      : '선택한 ' + report.targetYear +
+        '년은 조회 시각의 현재 연도가 아닙니다. 현재 연운으로 적용하지 않고 비교만 합니다.';
   const annual = report.annual.sections.map((section, i) =>
     '<article><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
     '<details><summary>연운 원문 출처와 계산 근거</summary><p>후보 프로필: ' +

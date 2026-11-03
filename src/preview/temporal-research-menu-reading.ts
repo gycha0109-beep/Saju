@@ -26,6 +26,14 @@ export interface TemporalResearchMenuSection {
   };
 }
 
+export interface TemporalAnnualReferenceFocus {
+  referenceDateTime: string;
+  /** Only the Ipchun-effective current year may carry the selected-year research text as current. */
+  state: 'from_ipchun' | 'before_ipchun' | 'outside_target_civil_year';
+  effectivePillarAtReference?: string;
+  message: string;
+}
+
 export interface TemporalMonthlyReferenceFocus {
   referenceDateTime: string;
   state: 'in_period' | 'insufficient_evidence' | 'outside_target_month';
@@ -43,7 +51,9 @@ export interface TemporalResearchMenuReading {
   meaning: TemporalResearchMeaning;
   statusMessage: string;
   sections: readonly TemporalResearchMenuSection[];
-  /** Reference-time projection applies to the monthly menu only. */
+  /** Research-only annual applicability, separate from the civil-year profile inventory. */
+  annualReferenceFocus?: TemporalAnnualReferenceFocus;
+  /** Exact currently applicable monthly T9 selection. */
   referenceFocus?: TemporalMonthlyReferenceFocus;
   missing: readonly string[];
   provenance: {
@@ -224,6 +234,46 @@ export function buildTemporalResearchMenuReadings(
     },
   })) ?? [];
 
+  let annualReferenceFocus: TemporalAnnualReferenceFocus | undefined;
+  if (joined !== undefined) {
+    const annualRef = joined.annualReference;
+    const effective = joined.annualEffectiveContext;
+    const referenceTime = Date.parse(annualRef.referenceDateTime);
+    const ipchunTime = Date.parse(effective.ipchunAt);
+    const expectedState = annualRef.state === 'outside_target_civil_year'
+      ? 'outside_target_civil_year'
+      : referenceTime < ipchunTime ? 'before_ipchun' : 'from_ipchun';
+    const expectedAnnualReading = expectedState === 'from_ipchun'
+      ? 'in_target_civil_year' : expectedState;
+    const wallYear = new Date(referenceTime + 9 * 60 * 60 * 1000).getUTCFullYear();
+    const expectedPillar = expectedState === 'before_ipchun'
+      ? effective.beforeIpchunPillar
+      : expectedState === 'from_ipchun' ? effective.afterIpchunPillar : undefined;
+    if (!Number.isFinite(referenceTime) || !Number.isFinite(ipchunTime) ||
+        annualRef.referenceDateTime !== joined.monthly.referenceReading.referenceDateTime ||
+        annualRef.civilYearAtReference !== wallYear ||
+        (annualRef.state === 'in_target_civil_year') !== (wallYear === joined.targetYear) ||
+        effective.state !== expectedState ||
+        effective.effectivePillarAtReference !== expectedPillar ||
+        joined.annualCurrentReading.state !== expectedAnnualReading ||
+        joined.annualCurrentReading.referenceDateTime !== annualRef.referenceDateTime ||
+        effective.afterIpchunPillar !== joined.annual.annualPillarLabel) {
+      throw new TypeError('Annual menu requires the exact joined Ipchun applicability and reference.');
+    }
+    const message = expectedState === 'before_ipchun'
+      ? '서울 달력연도는 선택한 연도이지만 입춘 전 효력 연주는 ' +
+        expectedPillar + '입니다. 선택 연도 연운 T9 연구 문구는 현재 연운으로 적용하지 않고 비교 자료로만 표시합니다.'
+      : expectedState === 'outside_target_civil_year'
+        ? '조회 시각은 선택한 달력연도 밖입니다. 선택 연도의 T9 연구 문구는 현재 연운이 아니라 비교 자료입니다.'
+        : '입춘 이후 효력 연주는 ' + expectedPillar +
+          '입니다. 선택한 달력연도의 기존 T9 연구 문구만 제공하며 Official 해석은 아닙니다.';
+    annualReferenceFocus = {
+      referenceDateTime: annualRef.referenceDateTime,
+      state: expectedState,
+      ...(expectedPillar === undefined ? {} : { effectivePillarAtReference: expectedPillar }),
+      message,
+    };
+  }
   const annualHasMeaning = annual.some(section =>
     section.evidenceKind === 'annual_research_profile');
   const monthlyHasMeaning = monthly.some(section =>
@@ -236,9 +286,12 @@ export function buildTemporalResearchMenuReadings(
       availability: annualHasMeaning ? 'partial' : 'unavailable',
       meaning: annualHasMeaning ? 'bounded_research_interpretation' : 'none',
       statusMessage: annualHasMeaning
-        ? '개인별 연간 연구 문구만 제공됩니다. 연운 Official 해석은 미승인입니다.'
+        ? (annualReferenceFocus?.state === 'from_ipchun'
+          ? '입춘 이후 선택 연도의 기존 연구 문구만 제공됩니다. 연운 Official 해석은 미승인입니다.'
+          : '선택한 연도의 연구 문구는 조회 시각의 현재 연운으로 적용하지 않습니다. 연운 Official 해석은 미승인입니다.')
         : '올해의 개인별 연구 풀이가 아직 실행되지 않았습니다.',
       sections: annual,
+      ...(annualReferenceFocus === undefined ? {} : { annualReferenceFocus }),
       missing: joined === undefined
         ? ['연도 및 출생정보를 입력하고 연운 연구 풀이를 실행해야 합니다.']
         : [...joined.annual.caveats],
