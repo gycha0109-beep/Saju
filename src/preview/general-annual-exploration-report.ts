@@ -3,6 +3,9 @@ import type { AnnualInterpretationFacts } from '../reading/annual-interpretation
 import { GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES } from '../research/general-annual-narrative-profiles.js';
 import {
   GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
+  GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE,
+  GENERAL_ANNUAL_COMBINATION_METHODOLOGY,
+  GENERAL_ANNUAL_SIX_COMBINATION_SOURCE,
   GENERAL_ANNUAL_THEME_CLAIM_TYPE,
   GENERAL_ANNUAL_POLICY_SOURCE,
   GENERAL_ANNUAL_READING_METHODOLOGY,
@@ -33,7 +36,7 @@ const SLOT_LABELS: Readonly<Record<PillarSlot, string>> = {
 const SLOTS = ['year', 'month', 'day', 'hour'] as const satisfies readonly PillarSlot[];
 
 export interface GeneralAnnualExplorationSection {
-  kind: 'core' | 'tension';
+  kind: 'core' | 'tension' | 'support';
   id: string;
   title: string;
   text: string;
@@ -43,9 +46,14 @@ export interface GeneralAnnualExplorationSection {
   candidateClaimType: string;
   calculationFactPaths: readonly string[];
   policySourceId: typeof GENERAL_ANNUAL_POLICY_SOURCE.sourceId;
-  methodologyId: typeof GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId;
+  methodologyId: typeof GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId |
+    typeof GENERAL_ANNUAL_COMBINATION_METHODOLOGY.methodologyId;
   relatedPillar?: PillarSlot;
   observedClash?: Readonly<{ natalBranch: string; annualBranch: string; relation: 'clash' }>;
+  observedCombination?: Readonly<{
+    natalBranch: string; annualBranch: string; relation: 'six_combination';
+    sourceId: typeof GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId;
+  }>;
 }
 
 export interface GeneralAnnualExplorationReport {
@@ -130,6 +138,34 @@ export function buildGeneralAnnualExplorationReport(
     }
     if (state.value.pillar !== slot || state.value.annualBranch !== facts.annualPillar.branch) {
       throw new Error(`Contradictory annual branch relation for ${slot}.`);
+    }
+    if (state.value.relation === 'six_combination') {
+      const key = `ANNUAL_BRANCH_SIX_COMBINATION_${slot.toUpperCase()}`;
+      const copy = profileCopy(GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE.claimType, key);
+      sections.push({
+        kind: 'support',
+        id: key,
+        title: copy.headline,
+        text: copy.summary +
+          ` 실제 관측된 육합 쌍은 ${SLOT_LABELS[slot]} 지지 ${state.value.natalBranch}와 ${facts.targetYear}년 지지 ${state.value.annualBranch}입니다. 합화나 사건 성립의 근거로 사용하지 않습니다.`,
+        interpretationStatus: 'internal_research',
+        evidenceStatus: 'research_profile_projection_not_an_executed_official_claim',
+        researchProfileId: copy.profileId,
+        candidateClaimType: GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE.claimType,
+        calculationFactPaths: [
+          'temporal.targetYear', 'temporal.annualPillar',
+          'temporal.annualBranchRelations.' + slot,
+        ],
+        policySourceId: GENERAL_ANNUAL_POLICY_SOURCE.sourceId,
+        methodologyId: GENERAL_ANNUAL_COMBINATION_METHODOLOGY.methodologyId,
+        relatedPillar: slot,
+        observedCombination: {
+          natalBranch: state.value.natalBranch, annualBranch: state.value.annualBranch,
+          relation: 'six_combination',
+          sourceId: GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId,
+        },
+      });
+      continue;
     }
     if (state.value.relation !== 'clash') continue;
     const key = `ANNUAL_BRANCH_CLASH_${slot.toUpperCase()}`;
