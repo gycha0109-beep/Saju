@@ -248,6 +248,54 @@ nor a passing schema/Character check authorizes subtracting those references int
 traditional lengths. #2343/#2213 still require real private evidence, human review
 and exact-target governance before the actual producer connection can advance.
 
+## Exact-capture predecessor validation continuation
+
+Baseline: main `9807ce89c08afc61b587560d515a475efd819032` (checked 2026-11-02,
+Asia/Seoul). #2753 is merged and its six workflow runs, including required
+Integration, completed successfully. Its checks were not rerun. The exact Mayi
+`0.3.0 reviewed` methodology is now registered; the `0.2.0 research` predecessor,
+historical rule pins and all other authority gates remain unchanged.
+
+The next bounded implementation belongs to the existing FR-1/FR-2 observation
+handoff and #2213's same-capture measurement provenance/version requirement.
+FR319 already revalidates FR301/302/304/315, but its FR318 hairline branch accepted
+an unsupported result/receipt/runtime schema or contract version. It also accepted
+a successful-looking receipt with `exactSameCaptureBindingRevalidated=false` or
+`metricScaleAuthorityRevalidated=false`, or a different source observation, axis,
+selection rule or unsupported registration method. A matching private capture
+digest did not detect those contradictory predecessor records. Twenty-two new
+regressions reproduced acceptance before the fix.
+
+FR319 now checks the exact existing FR318 result/receipt/runtime versions and
+FR305 source observation reference, every declared authority boundary flag,
+available-receipt guarantees, metric frame/unit/axis, boundary preservation,
+selection rule and the two existing FR316 registration methods. These checks run
+before reference availability or exact-capture digest comparison can return a
+successful receipt. A legitimate unavailable predecessor still withholds the
+bundle; it does not need success-only flags. Errors contain fixed diagnostics,
+not the supplied private version, digest or metric value. The existing Face
+Reading CI runs both direct FR318 and FR319 suites. No new workflow, observation
+schema, threshold, binding, rule or methodology is introduced.
+
+This validates consistency of the existing caller-supplied predecessor records.
+It does not authenticate a photo, independently verify the caller's attestations,
+or cryptographically bind a scalar to its capture. Real private evidence and
+human review remain necessary; none was acquired or fabricated here. The FR319
+runtime remains neutral-only, with cross-reference subtraction and traditional
+span execution disabled. FRB006 remains 13/16 and six of seven neutral references.
+The next evidence-bearing action is the existing private-local FR313/314/316 →
+FR318/319 execution and human review under #2213; only then can the remaining
+three hairline binding slots be reviewed. Governed interpretation, product and
+Character publication decisions remain independent.
+
+Local verification (Node 24.20.0): 108 tests pass across ten direct predecessor,
+snapshot, methodology and real-source closeout suites. Root/Face typechecks,
+Face build, migration integrity, scoped ESLint and whitespace checks pass.
+Compiled FR318/319 and FR313–319 executor import/privacy self-checks pass; these
+self-checks do not execute a real capture. The existing compiled static research
+CLI self-check also passes. Hosted exact-head CI and Integration remain merge
+gates for this change.
+
 Roadmap markers below describe inspected implementation surfaces, not percentages
 or end-to-end completion. `partial` means code exists with authority/runtime work
 remaining; `unassessed` means no completion claim is made in this bounded audit.

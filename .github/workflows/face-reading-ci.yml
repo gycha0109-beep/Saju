@@ -76,6 +76,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/mayi-three-divisions-reviewed-methodology.test.ts test/face-topic-traditional-authority-closeout.test.ts
 
+      - name: Verify exact-capture neutral predecessor admission
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/hairline-real-local-metric-receipt-fr318.test.ts packages/face-reading/src/seven-reference-common-frame-bundle-fr319.test.ts
+
       - name: Verify FR61 provider candidate boundary
         working-directory: target
         run: npx vitest run packages/face-reading/src/production-neutral-observation-provider-fr61.test.ts

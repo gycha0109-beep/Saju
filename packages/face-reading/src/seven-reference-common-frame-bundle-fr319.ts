@@ -30,9 +30,13 @@ import {
 } from './common-frame-bridge-fr315.js';
 import {
   FR318_CURRENT_GATE,
+  FR318_REAL_LOCAL_HAIRLINE_METRIC_RECEIPT_CONTRACT_VERSION,
   FR318_METRIC_HAIRLINE_VERTICAL_REFERENCE_REF,
   type FR318MaterializationResult,
 } from './hairline-real-local-metric-receipt-fr318.js';
+import {
+  FR305_VISIBLE_HAIRLINE_VERTICAL_REFERENCE_REF,
+} from './visible-hairline-vertical-reference-fr305.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export const FR319_SEVEN_REFERENCE_COMMON_FRAME_BUNDLE_CONTRACT_VERSION =
@@ -339,6 +343,7 @@ function collectReferences(
     input.nasalBridgeRoot,
   );
   assertFR315CentralGrooveMetricBridgeResult(input.centralGroove);
+  assertHairlinePredecessor(input.hairline);
 
   const lowerFace = input.lowerFace;
   const brow = input.browInterbrow.browVerticalReference;
@@ -361,32 +366,8 @@ function collectReferences(
     return null;
   }
 
-  if (
-    hairline.authorityState !==
-      'exact_capture_local_neutral_hairline_metric_reference_only' ||
-    hairline.repoSafeReceipt
-      .realLocalFR316EligibilityRevalidated !== true ||
-    hairline.repoSafeReceipt.localMetricMappingExecuted !== true ||
-    hairline.repoSafeReceipt.metricNeutralReferenceAvailable !== true ||
-    hairline.repoSafeReceipt
-      .hairlineMetricReferenceReadyForSevenReferenceAssembly !== true ||
-    hairline.authorityBoundary.neutralObservationOnly !== true ||
-    hairline.authorityBoundary.traditionalHairlineBindingIssued !== false ||
-    hairline.authorityBoundary.threeDivisionsSpanIssued !== false
-  ) {
-    fail('FR318 hairline authority boundary is not eligible for FR319.');
-  }
-
   const hairlineRef =
     hairline.runtimeOnlyMetricVerticalReference;
-  if (
-    hairlineRef.observationRef !==
-      FR318_METRIC_HAIRLINE_VERTICAL_REFERENCE_REF ||
-    hairlineRef.exactCaptureLocalOnly !== true ||
-    hairlineRef.globallyReusableImageToMetricTransformIssued !== false
-  ) {
-    fail('FR318 hairline runtime reference drift.');
-  }
 
   const references = Object.freeze([
     reference(
@@ -460,6 +441,104 @@ function collectReferences(
   }
 
   return references;
+}
+
+/** Revalidate the serialized predecessor; a matching capture digest cannot repair it. */
+function assertHairlinePredecessor(hairline: FR318MaterializationResult): void {
+  if (
+    hairline?.schemaVersion !== 'fr318-real-local-hairline-metric-materialization-result-v1' ||
+    !['available', 'unavailable'].includes(hairline.status) ||
+    hairline.repoSafeReceipt?.schemaVersion !== 'fr318-repo-safe-hairline-metric-receipt-v1' ||
+    hairline.repoSafeReceipt.contractVersion !==
+      FR318_REAL_LOCAL_HAIRLINE_METRIC_RECEIPT_CONTRACT_VERSION
+  ) {
+    fail('FR318 hairline predecessor version drift.');
+  }
+
+  const expectedBoundary = {
+    neutralObservationOnly: true,
+    anatomicalHairlineGroundTruthIssued: false,
+    traditionalHairlineBindingIssued: false,
+    globallyReusableImageToMetricTransformIssued: false,
+    arbitraryImageToMetricRelabelingIssued: false,
+    threeDivisionsBoundaryIssued: false,
+    threeDivisionsSpanIssued: false,
+    thresholdIssued: false,
+    classifierIssued: false,
+    productColumnMaterialized: false,
+    productionActivated: false,
+    commerceActivated: false,
+  } satisfies FR318MaterializationResult['authorityBoundary'];
+  for (const key of Object.keys(expectedBoundary) as (keyof typeof expectedBoundary)[]) {
+    if (hairline.authorityBoundary?.[key] !== expectedBoundary[key])
+      fail('FR318 hairline authority boundary drift.');
+  }
+
+  // Unavailable results carry diagnostic booleans, never an executable metric.
+  // Every available result must retain all the FR318 producer's guarantees.
+  if (hairline.status !== 'available') return;
+  const expectedReceipt = {
+    schemaVersion: 'fr318-repo-safe-hairline-metric-receipt-v1',
+    contractVersion: FR318_REAL_LOCAL_HAIRLINE_METRIC_RECEIPT_CONTRACT_VERSION,
+    realLocalFR316EligibilityRevalidated: true,
+    exactSameCaptureBindingRevalidated: true,
+    metricScaleAuthorityRevalidated: true,
+    localMetricMappingExecuted: true,
+    metricNeutralReferenceAvailable: true,
+    sourceBoundaryCardinalityPreserved: true,
+    sourceBoundaryPointOrderPreserved: true,
+    hairlineSupportRegionStayedWithinValidatedEnvelope: true,
+    transformedBoundaryPubliclyPersisted: false,
+    sourceImageDigestPubliclyPersisted: false,
+    rawRegistrationParametersPubliclyPersisted: false,
+    rawCorrespondencesPubliclyPersisted: false,
+    subjectMetricVerticalCoordinatePubliclyPersisted: false,
+    globallyReusableImageToMetricTransformIssued: false,
+    hairlineMetricReferenceReadyForSevenReferenceAssembly: true,
+    threeDivisionsSpanExecutionReady: false,
+  } satisfies FR318MaterializationResult['repoSafeReceipt'];
+  for (const key of Object.keys(expectedReceipt) as (keyof typeof expectedReceipt)[]) {
+    if (hairline.repoSafeReceipt[key] !== expectedReceipt[key])
+      fail('FR318 hairline receipt is not eligible for FR319.');
+  }
+  if (
+    hairline.authorityState !== 'exact_capture_local_neutral_hairline_metric_reference_only' ||
+    hairline.nextAction !== 'fr319_assemble_exact_capture_seven_reference_common_frame_bundle'
+  )
+    fail('FR318 hairline authority state drift.');
+
+  const expectedReference = {
+    schemaVersion: 'fr318-runtime-only-hairline-metric-reference-v1',
+    observationRef: FR318_METRIC_HAIRLINE_VERTICAL_REFERENCE_REF,
+    sourceObservationRef: FR305_VISIBLE_HAIRLINE_VERTICAL_REFERENCE_REF,
+    unit: 'centimeter',
+    coordinateFrame: 'canonical_aligned_right_handed_metric_xy',
+    axisConvention: 'x_right_y_up',
+    selectionRule: 'arc_length_weighted_y_centroid_of_transformed_visible_boundary_polyline',
+    exactCaptureLocalOnly: true,
+    sourceBoundaryCardinalityPreserved: true,
+    sourceBoundaryPointOrderPreserved: true,
+    noExtrapolationBeyondValidatedHairlineSupportRegion: true,
+    globallyReusableImageToMetricTransformIssued: false,
+    failClosedWhenUnavailable: true,
+  } satisfies Omit<
+    Extract<
+      FR318MaterializationResult,
+      { status: 'available' }
+    >['runtimeOnlyMetricVerticalReference'],
+    'value' | 'registrationMethod'
+  >;
+  const runtime = hairline.runtimeOnlyMetricVerticalReference;
+  for (const key of Object.keys(expectedReference) as (keyof typeof expectedReference)[]) {
+    if (runtime?.[key] !== expectedReference[key]) fail('FR318 hairline runtime reference drift.');
+  }
+  if (
+    !Number.isFinite(runtime.value) ||
+    !['exact_calibrated_surface_registration', 'independent_correspondence_registration'].includes(
+      runtime.registrationMethod,
+    )
+  )
+    fail('FR318 hairline runtime metric or registration method drift.');
 }
 
 export function assembleExactCaptureSevenReferenceCommonFrameBundleFR319(
