@@ -2,6 +2,7 @@ import type { ClaimNarrativeProfile } from '../contracts/narrative.js';
 import {
   GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
   GENERAL_ANNUAL_THEME_CLAIM_TYPE,
+  GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE,
 } from './general-annual-reading-candidate.js';
 
 export const GENERAL_ANNUAL_NARRATIVE_PROFILE_VERSION = '0.1.0-research' as const;
@@ -194,5 +195,34 @@ function tensionProfile(copy: AnnualTensionCopy): ClaimNarrativeProfile {
   };
 }
 
+function sixCombinationProfile(slot: 'YEAR' | 'MONTH' | 'DAY' | 'HOUR',
+  pillarLabel: string, order: number): ClaimNarrativeProfile {
+  return {
+    profileId: 'PROFILE-GENERAL-ANNUAL-BRANCH-SIX-COMBINATION-' + slot,
+    version: GENERAL_ANNUAL_NARRATIVE_PROFILE_VERSION,
+    claimType: GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE.claimType,
+    semanticKeys: ['ANNUAL_BRANCH_SIX_COMBINATION_' + slot],
+    allowedEpistemicTypes: ['interpretation'],
+    requiredMethodAttribution: true,
+    prohibitedPhrases: PROHIBITED_FUTURE_PHRASES,
+    renderingHints: ['axis:context', 'source-bound-six-combination', `order:${order}`],
+    templates: [
+      { templateKey: 'headline', language: 'ko',
+        text: `${pillarLabel}와 연도 지지 사이에 육합의 연결 구조가 확인됩니다` },
+      { templateKey: 'summary', language: 'ko',
+        text: `원국 ${pillarLabel}의 지지와 해당 연도의 지지는 전통 명리의 육합(六合) 쌍입니다. 이 경우 두 지지를 충 관계가 아닌 연결·조응의 구조로 구분해 살펴봅니다. 다만 육합 쌍이라는 계산 사실만으로 합화, 좋은 운, 인간관계 성사 또는 실제 사건을 판단할 수는 없습니다.` },
+    ],
+  };
+}
+
+export const GENERAL_ANNUAL_COMBINATION_NARRATIVE_PROFILES:
+  readonly ClaimNarrativeProfile[] = Object.freeze([
+    sixCombinationProfile('YEAR', '연주', 80),
+    sixCombinationProfile('MONTH', '월주', 81),
+    sixCombinationProfile('DAY', '일주', 82),
+    sixCombinationProfile('HOUR', '시주', 83),
+  ]);
+
 export const GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES: readonly ClaimNarrativeProfile[] =
-  Object.freeze([...THEME_COPY.map(themeProfile), ...TENSION_COPY.map(tensionProfile)]);
+  Object.freeze([...THEME_COPY.map(themeProfile), ...TENSION_COPY.map(tensionProfile),
+    ...GENERAL_ANNUAL_COMBINATION_NARRATIVE_PROFILES]);
