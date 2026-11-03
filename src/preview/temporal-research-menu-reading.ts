@@ -38,6 +38,9 @@ export interface TemporalAnnualReferenceFocus {
   /** Only the Ipchun-effective current year may carry the selected-year research text as current. */
   state: 'from_ipchun' | 'before_ipchun' | 'outside_target_civil_year';
   effectivePillarAtReference?: string;
+  /** Only active after Ipchun; selected T9 meanings, not all-year inventory. */
+  currentTheme?: TemporalResearchMenuSection;
+  currentTensions?: readonly TemporalResearchMenuSection[];
   message: string;
 }
 
@@ -376,10 +379,61 @@ export function buildTemporalResearchMenuReadings(
         ? '조회 시각은 선택한 달력연도 밖입니다. 선택 연도의 T9 연구 문구는 현재 연운이 아니라 비교 자료입니다.'
         : '입춘 이후 효력 연주는 ' + expectedPillar +
           '입니다. 선택한 달력연도의 기존 T9 연구 문구만 제공하며 Official 해석은 아닙니다.';
+    // Use the already selected annual current theme AND all associated T9
+    // branch-clash meanings. Inapplicable civil years retain inventory only.
+    let currentAnnual: {
+      currentTheme: TemporalResearchMenuSection;
+      currentTensions: readonly TemporalResearchMenuSection[];
+    } | undefined;
+    if (expectedState === 'from_ipchun') {
+      const reading = joined.annualCurrentReading;
+      const originalTheme = joined.annual.sections[0];
+      const projectedTheme = annual[0];
+      if (reading.state !== 'in_target_civil_year' ||
+          !originalTheme || originalTheme.kind !== 'core' ||
+          !projectedTheme || projectedTheme.interpretationRole !== 'theme' ||
+          reading.theme.id !== originalTheme.id ||
+          reading.theme.title !== originalTheme.title ||
+          reading.theme.text !== originalTheme.text ||
+          JSON.stringify(reading.theme.calculationFactPaths) !==
+            JSON.stringify(originalTheme.calculationFactPaths) ||
+          projectedTheme.semanticKey !== originalTheme.id ||
+          projectedTheme.text !== reading.theme.text) {
+        throw new TypeError('Annual current focus lost the selected T9 theme.');
+      }
+      const candidates = joined.annual.sections.filter(section => section.kind === 'tension');
+      if (reading.sourceBoundTensions.length !== candidates.length ||
+          new Set(reading.sourceBoundTensions.map(section => section.id)).size !==
+            reading.sourceBoundTensions.length) {
+        throw new TypeError('Annual current focus lost selected T9 tensions.');
+      }
+      const currentTensions = reading.sourceBoundTensions.map(source => {
+        const index = joined.annual.sections.findIndex(item => item.id === source.id &&
+          item.kind === 'tension');
+        const original = joined.annual.sections[index];
+        const projected = annual[index];
+        if (index < 0 || !original || !projected ||
+            projected.interpretationRole !== 'tension' ||
+            source.title !== original.title || source.text !== original.text ||
+            source.candidateClaimType !== original.candidateClaimType ||
+            source.methodologyId !== original.methodologyId ||
+            source.policySourceId !== original.policySourceId ||
+            JSON.stringify(source.calculationFactPaths) !==
+              JSON.stringify(original.calculationFactPaths) ||
+            projected.semanticKey !== original.id ||
+            projected.text !== original.text ||
+            projected.sourceIds.length === 0) {
+          throw new TypeError('Annual current focus cannot invent or drop a selected T9 tension.');
+        }
+        return projected;
+      });
+      currentAnnual = { currentTheme: projectedTheme, currentTensions };
+    }
     annualReferenceFocus = {
       referenceDateTime: annualRef.referenceDateTime,
       state: expectedState,
       ...(expectedPillar === undefined ? {} : { effectivePillarAtReference: expectedPillar }),
+      ...(currentAnnual === undefined ? {} : currentAnnual),
       message,
     };
   }
