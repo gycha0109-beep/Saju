@@ -398,7 +398,7 @@ export const WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_NARRATIVES:
         allowedEpistemicTypes: ['interpretation' as const],
         requiredMethodAttribution: true,
         prohibitedPhrases: ['반드시 성공', '승진한다', '돈이 들어온다', '성격이 확정된다', '운명이 정해져'],
-        renderingHints: ['axis:management', 'cross-channel', wealth + '/' + resource],
+        renderingHints: ['axis:planning', 'cross-channel', wealth + '/' + resource],
         templates: [
           { templateKey: 'headline', language: 'ko', text: pattern.headline },
           { templateKey: 'summary', language: 'ko', text:
