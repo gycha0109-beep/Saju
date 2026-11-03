@@ -10,6 +10,10 @@ on:
       - 'docs/migrations/face-reading-from-myeongha.manifest.json'
       - 'scripts/verify-face-reading-migration.mjs'
       - 'scripts/run-face-static-research-rules.mjs'
+      - 'scripts/local-face-photo-research.mjs'
+      - 'tools/face-reading/observe_local_photo.py'
+      - 'tools/face-reading/requirements-photo-research.txt'
+      - 'test/local-face-photo-research.node.mjs'
       - 'test/fixtures/face-static-research-snapshot.json'
       - 'scripts/verify-fr76-mediapipe-parity.mjs'
       - 'scripts/verify-fr77-governed-metric-runtime.mjs'
@@ -69,8 +73,10 @@ jobs:
         working-directory: target
         run: |
           npx vitest run packages/face-reading/src/rule-evaluation.test.ts packages/face-reading/src/static-research-rule-runtime.test.ts
+          npx vitest run packages/face-reading/src/photo-three-divisions-research.test.ts
           npx vitest run packages/face-reading/src/semantic-projection.test.ts
           node scripts/run-face-static-research-rules.mjs --self-check
+          node --test test/local-face-photo-research.node.mjs
 
       - name: Verify explicitly approved Mayi methodology review only
         working-directory: target
