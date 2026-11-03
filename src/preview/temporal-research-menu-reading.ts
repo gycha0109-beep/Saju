@@ -17,6 +17,8 @@ export interface TemporalResearchMenuSection {
   evidenceKind: 'annual_research_profile' | 'monthly_t9_research_claim' | 'canonical_dayun_fact';
   /** Original selected annual/monthly research Claim, never an Official Claim. */
   claimId?: string;
+  claimType?: string;
+  semanticKey?: string;
   researchProfileKey?: string;
   /** Exact executed source Rule/Methodology; only applicable to research T9 Claims. */
   ruleIds?: readonly string[];
@@ -174,28 +176,51 @@ export function buildTemporalResearchMenuReadings(
       // The semantic key is not itself a rule, source or executed Claim ID.
       researchProfileKey: section.id,
       claimId: evidence.claimId,
+      claimType: evidence.claimType,
+      semanticKey: evidence.semanticKey,
       ruleIds: [...evidence.ruleIds],
       methodologyId: evidence.methodologyId,
       sourceIds: [...evidence.sourceIds],
       factPaths: [...evidence.factPaths],
     };
   });
-  const monthly = joined?.monthly.sections.filter(section =>
-    section.text.trim().length > 0 &&
-    section.sourceIds.length > 0 &&
-    section.factPaths.length > 0).map(section => ({
+  // Every emitted monthly section is already an executed, source-selected T9
+  // interpretation. Do not silently filter a broken source binding and make a
+  // real selected meaning appear to be unavailable in the consumer menu.
+  const monthly = joined?.monthly.sections.map(section => {
+    const startsAt = Date.parse(section.calculatedInterval.startsAt);
+    const endsAt = Date.parse(section.calculatedInterval.endsAt);
+    if ((section.kind !== 'theme' && section.kind !== 'tension') ||
+        (section.segmentId !== 'before_jeol' && section.segmentId !== 'after_jeol') ||
+        !section.title.trim() || !section.text.trim() ||
+        !section.claimId.trim() || !section.claimType.trim() ||
+        !section.semanticKey.trim() ||
+        section.ruleIds.length === 0 || section.ruleIds.some(id => !id.trim()) ||
+        !section.methodologyId.trim() ||
+        section.sourceIds.length === 0 || section.sourceIds.some(id => !id.trim()) ||
+        section.factPaths.length === 0 || section.factPaths.some(path => !path.trim()) ||
+        !Number.isFinite(startsAt) || !Number.isFinite(endsAt) ||
+        startsAt >= endsAt) {
+      throw new TypeError('Monthly menu needs the original selected research T9 Claim, rule and source.');
+    }
+    return {
       title: (section.segmentId === 'before_jeol' ? '절입 전 · ' : '절입 이후 · ') +
         section.title,
       text: section.text,
       evidenceKind: 'monthly_t9_research_claim' as const,
       claimId: section.claimId,
+      claimType: section.claimType,
+      semanticKey: section.semanticKey,
+      ruleIds: [...section.ruleIds],
+      methodologyId: section.methodologyId,
       sourceIds: [...section.sourceIds],
       factPaths: [...section.factPaths],
       interval: {
         startsAt: section.calculatedInterval.startsAt,
         endsAtExclusive: section.calculatedInterval.endsAt,
       },
-    })) ?? [];
+    };
+  }) ?? [];
   // Reuse the exact T9 theme selected by the existing Monthly EvidenceSelector.
   // The other Jeol phase is comparison material, never a current prediction.
   const reference = joined?.monthly.referenceReading;
@@ -211,6 +236,10 @@ export function buildTemporalResearchMenuReadings(
         section.text === theme.text &&
         section.interval?.startsAt === theme.calculatedInterval.startsAt &&
         section.interval?.endsAtExclusive === theme.calculatedInterval.endsAt &&
+        section.claimType === theme.claimType &&
+        section.semanticKey === theme.semanticKey &&
+        section.ruleIds?.join('|') === theme.ruleIds.join('|') &&
+        section.methodologyId === theme.methodologyId &&
         section.sourceIds.join('|') === theme.sourceIds.join('|') &&
         section.factPaths.join('|') === theme.factPaths.join('|'));
       const at = Date.parse(reference.referenceDateTime);
