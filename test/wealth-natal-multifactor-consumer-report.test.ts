@@ -299,8 +299,26 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
     expect(report.sections[0]?.upstreamClaimIds.length).toBe(2);
     expect(report.readingGuide?.coreClaimType).toBe(report.sections[0]?.claimType);
-    expect(report.state).toBe('partial');
-    expect(report.missing.join(' ')).toContain('추가 구조 축');
+    // The new source-qualified 財→官殺 support can make this formerly partial
+    // chart complete under the *research* three-independent-axis criterion.
+    expect(report.state).toBe('complete');
+    expect(report.sections).toHaveLength(3);
+    expect(new Set(report.sections.map(section => section.axis)).size).toBe(3);
+    expect(report.sections.some(section =>
+      section.pattern === 'WEALTH_OFFICER' &&
+      section.channel === 'cross_channel' &&
+      section.axis === 'management')).toBe(true);
+    expect(report.readingGuide?.supporting).toHaveLength(2);
+    const usedPaths = new Set(report.sections[0]!.observedFactPaths);
+    for (const support of report.sections.slice(1)) {
+      expect(support.sourceIds.length).toBe(2);
+      expect(support.upstreamClaimIds).toHaveLength(2);
+      const independentPaths = support.observedFactPaths.filter(path => !usedPaths.has(path));
+      expect(independentPaths.length).toBeGreaterThan(0);
+      independentPaths.forEach(path => usedPaths.add(path));
+    }
+    expect(report.readingGuide?.paragraph).toContain('독립적인 계산 근거를 더하는 보조 관점 두 가지');
+    expect(report.missing).toHaveLength(0);
     expect(report.researchOnly).toBe(true);
     expect(report.usefulComplete).toBe(false);
     expect(report.mayPublish).toBe(false);
