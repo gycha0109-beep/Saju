@@ -104,6 +104,7 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
       expect(projected).toBeDefined();
       expect(projected?.claimType).toBe(original.claimType);
       expect(projected?.semanticKey).toBe(original.semanticKey);
+      expect(projected?.interpretationRole).toBe(original.kind);
       expect(projected?.ruleIds).toEqual(original.ruleIds);
       expect(projected?.methodologyId).toBe(original.methodologyId);
       expect(projected?.sourceIds).toEqual(original.sourceIds);
@@ -124,6 +125,8 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
       expect(projected.claimId).toBe(original.claimId);
       expect(projected.claimType).toBe(original.claimType);
       expect(projected.semanticKey).toBe(original.semanticKey);
+      expect(projected.interpretationRole).toBe(
+        annualMonthly.annual.sections[index]!.kind === 'core' ? 'theme' : 'tension');
       expect(projected.researchProfileKey).toBe(original.semanticKey);
       expect(projected.ruleIds).toEqual(original.ruleIds);
       expect(projected.methodologyId).toBe(original.methodologyId);
@@ -210,10 +213,23 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     expect(beforeCard.annualReferenceFocus?.effectivePillarAtReference)
       .toBe(before.annualEffectiveContext.beforeIpchunPillar);
     expect(beforeCard.statusMessage).toContain('현재 연운으로 적용하지 않습니다');
+    expect(beforeCard.annualReferenceFocus?.currentTheme).toBeUndefined();
+    expect(beforeCard.annualReferenceFocus?.currentTensions).toBeUndefined();
     expect(afterCard.annualReferenceFocus?.state).toBe('from_ipchun');
     expect(afterCard.annualReferenceFocus?.effectivePillarAtReference)
       .toBe(after.annual.annualPillarLabel);
+    expect(after.annualCurrentReading.state).toBe('in_target_civil_year');
+    if (after.annualCurrentReading.state !== 'in_target_civil_year') throw new Error('Year fixture');
+    expect(afterCard.annualReferenceFocus?.currentTheme?.semanticKey)
+      .toBe(after.annualCurrentReading.theme.id);
+    expect(afterCard.annualReferenceFocus?.currentTensions?.map(s => s.semanticKey))
+      .toEqual(after.annualCurrentReading.sourceBoundTensions.map(s => s.id));
+    expect(afterCard.annualReferenceFocus?.currentTensions?.map(s => s.claimId))
+      .toEqual(after.annualCurrentReading.sourceBoundTensions.map(s =>
+        after.annualExecutedEvidence[after.annual.sections.indexOf(s)]!.claimId));
     expect(outsideCard.annualReferenceFocus?.state).toBe('outside_target_civil_year');
+    expect(outsideCard.annualReferenceFocus?.currentTheme).toBeUndefined();
+    expect(outsideCard.annualReferenceFocus?.currentTensions).toBeUndefined();
     expect(outsideCard.annualReferenceFocus?.effectivePillarAtReference).toBeUndefined();
     expect(beforeCard.sections).toEqual(afterCard.sections);
     expect(beforeCard.availability).toBe('partial');
@@ -243,6 +259,11 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     expect(focus?.currentSection?.text).toBe(actual.theme?.text);
     expect(focus?.currentSection?.claimId).toBe(actual.theme?.claimId);
     expect(focus?.currentSection?.sourceIds).toEqual(actual.theme?.sourceIds);
+    expect(focus?.currentTensions?.map(s => s.claimId))
+      .toEqual((actual.sourceBoundTensions ?? []).map(s => s.claimId));
+    expect(focus?.currentTensions?.map(s => s.semanticKey))
+      .toEqual((actual.sourceBoundTensions ?? []).map(s => s.semanticKey));
+    expect(focus?.unavailableNatalPillars).toEqual(actual.unavailableNatalPillars ?? []);
     expect(focus?.currentSection?.factPaths).toEqual(actual.theme?.factPaths);
     expect(focus?.currentSection?.interval).toEqual({
       startsAt: actual.theme?.calculatedInterval.startsAt,
@@ -251,6 +272,37 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     expect(menu.sections).toHaveLength(annualMonthly.monthly.sections.length);
     expect(menu.statusMessage).toContain('조회 시각');
     expect(menu.authority.mayMarkMenuAvailable).toBe(false);
+  });
+
+  it('rejects removing or fabricating an in-period monthly T9 tension', () => {
+    const original = reports(true, 1990, '2030-06-02T12:00:00.000Z').annualMonthly;
+    const reference = original.monthly.referenceReading;
+    if (reference.state !== 'in_period' || !reference.theme) throw new Error('Month fixture');
+    const forged = { ...reference.theme, kind: 'tension' as const };
+    expect(() => buildTemporalResearchMenuReadings({
+      annualMonthly: {
+        ...original,
+        monthly: {
+          ...original.monthly,
+          referenceReading: { ...reference, sourceBoundTensions: [forged] },
+        },
+      },
+    })).toThrow(/Monthly reference (must retain all|tension lost)/);
+    const after = reports(true, 1990, '2030-09-03T12:00:00.000Z').annualMonthly;
+    if (after.annualCurrentReading.state !== 'in_target_civil_year') throw new Error('Year fixture');
+    expect(() => buildTemporalResearchMenuReadings({
+      annualMonthly: {
+        ...after,
+        annualCurrentReading: {
+          ...after.annualCurrentReading,
+          sourceBoundTensions: [{
+            ...after.annualCurrentReading.theme,
+            kind: 'tension',
+            id: 'INVENTED-ANNUAL-TENSION',
+          }],
+        },
+      },
+    })).toThrow('Annual current focus lost selected T9 tensions');
   });
 
   it('never borrows a theme when the reference time is outside or its current T9 is unavailable', () => {
