@@ -14,6 +14,7 @@ import {
   createGeneralMonthlyReadingCandidateRegistry,
   GENERAL_MONTHLY_TENSION_CLAIM_TYPE,
   GENERAL_MONTHLY_THEME_CLAIM_TYPE,
+  GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE,
 } from '../src/research/general-monthly-reading-candidate.js';
 
 const NOW = new Date('2026-09-03T13:00:00.000Z');
@@ -66,9 +67,9 @@ function evidence(value: CanonicalSajuSnapshot, month: number) {
 }
 
 describe('MyeongHa general monthly consumer narrative profiles', () => {
-  it('registers twenty phase themes plus eight bounded phase-clash tension profiles', () => {
-    expect(GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES).toHaveLength(28);
-    expect(new Set(GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES.map((profile) => profile.profileId)).size).toBe(28);
+  it('registers twenty phase themes, eight clashes, and eight six-combinations', () => {
+    expect(GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES).toHaveLength(36);
+    expect(new Set(GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES.map((profile) => profile.profileId)).size).toBe(36);
     expect(
       GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES.filter(
         (profile) => profile.claimType === GENERAL_MONTHLY_THEME_CLAIM_TYPE.claimType,
@@ -79,8 +80,21 @@ describe('MyeongHa general monthly consumer narrative profiles', () => {
         (profile) => profile.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType,
       ),
     ).toHaveLength(8);
+    const combinations = GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES.filter(
+      (profile) => profile.claimType === GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE.claimType,
+    );
+    expect(combinations).toHaveLength(8);
+    expect(combinations.every(
+      (profile) =>
+        profile.allowedEpistemicTypes.length === 1 &&
+        profile.allowedEpistemicTypes[0] === 'interpretation' &&
+        profile.renderingHints?.includes('axis:context') &&
+        profile.requiredMethodAttribution,
+    )).toBe(true);
     expect(
-      GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES.every(
+      GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES.filter(
+        (profile) => profile.claimType !== GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE.claimType,
+      ).every(
         (profile) =>
           profile.allowedEpistemicTypes.length === 1 &&
           profile.allowedEpistemicTypes[0] === 'future_tendency' &&

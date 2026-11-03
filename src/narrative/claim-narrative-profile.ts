@@ -16,6 +16,7 @@ export const DETERMINISTIC_NARRATIVE_AXIS_ORDER = Object.freeze([
   'execution',
   'decision',
   'environment',
+  'context',
   'responsibility',
   'collaboration',
   'tension',

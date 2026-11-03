@@ -14,6 +14,7 @@ import { GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES } from '../src/research/general
 import {
   GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
   GENERAL_ANNUAL_THEME_CLAIM_TYPE,
+  GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE,
   createGeneralAnnualReadingCandidateRegistry,
 } from '../src/research/general-annual-reading-candidate.js';
 
@@ -80,9 +81,9 @@ function withDayBranchClash(value: CanonicalSajuSnapshot): CanonicalSajuSnapshot
 }
 
 describe('MyeongHa general annual consumer narrative profiles', () => {
-  it('registers ten semantic annual themes plus four bounded clash-tension profiles', () => {
-    expect(GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES).toHaveLength(14);
-    expect(new Set(GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.map((profile) => profile.profileId)).size).toBe(14);
+  it('registers ten annual themes, four clashes, and four source-bound six-combination profiles', () => {
+    expect(GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES).toHaveLength(18);
+    expect(new Set(GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.map((profile) => profile.profileId)).size).toBe(18);
     expect(
       GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.filter(
         (profile) => profile.claimType === GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType,
@@ -93,8 +94,21 @@ describe('MyeongHa general annual consumer narrative profiles', () => {
         (profile) => profile.claimType === GENERAL_ANNUAL_TENSION_CLAIM_TYPE.claimType,
       ),
     ).toHaveLength(4);
+    const combinations = GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.filter(
+      (profile) => profile.claimType === GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE.claimType,
+    );
+    expect(combinations).toHaveLength(4);
+    expect(combinations.every(
+      (profile) =>
+        profile.allowedEpistemicTypes.length === 1 &&
+        profile.allowedEpistemicTypes[0] === 'interpretation' &&
+        profile.renderingHints?.includes('axis:context') &&
+        profile.requiredMethodAttribution,
+    )).toBe(true);
     expect(
-      GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.every(
+      GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.filter(
+        (profile) => profile.claimType !== GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE.claimType,
+      ).every(
         (profile) =>
           profile.allowedEpistemicTypes.length === 1 &&
           profile.allowedEpistemicTypes[0] === 'future_tendency' &&
