@@ -124,7 +124,10 @@ function enforceSourceScope(
           actual.methodologyId !== section.methodologyId ||
           !actual.sourceIds.includes(section.policySourceId) ||
           !section.calculationFactPaths.every(path => actual.factPaths.includes(path)) ||
-          actual.ruleIds.length === 0;
+          actual.ruleIds.length === 0 ||
+          (section.kind === 'support' &&
+            (section.observedCombination?.relation !== 'six_combination' ||
+             !actual.sourceIds.includes(section.observedCombination.sourceId)));
       }) ||
       !['bounded_natal_t8_research','insufficient_evidence'].includes(
         lifeStage.natalContext.availability) ||
@@ -175,7 +178,11 @@ function render(
     e(report.annualExecutedEvidence[i]!.ruleIds.join(' · ')) + '</p><p>계산 경로: ' +
     e(report.annualExecutedEvidence[i]!.factPaths.join(' · ')) + '</p><p>정책: ' +
     e(section.policySourceId) + ' · 방법론: ' + e(section.methodologyId) +
-    '</p><p>독립 고전 근거가 아닌 내부 연구 정책이며 Official 승인은 아닙니다.</p></details></article>',
+    '</p><p>실제 출처: ' + e(report.annualExecutedEvidence[i]!.sourceIds.join(' · ')) +
+    '</p><p>' + (section.kind === 'support'
+      ? '지지 육합 쌍은 고전 출처에 연결된 연구용 보조 관계이며 합화·길흉·사건을 뜻하지 않습니다.'
+      : '기존 내부 연구 정책 범위의 해석이며 Official 승인은 아닙니다.') +
+    '</p></details></article>',
   ).join('') || '<p>이 연도에 적용할 개인별 연운 연구 문구가 없습니다.</p>';
   const theme = monthlyFocus.state === 'in_period' ? monthlyFocus.theme : undefined;
   const currentMonth = theme === undefined
