@@ -20,7 +20,7 @@ export interface TemporalResearchMenuSection {
   claimType?: string;
   semanticKey?: string;
   /** Original T9 interpretation role; never inferred from consumer wording. */
-  interpretationRole?: 'theme' | 'tension';
+  interpretationRole?: 'theme' | 'tension' | 'support';
   researchProfileKey?: string;
   /** Exact executed source Rule/Methodology; only applicable to research T9 Claims. */
   ruleIds?: readonly string[];
@@ -41,6 +41,7 @@ export interface TemporalAnnualReferenceFocus {
   /** Only active after Ipchun; selected T9 meanings, not all-year inventory. */
   currentTheme?: TemporalResearchMenuSection;
   currentTensions?: readonly TemporalResearchMenuSection[];
+  currentSupports?: readonly TemporalResearchMenuSection[];
   message: string;
 }
 
@@ -187,7 +188,8 @@ export function buildTemporalResearchMenuReadings(
       claimId: evidence.claimId,
       claimType: evidence.claimType,
       semanticKey: evidence.semanticKey,
-      interpretationRole: section.kind === 'core' ? 'theme' as const : 'tension' as const,
+      interpretationRole: section.kind === 'core' ? 'theme' as const :
+        section.kind === 'support' ? 'support' as const : 'tension' as const,
       ruleIds: [...evidence.ruleIds],
       methodologyId: evidence.methodologyId,
       sourceIds: [...evidence.sourceIds],
@@ -384,6 +386,7 @@ export function buildTemporalResearchMenuReadings(
     let currentAnnual: {
       currentTheme: TemporalResearchMenuSection;
       currentTensions: readonly TemporalResearchMenuSection[];
+      currentSupports: readonly TemporalResearchMenuSection[];
     } | undefined;
     if (expectedState === 'from_ipchun') {
       const reading = joined.annualCurrentReading;
@@ -427,7 +430,35 @@ export function buildTemporalResearchMenuReadings(
         }
         return projected;
       });
-      currentAnnual = { currentTheme: projectedTheme, currentTensions };
+      const supportCandidates = joined.annual.sections.filter(section => section.kind === 'support');
+      if (reading.sourceBoundSupports.length !== supportCandidates.length ||
+          new Set(reading.sourceBoundSupports.map(section => section.id)).size !==
+            reading.sourceBoundSupports.length) {
+        throw new TypeError('Annual current focus lost source-selected six-combination support.');
+      }
+      const currentSupports = reading.sourceBoundSupports.map(source => {
+        const index = joined.annual.sections.findIndex(section =>
+          section.id === source.id && section.kind === 'support');
+        const original = joined.annual.sections[index];
+        const projected = annual[index];
+        if (index < 0 || !original || !projected ||
+            projected.interpretationRole !== 'support' ||
+            source.title !== original.title || source.text !== original.text ||
+            source.candidateClaimType !== original.candidateClaimType ||
+            source.methodologyId !== original.methodologyId ||
+            source.policySourceId !== original.policySourceId ||
+            source.observedCombination?.relation !== 'six_combination' ||
+            JSON.stringify(source.calculationFactPaths) !==
+              JSON.stringify(original.calculationFactPaths) ||
+            projected.semanticKey !== original.id ||
+            projected.text !== original.text ||
+            projected.sourceIds.length < 2 ||
+            !projected.sourceIds.includes(source.observedCombination.sourceId)) {
+          throw new TypeError('Annual current focus cannot invent or omit a sourced six-combination.');
+        }
+        return projected;
+      });
+      currentAnnual = { currentTheme: projectedTheme, currentTensions, currentSupports };
     }
     annualReferenceFocus = {
       referenceDateTime: annualRef.referenceDateTime,
