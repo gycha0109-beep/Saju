@@ -181,7 +181,9 @@ export function analyzeTemporalConsumedT9Meaning(rows, scope) {
     throw new TypeError('Consumed period semantics require an annual or monthly scope');
   }
   const typeFor = scope === 'annual'
-    ? { theme:'GENERAL_ANNUAL_THEME_ACTIVATION', tension:'GENERAL_ANNUAL_BRANCH_CLASH_TENSION' }
+    ? { theme:'GENERAL_ANNUAL_THEME_ACTIVATION',
+        tension:'GENERAL_ANNUAL_BRANCH_CLASH_TENSION',
+        support:'GENERAL_ANNUAL_BRANCH_SIX_COMBINATION_CONTEXT' }
     : { theme:'GENERAL_MONTHLY_SEGMENT_THEME_ACTIVATION', tension:'GENERAL_MONTHLY_SEGMENT_BRANCH_CLASH_TENSION' };
   const signatures = new Map();
   const byOldMeaning = new Map();
@@ -194,7 +196,8 @@ export function analyzeTemporalConsumedT9Meaning(rows, scope) {
         !Array.isArray(sections) ||
         sections.length === 0 || sections.some(section => {
           const kind = section?.kind === 'core' ? 'theme' : section?.kind;
-          return (kind !== 'theme' && kind !== 'tension') ||
+          return (kind !== 'theme' && kind !== 'tension' &&
+            !(scope === 'annual' && kind === 'support')) ||
             section.claimType !== typeFor[kind] ||
             typeof section.semanticKey !== 'string' || !section.semanticKey ||
             (scope === 'monthly' &&
@@ -211,7 +214,12 @@ export function analyzeTemporalConsumedT9Meaning(rows, scope) {
               ? typeof section.tenGod !== 'string' || !section.tenGod ||
                 section.relatedPillar != null || section.relation != null
               : !['year','month','day','hour'].includes(section.relatedPillar) ||
-                section.relation !== 'clash');
+                section.relation !== (kind === 'support' ? 'six_combination' : 'clash') ||
+                (kind === 'support' && (
+                  scope !== 'annual' ||
+                  !section.sourceIds.includes('SRC-T0-XUANZE-YAOLUE-UPPER') ||
+                  section.methodologyId !== 'M-GENERAL-ANNUAL-T9-SIX-COMBINATION-SOURCE-V1'
+                )));
         })) {
       unassessed++;
       continue;
