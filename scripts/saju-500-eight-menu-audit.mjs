@@ -163,7 +163,8 @@ function temporalEntries(result, natalT5) {
         claimType:evidence.claimType,
         semanticKey:evidence.semanticKey,
         ...(section.kind === 'core' ? {tenGod:report.annual.annualStemTenGod} : {
-          relatedPillar:section.relatedPillar, relation:section.observedClash?.relation,
+          relatedPillar:section.relatedPillar,
+          relation:section.observedClash?.relation ?? section.observedCombination?.relation,
         }),
         ruleIds:[...evidence.ruleIds],
         methodologyId:evidence.methodologyId,
@@ -653,7 +654,14 @@ export function runFiveHundredSajuAudit() {
           JSON.stringify((annualFocus.currentTensions ?? []).map(s => s.semanticKey)) !==
             JSON.stringify(sourceAnnualCurrent.sourceBoundTensions.map(s => s.id)) ||
           JSON.stringify((annualFocus.currentTensions ?? []).map(s => s.text)) !==
-            JSON.stringify(sourceAnnualCurrent.sourceBoundTensions.map(s => s.text))) {
+            JSON.stringify(sourceAnnualCurrent.sourceBoundTensions.map(s => s.text)) ||
+          JSON.stringify((annualFocus.currentSupports ?? []).map(s => s.semanticKey)) !==
+            JSON.stringify(sourceAnnualCurrent.sourceBoundSupports.map(s => s.id)) ||
+          JSON.stringify((annualFocus.currentSupports ?? []).map(s => s.text)) !==
+            JSON.stringify(sourceAnnualCurrent.sourceBoundSupports.map(s => s.text)) ||
+          (annualFocus.currentSupports ?? []).some(s =>
+            !s.sourceIds?.includes('SRC-T0-XUANZE-YAOLUE-UPPER') ||
+            s.interpretationRole !== 'support')) {
         throw new Error('Annual current focus lost actual selected chart-specific T9 meanings');
       }
       annualCurrentFocusChecked++;
