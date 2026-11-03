@@ -102,6 +102,10 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     for (const original of annualMonthly.monthly.sections) {
       const projected = monthly.sections.find(item => item.claimId === original.claimId);
       expect(projected).toBeDefined();
+      expect(projected?.claimType).toBe(original.claimType);
+      expect(projected?.semanticKey).toBe(original.semanticKey);
+      expect(projected?.ruleIds).toEqual(original.ruleIds);
+      expect(projected?.methodologyId).toBe(original.methodologyId);
       expect(projected?.sourceIds).toEqual(original.sourceIds);
       expect(projected?.factPaths).toEqual(original.factPaths);
       expect(projected?.interval).toEqual({
@@ -118,6 +122,8 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     for (const [index, original] of annualMonthly.annualExecutedEvidence.entries()) {
       const projected = annual.sections[index]!;
       expect(projected.claimId).toBe(original.claimId);
+      expect(projected.claimType).toBe(original.claimType);
+      expect(projected.semanticKey).toBe(original.semanticKey);
       expect(projected.researchProfileKey).toBe(original.semanticKey);
       expect(projected.ruleIds).toEqual(original.ruleIds);
       expect(projected.methodologyId).toBe(original.methodologyId);
@@ -128,6 +134,35 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     }
     expect(annual.statusMessage).toContain('연운 Official 해석은 미승인');
     expect(monthly.statusMessage).toContain('월운 Official 해석은 미승인');
+  });
+
+  it('does not silently drop a monthly T9 section when its executed claim or method binding is broken', () => {
+    const original = reports().annualMonthly;
+    const first = original.monthly.sections[0]!;
+    expect(original.monthly.sections.length).toBeGreaterThan(0);
+    for (const tampered of [
+      { ...first, claimId: '' },
+      { ...first, claimType: '' },
+      { ...first, semanticKey: '' },
+      { ...first, ruleIds: [] },
+      { ...first, methodologyId: '' },
+      { ...first, sourceIds: [] },
+      { ...first, factPaths: [] },
+      { ...first, text: '' },
+      { ...first, calculatedInterval: {
+        ...first.calculatedInterval, endsAt: first.calculatedInterval.startsAt,
+      } },
+    ]) {
+      expect(() => buildTemporalResearchMenuReadings({
+        annualMonthly: {
+          ...original,
+          monthly: {
+            ...original.monthly,
+            sections: [tampered, ...original.monthly.sections.slice(1)],
+          },
+        },
+      })).toThrow('Monthly menu needs the original selected research T9 Claim');
+    }
   });
 
   it('rejects missing or cross-wired annual T9 evidence rather than showing unsourced Korean meaning', () => {
