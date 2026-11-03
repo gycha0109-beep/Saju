@@ -80,16 +80,32 @@ function renderOverview(reports: NatalFiveDomainMultifactorReports): string {
     const report = reports[key];
     const firstSourceHeadline = report.sections[0]?.headline;
     const missingReason = report.missing[0];
-    const visibleSubject = firstSourceHeadline ??
-      missingReason ?? '현재 확인된 해석 문단이 없습니다.';
+    const wealth = key === 'wealth' ? reports.wealth : undefined;
+    // A real T5 partial meaning must not disappear behind a generic
+    // "insufficient" label; conversely a context-only T8 must not be
+    // promoted to a direct Wealth conclusion in the first-screen summary.
+    const noDirectWealthCore = wealth !== undefined &&
+      !wealth.sections.some(section =>
+        ['core', 'creation', 'management', 'planning'].includes(section.axis));
+    const firstT5 = noDirectWealthCore
+      ? wealth.availableThemeContext?.themes[0] : undefined;
+    const visibleSubject = noDirectWealthCore && firstSourceHeadline
+      ? '재물 종합 결론 보류 · 기존 ' +
+        (wealth!.sections[0]?.axis === 'tension' ? '긴장 관계' : '간접 구조') +
+        ' 부분풀이: ' + firstSourceHeadline
+      : noDirectWealthCore && firstT5
+        ? '재물 종합 결론 보류 · 출처 있는 십신 부분풀이: ' +
+          firstT5.headline + ' — ' + firstT5.summary
+        : firstSourceHeadline ?? missingReason ?? '현재 확인된 해석 문단이 없습니다.';
     const gap = report.state === 'partial' && missingReason !== undefined
       ? '<p class="overview-gap"><strong>아직 설명하지 못하는 부분:</strong> ' +
         escapeHtml(missingReason) + '</p>'
       : '';
     return '<li><a href="#domain-' + key + '">' + escapeHtml(label) + '</a>' +
       '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
-      '<p>' + (report.state === 'partial' && firstSourceHeadline !== undefined
-        ? '확인된 부분 해석: ' : '') + escapeHtml(visibleSubject) + '</p>' +
+      '<p>' + (report.state === 'partial' && firstSourceHeadline !== undefined &&
+        !noDirectWealthCore ? '확인된 부분 해석: ' : '') +
+      escapeHtml(visibleSubject) + '</p>' +
       gap + '</li>';
   }).join('');
   return '<nav class="overview" aria-label="다섯 분야의 근거 기반 요약">' +
