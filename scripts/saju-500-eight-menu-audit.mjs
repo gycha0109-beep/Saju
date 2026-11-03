@@ -191,7 +191,8 @@ function temporalEntries(result, natalT5) {
       claimType:section.claimType,
       semanticKey:section.semanticKey,
       ...(section.kind === 'theme' ? {tenGod:section.tenGod} : {
-        relatedPillar:section.relatedPillar, relation:section.observedClash?.relation,
+        relatedPillar:section.relatedPillar,
+        relation:section.observedClash?.relation ?? section.observedCombination?.relation,
       }),
       ruleIds:[...section.ruleIds],
       methodologyId:section.methodologyId,
@@ -289,6 +290,7 @@ export function runFiveHundredSajuAudit() {
   let annualCurrentFocusChecked = 0;
   const annualSixCombinationCases = [];
   let monthlyCurrentFocusChecked = 0;
+  const monthlySixCombinationCases = [];
   const currentMonthlyEvidencePairs = [];
   let threeMenuT5Available = 0;
   let threeMenuT5WithoutT8 = 0;
@@ -697,11 +699,38 @@ export function runFiveHundredSajuAudit() {
             JSON.stringify((sourceMonthCurrent.sourceBoundTensions ?? []).map(s => s.claimId)) ||
           JSON.stringify((monthFocus.currentTensions ?? []).map(s => s.text)) !==
             JSON.stringify((sourceMonthCurrent.sourceBoundTensions ?? []).map(s => s.text)) ||
+          JSON.stringify((monthFocus.currentSupports ?? []).map(s => s.claimId)) !==
+            JSON.stringify((sourceMonthCurrent.sourceBoundSupports ?? []).map(s => s.claimId)) ||
+          JSON.stringify((monthFocus.currentSupports ?? []).map(s => s.text)) !==
+            JSON.stringify((sourceMonthCurrent.sourceBoundSupports ?? []).map(s => s.text)) ||
           JSON.stringify(monthFocus.unavailableNatalPillars ?? []) !==
             JSON.stringify(sourceMonthCurrent.unavailableNatalPillars ?? [])) {
         throw new Error('Monthly current focus lost source-selected natal-branch T9 meanings');
       }
       monthlyCurrentFocusChecked++;
+      for (const support of sourceMonthCurrent.sourceBoundSupports ?? []) {
+        const projected = monthFocus.currentSupports?.find(s => s.claimId === support.claimId);
+        if (!projected ||
+            support.kind !== 'support' ||
+            support.observedCombination?.relation !== 'six_combination' ||
+            support.observedCombination.sourceId !== 'SRC-T0-XUANZE-YAOLUE-UPPER' ||
+            !projected.sourceIds.includes(support.observedCombination.sourceId) ||
+            projected.methodologyId !== 'M-GENERAL-MONTHLY-T9-SIX-COMBINATION-SOURCE-V1' ||
+            projected.interpretationRole !== 'support' ||
+            !support.factPaths.includes('temporal.segmentsById.' + support.segmentId +
+              '.monthlyBranchRelations.' + support.relatedPillar + '.relation') ||
+            !support.text.includes('육합') ||
+            !support.text.includes('합화나 실제 사건의 근거가 아닙니다')) {
+          throw new Error('Current monthly six-combination lost selected Jeol interval evidence or Korean interpretation');
+        }
+        monthlySixCombinationCases.push({
+          birth:stamp, calculationHash:chartKey,
+          claimId:support.claimId, sourceIds:support.sourceIds,
+          ruleIds:support.ruleIds, methodologyId:support.methodologyId,
+          factPaths:support.factPaths, observedCombination:support.observedCombination,
+          segmentId:support.segmentId, text:support.text,
+        });
+      }
       currentMonthlyEvidencePairs.push({
         birth:stamp,
         calculationHash:chartKey,
@@ -857,6 +886,11 @@ export function runFiveHundredSajuAudit() {
         examples: annualSixCombinationCases.slice(0, 8),
         interpretationBoundary: 'Selected T9 structure-only 六合, no 合化 or outcome claim',
       },
+      monthlySixCombinationSelectedMeaning: {
+        examined: COUNT, selectedCount: monthlySixCombinationCases.length,
+        examples: monthlySixCombinationCases.slice(0, 8),
+        interpretationBoundary: 'Exact selected Jeol phase T9 六合 with classical source, no annual T9 inheritance',
+      },
       currentMonthlyT9Focus: {
         examined:COUNT,exactSourceSelected:monthlyCurrentFocusChecked,
         sameThemeDifferentActualT9MeaningPairs: meaningfulCurrentMonthContrasts,
@@ -909,6 +943,7 @@ export function runFiveHundredSajuAudit() {
     monthlyMenuExactT9Provenance: result.rootCauseDiagnostics.monthlyMenuT9Provenance.exactSelectedClaimRuleMethodSource,
     currentAnnualExactT9:annualCurrentFocusChecked,
     annualSixCombinationSelected:result.rootCauseDiagnostics.annualSixCombinationSelectedMeaning.selectedCount,
+    monthlySixCombinationSelected:result.rootCauseDiagnostics.monthlySixCombinationSelectedMeaning.selectedCount,
     currentMonthlyExactT9:monthlyCurrentFocusChecked,
     sameThemeDifferentCurrentT9Pairs:meaningfulCurrentMonthContrasts.length,
     threeMenuDisplayedNatalT5: result.rootCauseDiagnostics.threeMenuSourceBoundNatalT5.withDisplayedOriginalT5,
@@ -939,6 +974,7 @@ export function runFiveHundredSajuAudit() {
       monthlyMenuProvenanceChecked !== COUNT ||
       annualCurrentFocusChecked !== COUNT ||
       result.rootCauseDiagnostics.annualSixCombinationSelectedMeaning.examined !== COUNT ||
+      result.rootCauseDiagnostics.monthlySixCombinationSelectedMeaning.examined !== COUNT ||
       monthlyCurrentFocusChecked !== COUNT ||
       threeMenuT5WithoutT8 !==
         result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only ||
