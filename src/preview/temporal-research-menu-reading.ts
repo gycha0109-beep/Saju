@@ -19,6 +19,8 @@ export interface TemporalResearchMenuSection {
   claimId?: string;
   claimType?: string;
   semanticKey?: string;
+  /** Original T9 interpretation role; never inferred from consumer wording. */
+  interpretationRole?: 'theme' | 'tension';
   researchProfileKey?: string;
   /** Exact executed source Rule/Methodology; only applicable to research T9 Claims. */
   ruleIds?: readonly string[];
@@ -45,6 +47,10 @@ export interface TemporalMonthlyReferenceFocus {
   /** Only the actually selected Jeol interval can have a current claim. */
   segmentId?: 'before_jeol' | 'after_jeol';
   currentSection?: TemporalResearchMenuSection;
+  /** Already executed and selected in the SAME current Jeol interval. */
+  currentTensions?: readonly TemporalResearchMenuSection[];
+  /** Unresolved natal relations are not negative evidence of no clash. */
+  unavailableNatalPillars?: readonly ('year' | 'month' | 'day' | 'hour')[];
   message: string;
 }
 
@@ -178,6 +184,7 @@ export function buildTemporalResearchMenuReadings(
       claimId: evidence.claimId,
       claimType: evidence.claimType,
       semanticKey: evidence.semanticKey,
+      interpretationRole: section.kind === 'core' ? 'theme' as const : 'tension' as const,
       ruleIds: [...evidence.ruleIds],
       methodologyId: evidence.methodologyId,
       sourceIds: [...evidence.sourceIds],
@@ -211,6 +218,7 @@ export function buildTemporalResearchMenuReadings(
       claimId: section.claimId,
       claimType: section.claimType,
       semanticKey: section.semanticKey,
+      interpretationRole: section.kind,
       ruleIds: [...section.ruleIds],
       methodologyId: section.methodologyId,
       sourceIds: [...section.sourceIds],
@@ -232,7 +240,9 @@ export function buildTemporalResearchMenuReadings(
     }
     if (reference.state === 'in_period') {
       const theme = reference.theme;
-      const matched = theme === undefined ? [] : monthly.filter(section => section.claimId === theme.claimId &&
+      const matched = theme === undefined ? [] : monthly.filter(section =>
+        section.interpretationRole === 'theme' &&
+        section.claimId === theme.claimId &&
         section.text === theme.text &&
         section.interval?.startsAt === theme.calculatedInterval.startsAt &&
         section.interval?.endsAtExclusive === theme.calculatedInterval.endsAt &&
@@ -249,12 +259,54 @@ export function buildTemporalResearchMenuReadings(
             at < Date.parse(theme.calculatedInterval.endsAt))) {
         throw new TypeError('Monthly reference must match one original source-qualified T9 theme and interval.');
       }
+      // A chart's current-month meaning is the selected theme PLUS its
+      // independently selected T9 natal-branch tensions. Passing only the
+      // theme makes charts with a different executed clash look identical.
+      const sourceTensions = reference.sourceBoundTensions ?? [];
+      const eligibleTensions = joined.monthly.sections.filter(section =>
+        section.kind === 'tension' && section.segmentId === reference.segmentId &&
+        section.calculatedInterval.startsAt === theme.calculatedInterval.startsAt &&
+        section.calculatedInterval.endsAt === theme.calculatedInterval.endsAt);
+      const matchesTension = (section: TemporalResearchMenuSection,
+        original: typeof sourceTensions[number]) =>
+        section.interpretationRole === 'tension' &&
+        section.claimId === original.claimId &&
+        section.claimType === original.claimType &&
+        section.semanticKey === original.semanticKey &&
+        section.title.endsWith(original.title) &&
+        section.text === original.text &&
+        section.interval?.startsAt === original.calculatedInterval.startsAt &&
+        section.interval?.endsAtExclusive === original.calculatedInterval.endsAt &&
+        section.ruleIds?.join('|') === original.ruleIds.join('|') &&
+        section.methodologyId === original.methodologyId &&
+        section.sourceIds.join('|') === original.sourceIds.join('|') &&
+        section.factPaths.join('|') === original.factPaths.join('|');
+      if (sourceTensions.length !== eligibleTensions.length ||
+          new Set(sourceTensions.map(section => section.claimId)).size !== sourceTensions.length ||
+          sourceTensions.some(section => !eligibleTensions.includes(section))) {
+        throw new TypeError('Monthly reference must retain all actually selected current T9 tensions.');
+      }
+      const currentTensions = sourceTensions.map(original => {
+        const matches = monthly.filter(section => matchesTension(section, original));
+        if (matches.length !== 1) {
+          throw new TypeError('Monthly reference tension lost original selected T9 evidence.');
+        }
+        return matches[0]!;
+      });
+      const unavailable = reference.unavailableNatalPillars ?? [];
+      if (new Set(unavailable).size !== unavailable.length ||
+          unavailable.some(slot => !['year', 'month', 'day', 'hour'].includes(slot))) {
+        throw new TypeError('Monthly reference has invalid unresolved natal pillar context.');
+      }
       referenceFocus = {
         referenceDateTime: reference.referenceDateTime,
         state: 'in_period',
         segmentId: reference.segmentId,
         currentSection: matched[0]!,
-        message: '조회 시각에 해당하는 절입 구간의 기존 T9 연구 풀이입니다. 다른 구간의 문구는 현재 풀이가 아닙니다.',
+        currentTensions,
+        unavailableNatalPillars: [...unavailable],
+        message: '조회 시각에 해당하는 절입 구간의 기존 T9 연구 풀이입니다. 다른 구간의 문구는 현재 풀이가 아닙니다.' +
+          (unavailable.length ? ' 원국의 일부 기둥 관계는 미확정이므로 충이 없다고 판단하지 않습니다.' : ''),
       };
     } else if (reference.state === 'insufficient_evidence') {
       if (!reference.segmentId || reference.theme !== undefined) {
@@ -264,6 +316,7 @@ export function buildTemporalResearchMenuReadings(
         referenceDateTime: reference.referenceDateTime,
         state: 'insufficient_evidence',
         segmentId: reference.segmentId,
+        unavailableNatalPillars: [...(reference.unavailableNatalPillars ?? [])],
         message: '조회 시각의 절입 구간에는 근거 있는 T9 해석 문단이 없어 현재 풀이를 보류합니다.',
       };
     } else {
