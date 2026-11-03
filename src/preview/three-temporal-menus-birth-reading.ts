@@ -167,6 +167,7 @@ function render(
   const annualReference = report.annualReference;
   const annualEffective = report.annualEffectiveContext;
   const monthlyFocus = report.monthly.referenceReading;
+  const currentSupports = monthlyFocus.sourceBoundSupports ?? [];
   // Product menu names are stable, but a comparison year/month must not be
   // displayed as if it were the year/month of the supplied reference instant.
   const annualAppliesNow = annualReference.state === 'in_target_civil_year' &&
