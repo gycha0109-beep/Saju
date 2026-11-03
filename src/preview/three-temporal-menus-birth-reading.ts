@@ -69,10 +69,11 @@ function enforceSourceScope(
   );
   const theme = monthFocus.theme;
   const currentTensions = monthFocus.sourceBoundTensions ?? [];
+  const currentSupports = monthFocus.sourceBoundSupports ?? [];
   const invalidCurrentTheme = monthFocus.state === 'in_period'
     ? theme === undefined || !joined.monthly.sections.includes(theme) ||
       theme.kind !== 'theme' || theme.segmentId !== monthFocus.segmentId
-    : theme !== undefined || currentTensions.length > 0;
+    : theme !== undefined || currentTensions.length > 0 || currentSupports.length > 0;
   const invalidCurrentTensions = currentTensions.some(section =>
     monthFocus.state !== 'in_period' || theme === undefined ||
     !joined.monthly.sections.includes(section) ||
@@ -81,6 +82,20 @@ function enforceSourceScope(
     section.calculatedInterval.endsAt !== theme.calculatedInterval.endsAt ||
     section.sourceIds.length === 0 || section.ruleIds.length === 0 ||
     section.relatedPillar === undefined || section.observedClash?.relation !== 'clash' ||
+    !section.factPaths.includes(
+      'temporal.segmentsById.' + section.segmentId +
+      '.monthlyBranchRelations.' + section.relatedPillar + '.relation',
+    ));
+  const invalidCurrentSupports = currentSupports.some(section =>
+    monthFocus.state !== 'in_period' || theme === undefined ||
+    !joined.monthly.sections.includes(section) ||
+    section.kind !== 'support' || section.segmentId !== monthFocus.segmentId ||
+    section.calculatedInterval.startsAt !== theme.calculatedInterval.startsAt ||
+    section.calculatedInterval.endsAt !== theme.calculatedInterval.endsAt ||
+    !section.sourceIds.includes('SRC-T0-XUANZE-YAOLUE-UPPER') ||
+    section.ruleIds.length === 0 ||
+    section.relatedPillar === undefined ||
+    section.observedCombination?.relation !== 'six_combination' ||
     !section.factPaths.includes(
       'temporal.segmentsById.' + section.segmentId +
       '.monthlyBranchRelations.' + section.relatedPillar + '.relation',
@@ -115,7 +130,7 @@ function enforceSourceScope(
       lifeStage.natalContext.calculationHash !== joined.calculationHash ||
       joined.monthly.referenceReading.referenceDateTime !== reference ||
       stage.referenceDateTime !== reference ||
-      invalidCurrentTheme || invalidCurrentTensions ||
+      invalidCurrentTheme || invalidCurrentTensions || invalidCurrentSupports ||
       joined.annualExecutedEvidence.length !== joined.annual.sections.length ||
       joined.annual.sections.some((section,i) => {
         const actual = joined.annualExecutedEvidence[i];
@@ -214,10 +229,25 @@ function render(
             ' — ' + e(section.calculatedInterval.endsAt) +
             '</p></details></article>').join('') +
           '<p>관측된 지지 충의 연구용 설명이며 실제 사건·길흉을 예측하지 않습니다.</p></div>'
+        : '') +
+      (currentSupports.length
+        ? '<div class="active-month-supports" aria-label="현재 절입 구간의 원국 지지 육합">' +
+          '<h4>이 구간에서 함께 확인된 지지 육합 관계</h4>' +
+          currentSupports.map(section =>
+            '<article class="current-support"><h4>' + e(section.title) + '</h4><p>' +
+            e(section.text) + '</p><details><summary>실제 월운 육합 연구 근거</summary>' +
+            '<p>Claim: ' + e(section.claimId) +
+            '</p><p>규칙: ' + e(section.ruleIds.join(' · ')) +
+            '</p><p>방법론: ' + e(section.methodologyId) +
+            '</p><p>계산: ' + e(section.factPaths.join(' · ')) +
+            '</p><p>출처: ' + e(section.sourceIds.join(' · ')) +
+            '</p></details></article>').join('') +
+          '<p>육합의 관측만으로 합화·길흉·실제 사건을 예측하지 않습니다.</p></div>'
         : '');
   const monthly = report.monthly.sections.map(section =>
     '<article><small>' + (section.kind === 'theme'
-      ? '절입 구간의 중심 주제' : '해당 구간의 조건부 원국 충 관계') +
+      ? '절입 구간의 중심 주제' : section.kind === 'tension'
+        ? '해당 구간의 조건부 원국 충 관계' : '해당 구간의 고전 근거 지지 육합 관계') +
       '</small><h3>' + (section.segmentId === 'before_jeol'
       ? '절입 전 · ' : '절입 이후 · ') + e(section.title) + '</h3><p>' +
       e(section.text) + '</p><details><summary>절입 기간·T9 Claim과 출처</summary>' +
