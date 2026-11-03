@@ -72,6 +72,8 @@ export interface GeneralAnnualMonthlyExplorationReport {
         sameTenGod: boolean;
         beforeTensions: readonly GeneralMonthlyExplorationSection[];
         afterTensions: readonly GeneralMonthlyExplorationSection[];
+        beforeSupports: readonly GeneralMonthlyExplorationSection[];
+        afterSupports: readonly GeneralMonthlyExplorationSection[];
       }
     | { state: 'insufficient_evidence' };
   /** The yearly profile is for a Seoul civil calendar year, not an Ipchun annual pillar. */
@@ -277,6 +279,10 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     section.kind === 'tension' && section.segmentId === id);
   const beforeTensions = phaseTensions('before_jeol');
   const afterTensions = phaseTensions('after_jeol');
+  const phaseSupports = (id: MonthlySegmentId) => monthly.sections.filter(section =>
+    section.kind === 'support' && section.segmentId === id);
+  const beforeSupports = phaseSupports('before_jeol');
+  const afterSupports = phaseSupports('after_jeol');
   requireLinkedPeriod([...beforeTensions, ...afterTensions].every(section =>
     section.sourceIds.length > 0 && section.ruleIds.length > 0 &&
     section.methodologyId.length > 0 && section.claimId.length > 0 &&
@@ -285,13 +291,22 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     section.factPaths.includes('temporal.segmentsById.' + section.segmentId +
       '.monthlyBranchRelations.' + section.relatedPillar + '.relation')),
     'phase contrast must retain original executed natal-branch research evidence');
+  requireLinkedPeriod([...beforeSupports, ...afterSupports].every(section =>
+    section.sourceIds.includes('SRC-T0-XUANZE-YAOLUE-UPPER') &&
+    section.ruleIds.length > 0 &&
+    section.methodologyId === 'M-GENERAL-MONTHLY-T9-SIX-COMBINATION-SOURCE-V1' &&
+    section.claimId.length > 0 && section.relatedPillar !== undefined &&
+    section.observedCombination?.relation === 'six_combination' &&
+    section.factPaths.includes('temporal.segmentsById.' + section.segmentId +
+      '.monthlyBranchRelations.' + section.relatedPillar + '.relation')),
+    'phase contrast must retain source-qualified Jeol six-combination evidence');
   const monthlyPhaseContrast: GeneralAnnualMonthlyExplorationReport['monthlyPhaseContrast'] =
     beforeThemes.length === 1 && afterThemes.length === 1
       ? {
           state: 'source_bound_comparison',
           beforeTheme: beforeThemes[0]!, afterTheme: afterThemes[0]!,
           sameTenGod: beforeThemes[0]!.tenGod === afterThemes[0]!.tenGod,
-          beforeTensions, afterTensions,
+          beforeTensions, afterTensions, beforeSupports, afterSupports,
         }
       : { state: 'insufficient_evidence' };
   // The comparison must use the original selected T9 meanings, not merely
@@ -301,11 +316,16 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     if (found === undefined) return label + '의 개인별 해석 근거는 아직 충분하지 않습니다';
     const tensions = monthly.sections.filter(section =>
       section.kind === 'tension' && section.segmentId === id);
+    const supports = monthly.sections.filter(section =>
+      section.kind === 'support' && section.segmentId === id);
     return label + '에는 실제 실행·선택된 ' + found.tenGod +
       ' 연구 주제 ‘' + found.title + '’가 있습니다. ' + found.text +
       (tensions.length === 0 ? '' :
         ' 같은 절입 구간에서 별도 확인된 원국 충 관계의 기존 풀이: ' +
-        tensions.map(section => '‘' + section.title + '’ ' + section.text).join(' '));
+        tensions.map(section => '‘' + section.title + '’ ' + section.text).join(' ')) +
+      (supports.length === 0 ? '' :
+        ' 같은 절입 구간의 별도 지지 육합 구조: ' +
+        supports.map(section => '‘' + section.title + '’ ' + section.text).join(' '));
   };
   // Reuse the exact single-month selection; joining Annual never reinterprets it.
   const referenceReading = monthly.referenceReading;
@@ -764,6 +784,11 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       ' · ' + e(kst(selected.theme.calculatedInterval.startsAt)) + '부터 ' +
       e(kst(selected.theme.calculatedInterval.endsAt)) + ' 전까지</p>' +
       monthlyCard(selected.theme) +
+      (selected.sourceBoundSupports?.length
+        ? '<section class="active-natal-supports" aria-label="같은 절입 구간의 육합 관계">' +
+          '<h4>이 구간에서 함께 확인된 지지 육합 관계</h4>' +
+          selected.sourceBoundSupports.map(monthlyCard).join('') + '</section>'
+        : '') +
       (selected.sourceBoundTensions?.length
         ? '<section class="active-natal-relations" aria-label="같은 절입 구간의 원국 관계">' +
           '<h4>이 구간에서 함께 확인된 원국 관계</h4>' +
