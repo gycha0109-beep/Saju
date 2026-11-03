@@ -410,6 +410,69 @@ remaining; `unassessed` means no completion claim is made in this bounded audit.
 | FR-9           | Source-owned governed Character handoff present; publication remains gated                                     |
 | FR-10 / FR-11  | Compatibility contracts present; bridge activation/future scope unassessed                                     |
 
+### Same-photo evidence intake and Mayi text candidates
+
+The photo CLI now accepts `--metric-evidence <private-json>` using the existing
+`fr318-fr319-local-private-execution-input-v1` executor input. It hashes the frozen
+photo bytes privately, checks the RGB/support/hairline and seven-reference capture
+bindings, then executes the existing FR318 and FR319 materializers. A caller's
+success receipt is not accepted in place of execution. Available neutral metric
+references are reported privately; they are not declared traditional anchors.
+FR319 still issues no cross-reference subtraction or traditional span authority,
+so B remains withheld even with available neutral references. No authorized
+Mayi metric formula currently exists to execute; method review alone does not
+provide one. This is the remaining measurement gap, not a completed B stage.
+
+`stages.A/B/C` separates observation, governed traditional measurement and
+personal interpretation. Optional human image labels calculate actual adjacent
+pixel gaps and shares only under `imageLabelDiagnostics`. They never populate
+the governed lengths or qualify a traditional condition.
+
+Prepare a standalone private comparison page with the existing review worksheet:
+
+```powershell
+node scripts/prepare-face-photo-review.mjs --summary "<private-summary.json>" --output "<new-private-review.html>"
+```
+
+It embeds original encoded-raster previews and existing overlays, explains held
+candidates and leaves all human answers blank. The reviewer can inspect each
+candidate and export the existing worksheet. Optional visible image-line clicks
+export `face-photo-private-image-labels-v1` with private photo byte identity,
+dimensions and `encoded_raster_top_left_no_exif_rotation`. Import this with
+`--image-reference-file <private-labels.json>` in the existing photo command.
+Different photo bytes, dimensions or raster conventions are rejected. This is
+an operator assertion, not authenticated anatomical adjudication or a substitute
+for the existing independent capture/review/admission procedure. Outputs must
+stay outside repository source (or in its ignored Face cache); no private images
+or scalar artifacts enter Git.
+
+The same 1925 NLC Mayi witness has now been visually consulted at PDF page 36,
+printed page 二三, chapter 六府三才三停, rightmost two columns. Primary scan:
+[NLC Mayi volume 1](https://commons.wikimedia.org/wiki/File:NLC416-12jh002690-44091_%E9%BA%BB%E8%A1%A3%E7%9B%B8%E6%B3%95_%E7%AC%AC1%E5%8D%B7.pdf).
+The new passage record is a scan-checked research transcription with editorial
+punctuation, not a new owner approval. Its five explicit condition/result pairs:
+
+| Text condition | Text result | Unissued interpretation criteria                     |
+| -------------- | ----------- | ---------------------------------------------------- |
+| 上停長         | 老吉昌      | Meaning of 長; no numeric age range for 老           |
+| 中停長         | 近君王      | Meaning of 長; no modern trait/influence mapping     |
+| 下停長         | 少吉祥      | Meaning of 長; no numeric age range for 少           |
+| 三停平等       | 富貴榮顯    | Qualitative equality; no numeric tolerance           |
+| 三停不均       | 孤夭賤貧    | Qualitative unevenness; no numeric negation shortcut |
+
+`mayi-three-divisions-rule-candidates.ts` defines five source-qualified research
+rules in an isolated authoring registry, reusing the shared evaluator and exact
+reviewed `method.mayi.face_three_divisions.fr261@0.3.0`. It does not alter the
+existing topic/provider registry, historical 0.2.0 references or Shenxiang rules.
+The conditions require explicit qualitative assertions; no pixel or metric input
+produces these assertions. `長` is not rewritten as the unique numeric maximum.
+The actual photo path supplies unavailable inputs and returns five unavailable
+evaluations with null output, original passage, conditions/results and specific
+unapproved items. These are descriptions of historical text, not conclusions
+about the photographed person. The separate `--self-check-mayi` command executes
+five explicitly synthetic authoring assertions and emits no personal reading.
+Production/Character/personal interpretation authority remains unissued.
+
 The research snapshot caller is implemented; an admitted static observation and
 operationalization producer must still be connected with exact snapshot provenance.
 Do not introduce a second source of semantic truth or automatically convert

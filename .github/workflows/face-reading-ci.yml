@@ -1,5 +1,5 @@
 name: Face Reading CI
-run-name: "[WT:face-reading] Face Reading CI"
+run-name: '[WT:face-reading] Face Reading CI'
 
 on:
   pull_request:
@@ -11,6 +11,7 @@ on:
       - 'scripts/verify-face-reading-migration.mjs'
       - 'scripts/run-face-static-research-rules.mjs'
       - 'scripts/local-face-photo-research.mjs'
+      - 'scripts/prepare-face-photo-review.mjs'
       - 'tools/face-reading/observe_local_photo.py'
       - 'tools/face-reading/requirements-photo-research.txt'
       - 'test/local-face-photo-research.node.mjs'
@@ -73,9 +74,10 @@ jobs:
         working-directory: target
         run: |
           npx vitest run packages/face-reading/src/rule-evaluation.test.ts packages/face-reading/src/static-research-rule-runtime.test.ts
-          npx vitest run packages/face-reading/src/photo-three-divisions-research.test.ts
+          npx vitest run packages/face-reading/src/photo-three-divisions-research.test.ts packages/face-reading/src/photo-metric-evidence.test.ts packages/face-reading/src/mayi-three-divisions-rule-candidates.test.ts
           npx vitest run packages/face-reading/src/semantic-projection.test.ts
           node scripts/run-face-static-research-rules.mjs --self-check
+          node scripts/run-face-static-research-rules.mjs --self-check-mayi
           node --test test/local-face-photo-research.node.mjs
 
       - name: Verify explicitly approved Mayi methodology review only

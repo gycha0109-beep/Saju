@@ -3,8 +3,10 @@ import { mkdir, mkdtemp, readFile, writeFile, rm, stat, rename } from 'node:fs/p
 import { isAbsolute, resolve, relative, sep } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import process from 'node:process';
+import { createHash } from 'node:crypto';
 import { analyzePhotoThreeDivisionsResearch } from '../.face-reading-dist/photo-three-divisions-research.js';
 import { FR26_MEDIAPIPE_FACE_LANDMARKER_MODEL } from '../.face-reading-dist/mediapipe-face-landmarker-runtime-fr26.js';
+import { consumePhotoMetricEvidence } from '../.face-reading-dist/photo-metric-evidence.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const cache = resolve(root, '.cache/face-reading');
@@ -28,6 +30,8 @@ export async function runLocalFacePhotoResearch(args) {
   let imagePath;
   let output;
   let labels;
+  let referenceFile;
+  let metricFile;
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     const value = args[++index];
@@ -35,6 +39,10 @@ export async function runLocalFacePhotoResearch(args) {
     if (arg === '--image' && imagePath === undefined) imagePath = resolve(value);
     else if (arg === '--output' && output === undefined) output = privateOutput(value);
     else if (arg === '--image-reference-y' && labels === undefined) labels = JSON.parse(value);
+    else if (arg === '--image-reference-file' && referenceFile === undefined)
+      referenceFile = privateOutput(value);
+    else if (arg === '--metric-evidence' && metricFile === undefined)
+      metricFile = privateOutput(value);
     else throw new Error('unsupported photo argument');
   }
   if (imagePath === undefined) throw new Error('image required');
@@ -43,6 +51,29 @@ export async function runLocalFacePhotoResearch(args) {
   // previously generated hairline JSON or second image can be joined here.
   const bytes = await readFile(imagePath);
   if (bytes.length === 0 || bytes.length > MAX_BYTES) throw new Error('image resource limit');
+  const actualDigest = `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
+  let referenceBinding;
+  if (referenceFile !== undefined) {
+    if (labels !== undefined || (await stat(referenceFile)).size > 262144)
+      throw new Error('ambiguous or oversized image references');
+    referenceBinding = JSON.parse(await readFile(referenceFile, 'utf8'));
+    if (
+      referenceBinding.schemaVersion !== 'face-photo-private-image-labels-v1' ||
+      referenceBinding.sourceImageSha256 !== actualDigest ||
+      referenceBinding.coordinateFrame !== 'encoded_raster_top_left_no_exif_rotation'
+    )
+      throw new Error('image label capture mismatch');
+    labels = referenceBinding.labels;
+  }
+  let metricEvidence;
+  if (metricFile !== undefined) {
+    if ((await stat(metricFile)).size > 4 * 1024 * 1024)
+      throw new Error('metric evidence resource limit');
+    metricEvidence = consumePhotoMetricEvidence(
+      JSON.parse(await readFile(metricFile, 'utf8')),
+      actualDigest,
+    );
+  }
   await mkdir(cache, { recursive: true });
   const model = resolve(cache, 'photo-research-face-landmarker.task');
   try {
@@ -83,9 +114,18 @@ export async function runLocalFacePhotoResearch(args) {
     if (child.error || child.status !== 0)
       throw new Error('private photo inference failed; check documented runtime dependencies');
     const observation = JSON.parse(child.stdout);
-    const result = analyzePhotoThreeDivisionsResearch(observation, labels);
+    if (
+      referenceBinding &&
+      (referenceBinding.width !== observation.width ||
+        referenceBinding.height !== observation.height)
+    )
+      throw new Error('image label dimensions mismatch');
+    const result = analyzePhotoThreeDivisionsResearch(observation, labels, metricEvidence);
     const report = {
       ...result,
+      imageLabelCaptureBinding: referenceBinding
+        ? 'same_frozen_image_bytes_verified_labels_are_human_assertions'
+        : 'no_byte_bound_human_label_file',
       runtimeAssets: {
         modelRef: FR26_MEDIAPIPE_FACE_LANDMARKER_MODEL,
         verificationState: 'reference_pinned_bytes_unverified',

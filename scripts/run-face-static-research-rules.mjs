@@ -5,7 +5,13 @@ import process from 'node:process';
 import { evaluateStaticFaceResearchRules } from '../.face-reading-dist/static-research-rule-runtime.js';
 
 try {
-  if (process.argv[2] === '--image') {
+  if (process.argv.length === 3 && process.argv[2] === '--self-check-mayi') {
+    const { selfCheckMayiCandidateLogic } =
+      await import('../.face-reading-dist/mayi-three-divisions-rule-candidates.js');
+    process.stdout.write(
+      `${JSON.stringify({ status: 'candidate_logic_self_check', assertionAuthority: 'research_fixture', evaluations: selfCheckMayiCandidateLogic(), personalReadingIssued: false })}\n`,
+    );
+  } else if (process.argv[2] === '--image') {
     const { runLocalFacePhotoResearch } = await import('./local-face-photo-research.mjs');
     process.stdout.write(
       `${JSON.stringify(await runLocalFacePhotoResearch(process.argv.slice(2)))}\n`,

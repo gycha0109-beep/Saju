@@ -10,6 +10,11 @@ import {
 import { FACE_THREE_DIVISION_RULES_V0 } from './research-pack-v0.js';
 import { evaluateThreeDivisionRelativeOrder } from './three-divisions.js';
 import { FaceAuthorityValidationError } from './validation.js';
+import {
+  MAYI_SANTING_INTERPRETATION_CANDIDATE_SOURCE,
+  pendingMayiCandidateEvaluations,
+} from './mayi-three-divisions-rule-candidates.js';
+import type { consumePhotoMetricEvidence } from './photo-metric-evidence.js';
 
 /** Private, per-invocation output of observe_local_photo.py; not a governed artifact. */
 export interface FacePhotoObservation extends MediaPipeFaceLandmarkerResultFR25V1 {
@@ -88,6 +93,7 @@ function imageLabelDiagnostics(labels: FacePhotoImageReferenceLabels | undefined
 export function analyzePhotoThreeDivisionsResearch(
   observation: FacePhotoObservation,
   labels?: FacePhotoImageReferenceLabels,
+  metricEvidence?: ReturnType<typeof consumePhotoMetricEvidence>,
 ) {
   if (
     observation.schemaVersion !== 'face-photo-observation-v1' ||
@@ -181,10 +187,18 @@ export function analyzePhotoThreeDivisionsResearch(
     'fr318_metric_hairline_reference_missing',
     'fr319_governed_seven_reference_common_frame_bundle_missing',
     'mayi_0.3.0_metric_operationalization_and_binding_not_issued',
-    'no_registered_rule_for_exact_mayi_0.3.0_methodology',
+    'mayi_qualitative_rule_conditions_and_personal_execution_not_admitted',
   ];
   return {
     status: 'research_only',
+    stages: {
+      A: {
+        complete: faceCount === 1,
+        status: faceCount === 1 ? 'observation_completed' : 'observation_unavailable',
+      },
+      B: { complete: false, status: 'approved_three_divisions_measurement_withheld' },
+      C: { complete: false, status: 'personal_traditional_interpretation_withheld' },
+    },
     imageObservation: {
       status: faceCount === 1 ? 'processed' : 'unavailable',
       faceCount,
@@ -197,28 +211,37 @@ export function analyzePhotoThreeDivisionsResearch(
     },
     providerMeasurements,
     hairline,
+    metricEvidence: faceCount === 1 ? (metricEvidence ?? null) : null,
     anchors: [
       {
         key: 'hairline',
         observedCandidate: hairline?.candidatePointCount ? true : false,
+        neutralCommonFrameReferenceAvailable:
+          faceCount === 1 && metricEvidence?.status === 'common_frame_references_available',
         governedReferenceAvailable: false,
         reason: 'visible_candidate_is_not_fr313_fr318_admission',
       },
       {
         key: 'brow',
         observedCandidate: providerMeasurements !== null,
+        neutralCommonFrameReferenceAvailable:
+          faceCount === 1 && metricEvidence?.status === 'common_frame_references_available',
         governedReferenceAvailable: false,
         reason: 'provider_components_are_not_explicit_visible_brow_geometry_fr292',
       },
       {
         key: 'nasal_apex',
         observedCandidate: false,
+        neutralCommonFrameReferenceAvailable:
+          faceCount === 1 && metricEvidence?.status === 'common_frame_references_available',
         governedReferenceAvailable: false,
         reason: 'provider_independent_nasal_apex_reference_fr266_not_supplied',
       },
       {
         key: 'lower_face_inferior',
         observedCandidate: providerMeasurements !== null,
+        neutralCommonFrameReferenceAvailable:
+          faceCount === 1 && metricEvidence?.status === 'common_frame_references_available',
         governedReferenceAvailable: false,
         reason: 'face_oval_extremum_is_not_governed_lower_face_contour_fr301',
       },
@@ -237,7 +260,13 @@ export function analyzePhotoThreeDivisionsResearch(
       unit: 'centimeter',
       lengths: { upper: null, middle: null, lower: null },
       normalizedShares: null,
-      blockedReasons,
+      blockedReasons:
+        faceCount === 1 && metricEvidence
+          ? [
+              ...metricEvidence.blockedReasons,
+              'mayi_qualitative_rule_conditions_and_personal_execution_not_admitted',
+            ]
+          : blockedReasons,
     },
     rules: FACE_THREE_DIVISION_RULES_V0.map((rule) => ({
       ruleRef: `${rule.ruleId}@${rule.version}`,
@@ -249,23 +278,33 @@ export function analyzePhotoThreeDivisionsResearch(
           : 'methodology_mismatch',
       sourceRefs: [...rule.sourceRefs],
     })),
+    mayiCandidates: pendingMayiCandidateEvaluations(),
     sources: [
       ...new Set([
         ...method.sourceRefs,
         ...FACE_THREE_DIVISION_RULES_V0.flatMap((rule) => [...rule.sourceRefs]),
       ]),
-    ].map((ref) => {
-      const source = FACE_AUTHORITY_MAYI_THREE_DIVISIONS_REVIEWED_REGISTRY.passages.find(
-        (passage) => passage.passageId === ref,
-      );
-      if (source === undefined) fail();
-      return {
-        ref,
-        witnessId: source.witnessId,
-        verificationStatus: source.verificationStatus,
-        originalText: source.originalText,
-      };
-    }),
+    ]
+      .map((ref) => {
+        const source = FACE_AUTHORITY_MAYI_THREE_DIVISIONS_REVIEWED_REGISTRY.passages.find(
+          (passage) => passage.passageId === ref,
+        );
+        if (source === undefined) fail();
+        return {
+          ref,
+          witnessId: source.witnessId,
+          verificationStatus: source.verificationStatus,
+          originalText: source.originalText,
+        };
+      })
+      .concat(
+        [MAYI_SANTING_INTERPRETATION_CANDIDATE_SOURCE].map((source) => ({
+          ref: source.passageId,
+          witnessId: source.witnessId,
+          verificationStatus: source.verificationStatus,
+          originalText: source.originalText,
+        })),
+      ),
     semantic: {
       status: 'withheld',
       claims: [],

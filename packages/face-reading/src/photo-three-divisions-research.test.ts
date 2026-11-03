@@ -49,6 +49,15 @@ describe('one-photo research observation and source-specific three-divisions rep
   it('runs existing provider probes and retains numerical observations without inventing traditional anchors', () => {
     const result = analyzePhotoThreeDivisionsResearch(observation());
     expect(result.imageObservation.status).toBe('processed');
+    expect(result.stages.A.complete).toBe(true);
+    expect(result.stages.B.complete).toBe(false);
+    expect(result.stages.C.complete).toBe(false);
+    expect(result.mayiCandidates).toHaveLength(5);
+    expect(
+      result.mayiCandidates.every(
+        (c) => c.evaluation.outcome === 'unavailable' && c.evaluation.output === null,
+      ),
+    ).toBe(true);
     expect(result.providerMeasurements?.eyebrowProviderComponents).toHaveLength(2);
     expect(result.providerMeasurements?.faceOvalInferior.pixelY).toBeGreaterThan(0);
     expect(result.hairline?.imagePixelYRange).toEqual([20, 25]);
