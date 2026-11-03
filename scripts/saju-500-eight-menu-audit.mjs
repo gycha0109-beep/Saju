@@ -287,6 +287,7 @@ export function runFiveHundredSajuAudit() {
   let annualMenuProvenanceChecked = 0;
   let monthlyMenuProvenanceChecked = 0;
   let annualCurrentFocusChecked = 0;
+  const annualSixCombinationCases = [];
   let monthlyCurrentFocusChecked = 0;
   const currentMonthlyEvidencePairs = [];
   let threeMenuT5Available = 0;
@@ -665,6 +666,27 @@ export function runFiveHundredSajuAudit() {
         throw new Error('Annual current focus lost actual selected chart-specific T9 meanings');
       }
       annualCurrentFocusChecked++;
+      for (const support of sourceAnnualCurrent.sourceBoundSupports) {
+        const index = temporal.annualMonthly.report.annual.sections.indexOf(support);
+        const evidence = temporal.annualMonthly.report.annualExecutedEvidence[index];
+        if (!evidence ||
+            support.kind !== 'support' ||
+            support.observedCombination?.relation !== 'six_combination' ||
+            support.observedCombination.sourceId !== 'SRC-T0-XUANZE-YAOLUE-UPPER' ||
+            !evidence.sourceIds.includes(support.observedCombination.sourceId) ||
+            evidence.methodologyId !== support.methodologyId ||
+            !evidence.factPaths.includes('temporal.annualBranchRelations.' + support.relatedPillar) ||
+            !support.text.includes('육합') || !support.text.includes('합화나 사건 성립의 근거로 사용하지 않습니다')) {
+          throw new Error('Annual selected six-combination lost classical source, calculated pair or bounded Korean meaning');
+        }
+        annualSixCombinationCases.push({
+          birth:stamp, calculationHash:chartKey, claimId:evidence.claimId,
+          claimType:evidence.claimType, semanticKey:evidence.semanticKey,
+          sourceIds:evidence.sourceIds, ruleIds:evidence.ruleIds,
+          methodologyId:evidence.methodologyId, factPaths:evidence.factPaths,
+          observedCombination:support.observedCombination, text:support.text,
+        });
+      }
       const sourceMonthCurrent = temporal.annualMonthly.report.monthly.referenceReading;
       const monthFocus = monthlyMenu.referenceFocus;
       if (sourceMonthCurrent.state !== 'in_period' ||
@@ -830,6 +852,11 @@ export function runFiveHundredSajuAudit() {
         researchOnlyNoPromotion: true,
       },
       currentAnnualT9Focus: {examined:COUNT,exactSourceSelected:annualCurrentFocusChecked},
+      annualSixCombinationSelectedMeaning: {
+        examined: COUNT, selectedCount: annualSixCombinationCases.length,
+        examples: annualSixCombinationCases.slice(0, 8),
+        interpretationBoundary: 'Selected T9 structure-only 六合, no 合化 or outcome claim',
+      },
       currentMonthlyT9Focus: {
         examined:COUNT,exactSourceSelected:monthlyCurrentFocusChecked,
         sameThemeDifferentActualT9MeaningPairs: meaningfulCurrentMonthContrasts,
@@ -881,6 +908,7 @@ export function runFiveHundredSajuAudit() {
     annualMenuExactT9Provenance: result.rootCauseDiagnostics.annualMenuT9Provenance.exactSelectedClaimRuleMethodSource,
     monthlyMenuExactT9Provenance: result.rootCauseDiagnostics.monthlyMenuT9Provenance.exactSelectedClaimRuleMethodSource,
     currentAnnualExactT9:annualCurrentFocusChecked,
+    annualSixCombinationSelected:result.rootCauseDiagnostics.annualSixCombinationSelectedMeaning.selectedCount,
     currentMonthlyExactT9:monthlyCurrentFocusChecked,
     sameThemeDifferentCurrentT9Pairs:meaningfulCurrentMonthContrasts.length,
     threeMenuDisplayedNatalT5: result.rootCauseDiagnostics.threeMenuSourceBoundNatalT5.withDisplayedOriginalT5,
@@ -910,6 +938,7 @@ export function runFiveHundredSajuAudit() {
       annualMenuProvenanceChecked !== COUNT ||
       monthlyMenuProvenanceChecked !== COUNT ||
       annualCurrentFocusChecked !== COUNT ||
+      result.rootCauseDiagnostics.annualSixCombinationSelectedMeaning.examined !== COUNT ||
       monthlyCurrentFocusChecked !== COUNT ||
       threeMenuT5WithoutT8 !==
         result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only ||
