@@ -9,6 +9,9 @@ import {
   createGeneralAnnualReadingCandidateRegistry,
   GENERAL_ANNUAL_THEME_CLAIM_TYPE,
   GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
+  GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE,
+  GENERAL_ANNUAL_COMBINATION_METHODOLOGY,
+  GENERAL_ANNUAL_SIX_COMBINATION_SOURCE,
   GENERAL_ANNUAL_POLICY_SOURCE,
   GENERAL_ANNUAL_READING_METHODOLOGY,
 } from '../research/general-annual-reading-candidate.js';
@@ -103,6 +106,7 @@ export interface GeneralAnnualMonthlyExplorationReport {
         referenceDateTime: string;
         theme: GeneralAnnualExplorationSection;
         sourceBoundTensions: readonly GeneralAnnualExplorationSection[];
+        sourceBoundSupports: readonly GeneralAnnualExplorationSection[];
       }
     | { state: 'before_ipchun'; referenceDateTime: string }
     | { state: 'outside_target_civil_year'; referenceDateTime: string };
@@ -220,15 +224,23 @@ export function buildGeneralAnnualMonthlyExplorationReport(
         (section.kind === 'core'
           ? claim.claimType === GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType &&
             value.tenGod === annualFacts.annualStemTenGod
-          : claim.claimType === GENERAL_ANNUAL_TENSION_CLAIM_TYPE.claimType &&
-            value.natalPillar === section.relatedPillar && value.relation === 'clash');
+          : section.kind === 'tension'
+            ? claim.claimType === GENERAL_ANNUAL_TENSION_CLAIM_TYPE.claimType &&
+              value.natalPillar === section.relatedPillar && value.relation === 'clash'
+            : claim.claimType === GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE.claimType &&
+              value.natalPillar === section.relatedPillar &&
+              value.relation === 'six_combination');
     });
     requireLinkedPeriod(matches.length === 1,
       'projected annual profile does not match an executed annual Claim');
     const claim = matches[0]!;
     requireLinkedPeriod(
-      claim.methodologyRef.id === GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId &&
       section.methodologyId === claim.methodologyRef.id &&
+      (section.kind === 'support'
+        ? claim.methodologyRef.id === GENERAL_ANNUAL_COMBINATION_METHODOLOGY.methodologyId &&
+          claim.sourceRefs.includes(GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId) &&
+          section.observedCombination?.sourceId === GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId
+        : claim.methodologyRef.id === GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId) &&
       section.policySourceId === GENERAL_ANNUAL_POLICY_SOURCE.sourceId &&
       claim.sourceRefs.includes(GENERAL_ANNUAL_POLICY_SOURCE.sourceId) &&
       claim.ruleRefs.length > 0 &&
@@ -387,7 +399,16 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     ) &&
     section.policySourceId === annualTheme.policySourceId &&
     section.methodologyId === annualTheme.methodologyId);
-  requireLinkedPeriod(annualTensions.length === annual.sections.length - 1,
+  const annualSupports = annual.sections.filter(section =>
+    section.kind === 'support' && section.observedCombination?.relation === 'six_combination' &&
+    section.observedCombination.sourceId === GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId &&
+    section.relatedPillar !== undefined &&
+    section.calculationFactPaths.includes(
+      'temporal.annualBranchRelations.' + section.relatedPillar,
+    ) &&
+    section.policySourceId === annualTheme.policySourceId &&
+    section.methodologyId === GENERAL_ANNUAL_COMBINATION_METHODOLOGY.methodologyId);
+  requireLinkedPeriod(annualTensions.length + annualSupports.length === annual.sections.length - 1,
     'the annual focus cannot silently drop an unsupported relation');
   const annualCurrentReading: GeneralAnnualMonthlyExplorationReport['annualCurrentReading'] =
     annualReference.state === 'outside_target_civil_year'
@@ -399,6 +420,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
             referenceDateTime: annualReference.referenceDateTime,
             theme: annualTheme,
             sourceBoundTensions: annualTensions,
+            sourceBoundSupports: annualSupports,
           };
 
   const annualTensionComparison = annualTensions.length === 0 ? '' :
@@ -408,7 +430,10 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     '서로 다른 시기 계산: ' + phaseYearExplanation +
     String(annual.targetYear) + '년 기존 연운 T9 연구 주제는 ‘' +
     annualTheme.title + '’입니다. ' + annualTheme.text +
-    annualTensionComparison + ' ' +
+    annualTensionComparison +
+    (annualSupports.length === 0 ? '' :
+      ' 별도로 확인된 연도 지지와 원국의 육합 관계: ' +
+      annualSupports.map(section => '‘' + section.title + '’ ' + section.text).join(' ')) + ' ' +
     String(monthly.targetMonth) + '월의 기존 월운 T9 연구 주제는 구간별로 나뉩니다. ' +
     phase('before_jeol', '절입 전') + ' ' +
     phase('after_jeol', '절입 이후') + '. ' +
@@ -560,7 +585,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '</section>';
   const annual = report.annual.sections.map((section, i) =>
     '<article class="reading-card"><small>' +
-    (section.kind === 'core' ? e(annualLabel) + '의 중심 관점' : '연운의 조건부 충 관계') +
+    (section.kind === 'core' ? e(annualLabel) + '의 중심 관점' :
+      section.kind === 'tension' ? '연운의 조건부 충 관계' : '연운의 지지 육합 보조 관계') +
     '</small><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
     '<details><summary>' + e(annualLabel) + ' 문구의 계산 근거와 연구 출처</summary>' +
     '<p>해석 범위: 기존 연구 프로필의 한국어 문구 + 별도 실행된 연구 T9 Claim (Official 승인 아님)</p>' +
@@ -570,7 +596,9 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<p>실행된 연구 규칙: ' + e(report.annualExecutedEvidence[i]!.ruleIds.join(' · ')) + '</p>' +
     '<p>계산 경로: ' + e(report.annualExecutedEvidence[i]!.factPaths.join(' · ')) + '</p>' +
     '<p>연구 방법론: ' + e(section.methodologyId) + '</p>' +
-    '<p>출처: ' + e(section.policySourceId) + ' (명하 내부 연구 정책, 독립 고전 근거 아님)</p>' +
+    '<p>출처: ' + e(report.annualExecutedEvidence[i]!.sourceIds.join(' · ')) +
+    (section.kind === 'support' ? ' (기존 고전의 육합 쌍 + 내부 연구 제한)' :
+      ' (명하 내부 연구 정책, 독립 고전 근거 아님)') + '</p>' +
     '</details></article>',
   ).join('\n');
   const selected = report.referenceReading;
@@ -642,10 +670,15 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       annualFocus.state !== expectedFocusState ||
       (annualFocus.state === 'in_target_civil_year' &&
         (annualFocus.theme !== report.annual.sections[0] ||
-         annualFocus.sourceBoundTensions.length !== report.annual.sections.length - 1 ||
+         annualFocus.sourceBoundTensions.length + annualFocus.sourceBoundSupports.length !==
+           report.annual.sections.length - 1 ||
          annualFocus.sourceBoundTensions.some(section =>
            section.kind !== 'tension' ||
            !section.observedClash ||
+           !report.annual.sections.includes(section)) ||
+         annualFocus.sourceBoundSupports.some(section =>
+           section.kind !== 'support' ||
+           section.observedCombination?.relation !== 'six_combination' ||
            !report.annual.sections.includes(section))))) {
     throw new TypeError('Annual/monthly HTML requires the exact source-bound annual focus.');
   }
@@ -676,7 +709,9 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       '<p>방법론: ' + e(evidence.methodologyId) + '</p>' +
       '<p>계산: ' + e(evidence.factPaths.join(' · ')) + '</p>' +
       '<p>출처: ' + e(evidence.sourceIds.join(' · ')) +
-      ' (명하 내부 연구 정책, 독립 고전 근거 아님)</p></details>';
+      (section.kind === 'support'
+        ? ' (지지 육합 쌍의 고전 출처 + 내부 연구 정책)'
+        : ' (명하 내부 연구 정책, 독립 고전 근거 아님)') + '</p></details>';
   };
   const annualUncertainty = annualFocus.state !== 'in_target_civil_year' ||
     report.annual.unavailablePillars.length === 0 ? '' :
@@ -708,6 +743,13 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
           '</div>'
         : '<p>현재 확인된 원국 기둥에서는 추가로 선택된 연운 충 관계가 없습니다. ' +
           '미확정 기둥의 관계나 다른 관계의 부재를 뜻하지 않습니다.</p>') +
+      (annualFocus.sourceBoundSupports.length
+        ? '<div aria-label="연도와 원국의 실제 육합 관계">' +
+          annualFocus.sourceBoundSupports.map(section =>
+            '<article class="reading-card"><small>기존 고전 출처의 지지 육합 보조 맥락</small><h4>' +
+            e(section.title) + '</h4><p>' + e(section.text) +
+            '</p>' + annualFocusEvidence(section) + '</article>').join('') +
+          '</div>' : '') +
       annualUncertainty + '</section>'
     : '';
   const monthlyUncertainty = selected.state === 'outside_target_month' ||
