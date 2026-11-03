@@ -100,7 +100,11 @@ describe('real-calculated monthly Korean research consumer preview', () => {
     for (const section of report.sections) {
       expect(section.title).toMatch(/[가-힣]/u);
       expect(section.text.length).toBeGreaterThan(30);
-      expect(section.text).toContain('특정 사건이나 결과를 확정하지 않습니다');
+      if (section.kind === 'support') {
+        expect(section.text).toContain('합화나 실제 사건의 근거가 아닙니다');
+      } else {
+        expect(section.text).toContain('특정 사건이나 결과를 확정하지 않습니다');
+      }
       expect(section.sourceIds.length).toBeGreaterThan(0);
       expect(section.ruleIds.length).toBeGreaterThan(0);
       expect(section.factPaths.length).toBeGreaterThanOrEqual(3);
