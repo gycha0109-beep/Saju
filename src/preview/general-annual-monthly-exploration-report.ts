@@ -806,6 +806,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     section.kind === 'theme' && section.segmentId === id);
   const originalTensions = (id: MonthlySegmentId) => report.monthly.sections.filter(section =>
     section.kind === 'tension' && section.segmentId === id);
+  const originalSupports = (id: MonthlySegmentId) => report.monthly.sections.filter(section =>
+    section.kind === 'support' && section.segmentId === id);
   const originalBefore = originalTheme('before_jeol');
   const originalAfter = originalTheme('after_jeol');
   if (contrast.state === 'source_bound_comparison') {
@@ -816,12 +818,24 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
         section.sourceIds.length > 0 && section.ruleIds.length > 0 &&
         section.relatedPillar !== undefined && section.observedClash?.relation === 'clash');
     };
+    const exactSupports = (id: MonthlySegmentId,
+      chosen: readonly GeneralMonthlyExplorationSection[]) => {
+      const original = originalSupports(id);
+      return chosen.length === original.length && chosen.every((section, i) =>
+        section === original[i] && section.kind === 'support' &&
+        section.sourceIds.includes('SRC-T0-XUANZE-YAOLUE-UPPER') &&
+        section.ruleIds.length > 0 &&
+        section.relatedPillar !== undefined &&
+        section.observedCombination?.relation === 'six_combination');
+    };
     if (originalBefore.length !== 1 || originalAfter.length !== 1 ||
         contrast.beforeTheme !== originalBefore[0] ||
         contrast.afterTheme !== originalAfter[0] ||
         contrast.sameTenGod !== (contrast.beforeTheme.tenGod === contrast.afterTheme.tenGod) ||
         !exactTensions('before_jeol', contrast.beforeTensions) ||
-        !exactTensions('after_jeol', contrast.afterTensions)) {
+        !exactTensions('after_jeol', contrast.afterTensions) ||
+        !exactSupports('before_jeol', contrast.beforeSupports) ||
+        !exactSupports('after_jeol', contrast.afterSupports)) {
       throw new TypeError('Annual/monthly HTML requires exactly selected T9 phase contrast evidence.');
     }
   } else if (contrast.state !== 'insufficient_evidence' ||
@@ -842,6 +856,10 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
         '</p></details></article>').join('') + '</div>'
     : '<p>' + e(label) +
       '에 선택된 원국 충 관계 연구 Claim은 없습니다. 다른 관계의 부재를 뜻하지 않습니다.</p>';
+  const contrastSupport = (label: string, supports: readonly GeneralMonthlyExplorationSection[]) =>
+    supports.length
+      ? '<div><h4>' + e(label) + '에 실제 확인된 원국 지지 육합</h4>' +
+        supports.map(monthlyCard).join('') + '</div>' : '';
   const phaseContrast = contrast.state === 'source_bound_comparison'
     ? '<section id="monthly-phase-contrast" aria-label="절입 전후 기존 월운 해석 근거 비교">' +
       '<h3>절입 전·후, 실제 선택된 해석 주제의 차이</h3>' +
@@ -866,6 +884,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       e(contrast.afterTheme.sourceIds.join(' · ')) + '</p></details></article></div>' +
       contrastTension('절입 전', contrast.beforeTensions) +
       contrastTension('절입 이후', contrast.afterTensions) +
+      contrastSupport('절입 전', contrast.beforeSupports) +
+      contrastSupport('절입 이후', contrast.afterSupports) +
       '<p class="muted">원국 충 관계는 각 구간에 실제 실행된 T9 부분풀이로만 표시합니다. ' +
       '두 구간의 결과를 하나의 새 예측으로 합성하지 않습니다.</p></section>'
     : '<section id="monthly-phase-contrast"><h3>절입 전·후 풀이 비교 보류</h3>' +
