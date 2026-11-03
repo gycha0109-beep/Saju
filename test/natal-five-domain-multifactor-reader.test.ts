@@ -54,7 +54,7 @@ function reports(snapshot: ReturnType<typeof sample>): NatalFiveDomainMultifacto
 }
 
 describe('same-chart five-domain multifactor Korean research reading', () => {
-  it('keeps both actual 500-case Wealth readings when one gains a sourced whole-chart core', () => {
+  it('keeps both source-bound Wealth readings after independent cross-channel support is added', () => {
     const examples = [
       { year: 1960, month: 11, day: 15, hour: 12, minute: 41 },
       { year: 1977, month: 6, day: 8, hour: 9, minute: 48 },
@@ -71,31 +71,55 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         time: { known: true, hour: birth.hour, minute: birth.minute },
         sexForTraditionalCalculation: 'male',
       }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
-      const wealth = reports(chart).wealth;
       const all = reports(chart);
-      expect(wealth.state).toBe('partial');
+      const wealth = all.wealth;
+      const core = wealth.sections[0];
+      const hasDirectCore = core !== undefined &&
+        ['core', 'creation', 'management', 'planning'].includes(core.axis);
       const html = renderNatalFiveDomainMultifactorResearchHtml(chart, all);
       const card = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
       const firstReading = card.split('<details class="full-claim-evidence"')[0]!;
-      expect(card).toContain('아직 설명하지 못하는 부분');
       expect(card).toContain('aria-label="재물운 명식별 풀이 본문"');
-      if (wealth.sections[0]?.channel === 'cross_channel') {
+      if (birth.year === 1960) {
+        // Formerly partial; a new, source-bound and independent management
+        // axis now legitimately meets the three-axis research criterion.
+        expect(wealth.state).toBe('complete');
+        expect(wealth.sections).toHaveLength(3);
+        expect(new Set(wealth.sections.map(section => section.axis)).size).toBe(3);
+        expect(wealth.sections.some(section =>
+          section.pattern === 'WEALTH_OFFICER' &&
+          section.channel === 'cross_channel' && section.axis === 'management')).toBe(true);
+      }
+      if (hasDirectCore) {
         sourcedCrossCore++;
-        expect(wealth.sections[0]?.axis).toBe('creation');
-        expect(wealth.sections[0]?.pattern).toBe('OUTPUT_WEALTH');
-        expect(wealth.readingGuide?.coreClaimType).toBe(wealth.sections[0]?.claimType);
-        expect(wealth.sections[0]?.paragraph).toContain('서로 다른 관측 범위');
+        expect(core.channel).toBe('cross_channel');
+        expect(['creation', 'management']).toContain(core.axis);
+        expect(core.pattern).toBe(core.axis === 'creation' ? 'OUTPUT_WEALTH' : 'WEALTH_OFFICER');
+        expect(wealth.readingGuide?.coreClaimType).toBe(core.claimType);
+        expect(core.paragraph).toContain('서로 다른 관측 범위');
         expect(card).toContain('중심 관점 · ');
-        expect(card).toContain('독립적인 추가 근거가 부족하여 종합 판단은 보류합니다');
         expect(card).not.toContain('재물운 중심 결론이 확립되지 않았습니다');
+        if (wealth.state === 'complete') {
+          expect(wealth.sections).toHaveLength(3);
+          expect(wealth.readingGuide?.supporting).toHaveLength(2);
+          expect(card).toContain('중심 하나와 서로 독립적인 보조 두 가지를 확인한 연구용 풀이');
+          expect(wealth.missing).toHaveLength(0);
+        } else {
+          expect(wealth.state).toBe('partial');
+          expect(card).toContain('아직 설명하지 못하는 부분');
+          expect(card).toContain('독립적인 추가 근거가 부족하여 종합 판단은 보류합니다');
+        }
       } else {
         originalLimitedTension++;
+        expect(wealth.state).toBe('partial');
         expect(wealth.readingGuide).toBeUndefined();
         expect(wealth.sections.map(section => section.axis)).toEqual(['tension', 'context']);
+        expect(card).toContain('아직 설명하지 못하는 부분');
         expect(card).toContain('재물운 중심 결론이 확립되지 않았습니다');
         expect(card).toContain('확인된 긴장 부분 관점');
         expect(card).toContain('재성 중심 결론이 아닌 간접 맥락');
       }
+      const usedPaths = new Set<string>();
       for (const section of wealth.sections) {
         expect(firstReading).toContain('<p>' + escaped(section.paragraph) + '</p>');
         expect(section.sourceIds.length).toBeGreaterThan(0);
@@ -103,14 +127,19 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         expect(card).toContain('<h3>' + escaped(section.headline) + '</h3>');
         expect(card).toContain(section.ruleId);
         expect(card).toContain(section.sourceIds[0]!);
+        if (hasDirectCore) {
+          const fresh = section.observedFactPaths.filter(path => !usedPaths.has(path));
+          expect(fresh.length).toBeGreaterThan(0);
+          section.observedFactPaths.forEach(path => usedPaths.add(path));
+        }
       }
       expect(wealth.researchOnly).toBe(true);
       expect(wealth.usefulComplete).toBe(false);
       expect(wealth.mayPublish).toBe(false);
       expect(wealth.maySell).toBe(false);
     }
-    expect(sourcedCrossCore).toBe(1);
-    expect(originalLimitedTension).toBe(1);
+    expect(sourcedCrossCore + originalLimitedTension).toBe(2);
+    expect(sourcedCrossCore).toBeGreaterThanOrEqual(1);
   }, 60000);
 
 
