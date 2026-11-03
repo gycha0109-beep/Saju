@@ -90,11 +90,20 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
           section.pattern === 'WEALTH_OFFICER' &&
           section.channel === 'cross_channel' && section.axis === 'management')).toBe(true);
       }
+      if (birth.year === 1977) {
+        // The originally tension-only fixture now has a source-owned
+        // Wealth/Resource planning core across opposite T5 channels.
+        expect(core?.channel).toBe('cross_channel');
+        expect(core?.axis).toBe('planning');
+        expect(core?.pattern).toBe('WEALTH_RESOURCE');
+        expect(core?.paragraph).toContain('재성과 인성은 동일 관측 채널이 아니라');
+      }
       if (hasDirectCore) {
         sourcedCrossCore++;
         expect(core.channel).toBe('cross_channel');
-        expect(['creation', 'management']).toContain(core.axis);
-        expect(core.pattern).toBe(core.axis === 'creation' ? 'OUTPUT_WEALTH' : 'WEALTH_OFFICER');
+        expect(['creation', 'management', 'planning']).toContain(core.axis);
+        expect(core.pattern).toBe(core.axis === 'creation' ? 'OUTPUT_WEALTH' :
+          core.axis === 'management' ? 'WEALTH_OFFICER' : 'WEALTH_RESOURCE');
         expect(wealth.readingGuide?.coreClaimType).toBe(core.claimType);
         expect(core.paragraph).toContain('서로 다른 관측 범위');
         expect(card).toContain('중심 관점 · ');
@@ -138,8 +147,8 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       expect(wealth.mayPublish).toBe(false);
       expect(wealth.maySell).toBe(false);
     }
-    expect(sourcedCrossCore + originalLimitedTension).toBe(2);
-    expect(sourcedCrossCore).toBeGreaterThanOrEqual(1);
+    expect(sourcedCrossCore).toBe(2);
+    expect(originalLimitedTension).toBe(0);
   }, 60000);
 
 
