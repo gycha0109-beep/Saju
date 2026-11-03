@@ -280,6 +280,7 @@ export function runFiveHundredSajuAudit() {
   const wealthConsumerCases = [];
   const wealthCrossOfficerCases = [];
   const wealthCrossResourceCases = [];
+  const wealthCrossPeerCases = [];
   const generalT5ContextCases = [];
   const generalTensionFirstScreenCases = [];
   const wealthIndependentLimitedCases = [];
@@ -445,6 +446,40 @@ export function runFiveHundredSajuAudit() {
             });
           }
         }
+
+          for (const section of report.sections.filter(item =>
+            item.pattern === 'PEER_WEALTH' && item.channel === 'cross_channel')) {
+            const claim = interpretation.claims.find(item =>
+              item.state === 'active' && item.claimType === section.claimType &&
+              item.snapshotId === snapshot.snapshotId);
+            const peer = claim?.value?.familyChannels?.peer;
+            const wealth = claim?.value?.familyChannels?.wealth;
+            const upstream = section.upstreamClaimIds.map(id =>
+              interpretation.claims.find(item => item.claimId === id)?.claimType);
+            const expected = [
+              'TEN_GOD_PEER_' + String(peer).toUpperCase() + '_THEME',
+              'TEN_GOD_WEALTH_' + String(wealth).toUpperCase() + '_THEME',
+            ];
+            if (!claim || !['visible_stems','branches'].includes(peer) ||
+                !['visible_stems','branches'].includes(wealth) || peer === wealth ||
+                section.axis !== 'tension' ||
+                JSON.stringify([...upstream].sort()) !== JSON.stringify(expected.sort()) ||
+                section.sourceIds.length !== 2 || !section.ruleId ||
+                section.observedFactPaths.length < 2 ||
+                !section.observedFactPaths.some(path => path.endsWith('.stem.value')) ||
+                !section.observedFactPaths.some(path => path.endsWith('.branch.value')) ||
+                !section.paragraph.includes('비겁과 재성은 동일 관측 채널이 아니라') ||
+                !section.paragraph.includes('실제 자산 손실')) {
+              throw new Error('Selected Peer-to-Wealth cross-channel T8 lost actual T5 or its bounded meaning');
+            }
+            wealthCrossPeerCases.push({
+              birth:stamp, calculationHash:chartKey,
+              claimType:section.claimType, upstreamClaimTypes:upstream,
+              ruleId:section.ruleId, sourceIds:section.sourceIds,
+              observedFactPaths:section.observedFactPaths,
+              headline:section.headline, paragraph:section.paragraph,
+            });
+          }
         if (domain === 'wealth' && report.sections.length === 0) {
           const context = report.availableThemeContext;
           const membership = context?.hiddenWealthMembership ?? [];
@@ -833,6 +868,12 @@ export function runFiveHundredSajuAudit() {
         examples: wealthCrossResourceCases.slice(0, 8),
         distinction: 'Actually selected T8 source-grounded 財剋印 with exact opposite-channel Wealth/Resource T5; not a money or behavior prediction',
       },
+      wealthCrossPeerSelectedMeaning: {
+        examined: COUNT,
+        selectedCount: wealthCrossPeerCases.length,
+        examples: wealthCrossPeerCases.slice(0, 8),
+        distinction: 'Actually selected classical 比劫↔財 tension from opposite-channel T5 without event or asset-loss prediction',
+      },
       wealthIndependentLimitedContext: {
         examined: COUNT,
         count: wealthIndependentLimitedCases.length,
@@ -928,6 +969,7 @@ export function runFiveHundredSajuAudit() {
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
     wealthCrossOfficerSelected: result.rootCauseDiagnostics.wealthCrossOfficerSelectedMeaning.selectedCount,
     wealthCrossResourceSelected: result.rootCauseDiagnostics.wealthCrossResourceSelectedMeaning.selectedCount,
+    wealthCrossPeerSelected: result.rootCauseDiagnostics.wealthCrossPeerSelectedMeaning.selectedCount,
     wealthNoT8ButSourcedT5: result.rootCauseDiagnostics.wealthConsumerEvidence.withBoundedT5ContextInstead,
     wealthNoSourceBoundInterpretiveText: result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText,
     wealthIndependentLimitedInterpretations: result.rootCauseDiagnostics.wealthIndependentLimitedContext.count,
@@ -992,6 +1034,7 @@ export function runFiveHundredSajuAudit() {
       result.rootCauseDiagnostics.wealthConsumerEvidence.examined !== COUNT ||
       result.rootCauseDiagnostics.wealthCrossOfficerSelectedMeaning.examined !== COUNT ||
       result.rootCauseDiagnostics.wealthCrossResourceSelectedMeaning.examined !== COUNT ||
+      result.rootCauseDiagnostics.wealthCrossPeerSelectedMeaning.examined !== COUNT ||
       result.rootCauseDiagnostics.wealthIndependentLimitedContext.examined !== COUNT ||
       result.rootCauseDiagnostics.wealthIndependentLimitedContext.cases.length !==
         result.rootCauseDiagnostics.wealthIndependentLimitedContext.count ||
