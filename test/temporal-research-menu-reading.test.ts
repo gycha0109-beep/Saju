@@ -289,14 +289,15 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
       },
     })).toThrow(/Monthly reference (must retain all|tension lost)/);
     const after = reports(true, 1990, '2030-09-03T12:00:00.000Z').annualMonthly;
-    if (after.annualCurrentReading.state !== 'in_target_civil_year') throw new Error('Year fixture');
+    const currentAnnual = after.annualCurrentReading;
+    if (currentAnnual.state !== 'in_target_civil_year') throw new Error('Year fixture');
     expect(() => buildTemporalResearchMenuReadings({
       annualMonthly: {
         ...after,
         annualCurrentReading: {
-          ...after.annualCurrentReading,
+          ...currentAnnual,
           sourceBoundTensions: [{
-            ...after.annualCurrentReading.theme,
+            ...currentAnnual.theme,
             kind: 'tension',
             id: 'INVENTED-ANNUAL-TENSION',
           }],
