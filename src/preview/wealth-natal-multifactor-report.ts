@@ -10,6 +10,7 @@ import {
   WEALTH_NATAL_MULTIFACTOR_PACK,
   WEALTH_NATAL_MULTIFACTOR_NARRATIVES,
   WEALTH_NATAL_CROSS_CHANNEL_NARRATIVES,
+  WEALTH_NATAL_CROSS_CHANNEL_OFFICER_NARRATIVES,
 } from '../research/wealth-natal-multifactor-candidate.js';
 
 export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
@@ -350,7 +351,9 @@ function buildAvailableThemeContext(
 }
 
 function textFor(claimType: string, key: 'headline'|'summary') {
-  const profile = [...WEALTH_NATAL_MULTIFACTOR_NARRATIVES, ...WEALTH_NATAL_CROSS_CHANNEL_NARRATIVES]
+  const profile = [...WEALTH_NATAL_MULTIFACTOR_NARRATIVES,
+    ...WEALTH_NATAL_CROSS_CHANNEL_NARRATIVES,
+    ...WEALTH_NATAL_CROSS_CHANNEL_OFFICER_NARRATIVES]
     .find(p => p.claimType === claimType);
   guard(profile, 'ClaimNarrativeProfile missing: ' + claimType);
   const matches = profile.templates?.filter(t => t.templateKey === key && t.language === 'ko') ?? [];
@@ -390,11 +393,17 @@ function toSection(
   const value = claim.value as Record<string, unknown>;
   const cross = value?.channel === 'cross_channel';
   const channels = value?.familyChannels as Record<string, unknown> | undefined;
-  const validCross = cross && value.pattern === 'OUTPUT_WEALTH' &&
+  const outputWealthCross = cross && value.pattern === 'OUTPUT_WEALTH' &&
     JSON.stringify(value.families) === JSON.stringify(['output', 'wealth']) &&
     channels !== undefined &&
     ((channels.output === 'visible_stems' && channels.wealth === 'branches') ||
       (channels.output === 'branches' && channels.wealth === 'visible_stems'));
+  const wealthOfficerCross = cross && value.pattern === 'WEALTH_OFFICER' &&
+    JSON.stringify(value.families) === JSON.stringify(['wealth', 'officer']) &&
+    channels !== undefined &&
+    ((channels.wealth === 'visible_stems' && channels.officer === 'branches') ||
+      (channels.wealth === 'branches' && channels.officer === 'visible_stems'));
+  const validCross = outputWealthCross || wealthOfficerCross;
   guard(value && typeof value === 'object' && typeof value.pattern === 'string' &&
     AXES.includes(value.axis as Axis) &&
     (value.channel === 'visible_stems' || value.channel === 'branches' || validCross) &&
@@ -406,8 +415,9 @@ function toSection(
     'invalid or overclaiming structured T8 meaning');
   const upstream = claim.upstreamClaimRefs.map(id => execution.claims.find(c => c.claimId === id));
   guard(claim.scenarioRef === undefined && claim.methodologyRef.id ===
-    (cross ? 'M-WEALTH-NATAL-WHOLE-CHART-OUTPUT-WEALTH-V1' :
-      'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1') &&
+    (outputWealthCross ? 'M-WEALTH-NATAL-WHOLE-CHART-OUTPUT-WEALTH-V1' :
+      wealthOfficerCross ? 'M-WEALTH-NATAL-WHOLE-CHART-WEALTH-OFFICER-V1' :
+        'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1') &&
     new Set(claim.upstreamClaimRefs).size === claim.upstreamClaimRefs.length &&
     upstream.every(c => c && c.state === 'active' && c.taxonomy.tier === 'T5' &&
       c.snapshotId === snapshot.snapshotId && c.scenarioRef === undefined),
@@ -443,10 +453,15 @@ function toSection(
     claim.sourceRefs.every(id => registry.sources.some(x => x.sourceId === id)),
     'not exactly source-bound to Wealth T5 family and method inputs');
   const locations = cross
-    ? [
-        ...positions(snapshot, channels!.output as ObservationChannel, ['output']),
-        ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
-      ]
+    ? outputWealthCross
+      ? [
+          ...positions(snapshot, channels!.output as ObservationChannel, ['output']),
+          ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
+        ]
+      : [
+          ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
+          ...positions(snapshot, channels!.officer as ObservationChannel, ['officer']),
+        ]
     : positions(snapshot, value.channel as ObservationChannel, value.families as string[]);
   const observedByFamily = (value.families as string[]).map(family => {
     const actual = locations.filter(location => location.family === family);
