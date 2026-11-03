@@ -192,7 +192,9 @@ describe('three temporal menus preserve already source-bound natal interpretatio
     expect(result.lifeStage.natalContext.availability).toBe('insufficient_evidence');
     expect(result.lifeStage.natalContext.sections).toHaveLength(0);
     expect(result.html).toContain('원국 해석 근거 부족');
-    expect(result.html).toContain('출처가 있는 원국 종합 풀이를 확인하지 못했습니다');
+    expect(result.annualMonthly.report.natalContext.availableThemeContext).toBeUndefined();
+    expect(result.html).toContain('출처가 있는 원국 종합 풀이 또는 십신 부분풀이를 확인하지 못했습니다');
+    expect(result.html).not.toContain('aria-label="원국에서 확인된 기존 십신 부분풀이"');
     expect(result.html).not.toContain('<summary>원국 해석 출처</summary>');
     expect(result.maySell).toBe(false);
   }, 30000);
