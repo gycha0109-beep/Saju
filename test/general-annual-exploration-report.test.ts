@@ -145,6 +145,36 @@ describe('opt-in consumer Annual exploration', () => {
     );
   });
 
+  it('renders a real resolved 六合 pair as source-bounded context, never luck or 合化', () => {
+    const value = facts();
+    expect(value.annualPillar.branch).toBe('오');
+    const updated: AnnualInterpretationFacts = {
+      ...value,
+      annualBranchRelations: {
+        ...value.annualBranchRelations,
+        day: resolved({
+          pillar: 'day', natalBranch: '미',
+          annualBranch: '오', relation: 'six_combination',
+        }),
+      },
+    };
+    const report = buildGeneralAnnualExplorationReport(updated);
+    const support = report.sections.find(section =>
+      section.kind === 'support' && section.relatedPillar === 'day');
+    expect(support).toBeDefined();
+    expect(support?.id).toBe('ANNUAL_BRANCH_SIX_COMBINATION_DAY');
+    expect(support?.text).toContain('연도 지지는 전통 명리의 육합(六合) 쌍');
+    expect(support?.text).toContain('지지 미와 2026년 지지 오');
+    expect(support?.text).toContain('합화나 사건 성립의 근거로 사용하지 않습니다');
+    expect(support?.observedCombination).toMatchObject({
+      natalBranch: '미', annualBranch: '오', relation: 'six_combination',
+      sourceId: 'SRC-T0-XUANZE-YAOLUE-UPPER',
+    });
+    expect(support?.calculationFactPaths).toContain('temporal.annualBranchRelations.day');
+    expect(report.permissions.mayPublish).toBe(false);
+    expect(report.permissions.maySell).toBe(false);
+  });
+
   it('rejects contradictory relation payloads and never grants publication or commerce rights', () => {
     const value = facts();
     expect(() => buildGeneralAnnualExplorationReport({
