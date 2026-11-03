@@ -16,6 +16,8 @@ const CROSS_RULE_SET = 'wealth-natal-whole-chart-output-wealth-research';
 const CROSS_METHOD_ID = 'M-WEALTH-NATAL-WHOLE-CHART-OUTPUT-WEALTH-V1';
 const CROSS_OFFICER_METHOD_ID = 'M-WEALTH-NATAL-WHOLE-CHART-WEALTH-OFFICER-V1';
 const CROSS_OFFICER_RULE_SET = 'wealth-natal-whole-chart-wealth-officer-research';
+const CROSS_RESOURCE_METHOD_ID = 'M-WEALTH-NATAL-WHOLE-CHART-WEALTH-RESOURCE-V1';
+const CROSS_RESOURCE_RULE_SET = 'wealth-natal-whole-chart-wealth-resource-research';
 type Family = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
 type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension' | 'context';
 type Channel = 'visible_stems' | 'branches';
@@ -321,6 +323,92 @@ export const WEALTH_NATAL_CROSS_CHANNEL_OFFICER_NARRATIVES:
     }),
   );
 
+/**
+ * 三命通會 五卷's existing 財剋印 relation is about the whole chart, not
+ * just one canonical observation channel. Keep this distinct from the
+ * established 食傷→財 cross-channel methodology; no other relationships are
+ * automatically authorized by this addition.
+ */
+export const WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_METHODOLOGY: MethodologyDefinition =
+  Object.freeze({
+    methodologyId: CROSS_RESOURCE_METHOD_ID,
+    version: WEALTH_NATAL_MULTIFACTOR_VERSION,
+    family: 'domain_synthesis',
+    name: 'Whole-chart Wealth-to-Resource relation across observed T5 channels (research)',
+    description: 'Bounded, source-backed 財剋印 resource/preparation relationship across opposite observed T5 channels.',
+    assumptions: [
+      'Only 財剋印 is supported in this separate cross-channel method; other cross-channel patterns remain unauthorized.',
+      'Wealth and Resource T5 must both be actually emitted and active in the same chart, in opposite observation channels.',
+      'An observed structure is not a causal or predictive statement about personal wealth, career, success, event timing, or money.',
+      'The research method grants no Official, public, production, or commerce authority.',
+    ],
+    requiredFactTypes: ['derivedFacts.tenGods'],
+    sourceIds: [GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId,
+      GENERAL_NATAL_CONCLUSION_SOURCE.sourceId],
+    status: 'research',
+  });
+
+const WEALTH_RESOURCE_CROSS_PAIRS = [
+  { wealth: 'visible_stems', resource: 'branches' },
+  { wealth: 'branches', resource: 'visible_stems' },
+] as const;
+const wealthResourceCrossType = (wealth: 'visible_stems' | 'branches') =>
+  'WEALTH_NATAL_MULTIFACTOR_WEALTH_RESOURCE_WEALTH_' +
+  wealth.toUpperCase() + '_CROSS_CHANNEL';
+
+export const WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_RULES: readonly RuleDefinition[] =
+  Object.freeze(WEALTH_RESOURCE_CROSS_PAIRS.map(({ wealth, resource }) => {
+    const pattern = PATTERNS.find(item => item.id === 'WEALTH_RESOURCE')!;
+    const base = rule(pattern, wealth);
+    return {
+      ...base,
+      ruleId: 'RULE-' + wealthResourceCrossType(wealth),
+      ruleSetId: CROSS_RESOURCE_RULE_SET,
+      methodologyRef: {
+        id: CROSS_RESOURCE_METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION,
+      },
+      title: pattern.headline + ' — cross-channel ' + wealth + '/' + resource,
+      description: 'Existing whole-chart 財剋印 meaning, limited to original opposite-channel T5 Claims.',
+      inputs: [
+        { ...base.inputs[0]!, pathOrClaimType: 'TEN_GOD_WEALTH_' + wealth.toUpperCase() + '_THEME' },
+        { ...base.inputs[1]!, pathOrClaimType: 'TEN_GOD_RESOURCE_' + resource.toUpperCase() + '_THEME' },
+      ],
+      output: {
+        ...base.output,
+        claimType: wealthResourceCrossType(wealth),
+        value: {
+          ...(base.output.value as Record<string, unknown>),
+          channel: 'cross_channel',
+          familyChannels: { wealth, resource },
+        },
+        tags: [...(base.output.tags ?? []), 'whole-chart-cross-channel'],
+      },
+    };
+  }));
+
+export const WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_NARRATIVES:
+  readonly ClaimNarrativeProfile[] = Object.freeze(
+    WEALTH_RESOURCE_CROSS_PAIRS.map(({ wealth, resource }) => {
+      const pattern = PATTERNS.find(item => item.id === 'WEALTH_RESOURCE')!;
+      return {
+        profileId: 'PROFILE-' + wealthResourceCrossType(wealth),
+        version: WEALTH_NATAL_MULTIFACTOR_VERSION,
+        claimType: wealthResourceCrossType(wealth),
+        semanticKeys: ['pattern', 'families', 'channel', 'axis', 'familyChannels'],
+        allowedEpistemicTypes: ['interpretation' as const],
+        requiredMethodAttribution: true,
+        prohibitedPhrases: ['반드시 성공', '승진한다', '돈이 들어온다', '성격이 확정된다', '운명이 정해져'],
+        renderingHints: ['axis:management', 'cross-channel', wealth + '/' + resource],
+        templates: [
+          { templateKey: 'headline', language: 'ko', text: pattern.headline },
+          { templateKey: 'summary', language: 'ko', text:
+            '재성과 인성은 동일 관측 채널이 아니라 원국의 서로 다른 위치에서 실제 확인되었습니다. ' +
+            pattern.summary },
+        ],
+      };
+    }),
+  );
+
 export const WEALTH_NATAL_MULTIFACTOR_NARRATIVES: readonly ClaimNarrativeProfile[] =
   Object.freeze(PATTERNS.flatMap((pattern, order) => CHANNELS.map(channel => ({
     profileId: `PROFILE-${claimType(pattern, channel)}`,
@@ -346,6 +434,7 @@ export const WEALTH_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
   methodologyRefs: [
     { id: CROSS_METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION },
     { id: CROSS_OFFICER_METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION },
+    { id: CROSS_RESOURCE_METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION },
     { id: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.methodologyId,
       version: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.version },
     { id: METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION },
@@ -355,6 +444,7 @@ export const WEALTH_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
     RULE_SET,
     CROSS_RULE_SET,
     CROSS_OFFICER_RULE_SET,
+    CROSS_RESOURCE_RULE_SET,
   ])],
   conflictPolicy: 'preserve_all',
   ambiguityPolicy: 'propagate',
@@ -366,10 +456,12 @@ export const WEALTH_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
 });
 export function createWealthNatalMultifactorRegistry(createdAt = '1970-01-01T00:00:00.000Z') {
   return createRuleRegistrySnapshot({
-    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...WEALTH_NATAL_MULTIFACTOR_RULES, ...WEALTH_NATAL_CROSS_CHANNEL_RULES, ...WEALTH_NATAL_CROSS_CHANNEL_OFFICER_RULES],
+    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...WEALTH_NATAL_MULTIFACTOR_RULES, ...WEALTH_NATAL_CROSS_CHANNEL_RULES, ...WEALTH_NATAL_CROSS_CHANNEL_OFFICER_RULES,
+      ...WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_RULES],
     methodologies: [GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
       WEALTH_NATAL_MULTIFACTOR_METHODOLOGY, WEALTH_NATAL_CROSS_CHANNEL_METHODOLOGY,
-      WEALTH_NATAL_CROSS_CHANNEL_OFFICER_METHODOLOGY],
+      WEALTH_NATAL_CROSS_CHANNEL_OFFICER_METHODOLOGY,
+      WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_METHODOLOGY],
     sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE],
   }, WEALTH_NATAL_MULTIFACTOR_PACK, createdAt);
 }
