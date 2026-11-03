@@ -85,6 +85,15 @@ export interface GeneralAnnualMonthlyExplorationReport {
     state: 'before_ipchun' | 'from_ipchun' | 'outside_target_civil_year';
     effectivePillarAtReference?: string;
   };
+  /** Effective annual pillar in each half-open solar-term monthly interval.
+   * Pure calendar facts, never T9 interpretation or automatic annual-to-monthly authority. */
+  monthlyEffectiveYearPhases: Readonly<Record<MonthlySegmentId, Readonly<{
+    startsAt: string;
+    endsAt: string;
+    state: 'before_ipchun' | 'from_ipchun';
+    effectiveYear: number;
+    pillarLabel: string;
+  }>>>;
   /** Shared with the exact single-month research result. */
   referenceReading: GeneralMonthlyExplorationReport['referenceReading'];
   /** Existing annual research profiles only, scoped to the requested Seoul civil year. */
@@ -329,6 +338,42 @@ export function buildGeneralAnnualMonthlyExplorationReport(
         : currentPillar.stem + currentPillar.branch }),
   };
 
+  const monthlyEffectiveYearPhases = Object.fromEntries(
+    (['before_jeol', 'after_jeol'] as const).map(id => {
+      const segment = facts.segmentsById[id];
+      const start = Date.parse(segment.startsAt);
+      const end = Date.parse(segment.endsAt);
+      requireLinkedPeriod(Number.isFinite(start) && Number.isFinite(end) &&
+        start < end &&
+        // An effective annual pillar cannot silently change in the middle
+        // of a reported monthly T9 interval.
+        (start < ipchun.date.getTime()) === (end - 1 < ipchun.date.getTime()),
+        'monthly phase overlaps an unreported Ipchun-effective annual transition');
+      const beforeIpchun = start < ipchun.date.getTime();
+      return [id, {
+        startsAt: segment.startsAt,
+        endsAt: segment.endsAt,
+        state: beforeIpchun ? 'before_ipchun' as const : 'from_ipchun' as const,
+        effectiveYear: beforeIpchun ? annual.targetYear - 1 : annual.targetYear,
+        pillarLabel: beforeIpchun
+          ? previousPillar.stem + previousPillar.branch
+          : currentPillar.stem + currentPillar.branch,
+      }];
+    }),
+  ) as unknown as GeneralAnnualMonthlyExplorationReport['monthlyEffectiveYearPhases'];
+  const phaseYearExplanation =
+    '절입 전 효력 연주는 ' + monthlyEffectiveYearPhases.before_jeol.effectiveYear +
+    '년 ' + monthlyEffectiveYearPhases.before_jeol.pillarLabel +
+    ', 절입 이후 효력 연주는 ' +
+    monthlyEffectiveYearPhases.after_jeol.effectiveYear + '년 ' +
+    monthlyEffectiveYearPhases.after_jeol.pillarLabel + '입니다. ' +
+    (monthlyEffectiveYearPhases.before_jeol.state === 'before_ipchun'
+      ? '절입 전 구간에 아래 ' + annual.targetYear +
+        '년 연구 연운 문구를 현재 효력의 연운으로 적용하지 않습니다. ' : '') +
+    (monthlyEffectiveYearPhases.after_jeol.state === 'before_ipchun'
+      ? '절입 이후 구간에도 아래 ' + annual.targetYear +
+        '년 연구 연운 문구를 현재 효력의 연운으로 적용하지 않습니다. ' : '');
+
   const annualTheme = annual.sections[0];
   requireLinkedPeriod(annualTheme?.kind === 'core' &&
     annualTheme.interpretationStatus === 'internal_research' &&
@@ -360,6 +405,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     ' 같은 연운에서 별도 관측된 원국 충 관계의 기존 풀이: ' +
     annualTensions.map(section => '‘' + section.title + '’ ' + section.text).join(' ');
   const periodComparison =
+    '서로 다른 시기 계산: ' + phaseYearExplanation +
     String(annual.targetYear) + '년 기존 연운 T9 연구 주제는 ‘' +
     annualTheme.title + '’입니다. ' + annualTheme.text +
     annualTensionComparison + ' ' +
@@ -377,7 +423,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     targetYear: monthly.targetYear, targetMonth: monthly.targetMonth,
     annual, annualExecutedEvidence, monthly, natalContext, periodComparison,
     monthlyPhaseContrast, annualReference, annualEffectiveContext,
-    referenceReading, annualCurrentReading,
+    monthlyEffectiveYearPhases, referenceReading, annualCurrentReading,
     caveats: [
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
       '이 연결 화면은 별도 통합 운세 규칙이 아니라 기존 연운 연구 문구와 월운 T9 근거를 순서대로 보여줍니다.',
@@ -555,6 +601,40 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       effective.effectivePillarAtReference !== expectedEffectivePillar) {
     throw new TypeError('Annual/monthly HTML requires the exact Ipchun-effective year calculation.');
   }
+  const monthlyPhases = report.monthlyEffectiveYearPhases;
+  const expectedJeol = getSolarTerm(report.targetYear, (report.targetMonth - 1) * 2);
+  const jeolMs = expectedJeol.date.getTime();
+  const civilStartMs = Date.UTC(report.targetYear, report.targetMonth - 1, 1) -
+    9 * 60 * 60 * 1000;
+  const civilEndMs = Date.UTC(report.targetYear, report.targetMonth, 1) -
+    9 * 60 * 60 * 1000;
+  if (report.monthly.jeolBoundary.at !== expectedJeol.date.toISOString() ||
+      !(civilStartMs < jeolMs && jeolMs < civilEndMs)) {
+    throw new TypeError('Annual/monthly HTML requires exact canonical monthly Jeol intervals.');
+  }
+  for (const [id, startsAt, endsAt] of [
+    ['before_jeol', civilStartMs, jeolMs],
+    ['after_jeol', jeolMs, civilEndMs],
+  ] as const) {
+    const state = startsAt < computedIpchun.date.getTime()
+      ? 'before_ipchun' : 'from_ipchun';
+    const expectedYear = state === 'before_ipchun'
+      ? report.targetYear - 1 : report.targetYear;
+    const expectedPillar = state === 'before_ipchun'
+      ? effective.beforeIpchunPillar : effective.afterIpchunPillar;
+    const phase = monthlyPhases[id];
+    if (!phase || phase.startsAt !== new Date(startsAt).toISOString() ||
+        phase.endsAt !== new Date(endsAt).toISOString() ||
+        (startsAt < computedIpchun.date.getTime()) !==
+          (endsAt - 1 < computedIpchun.date.getTime()) ||
+        phase.state !== state || phase.effectiveYear !== expectedYear ||
+        phase.pillarLabel !== expectedPillar ||
+        report.monthly.sections.some(section => section.segmentId === id &&
+          (section.calculatedInterval.startsAt !== phase.startsAt ||
+           section.calculatedInterval.endsAt !== phase.endsAt))) {
+      throw new TypeError('Annual/monthly HTML requires exact Ipchun year in each monthly phase.');
+    }
+  }
   const annualFocus = report.annualCurrentReading;
   const expectedFocusState = effective.state === 'before_ipchun'
     ? 'before_ipchun' : annualAt.state;
@@ -725,6 +805,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       '<p>두 구간 중 실제 선택된 기존 월운 해석 근거가 부족해 차이를 판단하지 않습니다.</p></section>';
   const monthly = SEGMENTS.map(id => {
     const sections = report.monthly.sections.filter(section => section.segmentId === id);
+    const periodYear = monthlyPhases[id];
     const interval = sections[0]?.calculatedInterval;
     const visiblePeriod = interval === undefined ? '' :
       '<p class="muted">실제 계산 적용 기간: ' +
@@ -734,6 +815,11 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       SEGMENT_LABEL[id] + (selected.segmentId === id ? ' · 조회 시각 구간' : '') +
       '</h3>' +
       visiblePeriod +
+      '<p class="muted" aria-label="절입 구간의 입춘 효력 연주">해당 구간 효력 연주: ' +
+      periodYear.effectiveYear + '년 ' + e(periodYear.pillarLabel) +
+      (periodYear.state === 'before_ipchun'
+        ? ' · 선택 연도 연구 연운은 이 구간에 적용하지 않음' : '') +
+      ' (계산 사실이며 새 운세 해석 아님)</p>' +
       (sections.length === 0
         ? '<p>이 구간의 해석 근거가 충분하지 않습니다.</p>'
         : sections.map(monthlyCard).join('\n')) + '</section>';

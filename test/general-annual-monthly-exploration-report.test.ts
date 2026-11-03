@@ -533,6 +533,62 @@ describe('one-person annual to monthly source-bound research reading', () => {
     })).toThrow('Ipchun-effective year calculation');
   });
 
+  it('shows the actual effective annual pillar separately for both monthly Jeol intervals', () => {
+    const january = run(1);
+    const february = run(2, 9, true, '2026-02-03T00:00:00.000Z');
+    const march = run(3);
+    expect(january.report.monthlyEffectiveYearPhases.before_jeol).toMatchObject({
+      state: 'before_ipchun', effectiveYear: 2025, pillarLabel: '을사',
+    });
+    expect(january.report.monthlyEffectiveYearPhases.after_jeol).toMatchObject({
+      state: 'before_ipchun', effectiveYear: 2025, pillarLabel: '을사',
+    });
+    expect(february.report.monthlyEffectiveYearPhases.before_jeol).toMatchObject({
+      state: 'before_ipchun', effectiveYear: 2025, pillarLabel: '을사',
+    });
+    expect(february.report.monthlyEffectiveYearPhases.after_jeol).toMatchObject({
+      state: 'from_ipchun', effectiveYear: 2026, pillarLabel: '병오',
+    });
+    expect(march.report.monthlyEffectiveYearPhases.before_jeol).toMatchObject({
+      state: 'from_ipchun', effectiveYear: 2026, pillarLabel: '병오',
+    });
+    expect(march.report.monthlyEffectiveYearPhases.after_jeol).toMatchObject({
+      state: 'from_ipchun', effectiveYear: 2026, pillarLabel: '병오',
+    });
+    const [before, after] = ['before_jeol', 'after_jeol'] as const;
+    expect(february.report.monthlyEffectiveYearPhases[before].endsAt)
+      .toBe(february.report.annualEffectiveContext.ipchunAt);
+    expect(february.report.monthlyEffectiveYearPhases[after].startsAt)
+      .toBe(february.report.annualEffectiveContext.ipchunAt);
+    for (const { report } of [january, february, march]) {
+      const html = renderGeneralAnnualMonthlyExplorationHtml(report);
+      expect(html).toContain('절입 구간의 입춘 효력 연주');
+      expect(html).toContain('계산 사실이며 새 운세 해석 아님');
+      expect(report.periodComparison).toContain('서로 다른 시기 계산:');
+      for (const id of [before, after]) {
+        const phase = report.monthlyEffectiveYearPhases[id];
+        expect(html).toContain(phase.effectiveYear + '년 ' + phase.pillarLabel);
+      }
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+    expect(january.report.periodComparison).toContain('절입 이후 구간에도 아래 2026년 연구 연운 문구를');
+    expect(february.report.periodComparison).not.toContain('절입 이후 구간에도 아래 2026년 연구 연운 문구를');
+    expect(march.report.periodComparison).not.toContain('현재 효력의 연운으로 적용하지 않습니다');
+    const forged = {
+      ...february.report,
+      monthlyEffectiveYearPhases: {
+        ...february.report.monthlyEffectiveYearPhases,
+        before_jeol: {
+          ...february.report.monthlyEffectiveYearPhases.before_jeol,
+          effectiveYear: 2026,
+        },
+      },
+    };
+    expect(() => renderGeneralAnnualMonthlyExplorationHtml(forged))
+      .toThrow('exact Ipchun year in each monthly phase');
+  });
+
   it('rejects a manipulated annual civil reference instead of mislabeling current year', () => {
     const { report } = run(9);
     expect(() => renderGeneralAnnualMonthlyExplorationHtml({
