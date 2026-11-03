@@ -91,12 +91,13 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
           section.channel === 'cross_channel' && section.axis === 'management')).toBe(true);
       }
       if (birth.year === 1977) {
-        // The originally tension-only fixture now has a source-owned
-        // Wealth/Resource planning core across opposite T5 channels.
+        // The registered axis priority chooses the source-owned management
+        // core ahead of planning. Wealth/Resource is independently tested
+        // on a chart where that T8 is actually selected for the reader.
         expect(core?.channel).toBe('cross_channel');
-        expect(core?.axis).toBe('planning');
-        expect(core?.pattern).toBe('WEALTH_RESOURCE');
-        expect(core?.paragraph).toContain('재성과 인성은 동일 관측 채널이 아니라');
+        expect(core?.axis).toBe('management');
+        expect(core?.pattern).toBe('WEALTH_OFFICER');
+        expect(core?.paragraph).toContain('재성과 관성은 동일 관측 채널이 아니라');
       }
       if (hasDirectCore) {
         sourcedCrossCore++;
