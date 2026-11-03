@@ -277,6 +277,7 @@ export function runFiveHundredSajuAudit() {
   const wealthMissingCases = [];
   const wealthConsumerCases = [];
   const wealthCrossOfficerCases = [];
+  const wealthCrossResourceCases = [];
   const generalT5ContextCases = [];
   const generalTensionFirstScreenCases = [];
   const wealthIndependentLimitedCases = [];
@@ -398,6 +399,40 @@ export function runFiveHundredSajuAudit() {
               throw new Error('Cross-channel Wealth-to-Officer T8 lacks its executed T5 and original Korean meaning');
             }
             wealthCrossOfficerCases.push({
+              birth:stamp, calculationHash:chartKey,
+              claimType:section.claimType, upstreamClaimTypes:upstreamTypes,
+              ruleId:section.ruleId, sourceIds:section.sourceIds,
+              observedFactPaths:section.observedFactPaths,
+              headline:section.headline, paragraph:section.paragraph,
+            });
+          }
+          for (const section of report.sections.filter(item =>
+            item.pattern === 'WEALTH_RESOURCE' && item.channel === 'cross_channel')) {
+            const claim = interpretation.claims.find(item =>
+              item.state === 'active' && item.claimType === section.claimType &&
+              item.snapshotId === snapshot.snapshotId);
+            const familyChannels = claim?.value?.familyChannels;
+            const wealthChannel = familyChannels?.wealth;
+            const resourceChannel = familyChannels?.resource;
+            const upstreamTypes = section.upstreamClaimIds.map(id =>
+              interpretation.claims.find(item => item.claimId === id)?.claimType);
+            const expectedTypes = [
+              'TEN_GOD_WEALTH_' + String(wealthChannel).toUpperCase() + '_THEME',
+              'TEN_GOD_RESOURCE_' + String(resourceChannel).toUpperCase() + '_THEME',
+            ];
+            if (!claim || !['visible_stems','branches'].includes(wealthChannel) ||
+                !['visible_stems','branches'].includes(resourceChannel) ||
+                wealthChannel === resourceChannel ||
+                JSON.stringify([...upstreamTypes].sort()) !==
+                  JSON.stringify(expectedTypes.sort()) ||
+                section.sourceIds.length !== 2 || !section.ruleId ||
+                section.observedFactPaths.length < 2 ||
+                !section.observedFactPaths.some(path => path.endsWith('.stem.value')) ||
+                !section.observedFactPaths.some(path => path.endsWith('.branch.value')) ||
+                !section.paragraph.includes('재성과 인성은 동일 관측 채널이 아니라')) {
+              throw new Error('Cross-channel Wealth-to-Resource T8 lacks its executed T5 and original Korean meaning');
+            }
+            wealthCrossResourceCases.push({
               birth:stamp, calculationHash:chartKey,
               claimType:section.claimType, upstreamClaimTypes:upstreamTypes,
               ruleId:section.ruleId, sourceIds:section.sourceIds,
@@ -733,6 +768,12 @@ export function runFiveHundredSajuAudit() {
         examples: wealthCrossOfficerCases.slice(0, 8),
         distinction: 'Actually selected T8 source-grounded 財→官殺 with exact opposite-channel Wealth/Officer T5; not new outcome predictions',
       },
+      wealthCrossResourceSelectedMeaning: {
+        examined: COUNT,
+        selectedCount: wealthCrossResourceCases.length,
+        examples: wealthCrossResourceCases.slice(0, 8),
+        distinction: 'Actually selected T8 source-grounded 財剋印 with exact opposite-channel Wealth/Resource T5; not a money or behavior prediction',
+      },
       wealthIndependentLimitedContext: {
         examined: COUNT,
         count: wealthIndependentLimitedCases.length,
@@ -817,6 +858,7 @@ export function runFiveHundredSajuAudit() {
     generalTensionFirstScreen: result.rootCauseDiagnostics.generalTensionFirstScreen.count,
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
     wealthCrossOfficerSelected: result.rootCauseDiagnostics.wealthCrossOfficerSelectedMeaning.selectedCount,
+    wealthCrossResourceSelected: result.rootCauseDiagnostics.wealthCrossResourceSelectedMeaning.selectedCount,
     wealthNoT8ButSourcedT5: result.rootCauseDiagnostics.wealthConsumerEvidence.withBoundedT5ContextInstead,
     wealthNoSourceBoundInterpretiveText: result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText,
     wealthIndependentLimitedInterpretations: result.rootCauseDiagnostics.wealthIndependentLimitedContext.count,
@@ -876,6 +918,7 @@ export function runFiveHundredSajuAudit() {
         result.menuResults['재물'].withoutReadableText ||
       result.rootCauseDiagnostics.wealthConsumerEvidence.examined !== COUNT ||
       result.rootCauseDiagnostics.wealthCrossOfficerSelectedMeaning.examined !== COUNT ||
+      result.rootCauseDiagnostics.wealthCrossResourceSelectedMeaning.examined !== COUNT ||
       result.rootCauseDiagnostics.wealthIndependentLimitedContext.examined !== COUNT ||
       result.rootCauseDiagnostics.wealthIndependentLimitedContext.cases.length !==
         result.rootCauseDiagnostics.wealthIndependentLimitedContext.count ||
