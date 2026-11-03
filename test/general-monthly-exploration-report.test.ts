@@ -47,6 +47,39 @@ function run(month: number, natal: CanonicalSajuSnapshot = snapshot(), reference
 }
 
 describe('real-calculated monthly Korean research consumer preview', () => {
+  it('renders real monthly 六合 T9 with its classical source in the exact Jeol interval', () => {
+    let example: ReturnType<typeof run> | undefined;
+    for (const month of [2, 4, 6, 8, 10, 12]) {
+      if (example) break;
+      for (const day of [2, 7, 12, 17, 22]) {
+        const candidate = run(month, snapshot(day));
+        if (candidate.report.sections.some(section => section.kind === 'support')) {
+          example = candidate;
+          break;
+        }
+      }
+    }
+    expect(example).toBeDefined();
+    if (!example) return;
+    const support = example.report.sections.find(section => section.kind === 'support')!;
+    const sourceSegment = example.facts.segmentsById[support.segmentId];
+    expect(support.observedCombination?.relation).toBe('six_combination');
+    expect(support.sourceIds).toContain('SRC-T0-XUANZE-YAOLUE-UPPER');
+    expect(support.methodologyId).toBe('M-GENERAL-MONTHLY-T9-SIX-COMBINATION-SOURCE-V1');
+    expect(support.calculatedInterval).toEqual({
+      startsAt: sourceSegment.startsAt, endsAt: sourceSegment.endsAt,
+    });
+    expect(support.text).toContain('전통 명리의 육합(六合) 쌍');
+    expect(support.text).toContain('합화나 실제 사건의 근거가 아닙니다');
+    const actual = example.execution.claims.find(claim => claim.claimId === support.claimId);
+    expect(actual?.state).toBe('active');
+    expect(actual?.sourceRefs).toEqual(support.sourceIds);
+    expect(actual?.factRefs).toEqual(support.factPaths);
+    expect(renderGeneralMonthlyExplorationHtml(example.report)).toContain(support.text);
+    expect(example.report.mayPublish).toBe(false);
+    expect(example.report.maySell).toBe(false);
+  });
+
   it('shows actual distinct before/after jeol T9 meanings and their source-bound intervals in one HTML', () => {
     const { natal, facts, report, execution } = run(9);
     expect(report.headline).toContain('9월');
