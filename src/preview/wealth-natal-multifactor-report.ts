@@ -11,6 +11,7 @@ import {
   WEALTH_NATAL_MULTIFACTOR_NARRATIVES,
   WEALTH_NATAL_CROSS_CHANNEL_NARRATIVES,
   WEALTH_NATAL_CROSS_CHANNEL_OFFICER_NARRATIVES,
+  WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_NARRATIVES,
 } from '../research/wealth-natal-multifactor-candidate.js';
 
 export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
@@ -353,7 +354,8 @@ function buildAvailableThemeContext(
 function textFor(claimType: string, key: 'headline'|'summary') {
   const profile = [...WEALTH_NATAL_MULTIFACTOR_NARRATIVES,
     ...WEALTH_NATAL_CROSS_CHANNEL_NARRATIVES,
-    ...WEALTH_NATAL_CROSS_CHANNEL_OFFICER_NARRATIVES]
+    ...WEALTH_NATAL_CROSS_CHANNEL_OFFICER_NARRATIVES,
+    ...WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_NARRATIVES]
     .find(p => p.claimType === claimType);
   guard(profile, 'ClaimNarrativeProfile missing: ' + claimType);
   const matches = profile.templates?.filter(t => t.templateKey === key && t.language === 'ko') ?? [];
@@ -403,7 +405,12 @@ function toSection(
     channels !== undefined &&
     ((channels.wealth === 'visible_stems' && channels.officer === 'branches') ||
       (channels.wealth === 'branches' && channels.officer === 'visible_stems'));
-  const validCross = outputWealthCross || wealthOfficerCross;
+  const wealthResourceCross = cross && value.pattern === 'WEALTH_RESOURCE' &&
+    JSON.stringify(value.families) === JSON.stringify(['wealth', 'resource']) &&
+    channels !== undefined &&
+    ((channels.wealth === 'visible_stems' && channels.resource === 'branches') ||
+      (channels.wealth === 'branches' && channels.resource === 'visible_stems'));
+  const validCross = outputWealthCross || wealthOfficerCross || wealthResourceCross;
   guard(value && typeof value === 'object' && typeof value.pattern === 'string' &&
     AXES.includes(value.axis as Axis) &&
     (value.channel === 'visible_stems' || value.channel === 'branches' || validCross) &&
@@ -417,6 +424,7 @@ function toSection(
   guard(claim.scenarioRef === undefined && claim.methodologyRef.id ===
     (outputWealthCross ? 'M-WEALTH-NATAL-WHOLE-CHART-OUTPUT-WEALTH-V1' :
       wealthOfficerCross ? 'M-WEALTH-NATAL-WHOLE-CHART-WEALTH-OFFICER-V1' :
+      wealthResourceCross ? 'M-WEALTH-NATAL-WHOLE-CHART-WEALTH-RESOURCE-V1' :
         'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1') &&
     new Set(claim.upstreamClaimRefs).size === claim.upstreamClaimRefs.length &&
     upstream.every(c => c && c.state === 'active' && c.taxonomy.tier === 'T5' &&
@@ -458,10 +466,15 @@ function toSection(
           ...positions(snapshot, channels!.output as ObservationChannel, ['output']),
           ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
         ]
-      : [
-          ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
-          ...positions(snapshot, channels!.officer as ObservationChannel, ['officer']),
-        ]
+      : wealthOfficerCross
+        ? [
+            ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
+            ...positions(snapshot, channels!.officer as ObservationChannel, ['officer']),
+          ]
+        : [
+            ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
+            ...positions(snapshot, channels!.resource as ObservationChannel, ['resource']),
+          ]
     : positions(snapshot, value.channel as ObservationChannel, value.families as string[]);
   const observedByFamily = (value.families as string[]).map(family => {
     const actual = locations.filter(location => location.family === family);
