@@ -282,6 +282,7 @@ export function runFiveHundredSajuAudit() {
   const wealthPartialCoreUnusedT5Cases = [];
   const startedAt = Date.now();
   let annualMenuProvenanceChecked = 0;
+  let monthlyMenuProvenanceChecked = 0;
   let threeMenuT5Available = 0;
   let threeMenuT5WithoutT8 = 0;
   for (let i=0; i<COUNT; i++) {
@@ -510,9 +511,9 @@ export function runFiveHundredSajuAudit() {
       if (temporal.calculationHash !== chartKey) {
         throw new Error('Time menus did not preserve canonical calculation hash');
       }
-      const annualMenu = buildTemporalResearchMenuReadings({
+      const [annualMenu, monthlyMenu] = buildTemporalResearchMenuReadings({
         annualMonthly: temporal.annualMonthly.report,
-      })[0];
+      });
       const originals = temporal.annualMonthly.report.annualExecutedEvidence;
       if (annualMenu?.menuId !== 'annual' ||
           annualMenu.authority.mayCallOfficial ||
@@ -534,6 +535,28 @@ export function runFiveHundredSajuAudit() {
         throw new Error('Annual menu lost selected Claim/Rule/Methodology/Source in 500-case audit');
       }
       annualMenuProvenanceChecked++;
+      const originalMonthly = temporal.annualMonthly.report.monthly.sections;
+      if (monthlyMenu?.menuId !== 'monthly' ||
+          monthlyMenu.authority.mayCallOfficial ||
+          monthlyMenu.authority.mayPublish || monthlyMenu.authority.maySell ||
+          monthlyMenu.authority.mayMarkMenuAvailable ||
+          monthlyMenu.sections.length !== originalMonthly.length ||
+          monthlyMenu.sections.some((section, index) => {
+            const original = originalMonthly[index];
+            return section.evidenceKind !== 'monthly_t9_research_claim' ||
+              section.claimId !== original?.claimId ||
+              section.claimType !== original?.claimType ||
+              section.semanticKey !== original?.semanticKey ||
+              section.methodologyId !== original?.methodologyId ||
+              JSON.stringify(section.ruleIds) !== JSON.stringify(original?.ruleIds) ||
+              JSON.stringify(section.sourceIds) !== JSON.stringify(original?.sourceIds) ||
+              JSON.stringify(section.factPaths) !== JSON.stringify(original?.factPaths) ||
+              section.interval?.startsAt !== original?.calculatedInterval.startsAt ||
+              section.interval?.endsAtExclusive !== original?.calculatedInterval.endsAt;
+          })) {
+        throw new Error('Monthly menu lost selected Claim/Rule/Methodology/Source in 500-case audit');
+      }
+      monthlyMenuProvenanceChecked++;
       const sharedNatal = temporal.annualMonthly.report.natalContext;
       const t5 = sharedNatal.availableThemeContext;
       if (t5 !== undefined) {
@@ -624,6 +647,11 @@ export function runFiveHundredSajuAudit() {
         exactSelectedClaimRuleMethodSource: annualMenuProvenanceChecked,
         researchOnlyNoPromotion: true,
       },
+      monthlyMenuT9Provenance: {
+        examined: COUNT,
+        exactSelectedClaimRuleMethodSource: monthlyMenuProvenanceChecked,
+        researchOnlyNoPromotion: true,
+      },
       threeMenuSourceBoundNatalT5: {
         examined: COUNT,
         withDisplayedOriginalT5: threeMenuT5Available,
@@ -666,6 +694,7 @@ export function runFiveHundredSajuAudit() {
     remediationGroups: result.rootCauseDiagnostics.wealth.remediation.groupCount,
     remediationTargets: result.rootCauseDiagnostics.wealth.remediation.byRemediationTarget,
     annualMenuExactT9Provenance: result.rootCauseDiagnostics.annualMenuT9Provenance.exactSelectedClaimRuleMethodSource,
+    monthlyMenuExactT9Provenance: result.rootCauseDiagnostics.monthlyMenuT9Provenance.exactSelectedClaimRuleMethodSource,
     threeMenuDisplayedNatalT5: result.rootCauseDiagnostics.threeMenuSourceBoundNatalT5.withDisplayedOriginalT5,
     threeMenuT5OnlyWithoutT8: result.rootCauseDiagnostics.threeMenuSourceBoundNatalT5.withoutT8ButWithDisplayedT5,
     annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
@@ -691,6 +720,7 @@ export function runFiveHundredSajuAudit() {
   process.stdout.write('SAJU500_RESULT_JSON '+JSON.stringify(result)+'\n');
   if(inputs.size!==COUNT || failures.length ||
       annualMenuProvenanceChecked !== COUNT ||
+      monthlyMenuProvenanceChecked !== COUNT ||
       threeMenuT5WithoutT8 !==
         result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only ||
       DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
