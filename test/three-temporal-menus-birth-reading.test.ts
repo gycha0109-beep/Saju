@@ -54,6 +54,46 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
     expect(buildThreeTemporalMenusBirthReading(BIRTH, target())).toEqual(reading);
   });
 
+  it('shows source-owned natal T5 in the three-menu reader when General T8 has no core', () => {
+    const birth: BirthInput = {
+      calendarType: 'solar', date: { year: 1981, month: 2, day: 1 },
+      time: { known: true, hour: 13, minute: 52 },
+      sexForTraditionalCalculation: 'male',
+    };
+    const reading = buildThreeTemporalMenusBirthReading(birth, target());
+    const natal = reading.annualMonthly.report.natalContext;
+    const context = natal.availableThemeContext!;
+    expect(natal.sections).toHaveLength(0);
+    expect(natal.state).toBe('insufficient');
+    expect(context).toBeDefined();
+    expect(context.themes.length).toBeGreaterThan(0);
+    expect(reading.lifeStage.natalContext.sections).toHaveLength(0);
+    const panel = reading.html.split('<section id="natal-reference"')[1]!
+      .split('<section id="annual"')[0]!;
+    expect(panel).toContain('aria-label="원국에서 확인된 기존 십신 부분풀이"');
+    expect(panel).toContain('종합풀이가 없거나 불완전한 경우에도');
+    expect(panel).not.toContain('원국 해석 근거 부족');
+    for (const theme of context.themes) {
+      expect(panel).toContain(theme.summary);
+      expect(panel).toContain(theme.claimId);
+      expect(panel).toContain(theme.ruleIds[0]!);
+      expect(panel).toContain(theme.methodologyId);
+      expect(panel).toContain(theme.sourceIds[0]!);
+      expect(panel).toContain(theme.observedPositions[0]!);
+      expect(panel).toContain(theme.observedFactPaths[0]!);
+    }
+    const annual = reading.html.split('<section id="annual"')[1]!
+      .split('<section id="monthly"')[0]!;
+    const monthly = reading.html.split('<section id="monthly"')[1]!
+      .split('<section id="life-stage"')[0]!;
+    expect(annual).not.toContain(context.paragraph);
+    expect(monthly).not.toContain(context.paragraph);
+    expect(reading.researchOnly).toBe(true);
+    expect(reading.mayPublish).toBe(false);
+    expect(reading.maySell).toBe(false);
+    expect(buildThreeTemporalMenusBirthReading(birth, target())).toEqual(reading);
+  });
+
   it('uses a different year/month only as selected-period research, never claims current month or future outcomes', () => {
     const inPeriod = buildThreeTemporalMenusBirthReading(BIRTH, target());
     const outside = buildThreeTemporalMenusBirthReading(BIRTH, target(2030, 6));

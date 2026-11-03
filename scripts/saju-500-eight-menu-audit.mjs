@@ -282,6 +282,8 @@ export function runFiveHundredSajuAudit() {
   const wealthPartialCoreUnusedT5Cases = [];
   const startedAt = Date.now();
   let annualMenuProvenanceChecked = 0;
+  let threeMenuT5Available = 0;
+  let threeMenuT5WithoutT8 = 0;
   for (let i=0; i<COUNT; i++) {
     const {stamp, birth} = sampleBirth(inputs);
     try {
@@ -532,6 +534,30 @@ export function runFiveHundredSajuAudit() {
         throw new Error('Annual menu lost selected Claim/Rule/Methodology/Source in 500-case audit');
       }
       annualMenuProvenanceChecked++;
+      const sharedNatal = temporal.annualMonthly.report.natalContext;
+      const t5 = sharedNatal.availableThemeContext;
+      if (t5 !== undefined) {
+        const panel = temporal.html.split('<section id="natal-reference"')[1]
+          ?.split('<section id="annual"')[0];
+        if (!panel || !panel.includes('aria-label="원국에서 확인된 기존 십신 부분풀이"') ||
+            !panel.includes('이를 연·월운이나 대운의 새로운 의미로 합치지 않습니다') ||
+            t5.themes.some(theme =>
+              !panel.includes(escapedHtmlText(theme.summary)) ||
+              !panel.includes(escapedHtmlText(theme.claimId)) ||
+              !panel.includes(escapedHtmlText(theme.ruleIds[0])) ||
+              !panel.includes(escapedHtmlText(theme.sourceIds[0])) ||
+              !panel.includes(escapedHtmlText(theme.observedPositions[0])) ||
+              !panel.includes(escapedHtmlText(theme.observedFactPaths[0])))) {
+          throw new Error('Three-menu reader dropped original natal T5 partial meaning and provenance');
+        }
+        threeMenuT5Available++;
+        if (sharedNatal.sections.length === 0) {
+          if (sharedNatal.state !== 'insufficient') {
+            throw new Error('T5-only report cannot be promoted to whole-chart T8');
+          }
+          threeMenuT5WithoutT8++;
+        }
+      }
       const three = temporalEntries(temporal, natalT5);
       for (let t=0;t<3;t++) rows[DOMAIN_NAMES[5+t]].push({...three[t],birth:stamp,calculationHash:chartKey});
     } catch(error) {
@@ -598,6 +624,12 @@ export function runFiveHundredSajuAudit() {
         exactSelectedClaimRuleMethodSource: annualMenuProvenanceChecked,
         researchOnlyNoPromotion: true,
       },
+      threeMenuSourceBoundNatalT5: {
+        examined: COUNT,
+        withDisplayedOriginalT5: threeMenuT5Available,
+        withoutT8ButWithDisplayedT5: threeMenuT5WithoutT8,
+        noTemporalMeaningPromotion: true,
+      },
       annualRepetition: analyzeTemporalRepetition(rows['올해']),
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
       annualMeaningRepetition: analyzeTemporalMeaningRepetition(rows['올해']),
@@ -634,6 +666,8 @@ export function runFiveHundredSajuAudit() {
     remediationGroups: result.rootCauseDiagnostics.wealth.remediation.groupCount,
     remediationTargets: result.rootCauseDiagnostics.wealth.remediation.byRemediationTarget,
     annualMenuExactT9Provenance: result.rootCauseDiagnostics.annualMenuT9Provenance.exactSelectedClaimRuleMethodSource,
+    threeMenuDisplayedNatalT5: result.rootCauseDiagnostics.threeMenuSourceBoundNatalT5.withDisplayedOriginalT5,
+    threeMenuT5OnlyWithoutT8: result.rootCauseDiagnostics.threeMenuSourceBoundNatalT5.withoutT8ButWithDisplayedT5,
     annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
     monthlyRepeated: result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups,
     annualExecutedMeaningSignatures: result.rootCauseDiagnostics.annualConsumedT9Meaning.distinctExecutedMeaningSignatures,
@@ -657,6 +691,8 @@ export function runFiveHundredSajuAudit() {
   process.stdout.write('SAJU500_RESULT_JSON '+JSON.stringify(result)+'\n');
   if(inputs.size!==COUNT || failures.length ||
       annualMenuProvenanceChecked !== COUNT ||
+      threeMenuT5WithoutT8 !==
+        result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only ||
       DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
       result.rootCauseDiagnostics.generalBoundedT5OnNoT8.examined !== COUNT ||
       result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8 !==

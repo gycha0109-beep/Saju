@@ -40,6 +40,33 @@ function enforceSourceScope(
   const joined = annualMonthly.report;
   const stage = lifeStage.report;
   const monthFocus = joined.monthly.referenceReading;
+  const natalReport = joined.natalContext;
+  const existingT5 = natalReport.availableThemeContext;
+  const consumedNatalT5 = new Set(natalReport.sections.flatMap(section =>
+    section.upstreamClaimIds));
+  const usedNatalPaths = new Set(natalReport.sections.flatMap(section =>
+    section.observedFactPaths));
+  const sourceBoundPartialT5 = existingT5 === undefined || (
+    existingT5.wholeChartSynthesisAuthorized === false &&
+    existingT5.title.trim().length > 0 &&
+    existingT5.paragraph.trim().length > 0 &&
+    existingT5.themes.length > 0 &&
+    existingT5.themes.every(item =>
+      /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+        .test(item.claimType) &&
+      item.claimId.trim().length > 0 &&
+      !consumedNatalT5.has(item.claimId) &&
+      item.headline.trim().length > 0 && item.summary.trim().length > 0 &&
+      existingT5.paragraph.includes(item.summary) &&
+      item.sourceIds.length > 0 && item.ruleIds.length > 0 &&
+      item.methodologyId.trim().length > 0 &&
+      item.observedPositions.length > 0 &&
+      item.observedFactPaths.length === item.observedPositions.length &&
+      item.observedPositions.every(pos => existingT5.paragraph.includes(pos)) &&
+      item.observedFactPaths.every(path =>
+        /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u
+          .test(path) && !usedNatalPaths.has(path)))
+  );
   const theme = monthFocus.theme;
   const currentTensions = monthFocus.sourceBoundTensions ?? [];
   const invalidCurrentTheme = monthFocus.state === 'in_period'
@@ -73,6 +100,17 @@ function enforceSourceScope(
       annualMonthly.monthlyMenu.authority.mayCallOfficial ||
       joined.snapshotId !== stage.snapshotId ||
       joined.calculationHash !== stage.calculationHash ||
+      natalReport.snapshotId !== joined.snapshotId ||
+      natalReport.calculationHash !== joined.calculationHash ||
+      !natalReport.researchOnly || natalReport.usefulComplete ||
+      natalReport.mayPublish || natalReport.maySell ||
+      !sourceBoundPartialT5 ||
+      (existingT5 !== undefined && !(
+        natalReport.state === 'insufficient' && natalReport.sections.length === 0 ||
+        natalReport.state === 'partial' &&
+          (natalReport.sections.length === 1 &&
+            natalReport.sections[0]?.axis === 'tension' ||
+           natalReport.sections.length < 3 && natalReport.readingGuide !== undefined))) ||
       lifeStage.natalContext.snapshotId !== joined.snapshotId ||
       lifeStage.natalContext.calculationHash !== joined.calculationHash ||
       joined.monthly.referenceReading.referenceDateTime !== reference ||
@@ -203,16 +241,36 @@ function render(
       e(section.sourceIds.join(' · ')) + '</p><p>' +
       e(section.factPaths.join(' · ')) + '</p></details></article>',
   ).join('');
-  const natalPanel = natal
+  // Use the already validated, UNCONSUMED natal T5 meanings alongside T8.
+  // This repairs the empty panel for source-owned T5-only charts; it does NOT
+  // turn independent natal themes into annual/monthly/Dayun interpretations.
+  const natalT5 = report.natalContext.availableThemeContext;
+  const t5Panel = natalT5 === undefined ? '' :
+    '<div class="natal-t5-only" aria-label="원국에서 확인된 기존 십신 부분풀이">' +
+    '<h3>' + e(natalT5.title) + '</h3><p>' + e(natalT5.paragraph) + '</p>' +
+    '<p>기존 원국 십신 해석만 별도로 표시합니다. 종합풀이가 없거나 불완전한 경우에도 ' +
+    '이를 연·월운이나 대운의 새로운 의미로 합치지 않습니다.</p>' +
+    natalT5.themes.map(theme =>
+      '<article class="natal-t5-claim"><h4>' + e(theme.headline) + '</h4>' +
+      '<p>' + e(theme.summary) + '</p>' +
+      '<p>원국 계산 위치: ' + e(theme.observedPositions.join(' · ')) + '</p>' +
+      '<details><summary>실제 실행된 십신 근거·출처</summary>' +
+      '<p>Claim: ' + e(theme.claimId) + ' · ' + e(theme.claimType) + '</p>' +
+      '<p>규칙: ' + e(theme.ruleIds.join(' · ')) + '</p>' +
+      '<p>방법론: ' + e(theme.methodologyId) + '</p>' +
+      '<p>출처: ' + e(theme.sourceIds.join(' · ')) + '</p>' +
+      '<p>계산: ' + e(theme.observedFactPaths.join(' · ')) + '</p>' +
+      '</details></article>').join('') + '</div>';
+  const natalPanel = natal || t5Panel
     ? '<section id="natal-reference" aria-label="연운과 월운에서 분리된 출처 있는 원국 근거">' +
       '<h2>대운과 분리된 원국 연구 풀이</h2>' +
-      '<p>이 명식에서 이미 확인된 개별 원국 구조입니다. 올해·이번 달 풀이와 나란히 ' +
+      '<p>이 명식에서 이미 확인된 개별 원국 구조와 십신 부분풀이입니다. 올해·이번 달 풀이와 나란히 ' +
       '살펴볼 수 있지만 기간별 원인·결과·길흉을 결론 내린 것은 아닙니다. ' +
       '연운·월운과 원국의 의미 연결은 별도 출처·방법론이 확인되기 전까지 보류합니다.</p>' +
-      natal + '</section>'
+      natal + t5Panel + '</section>'
     : '<section id="natal-reference" aria-label="원국 해석 근거 부족">' +
       '<h2>원국과 기간별 해석의 구분</h2><p>현재 같은 명식에서 ' +
-      '출처가 있는 원국 종합 풀이를 확인하지 못했습니다. 연·월운 풀이를 ' +
+      '출처가 있는 원국 종합 풀이 또는 십신 부분풀이를 확인하지 못했습니다. 연·월운 풀이를 ' +
       '원국의 성격이나 사건 판단으로 확장하지 않습니다.</p></section>';
   const gaps = [...report.annual.caveats, ...report.monthly.missing,
     ...report.monthly.caveats, ...life.missing, ...life.caveats]
