@@ -15,9 +15,12 @@ export interface TemporalResearchMenuSection {
   title: string;
   text: string;
   evidenceKind: 'annual_research_profile' | 'monthly_t9_research_claim' | 'canonical_dayun_fact';
-  /** Monthly claim ID is only an internal research Claim, not Official authority. */
+  /** Original selected annual/monthly research Claim, never an Official Claim. */
   claimId?: string;
   researchProfileKey?: string;
+  /** Exact executed source Rule/Methodology; only applicable to research T9 Claims. */
+  ruleIds?: readonly string[];
+  methodologyId?: string;
   sourceIds: readonly string[];
   factPaths: readonly string[];
   interval?: {
@@ -142,18 +145,41 @@ export function buildTemporalResearchMenuReadings(
     targetMonth: joined.targetMonth,
     timeZone: 'Asia/Seoul' as const,
   };
-  const annual = joined?.annual.sections.filter(section =>
-    section.text.trim().length > 0).map(section => ({
+  // The combined annual research engine already selected an actual T9 Claim
+  // for every projected Korean profile. Never discard that provenance in the
+  // individual menu handoff or substitute a profile ID for Rule/Source authority.
+  // The source remains the INTERNAL research policy, not classical admission.
+  const annual = joined === undefined ? [] : joined.annual.sections.map((section, index) => {
+    const evidence = joined.annualExecutedEvidence[index];
+    if (joined.annualExecutedEvidence.length !== joined.annual.sections.length ||
+        section.interpretationStatus !== 'internal_research' ||
+        section.evidenceStatus !== 'research_profile_projection_not_an_executed_official_claim' ||
+        section.title.trim().length === 0 || section.text.trim().length === 0 ||
+        section.researchProfileId.trim().length === 0 ||
+        !evidence || evidence.semanticKey !== section.id ||
+        evidence.claimType !== section.candidateClaimType ||
+        evidence.methodologyId !== section.methodologyId ||
+        evidence.claimId.trim().length === 0 ||
+        evidence.ruleIds.length === 0 || evidence.ruleIds.some(id => !id.trim()) ||
+        evidence.sourceIds.length === 0 ||
+        !evidence.sourceIds.includes(section.policySourceId) ||
+        evidence.factPaths.length === 0 ||
+        !section.calculationFactPaths.every(path => evidence.factPaths.includes(path))) {
+      throw new TypeError('Annual menu needs the original selected research T9 Claim, rule and source.');
+    }
+    return {
       title: section.title,
       text: section.text,
       evidenceKind: 'annual_research_profile' as const,
-      // The annual section ID is a research semantic key, not a source ID.
+      // The semantic key is not itself a rule, source or executed Claim ID.
       researchProfileKey: section.id,
-      sourceIds: [],
-      factPaths: section.relatedPillar === undefined
-        ? ['temporal.annualStemTenGod']
-        : ['temporal.annualBranchRelations.' + section.relatedPillar],
-    })) ?? [];
+      claimId: evidence.claimId,
+      ruleIds: [...evidence.ruleIds],
+      methodologyId: evidence.methodologyId,
+      sourceIds: [...evidence.sourceIds],
+      factPaths: [...evidence.factPaths],
+    };
+  });
   const monthly = joined?.monthly.sections.filter(section =>
     section.text.trim().length > 0 &&
     section.sourceIds.length > 0 &&

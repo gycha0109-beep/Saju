@@ -114,9 +114,52 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
     }
     const annual = buildTemporalResearchMenuReadings({ annualMonthly })[0]!;
     expect(annual.sections.every(s => s.evidenceKind === 'annual_research_profile')).toBe(true);
-    expect(annual.sections.every(s => s.claimId === undefined)).toBe(true);
+    expect(annual.sections).toHaveLength(annualMonthly.annualExecutedEvidence.length);
+    for (const [index, original] of annualMonthly.annualExecutedEvidence.entries()) {
+      const projected = annual.sections[index]!;
+      expect(projected.claimId).toBe(original.claimId);
+      expect(projected.researchProfileKey).toBe(original.semanticKey);
+      expect(projected.ruleIds).toEqual(original.ruleIds);
+      expect(projected.methodologyId).toBe(original.methodologyId);
+      expect(projected.sourceIds).toEqual(original.sourceIds);
+      expect(projected.factPaths).toEqual(original.factPaths);
+      expect(projected.sourceIds).toContain(
+        annualMonthly.annual.sections[index]!.policySourceId);
+    }
     expect(annual.statusMessage).toContain('연운 Official 해석은 미승인');
     expect(monthly.statusMessage).toContain('월운 Official 해석은 미승인');
+  });
+
+  it('rejects missing or cross-wired annual T9 evidence rather than showing unsourced Korean meaning', () => {
+    const original = reports(true, 1990, '2030-09-03T12:00:00.000Z').annualMonthly;
+    const bound = buildTemporalResearchMenuReadings({ annualMonthly: original })[0]!;
+    expect(bound.sections.length).toBeGreaterThan(0);
+    expect(bound.sections.every(section =>
+      section.claimId !== undefined &&
+      section.sourceIds.length > 0 &&
+      (section.ruleIds?.length ?? 0) > 0 &&
+      section.methodologyId !== undefined &&
+      section.factPaths.length > 0)).toBe(true);
+    expect(bound.authority.mayCallOfficial).toBe(false);
+    expect(bound.authority.maySell).toBe(false);
+    expect(bound.authority.mayMarkMenuAvailable).toBe(false);
+    const first = original.annualExecutedEvidence[0]!;
+    for (const tampered of [
+      { ...first, claimId: '' },
+      { ...first, semanticKey: 'UNRELATED_ANNUAL_MEANING' },
+      { ...first, claimType: 'UNRELATED-T9-CLAIM' },
+      { ...first, ruleIds: [] },
+      { ...first, methodologyId: 'UNBOUND-METHOD' },
+      { ...first, sourceIds: [] },
+      { ...first, factPaths: [] },
+    ]) {
+      expect(() => buildTemporalResearchMenuReadings({
+        annualMonthly: {
+          ...original,
+          annualExecutedEvidence: [tampered, ...original.annualExecutedEvidence.slice(1)],
+        },
+      })).toThrow('Annual menu needs the original selected research T9 Claim');
+    }
   });
 
   it('does not transfer pre-Ipchun annual research copy into the active annual menu focus', () => {

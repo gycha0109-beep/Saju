@@ -15,6 +15,7 @@ import { buildWealthNatalMultifactorReport } from '../dist/preview/wealth-natal-
 import { buildBusinessNatalMultifactorReport } from '../dist/preview/business-natal-multifactor-report.js';
 import { buildRelationshipNatalMultifactorReport } from '../dist/preview/relationship-natal-multifactor-report.js';
 import { buildThreeTemporalMenusBirthReading } from '../dist/preview/three-temporal-menus-birth-reading.js';
+import { buildTemporalResearchMenuReadings } from '../dist/preview/temporal-research-menu-reading.js';
 import { renderNatalFiveDomainMultifactorResearchHtml } from '../dist/preview/natal-five-domain-multifactor-reader.js';
 import {
   diagnoseMissingWealthReading,
@@ -280,6 +281,7 @@ export function runFiveHundredSajuAudit() {
   const wealthIndependentLimitedCases = [];
   const wealthPartialCoreUnusedT5Cases = [];
   const startedAt = Date.now();
+  let annualMenuProvenanceChecked = 0;
   for (let i=0; i<COUNT; i++) {
     const {stamp, birth} = sampleBirth(inputs);
     try {
@@ -506,6 +508,30 @@ export function runFiveHundredSajuAudit() {
       if (temporal.calculationHash !== chartKey) {
         throw new Error('Time menus did not preserve canonical calculation hash');
       }
+      const annualMenu = buildTemporalResearchMenuReadings({
+        annualMonthly: temporal.annualMonthly.report,
+      })[0];
+      const originals = temporal.annualMonthly.report.annualExecutedEvidence;
+      if (annualMenu?.menuId !== 'annual' ||
+          annualMenu.authority.mayCallOfficial ||
+          annualMenu.authority.mayPublish || annualMenu.authority.maySell ||
+          annualMenu.authority.mayMarkMenuAvailable ||
+          annualMenu.sections.length !== originals.length ||
+          annualMenu.sections.some((section, index) => {
+            const original = originals[index];
+            const profile = temporal.annualMonthly.report.annual.sections[index];
+            return section.evidenceKind !== 'annual_research_profile' ||
+              section.claimId !== original?.claimId ||
+              section.researchProfileKey !== original?.semanticKey ||
+              section.methodologyId !== original?.methodologyId ||
+              JSON.stringify(section.ruleIds) !== JSON.stringify(original?.ruleIds) ||
+              JSON.stringify(section.sourceIds) !== JSON.stringify(original?.sourceIds) ||
+              JSON.stringify(section.factPaths) !== JSON.stringify(original?.factPaths) ||
+              !section.sourceIds.includes(profile?.policySourceId);
+          })) {
+        throw new Error('Annual menu lost selected Claim/Rule/Methodology/Source in 500-case audit');
+      }
+      annualMenuProvenanceChecked++;
       const three = temporalEntries(temporal, natalT5);
       for (let t=0;t<3;t++) rows[DOMAIN_NAMES[5+t]].push({...three[t],birth:stamp,calculationHash:chartKey});
     } catch(error) {
@@ -567,6 +593,11 @@ export function runFiveHundredSajuAudit() {
         examples: generalT5ContextCases.filter(c => c.partialCoreWithUnusedT5)
           .slice(0, 6),
       },
+      annualMenuT9Provenance: {
+        examined: COUNT,
+        exactSelectedClaimRuleMethodSource: annualMenuProvenanceChecked,
+        researchOnlyNoPromotion: true,
+      },
       annualRepetition: analyzeTemporalRepetition(rows['올해']),
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
       annualMeaningRepetition: analyzeTemporalMeaningRepetition(rows['올해']),
@@ -602,6 +633,7 @@ export function runFiveHundredSajuAudit() {
     hiddenWealthEvidenceStates: result.rootCauseDiagnostics.wealth.remediation.byHiddenWealthEvidenceState,
     remediationGroups: result.rootCauseDiagnostics.wealth.remediation.groupCount,
     remediationTargets: result.rootCauseDiagnostics.wealth.remediation.byRemediationTarget,
+    annualMenuExactT9Provenance: result.rootCauseDiagnostics.annualMenuT9Provenance.exactSelectedClaimRuleMethodSource,
     annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
     monthlyRepeated: result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups,
     annualExecutedMeaningSignatures: result.rootCauseDiagnostics.annualConsumedT9Meaning.distinctExecutedMeaningSignatures,
@@ -623,7 +655,9 @@ export function runFiveHundredSajuAudit() {
       result.rootCauseDiagnostics.monthlyNatalT5Variation.repeatedMeaningProfilesWithDifferentNatalT5Evidence,
   })+'\n');
   process.stdout.write('SAJU500_RESULT_JSON '+JSON.stringify(result)+'\n');
-  if(inputs.size!==COUNT || failures.length || DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
+  if(inputs.size!==COUNT || failures.length ||
+      annualMenuProvenanceChecked !== COUNT ||
+      DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
       result.rootCauseDiagnostics.generalBoundedT5OnNoT8.examined !== COUNT ||
       result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8 !==
         result.menuResults['전체 사주'].withoutReadableText ||
