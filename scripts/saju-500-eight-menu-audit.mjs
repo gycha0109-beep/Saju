@@ -388,6 +388,13 @@ export function runFiveHundredSajuAudit() {
         const hiddenContext = missingWealthReport.availableThemeContext;
         const expected = hiddenContext?.hiddenWealthT5Boundary;
         const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+        const overview = html.split('</nav>')[0] ?? '';
+        const firstT5 = hiddenContext?.themes[0];
+        if (firstT5 && (!overview.includes('재물 종합 결론 보류 · 출처 있는 십신 부분풀이: ') ||
+            !overview.includes(firstT5.headline) ||
+            !overview.includes(firstT5.summary))) {
+          throw new Error('Missing Wealth T8 hid its real source-owned T5 Korean meaning from the first screen');
+        }
         const card = html.split('<h2 id="domain-wealth">')[1]?.split('</article>')[0];
         if (!card || !card.includes('aria-label="지장간 계산과 재물운 해석의 구분"') ||
             !card.includes('새로운 운세 주장이 아닙니다') ||
