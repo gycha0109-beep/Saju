@@ -296,6 +296,104 @@ self-checks do not execute a real capture. The existing compiled static research
 CLI self-check also passes. Hosted exact-head CI and Integration remain merge
 gates for this change.
 
+## Single-photo private research execution
+
+The existing CLI now accepts one actual local photo. This extends the existing
+FR-1/FR-2 observation and FR-3 research caller, not the roadmap or product UI.
+The named v0.3 architecture document still is not present in this repository;
+the source contracts and existing roadmap table below remain the baseline.
+
+```powershell
+python -m venv .cache/face-reading/photo-research-runtime
+$env:FACE_READING_PYTHON = (Resolve-Path .cache/face-reading/photo-research-runtime/Scripts/python.exe).Path
+& $env:FACE_READING_PYTHON -m pip install -r tools/face-reading/requirements-photo-research.txt
+npm run face:build
+node scripts/run-face-static-research-rules.mjs --image C:\private\photo.jpg
+```
+
+No new server or web app is required. Default snapshot-JSON stdin and the existing
+`--self-check` retain their behavior. `--output C:\private\new-report.json` opts
+into a private report file; existing files and repository source paths cannot be
+overwritten. Default output is JSON stdout, intended only for a private terminal.
+Original photos, landmarks, private source paths and image digests are not in the
+report or GitHub. Temporary input and extractor files are cleaned after the run.
+
+The CLI reads the photo once into bytes and makes one private frozen input for
+both inference stages. A local Python bridge runs MediaPipe Tasks 0.10.35 with
+the existing FR26 face-landmarker model URL and the existing multi-signal 0.4.0
+hairline extractor. Python inference is explicitly not an attestation of the
+FR26 JavaScript runtime; its model bytes retain `reference_pinned_bytes_unverified`.
+Two-face capacity is used only to reject multi-face input, never to select a face.
+The bridge follows the [official Python image-mode API](https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker/python).
+There is no new detector/model, cloud image call, provider-anatomy mapping or
+physical-scale calibration. OpenCV stays on 4.x in a private environment.
+
+`photo-three-divisions-research.ts` consumes the in-memory observation. It reuses
+the existing ephemeral screen-geometry validator, FR42 eyebrow component probe,
+FR45 face-oval extremum and exact reviewed Mayi registry. Reports include actual
+face/landmark counts, numerical provider component positions, the face-oval
+inferior candidate, visible hairline candidate range, four anchor readiness
+records, exact method/source provenance, rule admission and specific hold reasons.
+No-face/multi-face results withhold measurements. Raw landmarks and boundary
+polylines do not leave the private worker-to-engine pipe in the final report.
+
+For an operator who has explicitly labelled visible lines in this same image,
+`--image-reference-y <JSON>` accepts `assertionAuthority: human_label_assertion`,
+`visibleOnly: true` and nullable `hairlineY`, `browY`, `nasalApexY`, `lowerFaceY`.
+Coordinates are pixels measured downward from the encoded raster's top edge, with
+no EXIF rotation. The engine computes only supplied adjacent positive gaps and,
+when all three exist, reuses `evaluateThreeDivisionRelativeOrder` for shares and
+strict order. These live solely in `imageLabelDiagnostics`: caller assertions,
+not authenticated annotations, FR319 coordinates, approved Mayi measurements,
+physical lengths or semantic rule inputs. Missing lines remain null. No candidate
+or diagnostic path is silently converted into a human label or completed hairline.
+
+### Why real Mayi spans and interpretation remain withheld
+
+The existing FR313–319 executor consumes human review, admitted local observation,
+same-capture M3 registration and metric/common-frame evidence. It is not a JPG
+detector. The current hairline preview supplies none of those receipts. FR314
+also pins its own admitted model identity; a multi-signal candidate is not silently
+relabelled as that model. MediaPipe eyebrow components are not FR292 explicit
+visible brow curves; a provider nose vertex is not FR266 independent nasal-apex
+evidence; the FR45 oval extremum is not FR301 governed lower-face contour.
+
+Accordingly `threeDivisions.lengths` and shares remain null, with those missing
+dependencies stated. FR319's existing `crossReferenceSubtractionAuthorityIssued`
+and `threeDivisionsSpanExecutionReady` remain false. A complete neutral bundle
+would still need its separately governed traditional operationalization; this
+photo route does not accept a caller boolean to bypass that authority.
+
+The five registered executable rules are Shenxiang research definitions, not
+`method.mayi.face_three_divisions.fr261@0.3.0` rules. Each is listed with its exact
+methodology and source and `not_executed/methodology_mismatch`. No Mayi labels or
+image gaps are fed into Shenxiang's operationalization. The existing registered
+rule evaluator and snapshot path remain available for their exact existing
+research inputs. No new rule or semantic key is fabricated to produce prose.
+The photo report's semantic section is withheld and issues no FaceClaim,
+Character grounding/publication or Production result.
+
+Local actual-input verification used the operator-provided private photo folder:
+12/12 files completed observation processing with one detected face; 3 exposed a
+hairline candidate and 9 withheld it. All 12 correctly withheld governed Mayi
+spans and traditional semantics. This is an exploratory run, not evidence of
+capture independence, human annotation/review, landmark correctness or FR313
+admission. No image, path, personal scalar report or private receipt is committed.
+Direct tests separately use explicitly synthetic geometry and labels.
+
+Validation: 83 direct tests across photo diagnostics, the original static caller,
+common evaluator and FR319 pass, plus two compiled CLI privacy/invalid-input
+checks. Root and Face typechecks, Face build, migration integrity, scoped ESLint,
+formatting and whitespace checks pass. Both the compiled original snapshot
+self-check and actual single-photo CLI execute. Existing Face Reading CI runs
+the new direct/CLI checks without private photos or Python inference dependencies.
+
+To advance actual metric measurements, use the existing fresh-validation and
+FR313–319 commands documented in `tools/face-reading/hairline/README-fresh-validation.md`
+and `README-fr313-fr319-local-pipeline.md`, then the separate binding and
+operationalization review. The earlier local comparison screen can support
+human inspection of the hairline; no review attestation is filled automatically.
+
 Roadmap markers below describe inspected implementation surfaces, not percentages
 or end-to-end completion. `partial` means code exists with authority/runtime work
 remaining; `unassessed` means no completion claim is made in this bounded audit.
@@ -311,6 +409,69 @@ remaining; `unassessed` means no completion claim is made in this bounded audit.
 | FR-8           | Full product UX unassessed; no UI change here                                                                  |
 | FR-9           | Source-owned governed Character handoff present; publication remains gated                                     |
 | FR-10 / FR-11  | Compatibility contracts present; bridge activation/future scope unassessed                                     |
+
+### Same-photo evidence intake and Mayi text candidates
+
+The photo CLI now accepts `--metric-evidence <private-json>` using the existing
+`fr318-fr319-local-private-execution-input-v1` executor input. It hashes the frozen
+photo bytes privately, checks the RGB/support/hairline and seven-reference capture
+bindings, then executes the existing FR318 and FR319 materializers. A caller's
+success receipt is not accepted in place of execution. Available neutral metric
+references are reported privately; they are not declared traditional anchors.
+FR319 still issues no cross-reference subtraction or traditional span authority,
+so B remains withheld even with available neutral references. No authorized
+Mayi metric formula currently exists to execute; method review alone does not
+provide one. This is the remaining measurement gap, not a completed B stage.
+
+`stages.A/B/C` separates observation, governed traditional measurement and
+personal interpretation. Optional human image labels calculate actual adjacent
+pixel gaps and shares only under `imageLabelDiagnostics`. They never populate
+the governed lengths or qualify a traditional condition.
+
+Prepare a standalone private comparison page with the existing review worksheet:
+
+```powershell
+node scripts/prepare-face-photo-review.mjs --summary "<private-summary.json>" --output "<new-private-review.html>"
+```
+
+It embeds original encoded-raster previews and existing overlays, explains held
+candidates and leaves all human answers blank. The reviewer can inspect each
+candidate and export the existing worksheet. Optional visible image-line clicks
+export `face-photo-private-image-labels-v1` with private photo byte identity,
+dimensions and `encoded_raster_top_left_no_exif_rotation`. Import this with
+`--image-reference-file <private-labels.json>` in the existing photo command.
+Different photo bytes, dimensions or raster conventions are rejected. This is
+an operator assertion, not authenticated anatomical adjudication or a substitute
+for the existing independent capture/review/admission procedure. Outputs must
+stay outside repository source (or in its ignored Face cache); no private images
+or scalar artifacts enter Git.
+
+The same 1925 NLC Mayi witness has now been visually consulted at PDF page 36,
+printed page 二三, chapter 六府三才三停, rightmost two columns. Primary scan:
+[NLC Mayi volume 1](https://commons.wikimedia.org/wiki/File:NLC416-12jh002690-44091_%E9%BA%BB%E8%A1%A3%E7%9B%B8%E6%B3%95_%E7%AC%AC1%E5%8D%B7.pdf).
+The new passage record is a scan-checked research transcription with editorial
+punctuation, not a new owner approval. Its five explicit condition/result pairs:
+
+| Text condition | Text result | Unissued interpretation criteria                     |
+| -------------- | ----------- | ---------------------------------------------------- |
+| 上停長         | 老吉昌      | Meaning of 長; no numeric age range for 老           |
+| 中停長         | 近君王      | Meaning of 長; no modern trait/influence mapping     |
+| 下停長         | 少吉祥      | Meaning of 長; no numeric age range for 少           |
+| 三停平等       | 富貴榮顯    | Qualitative equality; no numeric tolerance           |
+| 三停不均       | 孤夭賤貧    | Qualitative unevenness; no numeric negation shortcut |
+
+`mayi-three-divisions-rule-candidates.ts` defines five source-qualified research
+rules in an isolated authoring registry, reusing the shared evaluator and exact
+reviewed `method.mayi.face_three_divisions.fr261@0.3.0`. It does not alter the
+existing topic/provider registry, historical 0.2.0 references or Shenxiang rules.
+The conditions require explicit qualitative assertions; no pixel or metric input
+produces these assertions. `長` is not rewritten as the unique numeric maximum.
+The actual photo path supplies unavailable inputs and returns five unavailable
+evaluations with null output, original passage, conditions/results and specific
+unapproved items. These are descriptions of historical text, not conclusions
+about the photographed person. The separate `--self-check-mayi` command executes
+five explicitly synthetic authoring assertions and emits no personal reading.
+Production/Character/personal interpretation authority remains unissued.
 
 The research snapshot caller is implemented; an admitted static observation and
 operationalization producer must still be connected with exact snapshot provenance.
