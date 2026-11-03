@@ -8,6 +8,8 @@ import {
   WEALTH_NATAL_CROSS_CHANNEL_RULES,
   WEALTH_NATAL_CROSS_CHANNEL_OFFICER_RULES,
   WEALTH_NATAL_CROSS_CHANNEL_OFFICER_METHODOLOGY,
+  WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_RULES,
+  WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_METHODOLOGY,
   WEALTH_NATAL_MULTIFACTOR_PACK,
   createWealthNatalMultifactorRegistry,
 } from '../src/research/wealth-natal-multifactor-candidate.js';
@@ -37,9 +39,19 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(registry.pack.packId).toBe(WEALTH_NATAL_MULTIFACTOR_PACK.packId);
     expect(WEALTH_NATAL_MULTIFACTOR_RULES).toHaveLength(18);
     expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(22);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(24);
     expect(WEALTH_NATAL_CROSS_CHANNEL_RULES).toHaveLength(2);
     expect(WEALTH_NATAL_CROSS_CHANNEL_OFFICER_RULES).toHaveLength(2);
+    expect(WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_RULES).toHaveLength(2);
+    expect(registry.methodologies.some(m =>
+      m.methodologyId === WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_METHODOLOGY.methodologyId &&
+      m.status === 'research')).toBe(true);
+    expect(WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_RULES.every(rule =>
+      rule.status === 'research' && rule.inputs.length === 2 &&
+      rule.inputs.every(input => input.source === 'interpretation_claim' &&
+        input.required && input.cardinality === 'exactly_one') &&
+      rule.sourceRefs.length === 2 &&
+      (rule.output.value as { axis?: string }).axis === 'planning')).toBe(true);
     expect(registry.methodologies.some(method =>
       method.methodologyId === WEALTH_NATAL_CROSS_CHANNEL_OFFICER_METHODOLOGY.methodologyId &&
       method.status === 'research')).toBe(true);
@@ -274,6 +286,46 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(section.paragraph).toContain('재성과 관성은 동일 관측 채널이 아니라');
     expect(section.paragraph).toContain('천간과 지지 대표 십신의 서로 다른 관측 범위');
     expect(section.sourceIds.length).toBe(2);
+    expect(report.usefulComplete).toBe(false);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+  });
+
+  it('executes actual sourced Wealth-to-Resource cross-channel planning interpretations', () => {
+    let found: ReturnType<typeof run> | undefined;
+    for (let month = 1; month <= 12 && found === undefined; month++) {
+      for (let day = 1; day <= 28 && found === undefined; day++) {
+        const candidate = run(month, day);
+        if (candidate.report.sections.some(section =>
+          section.pattern === 'WEALTH_RESOURCE' && section.channel === 'cross_channel')) {
+          found = candidate;
+        }
+      }
+    }
+    expect(found).toBeDefined();
+    if (!found) return;
+    const { execution, report, snapshot } = found;
+    const section = report.sections.find(item =>
+      item.pattern === 'WEALTH_RESOURCE' && item.channel === 'cross_channel')!;
+    const claim = execution.claims.find(item =>
+      item.claimType === section.claimType && item.state === 'active')!;
+    const sourceChannels = (claim.value as {
+      familyChannels: { wealth: 'visible_stems' | 'branches'; resource: 'visible_stems' | 'branches' };
+    }).familyChannels;
+    expect(sourceChannels.wealth).not.toBe(sourceChannels.resource);
+    expect(section.axis).toBe('planning');
+    expect(section.upstreamClaimIds.map(id =>
+      execution.claims.find(item => item.claimId === id)?.claimType).sort()).toEqual([
+      'TEN_GOD_WEALTH_' + sourceChannels.wealth.toUpperCase() + '_THEME',
+      'TEN_GOD_RESOURCE_' + sourceChannels.resource.toUpperCase() + '_THEME',
+    ].sort());
+    expect(section.observedFactPaths.some(path => path.endsWith('.stem.value'))).toBe(true);
+    expect(section.observedFactPaths.some(path => path.endsWith('.branch.value'))).toBe(true);
+    expect(section.paragraph).toContain('재성과 인성은 동일 관측 채널이 아니라');
+    expect(section.paragraph).toContain('천간과 지지 대표 십신의 서로 다른 관측 범위');
+    expect(section.sourceIds).toHaveLength(2);
+    expect(snapshot.snapshotId).toBe(report.snapshotId);
+    expect(report.researchOnly).toBe(true);
     expect(report.usefulComplete).toBe(false);
     expect(report.mayPublish).toBe(false);
     expect(report.maySell).toBe(false);
