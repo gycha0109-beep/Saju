@@ -6,6 +6,8 @@ import { inspectMyeonghwaProductionComposition } from '../src/production/product
 import {
   WEALTH_NATAL_MULTIFACTOR_RULES,
   WEALTH_NATAL_CROSS_CHANNEL_RULES,
+  WEALTH_NATAL_CROSS_CHANNEL_OFFICER_RULES,
+  WEALTH_NATAL_CROSS_CHANNEL_OFFICER_METHODOLOGY,
   WEALTH_NATAL_MULTIFACTOR_PACK,
   createWealthNatalMultifactorRegistry,
 } from '../src/research/wealth-natal-multifactor-candidate.js';
@@ -35,8 +37,19 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(registry.pack.packId).toBe(WEALTH_NATAL_MULTIFACTOR_PACK.packId);
     expect(WEALTH_NATAL_MULTIFACTOR_RULES).toHaveLength(18);
     expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(20);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(22);
     expect(WEALTH_NATAL_CROSS_CHANNEL_RULES).toHaveLength(2);
+    expect(WEALTH_NATAL_CROSS_CHANNEL_OFFICER_RULES).toHaveLength(2);
+    expect(registry.methodologies.some(method =>
+      method.methodologyId === WEALTH_NATAL_CROSS_CHANNEL_OFFICER_METHODOLOGY.methodologyId &&
+      method.status === 'research')).toBe(true);
+    expect(WEALTH_NATAL_CROSS_CHANNEL_OFFICER_RULES.every(rule =>
+      rule.status === 'research' && rule.inputs.length === 2 &&
+      rule.inputs.every(input =>
+        input.source === 'interpretation_claim' && input.required &&
+        input.cardinality === 'exactly_one') &&
+      rule.sourceRefs.length === 2 &&
+      (rule.output.value as { axis?: string }).axis === 'management')).toBe(true);
     expect(WEALTH_NATAL_CROSS_CHANNEL_RULES.every(rule =>
       rule.status === 'research' && rule.inputs.length === 2 &&
       rule.inputs.every(i => i.required && i.cardinality === 'exactly_one') &&
@@ -228,6 +241,43 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
       general.sections.map(section => section.headline));
   });
 
+
+  it('actually executes and displays sourced opposite-channel Wealth-to-Officer meanings', () => {
+    let selected: ReturnType<typeof run> | undefined;
+    for (let month = 1; month <= 12 && selected === undefined; month++) {
+      for (let day = 1; day <= 28 && selected === undefined; day++) {
+        const candidate = run(month, day);
+        if (candidate.report.sections.some(section =>
+          section.pattern === 'WEALTH_OFFICER' && section.channel === 'cross_channel')) {
+          selected = candidate;
+        }
+      }
+    }
+    expect(selected).toBeDefined();
+    if (!selected) return;
+    const { report, execution } = selected;
+    const section = report.sections.find(item =>
+      item.pattern === 'WEALTH_OFFICER' && item.channel === 'cross_channel')!;
+    const claim = execution.claims.find(item => item.claimType === section.claimType)!;
+    const meaning = claim.value as {
+      familyChannels: { wealth: 'visible_stems' | 'branches'; officer: 'visible_stems' | 'branches' };
+    };
+    expect(meaning.familyChannels.wealth).not.toBe(meaning.familyChannels.officer);
+    expect(section.axis).toBe('management');
+    expect(section.upstreamClaimIds.map(id =>
+      execution.claims.find(item => item.claimId === id)?.claimType).sort()).toEqual([
+      'TEN_GOD_WEALTH_' + meaning.familyChannels.wealth.toUpperCase() + '_THEME',
+      'TEN_GOD_OFFICER_' + meaning.familyChannels.officer.toUpperCase() + '_THEME',
+    ].sort());
+    expect(section.observedFactPaths.some(path => path.endsWith('.stem.value'))).toBe(true);
+    expect(section.observedFactPaths.some(path => path.endsWith('.branch.value'))).toBe(true);
+    expect(section.paragraph).toContain('재성과 관성은 동일 관측 채널이 아니라');
+    expect(section.paragraph).toContain('천간과 지지 대표 십신의 서로 다른 관측 범위');
+    expect(section.sourceIds.length).toBe(2);
+    expect(report.usefulComplete).toBe(false);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+  });
 
   it('keeps the original tension T8 executed when a sourced whole-chart core becomes available', () => {
     const snapshot = calculateCanonicalSajuSnapshot({
