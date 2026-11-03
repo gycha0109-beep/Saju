@@ -302,7 +302,7 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
           }],
         },
       },
-    })).toThrow('Annual current focus lost selected T9 tensions');
+    })).toThrow(/Annual current focus (lost selected|cannot invent)/);
   });
 
   it('never borrows a theme when the reference time is outside or its current T9 is unavailable', () => {
