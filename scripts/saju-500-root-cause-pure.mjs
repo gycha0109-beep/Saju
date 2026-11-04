@@ -7,6 +7,55 @@ export function frequency(values) {
 }
 
 
+
+const OTHER_NATAL_DOMAINS = ['general', 'career', 'relationship', 'business'];
+
+/**
+ * Preserve the exact failure boundary for every non-Wealth empty natal T8
+ * report in the same fixed audit. A lack of eligible T5 inputs is not
+ * evidence of an absent trait, nor a license to fabricate a new T8 rule.
+ */
+export function summarizeMissingNatalCauses(rows) {
+  if (!Array.isArray(rows)) throw new TypeError('Natal root cause cases must be an array');
+  const byDomain = Object.fromEntries(OTHER_NATAL_DOMAINS.map(domain => {
+    const cases = rows.filter(row => row?.domain === domain);
+    const seen = new Set();
+    for (const row of cases) {
+      if (!row.birth || !row.calculationHash || seen.has(row.calculationHash) ||
+          row.reportState !== 'insufficient' ||
+          !Array.isArray(row.reportMissing) || row.reportMissing.length === 0 ||
+          !row.cause || row.cause === 'unknown' ||
+          !Array.isArray(row.upstream?.activeT5ClaimTypes) ||
+          !Array.isArray(row.rules?.eligibleRuleIds) ||
+          !Array.isArray(row.rules?.eligibleRuleEvaluations) ||
+          !Array.isArray(row.activeT8) ||
+          !Array.isArray(row.selection?.selectedT8ClaimIds) ||
+          typeof row.selection?.coverageState !== 'string') {
+        throw new TypeError('Natal empty T8 diagnosis requires exact, unique run and cause evidence');
+      }
+      seen.add(row.calculationHash);
+    }
+    return [domain, {
+      missingCaseCount: cases.length,
+      byCause: frequency(cases.map(row => row.cause)),
+      withActiveT5: cases.filter(row => row.upstream.activeT5ClaimTypes.length > 0).length,
+      withInputEligibleT8Rule: cases.filter(row => row.rules.eligibleRuleIds.length > 0).length,
+      withActiveT8Claim: cases.filter(row => row.activeT8.length > 0).length,
+      cases,
+    }];
+  }));
+  if (rows.some(row => !OTHER_NATAL_DOMAINS.includes(row?.domain))) {
+    throw new TypeError('Only four non-Wealth natal domains are supported by this diagnosis');
+  }
+  return {
+    examinedDomains: [...OTHER_NATAL_DOMAINS],
+    missingCaseCount: rows.length,
+    byDomain,
+    researchOnlyNoNewMeaningAuthorized: true,
+  };
+}
+
+
 /**
  * Group the *actual delivered text* and keep its exact temporal T9 or annual
  * profile evidence. Same wording across different chart hashes is visible;
