@@ -474,7 +474,8 @@ export function renderCareerMultifactorResearchHtml(report: CareerMultifactorRep
       '<h2>기존 원국 십신 관점만 부분적으로 확인</h2>' +
       '<p>직업운 종합풀이 아님 · 원국에서 실행된 기존 십신 근거만 설명합니다. ' +
       '직업 적성이나 성과·연봉을 판단하지 않습니다.</p>' +
-      '<p>' + e(t5.paragraph) + '</p>' +
+      // The source context paragraph already repeats every theme summary.
+      // The original theme copy is printed once below, with provenance.
       t5.themes.map(theme =>
         '<article class="career-t5-source"><h3>' + e(theme.headline) + '</h3>' +
         '<p>' + e(theme.summary) + '</p><p>실제 원국 위치: ' +
