@@ -700,8 +700,11 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     const explainedT5 = new Set(wealth.sections.flatMap(s => s.upstreamClaimIds));
     expect(wealth.availableThemeContext?.themes.every(theme =>
       !explainedT5.has(theme.claimId)) ?? true).toBe(true);
-    expect(wealth.availableThemeContext?.themes.map(theme => theme.claimType))
-      .not.toContain('TEN_GOD_WEALTH_BRANCHES_THEME');
+    // When every source-qualified T5 was already consumed by the selected
+    // core and its independent tension, the separate unused-T5 appendix may
+    // correctly be absent. Still reject any double-counting if it exists.
+    expect((wealth.availableThemeContext?.themes ?? []).some(theme =>
+      theme.claimType === 'TEN_GOD_WEALTH_BRANCHES_THEME')).toBe(false);
     const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reports(chart));
     const wealthHtml = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
     const escapedParagraph = section.paragraph.replace(/[&<>"']/gu, char => ({
