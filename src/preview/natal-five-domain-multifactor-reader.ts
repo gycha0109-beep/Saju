@@ -89,6 +89,8 @@ function renderOverview(reports: NatalFiveDomainMultifactorReports): string {
         ['core', 'creation', 'management', 'planning'].includes(section.axis));
     const firstT5 = noDirectWealthCore
       ? wealth.availableThemeContext?.themes[0] : undefined;
+    const otherNatalT5 = ['career', 'business', 'relationship'].includes(key) &&
+      report.sections.length === 0 ? report.availableThemeContext?.themes[0] : undefined;
     const visibleSubject = noDirectWealthCore && firstSourceHeadline
       ? '재물 종합 결론 보류 · 기존 ' +
         (wealth!.sections[0]?.axis === 'tension' ? '긴장 관계' : '간접 구조') +
@@ -96,7 +98,10 @@ function renderOverview(reports: NatalFiveDomainMultifactorReports): string {
       : noDirectWealthCore && firstT5
         ? '재물 종합 결론 보류 · 출처 있는 십신 부분풀이: ' +
           firstT5.headline + ' — ' + firstT5.summary
-        : firstSourceHeadline ?? missingReason ?? '현재 확인된 해석 문단이 없습니다.';
+        : otherNatalT5
+          ? '해당 분야 종합풀이 보류 · 출처 있는 원국 십신 부분 관측: ' +
+            otherNatalT5.headline + ' — ' + otherNatalT5.summary
+          : firstSourceHeadline ?? missingReason ?? '현재 확인된 해석 문단이 없습니다.';
     const gap = report.state === 'partial' && missingReason !== undefined
       ? '<p class="overview-gap"><strong>아직 설명하지 못하는 부분:</strong> ' +
         escapeHtml(missingReason) + '</p>'
@@ -597,6 +602,53 @@ function renderGeneralExistingT5Context(report: GeneralNatalMultifactorReport): 
     '<p>' + escapeHtml(context.paragraph) + '</p><ul>' + items + '</ul></section>';
 }
 
+/**
+ * Career/Business/Relationship have real source-owned T5 partial observations
+ * even where no registered domain T8 combination can run. Show the original
+ * T5 wording and lineage, without turning it into career/relationship/business
+ * outcomes or changing the domain report's insufficient state.
+ */
+function renderOtherNatalExistingT5Context(
+  report: CareerMultifactorReport | BusinessNatalMultifactorReport |
+    RelationshipNatalMultifactorReport,
+): string {
+  const context = report.availableThemeContext;
+  if (context === undefined) return '';
+  guard(report.state === 'insufficient' && report.sections.length === 0 &&
+    context.wholeChartSynthesisAuthorized === false &&
+    context.title.trim().length > 0 && context.paragraph.trim().length > 0 &&
+    context.themes.length > 0 && report.researchOnly &&
+    !report.usefulComplete && !report.mayPublish && !report.maySell,
+    'Other natal T5 observations cannot replace a missing domain T8 core');
+  const content = context.themes.map(theme => {
+    guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+      .test(theme.claimType) && theme.claimId.trim().length > 0 &&
+      theme.headline.trim().length > 0 && theme.summary.trim().length > 0 &&
+      theme.sourceIds.length > 0 && theme.ruleIds.length > 0 &&
+      theme.methodologyId.trim().length > 0 &&
+      theme.observedFactPaths.length > 0 &&
+      theme.observedFactPaths.length === theme.observedPositions.length &&
+      theme.observedFactPaths.every(path => FACT_PATH.test(path)) &&
+      theme.observedPositions.every(position => context.paragraph.includes(position)) &&
+      context.paragraph.includes(theme.summary),
+      'Other natal T5 explanation lost its original registered meaning or facts');
+    return '<li><strong>' + escapeHtml(theme.headline) + '</strong>' +
+      '<p>' + escapeHtml(theme.summary) + '</p>' +
+      '<p>실제 원국 위치: ' + escapeHtml(theme.observedPositions.join(' · ')) + '</p>' +
+      '<details><summary>기존 십신 주장·계산 경로·출처</summary>' +
+      '<p>Claim: ' + escapeHtml(theme.claimId) + ' · ' +
+      escapeHtml(theme.claimType) + '</p>' +
+      '<p>계산 경로</p>' + renderList(theme.observedFactPaths) +
+      '<p>규칙</p>' + renderList(theme.ruleIds) +
+      '<p>방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
+      '<p>출처</p>' + renderList(theme.sourceIds) + '</details></li>';
+  }).join('');
+  return '<section class="bounded-other-natal-t5" aria-label="종합풀이 보류 시 기존 십신 부분 해석">' +
+    '<h3>' + escapeHtml(context.title) + '</h3>' +
+    '<p><strong>해당 분야의 종합 해석 아님 · 기존 원국 십신 관측만 설명</strong></p>' +
+    '<p>' + escapeHtml(context.paragraph) + '</p><ul>' + content + '</ul></section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -616,7 +668,11 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
       (report as WealthNatalMultifactorReport).availableThemeContext !== undefined
       ? '<p>재물운의 중심 복합 해석 근거는 아직 확인되지 않았습니다. ' +
         '아래에는 출처 있는 개별 십신 관점만 부분적으로 설명합니다.</p>'
-      : '<p>현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.</p>');
+      : ['career', 'business', 'relationship'].includes(domain) &&
+          report.availableThemeContext !== undefined
+        ? '<p>이 분야의 복합 해석 근거는 아직 확인되지 않았습니다. ' +
+          '아래에는 기존 출처에 연결된 원국 십신 주제만 부분적으로 보여줍니다.</p>'
+        : '<p>현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.</p>');
   const missing = report.missing.length > 0
     ? '<section class="missing"><h3>아직 설명하지 못하는 부분</h3>' + renderList(report.missing) + '</section>'
     : '';
@@ -634,6 +690,11 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     ? renderWealthAvailableThemeContext(report as WealthNatalMultifactorReport) : '';
   const existingGeneralContext = domain === 'general' && birthTimeKnown
     ? renderGeneralExistingT5Context(report as GeneralNatalMultifactorReport) : '';
+  const otherNatalContext = ['career', 'business', 'relationship'].includes(domain)
+    ? renderOtherNatalExistingT5Context(report as
+      CareerMultifactorReport | BusinessNatalMultifactorReport |
+        RelationshipNatalMultifactorReport)
+    : '';
   const firstMeaning = renderFirstScreenSelectedInterpretations(domain, report);
   const details = firstMeaning === '' ? readingGuide + originalText
     : '<details class="full-claim-evidence"><summary>원국 풀이의 상세 설명·명식 근거와 출처</summary>' +
@@ -642,7 +703,7 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
     '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning +
-    existingGeneralContext + existingWealthContext + details + missing +
+    existingGeneralContext + existingWealthContext + otherNatalContext + details + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }
