@@ -1,3 +1,7 @@
+import {
+  buildNatalExistingT5SourceContext,
+  type NatalExistingT5SourceContext,
+} from './natal-existing-t5-source-context.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -55,6 +59,8 @@ export interface CareerMultifactorReport {
    * These are not counted as independent MUR axes or proof of completeness.
    */
   additionalVerifiedSections: readonly CareerMultifactorReportSection[];
+  /** Existing source-owned T5 copy only, never a substitute for missing domain T8. */
+  availableThemeContext?: NatalExistingT5SourceContext;
   readingGuide?: CareerMultifactorReadingGuide;
   limitations: readonly string[];
   missing: readonly string[];
@@ -397,6 +403,11 @@ export function buildCareerMultifactorResearchReport(
     missing.push('이 계산 정책에서 십신(T5) 전체가 미확정이므로 직업의 다중 근거 T8 해석을 보류합니다. 확정된 간지만 계산 사실로 표시합니다.');
   }
   const readingGuide = buildCareerMultifactorReadingGuide(primary, supporting, state);
+  // Do not hide actual source-bound T5 observations when no domain T8
+  // combination exists. These are chart-wide facts, NOT domain conclusions.
+  const availableThemeContext = state === 'insufficient'
+    ? buildNatalExistingT5SourceContext(snapshot, execution, registry)
+    : undefined;
   return {
     version: CAREER_MULTIFACTOR_REPORT_VERSION,
     snapshotId: snapshot.snapshotId,
@@ -408,6 +419,7 @@ export function buildCareerMultifactorResearchReport(
     sections: shown,
     additionalVerifiedSections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(availableThemeContext === undefined ? {} : { availableThemeContext }),
     limitations: [
       '사용한 해석은 고전 관계를 제한적으로 참고한 미검토 연구 후보입니다. Production 또는 유료 보고서에 사용할 수 없습니다.',
       '명식에 관측된 관계만 설명하며 직업 적성·연봉·성공·미래 사건·신강신약·용신을 단정하지 않습니다.',
