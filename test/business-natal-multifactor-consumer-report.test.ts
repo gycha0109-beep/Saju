@@ -181,7 +181,9 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
         expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
         expect(report.missing.join(' ')).toContain('중심 해석 근거가 없어');
         expect(report.missing.join(' ')).toContain('출처 있는 중심 복합 해석 근거가 먼저 필요합니다');
-        expect(report.missing.join(' ')).toContain('조율(천간');
+        expect(report.missing.join(' ')).toContain(
+          '조율(' + (report.sections[0]?.channel === 'visible_stems' ? '천간' : '지지 대표 십신'),
+        );
         expect(report.missing.join(' ')).not.toMatch(/추가 해석 축 [1-3]개/u);
         expect(report.researchOnly).toBe(true);
         expect(report.usefulComplete).toBe(false);
