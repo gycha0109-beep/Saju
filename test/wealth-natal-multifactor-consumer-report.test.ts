@@ -133,7 +133,19 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
         expect(s.observedPositions).toHaveLength(s.observedFactPaths.length);
         expect(s.paragraph).toContain('이 원국에서 확인된 근거는');
         expect(s.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
-        expect(s.paragraph).toMatch(/(같은 (천간|지지 대표 십신)에서 관측된|서로 다른 관측 범위)/u);
+        if (s.channel === 'cross_channel') {
+          expect(s.paragraph).toContain('천간과 지지 대표 십신의 서로 다른 관측 범위');
+          expect(s.observedFactPaths.some(path => path.endsWith('.stem.value'))).toBe(true);
+          expect(s.observedFactPaths.some(path => path.endsWith('.branch.value'))).toBe(true);
+        } else {
+          const channel = s.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
+          expect(s.paragraph).toContain('서로 다른 원국 위치에서 확인된 십신 계열을 같은 ' +
+            channel + ' 관측 범위의 근거로');
+          expect(s.paragraph).not.toContain('같은 ' + channel + '에서 관측된');
+          expect(new Set(s.observedFactPaths).size).toBeGreaterThanOrEqual(2);
+          expect(s.observedFactPaths.every(path =>
+            path.endsWith(s.channel === 'visible_stems' ? '.stem.value' : '.branch.value'))).toBe(true);
+        }
         expect(s.paragraph).toContain(s.headline);
         expect(s.observedPositions.every(p=>s.paragraph.includes(p))).toBe(true);
         expect(s.observedFactPaths.every(path =>
@@ -143,6 +155,20 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
       expect(x.report.mayPublish).toBe(false);
       expect(x.report.maySell).toBe(false);
       expect(x.report.usefulComplete).toBe(false);
+    }
+    const sameChannel = data.flatMap(item => item.report.sections)
+      .filter(section => section.channel !== 'cross_channel');
+    expect(sameChannel.length).toBeGreaterThan(0);
+    for (const section of sameChannel) {
+      const channel = section.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
+      expect(section.paragraph).toContain(
+        '서로 다른 원국 위치에서 확인된 십신 계열을 같은 ' +
+        channel + ' 관측 범위의 근거로');
+      expect(section.observedPositions).toHaveLength(section.observedFactPaths.length);
+      expect(new Set(section.observedFactPaths).size).toBe(section.observedFactPaths.length);
+      expect(section.observedFactPaths.every(path =>
+        path.endsWith(section.channel === 'visible_stems' ? '.stem.value' : '.branch.value'))).toBe(true);
+      expect(section.sourceIds.length).toBeGreaterThan(0);
     }
     expect(run(3,10).report).toEqual(run(3,10).report);
   }, 30000);
