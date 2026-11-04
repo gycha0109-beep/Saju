@@ -20,6 +20,8 @@ import { buildTemporalResearchMenuReadings } from '../dist/preview/temporal-rese
 import { renderNatalFiveDomainMultifactorResearchHtml } from '../dist/preview/natal-five-domain-multifactor-reader.js';
 import {
   diagnoseMissingWealthReading,
+  diagnoseMissingNatalReading,
+  summarizeMissingNatalCauses,
   analyzeTemporalRepetition,
   analyzeTemporalMeaningRepetition,
   analyzeTemporalConsumedT9Meaning,
@@ -280,6 +282,7 @@ export function runFiveHundredSajuAudit() {
   const chartHashGroups = new Map();
   const failures = [];
   const wealthMissingCases = [];
+  const otherNatalMissingCases = [];
   const wealthConsumerCases = [];
   const wealthCrossOfficerCases = [];
   const wealthCrossResourceCases = [];
@@ -314,6 +317,13 @@ export function runFiveHundredSajuAudit() {
         if (domain === 'general') natalT5 = sourceBoundNatalT5(snapshot, interpretation);
         const report = renderers[domain](snapshot, interpretation, registry);
         natalReports[domain] = report;
+        if (domain !== 'wealth' && report.sections.length === 0) {
+          // Stage 1: preserve exact missing-case input, T5/Rule/T8 evaluation,
+          // EvidenceSelector output and consumer state for all four other
+          // natal menus. No guessed interpretation is introduced.
+          otherNatalMissingCases.push(diagnoseMissingNatalReading(
+            snapshot, interpretation, registry, report, stamp, domain));
+        }
         if (report.snapshotId !== snapshot.snapshotId || report.calculationHash !== chartKey) {
           throw new Error(domain + ' did not use the same exact natal snapshot');
         }
@@ -858,6 +868,7 @@ export function runFiveHundredSajuAudit() {
     rootCauseDiagnostics: {
       version: ROOT_CAUSE_AUDIT_VERSION,
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
+      otherNatalMissingReadings: summarizeMissingNatalCauses(otherNatalMissingCases),
       wealthConsumerEvidence: summarizeWealthConsumerEvidence(wealthConsumerCases),
       wealthCrossOfficerSelectedMeaning: {
         examined: COUNT,
@@ -982,6 +993,15 @@ export function runFiveHundredSajuAudit() {
     generalPartialCoreWithUnusedT5: result.rootCauseDiagnostics.generalPartialCoreWithUnusedT5.count,
     generalTensionFirstScreen: result.rootCauseDiagnostics.generalTensionFirstScreen.count,
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
+    otherNatalEmptyByDomain: Object.fromEntries(
+      Object.entries(result.rootCauseDiagnostics.otherNatalMissingReadings.byDomain)
+        .map(([domain, item]) => [domain, {
+          missingCases: item.missingCaseCount,
+          causes: item.byCause,
+          withActualSourceT5: item.withActiveT5,
+          eligibleT8Rules: item.withInputEligibleT8Rule,
+        }]),
+    ),
     wealthCrossOfficerSelected: result.rootCauseDiagnostics.wealthCrossOfficerSelectedMeaning.selectedCount,
     wealthCrossResourceSelected: result.rootCauseDiagnostics.wealthCrossResourceSelectedMeaning.selectedCount,
     wealthCrossPeerSelected: result.rootCauseDiagnostics.wealthCrossPeerSelectedMeaning.selectedCount,
@@ -1051,6 +1071,14 @@ export function runFiveHundredSajuAudit() {
         result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutAnySourcedT5 !==
           result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8 ||
       result.rootCauseDiagnostics.generalPartialTensionWithUnusedT5.examined !== COUNT ||
+      result.rootCauseDiagnostics.otherNatalMissingReadings.missingCaseCount !==
+        otherNatalMissingCases.length ||
+      Object.entries({
+        general: '전체 사주', career: '직업·커리어',
+        relationship: '연애·관계', business: '사업',
+      }).some(([domain, menu]) =>
+        result.rootCauseDiagnostics.otherNatalMissingReadings.byDomain[domain]
+          .missingCaseCount !== result.menuResults[menu].withoutReadableText) ||
       !result.rootCauseDiagnostics.wealth.allCasesHaveExplicitCause ||
       result.rootCauseDiagnostics.wealth.missingCaseCount !==
         result.menuResults['재물'].withoutReadableText ||
