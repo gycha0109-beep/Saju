@@ -775,6 +775,17 @@ export function runFiveHundredSajuAudit() {
         throw new Error('Annual menu lost selected Claim/Rule/Methodology/Source in 500-case audit');
       }
       annualMenuProvenanceChecked++;
+      // A future-tendency T9 profile owns its mandatory Korean limitation.
+      // The observation-only six-combination profile deliberately owns none.
+      const annualQualifier =
+        '이는 해당 연도에 두드러질 수 있는 경향을 설명하며, 특정 사건이나 결과를 확정하지 않습니다.';
+      for (const section of temporal.annualMonthly.report.annual.sections) {
+        const shouldQualify = section.kind === 'core' || section.kind === 'tension';
+        if (section.text.includes(annualQualifier) !== shouldQualify) {
+          throw new Error('Annual Korean reading omitted or invented its source-profile qualifier: ' +
+            stamp);
+        }
+      }
       const originalMonthly = temporal.annualMonthly.report.monthly.sections;
       if (monthlyMenu?.menuId !== 'monthly' ||
           monthlyMenu.authority.mayCallOfficial ||
