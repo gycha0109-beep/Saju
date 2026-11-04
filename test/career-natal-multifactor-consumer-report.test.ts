@@ -94,6 +94,38 @@ describe('Career standalone research page when its source-qualified T8 is missin
 });
 
 describe('source-bounded Career two-T5 → T8 → consumer Korean research vertical', () => {
+  it('renders verified 500-person Career examples with natural Korean particles and identical source authority', () => {
+    for (const [year, month, day, hour, minute] of [
+      [1998, 3, 28, 22, 19],
+      [1971, 2, 24, 21, 59],
+    ] as const) {
+      const chart = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar',
+        date: { year, month, day },
+        time: { known: true, hour, minute },
+        sexForTraditionalCalculation: 'unspecified',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const execution = runInterpretation(chart, registry, { now: NOW });
+      const report = buildCareerMultifactorResearchReport(chart, execution, registry);
+      expect(report.sections.length).toBeGreaterThan(0);
+      for (const section of report.sections) {
+        expect(section.paragraph).toContain(
+          '기존 출처에 연결된 구조적 해석 후보를 함께 살핍니다.');
+        expect(section.paragraph).toContain(`해석 관점은 ‘${section.headline}’입니다.`);
+        expect(section.paragraph).not.toContain(`‘${section.headline}’이라는 구조적`);
+        expect(section.paragraph).not.toContain(`‘${section.headline}’라는 구조적`);
+        expect(section.calculatedPositions.every(position =>
+          section.paragraph.includes(position))).toBe(true);
+        expect(section.sourceIds).toHaveLength(2);
+        expect(section.upstreamClaimIds).toHaveLength(2);
+        expect(section.ruleId).toBeTruthy();
+      }
+      expect(report.researchOnly).toBe(true);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+  });
+
   it('keeps legacy single-Ten-God Career T8 out of the new pack and never enables commerce', () => {
     expect(CAREER_MULTIFACTOR_PACK.status).toBe('research');
     expect(CAREER_MULTIFACTOR_RULES).toHaveLength(10);
