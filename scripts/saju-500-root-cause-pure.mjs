@@ -427,7 +427,7 @@ export function analyzeTemporalStructuralEvidenceVariation(rows) {
     repeatedMeaningProfilesWithDifferentVerifiedRelations: groups.length,
     casesInSuchProfiles: groups.reduce((n,g) => n+g.caseCount,0),
     groups,
-    qualification: 'Only actually selected clash/six-combination relations are compared; structural fact differences do not authorize new temporal interpretive meanings',
+    qualification: 'Only actually selected clash/six-combination relations are compared; structural fact differences do not authorize new temporal interpretive meanings and are not newly authorized interpretive meanings',
   };
 }
 
