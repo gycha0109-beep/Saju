@@ -186,6 +186,25 @@ function render(
         '아래 연운은 비교 자료로만 제공합니다.'
       : '선택한 ' + report.targetYear +
         '년은 조회 시각의 현재 연도가 아닙니다. 현재 연운으로 적용하지 않고 비교만 합니다.';
+  const natalPillarName: Record<'year' | 'month' | 'day' | 'hour', string> = {
+    year: '연주', month: '월주', day: '일주', hour: '시주',
+  };
+  // A selected annual T9 theme does not establish clash/combination absence
+  // for unresolved natal pillars. Keep the uncertainty at its own menu.
+  const annualUncertainty = annualAppliesNow && report.annual.unavailablePillars.length > 0
+    ? '<p class="unresolved-natal-relations" aria-label="올해 미확정 원국 충·육합 관계">' +
+      e(report.annual.unavailablePillars.map(slot => natalPillarName[slot]).join('·')) +
+      ' 지지와 올해 연운 사이의 충·육합 관계는 원국 정보 미확정으로 보류합니다. ' +
+      '충이나 육합이 없다는 결론이 아닙니다.</p>'
+    : '';
+  const monthlyUnknown = monthlyFocus.state === 'outside_target_month'
+    ? [] : monthlyFocus.unavailableNatalPillars ?? [];
+  const monthlyUncertainty = monthlyUnknown.length > 0
+    ? '<p class="unresolved-natal-relations" aria-label="조회 절입 구간의 미확정 원국 충·육합 관계">' +
+      e(monthlyUnknown.map(slot => natalPillarName[slot]).join('·')) +
+      ' 지지와 조회 절입 구간의 월운 충·육합 관계는 원국 정보 미확정으로 보류합니다. ' +
+      '충이나 육합이 없다는 결론이 아닙니다.</p>'
+    : '';
   const annual = report.annual.sections.map((section, i) =>
     '<article><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
     '<details><summary>연운 원문 출처와 계산 근거</summary><p>후보 프로필: ' +
@@ -335,12 +354,12 @@ function render(
     report.targetYear + '년</h2><p>' +
     e(yearNote) + '</p>' +
     '<p>올해 주제와 별개로 확인된 <a href="#natal-reference">원국의 연구 근거</a>는 ' +
-    '연운 해석 결론으로 합산하지 않습니다.</p>' + annual + '</section>' +
+    '연운 해석 결론으로 합산하지 않습니다.</p>' + annualUncertainty + annual + '</section>' +
     '<section id="monthly"><h2>' + e(monthlyLabel) + ' — ' +
     report.targetMonth + '월</h2>' +
     '<p>절입 전·후 월간 주제와 <a href="#natal-reference">같은 명식의 원국 근거</a>는 ' +
     '서로 다른 해석 범위입니다. 확인되지 않은 상호작용은 주장하지 않습니다.</p>' +
-    '<h3>조회 시각에 해당하는 월운</h3>' + currentMonth +
+    '<h3>조회 시각에 해당하는 월운</h3>' + monthlyUncertainty + currentMonth +
     '<h3>절입 전후 전체 풀이</h3>' + monthly + '</section>' +
     '<section id="life-stage"><h2>삶의 단계 — 계산된 대운</h2><p>' +
     '대운의 간지·시각만 계산된 사실입니다. 길흉이나 사건 시기를 해석하지 않습니다.</p>' +
