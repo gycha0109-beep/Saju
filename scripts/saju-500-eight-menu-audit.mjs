@@ -283,6 +283,9 @@ export function runFiveHundredSajuAudit() {
   const failures = [];
   const wealthMissingCases = [];
   const otherNatalMissingCases = [];
+  const otherNatalT5PartialCases = {
+    career: [], relationship: [], business: [],
+  };
   const wealthConsumerCases = [];
   const wealthCrossOfficerCases = [];
   const wealthCrossResourceCases = [];
@@ -506,6 +509,42 @@ export function runFiveHundredSajuAudit() {
           wealthMissingCases.push(
             diagnoseMissingWealthReading(snapshot, interpretation, registry, report, stamp),
           );
+        }
+      }
+      // Stage 1/5: when there is no registered domain T8 for a chart, the
+      // original T5 source copy must reach the user-facing panel as a bounded
+      // PARTIAL observation. Never count it as a new domain synthesis.
+      const heldOtherDomains = ['career', 'business', 'relationship'].filter(domain =>
+        natalReports[domain].state === 'insufficient' &&
+        natalReports[domain].sections.length === 0);
+      if (heldOtherDomains.length > 0) {
+        const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+        const overview = html.split('</nav>')[0] ?? '';
+        for (const domain of heldOtherDomains) {
+          const report = natalReports[domain];
+          const context = report.availableThemeContext;
+          const card = html.split('<h2 id="domain-' + domain + '">')[1]
+            ?.split('</article>')[0];
+          if (!context || context.wholeChartSynthesisAuthorized !== false ||
+              context.themes.length === 0 ||
+              !card?.includes('aria-label="종합풀이 보류 시 기존 십신 부분 해석"') ||
+              !card.includes('해당 분야의 종합 해석 아님') ||
+              !overview.includes('출처 있는 원국 십신 부분 관측') ||
+              context.themes.some(theme =>
+                !card.includes(escapedHtmlText(theme.summary)) ||
+                !card.includes(escapedHtmlText(theme.claimId)) ||
+                !card.includes(escapedHtmlText(theme.ruleIds[0])) ||
+                !card.includes(escapedHtmlText(theme.sourceIds[0])) ||
+                !card.includes(escapedHtmlText(theme.observedPositions[0])) ||
+                !card.includes(escapedHtmlText(theme.observedFactPaths[0])))) {
+            throw new Error(domain +
+              ' no-T8 consumer panel lost original research T5 or falsely indicated synthesis');
+          }
+          otherNatalT5PartialCases[domain].push({
+            birth: stamp, calculationHash: chartKey,
+            themeCount: context.themes.length,
+            originalT5ClaimIds: context.themes.map(theme => theme.claimId),
+          });
         }
       }
       // The five-domain HTML can only be checked after all five reports exist.
@@ -869,6 +908,14 @@ export function runFiveHundredSajuAudit() {
       version: ROOT_CAUSE_AUDIT_VERSION,
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
       otherNatalMissingReadings: summarizeMissingNatalCauses(otherNatalMissingCases),
+      otherNatalSourceBoundT5Panels: {
+        examined: COUNT,
+        counts: Object.fromEntries(Object.entries(otherNatalT5PartialCases)
+          .map(([domain,cases]) => [domain,cases.length])),
+        examples: Object.fromEntries(Object.entries(otherNatalT5PartialCases)
+          .map(([domain,cases]) => [domain,cases.slice(0,4)])),
+        noT8Promotion: true,
+      },
       wealthConsumerEvidence: summarizeWealthConsumerEvidence(wealthConsumerCases),
       wealthCrossOfficerSelectedMeaning: {
         examined: COUNT,
@@ -993,6 +1040,8 @@ export function runFiveHundredSajuAudit() {
     generalPartialCoreWithUnusedT5: result.rootCauseDiagnostics.generalPartialCoreWithUnusedT5.count,
     generalTensionFirstScreen: result.rootCauseDiagnostics.generalTensionFirstScreen.count,
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
+    otherNatalT5OnlyVisibleByDomain:
+      result.rootCauseDiagnostics.otherNatalSourceBoundT5Panels.counts,
     otherNatalEmptyByDomain: Object.fromEntries(
       Object.entries(result.rootCauseDiagnostics.otherNatalMissingReadings.byDomain)
         .map(([domain, item]) => [domain, {
@@ -1073,6 +1122,10 @@ export function runFiveHundredSajuAudit() {
       result.rootCauseDiagnostics.generalPartialTensionWithUnusedT5.examined !== COUNT ||
       result.rootCauseDiagnostics.otherNatalMissingReadings.missingCaseCount !==
         otherNatalMissingCases.length ||
+      Object.entries(otherNatalT5PartialCases).some(([domain,cases]) =>
+        cases.length !==
+          result.rootCauseDiagnostics.otherNatalMissingReadings.byDomain[domain]
+            .missingCaseCount) ||
       Object.entries({
         general: '전체 사주', career: '직업·커리어',
         relationship: '연애·관계', business: '사업',
