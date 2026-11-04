@@ -554,6 +554,35 @@ export function runFiveHundredSajuAudit() {
           );
         }
       }
+      // All five reports are assembled here, so verify that an actual
+      // registered General T5 is visible on the first screen when T8 is held.
+      // Do not label that T5 observation as a whole-chart synthesis.
+      const heldGeneral = natalReports.general;
+      if (heldGeneral.state === 'insufficient' &&
+          heldGeneral.sections.length === 0 && heldGeneral.availableThemeContext) {
+        const context = heldGeneral.availableThemeContext;
+        const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+        const overview = html.split('</nav>')[0] ?? '';
+        const card = html.split('<h2 id="domain-general">')[1]?.split('</article>')[0];
+        const first = context.themes[0];
+        if (context.wholeChartSynthesisAuthorized !== false || !first ||
+            !overview.includes('전체 사주 종합풀이 보류 · 출처 있는 원국 십신 부분 관측: ') ||
+            !overview.includes(escapedHtmlText(first.headline)) ||
+            !overview.includes(escapedHtmlText(first.summary)) ||
+            !card?.includes('전체 사주의 복합 종합해석 근거는 아직 확인되지 않았습니다') ||
+            !card.includes('aria-label="전체 원국의 기존 십신 부분 해석"') ||
+            context.themes.some(theme =>
+              !card.includes(escapedHtmlText(theme.summary)) ||
+              !card.includes(escapedHtmlText(theme.claimId)) ||
+              !card.includes(escapedHtmlText(theme.ruleIds[0])) ||
+              !card.includes(escapedHtmlText(theme.methodologyId)) ||
+              !card.includes(escapedHtmlText(theme.sourceIds[0])) ||
+              !card.includes(escapedHtmlText(theme.observedPositions[0])) ||
+              !card.includes(escapedHtmlText(theme.observedFactPaths[0])))) {
+          throw new Error('Held General T8 hid existing source-owned T5 on the first screen: ' +
+            stamp);
+        }
+      }
       // Stage 1/5: when there is no registered domain T8 for a chart, the
       // original T5 source copy must reach the user-facing panel as a bounded
       // PARTIAL observation. Never count it as a new domain synthesis.
