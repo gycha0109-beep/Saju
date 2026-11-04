@@ -115,14 +115,27 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
       for(const section of report.sections) {
         explainedSections++;
         expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
-        expect(section.paragraph).toContain('십신 계열이 함께 확인되므로');
+        expect(section.paragraph).toContain(
+          `${section.upstreamClaimIds.length}개 십신 계열이 ${section.channel === 'visible_stems' ? '천간' : '지지 대표 십신'} 관측 범위의 서로 다른 명식 위치에서 각각 확인됩니다`,
+        );
+        expect(section.paragraph).toContain('이 계산 근거에 한해');
         expect(section.paragraph).toContain('구조적 관점으로 연결해 읽습니다');
+        expect(section.paragraph).not.toContain('같은 천간에서');
+        expect(section.paragraph).not.toContain('같은 지지 대표 십신에서');
         expect(section.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
         for(const position of section.observedPositions) {
           expect(section.paragraph).toContain(position);
         }
         expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(section.sourceIds.length).toBeGreaterThan(0);
+      }
+      if (report.readingGuide !== undefined) {
+        for (const support of report.sections.slice(1)) {
+          expect(report.readingGuide.paragraph).toContain(
+            `‘${support.headline}’이라는 별도 관점은`);
+          expect(report.readingGuide.paragraph).not.toContain(
+            `또 다른 관점인 ‘${support.headline}’은`);
+        }
       }
       if(report.state !== 'complete') {
         explainedPartials++;

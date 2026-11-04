@@ -198,7 +198,7 @@ function toSection(
     axis: value.axis as Axis,
     channel: value.channel as Channel,
     headline: textFor(claim.claimType,'headline'),
-    paragraph: `이 원국에서 확인된 근거는 ${evidenceByFamily.join(' / ')}입니다. 같은 ${channelName}에서 ${evidenceByFamily.length}개 십신 계열이 함께 확인되므로 ${describeQuotedReadingAxis(headline)} 구조적 관점으로 연결해 읽습니다. ${textFor(claim.claimType,'summary')}`,
+    paragraph: `이 원국에서 확인된 근거는 ${evidenceByFamily.join(' / ')}입니다. ${evidenceByFamily.length}개 십신 계열이 ${channelName} 관측 범위의 서로 다른 명식 위치에서 각각 확인됩니다. 이 계산 근거에 한해 ${describeQuotedReadingAxis(headline)} 구조적 관점으로 연결해 읽습니다. ${textFor(claim.claimType,'summary')}`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
@@ -246,7 +246,7 @@ function buildBusinessNatalReadingGuide(
   const paragraphs = [
     `사업이라는 주제에서 이 명식의 중심 구조적 관점은 ‘${core.headline}’입니다. 이 표현은 ${core.observedPositions.join(' · ')}에서 실제 관측된 기존 십신 근거에 연결된 연구 후보입니다.`,
     ...supports.map((section, index) =>
-      `또 다른 관점인 ‘${section.headline}’은 기존 관찰과 다른 ${supporting[index]!.distinctObservedPositions.join(' · ')}의 계산 사실을 추가해 구별합니다.`),
+      `‘${section.headline}’이라는 별도 관점은 기존 관찰과 다른 ${supporting[index]!.distinctObservedPositions.join(' · ')}의 계산 사실을 추가해 구별합니다.`),
     ...(state === 'complete'
       ? ['서로 다른 구조적 관점 세 가지를 확인했지만, 이것은 창업 적성·매출·사업 성공이나 실패를 판정하지 않습니다.']
       : [`이 명식에서 독립적으로 설명할 수 있는 보조 관점은 ${supporting.length}개뿐이어서, 사업운 전체 종합 설명은 보류합니다.`]),
