@@ -707,13 +707,14 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       theme.claimType === 'TEN_GOD_WEALTH_BRANCHES_THEME')).toBe(false);
     const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reports(chart));
     const wealthHtml = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
-    const escapedParagraph = section.paragraph.replace(/[&<>"']/gu, char => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-    })[char]!);
+    const escapeHtmlParagraph = (paragraph: string) =>
+      paragraph.replace(/[&<>"']/gu, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      })[char]!);
     expect(wealthHtml).toContain('aria-label="재물운 명식별 풀이 본문"');
     expect(wealthHtml).toContain('중심 관점 · ');
-    expect(wealthHtml).toContain(escapedParagraph);
-    expect(html).toContain(tension.paragraph);
+    expect(wealthHtml).toContain(escapeHtmlParagraph(section.paragraph));
+    expect(wealthHtml).toContain(escapeHtmlParagraph(tension.paragraph));
     expect(wealthHtml).toContain(section.ruleId);
     expect(wealthHtml).toContain(section.sourceIds[0]!);
     expect(wealthHtml).toContain('재물운 종합 해석 아님');
