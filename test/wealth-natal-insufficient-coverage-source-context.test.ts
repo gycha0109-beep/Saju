@@ -111,7 +111,7 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(report.usefulComplete).toBe(false);
   }, 30000);
 
-  it('reads only the source-bounded whole-chart output/wealth relation across T5 channels', () => {
+  it('keeps the sourced whole-chart output/wealth core distinct from a Peer/Wealth support', () => {
     const { execution, report } = wealthReading(1955, 10, 31, 19, 35);
     const core = report.sections[0]!;
     expect(core).toBeDefined();
@@ -127,9 +127,28 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(core.paragraph).toContain('천간과 지지 대표 십신의 서로 다른 관측 범위');
     expect(core.paragraph).not.toContain('같은 천간에서 관측된');
     expect(core.sourceIds.length).toBe(2);
+    // The opposite-channel peer/wealth relation now consumes the remaining
+    // source-qualified T5 family. There may be no unused-theme appendix.
+    expect(report.sections).toHaveLength(2);
+    const support = report.sections[1]!;
+    expect(support.axis).toBe('tension');
+    expect(support.pattern).toBe('PEER_WEALTH');
+    expect(support.channel).toBe('cross_channel');
+    expect(support.paragraph).toContain('비겁과 재성은 동일 관측 채널이 아니라');
+    expect(support.sourceIds).toContain(
+      'SRC-SAMYEONG-TONGHOE-V5-FOUR-LIBRARIES-TENGOD-RELATIONS');
+    expect(support.upstreamClaimIds.map(id =>
+      execution.claims.find(c => c.claimId === id)?.claimType).sort())
+      .toEqual(['TEN_GOD_PEER_VISIBLE_STEMS_THEME', 'TEN_GOD_WEALTH_BRANCHES_THEME'].sort());
+    expect(support.observedFactPaths.some(path =>
+      !core.observedFactPaths.includes(path))).toBe(true);
     expect(report.state).toBe('partial');
     expect(report.readingGuide?.paragraph).toContain('독립적인 보조 관점');
-    expect(report.availableThemeContext?.wealthConclusionAuthorized).toBe(false);
+    expect(report.readingGuide?.supporting[0]?.claimType).toBe(support.claimType);
+    const explainedT5 = new Set(report.sections.flatMap(section => section.upstreamClaimIds));
+    expect(report.availableThemeContext?.wealthConclusionAuthorized).not.toBe(true);
+    expect(report.availableThemeContext?.themes.every(theme =>
+      !explainedT5.has(theme.claimId)) ?? true).toBe(true);
     expect(report.usefulComplete).toBe(false);
     expect(report.mayPublish).toBe(false);
     expect(report.maySell).toBe(false);
