@@ -15,11 +15,15 @@ describe('General Annual Research-return handoff', () => {
     const handoff = buildGeneralAnnualResearchReturnHandoff();
 
     expect(handoff.candidateBinding.candidateVersion).toBe('0.1.0-research');
-    expect(handoff.candidateBinding.methodologyCount).toBe(1);
-    expect(handoff.candidateBinding.ruleCount).toBe(14);
+    // The existing annual ten-god and clash candidates now coexist with an
+    // independent source-bounded six-combination method and four T9 rules.
+    expect(handoff.candidateBinding.methodologyCount).toBe(2);
+    expect(handoff.candidateBinding.ruleCount).toBe(18);
     expect(handoff.candidateBinding.packRef.contentHash).toMatch(/^[a-f0-9]{64}$/);
-    expect(handoff.candidateBinding.methodologies).toHaveLength(1);
-    expect(handoff.candidateBinding.rules).toHaveLength(14);
+    expect(handoff.candidateBinding.methodologies).toHaveLength(2);
+    expect(handoff.candidateBinding.rules).toHaveLength(18);
+    expect(handoff.candidateBinding.rules.some(ref =>
+      ref.id === 'RULE-GENERAL-ANNUAL-T9-BRANCH-SIX-COMBINATION-DAY')).toBe(true);
     expect(handoff.candidateBinding.candidateSurfaceHash).toMatch(/^[a-f0-9]{64}$/);
   });
 

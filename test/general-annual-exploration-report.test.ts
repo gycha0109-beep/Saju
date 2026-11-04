@@ -163,7 +163,7 @@ describe('opt-in consumer Annual exploration', () => {
       section.kind === 'support' && section.relatedPillar === 'day');
     expect(support).toBeDefined();
     expect(support?.id).toBe('ANNUAL_BRANCH_SIX_COMBINATION_DAY');
-    expect(support?.text).toContain('연도 지지는 전통 명리의 육합(六合) 쌍');
+    expect(support?.text).toContain('원국 일주의 지지와 해당 연도의 지지는 전통 명리의 육합(六合) 쌍');
     expect(support?.text).toContain('지지 미와 2026년 지지 오');
     expect(support?.text).toContain('합화나 사건 성립의 근거로 사용하지 않습니다');
     expect(support?.observedCombination).toMatchObject({
