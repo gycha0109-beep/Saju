@@ -8,6 +8,7 @@
  * sex choice even though this runner only executes the Wealth menu.
  * This script does NOT add a new Rule/Claim/Methodology/Source.
  */
+import process from 'node:process';
 import { writeFileSync } from 'node:fs';
 import { calculateCanonicalSajuSnapshot } from '../dist/calculation/calculation-engine.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
