@@ -135,7 +135,7 @@ function guard(v: unknown, message: string): asserts v {
 function explainMissingWealthT8(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
-  hasSourceBoundTension: boolean,
+  selectedTension: WealthNatalMultifactorSection | undefined,
 ): string | undefined {
   if (!snapshot.completeness.birthTimeKnown) return undefined;
   const activeFamilies = new Map<ObservationChannel, Set<string>>([
@@ -184,8 +184,11 @@ function explainMissingWealthT8(
     !(['visible_stems', 'branches'] as const).some(channel =>
       activeFamilies.get(channel)!.has('wealth') &&
       [...activeFamilies.get(channel)!].some(family => family !== 'wealth'));
-  const reason = hasSourceBoundTension && hasWealth
-    ? '같은 관측 범위 안에서 비겁·재성의 긴장 관계는 실제 확인됐지만, 이 관계는 등록된 재물 중심 복합 해석 축이 아니라 제한된 긴장 관점입니다. 확인된 긴장 관계를 재물 전체의 중심 결론으로 승격하지 않습니다. '
+  const tensionObservation = selectedTension?.channel === 'cross_channel'
+    ? '천간과 지지 대표 십신의 서로 다른 관측 범위에서 비겁·재성의 구조적 긴장 해석 근거가 확인됐지만'
+    : '같은 관측 범위 안에서 비겁·재성의 긴장 관계는 실제 확인됐지만';
+  const reason = selectedTension !== undefined && hasWealth
+    ? tensionObservation + ', 이 관계는 등록된 재물 중심 복합 해석 축이 아니라 제한된 긴장 관점입니다. 확인된 긴장 관계를 재물 전체의 중심 결론으로 승격하지 않습니다. '
     : wealthOnlyAcrossChannels
       ? '재성 관련 십신 근거와 다른 십신 계열의 근거가 천간과 지지 대표 십신으로 나뉘어 있습니다. 기존 재물 종합 규칙은 동일 관측 범위의 복합 근거를 요구하므로, 서로 다른 채널을 임의로 결합해 재물 종합 결론을 만들 수 없습니다. '
     : hasWealth
@@ -635,7 +638,7 @@ export function buildWealthNatalMultifactorReport(
   // A tension-only T8 is not a Wealth core and must not hide that reason.
   if (snapshot.completeness.birthTimeKnown && core === undefined) {
     const sourceBoundReason = explainMissingWealthT8(
-      snapshot, execution, result.some(section => section.axis === 'tension'));
+      snapshot, execution, chosen.find(section => section.axis === 'tension'));
     if (sourceBoundReason) missing.push(sourceBoundReason);
   }
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');

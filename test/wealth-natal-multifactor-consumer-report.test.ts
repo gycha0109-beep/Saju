@@ -506,15 +506,33 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
     const execution = runInterpretation(snapshot, registry, { now: NOW });
     const report = buildWealthNatalMultifactorReport(snapshot, execution, registry);
-    expect(report.sections).toHaveLength(1);
-    expect(report.sections[0]?.axis).toBe('creation');
-    expect(report.sections[0]?.channel).toBe('cross_channel');
+    expect(report.sections).toHaveLength(2);
+    const [core, tension] = report.sections;
+    expect(core?.axis).toBe('creation');
+    expect(core?.channel).toBe('cross_channel');
+    expect(tension?.axis).toBe('tension');
+    expect(tension?.pattern).toBe('PEER_WEALTH');
+    expect(tension?.channel).toBe('cross_channel');
+    expect(tension?.paragraph).toContain('비겁과 재성은 동일 관측 채널이 아니라');
+    expect(tension?.paragraph).toContain('실제 자산 손실');
+    expect(report.readingGuide?.coreClaimType).toBe(core?.claimType);
+    expect(report.readingGuide?.supporting[0]?.claimType).toBe(tension?.claimType);
+    expect(report.readingGuide?.supporting[0]?.distinctObservedFactPaths.length)
+      .toBeGreaterThan(0);
     expect(report.state).toBe('partial');
-    expect(report.availableThemeContext?.wealthConclusionAuthorized).toBe(false);
-    expect(report.availableThemeContext?.themes.some(theme => theme.family === 'wealth')).toBe(false);
-    expect(report.availableThemeContext?.themes.some(theme => theme.family === 'peer')).toBe(true);
-    expect(report.availableThemeContext?.themes.every(theme =>
-      !report.sections[0]!.upstreamClaimIds.includes(theme.claimId))).toBe(true);
+    expect(report.availableThemeContext?.wealthConclusionAuthorized).not.toBe(true);
+    // Only T5 facts not consumed by either exact selected T8 remain in the
+    // separate context. A newly consumed Peer T5 is no longer "unused".
+    const alreadyExplained = new Set(report.sections.flatMap(s => s.upstreamClaimIds));
+    const unconsumed = execution.claims.filter(c =>
+      c.state === 'active' && c.taxonomy.tier === 'T5' &&
+      c.predicate === 'ten_god_theme' &&
+      /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+        .test(c.claimType) && !alreadyExplained.has(c.claimId));
+    expect((report.availableThemeContext?.themes ?? []).map(theme => theme.claimId).sort())
+      .toEqual(unconsumed.map(c => c.claimId).sort());
+    expect(report.availableThemeContext?.themes.some(theme =>
+      alreadyExplained.has(theme.claimId)) ?? false).toBe(false);
   });
 
   it('keeps T8 meaning blocked with unknown birth hour but displays only verified chart facts', () => {

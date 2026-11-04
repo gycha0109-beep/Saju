@@ -669,8 +669,24 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
     const wealth = reports(chart).wealth;
     expect(wealth.state).toBe('partial');
-    expect(wealth.sections).toHaveLength(1);
+    // The source-qualified opposite-channel 比劫↔財 tension is now an
+    // independent supporting axis, not a duplicate or a new Wealth core.
+    expect(wealth.sections).toHaveLength(2);
     const section = wealth.sections[0]!;
+    const tension = wealth.sections[1]!;
+    expect(tension.axis).toBe('tension');
+    expect(tension.pattern).toBe('PEER_WEALTH');
+    expect(tension.channel).toBe('cross_channel');
+    expect(tension.paragraph).toContain('비겁과 재성은 동일 관측 채널이 아니라');
+    expect(tension.paragraph).toContain('실제 자산 손실');
+    expect(tension.sourceIds).toContain(
+      'SRC-SAMYEONG-TONGHOE-V5-FOUR-LIBRARIES-TENGOD-RELATIONS');
+    expect(tension.observedFactPaths.some(path =>
+      !section.observedFactPaths.includes(path))).toBe(true);
+    expect(wealth.readingGuide?.supporting).toHaveLength(1);
+    expect(wealth.readingGuide?.supporting[0]?.claimType).toBe(tension.claimType);
+    expect(wealth.readingGuide?.supporting[0]?.distinctObservedFactPaths.length)
+      .toBeGreaterThan(0);
     expect(section.channel).toBe('cross_channel');
     expect(section.axis).toBe('creation');
     expect(section.pattern).toBe('OUTPUT_WEALTH');
@@ -680,7 +696,10 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(section.sourceIds).toHaveLength(2);
     expect(wealth.readingGuide?.coreClaimType).toBe(section.claimType);
     expect(wealth.missing.join(' ')).toContain('추가 구조 축');
-    expect(wealth.availableThemeContext?.wealthConclusionAuthorized).toBe(false);
+    expect(wealth.availableThemeContext?.wealthConclusionAuthorized).not.toBe(true);
+    const explainedT5 = new Set(wealth.sections.flatMap(s => s.upstreamClaimIds));
+    expect(wealth.availableThemeContext?.themes.every(theme =>
+      !explainedT5.has(theme.claimId)) ?? true).toBe(true);
     expect(wealth.availableThemeContext?.themes.map(theme => theme.claimType))
       .not.toContain('TEN_GOD_WEALTH_BRANCHES_THEME');
     const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reports(chart));
@@ -691,6 +710,7 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(wealthHtml).toContain('aria-label="재물운 명식별 풀이 본문"');
     expect(wealthHtml).toContain('중심 관점 · ');
     expect(wealthHtml).toContain(escapedParagraph);
+    expect(html).toContain(tension.paragraph);
     expect(wealthHtml).toContain(section.ruleId);
     expect(wealthHtml).toContain(section.sourceIds[0]!);
     expect(wealthHtml).toContain('재물운 종합 해석 아님');
