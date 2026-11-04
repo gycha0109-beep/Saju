@@ -282,6 +282,7 @@ export function runFiveHundredSajuAudit() {
   const chartHashGroups = new Map();
   const failures = [];
   const wealthMissingCases = [];
+  const wealthPerChartCases = [];
   const otherNatalMissingCases = [];
   const otherNatalT5PartialCases = {
     career: [], relationship: [], business: [],
@@ -321,6 +322,31 @@ export function runFiveHundredSajuAudit() {
         if (domain === 'general') natalT5 = sourceBoundNatalT5(snapshot, interpretation);
         const report = renderers[domain](snapshot, interpretation, registry);
         natalReports[domain] = report;
+        if (domain === 'wealth') {
+          // Every current case, not only the remaining empty readings, must
+          // be matchable to the unchanged historical engine's source-SHA
+          // reproduction of the original 111 no-T8 cases.
+          wealthPerChartCases.push({
+            birth: stamp,
+            calculationHash: chartKey,
+            state: report.state,
+            noT8: report.sections.length === 0,
+            selectedT8: report.sections.map(section => ({
+              claimType: section.claimType,
+              pattern: section.pattern,
+              axis: section.axis,
+              channel: section.channel,
+              ruleId: section.ruleId,
+              sourceIds: [...section.sourceIds],
+              upstreamClaimIds: [...section.upstreamClaimIds],
+            })),
+            activeT5ClaimTypes: [...new Set(interpretation.claims.filter(claim =>
+              claim.taxonomy.tier === 'T5' && claim.state === 'active' &&
+              /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+                .test(claim.claimType)).map(claim => claim.claimType))].sort(),
+            missing: [...report.missing],
+          });
+        }
         if (domain !== 'wealth' && report.sections.length === 0) {
           // Stage 1: preserve exact missing-case input, T5/Rule/T8 evaluation,
           // EvidenceSelector output and consumer state for all four other
@@ -927,6 +953,14 @@ export function runFiveHundredSajuAudit() {
     sameCalculationHashGroups:sameChart.slice(0,10),
     elapsedMs:Date.now()-startedAt,
     menuResults:Object.fromEntries(DOMAIN_NAMES.map(name=>[name,summarize(rows[name])])),
+    wealthPerChart: {
+      count: COUNT,
+      seed: '0x5a1a2026',
+      referenceDateTime: REFERENCE,
+      withWealthT8: wealthPerChartCases.filter(row => !row.noT8).length,
+      withoutWealthT8: wealthPerChartCases.filter(row => row.noT8).length,
+      cases: wealthPerChartCases,
+    },
     rootCauseDiagnostics: {
       version: ROOT_CAUSE_AUDIT_VERSION,
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
@@ -1169,6 +1203,14 @@ export function runFiveHundredSajuAudit() {
       !result.rootCauseDiagnostics.wealth.allCasesHaveExplicitCause ||
       result.rootCauseDiagnostics.wealth.missingCaseCount !==
         result.menuResults['재물'].withoutReadableText ||
+      result.wealthPerChart.cases.length !== COUNT ||
+      result.wealthPerChart.withoutWealthT8 !==
+        result.menuResults['재물'].withoutReadableText ||
+      result.wealthPerChart.withWealthT8 !==
+        result.menuResults['재물'].withReadableText ||
+      new Set(result.wealthPerChart.cases.map(row => row.birth)).size !== COUNT ||
+      result.wealthPerChart.cases.some(row =>
+        !row.calculationHash || row.noT8 !== (row.selectedT8.length === 0)) ||
       result.rootCauseDiagnostics.wealthConsumerEvidence.examined !== COUNT ||
       result.rootCauseDiagnostics.wealthCrossOfficerSelectedMeaning.examined !== COUNT ||
       result.rootCauseDiagnostics.wealthCrossResourceSelectedMeaning.examined !== COUNT ||
