@@ -806,6 +806,33 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(html).not.toContain('<script>');
   });
 
+  it('shows each selected General T8 meaning once up front but retains its exact guide in details', () => {
+    const chart = sample(3, 10);
+    const reportSet = reports(chart);
+    const general = reportSet.general;
+    expect(general.sections.length).toBeGreaterThan(0);
+    expect(general.readingGuide).toBeDefined();
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reportSet);
+    const generalCard = html.split('<h2 id="domain-general">')[1]!.split('</article>')[0]!;
+    const firstScreen = generalCard.split('<details class="full-claim-evidence">')[0]!;
+    const details = generalCard.split('<details class="full-claim-evidence">')[1]!;
+    const escaped = (str: string) => str.replace(/[&<>"']/gu, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char]!);
+    for (const section of general.sections) {
+      expect(general.introduction).not.toContain(section.paragraph);
+      const actualText = escaped(section.paragraph);
+      expect(firstScreen.split('<p>' + actualText + '</p>')).toHaveLength(2);
+    }
+    expect(firstScreen).not.toContain('총운 근거 연결 설명');
+    expect(details).toContain('aria-label="총운 근거 연결 설명"');
+    expect(details).toContain(escaped(general.readingGuide!.paragraph));
+    expect(details).toContain(general.readingGuide!.sourceIds[0]!);
+    expect(details).toContain(general.readingGuide!.ruleIds[0]!);
+    expect(general.researchOnly).toBe(true);
+    expect(general.maySell).toBe(false);
+  });
+
   it('puts exact source-bound General Korean interpretation first without granting new meaning', () => {
     const chart = sample(3, 10);
     const original = reports(chart);
