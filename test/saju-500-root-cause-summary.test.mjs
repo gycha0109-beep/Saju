@@ -8,8 +8,66 @@ import {
   analyzeTemporalRepetition,
   buildWealthRemediationGroups,
   summarizeMissingWealthCauses,
+  summarizeMissingNatalCauses,
   summarizeWealthConsumerEvidence,
 } from '../scripts/saju-500-root-cause-pure.mjs';
+
+const otherNatalEmptyCase = (domain, birth, cause, options = {}) => ({
+  domain, birth, calculationHash: 'chart-' + birth, cause,
+  reportState: 'insufficient',
+  reportMissing: ['출처 있는 원국 중심 복합 해석 축'],
+  upstream: { activeT5ClaimTypes: options.t5 ?? ['TEN_GOD_OUTPUT_BRANCHES_THEME'] },
+  rules: {
+    eligibleRuleIds: options.eligible ?? [],
+    eligibleRuleEvaluations: options.evaluations ?? [],
+  },
+  activeT8: options.active ?? [],
+  selection: {
+    coverageState: 'insufficient_evidence',
+    selectedT8ClaimIds: options.selected ?? [],
+  },
+});
+
+describe('non-Wealth natal missing-reading cause classification on real audit rows', () => {
+  it('keeps four distinct menu causes and exact source-availability groups', () => {
+    const rows = [
+      otherNatalEmptyCase('general', 'G1', 'no_registered_t8_pattern_matches_executed_t5'),
+      otherNatalEmptyCase('career', 'C1', 'eligible_t8_rule_did_not_emit', {
+        eligible: ['RULE-C'], evaluations: [{ruleId:'RULE-C', status:'not_matched'}],
+      }),
+      otherNatalEmptyCase('relationship', 'R1', 'no_active_source_bound_t5', {t5:[]}),
+      otherNatalEmptyCase('business', 'B1', 'no_registered_t8_pattern_matches_executed_t5'),
+      otherNatalEmptyCase('general', 'G2', 'no_registered_t8_pattern_matches_executed_t5'),
+    ];
+    const result = summarizeMissingNatalCauses(rows);
+    expect(result.missingCaseCount).toBe(5);
+    expect(result.examinedDomains).toEqual(['general','career','relationship','business']);
+    expect(result.byDomain.general.missingCaseCount).toBe(2);
+    expect(result.byDomain.general.withActiveT5).toBe(2);
+    expect(result.byDomain.general.byCause).toEqual({
+      no_registered_t8_pattern_matches_executed_t5:2,
+    });
+    expect(result.byDomain.career.withInputEligibleT8Rule).toBe(1);
+    expect(result.byDomain.relationship.withActiveT5).toBe(0);
+    expect(result.byDomain.business.cases[0].calculationHash).toBe('chart-B1');
+    expect(result.researchOnlyNoNewMeaningAuthorized).toBe(true);
+  });
+  it('rejects missing run lineage, duplicated charts and unsupported menu labels', () => {
+    const actual = otherNatalEmptyCase('general','G1',
+      'no_registered_t8_pattern_matches_executed_t5');
+    expect(() => summarizeMissingNatalCauses([actual,{...actual}])).toThrow(
+      'Natal empty T8 diagnosis requires exact, unique run and cause evidence');
+    expect(() => summarizeMissingNatalCauses([{
+      ...actual, reportState: 'partial',
+    }])).toThrow();
+    expect(() => summarizeMissingNatalCauses([{
+      ...actual, upstream: {activeT5ClaimTypes: undefined},
+    }])).toThrow();
+    expect(() => summarizeMissingNatalCauses([{
+      ...actual, domain: 'wealth',
+    }])).toThrow('Only four non-Wealth natal domains');
+  });
+});
 
 const wealthCase = (birth, calculationHash, cause, themeTypes = [], eligibleRuleIds = []) => ({
   birth,
