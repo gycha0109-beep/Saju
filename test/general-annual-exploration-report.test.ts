@@ -88,6 +88,10 @@ describe('opt-in consumer Annual exploration', () => {
       expect(report.sections[0]?.title).toBe(
         match?.templates?.find((t) => t.templateKey === 'headline')?.text,
       );
+      // Research future-tendency profiles already require this qualifier.
+      // Reuse it verbatim; never invent a different certainty statement.
+      expect(match?.mandatoryQualifier).toBeTruthy();
+      expect(report.sections[0]?.text).toContain(match?.mandatoryQualifier);
     }
   });
 
@@ -131,6 +135,8 @@ describe('opt-in consumer Annual exploration', () => {
     expect(tension?.kind).toBe('tension');
     expect(tension?.title).toContain('일주');
     expect(tension?.text).toContain('특정 사건의 예고로 보지');
+    expect(tension?.text).toContain(
+      '이는 해당 연도에 두드러질 수 있는 경향을 설명하며, 특정 사건이나 결과를 확정하지 않습니다.');
     expect(tension?.observedClash).toEqual({
       natalBranch: '자',
       annualBranch: value.annualPillar.branch,
@@ -170,6 +176,9 @@ describe('opt-in consumer Annual exploration', () => {
     expect(support?.text).toContain('원국 일주의 지지와 해당 연도의 지지는 전통 명리의 육합(六合) 쌍');
     expect(support?.text).toContain('지지 미와 2026년 지지 오');
     expect(support?.text).toContain('합화나 사건 성립의 근거로 사용하지 않습니다');
+    // A structural six-combination observation is not a future tendency.
+    // No qualifier should be invented for a profile that does not own one.
+    expect(support?.text).not.toContain('이는 해당 연도에 두드러질 수 있는 경향');
     expect(support?.observedCombination).toMatchObject({
       natalBranch: '미', annualBranch: '오', relation: 'six_combination',
       sourceId: 'SRC-T0-XUANZE-YAOLUE-UPPER',
