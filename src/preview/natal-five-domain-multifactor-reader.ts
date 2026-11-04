@@ -89,6 +89,9 @@ function renderOverview(reports: NatalFiveDomainMultifactorReports): string {
         ['core', 'creation', 'management', 'planning'].includes(section.axis));
     const firstT5 = noDirectWealthCore
       ? wealth.availableThemeContext?.themes[0] : undefined;
+    const generalT5 = key === 'general' &&
+      report.state === 'insufficient' && report.sections.length === 0
+      ? reports.general.availableThemeContext?.themes[0] : undefined;
     const otherNatalT5 = ['career', 'business', 'relationship'].includes(key) &&
       report.sections.length === 0 ? report.availableThemeContext?.themes[0] : undefined;
     const visibleSubject = noDirectWealthCore && firstSourceHeadline
@@ -98,10 +101,13 @@ function renderOverview(reports: NatalFiveDomainMultifactorReports): string {
       : noDirectWealthCore && firstT5
         ? '재물 종합 결론 보류 · 출처 있는 십신 부분풀이: ' +
           firstT5.headline + ' — ' + firstT5.summary
-        : otherNatalT5
-          ? '해당 분야 종합풀이 보류 · 출처 있는 원국 십신 부분 관측: ' +
-            otherNatalT5.headline + ' — ' + otherNatalT5.summary
-          : firstSourceHeadline ?? missingReason ?? '현재 확인된 해석 문단이 없습니다.';
+        : generalT5
+          ? '전체 사주 종합풀이 보류 · 출처 있는 원국 십신 부분 관측: ' +
+            generalT5.headline + ' — ' + generalT5.summary
+          : otherNatalT5
+            ? '해당 분야 종합풀이 보류 · 출처 있는 원국 십신 부분 관측: ' +
+              otherNatalT5.headline + ' — ' + otherNatalT5.summary
+            : firstSourceHeadline ?? missingReason ?? '현재 확인된 해석 문단이 없습니다.';
     const gap = report.state === 'partial' && missingReason !== undefined
       ? '<p class="overview-gap"><strong>아직 설명하지 못하는 부분:</strong> ' +
         escapeHtml(missingReason) + '</p>'
@@ -668,11 +674,15 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
       (report as WealthNatalMultifactorReport).availableThemeContext !== undefined
       ? '<p>재물운의 중심 복합 해석 근거는 아직 확인되지 않았습니다. ' +
         '아래에는 출처 있는 개별 십신 관점만 부분적으로 설명합니다.</p>'
-      : ['career', 'business', 'relationship'].includes(domain) &&
-          report.availableThemeContext !== undefined
-        ? '<p>이 분야의 복합 해석 근거는 아직 확인되지 않았습니다. ' +
-          '아래에는 기존 출처에 연결된 원국 십신 주제만 부분적으로 보여줍니다.</p>'
-        : '<p>현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.</p>');
+      : domain === 'general' &&
+          (report as GeneralNatalMultifactorReport).availableThemeContext !== undefined
+        ? '<p>전체 사주의 복합 종합해석 근거는 아직 확인되지 않았습니다. ' +
+          '아래에는 출처 있는 기존 십신 부분풀이를 별도로 보여줍니다.</p>'
+        : ['career', 'business', 'relationship'].includes(domain) &&
+            report.availableThemeContext !== undefined
+          ? '<p>이 분야의 복합 해석 근거는 아직 확인되지 않았습니다. ' +
+            '아래에는 기존 출처에 연결된 원국 십신 주제만 부분적으로 보여줍니다.</p>'
+          : '<p>현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.</p>');
   const missing = report.missing.length > 0
     ? '<section class="missing"><h3>아직 설명하지 못하는 부분</h3>' + renderList(report.missing) + '</section>'
     : '';
