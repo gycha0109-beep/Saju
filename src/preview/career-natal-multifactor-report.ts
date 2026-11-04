@@ -447,6 +447,46 @@ export function renderCareerMultifactorResearchHtml(report: CareerMultifactorRep
   const readingGuideMarkup = report.readingGuide === undefined
     ? ''
     : `<section aria-label="직업운 읽기 요약"><h2>${e(report.readingGuide.title)}</h2><p>${e(report.readingGuide.paragraph)}</p></section>`;
+  // A missing source-owned Career T8 core does not erase separately executed
+  // T5 source meanings. Display only their original observation text, never a
+  // new Career synthesis or a claim about salary, aptitude or future success.
+  const t5 = report.availableThemeContext;
+  let sourcedPartialMarkup = '';
+  if (t5 !== undefined) {
+    const factPath = /^derivedFacts\\.tenGods\\.value\\.(year|month|day|hour)\\.(stem|branch)\\.value$/u;
+    if (report.state !== 'insufficient' || report.sections.length !== 0 ||
+        report.readingGuide !== undefined || t5.wholeChartSynthesisAuthorized !== false ||
+        t5.themes.length === 0 || !t5.paragraph.trim() ||
+        !report.researchOnly || report.usefulComplete || report.mayPublish || report.maySell ||
+        t5.themes.some(theme =>
+          !/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(theme.claimType) ||
+          !theme.claimId || !theme.summary || !theme.headline ||
+          theme.ruleIds.length === 0 || theme.sourceIds.length === 0 ||
+          !theme.methodologyId || theme.observedFactPaths.length === 0 ||
+          theme.observedFactPaths.length !== theme.observedPositions.length ||
+          theme.observedFactPaths.some(path => !factPath.test(path)) ||
+          !t5.paragraph.includes(theme.summary) ||
+          theme.observedPositions.some(pos => !t5.paragraph.includes(pos)))) {
+      throw new TypeError('Career standalone preview cannot promote unsourced T5 to domain synthesis');
+    }
+    sourcedPartialMarkup =
+      '<section aria-label="직업운 종합풀이 보류 시 원국 십신 부분 설명">' +
+      '<h2>기존 원국 십신 관점만 부분적으로 확인</h2>' +
+      '<p>직업운 종합풀이 아님 · 원국에서 실행된 기존 십신 근거만 설명합니다. ' +
+      '직업 적성이나 성과·연봉을 판단하지 않습니다.</p>' +
+      '<p>' + e(t5.paragraph) + '</p>' +
+      t5.themes.map(theme =>
+        '<article class="career-t5-source"><h3>' + e(theme.headline) + '</h3>' +
+        '<p>' + e(theme.summary) + '</p><p>실제 원국 위치: ' +
+        e(theme.observedPositions.join(' · ')) + '</p>' +
+        '<details><summary>원래 십신 해석의 규칙·계산 경로·출처</summary>' +
+        '<p>Claim: ' + e(theme.claimId) + ' · ' + e(theme.claimType) + '</p>' +
+        '<p>계산 위치 경로: ' + e(theme.observedFactPaths.join(' · ')) + '</p>' +
+        '<p>규칙: ' + e(theme.ruleIds.join(' · ')) + '</p>' +
+        '<p>방법론: ' + e(theme.methodologyId) + '</p>' +
+        '<p>출처: ' + e(theme.sourceIds.join(' · ')) + '</p></details></article>').join('') +
+      '</section>';
+  }
   // A partial research result must explain the missing MUR evidence in the HTML,
   // not merely in the report object that downstream readers may never inspect.
   const stateLabel: Readonly<Record<Status, string>> = {
@@ -457,5 +497,5 @@ export function renderCareerMultifactorResearchHtml(report: CareerMultifactorRep
   const missingMarkup = report.missing.length > 0
     ? `<section aria-label="아직 설명할 수 없는 부분"><h2>아직 설명할 수 없는 부분</h2><ul>${report.missing.map(reason => `<li>${e(reason)}</li>`).join('')}</ul></section>`
     : '';
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header>${readingGuideMarkup}${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${additionalMarkup}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header>${readingGuideMarkup}${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${sourcedPartialMarkup}${additionalMarkup}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
 }
