@@ -68,19 +68,27 @@ describe('three temporal menus preserve already source-bound natal interpretatio
       expect(year).toContain(evidence.ruleIds[0]!);
     }
     expect(year).toContain(escaped(result.annualMonthly.report.annual.sections[0]!.text));
-    expect(month).toContain('절입 전후 전체 풀이');
+    expect(month).toContain('다른 절입 구간의 풀이');
     const monthlyReport = result.annualMonthly.report.monthly;
     expect(monthlyReport.referenceReading.state).toBe('in_period');
     const focus = monthlyReport.referenceReading.theme!;
     const active = month.split('<h3>조회 시각에 해당하는 월운</h3>')[1]!
-      .split('<h3>절입 전후 전체 풀이</h3>')[0]!;
+      .split('<h3>다른 절입 구간의 풀이</h3>')[0]!;
     expect(active).toContain(escaped(focus.claimId));
     expect(active).toContain(escaped(focus.methodologyId));
     for (const path of focus.factPaths) expect(active).toContain(escaped(path));
     for (const section of monthlyReport.sections) {
       const kind = section.kind === 'theme' ? '절입 구간의 중심 주제' :
-        '해당 구간의 조건부 원국 충 관계';
-      expect(month).toContain(kind);
+        section.kind === 'tension' ? '해당 구간의 조건부 원국 충 관계' :
+          '해당 구간의 고전 근거 지지 육합 관계';
+      if (section.segmentId === focus.segmentId) {
+        // Active T9 meanings already appear in the current reading.
+        expect(active).toContain(escaped(section.claimId));
+      } else {
+        expect(month).toContain(kind);
+      }
+      // Each registered monthly meaning is displayed exactly once.
+      expect(month.split(escaped(section.text))).toHaveLength(2);
       expect(month).toContain(escaped(section.claimId));
       expect(month).toContain(escaped(section.methodologyId));
       for (const ruleId of section.ruleIds) expect(month).toContain(escaped(ruleId));
@@ -121,7 +129,7 @@ describe('three temporal menus preserve already source-bound natal interpretatio
     expect(focus.state).toBe('in_period');
     expect(focus.sourceBoundTensions?.length).toBeGreaterThan(0);
     const current = reading.html.split('<h3>조회 시각에 해당하는 월운</h3>')[1]!
-      .split('<h3>절입 전후 전체 풀이</h3>')[0]!;
+      .split('<h3>다른 절입 구간의 풀이</h3>')[0]!;
     expect(current).toContain('aria-label="조회 시각 절입 구간의 실제 원국 충 관계"');
     expect(current).toContain('실제 사건·길흉을 예측하지 않습니다');
     expect(current).toContain(escaped(focus.theme!.claimId));
