@@ -432,7 +432,10 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
         '선택한 달의 절입 전·후 구간만 아래에 보여줍니다.</p>';
   const sections = SEGMENTS.map(id => {
     const items = report.sections.filter(section => section.segmentId === id);
-    const cards = items.map(section => `
+    // Already shown in the active focus above, including source-bound
+    // clash and six-combination cards. Do not repeat those Korean meanings.
+    const alreadyShown = theme?.segmentId === id;
+    const cards = (alreadyShown ? [] : items).map(section => `
       <article class="card">
         <div class="label">${section.kind === 'theme' ? '이 구간의 중심 관점' :
           section.kind === 'tension' ? '함께 살펴볼 충 관계' : '출처 확인된 육합 보조 관계'}</div>
@@ -448,7 +451,9 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
     const interval = items[0]?.calculatedInterval;
     return `<section><h2>${SEGMENT_KO[id]}</h2>
       ${interval ? `<p class="muted">${kst(interval.startsAt)}부터 ${kst(interval.endsAt)} 전까지</p>` : ''}
-      ${cards || '<p>이 구간에서 보여줄 근거가 충분하지 않습니다.</p>'}</section>`;
+      ${alreadyShown
+        ? '<p>이 구간의 풀이와 근거는 위의 조회 시각 결과에서 한 번만 표시합니다.</p>'
+        : cards || '<p>이 구간에서 보여줄 근거가 충분하지 않습니다.</p>'}</section>`;
   }).join('');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
