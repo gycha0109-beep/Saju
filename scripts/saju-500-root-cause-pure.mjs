@@ -176,6 +176,41 @@ export function analyzeTemporalMeaningRepetition(rows) {
  * Required source/rule/fact records are verified, but their incidental
  * identifiers do not create extra meanings on their own.
  */
+/**
+ * Normalize only existing, source-attested natal T5 positions. A different
+ * source identifier, chart hash or date cannot manufacture a T5 difference.
+ * No T5 input here becomes a period T9 interpretation.
+ */
+function normalizeSourceBoundNatalT5(themes) {
+  const familyTenGods = {
+    PEER: ['비견','겁재'], RESOURCE: ['정인','편인'],
+    OUTPUT: ['식신','상관'], WEALTH: ['정재','편재'],
+    OFFICER: ['정관','편관'],
+  };
+  const validSourceTheme = t => {
+    if (!t || typeof t.claimType !== 'string') return false;
+    const match = /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.exec(t.claimType);
+    if (!match) return false;
+    const [family, channel] = [match[1], match[2]];
+    const key = channel === 'VISIBLE_STEMS' ? 'stem' : 'branch';
+    const slots = channel === 'VISIBLE_STEMS'
+      ? ['year','month','hour'] : ['year','month','day','hour'];
+    return Array.isArray(t.sourceIds) && t.sourceIds.length > 0 &&
+      t.sourceIds.every(id => typeof id === 'string' && id.length > 0) &&
+      Array.isArray(t.observed) && t.observed.length > 0 &&
+      t.observed.every(p => slots.some(slot =>
+        p?.factPath === 'derivedFacts.tenGods.value.' + slot + '.' + key + '.value') &&
+        familyTenGods[family].includes(p.tenGod));
+  };
+  if (!Array.isArray(themes) || themes.length === 0 ||
+      !themes.every(validSourceTheme)) return null;
+  return themes.map(t => ({
+    claimType: t.claimType,
+    positions: t.observed.map(p => [p.factPath, p.tenGod])
+      .sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
+  })).sort((a,b) => a.claimType.localeCompare(b.claimType));
+}
+
 export function analyzeTemporalConsumedT9Meaning(rows, scope) {
   if (scope !== 'annual' && scope !== 'monthly') {
     throw new TypeError('Consumed period semantics require an annual or monthly scope');
@@ -238,8 +273,17 @@ export function analyzeTemporalConsumedT9Meaning(rows, scope) {
       methodologyId:section.methodologyId,
     })).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
     const signature=JSON.stringify(actual);
+    const natalT5Evidence = normalizeSourceBoundNatalT5(row.sourceEvidence?.natalT5);
     const record={
       birth:row.birth, calculationHash:row.calculationHash, signature,
+      ...(natalT5Evidence === null ? {} : {
+        natalT5Evidence,
+        natalT5Signature: JSON.stringify(natalT5Evidence),
+        natalT5SourceBindings: row.sourceEvidence.natalT5.map(theme => ({
+          claimType: theme.claimType, sourceIds: [...theme.sourceIds],
+          observed: theme.observed.map(item => ({...item})),
+        })),
+      }),
       selectedSemantics:actual, legacyMeaningKey:row.meaningKey,
       exactKey:row.exactKey, actualKoreanText:row.text,
       sourceBindings:sections.map(section => ({
@@ -329,6 +373,45 @@ export function analyzeTemporalConsumedT9Meaning(rows, scope) {
       });
     }
   }
+  // Compare actual chart pairs whose selected T9 meanings are identical while
+  // source-backed natal T5 positions differ. This is a bounded audit of unused
+  // context, NOT an assertion that T5 must alter an annual/monthly T9 meaning.
+  let withValidatedNatalT5 = 0;
+  const sameT9DifferentNatalT5Groups = [];
+  for (const members of signatures.values()) {
+    const qualified = members.filter(m => m.natalT5Signature !== undefined &&
+      typeof m.calculationHash === 'string' && m.calculationHash.length > 0);
+    withValidatedNatalT5 += qualified.length;
+    const distinctNatal = new Set(qualified.map(m => m.natalT5Signature));
+    if (distinctNatal.size < 2) continue;
+    const first = qualified[0];
+    const second = qualified.find(m =>
+      m.calculationHash !== first.calculationHash &&
+      m.natalT5Signature !== first.natalT5Signature);
+    if (!second) continue;
+    const keys = m => new Set(m.natalT5Evidence.flatMap(t =>
+      t.positions.map(position => JSON.stringify([t.claimType, ...position]))));
+    const firstKeys = keys(first), secondKeys = keys(second);
+    sameT9DifferentNatalT5Groups.push({
+      selectedT9: first.selectedSemantics,
+      caseCount: qualified.length,
+      distinctNatalT5Signatures: distinctNatal.size,
+      sameKoreanText: first.exactKey === second.exactKey,
+      differentT5Observations: {
+        firstOnly: [...firstKeys].filter(k => !secondKeys.has(k)).map(k => JSON.parse(k)),
+        secondOnly: [...secondKeys].filter(k => !firstKeys.has(k)).map(k => JSON.parse(k)),
+      },
+      pair: [first, second].map(m => ({
+        birth: m.birth,
+        calculationHash: m.calculationHash,
+        legacyMeaningKey: m.legacyMeaningKey,
+        actualKoreanText: m.actualKoreanText,
+        natalT5Evidence: m.natalT5Evidence,
+        natalT5SourceBindings: m.natalT5SourceBindings,
+        selectedT9SourceBindings: m.sourceBindings,
+      })),
+    });
+  }
   return {
     scope,
     assessed:rows.length-unassessed,
@@ -344,6 +427,13 @@ export function analyzeTemporalConsumedT9Meaning(rows, scope) {
     displaySplits,
     actualEvidencePatternCount:actualEvidencePatterns.length,
     actualEvidencePatterns,
+    sameT9DifferentNatalT5: {
+      assessedWithValidatedNatalT5: withValidatedNatalT5,
+      groupCount: sameT9DifferentNatalT5Groups.length,
+      casesInGroups: sameT9DifferentNatalT5Groups.reduce((n,g) => n + g.caseCount, 0),
+      examples: sameT9DifferentNatalT5Groups.slice(0, 12),
+      qualification: 'Same selected T9 interpretation and different sourced natal T5 observations do not alone require different annual/monthly conclusions. The pair preserves actual Korean text and T9/T5 evidence for methodology review; no new period claim is generated.',
+    },
     sameMeaningPairs,
     contrastingMeaningPairs,
     examples:[...signatures.values()].slice(0,5).map(members=>({
@@ -439,42 +529,14 @@ export function analyzeTemporalStructuralEvidenceVariation(rows) {
  * chart IDs, birth dates, raw strings, or invented variability.
  */
 export function analyzeTemporalNatalT5Variation(rows) {
-  const familyTenGods = {
-    PEER: ['비견','겁재'], RESOURCE: ['정인','편인'],
-    OUTPUT: ['식신','상관'], WEALTH: ['정재','편재'],
-    OFFICER: ['정관','편관'],
-  };
-  const validSourceTheme = t => {
-    if (!t || typeof t.claimType !== 'string') return false;
-    const match = /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.exec(t.claimType);
-    if (!match) return false;
-    const [family, channel] = [match[1], match[2]];
-    const key = channel === 'VISIBLE_STEMS' ? 'stem' : 'branch';
-    const allowedSlots = channel === 'VISIBLE_STEMS'
-      ? ['year','month','hour'] : ['year','month','day','hour'];
-    return Array.isArray(t.sourceIds) && t.sourceIds.length > 0 &&
-      t.sourceIds.every(id => typeof id === 'string' && id.length > 0) &&
-      Array.isArray(t.observed) && t.observed.length > 0 &&
-      t.observed.every(p => allowedSlots.some(slot =>
-        p?.factPath === 'derivedFacts.tenGods.value.' + slot + '.' + key + '.value') &&
-        familyTenGods[family].includes(p.tenGod));
-  };
   const byMeaning = new Map();
   let unassessed = 0;
   for (const row of rows) {
-    const themes = row.sourceEvidence?.natalT5;
-    if (typeof row.meaningKey !== 'string' || !Array.isArray(themes) ||
-        themes.length === 0 ||
-        !themes.every(validSourceTheme)) {
+    const observed = normalizeSourceBoundNatalT5(row.sourceEvidence?.natalT5);
+    if (typeof row.meaningKey !== 'string' || observed === null) {
       unassessed++;
       continue;
     }
-    const observed = themes.map(t => ({
-      claimType: t.claimType,
-      positions: [...t.observed]
-        .map(p => [p.factPath, p.tenGod])
-        .sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
-    })).sort((a,b) => a.claimType.localeCompare(b.claimType));
     const signature = JSON.stringify(observed);
     const group = byMeaning.get(row.meaningKey) ?? [];
     group.push({birth:row.birth, calculationHash:row.calculationHash, signature, observed});
