@@ -11,7 +11,7 @@ import { createWealthNatalMultifactorRegistry } from '../dist/research/wealth-na
 import { createBusinessNatalMultifactorRegistry } from '../dist/research/business-natal-multifactor-candidate.js';
 import { createRelationshipNatalMultifactorRegistry } from '../dist/research/relationship-natal-multifactor-candidate.js';
 import { buildGeneralNatalMultifactorReport } from '../dist/preview/general-natal-multifactor-report.js';
-import { buildCareerMultifactorResearchReport } from '../dist/preview/career-natal-multifactor-report.js';
+import { buildCareerMultifactorResearchReport, renderCareerMultifactorResearchHtml } from '../dist/preview/career-natal-multifactor-report.js';
 import { buildWealthNatalMultifactorReport } from '../dist/preview/wealth-natal-multifactor-report.js';
 import { buildBusinessNatalMultifactorReport } from '../dist/preview/business-natal-multifactor-report.js';
 import { buildRelationshipNatalMultifactorReport } from '../dist/preview/relationship-natal-multifactor-report.js';
@@ -286,6 +286,7 @@ export function runFiveHundredSajuAudit() {
   const otherNatalT5PartialCases = {
     career: [], relationship: [], business: [],
   };
+  const careerStandaloneT5Cases = [];
   const wealthConsumerCases = [];
   const wealthCrossOfficerCases = [];
   const wealthCrossResourceCases = [];
@@ -545,6 +546,28 @@ export function runFiveHundredSajuAudit() {
             themeCount: context.themes.length,
             originalT5ClaimIds: context.themes.map(theme => theme.claimId),
           });
+          if (domain === 'career') {
+            const standalone = renderCareerMultifactorResearchHtml(report);
+            if (!standalone.includes(
+                  'aria-label="직업운 종합풀이 보류 시 원국 십신 부분 설명"') ||
+                !standalone.includes('직업운 종합풀이 아님') ||
+                !standalone.includes('출처로 뒷받침되는 종합 해석을 구성할 수 없습니다') ||
+                context.themes.some(theme =>
+                  !standalone.includes(escapedHtmlText(theme.summary)) ||
+                  !standalone.includes(escapedHtmlText(theme.claimId)) ||
+                  !standalone.includes(escapedHtmlText(theme.claimType)) ||
+                  !standalone.includes(escapedHtmlText(theme.ruleIds[0])) ||
+                  !standalone.includes(escapedHtmlText(theme.methodologyId)) ||
+                  !standalone.includes(escapedHtmlText(theme.sourceIds[0])) ||
+                  !standalone.includes(escapedHtmlText(theme.observedPositions[0])) ||
+                  !standalone.includes(escapedHtmlText(theme.observedFactPaths[0])))) {
+              throw new Error('Career standalone source-bound T5 partial reading lost its original calculation or rule provenance');
+            }
+            careerStandaloneT5Cases.push({
+              birth: stamp, calculationHash: chartKey,
+              themes: context.themes.length,
+            });
+          }
         }
       }
       // The five-domain HTML can only be checked after all five reports exist.
@@ -908,6 +931,12 @@ export function runFiveHundredSajuAudit() {
       version: ROOT_CAUSE_AUDIT_VERSION,
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
       otherNatalMissingReadings: summarizeMissingNatalCauses(otherNatalMissingCases),
+      careerStandaloneT5Panel: {
+        examined: COUNT,
+        verifiedEmptyT8WithOriginalT5: careerStandaloneT5Cases.length,
+        examples: careerStandaloneT5Cases.slice(0, 4),
+        noCareerT8Promotion: true,
+      },
       otherNatalSourceBoundT5Panels: {
         examined: COUNT,
         counts: Object.fromEntries(Object.entries(otherNatalT5PartialCases)
@@ -1042,6 +1071,8 @@ export function runFiveHundredSajuAudit() {
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
     otherNatalT5OnlyVisibleByDomain:
       result.rootCauseDiagnostics.otherNatalSourceBoundT5Panels.counts,
+    careerStandaloneOriginalT5Visible:
+      result.rootCauseDiagnostics.careerStandaloneT5Panel.verifiedEmptyT8WithOriginalT5,
     otherNatalEmptyByDomain: Object.fromEntries(
       Object.entries(result.rootCauseDiagnostics.otherNatalMissingReadings.byDomain)
         .map(([domain, item]) => [domain, {
@@ -1126,6 +1157,9 @@ export function runFiveHundredSajuAudit() {
         cases.length !==
           result.rootCauseDiagnostics.otherNatalMissingReadings.byDomain[domain]
             .missingCaseCount) ||
+      careerStandaloneT5Cases.length !==
+        result.rootCauseDiagnostics.otherNatalMissingReadings.byDomain.career
+          .missingCaseCount ||
       Object.entries({
         general: '전체 사주', career: '직업·커리어',
         relationship: '연애·관계', business: '사업',
