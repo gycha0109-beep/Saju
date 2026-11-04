@@ -27,6 +27,71 @@ function run(month: number, day: number, hour = 12) {
   return { chart, execution, report: buildCareerMultifactorResearchReport(chart, execution, registry) };
 }
 
+describe('Career standalone research page when its source-qualified T8 is missing', () => {
+  const missingCareerBirth = {
+    calendarType: 'solar' as const,
+    date: { year: 1955, month: 10, day: 31 },
+    time: { known: true as const, hour: 19, minute: 35 },
+    sexForTraditionalCalculation: 'unspecified' as const,
+  };
+  const read = () => {
+    const chart = calculateCanonicalSajuSnapshot(
+      missingCareerBirth, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW },
+    );
+    const execution = runInterpretation(chart, registry, { now: NOW });
+    return buildCareerMultifactorResearchReport(chart, execution, registry);
+  };
+  it('shows actual pre-existing T5 Korean text and all original sources without promoting Career', () => {
+    const report = read();
+    expect(report.state).toBe('insufficient');
+    expect(report.sections).toHaveLength(0);
+    expect(report.readingGuide).toBeUndefined();
+    const context = report.availableThemeContext!;
+    expect(context.wholeChartSynthesisAuthorized).toBe(false);
+    expect(context.themes.length).toBeGreaterThan(0);
+    const html = renderCareerMultifactorResearchHtml(report);
+    expect(html).toContain('aria-label="직업운 종합풀이 보류 시 원국 십신 부분 설명"');
+    expect(html).toContain('직업운 종합풀이 아님');
+    expect(html).toContain('출처로 뒷받침되는 종합 해석을 구성할 수 없습니다');
+    const escape = (s: string) => s.replace(/[&<>"']/gu, character => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[character]!);
+    for (const theme of context.themes) {
+      expect(html).toContain(escape(theme.summary));
+      expect(html).toContain(escape(theme.headline));
+      expect(html).toContain(escape(theme.claimId));
+      expect(html).toContain(escape(theme.claimType));
+      expect(html).toContain(escape(theme.observedPositions[0]!));
+      expect(html).toContain(escape(theme.observedFactPaths[0]!));
+      expect(html).toContain(escape(theme.ruleIds[0]!));
+      expect(html).toContain(escape(theme.methodologyId));
+      expect(html).toContain(escape(theme.sourceIds[0]!));
+    }
+    expect(renderCareerMultifactorResearchHtml(read())).toBe(html);
+    expect(report.researchOnly).toBe(true);
+    expect(report.usefulComplete).toBe(false);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+  });
+  it('keeps unresolved-hour T5 unavailable and refuses forged standalone source evidence', () => {
+    const unknown = sample(3, 10, null);
+    const execution = runInterpretation(unknown, registry, { now: NOW });
+    const held = buildCareerMultifactorResearchReport(unknown, execution, registry);
+    expect(held.state).toBe('insufficient');
+    expect(held.availableThemeContext).toBeUndefined();
+    expect(renderCareerMultifactorResearchHtml(held)).not.toContain(
+      'aria-label="직업운 종합풀이 보류 시 원국 십신 부분 설명"');
+    const report = read();
+    const context = report.availableThemeContext!;
+    const forged = { ...report, availableThemeContext: {
+      ...context,
+      themes: [{ ...context.themes[0]!, sourceIds: [] }, ...context.themes.slice(1)],
+    } };
+    expect(() => renderCareerMultifactorResearchHtml(forged)).toThrow(
+      'Career standalone preview cannot promote unsourced T5 to domain synthesis');
+  });
+});
+
 describe('source-bounded Career two-T5 → T8 → consumer Korean research vertical', () => {
   it('keeps legacy single-Ten-God Career T8 out of the new pack and never enables commerce', () => {
     expect(CAREER_MULTIFACTOR_PACK.status).toBe('research');
