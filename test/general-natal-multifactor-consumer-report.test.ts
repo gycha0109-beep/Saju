@@ -68,7 +68,17 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
         expect(s.observedPositions).toHaveLength(s.observedFactPaths.length);
         expect(s.paragraph).toContain('이 원국에서 확인된 근거는');
         expect(s.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
-        expect(s.paragraph).toMatch(/같은 (천간|지지 대표 십신)에서 관측된/u);
+        const observedChannel = s.channel === 'visible_stems'
+          ? '천간' : '지지 대표 십신';
+        expect(s.paragraph).toContain(
+          '서로 다른 원국 위치에서 확인된 십신 계열은 모두 ' +
+          observedChannel + '이라는 동일 관측 범위에 속합니다.');
+        expect(s.paragraph).not.toMatch(/같은 (천간|지지 대표 십신)에서 관측된/u);
+        // The separate calculated positions, not one imaginary shared stem
+        // or branch, must justify the original source-bound T8 synthesis.
+        expect(new Set(s.observedFactPaths).size).toBeGreaterThanOrEqual(2);
+        expect(s.observedFactPaths.every(path => path.includes(
+          observedChannel === '천간' ? '.stem.value' : '.branch.value'))).toBe(true);
         expect(s.paragraph).toContain(s.headline);
         expect(s.observedPositions.every(p=>s.paragraph.includes(p))).toBe(true);
         expect(s.observedFactPaths.every(path =>
