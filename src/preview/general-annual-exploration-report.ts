@@ -86,13 +86,18 @@ function profileCopy(claimType: string, key: string): { headline: string; summar
   if (profiles.length !== 1) {
     throw new Error(`Expected exactly one annual narrative profile for ${key}.`);
   }
-  const templates = profiles[0]!.templates;
+  const profile = profiles[0]!;
+  const templates = profile.templates;
   const headline = templates?.find((template) => template.templateKey === 'headline' && template.language === 'ko')?.text;
   const summary = templates?.find((template) => template.templateKey === 'summary' && template.language === 'ko')?.text;
   if (!headline || !summary) {
     throw new Error(`Annual narrative profile ${key} is missing consumer copy.`);
   }
-  return { headline, summary, profileId: profiles[0]!.profileId };
+  return {
+    headline,
+    summary: profile.mandatoryQualifier ? `${summary} ${profile.mandatoryQualifier}` : summary,
+    profileId: profile.profileId,
+  };
 }
 
 /**
