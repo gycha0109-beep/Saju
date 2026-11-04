@@ -1,3 +1,7 @@
+import {
+  buildNatalExistingT5SourceContext,
+  type NatalExistingT5SourceContext,
+} from './natal-existing-t5-source-context.js';
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
 import { selectBestNatalCoreWithinPriorityAxis } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
@@ -45,6 +49,8 @@ export interface BusinessNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly BusinessNatalMultifactorSection[];
+  /** Existing source-owned T5 copy only, never a substitute for missing domain T8. */
+  availableThemeContext?: NatalExistingT5SourceContext;
   readingGuide?: BusinessNatalReadingGuide;
   missing: readonly string[];
   limitations: readonly string[];
@@ -333,6 +339,11 @@ export function buildBusinessNatalMultifactorReport(
   const readingGuide = buildBusinessNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
+  // Do not hide actual source-bound T5 observations when no domain T8
+  // combination exists. These are chart-wide facts, NOT domain conclusions.
+  const availableThemeContext = state === 'insufficient'
+    ? buildNatalExistingT5SourceContext(snapshot, execution, registry)
+    : undefined;
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 사업의 다중 근거 T8 해석은 보류합니다.');
   }
@@ -346,6 +357,7 @@ export function buildBusinessNatalMultifactorReport(
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(availableThemeContext === undefined ? {} : { availableThemeContext }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],
