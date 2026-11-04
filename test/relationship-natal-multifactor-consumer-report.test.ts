@@ -170,8 +170,18 @@ describe('actual-source Relationship natal T5→T8→Korean five-domain report',
       }
       if(report.state !== 'complete') {
         explainedPartials++;
-        expect(report.missing.join(' ')).toMatch(/추가 해석 축 [1-3]개/u);
-        expect(report.missing.join(' ')).toContain('이 명식에서 확인된 해석 축');
+        const missing = report.missing.join(' ');
+        expect(missing).toContain('이 명식에서 확인된 해석 축');
+        const core = report.sections[0]?.axis !== 'coordination' &&
+          report.sections.length > 0;
+        if (core) {
+          expect(missing).toMatch(/중심 결론과 구별되는 추가 해석 축 [1-2]개가 부족합니다/u);
+          expect(missing).not.toContain('출처 있는 중심 복합 해석 근거가 먼저 필요합니다');
+        } else {
+          expect(missing).toContain('출처 있는 중심 복합 해석 근거가 먼저 필요합니다');
+          expect(missing).not.toMatch(/추가 해석 축 [1-3]개/u);
+          expect(missing).toContain('중심 결론이나 독립 보조 축 수를 대신하지 않습니다');
+        }
       }
       expect(report.researchOnly).toBe(true);
       expect(report.mayPublish).toBe(false);
@@ -201,6 +211,9 @@ describe('actual-source Relationship natal T5→T8→Korean five-domain report',
         expect(report.sections[0]?.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
         expect(report.missing.join(' ')).toContain('중심 해석 근거가 없어');
+        expect(report.missing.join(' ')).toContain('출처 있는 중심 복합 해석 근거가 먼저 필요합니다');
+        expect(report.missing.join(' ')).toContain('조율(천간');
+        expect(report.missing.join(' ')).not.toMatch(/추가 해석 축 [1-3]개/u);
         expect(report.researchOnly).toBe(true);
         expect(report.usefulComplete).toBe(false);
         expect(report.mayPublish).toBe(false);
