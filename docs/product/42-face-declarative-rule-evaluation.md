@@ -491,3 +491,8 @@ Architecture Check:
   relative-order function, source validator and rule/pack identities.
   No new stage, methodology, alias for a measured feature, fallback classifier,
   normalization path, DB contract or second rule engine is introduced.
+
+
+## Whole-face scope / current face-specific roadmap
+
+The active face-reading coverage roadmap is [명하 관상 엔진 — 전체 관상 범위 구현 로드맵](face-reading-full-coverage-roadmap.md). It maps the original FR-0~FR-11 stages to the whole-face observation inventory, source-specific traditional region systems, feature-to-rule bindings, compound interpretation, and gated product surfaces. This extends planning scope only; no measurement, claim, Character, or Production authority is promoted by the roadmap.
