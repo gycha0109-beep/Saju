@@ -5,6 +5,7 @@
  *
  * A selected T8 is not a prediction, product readiness or Official authority.
  */
+import process from 'node:process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { FIXED_500_BASELINE } from './saju-500-baseline-comparison.mjs';
