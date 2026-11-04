@@ -163,6 +163,61 @@ describe('temporal evidence variation is not new semantic diversity', () => {
     expect(analyzeTemporalMeaningRepetition(rows).distinctMeaningProfileCount).toBe(2);
   });
 
+  it('compares sourced six-combination facts, not just clashes, without inventing temporal meaning', () => {
+    const combination = (natalBranch, annualBranch, sourceId = 'SRC-T0-XUANZE-YAOLUE-UPPER') => ({
+      kind: 'support',
+      relatedPillar: 'day',
+      observedCombination: {
+        natalBranch, annualBranch, relation: 'six_combination', sourceId,
+      },
+    });
+    const rows = [
+      base('A', 'shared', [combination('자', '축')]),
+      base('B', 'shared', [combination('인', '해')]),
+      base('C', 'shared', [combination('자', '축')]),
+      base('D', 'other', [clash('자', '오')]),
+    ];
+    const result = analyzeTemporalStructuralEvidenceVariation(rows);
+    expect(result.assessed).toBe(4);
+    expect(result.unassessed).toBe(0);
+    expect(result.repeatedMeaningProfilesWithDifferentVerifiedRelations).toBe(1);
+    expect(result.groups[0].caseCount).toBe(3);
+    expect(result.groups[0].distinctStructuralSignatures).toBe(2);
+    expect(result.groups[0].examples[0].observedRelations[0].kind)
+      .toBe('verified_natal_period_branch_six_combination');
+    expect(result.qualification).toContain('do not authorize new temporal interpretive meanings');
+    expect(analyzeTemporalStructuralEvidenceVariation([
+      base('A', 'shared', [combination('자', '축')]),
+      base('B', 'shared', [combination('자', '축')]),
+    ]).repeatedMeaningProfilesWithDifferentVerifiedRelations).toBe(0);
+  });
+
+  it('rejects unsupported or contradictory six-combination evidence from the audit', () => {
+    const valid = base('A', 'shared', [{
+      kind: 'support', segmentId: 'after_jeol', relatedPillar: 'day',
+      observedCombination: {
+        natalBranch: '자', monthlyBranch: '축', relation: 'six_combination',
+        sourceId: 'SRC-T0-XUANZE-YAOLUE-UPPER',
+      },
+    }]);
+    const invalid = [
+      { kind: 'support', relatedPillar: 'day' },
+      { kind: 'support', relatedPillar: 'day',
+        observedCombination: { natalBranch: '자', monthlyBranch: '축',
+          relation: 'clash', sourceId: 'SRC-T0-XUANZE-YAOLUE-UPPER' } },
+      { kind: 'support', relatedPillar: 'day',
+        observedCombination: { natalBranch: '자', monthlyBranch: '축',
+          relation: 'six_combination', sourceId: 'missing-classical-evidence' } },
+    ];
+    const result = analyzeTemporalStructuralEvidenceVariation([
+      valid, ...invalid.map((section, index) =>
+        base('invalid-' + index, 'shared', [section])),
+    ]);
+    expect(result.assessed).toBe(1);
+    expect(result.unassessed).toBe(3);
+    expect(result.repeatedMeaningProfilesWithDifferentVerifiedRelations).toBe(0);
+  });
+
   it('does not treat chart hashes, dates or Claim IDs alone as different structural evidence', () => {
     const rows = [
       base('A', 'same', [clash('자', '오')]),

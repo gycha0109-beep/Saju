@@ -367,21 +367,29 @@ export function analyzeTemporalStructuralEvidenceVariation(rows) {
     const relationships = [];
     let valid = true;
     for (const section of row.sourceEvidence.sections) {
-      if (section.kind !== 'tension') continue;
-      const clash = section.observedClash;
-      const timeBranch = clash?.annualBranch ?? clash?.monthlyBranch;
-      if (clash?.relation !== 'clash' ||
-          typeof clash.natalBranch !== 'string' ||
+      if (section.kind !== 'tension' && section.kind !== 'support') continue;
+      const relation = section.kind === 'support'
+        ? section.observedCombination : section.observedClash;
+      const timeBranch = relation?.annualBranch ?? relation?.monthlyBranch;
+      if (relation?.relation !==
+            (section.kind === 'support' ? 'six_combination' : 'clash') ||
+          typeof relation.natalBranch !== 'string' ||
+          !relation.natalBranch ||
           typeof timeBranch !== 'string' ||
-          typeof section.relatedPillar !== 'string') {
+          !timeBranch ||
+          !['year', 'month', 'day', 'hour'].includes(section.relatedPillar) ||
+          (section.kind === 'support' &&
+            relation.sourceId !== 'SRC-T0-XUANZE-YAOLUE-UPPER')) {
         valid = false;
         break;
       }
       relationships.push({
-        kind: 'verified_natal_period_branch_clash',
+        kind: section.kind === 'support'
+          ? 'verified_natal_period_branch_six_combination'
+          : 'verified_natal_period_branch_clash',
         segmentId: section.segmentId ?? null,
         natalPillar: section.relatedPillar,
-        natalBranch: clash.natalBranch,
+        natalBranch: relation.natalBranch,
         periodBranch: timeBranch,
       });
     }
@@ -419,7 +427,7 @@ export function analyzeTemporalStructuralEvidenceVariation(rows) {
     repeatedMeaningProfilesWithDifferentVerifiedRelations: groups.length,
     casesInSuchProfiles: groups.reduce((n,g) => n+g.caseCount,0),
     groups,
-    qualification: 'Structural relation differences are calculation context only; not newly authorized interpretive meanings',
+    qualification: 'Only actually selected clash/six-combination relations are compared; structural fact differences do not authorize new temporal interpretive meanings',
   };
 }
 

@@ -181,6 +181,7 @@ function temporalEntries(result, natalT5) {
       calculatedFactPaths: [...s.calculationFactPaths],
       relatedPillar: s.relatedPillar ?? null,
       observedClash: s.observedClash ?? null,
+      observedCombination: s.observedCombination ?? null,
     })),
   };
   m.sourceEvidence = {
@@ -211,6 +212,7 @@ function temporalEntries(result, natalT5) {
       factPaths: [...s.factPaths],
       relatedPillar: s.relatedPillar ?? null,
       observedClash: s.observedClash ?? null,
+      observedCombination: s.observedCombination ?? null,
     })),
   };
   const l = entry(
