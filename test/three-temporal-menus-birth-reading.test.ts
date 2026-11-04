@@ -142,8 +142,30 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
     expect(missingTime.lifeStage.report.coverage).toBe('unavailable');
     expect(missingTime.html).toContain('대운 계산');
     expect(missingTime.annualMonthly.report.annual.unavailablePillars).toContain('hour');
+    expect(missingTime.annualMonthly.report.monthly.referenceReading.state).toBe('in_period');
+    expect(missingTime.annualMonthly.report.monthly.referenceReading.unavailableNatalPillars)
+      .toContain('hour');
+    const annualPanel = missingTime.html.split('<section id="annual"')[1]!
+      .split('<section id="monthly"')[0]!;
+    const monthlyPanel = missingTime.html.split('<section id="monthly"')[1]!
+      .split('<section id="life-stage"')[0]!;
+    expect(annualPanel).toContain('aria-label="올해 미확정 원국 충·육합 관계"');
+    expect(annualPanel).toContain('시주 지지와 올해 연운 사이의 충·육합 관계는');
+    expect(monthlyPanel).toContain('aria-label="조회 절입 구간의 미확정 원국 충·육합 관계"');
+    expect(monthlyPanel).toContain('시주 지지와 조회 절입 구간의 월운 충·육합 관계는');
+    expect(annualPanel).toContain('충이나 육합이 없다는 결론이 아닙니다');
+    expect(monthlyPanel).toContain('충이나 육합이 없다는 결론이 아닙니다');
     expect(missingTime.annualMonthly.report.monthly.sections
       .some(section => section.relatedPillar === 'hour')).toBe(false);
+    // An inapplicable comparison year/month must not carry current-period
+    // uncertainty warnings as if those selected-period T9 claims were active.
+    const outsideUnknown = buildThreeTemporalMenusBirthReading(
+      { ...BIRTH, time: { known: false } }, target(2030, 6),
+    );
+    expect(outsideUnknown.html).not.toContain('aria-label="올해 미확정 원국 충·육합 관계"');
+    expect(outsideUnknown.html).not.toContain('aria-label="조회 절입 구간의 미확정 원국 충·육합 관계"');
+    expect(buildThreeTemporalMenusBirthReading(BIRTH, target()).html)
+      .not.toContain('aria-label="조회 절입 구간의 미확정 원국 충·육합 관계"');
     expect(missingTime.maySell).toBe(false);
     expect(() => buildThreeTemporalMenusBirthReading(BIRTH, target(2026, 13))).toThrow();
     expect(() => buildThreeTemporalMenusBirthReading(BIRTH,
