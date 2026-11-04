@@ -53,6 +53,98 @@ function reports(snapshot: ReturnType<typeof sample>): NatalFiveDomainMultifacto
   };
 }
 
+describe('source-owned T5 observations when Career/Business/Relationship synthesis is absent', () => {
+  const sourceOnly = [
+    { domain: 'career' as const, year: 1955, month: 10, day: 31, hour: 19, minute: 35 },
+    { domain: 'business' as const, year: 2004, month: 8, day: 10, hour: 7, minute: 55 },
+    { domain: 'relationship' as const, year: 1975, month: 3, day: 26, hour: 1, minute: 34 },
+  ];
+  for (const birth of sourceOnly) {
+    it('preserves original T5 without a forged ' + birth.domain + ' T8', () => {
+      const snapshot = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar',
+        date: { year: birth.year, month: birth.month, day: birth.day },
+        time: { known: true, hour: birth.hour, minute: birth.minute },
+        sexForTraditionalCalculation: 'unspecified',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const all = reports(snapshot);
+      const report = all[birth.domain];
+      expect(report.state).toBe('insufficient');
+      expect(report.sections).toHaveLength(0);
+      expect(report.readingGuide).toBeUndefined();
+      const context = report.availableThemeContext;
+      expect(context).toBeDefined();
+      expect(context?.wholeChartSynthesisAuthorized).toBe(false);
+      expect(context?.themes.length).toBeGreaterThan(0);
+      const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, all);
+      const card = html.split('<h2 id="domain-' + birth.domain + '">')[1]!
+        .split('</article>')[0]!;
+      const escaped = (str: string) => str.replace(/[&<>"']/gu, ch => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
+      })[ch]!);
+      expect(card).toContain('aria-label="종합풀이 보류 시 기존 십신 부분 해석"');
+      expect(card).toContain('해당 분야의 종합 해석 아님');
+      expect(card).toContain('풀이 보류 · 근거 부족');
+      expect(card).not.toContain('연구용 최소 근거 충족');
+      for (const theme of context!.themes) {
+        expect(card).toContain(escaped(theme.summary));
+        expect(card).toContain(escaped(theme.headline));
+        expect(card).toContain(escaped(theme.observedPositions[0]!));
+        expect(card).toContain(escaped(theme.observedFactPaths[0]!));
+        expect(card).toContain(escaped(theme.claimId));
+        expect(card).toContain(escaped(theme.ruleIds[0]!));
+        expect(card).toContain(escaped(theme.methodologyId));
+        expect(card).toContain(escaped(theme.sourceIds[0]!));
+      }
+      const overview = html.split('</nav>')[0]!;
+      expect(overview).toContain(escaped(context!.themes[0]!.summary));
+      expect(report.researchOnly).toBe(true);
+      expect(report.usefulComplete).toBe(false);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+      expect(renderNatalFiveDomainMultifactorResearchHtml(snapshot, all)).toBe(html);
+    });
+  }
+  it('does not invent source T5 interpretations when the original Ten Gods are unresolved', () => {
+    const snapshot = sample(3, 10, null);
+    const all = reports(snapshot);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, all);
+    for (const domain of ['career', 'business', 'relationship'] as const) {
+      expect(all[domain].state).toBe('insufficient');
+      expect(all[domain].availableThemeContext).toBeUndefined();
+      const card = html.split('<h2 id="domain-' + domain + '">')[1]!
+        .split('</article>')[0]!;
+      expect(card).not.toContain('aria-label="종합풀이 보류 시 기존 십신 부분 해석"');
+    }
+  });
+  it('rejects an unregistered T5 source list in the combined reader', () => {
+    const snapshot = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar', date: { year: 1955, month: 10, day: 31 },
+      time: { known: true, hour: 19, minute: 35 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const all = reports(snapshot);
+    const career = all.career;
+    const context = career.availableThemeContext!;
+    expect(context.themes.length).toBeGreaterThan(0);
+    const forged = {
+      ...all,
+      career: {
+        ...career,
+        availableThemeContext: {
+          ...context,
+          themes: [
+            { ...context.themes[0]!, sourceIds: [] },
+            ...context.themes.slice(1),
+          ],
+        },
+      },
+    };
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(snapshot, forged))
+      .toThrow('Other natal T5 explanation lost its original registered meaning or facts');
+  });
+});
+
 describe('same-chart five-domain multifactor Korean research reading', () => {
   it('keeps both source-bound Wealth readings after independent cross-channel support is added', () => {
     const examples = [
