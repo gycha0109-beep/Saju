@@ -346,7 +346,7 @@ export function buildTemporalResearchMenuReadings(
         currentSupports,
         unavailableNatalPillars: [...unavailable],
         message: '조회 시각에 해당하는 절입 구간의 기존 T9 연구 풀이입니다. 다른 구간의 문구는 현재 풀이가 아닙니다.' +
-          (unavailable.length ? ' 원국의 일부 기둥 관계는 미확정이므로 충이 없다고 판단하지 않습니다.' : ''),
+          (unavailable.length ? ' 원국의 일부 기둥 관계는 미확정이므로 충·육합 관계가 없다고 판단하지 않습니다.' : ''),
       };
     } else if (reference.state === 'insufficient_evidence') {
       if (!reference.segmentId || reference.theme !== undefined) {
