@@ -201,7 +201,8 @@ export function diagnoseMissingNatalReading(snapshot, execution, registry, repor
     claim.snapshotId === snapshot.snapshotId && claim.scenarioRef === undefined);
   const composition = buildReadingCompositionEvidence(snapshot, execution, registry, {
     requestId: 'saju-500-' + domain + '-empty-root-cause',
-    intent: {domain, temporalScope: 'natal'},
+    intent: {domain, temporalScope: 'natal',
+      ...(domain === 'relationship' ? {relationshipScope: 'general'} : {})},
   });
   const selectedIds = new Set(composition.selection.selectedClaimIds);
   const selectedT8 = activeT8.filter(claim => selectedIds.has(claim.claimId));
