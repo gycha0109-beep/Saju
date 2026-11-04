@@ -58,6 +58,7 @@ describe('Career standalone research page when its source-qualified T8 is missin
     })[character]!);
     for (const theme of context.themes) {
       expect(html).toContain(escape(theme.summary));
+      expect(html.split(escape(theme.summary))).toHaveLength(2);
       expect(html).toContain(escape(theme.headline));
       expect(html).toContain(escape(theme.claimId));
       expect(html).toContain(escape(theme.claimType));
