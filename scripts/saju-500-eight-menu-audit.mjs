@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import process from 'node:process';
 import { writeFileSync } from 'node:fs';
+import { compareFixedSaju500Baseline } from './saju-500-baseline-comparison.mjs';
 import { calculateCanonicalSajuSnapshot } from '../dist/calculation/calculation-engine.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
@@ -959,8 +960,20 @@ export function runFiveHundredSajuAudit() {
     interpretationCaveat:'Natal withReadableText counts selected source-bound T8 sections, not bounded General/Wealth T5-only partial explanations. General and Wealth T5 are reported separately without upgrading T8 completion. Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
     permissions:{mayPublish:false,maySell:false,mayCallOfficial:false},
   };
+  result.beforeAfterComparison = compareFixedSaju500Baseline(result);
   const outfile=process.argv[2];
   if(outfile) writeFileSync(outfile,JSON.stringify(result,null,2)+'\n','utf8');
+  process.stdout.write('SAJU500_BASELINE_COMPARISON '+JSON.stringify({
+    baselineRunId:result.beforeAfterComparison.baseline.runId,
+    wealthT8Before:result.beforeAfterComparison.menus['재물'].selectedReadingTextCases.before,
+    wealthT8After:result.beforeAfterComparison.menus['재물'].selectedReadingTextCases.after,
+    wealthRemainingWithoutT8:result.beforeAfterComparison.menus['재물'].withoutSelectedReadingTextCases.after,
+    annualExactTextBefore:result.beforeAfterComparison.menus['올해'].distinctExactKoreanTexts.before,
+    annualExactTextAfter:result.beforeAfterComparison.menus['올해'].distinctExactKoreanTexts.after,
+    monthlyExactTextBefore:result.beforeAfterComparison.menus['이번 달'].distinctExactKoreanTexts.before,
+    monthlyExactTextAfter:result.beforeAfterComparison.menus['이번 달'].distinctExactKoreanTexts.after,
+    researchOnly:true
+  })+'\n');
   process.stdout.write('SAJU500_ROOT_CAUSE_SUMMARY '+JSON.stringify({
     generalWithoutT8: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8,
     generalNoT8WithSourcedT5: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only,

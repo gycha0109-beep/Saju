@@ -505,3 +505,51 @@ describe('executed annual/monthly T9 meaning is not a changed date or generic pr
   });
 });
 
+
+
+import { compareFixedSaju500Baseline, FIXED_500_BASELINE }
+  from '../scripts/saju-500-baseline-comparison.mjs';
+
+describe('fixed original 500-birth audit comparison', () => {
+  const example = () => ({
+    seed:FIXED_500_BASELINE.seed,spec:FIXED_500_BASELINE.spec,
+    count:500,attempted:500,uniqueBirthDateTimes:500,
+    uniqueCalculationHashes:500,failedCases:0,
+    menuResults:Object.fromEntries(Object.entries(FIXED_500_BASELINE.menuResults)
+      .map(([name,old])=>[name,{
+        generated:500,withReadableText:old.readable,
+        withoutReadableText:old.missing,exactText:{unique:old.exact},
+        meaningProfile:{unique:old.profiles},reportStates:{...old.states}
+      }]))
+  });
+
+  it('quantifies the real wealth T8 delta but does not grant interpretation authority', () => {
+    const current=example();
+    current.menuResults['재물']={
+      generated:500,withReadableText:484,withoutReadableText:16,
+      exactText:{unique:472},meaningProfile:{unique:155},
+      reportStates:{complete:330,insufficient:16,partial:154}
+    };
+    const compared=compareFixedSaju500Baseline(current);
+    expect(compared.baseline.runId).toBe(40122318503);
+    expect(compared.menus['재물'].selectedReadingTextCases)
+      .toEqual({before:389,after:484,change:95});
+    expect(compared.menus['재물'].withoutSelectedReadingTextCases.change).toBe(-95);
+    expect(compared.menus['올해'].distinctExactKoreanTexts.change).toBe(0);
+    expect(compared.menus['삶의 단계'].interpretationAuthority)
+      .toBe('calculation_only_not_life_stage_fortune');
+    expect(compared.permissions.maySell).toBe(false);
+  });
+
+  it('refuses different seeds, missing menus and inconsistent metrics', () => {
+    const changedSeed=example();
+    changedSeed.seed='another-seed';
+    expect(()=>compareFixedSaju500Baseline(changedSeed)).toThrow('identical verified');
+    const missing=example();
+    delete missing.menuResults['재물'];
+    expect(()=>compareFixedSaju500Baseline(missing)).toThrow('same eight');
+    const bad=example();
+    bad.menuResults['재물'].withoutReadableText=17;
+    expect(()=>compareFixedSaju500Baseline(bad)).toThrow('contradictory');
+  });
+});
