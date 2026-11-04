@@ -502,7 +502,8 @@ function toSection(
   const observedChannel = value.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
   const observation = cross
     ? '천간과 지지 대표 십신의 서로 다른 관측 범위에서 확인된 두 십신 계열을'
-    : '같은 ' + observedChannel + '에서 관측된 서로 다른 십신 계열을';
+    : '서로 다른 원국 위치에서 확인된 십신 계열을 같은 ' +
+      observedChannel + ' 관측 범위의 근거로';
   const headline = textFor(claim.claimType, 'headline');
   return {
     claimType: claim.claimType,
