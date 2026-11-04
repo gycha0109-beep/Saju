@@ -190,14 +190,14 @@ export function diagnoseMissingNatalReading(snapshot, execution, registry, repor
   const registered = registry.rules.filter(rule =>
     rule.status === 'research' && rule.taxonomy.tier === 'T8' &&
     rule.taxonomy.category === domain &&
-    rule.taxonomy.subcategory === 'multifactor_structure');
+    rule.output.predicate === domain + '_multifactor_structure');
   const eligible = registered.filter(rule => rule.inputs.length > 0 &&
     rule.inputs.every(input => input.required &&
       input.source === 'interpretation_claim' && t5Types.has(input.pathOrClaimType)));
   const activeT8 = execution.claims.filter(claim =>
     claim.state === 'active' && claim.taxonomy.tier === 'T8' &&
     claim.taxonomy.category === domain &&
-    claim.taxonomy.subcategory === 'multifactor_structure' &&
+    claim.predicate === domain + '_multifactor_structure' &&
     claim.snapshotId === snapshot.snapshotId && claim.scenarioRef === undefined);
   const composition = buildReadingCompositionEvidence(snapshot, execution, registry, {
     requestId: 'saju-500-' + domain + '-empty-root-cause',
