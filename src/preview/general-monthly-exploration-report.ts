@@ -287,7 +287,7 @@ export function buildGeneralMonthlyExplorationReport(
   const unavailable = SLOTS.filter(slot =>
     SEGMENTS.some(id => facts.segmentsById[id].monthlyBranchRelations[slot].status !== 'resolved'));
   if (unavailable.length > 0) {
-    missing.push(`미확정 원국 기둥(${unavailable.map(slot => SLOT_KO[slot]).join(', ')})의 월운 충 관계는 해석하지 않습니다.`);
+    missing.push(`미확정 원국 기둥(${unavailable.map(slot => SLOT_KO[slot]).join(', ')})의 월운 충·육합 관계는 해석하지 않습니다.`);
   }
   const instant = Date.parse(facts.referenceDateTime);
   const atReference = facts.segments.filter(segment =>
