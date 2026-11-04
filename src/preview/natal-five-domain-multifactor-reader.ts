@@ -114,6 +114,30 @@ function renderOverview(reports: NatalFiveDomainMultifactorReports): string {
     '<ol class="overview">' + items + '</ol></nav>';
 }
 
+/**
+ * The full selected General reading guide is source-owned but its core text
+ * overlaps the T8 sections already rendered first. Keep the explanatory
+ * through-line available in expanded details, not repeated in the intro.
+ */
+function renderGeneralReadingGuide(report: GeneralNatalMultifactorReport): string {
+  const guide = report.readingGuide;
+  if (guide === undefined) return '';
+  const first = report.sections[0];
+  guard(first !== undefined && guide.sourceClaimType === first.claimType &&
+    guide.paragraph.includes(first.headline) &&
+    guide.paragraph.includes(first.paragraph) &&
+    guide.ruleIds.length > 0 &&
+    guide.ruleIds.every(id => report.sections.some(section => section.ruleId === id)) &&
+    guide.sourceIds.length > 0 &&
+    guide.sourceIds.every(id => report.sections.some(section => section.sourceIds.includes(id))),
+    'General guide must retain its exact selected T8 provenance');
+  return '<section class="general-reading-guide" aria-label="총운 근거 연결 설명">' +
+    '<h3>' + escapeHtml(guide.title) + '</h3>' +
+    '<p>' + escapeHtml(guide.paragraph) + '</p>' +
+    '<p>선택 규칙: ' + escapeHtml(guide.ruleIds.join(' · ')) + '</p>' +
+    '<p>출처: ' + escapeHtml(guide.sourceIds.join(' · ')) + '</p></section>';
+}
+
 function renderCareerReadingGuide(report: CareerMultifactorReport): string {
   const guide = report.readingGuide;
   if (guide === undefined) return '';
@@ -596,8 +620,10 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
   const missing = report.missing.length > 0
     ? '<section class="missing"><h3>아직 설명하지 못하는 부분</h3>' + renderList(report.missing) + '</section>'
     : '';
-  const readingGuide = domain === 'career'
-    ? renderCareerReadingGuide(report as CareerMultifactorReport)
+  const readingGuide = domain === 'general'
+    ? renderGeneralReadingGuide(report as GeneralNatalMultifactorReport)
+    : domain === 'career'
+      ? renderCareerReadingGuide(report as CareerMultifactorReport)
     : domain === 'wealth'
       ? renderWealthReadingGuide(report as WealthNatalMultifactorReport)
       : domain === 'business'
