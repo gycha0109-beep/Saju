@@ -1014,6 +1014,14 @@ export function runFiveHundredSajuAudit() {
     annualActualUsedEvidencePatterns: result.rootCauseDiagnostics.annualConsumedT9Meaning.actualEvidencePatternCount,
     monthlyActualUsedEvidencePatterns: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.actualEvidencePatternCount,
     monthlyExtraDisplayProfilesWithoutNewMeaning: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.excessDisplayProfileVariants,
+    annualSameT9DifferentNatalT5Groups:
+      result.rootCauseDiagnostics.annualConsumedT9Meaning.sameT9DifferentNatalT5.groupCount,
+    monthlySameT9DifferentNatalT5Groups:
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.sameT9DifferentNatalT5.groupCount,
+    annualSameT9DifferentNatalT5Examples:
+      result.rootCauseDiagnostics.annualConsumedT9Meaning.sameT9DifferentNatalT5.examples.length,
+    monthlySameT9DifferentNatalT5Examples:
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.sameT9DifferentNatalT5.examples.length,
     annualActualMeaningControlledPairs: result.rootCauseDiagnostics.annualConsumedT9Meaning.contrastingMeaningPairs.length,
     monthlyActualMeaningControlledPairs: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.contrastingMeaningPairs.length,
     annualProfilesWithDifferentObservedRelations:
@@ -1070,6 +1078,10 @@ export function runFiveHundredSajuAudit() {
       result.rootCauseDiagnostics.monthlyNatalT5Variation.unassessed !== 0 ||
       result.rootCauseDiagnostics.annualConsumedT9Meaning.unassessed !== 0 ||
       result.rootCauseDiagnostics.monthlyConsumedT9Meaning.unassessed !== 0 ||
+      result.rootCauseDiagnostics.annualConsumedT9Meaning.sameT9DifferentNatalT5
+        .assessedWithValidatedNatalT5 !== COUNT ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.sameT9DifferentNatalT5
+        .assessedWithValidatedNatalT5 !== COUNT ||
       result.rootCauseDiagnostics.annualConsumedT9Meaning.actualEvidencePatternCount !==
         result.rootCauseDiagnostics.annualConsumedT9Meaning.distinctExecutedMeaningSignatures ||
       result.rootCauseDiagnostics.monthlyConsumedT9Meaning.actualEvidencePatternCount !==
