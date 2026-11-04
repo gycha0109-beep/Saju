@@ -144,6 +144,9 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
       !core.observedFactPaths.includes(path))).toBe(true);
     expect(report.state).toBe('partial');
     expect(report.readingGuide?.paragraph).toContain('독립적인 보조 관점');
+    expect(report.readingGuide?.paragraph).toContain(
+      `‘${support.headline}’이라는 별도 관점은`);
+    expect(report.readingGuide?.paragraph).not.toContain(`‘${support.headline}’은`);
     expect(report.readingGuide?.supporting[0]?.claimType).toBe(support.claimType);
     const explainedT5 = new Set(report.sections.flatMap(section => section.upstreamClaimIds));
     expect(report.availableThemeContext?.wealthConclusionAuthorized).not.toBe(true);

@@ -190,9 +190,9 @@ function explainMissingWealthT8(
   const reason = selectedTension !== undefined && hasWealth
     ? tensionObservation + ', 이 관계는 등록된 재물 중심 복합 해석 축이 아니라 제한된 긴장 관점입니다. 확인된 긴장 관계를 재물 전체의 중심 결론으로 승격하지 않습니다. '
     : wealthOnlyAcrossChannels
-      ? '재성 관련 십신 근거와 다른 십신 계열의 근거가 천간과 지지 대표 십신으로 나뉘어 있습니다. 기존 재물 종합 규칙은 동일 관측 범위의 복합 근거를 요구하므로, 서로 다른 채널을 임의로 결합해 재물 종합 결론을 만들 수 없습니다. '
+      ? '재성 근거와 다른 십신 계열의 근거가 천간과 지지 대표 십신으로 나뉘어 있습니다. 서로 다른 관측 범위의 관계도 등록된 출처와 규칙에 따라 실제 실행·선택되면 함께 읽을 수 있지만, 이 명식에서 재물 중심 종합 결론으로 선택된 관계 근거는 없습니다. '
     : hasWealth
-      ? '재성 관련 십신 관점은 있지만 기존 재물 종합 규칙이 요구하는 같은 관측 범위 안의 다른 십신 계열과 결합되지 않아, 출처가 있는 재물 종합 결론을 만들 수 없습니다. '
+      ? '재성 관련 십신 관점은 확인됐지만 이 명식에서 출처가 연결된 재물 중심 복합 해석은 실제 선택되지 않았습니다. 개별 십신의 존재나 관측 범위만으로 재물 종합 결론을 새로 만들 수 없습니다. '
       : '기존 십신 관점 규칙에서 재성 계열의 활성 근거가 확인되지 않아, 등록된 재물 복합 해석 규칙을 적용할 수 없습니다. ';
   return sourceNote + reason +
     '이는 재성이 없거나 돈이 없다는 판정이 아니며, 실제 소득·재산·재물운의 좋고 나쁨을 뜻하지 않습니다.';
@@ -558,7 +558,7 @@ function buildWealthNatalReadingGuide(
   const paragraphs = [
     `이 명식에서 재물과 자원을 읽는 중심 구조적 관점은 ‘${core.headline}’입니다. ${core.observedPositions.join(' · ')}에서 관측된 근거와 연결된 연구용 해석 후보입니다.`,
     ...supports.map((section, index) =>
-      `별도 관점인 ‘${section.headline}’은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 추가로 확인된 계산 근거를 바탕으로 함께 살핍니다.`),
+      `‘${section.headline}’이라는 별도 관점은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 추가로 확인된 계산 근거를 바탕으로 함께 살핍니다.`),
     ...(state === 'complete'
       ? ['중심 관점 하나와 독립적인 계산 근거를 더하는 보조 관점 두 가지를 구분해 읽을 수 있습니다. 다만 이 기준 충족은 실제 소득·재산·투자 성과의 판단이 아닙니다.']
       : [`독립적인 보조 관점은 현재 ${supporting.length}개만 확인되어 필요한 두 가지를 모두 설명하지 못합니다. 재물운 전체 종합 판단은 보류합니다.`]),
