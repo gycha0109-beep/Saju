@@ -131,6 +131,15 @@ describe('real-calculated monthly Korean research consumer preview', () => {
       expect(html).toContain(section.title);
       expect(html).toContain(section.text);
     });
+    // The active month appears in its focus card. The period overview keeps
+    // the original interval label without repeating the same T9 copy.
+    expect(html).toContain(
+      '이 구간의 풀이와 근거는 위의 조회 시각 결과에서 한 번만 표시합니다.');
+    for (const section of report.sections) {
+      expect(html.split(section.text)).toHaveLength(2);
+      expect(html).toContain(section.claimId);
+      expect(html).toContain(section.sourceIds[0]!);
+    }
     expect(html).toContain('공식 해석이나 판매 가능한 결과가 아닙니다');
   });
 
@@ -166,6 +175,11 @@ describe('real-calculated monthly Korean research consumer preview', () => {
     expect(html).not.toContain('<h1>2026년 10월 — 이번 달의 흐름</h1>');
     expect(html).toContain('절입 전');
     expect(html).toContain('절입 이후');
+    expect(html).not.toContain(
+      '이 구간의 풀이와 근거는 위의 조회 시각 결과에서 한 번만 표시합니다.');
+    for (const section of report.sections) {
+      expect(html.split(section.text)).toHaveLength(2);
+    }
   });
 
   it('changes source-linked Korean phase interpretations across different actual months and is deterministic for the same month', () => {
