@@ -357,6 +357,22 @@ export function runFiveHundredSajuAudit() {
         if (report.snapshotId !== snapshot.snapshotId || report.calculationHash !== chartKey) {
           throw new Error(domain + ' did not use the same exact natal snapshot');
         }
+        if (domain === 'career') {
+          // Verify the real Korean paragraphs, not only their structural claim
+          // signatures. A quoted headline must not take a fixed '이라는'
+          // particle when it ends with a vowel (e.g. '구조').
+          for (const section of [...report.sections, ...report.additionalVerifiedSections]) {
+            if (!section.paragraph.includes(
+              '기존 출처에 연결된 구조적 해석 후보를 함께 살핍니다.') ||
+              !section.paragraph.includes(`해석 관점은 ‘${section.headline}’입니다.`) ||
+              /[’'](?:이라는|라는) 구조적 해석 후보/u.test(section.paragraph) ||
+              section.sourceIds.length === 0 ||
+              section.upstreamClaimIds.length !== 2) {
+              throw new Error('Career Korean text lost natural headline grammar or source-bound evidence: ' +
+                stamp);
+            }
+          }
+        }
         rows[({
           general:'전체 사주', career:'직업·커리어', wealth:'재물',
           relationship:'연애·관계', business:'사업',
