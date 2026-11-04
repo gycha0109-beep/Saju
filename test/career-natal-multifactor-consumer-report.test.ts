@@ -189,13 +189,19 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
         expect(section.sourceIds).toHaveLength(2);
         expect(section.upstreamClaimIds).toHaveLength(2);
         for (const family of families) {
-          const first = section.calculatedPositions.find(position =>
+          const observed = section.calculatedPositions.filter(position =>
             familyGods[family]?.some(god => position.endsWith(' ' + god)));
-          expect(first, family + ' must be observed on the actual chart').toBeDefined();
-          expect(section.paragraph).toContain(`${first}의 ${sourceRoles[family]}`);
+          expect(observed.length, family + ' must be observed on the actual chart')
+            .toBeGreaterThan(0);
+          expect(section.paragraph).toContain(
+            `${sourceRoles[family]}: ${observed.join(' · ')}`);
+          // The readable explanation must not repeat a single first slot as
+          // an ill-formed family-labelled noun phrase.
+          expect(section.paragraph).not.toContain(
+            `${observed[0]}의 ${sourceRoles[family]}`);
         }
         expect(section.paragraph).toContain(
-          `같은 ${section.channel === 'visible_stems' ? '천간' : '지지 대표 십신'} 관찰 범위`,
+          `두 십신 계열이 같은 ${section.channel === 'visible_stems' ? '천간' : '지지 대표 십신'} 관찰 범위에서 각각 확인됐습니다`,
         );
         expect(section.paragraph).toContain(`‘${section.headline}’`);
         observedPatterns.add(section.pattern);

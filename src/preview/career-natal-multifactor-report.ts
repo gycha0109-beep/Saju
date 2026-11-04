@@ -188,17 +188,12 @@ function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
       'source-backed Ten-God family is not actually observed');
     return `${EVIDENCE_ROLES[family]}: ${positions.map(x => x.display).join(' · ')}`;
   }).join(' / ');
-  // Name the two exact, source-owned upstream families in their observed
-  // canonical positions, not as a free-floating thematic keyword list.
-  // First observed slot is a deterministic display example, never rank/weight.
-  const pairBasis = (value.families as string[]).map(family => {
-    const first = locations.find(x => x.observedFamily === family);
-    guard(first !== undefined && EVIDENCE_ROLES[family] !== undefined,
-      'source-owned pair is absent from the exact canonical observation channel');
-    return `${first.display}의 ${EVIDENCE_ROLES[family]}`;
-  });
-  guard(pairBasis.length === 2 && pairBasis.every(Boolean),
-    'a Career synthesis must explain exactly two upstream families');
+  // The evidence line above already names EVERY observed position for both
+  // source-owned T5 families. Do not repeat only the first slot with malformed
+  // particles (e.g. "재성(... )와 인성(... )가") or imply rank/weight.
+  const pairFamilies = value.families as string[];
+  guard(pairFamilies.length === 2 && new Set(pairFamilies).size === 2,
+    'a Career synthesis must explain exactly two distinct upstream families');
   const channelName = value.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
   const headline = profileText(claim.claimType, 'headline');
   return {
@@ -207,7 +202,7 @@ function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
     axis: value.axis as Axis,
     channel: value.channel as 'visible_stems' | 'branches',
     headline,
-    paragraph: `실제 명식에서 확인한 근거는 ${locationText}입니다. ${pairBasis[0]}와 ${pairBasis[1]}가 같은 ${channelName} 관찰 범위에서 확인되므로, 기존 출처에 연결된 ‘${headline}’이라는 구조적 해석 후보를 함께 살핍니다. ${profileText(claim.claimType, 'summary')}`,
+    paragraph: `실제 명식에서 확인한 근거는 ${locationText}입니다. 두 십신 계열이 같은 ${channelName} 관찰 범위에서 각각 확인됐습니다. 이 계산 근거에 한해 기존 출처에 연결된 ‘${headline}’이라는 구조적 해석 후보를 함께 살핍니다. ${profileText(claim.claimType, 'summary')}`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
