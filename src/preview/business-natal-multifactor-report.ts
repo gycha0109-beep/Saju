@@ -311,9 +311,20 @@ export function buildBusinessNatalMultifactorReport(
   if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
     missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
   }
-  if(chosen.length < 3) {
-    const observed = chosen.map(s => `${AXIS_NAMES[s.axis]}(${s.channel === 'visible_stems' ? '천간' : '지지'})`);
-    missing.push(`이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}. 최소 유효 풀이에는 독립된 근거의 추가 해석 축 ${3 - chosen.length}개가 더 필요합니다.`);
+  if (chosen.length < 3) {
+    const observed = chosen.map(section =>
+      `${AXIS_NAMES[section.axis]}(${section.channel === 'visible_stems' ? '천간' : '지지 대표 십신'})`);
+    const observedSummary = `이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}.`;
+    // Coordination is bounded partial evidence, never an eligible synthesis
+    // core. Counting it toward three axes would misstate what is missing.
+    if (core === undefined) {
+      missing.push(observedSummary +
+        ' 출처 있는 중심 복합 해석 근거가 먼저 필요합니다. ' +
+        '현재 조율 관점은 중심 결론이나 독립 보조 축 수를 대신하지 않습니다.');
+    } else {
+      missing.push(observedSummary +
+        ` 중심 결론과 구별되는 추가 해석 축 ${3 - chosen.length}개가 부족합니다.`);
+    }
   }
   const state: Status = snapshot.completeness.birthTimeKnown &&
     core !== undefined && chosen.length === 3
