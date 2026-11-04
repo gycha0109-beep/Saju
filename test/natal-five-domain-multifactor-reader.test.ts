@@ -846,6 +846,15 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(first).toBeGreaterThanOrEqual(0);
     expect(details).toBeGreaterThan(first);
     expect(ownCard).toContain('aria-label="총운 명식별 풀이 본문"');
+    expect(ownCard).not.toContain('같은 천간에서 관측된 서로 다른 십신 계열');
+    expect(ownCard).not.toContain('같은 지지 대표 십신에서 관측된 서로 다른 십신 계열');
+    for (const section of general.sections) {
+      const channel = section.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
+      expect(ownCard).toContain(
+        '서로 다른 원국 위치에서 확인된 십신 계열은 모두 ' +
+        channel + '이라는 동일 관측 범위에 속합니다.');
+    }
+
     // The introduction may already repeat a sourced paragraph. Verify the
     // dedicated first-screen segment, not its first occurrence in the card.
     const firstScreen = ownCard.slice(first, details);
