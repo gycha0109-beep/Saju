@@ -875,8 +875,10 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         readingGuide: { ...general.readingGuide!, sourceClaimType: 'FAKE_GENERAL_T8' },
       },
     };
+    // The dedicated expanded guide verifies the original selected T8 Claim
+    // before first-screen rendering; an altered guide must still fail closed.
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
-      .toThrow(/General first-screen reading/);
+      .toThrow(/General guide must retain its exact selected T8 provenance/);
   });
 
   it('puts exact Business and Relationship T8 Korean meaning before collapsed attribution', () => {
