@@ -490,6 +490,70 @@ describe('executed annual/monthly T9 meaning is not a changed date or generic pr
     expect(result.unassessed).toBe(1);
     expect(result.actualEvidencePatternCount).toBe(1);
   });
+  it('compares actual Korean pairs with the same selected T9 but different sourced natal T5', () => {
+    const t5 = (slot, tenGod, sourceId = 'SRC-TEST-NATAL') => ({
+      claimType: 'TEN_GOD_OFFICER_BRANCHES_THEME',
+      sourceIds: [sourceId],
+      observed: [{
+        factPath: 'derivedFacts.tenGods.value.' + slot + '.branch.value',
+        tenGod,
+      }],
+    });
+    const a = row('A', 'same-display', [monthlyTheme(), monthlyClash()]);
+    const b = row('B', 'same-display', [monthlyClash(), monthlyTheme()]);
+    const c = row('C', 'other-display', [monthlyTheme(), monthlyClash()]);
+    const differentT9 = row('D', 'other-display', [monthlyTheme('PEER_OTHER_DIRECTION')]);
+    a.sourceEvidence.natalT5 = [t5('year', '정관')];
+    b.sourceEvidence.natalT5 = [t5('month', '편관')];
+    c.sourceEvidence.natalT5 = [t5('year', '정관', 'SRC-SECOND-ATTESTATION')];
+    differentT9.sourceEvidence.natalT5 = [t5('month', '편관')];
+    // Identical visible Korean output must not hide the sourced T5 contrast.
+    a.text = b.text = '동일한 실제 월운 연구 풀이';
+    a.exactKey = b.exactKey = 'same-exact-text';
+    const result = analyzeTemporalConsumedT9Meaning([a, b, c, differentT9], 'monthly');
+    const diagnosis = result.sameT9DifferentNatalT5;
+    expect(result.assessed).toBe(4);
+    expect(diagnosis.assessedWithValidatedNatalT5).toBe(4);
+    expect(diagnosis.groupCount).toBe(1);
+    expect(diagnosis.casesInGroups).toBe(3);
+    expect(diagnosis.examples[0].distinctNatalT5Signatures).toBe(2);
+    expect(diagnosis.examples[0].sameKoreanText).toBe(true);
+    expect(diagnosis.examples[0].pair.map(p => p.birth)).toEqual(['A', 'B']);
+    expect(diagnosis.examples[0].pair[0].actualKoreanText)
+      .toBe('동일한 실제 월운 연구 풀이');
+    expect(diagnosis.examples[0].differentT5Observations.firstOnly[0])
+      .toEqual(['TEN_GOD_OFFICER_BRANCHES_THEME',
+        'derivedFacts.tenGods.value.year.branch.value', '정관']);
+    expect(diagnosis.examples[0].differentT5Observations.secondOnly[0])
+      .toEqual(['TEN_GOD_OFFICER_BRANCHES_THEME',
+        'derivedFacts.tenGods.value.month.branch.value', '편관']);
+    expect(diagnosis.examples[0].pair[0].selectedT9SourceBindings[0].sourceIds)
+      .toEqual(['SRC-MONTH-RESEARCH']);
+    expect(diagnosis.qualification).toContain('do not alone require different');
+    // A source ID variant alone is never an additional natal meaning.
+    expect(result.distinctExecutedMeaningSignatures).toBe(2);
+  });
+
+  it('keeps invalid or missing natal T5 out of paired evidence without changing T9 coverage', () => {
+    const a = row('A', 'same', [annualTheme()]);
+    const b = row('B', 'same', [annualTheme()]);
+    a.sourceEvidence.natalT5 = [{
+      claimType: 'TEN_GOD_OFFICER_BRANCHES_THEME',
+      sourceIds: ['SRC-NATAL'],
+      observed: [{ factPath: 'derivedFacts.tenGods.value.year.branch.value', tenGod: '정관' }],
+    }];
+    b.sourceEvidence.natalT5 = [{
+      claimType: 'TEN_GOD_OFFICER_BRANCHES_THEME',
+      sourceIds: [],
+      observed: [{ factPath: 'derivedFacts.tenGods.value.month.branch.value', tenGod: '편관' }],
+    }];
+    const result = analyzeTemporalConsumedT9Meaning([a, b], 'annual');
+    expect(result.assessed).toBe(2);
+    expect(result.sameT9DifferentNatalT5.assessedWithValidatedNatalT5).toBe(1);
+    expect(result.sameT9DifferentNatalT5.groupCount).toBe(0);
+    expect(result.sameT9DifferentNatalT5.examples).toHaveLength(0);
+  });
+
   it('does not count unselected, unsourced or invalid T9 values as executed meanings', () => {
     const bad=row('B','same',[{...monthlyTheme(),ruleIds:[]}]);
     const mismatched=row('C','same',[{...monthlyTheme(),claimType:'TEN_GOD_WEALTH_BRANCHES_THEME'}]);
