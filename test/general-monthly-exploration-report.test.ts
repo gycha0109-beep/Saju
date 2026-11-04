@@ -287,6 +287,9 @@ describe('real-calculated monthly Korean research consumer preview', () => {
     expect(report.sections.some(section => section.relatedPillar === 'hour' &&
       section.observedClash !== undefined)).toBe(false);
     expect(report.missing.join(' ')).toContain('시주');
+    const html = renderGeneralMonthlyExplorationHtml(report);
+    expect(html).toContain('시주 지지와 월운 사이의 충·육합 관계는');
+    expect(html).toContain('확인된 충·육합 관계가 없다는 결론이 아닙니다');
     expect(report.researchOnly).toBe(true);
     expect(report.usefulComplete).toBe(false);
     expect(report.mayPublish).toBe(false);

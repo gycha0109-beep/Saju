@@ -208,10 +208,10 @@ export function buildGeneralAnnualExplorationReport(
     caveats: [
       '내부 기획용 연운 시제품이며 Official Reading이나 판매용 해석 결과가 아닙니다.',
       '표시 연도는 서울 달력 연도 기준이며 입춘 시각 전후의 효력 간지를 뜻하지 않습니다.',
-      '십신 테마와 충 관계 문구는 검토 중인 해석 가설로, 실제 사건이나 결과의 확정 예측이 아닙니다.',
+      '십신 테마와 충·육합 관계 문구는 검토 중인 해석 가설로, 합화나 실제 사건·결과의 확정 예측이 아닙니다.',
       ...(unavailablePillars.length === 0
         ? []
-        : [`확인되지 않은 기둥(${unavailablePillars.map((slot) => SLOT_LABELS[slot]).join(', ')})의 충 관계는 추정하지 않았습니다.`]),
+        : [`확인되지 않은 기둥(${unavailablePillars.map((slot) => SLOT_LABELS[slot]).join(', ')})의 충·육합 관계는 추정하지 않았습니다.`]),
     ],
     permissions: {
       mayClaimOfficialAuthority: false,

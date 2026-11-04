@@ -103,12 +103,15 @@ describe('one-person annual to monthly source-bound research reading', () => {
       .toEqual(unknown.report.referenceReading.unavailableNatalPillars);
     const joined = renderGeneralAnnualMonthlyExplorationHtml(unknown.report);
     const single = renderGeneralMonthlyExplorationHtml(unknown.report.monthly);
-    expect(joined).toContain('aria-label="올해 미확정 원국 충 관계"');
+    expect(joined).toContain('aria-label="올해 미확정 원국 충·육합 관계"');
+    expect(joined).toContain('지지와의 충·육합 관계는 아직 확정할 수 없습니다');
+    expect(joined).toContain('이는 충이나 육합이 없다는 뜻이 아닙니다');
+    expect(joined).toContain('지지와의 월운 충·육합 관계는 아직 계산 근거가 부족합니다');
     expect(joined).toContain('aria-label="조회 절입 구간의 미확정 원국 관계"');
     expect(joined).toContain('미확정 기둥의 관계나 다른 관계의 부재를 뜻하지 않습니다');
     expect(joined).toContain('아직 계산 근거가 부족합니다');
     expect(single).toContain('aria-label="현재 절입 구간의 미확정 원국 관계"');
-    expect(single).toContain('확인된 충 관계가 없다는 결론이 아닙니다');
+    expect(single).toContain('확인된 충·육합 관계가 없다는 결론이 아닙니다');
     expect(joined).not.toContain('시주 지지와의 충이 확정되었습니다');
     expect(unknown.report.mayPublish).toBe(false);
     expect(unknown.report.maySell).toBe(false);

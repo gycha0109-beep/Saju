@@ -382,7 +382,7 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
     : '<p class="muted" aria-label="현재 절입 구간의 미확정 원국 관계">' +
       '이 구간에서 ' + escapeHtml(uncertainPositions.map(slot => SLOT_KO[slot]).join('·')) +
       ' 지지와 월운 사이의 충·육합 관계는 원국 정보가 미확정이라 판단하지 않습니다. ' +
-      '확인된 충 관계가 없다는 결론이 아닙니다.</p>';
+      '확인된 충·육합 관계가 없다는 결론이 아닙니다.</p>';
   const focus = theme !== undefined
     ? '<p class="muted">실제 적용 구간: ' + escapeHtml(SEGMENT_KO[theme.segmentId]) +
       ' · ' + kst(theme.calculatedInterval.startsAt) + '부터 ' +

@@ -106,6 +106,10 @@ describe('opt-in consumer Annual exploration', () => {
     expect(report.unavailablePillars).toContain('hour');
     expect(report.sections.some((x) => x.relatedPillar === 'hour')).toBe(false);
     expect(report.caveats.join(' ')).toContain('확인되지 않은 기둥');
+    expect(report.caveats.join(' ')).toContain('충·육합 관계는 추정하지 않았습니다');
+    expect(report.caveats.join(' ')).toContain('합화나 실제 사건');
+    expect(report.sections.some(section => section.relatedPillar === 'hour' &&
+      section.kind === 'support')).toBe(false);
   });
 
   it('shows a resolved branch clash as conditional tension, not a concrete event', () => {

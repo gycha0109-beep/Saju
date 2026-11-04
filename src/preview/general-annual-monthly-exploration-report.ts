@@ -735,17 +735,17 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   };
   const annualUncertainty = annualFocus.state !== 'in_target_civil_year' ||
     report.annual.unavailablePillars.length === 0 ? '' :
-    '<p class="muted" aria-label="올해 미확정 원국 충 관계">' +
+    '<p class="muted" aria-label="올해 미확정 원국 충·육합 관계">' +
     '올해 연운에서 ' + e(report.annual.unavailablePillars.map(slot =>
       ({ year: '연주', month: '월주', day: '일주', hour: '시주' })[slot]).join('·')) +
-    ' 지지와의 충 관계는 아직 확정할 수 없습니다. ' +
-    '이는 충이 없다는 뜻이 아닙니다.</p>';
+    ' 지지와의 충·육합 관계는 아직 확정할 수 없습니다. ' +
+    '이는 충이나 육합이 없다는 뜻이 아닙니다.</p>';
   const annualReadingFocus = annualFocus.state === 'before_ipchun'
     ? '<section id="reference-year-before-ipchun" aria-label="입춘 전 연운 적용 보류">' +
       '<h3>입춘 전 — 선택 연도의 연운 적용 보류</h3>' +
       '<p>현재 효력 연주는 ' + e(effective.effectivePillarAtReference!) +
       '입니다. ' + e(effective.afterIpchunPillar) +
-      '에 대한 기존 T9 연구 주제와 충 관계는 입춘 이전의 현재 풀이로 사용하지 않습니다. ' +
+      '에 대한 기존 T9 연구 주제와 충·육합 관계는 입춘 이전의 현재 풀이로 사용하지 않습니다. ' +
       '선택 연도 연구 문구는 아래 출처 영역에서 별도로 확인할 수 있습니다.</p></section>'
     : annualFocus.state === 'in_target_civil_year'
     ? '<section class="annual-focus" id="reference-year-reading" aria-label="올해의 원국 근거가 연결된 풀이">' +
@@ -777,8 +777,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<p class="muted" aria-label="조회 절입 구간의 미확정 원국 관계">' +
     '선택된 절입 구간에서 ' + e(selected.unavailableNatalPillars!.map(slot =>
       ({ year: '연주', month: '월주', day: '일주', hour: '시주' })[slot]).join('·')) +
-    ' 지지와의 월운 충 관계는 아직 계산 근거가 부족합니다. ' +
-    '다른 원국 관계가 없다는 뜻이 아닙니다.</p>';
+    ' 지지와의 월운 충·육합 관계는 아직 계산 근거가 부족합니다. ' +
+    '충이나 육합이 없다는 뜻이 아닙니다.</p>';
   const focus = selected.state === 'in_period' && selected.theme !== undefined
     ? '<p class="muted">해당 절입 구간: ' + e(SEGMENT_LABEL[selected.segmentId!]) +
       ' · ' + e(kst(selected.theme.calculatedInterval.startsAt)) + '부터 ' +
@@ -886,7 +886,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       contrastTension('절입 이후', contrast.afterTensions) +
       contrastSupport('절입 전', contrast.beforeSupports) +
       contrastSupport('절입 이후', contrast.afterSupports) +
-      '<p class="muted">원국 충 관계는 각 구간에 실제 실행된 T9 부분풀이로만 표시합니다. ' +
+      '<p class="muted">원국 충·육합 관계는 각 구간에 실제 실행된 T9 부분풀이로만 표시합니다. ' +
       '두 구간의 결과를 하나의 새 예측으로 합성하지 않습니다.</p></section>'
     : '<section id="monthly-phase-contrast"><h3>절입 전·후 풀이 비교 보류</h3>' +
       '<p>두 구간 중 실제 선택된 기존 월운 해석 근거가 부족해 차이를 판단하지 않습니다.</p></section>';
