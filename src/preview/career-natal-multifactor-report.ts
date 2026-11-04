@@ -453,7 +453,7 @@ export function renderCareerMultifactorResearchHtml(report: CareerMultifactorRep
   const t5 = report.availableThemeContext;
   let sourcedPartialMarkup = '';
   if (t5 !== undefined) {
-    const factPath = /^derivedFacts\\.tenGods\\.value\\.(year|month|day|hour)\\.(stem|branch)\\.value$/u;
+    const factPath = /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u;
     if (report.state !== 'insufficient' || report.sections.length !== 0 ||
         report.readingGuide !== undefined || t5.wholeChartSynthesisAuthorized !== false ||
         t5.themes.length === 0 || !t5.paragraph.trim() ||
