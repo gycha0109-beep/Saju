@@ -464,6 +464,14 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
           expect(general.availableThemeContext.wholeChartSynthesisAuthorized).toBe(false);
           const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reports(chart));
           const own = html.split('<h2 id="domain-general">')[1]!.split('</article>')[0]!;
+          const overview = html.split('</nav>')[0]!;
+          const firstT5 = general.availableThemeContext.themes[0]!;
+          expect(overview).toContain('전체 사주 종합풀이 보류 · 출처 있는 원국 십신 부분 관측: ');
+          expect(overview).toContain(firstT5.headline);
+          expect(overview).toContain(firstT5.summary);
+          expect(overview).not.toContain('확인된 부분 해석: ' + firstT5.headline);
+          expect(own).toContain('전체 사주의 복합 종합해석 근거는 아직 확인되지 않았습니다');
+          expect(own).not.toContain('현재 이 명식에서 근거가 확인된 해석 문단은 없습니다');
           expect(own).toContain('전체 원국의 기존 십신 부분 해석');
           expect(own).toContain('원국 종합해석 아님');
           for (const theme of general.availableThemeContext.themes) {
