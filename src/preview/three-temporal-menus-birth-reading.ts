@@ -264,7 +264,11 @@ function render(
             '</p></details></article>').join('') +
           '<p>육합의 관측만으로 합화·길흉·실제 사건을 예측하지 않습니다.</p></div>'
         : '');
-  const monthly = report.monthly.sections.map(section =>
+  // The current interval's theme and relations were already rendered above.
+  // Preserve the other interval without repeating the same T9 Korean copy.
+  const currentIntervalId = theme?.segmentId;
+  const monthly = report.monthly.sections
+    .filter(section => section.segmentId !== currentIntervalId).map(section =>
     '<article><small>' + (section.kind === 'theme'
       ? '절입 구간의 중심 주제' : section.kind === 'tension'
         ? '해당 구간의 조건부 원국 충 관계' : '해당 구간의 고전 근거 지지 육합 관계') +
@@ -360,7 +364,8 @@ function render(
     '<p>절입 전·후 월간 주제와 <a href="#natal-reference">같은 명식의 원국 근거</a>는 ' +
     '서로 다른 해석 범위입니다. 확인되지 않은 상호작용은 주장하지 않습니다.</p>' +
     '<h3>조회 시각에 해당하는 월운</h3>' + monthlyUncertainty + currentMonth +
-    '<h3>절입 전후 전체 풀이</h3>' + monthly + '</section>' +
+    '<h3>' + (currentIntervalId === undefined
+      ? '절입 전후 전체 풀이' : '다른 절입 구간의 풀이') + '</h3>' + monthly + '</section>' +
     '<section id="life-stage"><h2>삶의 단계 — 계산된 대운</h2><p>' +
     '대운의 간지·시각만 계산된 사실입니다. 길흉이나 사건 시기를 해석하지 않습니다.</p>' +
     periods +
