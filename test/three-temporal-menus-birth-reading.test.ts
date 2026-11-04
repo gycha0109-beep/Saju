@@ -46,12 +46,47 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
       expect(reading.html).toContain(section.sourceIds[0]!);
     }
     expect(reading.html).toContain(report.monthly.referenceReading.theme!.text);
+    // Current-period T9 is already present in the focus and must not be
+    // duplicated in the before/after list.
+    const monthlyPanel = reading.html.split('<section id="monthly"')[1]!
+      .split('<section id="life-stage"')[0]!;
+    expect(monthlyPanel).toContain('다른 절입 구간의 풀이');
+    for (const section of report.monthly.sections) {
+      expect(monthlyPanel.split(section.text)).toHaveLength(2);
+    }
     for (const period of life.periods) {
       expect(reading.html).toContain(period.text);
     }
     expect(reading.html).toContain(life.policyHash);
     expect(reading.html).toContain('공식 공개·저장·판매·결제 권한은 없습니다');
     expect(buildThreeTemporalMenusBirthReading(BIRTH, target())).toEqual(reading);
+  });
+
+  it('shows the selected 500-chart October month once, including exact active six-combination evidence', () => {
+    const birth: BirthInput = {
+      calendarType: 'solar',
+      date: { year: 1998, month: 3, day: 28 },
+      time: { known: true, hour: 22, minute: 19 },
+      sexForTraditionalCalculation: 'male',
+    };
+    const reading = buildThreeTemporalMenusBirthReading(
+      birth, target(2026, 10, '2026-10-25T00:00:00.000Z'),
+    );
+    const focus = reading.annualMonthly.report.monthly.referenceReading;
+    expect(focus.state).toBe('in_period');
+    expect(focus.segmentId).toBe('after_jeol');
+    expect(focus.sourceBoundSupports?.length).toBeGreaterThan(0);
+    const monthlyPanel = reading.html.split('<section id="monthly"')[1]!
+      .split('<section id="life-stage"')[0]!;
+    expect(monthlyPanel).toContain('다른 절입 구간의 풀이');
+    for (const section of reading.annualMonthly.report.monthly.sections) {
+      expect(monthlyPanel.split(section.text)).toHaveLength(2);
+      expect(monthlyPanel).toContain(section.claimId);
+      expect(monthlyPanel).toContain(section.ruleIds[0]!);
+      expect(monthlyPanel).toContain(section.sourceIds[0]!);
+    }
+    expect(reading.mayPublish).toBe(false);
+    expect(reading.maySell).toBe(false);
   });
 
   it('shows source-owned natal T5 in the three-menu reader when General T8 has no core', () => {
