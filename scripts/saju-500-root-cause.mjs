@@ -11,6 +11,7 @@ export {
   analyzeTemporalNatalT5Variation,
   summarizeMissingWealthCauses,
   summarizeWealthConsumerEvidence,
+  summarizeMissingNatalCauses,
 } from './saju-500-root-cause-pure.mjs';
 
 const WEALTH_FILTER = claim =>
@@ -153,5 +154,112 @@ export function diagnoseMissingWealthReading(snapshot, execution, registry, repo
           })),
         }
       : null,
+  };
+}
+
+
+const OTHER_NATAL_DOMAINS = ['general', 'career', 'relationship', 'business'];
+
+/**
+ * Diagnose truly empty General/Career/Relationship/Business source-bound T8
+ * outputs using the same Canonical chart, executed T5/T8 claims, original
+ * registry evaluations, EvidenceSelector and displayed report. A missing
+ * input combination is not treated as authority to mint another meaning.
+ */
+export function diagnoseMissingNatalReading(snapshot, execution, registry, report, birth, domain) {
+  if (!OTHER_NATAL_DOMAINS.includes(domain) ||
+      report.sections.length !== 0 || report.state !== 'insufficient' ||
+      report.researchOnly !== true || report.mayPublish !== false ||
+      report.maySell !== false || report.usefulComplete !== false ||
+      report.snapshotId !== snapshot.snapshotId ||
+      report.calculationHash !== snapshot.calculationHash ||
+      execution.run.snapshotId !== snapshot.snapshotId ||
+      execution.run.snapshotHash !== snapshot.calculationHash ||
+      execution.run.registrySnapshotId !== registry.snapshot.registrySnapshotId ||
+      execution.run.packRef.id !== registry.pack.packId) {
+    throw new TypeError('Natal empty-reading diagnosis requires one real research-only chart and run');
+  }
+  const upstream = execution.claims.filter(claim =>
+    claim.state === 'active' && claim.taxonomy.tier === 'T5' &&
+    claim.snapshotId === snapshot.snapshotId &&
+    claim.scenarioRef === undefined && claim.sourceRefs.length > 0 &&
+    /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(
+      claim.claimType));
+  const activeT5ClaimTypes = [...new Set(upstream.map(claim => claim.claimType))].sort();
+  const t5Types = new Set(activeT5ClaimTypes);
+  const registered = registry.rules.filter(rule =>
+    rule.status === 'research' && rule.taxonomy.tier === 'T8' &&
+    rule.taxonomy.category === domain &&
+    rule.taxonomy.subcategory === 'multifactor_structure');
+  const eligible = registered.filter(rule => rule.inputs.length > 0 &&
+    rule.inputs.every(input => input.required &&
+      input.source === 'interpretation_claim' && t5Types.has(input.pathOrClaimType)));
+  const activeT8 = execution.claims.filter(claim =>
+    claim.state === 'active' && claim.taxonomy.tier === 'T8' &&
+    claim.taxonomy.category === domain &&
+    claim.taxonomy.subcategory === 'multifactor_structure' &&
+    claim.snapshotId === snapshot.snapshotId && claim.scenarioRef === undefined);
+  const composition = buildReadingCompositionEvidence(snapshot, execution, registry, {
+    requestId: 'saju-500-' + domain + '-empty-root-cause',
+    intent: {domain, temporalScope: 'natal'},
+  });
+  const selectedIds = new Set(composition.selection.selectedClaimIds);
+  const selectedT8 = activeT8.filter(claim => selectedIds.has(claim.claimId));
+  if (registered.length === 0 ||
+      activeT8.some(claim => !registered.some(rule =>
+        rule.ruleId === claim.ruleRefs[0]?.ruleId))) {
+    throw new TypeError('Missing natal T8 must not have an unregistered research rule');
+  }
+
+  const cause = !snapshot.completeness.birthTimeKnown
+    ? 'birth_time_unresolved'
+    : upstream.length === 0
+      ? 'no_active_source_bound_t5'
+      : eligible.length === 0 && activeT8.length === 0
+        ? 'no_registered_t8_pattern_matches_executed_t5'
+        : activeT8.length === 0
+          ? 'eligible_t8_rule_did_not_emit'
+          : selectedT8.length === 0
+            ? 'emitted_t8_not_selected_by_reading_profile'
+            : 'selected_t8_not_displayed_by_report';
+
+  return {
+    domain, birth, calculationHash: snapshot.calculationHash,
+    cause, reportState: report.state, reportMissing: [...report.missing],
+    canonical: {
+      birthTimeKnown: snapshot.completeness.birthTimeKnown,
+      tenGodStatus: snapshot.derivedFacts.tenGods.status,
+    },
+    upstream: {
+      activeT5ClaimTypes,
+      claims: upstream.map(claim => ({
+        claimId: claim.claimId, claimType: claim.claimType,
+        factRefs: [...claim.factRefs], sourceRefs: [...claim.sourceRefs],
+        ruleIds: claim.ruleRefs.map(ref => ref.ruleId),
+      })),
+    },
+    rules: {
+      registeredT8RuleCount: registered.length,
+      eligibleRuleIds: eligible.map(rule => rule.ruleId).sort(),
+      eligibleRuleEvaluations: execution.evaluations.filter(ev =>
+        eligible.some(rule => rule.ruleId === ev.ruleRef.id &&
+          rule.version === ev.ruleRef.version)).map(ev => ({
+          ruleId: ev.ruleRef.id, status: ev.status,
+          emittedClaimIds: [...ev.emittedClaimIds],
+        })),
+    },
+    activeT8: activeT8.map(claim => ({
+      claimId: claim.claimId, claimType: claim.claimType,
+      upstreamClaimRefs: [...claim.upstreamClaimRefs],
+      ruleIds: claim.ruleRefs.map(ref => ref.ruleId),
+      sourceRefs: [...claim.sourceRefs],
+    })),
+    selection: {
+      coverageState: composition.selection.coverageState,
+      missingRequirements: [...composition.selection.missingRequirements],
+      targetClaimIds: [...composition.selection.targetClaimIds],
+      selectedT8ClaimIds: selectedT8.map(claim => claim.claimId),
+    },
+    displayedT8Count: report.sections.length,
   };
 }
