@@ -378,9 +378,12 @@ export function buildGeneralNatalMultifactorReport(
     version: GENERAL_NATAL_MULTIFACTOR_REPORT_VERSION,
     state,
     title: '나의 원국 전체를 읽는 구조적 출발점',
+    // The rendered first-screen T8 sections already carry their source-owned
+    // Korean meaning. Repeating the entire guide (including the same core
+    // paragraph) in the introduction would print it twice before the reader
+    // reaches the actual claims. Keep the original guide separately.
     introduction: '서로 다른 십신 관계가 같은 실제 명식에서 어떤 구조적 주제를 만드는지 연결했습니다. 전통적인 읽기의 연구 후보로, 실제 삶의 특징이나 운세 결과를 판단한 것은 아닙니다.' +
-      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)) +
-      (readingGuide === undefined ? '' : ' ' + readingGuide.paragraph),
+      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
     ...(availableThemeContext === undefined ? {} : { availableThemeContext }),
