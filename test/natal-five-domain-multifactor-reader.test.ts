@@ -717,7 +717,13 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(wealthHtml).toContain(escapeHtmlParagraph(tension.paragraph));
     expect(wealthHtml).toContain(section.ruleId);
     expect(wealthHtml).toContain(section.sourceIds[0]!);
-    expect(wealthHtml).toContain('재물운 종합 해석 아님');
+    // A real creation core plus one distinct Peer/Wealth supporting axis
+    // remains partial. The consumer must explain the missing second support,
+    // not display the older no-core/no-synthesis wording.
+    expect(wealthHtml).toContain('독립 보조 관점 · ');
+    expect(wealthHtml).toContain('독립적인 추가 근거가 부족하여 종합 판단은 보류합니다');
+    expect(wealthHtml).toContain('독립적인 보조 관점은 현재 1개만 확인');
+    expect(wealthHtml).toContain('재물운 전체 종합 판단은 보류합니다');
     expect(wealthHtml).not.toContain('서로 다른 채널을 임의로 결합');
     expect(wealth.usefulComplete).toBe(false);
     expect(wealth.mayPublish).toBe(false);
