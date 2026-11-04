@@ -363,6 +363,18 @@ describe('actual temporal research → three separate 12-menu readiness hand-off
       })).toThrow('Monthly reference');
   });
 
+  it('does not interpret an unknown natal pillar as absence of clash or six-combination', () => {
+    const { annualMonthly } = reports(false, 1990, '2030-06-02T12:00:00.000Z');
+    const monthly = buildTemporalResearchMenuReadings({ annualMonthly })[1]!;
+    const focus = monthly.referenceFocus;
+    expect(focus?.state).toBe('in_period');
+    expect(focus?.unavailableNatalPillars).toContain('hour');
+    expect(focus?.message).toContain('충·육합 관계가 없다고 판단하지 않습니다');
+    expect(focus?.message).not.toContain('충이 없다고 판단하지 않습니다');
+    expect(monthly.authority.mayMarkMenuAvailable).toBe(false);
+    expect(monthly.authority.maySell).toBe(false);
+  });
+
   it('does not fabricate life-stage calculations for unknown birth time', () => {
     const { annualMonthly, lifeStage } = reports(false);
     expect(lifeStage.coverage).toBe('unavailable');
