@@ -144,12 +144,12 @@ function temporalEntries(result, natalT5) {
     annual.map(s => [s.researchProfileId, s.title]),
     report.annualReference.state, annual.length, 'annual_research',
   );
-  const current = focus.state === 'in_period' && focus.theme
-    ? focus.theme.title + '\n' + focus.theme.text : '';
+  // The reference theme is already one of the source-selected monthly
+  // sections. Count its Korean text once, as the consumer now displays it.
   const m = entry(
-    [current, ...monthly.map(s => s.title + '\n' + s.text)].filter(Boolean).join('\n\n'),
-    [focus.state, focus.theme?.title ?? '', ...monthly.map(s => [s.segmentId, s.title])],
-    focus.state, monthly.length + (current ? 1 : 0), 'monthly_research',
+    monthly.map(s => s.title + '\n' + s.text).join('\n\n'),
+    [focus.state, focus.segmentId ?? '', ...monthly.map(s => [s.segmentId, s.title])],
+    focus.state, monthly.length, 'monthly_research',
   );
   // IMPORTANT: Dayun periods describe calendar/pillar facts, not supported
   // forecasts; report life-stage's structural uniqueness but DO NOT count it
@@ -935,6 +935,28 @@ export function runFiveHundredSajuAudit() {
           }
           threeMenuT5WithoutT8++;
         }
+      }
+      // Step 5+7: actual consumer monthly HTML must never repeat a selected
+      // source-owned T9 theme, clash, or six-combination paragraph.
+      const monthlyPanel = temporal.html.split('<section id="monthly">')[1]
+        ?.split('<section id="life-stage">')[0];
+      if (!monthlyPanel) {
+        throw new Error('Monthly consumer panel missing in 500-case audit: ' + stamp);
+      }
+      for (const section of temporal.annualMonthly.report.monthly.sections) {
+        if (monthlyPanel.split(escapedHtmlText(section.text)).length !== 2 ||
+            !monthlyPanel.includes(escapedHtmlText(section.claimId)) ||
+            !section.ruleIds.every(ruleId =>
+              monthlyPanel.includes(escapedHtmlText(ruleId))) ||
+            !section.sourceIds.every(sourceId =>
+              monthlyPanel.includes(escapedHtmlText(sourceId)))) {
+          throw new Error('Monthly consumer repeated or dropped source-bound T9 Korean copy: ' +
+            stamp);
+        }
+      }
+      if (temporal.annualMonthly.report.monthly.referenceReading.state === 'in_period' &&
+          !monthlyPanel.includes('다른 절입 구간의 풀이')) {
+        throw new Error('Current monthly focus must not repeat in the other phase: ' + stamp);
       }
       const three = temporalEntries(temporal, natalT5);
       for (let t=0;t<3;t++) rows[DOMAIN_NAMES[5+t]].push({...three[t],birth:stamp,calculationHash:chartKey});
