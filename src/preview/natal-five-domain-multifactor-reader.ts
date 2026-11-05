@@ -582,6 +582,9 @@ function renderGeneralExistingT5Context(report: GeneralNatalMultifactorReport): 
     report.researchOnly && !report.mayPublish && !report.maySell &&
     context.title.length > 0 && context.paragraph.length > 0,
     'General T5 context cannot substitute for a source-qualified T8 synthesis');
+  // The source-owned context.paragraph already contains each exact T5
+  // summary. Do not repeat that interpretation inside the provenance list;
+  // keep claim identity, chart position, rule, methodology, and source intact.
   const items = context.themes.map(theme => {
     guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
       .test(theme.claimType) && theme.claimId.length > 0 &&
@@ -593,7 +596,6 @@ function renderGeneralExistingT5Context(report: GeneralNatalMultifactorReport): 
       theme.observedPositions.every(position => context.paragraph.includes(position)),
       'General T5 partial reading lacks original rule, source, or calculated chart facts');
     return '<li><strong>' + escapeHtml(theme.headline) + '</strong>' +
-      '<p>' + escapeHtml(theme.summary) + '</p>' +
       '<p>확인된 명식 위치: ' + escapeHtml(theme.observedPositions.join(' · ')) + '</p>' +
       '<details><summary>기존 십신 해석의 실제 근거</summary>' +
       '<p>Claim: ' + escapeHtml(theme.claimId) + ' · ' + escapeHtml(theme.claimType) + '</p>' +
@@ -626,6 +628,9 @@ function renderOtherNatalExistingT5Context(
     context.themes.length > 0 && report.researchOnly &&
     !report.usefulComplete && !report.mayPublish && !report.maySell,
     'Other natal T5 observations cannot replace a missing domain T8 core');
+  // The source-owned context.paragraph already contains each exact T5
+  // summary. Do not repeat that interpretation inside the provenance list;
+  // keep claim identity, chart position, rule, methodology, and source intact.
   const content = context.themes.map(theme => {
     guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
       .test(theme.claimType) && theme.claimId.trim().length > 0 &&
@@ -639,7 +644,6 @@ function renderOtherNatalExistingT5Context(
       context.paragraph.includes(theme.summary),
       'Other natal T5 explanation lost its original registered meaning or facts');
     return '<li><strong>' + escapeHtml(theme.headline) + '</strong>' +
-      '<p>' + escapeHtml(theme.summary) + '</p>' +
       '<p>실제 원국 위치: ' + escapeHtml(theme.observedPositions.join(' · ')) + '</p>' +
       '<details><summary>기존 십신 주장·계산 경로·출처</summary>' +
       '<p>Claim: ' + escapeHtml(theme.claimId) + ' · ' +
