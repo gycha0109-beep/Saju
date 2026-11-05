@@ -142,3 +142,101 @@ export function summarizeWholeFaceCoverage(columns, captures) {
     features: Object.freeze(features),
   });
 }
+
+export const SOURCE_TRACE_VERSION = 'local-whole-face-source-trace@0.1.0';
+
+// A source-derived execution inventory, not another canonical feature registry.
+// The authoritative keys and calculator state come from FR293; observation
+// readiness and camera limitations come from FR282. Local photo evidence is
+// limited to the independently validated engineering proxies above.
+export function traceWholeFaceSourceGaps(columns, authorityEntries, captures) {
+  const report = summarizeWholeFaceCoverage(columns, captures);
+  if (
+    !Array.isArray(authorityEntries) ||
+    authorityEntries.length !== report.canonicalFeatureCount ||
+    new Set(authorityEntries.map((entry) => entry.featureKey)).size !==
+      report.canonicalFeatureCount
+  )
+    throw Error('COVERAGE_AUTHORITY_DRIFT');
+  const authorityByKey = new Map(authorityEntries.map((entry) => [entry.featureKey, entry]));
+  const features = report.features.map((coverage, index) => {
+    const column = columns[index];
+    const authority = authorityByKey.get(column.featureKey);
+    if (
+      !authority ||
+      authority.regionKey !== column.regionKey ||
+      authority.traditionalBindingIssued !== false ||
+      authority.specialDepthHardwareRequired !== false ||
+      authority.metric3DRequired !== false ||
+      !Array.isArray(authority.reusableRefs) ||
+      !Array.isArray(column.sourcePrimitives) ||
+      typeof authority.note !== 'string' ||
+      typeof authority.observationClass !== 'string' ||
+      typeof authority.readiness !== 'string'
+    )
+      throw Error('COVERAGE_AUTHORITY_DRIFT');
+    const sourcePaths = [...new Set([...column.sourcePrimitives, ...authority.reusableRefs])];
+    if (
+      sourcePaths.some(
+        (path) => typeof path !== 'string' || !/^(packages|research)\/[a-zA-Z0-9/_.-]+$/.test(path),
+      )
+    )
+      throw Error('COVERAGE_SOURCE_PATH_INVALID');
+    const unavailable = column.implementationState === 'deferred_unavailable';
+    const photoEvidenceState = unavailable
+      ? 'unavailable'
+      : coverage.candidatePhotoCount > 0
+        ? 'candidate_only'
+        : coverage.canonicalCalculatorMaterialized
+          ? 'calculation_only'
+          : 'not_observed';
+    const nextMissingEvidence = unavailable
+      ? 'current_rgb_authority_unavailable'
+      : coverage.candidatePhotoCount > 0
+        ? 'canonical_input_binding_and_independent_human_reference'
+        : coverage.canonicalCalculatorMaterialized
+          ? 'actual_photo_extraction_and_independent_human_reference'
+          : 'missing_image_extractor_and_independent_human_reference';
+    return Object.freeze({
+      featureKey: column.featureKey,
+      regionKey: column.regionKey,
+      requiredObservation: authority.note,
+      observationClass: authority.observationClass,
+      captureRequirement:
+        authority.observationClass === 'unavailable'
+          ? 'not_supported_by_current_rgb_authority'
+          : authority.observationClass === 'rgb_relative_3d_shape'
+            ? 'rgb_with_independent_relative_3d_reference'
+            : authority.observationClass === 'visibility_dependent'
+              ? 'view_and_visible_region_required'
+              : 'frontal_visible_rgb_region',
+      visibilityAndQualityRequirement: column.qualityDependency,
+      calculatorState: column.implementationState,
+      canonicalCalculatorMaterialized: coverage.canonicalCalculatorMaterialized,
+      implementationSourcePaths: Object.freeze(sourcePaths),
+      requiredExtractor: column.requiredExtractor,
+      localEngineeringProxySources: Object.freeze([...(CANDIDATE_SOURCES[column.featureKey] || [])]),
+      localPhotoProxyCount: coverage.candidatePhotoCount,
+      photoEvidenceState,
+      canonicalPhotoMeasurementVerified: false,
+      traditionalSourcePredicateMapped: false,
+      traditionalBindingIssued: false,
+      interpretationAuthorized: false,
+      independentAccuracyState: 'not_evaluated',
+      nextMissingEvidence,
+    });
+  });
+  return Object.freeze({
+    schemaVersion: SOURCE_TRACE_VERSION,
+    canonicalFeatureCount: features.length,
+    calculatedOnlyOrUnverifiedCount: features.filter(
+      (feature) => feature.canonicalCalculatorMaterialized,
+    ).length,
+    featuresWithLocalEngineeringProxy: features.filter(
+      (feature) => feature.photoEvidenceState === 'candidate_only',
+    ).length,
+    sourcePredicateMappingsAdmitted: 0,
+    privacy: 'repository_source_paths_and_aggregate_counts_only',
+    features: Object.freeze(features),
+  });
+}

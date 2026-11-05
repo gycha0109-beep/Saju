@@ -7,7 +7,8 @@ import {
 } from '../../.face-reading-dist/rgb-selfie-product-column-map-fr293.js';
 import { validateBatch } from '../../tools/face-reading/two-view/server.mjs';
 import { validateParsingSummary } from '../../tools/face-reading/two-view/parsing-contract.mjs';
-import { summarizeWholeFaceCoverage } from '../../tools/face-reading/two-view/feature-coverage.mjs';
+import { summarizeWholeFaceCoverage, traceWholeFaceSourceGaps } from '../../tools/face-reading/two-view/feature-coverage.mjs';
+import { FR282_RGB_SELFIE_FEATURE_ENTRIES } from '../../.face-reading-dist/rgb-selfie-feature-authority-matrix-fr282.js';
 
 async function readJson(file) {
   return JSON.parse(await readFile(file, 'utf8'));
@@ -109,11 +110,17 @@ async function main() {
     ? { records: [], metricsValidated: false, parsingValidated: false }
     : await loadLocal(resolve(args[1]));
   const report = summarizeWholeFaceCoverage(FR293_PRODUCT_COLUMN_MAP, local.records);
+  const sourceTrace = traceWholeFaceSourceGaps(
+    FR293_PRODUCT_COLUMN_MAP,
+    FR282_RGB_SELFIE_FEATURE_ENTRIES,
+    local.records,
+  );
   // Intentionally aggregate only: no capture ID, source filename, mask or raw coordinates.
   process.stdout.write(
     JSON.stringify(
       {
         ...report,
+        sourceTrace,
         evidenceSource: schemaOnly
           ? 'canonical_schema_only'
           : local.metricsValidated || local.parsingValidated

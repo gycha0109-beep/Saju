@@ -49,3 +49,54 @@ export declare function summarizeWholeFaceCoverage(
   columns: readonly CoverageColumn[],
   captures: readonly CoverageCapture[],
 ): CoverageReport;
+
+export interface SourceTraceAuthority {
+  readonly featureKey: string;
+  readonly regionKey: string;
+  readonly observationClass: string;
+  readonly readiness: string;
+  readonly note: string;
+  readonly reusableRefs: readonly string[];
+  readonly traditionalBindingIssued: false;
+  readonly specialDepthHardwareRequired: false;
+  readonly metric3DRequired: false;
+}
+export interface SourceTraceColumn extends CoverageColumn {
+  readonly sourcePrimitives: readonly string[];
+}
+export interface SourceTraceFeature {
+  readonly featureKey: string;
+  readonly regionKey: string;
+  readonly requiredObservation: string;
+  readonly observationClass: string;
+  readonly captureRequirement: string;
+  readonly visibilityAndQualityRequirement: string;
+  readonly calculatorState: string;
+  readonly canonicalCalculatorMaterialized: boolean;
+  readonly implementationSourcePaths: readonly string[];
+  readonly requiredExtractor: string;
+  readonly localEngineeringProxySources: readonly string[];
+  readonly localPhotoProxyCount: number;
+  readonly photoEvidenceState: 'unavailable' | 'candidate_only' | 'calculation_only' | 'not_observed';
+  readonly canonicalPhotoMeasurementVerified: false;
+  readonly traditionalSourcePredicateMapped: false;
+  readonly traditionalBindingIssued: false;
+  readonly interpretationAuthorized: false;
+  readonly independentAccuracyState: 'not_evaluated';
+  readonly nextMissingEvidence: string;
+}
+export interface SourceTraceReport {
+  readonly schemaVersion: typeof SOURCE_TRACE_VERSION;
+  readonly canonicalFeatureCount: number;
+  readonly calculatedOnlyOrUnverifiedCount: number;
+  readonly featuresWithLocalEngineeringProxy: number;
+  readonly sourcePredicateMappingsAdmitted: 0;
+  readonly privacy: 'repository_source_paths_and_aggregate_counts_only';
+  readonly features: readonly SourceTraceFeature[];
+}
+export declare const SOURCE_TRACE_VERSION: 'local-whole-face-source-trace@0.1.0';
+export declare function traceWholeFaceSourceGaps(
+  columns: readonly SourceTraceColumn[],
+  authorityEntries: readonly SourceTraceAuthority[],
+  captures: readonly CoverageCapture[],
+): SourceTraceReport;

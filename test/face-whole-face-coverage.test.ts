@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { FR293_PRODUCT_COLUMN_MAP } from '../packages/face-reading/src/rgb-selfie-product-column-map-fr293.js';
+import { FR282_RGB_SELFIE_FEATURE_ENTRIES } from '../packages/face-reading/src/rgb-selfie-feature-authority-matrix-fr282.js';
 import {
   summarizeWholeFaceCoverage,
   COVERAGE_VERSION,
+  traceWholeFaceSourceGaps,
+  SOURCE_TRACE_VERSION,
 } from '../tools/face-reading/two-view/feature-coverage.mjs';
 import {
   METHOD_VERSION,
@@ -169,5 +172,71 @@ describe('local canonical whole-face coverage audit', () => {
     expect(serialized).not.toContain('rawLandmarks');
     expect(serialized).toContain('local_research_only');
     expect(report.productionAuthorized).toBe(false);
+  });
+});
+
+describe('source-derived whole-face execution trace', () => {
+  it('ties every FR293 calculator to the matching FR282 observation and evidence gap', () => {
+    const trace = traceWholeFaceSourceGaps(
+      FR293_PRODUCT_COLUMN_MAP,
+      FR282_RGB_SELFIE_FEATURE_ENTRIES,
+      [],
+    );
+    expect(trace.schemaVersion).toBe(SOURCE_TRACE_VERSION);
+    expect(trace.canonicalFeatureCount).toBe(29);
+    expect(trace.calculatedOnlyOrUnverifiedCount).toBe(18);
+    expect(trace.featuresWithLocalEngineeringProxy).toBe(0);
+    expect(trace.sourcePredicateMappingsAdmitted).toBe(0);
+    expect(trace.features.every((row) => row.independentAccuracyState === 'not_evaluated')).toBe(true);
+    const eye = trace.features.find((row) => row.featureKey === 'eye.width_height_ratio');
+    expect(eye).toMatchObject({
+      photoEvidenceState: 'calculation_only',
+      canonicalPhotoMeasurementVerified: false,
+      traditionalBindingIssued: false,
+      nextMissingEvidence: 'actual_photo_extraction_and_independent_human_reference',
+    });
+    expect(eye?.implementationSourcePaths.length).toBeGreaterThan(0);
+    expect(trace.features.find((row) => row.featureKey === 'ear.thickness_attachment_canal_boundary'))
+      .toMatchObject({
+        photoEvidenceState: 'unavailable',
+        nextMissingEvidence: 'current_rgb_authority_unavailable',
+      });
+  });
+
+  it('exposes a local engineering photo proxy without promoting a canonical measurement', () => {
+    const trace = traceWholeFaceSourceGaps(
+      FR293_PRODUCT_COLUMN_MAP,
+      FR282_RGB_SELFIE_FEATURE_ENTRIES,
+      [{ captureRef: 'capture-21', viewRole: 'frontal', metrics: metrics('capture-21') }],
+    );
+    expect(trace.features.find((row) => row.featureKey === 'eye.width_height_ratio'))
+      .toMatchObject({
+        photoEvidenceState: 'candidate_only',
+        localPhotoProxyCount: 1,
+        canonicalPhotoMeasurementVerified: false,
+        traditionalSourcePredicateMapped: false,
+        interpretationAuthorized: false,
+        nextMissingEvidence: 'canonical_input_binding_and_independent_human_reference',
+      });
+    expect(JSON.stringify(trace)).not.toContain('capture-21');
+  });
+
+  it('rejects mismatched, partial or authority-elevated FR282 input', () => {
+    const a = [...FR282_RGB_SELFIE_FEATURE_ENTRIES];
+    expect(() => traceWholeFaceSourceGaps(FR293_PRODUCT_COLUMN_MAP, a.slice(1), [])).toThrow(
+      'COVERAGE_AUTHORITY_DRIFT',
+    );
+    const mismatched = a.map((entry, index) =>
+      index === 0 ? { ...entry, regionKey: 'eye_pair' } : entry,
+    );
+    expect(() => traceWholeFaceSourceGaps(FR293_PRODUCT_COLUMN_MAP, mismatched, [])).toThrow(
+      'COVERAGE_AUTHORITY_DRIFT',
+    );
+    const elevated = a.map((entry, index) =>
+      index === 0 ? { ...entry, traditionalBindingIssued: true } : entry,
+    );
+    expect(() => traceWholeFaceSourceGaps(FR293_PRODUCT_COLUMN_MAP, elevated, [])).toThrow(
+      'COVERAGE_AUTHORITY_DRIFT',
+    );
   });
 });
