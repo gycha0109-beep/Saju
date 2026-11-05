@@ -88,6 +88,9 @@ describe('source-owned T5 observations when Career/Business/Relationship synthes
       expect(card).not.toContain('연구용 최소 근거 충족');
       for (const theme of context!.themes) {
         expect(card).toContain(escaped(theme.summary));
+        // The existing Korean T5 summary belongs in the source paragraph
+        // exactly once, not again in its calculation/provenance list.
+        expect(card.split(escaped(theme.summary))).toHaveLength(2);
         expect(card).toContain(escaped(theme.headline));
         expect(card).toContain(escaped(theme.observedPositions[0]!));
         expect(card).toContain(escaped(theme.observedFactPaths[0]!));
@@ -422,7 +425,7 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
           for (const theme of general.availableThemeContext.themes) {
             expect(card).toContain(theme.headline);
             expect(card).toContain(theme.claimId);
-            expect(card).toContain(theme.summary);
+            expect(card.split(theme.summary)).toHaveLength(2);
             expect(card).toContain(theme.observedFactPaths[0]!);
             expect(card).toContain(theme.sourceIds[0]!);
           }
@@ -475,7 +478,7 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
           expect(own).toContain('전체 원국의 기존 십신 부분 해석');
           expect(own).toContain('원국 종합해석 아님');
           for (const theme of general.availableThemeContext.themes) {
-            expect(own).toContain(theme.summary);
+            expect(own.split(theme.summary)).toHaveLength(2);
             expect(own).toContain(theme.claimId);
             expect(own).toContain(theme.sourceIds[0]!);
             expect(own).toContain(theme.observedPositions[0]!);
