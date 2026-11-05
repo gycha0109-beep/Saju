@@ -146,4 +146,57 @@ describe('visible eyebrow mask envelope candidate', () => {
       }),
     ).toThrow('BROW_MASK_INVALID');
   });
+
+  it('measures a curved mask midline without declaring a true eyebrow arch or anatomical endpoints', () => {
+    const curved = mask();
+    const heights = [11, 10, 9, 8, 8, 9, 10, 11];
+    heights.forEach((y, i) => rectangle(curved, 4 + i, y, 1, 2));
+    rectangle(curved, 25, 6, 8, 4);
+    const measured = measureVisibleBrowMaskEnvelope(curved, width, height);
+    expect(measured.status).toBe('available');
+    if (measured.status !== 'available') throw Error();
+    const left = measured.brows[0]!;
+    const right = measured.brows[1]!;
+    expect(left.apparentMidlineUpwardBendToMaskXSpan).toBeCloseTo(3 / 7);
+    expect(left.apparentMidlineDownwardBendToMaskXSpan).toBe(0);
+    expect(left.apparentMidlineEndToEndVerticalSlope).toBe(0);
+    expect(left.upwardBendPositionOnMaskXSpan).toBeCloseTo(3 / 7);
+    expect(right.apparentMidlineUpwardBendToMaskXSpan).toBe(0);
+    expect(right.apparentMidlineDownwardBendToMaskXSpan).toBe(0);
+    expect(right.upwardBendPositionOnMaskXSpan).toBeNull();
+    expect(JSON.stringify(measured)).not.toContain('indices');
+    expect(JSON.stringify(measured)).not.toContain('sourceImage');
+  });
+
+  it('keeps bend ratios in the original image aspect and separates slope from bend', () => {
+    const sloping = mask();
+    for (let i = 0; i < 8; i++) rectangle(sloping, 4 + i, 6 + i, 1, 2);
+    rectangle(sloping, 25, 6, 8, 4);
+    const base = measureVisibleBrowMaskEnvelope(sloping, width, height);
+    expect(base.status).toBe('available');
+    if (base.status !== 'available') throw Error();
+    expect(base.brows[0]?.apparentMidlineEndToEndVerticalSlope).toBeCloseTo(1);
+    expect(base.brows[0]?.apparentMidlineUpwardBendToMaskXSpan).toBe(0);
+    expect(base.brows[0]?.apparentMidlineDownwardBendToMaskXSpan).toBe(0);
+
+    const curved = mask();
+    const heights = [11, 10, 9, 8, 8, 9, 10, 11];
+    heights.forEach((y, i) => rectangle(curved, 4 + i, y, 1, 2));
+    rectangle(curved, 25, 6, 8, 4);
+    const original = measureVisibleBrowMaskEnvelope(curved, width, height);
+    const stretched = measureVisibleBrowMaskEnvelope(curved, width, height, {
+      imageWidth: width * 2,
+      imageHeight: height,
+    });
+    expect(original.status).toBe('available');
+    expect(stretched.status).toBe('available');
+    if (original.status !== 'available' || stretched.status !== 'available') throw Error();
+    expect(stretched.brows[0]?.apparentMidlineUpwardBendToMaskXSpan).toBeCloseTo(
+      original.brows[0]!.apparentMidlineUpwardBendToMaskXSpan / 2,
+    );
+    expect(stretched.brows[0]?.upwardBendPositionOnMaskXSpan).toBeCloseTo(
+      original.brows[0]!.upwardBendPositionOnMaskXSpan!,
+    );
+  });
+
 });

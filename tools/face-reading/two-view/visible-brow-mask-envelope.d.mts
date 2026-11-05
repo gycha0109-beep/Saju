@@ -2,6 +2,11 @@ export interface BrowEnvelopeSide {
   readonly imageSide: 'left' | 'right';
   readonly apparentMaskThicknessToLongSpan: number;
   readonly visibleMaskAreaToImageArea: number;
+  readonly apparentMidlineUpwardBendToMaskXSpan: number;
+  readonly apparentMidlineDownwardBendToMaskXSpan: number;
+  readonly apparentMidlineEndToEndVerticalSlope: number;
+  readonly upwardBendPositionOnMaskXSpan: number | null;
+  readonly downwardBendPositionOnMaskXSpan: number | null;
 }
 export type BrowEnvelopeResult =
   | Readonly<{
@@ -29,7 +34,7 @@ export type BrowEnvelopeResult =
       accuracyValidated: false;
       traditionalBindingAuthorized: false;
     }>;
-export declare const VISIBLE_BROW_MASK_ENVELOPE_VERSION: 'engineering.visible-brow-mask-envelope@0.1.0';
+export declare const VISIBLE_BROW_MASK_ENVELOPE_VERSION: 'engineering.visible-brow-mask-envelope@0.2.0';
 export declare function eyebrowBinaryFromOverlayRGBA(
   rgba: Uint8Array | Uint8ClampedArray,
   width: number,

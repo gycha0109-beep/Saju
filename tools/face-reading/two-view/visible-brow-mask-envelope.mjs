@@ -1,6 +1,6 @@
 // Research-only apparent eyebrow *region* thickness, derived from the pinned
 // face-parsing overlay. NOT hair-fibre thickness, hair density, or F0 authority.
-export const VISIBLE_BROW_MASK_ENVELOPE_VERSION = 'engineering.visible-brow-mask-envelope@0.1.0';
+export const VISIBLE_BROW_MASK_ENVELOPE_VERSION = 'engineering.visible-brow-mask-envelope@0.2.0';
 
 const SOURCE = 'pinned_face_parsing_brow_rgba_overlay';
 const unavailable = (reason) =>
@@ -71,6 +71,53 @@ function regionStatistics(indices, width, scaleX, scaleY) {
   const cyy = syy / n - cy * cy;
   const cxy = sxy / n - cx * cy;
   return { indices, minX, maxX, minY, maxY, cx, cy, cxx, cyy, cxy };
+}
+
+// A local horizontal-section *mask* midline, not the anatomical eyebrow ridge.
+// Both ends define a chord; column-centre excursions from it describe only the
+// model's visible image-plane band. No threshold or named arch classification.
+function maskColumnMidlineShape(component, width, scaleX, scaleY) {
+  const columns = component.maxX - component.minX + 1;
+  if (columns < 2) return null;
+  const counts = new Int32Array(columns);
+  const sumY = new Float64Array(columns);
+  for (const pixel of component.indices) {
+    const column = (pixel % width) - component.minX;
+    counts[column]++;
+    sumY[column] += Math.floor(pixel / width) + 0.5;
+  }
+  if (counts.some((n) => n === 0)) return null;
+  const firstY = sumY[0] / counts[0];
+  const lastY = sumY[columns - 1] / counts[columns - 1];
+  const span = (columns - 1) * scaleX;
+  if (!(span > 0)) return null;
+  let maxUp = 0;
+  let maxDown = 0;
+  let peakUpAt = null;
+  let peakDownAt = null;
+  for (let x = 0; x < columns; x++) {
+    const meanY = sumY[x] / counts[x];
+    const referenceY = firstY + ((lastY - firstY) * x) / (columns - 1);
+    const deltaY = meanY - referenceY;
+    // Rounding tolerance only. No visual-model error or curvature threshold.
+    const roundoff = 32 * Number.EPSILON * Math.max(1, Math.abs(meanY), Math.abs(referenceY));
+    const departure = Math.abs(deltaY) <= roundoff ? 0 : (deltaY * scaleY) / span;
+    if (-departure > maxUp) {
+      maxUp = -departure;
+      peakUpAt = x / (columns - 1);
+    }
+    if (departure > maxDown) {
+      maxDown = departure;
+      peakDownAt = x / (columns - 1);
+    }
+  }
+  return {
+    apparentMidlineUpwardBendToMaskXSpan: maxUp,
+    apparentMidlineDownwardBendToMaskXSpan: maxDown,
+    apparentMidlineEndToEndVerticalSlope: ((lastY - firstY) * scaleY) / span,
+    upwardBendPositionOnMaskXSpan: peakUpAt,
+    downwardBendPositionOnMaskXSpan: peakDownAt,
+  };
 }
 
 // Uses 8-connectivity. Extra components, joined brows, clipped regions, or
@@ -156,10 +203,13 @@ export function measureVisibleBrowMaskEnvelope(
     }
     const span = high - low + Math.hypot(ux * scaleX, uy * scaleY);
     if (!(span > 0) || !Number.isFinite(span)) return unavailable('UNSTABLE_REGION_AXIS');
+    const midlineShape = maskColumnMidlineShape(c, width, scaleX, scaleY);
+    if (!midlineShape) return unavailable('MASK_MIDLINE_UNAVAILABLE');
     brows.push(
       Object.freeze({
         imageSide: brows.length === 0 ? 'left' : 'right',
         apparentMaskThicknessToLongSpan: (c.indices.length * scaleX * scaleY) / (span * span),
+        ...midlineShape,
         // Fraction of the 2D image plane, NOT hair coverage within the skin.
         visibleMaskAreaToImageArea: c.indices.length / (width * height),
       }),

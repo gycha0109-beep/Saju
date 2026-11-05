@@ -163,11 +163,11 @@ function renderVisibleBrowMaskExperiment(record, result, previous) {
       observed.brows
         .map(
           (b) =>
-            `${b.imageSide === 'left' ? '사진 왼쪽' : '사진 오른쪽'}: 분할된 눈썹 면적 기반 상대 띠 두께 ${b.apparentMaskThicknessToLongSpan.toFixed(3)}`,
+            `${b.imageSide === 'left' ? '사진 왼쪽' : '사진 오른쪽'}: 상대 띠 두께 ${b.apparentMaskThicknessToLongSpan.toFixed(3)}, 분할 중앙선의 위/아래 굽음 비율 ${b.apparentMidlineUpwardBendToMaskXSpan.toFixed(3)}/${b.apparentMidlineDownwardBendToMaskXSpan.toFixed(3)}, 양 끝 사이 기울기 ${b.apparentMidlineEndToEndVerticalSlope.toFixed(3)}, 위쪽 최대 굽음 위치 ${b.upwardBendPositionOnMaskXSpan === null ? '없음' : b.upwardBendPositionOnMaskXSpan.toFixed(3)}`,
         )
         .join(' · ') +
       ` · 눈썹 사이 모델 분할 간격/평균 눈썹 가로폭 ${observed.apparentInterBrowGapToMeanMaskXSpan.toFixed(3)}` +
-      ' — 모델 후보입니다. 눈 사이 거리나 실제 미간 해부학적 너비, 털 굵기·밀도, 전통 관상 판정은 아닙니다.';
+      ' — 모델 분할 후보입니다. 실제 눈썹산·눈꼬리/눈썹 머리의 해부학적 위치, 미간 너비, 털 굵기·밀도, 전통 관상형 판정은 아닙니다.';
     return;
   }
   if (observed?.status === 'unavailable') {
