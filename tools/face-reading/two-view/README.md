@@ -509,3 +509,22 @@ new canonical/semantic authority path is added.
   witness and a separate visible-profile scalar namespace in the private parser
   summary. Inventory role checks govern save/restore. Historical versions remain
   read-only, frontal rows stay unchanged, and no canonical normalization is added.
+
+
+## 29개 정규 관측 항목 점검 (로컬·읽기 전용)
+
+기존 얼굴 관측 엔진의 **29개 정규 항목과 18개 계산기/11개 미해결 상태**를 실제 코드에서 읽고, 이미 저장된 비공개 분석 결과가 있으면 **사진별 모델 후보가 존재하는 항목 수**만 집계할 수 있습니다.
+
+```powershell
+npm run face:coverage -- --schema-only
+npm run face:coverage -- --intake .cache/face-reading/fr2337-intake
+```
+
+- 첫 명령은 정규 계산기 목록만 검사합니다. **사진 0장은 모델 정확도 0점이나 관측 가능 0개라는 의미가 아닙니다.**
+- 둘째 명령은 기존 `two-view-runs` / `parsing-runs` 저장 결과의 **검증된 스칼라 요약**을 읽습니다. 기존 브라우저 분석이나 사진 추론을 다시 실행하지 않습니다.
+- 출력은 특징별 전체 후보 건수뿐입니다. **원본 이미지·경로·촬영 ID·마스크·원시 좌표·얼굴 식별자**를 출력하거나 저장하지 않습니다.
+- `partial_engineering_proxy_only`는 눈꼬리 모델 극점·눈썹 가로폭·입술 중앙 단면·코 class 폭 등 **해당 정규 특징과 동일하지 않은 연구 후보**를 뜻합니다.
+- `canonicalCalculatorMaterialized=true`는 계산 코드가 있다는 의미이지 **사진에서 자동 관측되어 정확도가 입증됐다는 의미가 아닙니다.** `canonicalPhotoMeasurementVerified`, `traditionalBindingApplied`, `productionAuthorized`는 항상 false입니다.
+- 모델/가중치 학습권, 사용자 사진 동의, 실측 정확도, 2026-10-29 입술 수정 뒤 23장 재실행은 이 도구로 증명되지 않습니다.
+
+실행 파일: `scripts/face-reading/whole-face-coverage.mjs`. 기존 FR293 목록을 읽고 기존 로컬 저장 검증 계약을 재사용하며, 새 모델·저장소 형식·공개 API·관상 분류기를 추가하지 않습니다.

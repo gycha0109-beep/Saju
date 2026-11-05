@@ -1,0 +1,124 @@
+import process from 'node:process';
+import { readFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import {
+  FR293_PRODUCT_COLUMN_MAP,
+  assertFR293ProductColumnMap,
+} from '../../.face-reading-dist/rgb-selfie-product-column-map-fr293.js';
+import { validateBatch } from '../../tools/face-reading/two-view/server.mjs';
+import { validateParsingSummary } from '../../tools/face-reading/two-view/parsing-contract.mjs';
+import { summarizeWholeFaceCoverage } from '../../tools/face-reading/two-view/feature-coverage.mjs';
+
+async function readJson(file) {
+  return JSON.parse(await readFile(file, 'utf8'));
+}
+async function maybeJson(file) {
+  try {
+    return await readJson(file);
+  } catch (e) {
+    if (e.code === 'ENOENT') return null;
+    throw e;
+  }
+}
+
+async function loadLocal(intake) {
+  // Never read source photos or persist reconstructive geometry.
+  const base = await readJson(join(intake, 'inventory.json'));
+  const extra = (await maybeJson(join(intake, 'additional-inventory.json'))) ?? [];
+  const render = await readJson(join(intake, 'combined-active.json'));
+  const manifest = await readJson(resolve(render.path, 'manifest.json'));
+  if (
+    !Array.isArray(base) ||
+    !Array.isArray(extra) ||
+    !Array.isArray(manifest.recordIds) ||
+    manifest.recordIds.some((id) => !base.some((r) => r.recordId === id))
+  )
+    throw Error('INVENTORY_INVALID');
+  const baseIds = [
+    ...manifest.recordIds,
+    ...base.map((r) => r.recordId).filter((id) => !manifest.recordIds.includes(id)),
+  ];
+  const ids = [...baseIds, ...extra.map((r) => r.recordId)];
+  if (
+    new Set(ids).size !== ids.length ||
+    extra.some((r) => !['frontal', 'profile'].includes(r.viewRole))
+  )
+    throw Error('INVENTORY_INVALID');
+  const roles = new Map([
+    ...baseIds.map((id) => [id, 'frontal']),
+    ...extra.map((r) => [r.recordId, r.viewRole]),
+  ]);
+
+  const metricActive = await readJson(join(intake, 'two-view-runs', 'active.json'));
+  if (!/^[a-f0-9-]{36}$/.test(metricActive.runId)) throw Error('METRICS_RUN_INVALID');
+  const metricSaved = await readJson(
+    join(intake, 'two-view-runs', metricActive.runId, 'metrics.json'),
+  );
+  const validMetrics = validateBatch(metricSaved, ids, roles);
+  const metrics = new Map(validMetrics.map((r) => [r.captureRef, r.metrics]));
+
+  const parserActive = await maybeJson(join(intake, 'parsing-runs', 'active.json'));
+  const parsing = new Map();
+  if (parserActive) {
+    if (!/^[a-f0-9-]{36}$/.test(parserActive.runId)) throw Error('PARSING_RUN_INVALID');
+    const saved = await readJson(join(intake, 'parsing-runs', parserActive.runId, 'summary.json'));
+    if (
+      !Array.isArray(saved.records) ||
+      saved.records.length !== ids.length ||
+      new Set(saved.records.map((r) => r.captureRef)).size !== ids.length ||
+      saved.records.some((r) => !roles.has(r.captureRef))
+    )
+      throw Error('PARSING_RUN_INVALID');
+    for (const r of saved.records)
+      parsing.set(
+        r.captureRef,
+        validateParsingSummary(r.parsing, {
+          allowLegacy: true,
+          viewRole: roles.get(r.captureRef),
+        }),
+      );
+  }
+  return {
+    records: ids.map((captureRef) => ({
+      captureRef,
+      viewRole: roles.get(captureRef),
+      metrics: metrics.get(captureRef),
+      parsing: parsing.get(captureRef) ?? null,
+    })),
+    parsingValidated: Boolean(parserActive),
+  };
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  if (!(
+    (args.length === 1 && args[0] === '--schema-only') ||
+    (args.length === 2 && args[0] === '--intake' && args[1])
+  )) {
+    process.stderr.write('Usage: npm run face:coverage -- --schema-only | --intake PRIVATE_DIR\n');
+    process.exitCode = 2;
+    return;
+  }
+  assertFR293ProductColumnMap();
+  const schemaOnly = args[0] === '--schema-only';
+  const local = schemaOnly
+    ? { records: [], parsingValidated: false }
+    : await loadLocal(resolve(args[1]));
+  const report = summarizeWholeFaceCoverage(FR293_PRODUCT_COLUMN_MAP, local.records);
+  // Intentionally aggregate only: no capture ID, source filename, mask or raw coordinates.
+  process.stdout.write(
+    JSON.stringify(
+      {
+        ...report,
+        evidenceSource: schemaOnly ? 'canonical_schema_only' : 'validated_local_saved_runs',
+        parsingSavedAndValidated: local.parsingValidated,
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+}
+main().catch(() => {
+  process.stderr.write('FACE_COVERAGE_UNAVAILABLE: invalid or missing private batch\n');
+  process.exitCode = 1;
+});

@@ -176,3 +176,12 @@ test files, TypeScript typecheck, build, scoped ESLint and formatting pass.
 Regression cases cover protrusion within unchanged bounding boxes, concave
 edge escape, self-intersection, touching boundaries, sparse brow pairs and
 reflection/topology permutation. Real-photo re-execution remains outstanding.
+
+## 2026-11-05 현재 단계: 29개 정규 특징별 로컬 증거 점검
+
+기존 8개 형태 카드와 29개 정규 특징은 서로 다른 분류입니다. 새 읽기 전용 점검기는 FR293의 실제 29개 키를 기준으로, 기존 사진 분석에서 저장된 **후보 수치가 어느 항목과 관련 있는지** 집계합니다. 눈/눈썹/입/코/귀/하관의 모델 기반 근거를 정규 실측이나 전통 형태 자동 판정으로 승격하지 않습니다.
+
+- 코드: `tools/face-reading/two-view/feature-coverage.mjs`; 실행 명령: `npm run face:coverage -- --schema-only` 또는 `--intake <private-dir>`.
+- 정규 계산 기능 18개와 입력 사진으로 자동 관측 가능한 기능은 별개로 표시합니다. 데이터가 없는 경우 0장이라는 사실을 분명히 드러냅니다.
+- 개인별 원본, 촬영 ID, 눈썹/귀 마스크, 생체 재구성 가능한 좌표는 집계 출력에 없습니다.
+- 집 PC 비공개 23장 자료에 접근할 수 없는 경우 해당 사진의 최신 실행·정확도·사람 판정은 **미완료**로 유지하고 코드·합성 테스트만 완료 처리합니다.
