@@ -1193,6 +1193,15 @@ export function runFiveHundredSajuAudit() {
     interpretationCaveat:'Natal withReadableText counts selected source-bound T8 sections, not bounded General/Wealth T5-only partial explanations. General and Wealth T5 are reported separately without upgrading T8 completion. Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
     permissions:{mayPublish:false,maySell:false,mayCallOfficial:false},
   };
+  // Report the actual failed chart and its first error before attempting the
+  // historical baseline comparison. A per-chart validation failure otherwise
+  // appears misleadingly as an "identical 500-case sample" mismatch.
+  if (failures.length > 0) {
+    process.stderr.write('SAJU500_CASE_FAILURES ' +
+      JSON.stringify({count:failures.length,examples:failures.slice(0,3)}) + '\n');
+    throw new Error('500-case audit found ' + failures.length +
+      ' chart validation failures; see SAJU500_CASE_FAILURES');
+  }
   result.beforeAfterComparison = compareFixedSaju500Baseline(result);
   const outfile=process.argv[2];
   if(outfile) writeFileSync(outfile,JSON.stringify(result,null,2)+'\n','utf8');
