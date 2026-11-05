@@ -1,5 +1,12 @@
 # 사주 엔진 해석 품질 개선 워크로그
 
+## 2026-11-05 — 작업 101 · 기존 T5 한국어 설명의 불필요한 중복 제거 (단계 5·7)
+- **출발 CI 사실:** 직전 커밋 `b10f75e`의 [전체 CI 41908306245](https://github.com/gycha0109-beep/Saju/actions/runs/41908306245), [고정 500명 감사 41908306250](https://github.com/gycha0109-beep/Saju/actions/runs/41908306250), [계산 컨테이너 41908306244](https://github.com/gycha0109-beep/Saju/actions/runs/41908306244) 성공. 기존 [PIE 41908306922](https://github.com/gycha0109-beep/Saju/actions/runs/41908306922)는 취소됐지만 동일 SHA의 [대체 PIE 41908337469](https://github.com/gycha0109-beep/Saju/actions/runs/41908337469)는 성공이다.
+- **실제 출력 경로 결함:** `natal-existing-t5-source-context.ts`가 원본 연구 T5 각 `summary`를 해당 `context.paragraph`에 합성하고, `natal-five-domain-multifactor-reader.ts`는 그 문단을 노출한 뒤 각 `li`의 `<p>`에도 동일 `theme.summary`를 다시 출력했다. 이 중복은 등록된 명리 의미 차이가 아니라 동일 해석 한국어 문장 재출력이다. 기존 500명 결과에서 총운 **356건**(종합 T8 없음 22, 보조 긴장 부분 70, 부분 중심 264), 직업 22·관계 4·사업 6건에 출처 있는 T5 문맥이 있다.
+- **구현:** 총운·직업·사업·관계의 기존 원국 T5 문맥에서 원본 `context.paragraph`의 의미·한계 안내를 그대로 1회 유지한다. 그 아래 계산/출처 목록은 정확한 Claim·기존 해석 제목·실제 원국 위치·Rule·Methodology·Source만 표시하고 동일 `theme.summary`를 중복하지 않는다. 재물운은 원래 근거 목록에 `summary` 중복 출력이 없으므로 변경하지 않는다.
+- **안전 경계 및 검사:** 실제 명식 회귀에서 T5 한국어 요약이 각 분야 카드에 정확히 한 번 등장하는지와 원본 Claim·출처 유지 여부를 확인한다. 고정 시드 500명 감사는 종합 부재·부분 T8 등 모든 해당 문맥에서 한국어 중복·근거 누락을 전수 확인한다. 기존 T5/T8·권한·판정·보류 16건 및 연·월운 T9를 변경하지 않는다.
+- **판정 유보:** 이번 신규 커밋 CI와 감사 성공 확인 전에는 최종 품질 충족이라고 주장하지 않는다.
+
 ## 2026-11-05 — 작업 100 · 전체 사주 T8 부재 22건의 원본 T5 첫 화면 출력 복구 (단계 1·5·7)
 - **진입 검증:** 작업 99 최종 커밋 `f5806fe`의 전체 CI [41904792771](https://github.com/gycha0109-beep/Saju/actions/runs/41904792771), 고정 500명 감사 [41904792805](https://github.com/gycha0109-beep/Saju/actions/runs/41904792805), 계산 컨테이너 [41904792774](https://github.com/gycha0109-beep/Saju/actions/runs/41904792774) 성공. [PIE 41904793471](https://github.com/gycha0109-beep/Saju/actions/runs/41904793471)는 취소됐으나 동일 커밋의 [대체 PIE 41904828910](https://github.com/gycha0109-beep/Saju/actions/runs/41904828910)은 성공하였으며 해당 prospective evidence 작업도 성공했다. 취소를 코드 RED로 간주하지 않는다.
 - **동일 SHA 실측:** 고정 500명 감사 결과 총운 T8 미선택 **22/500**, 이 22명 전원 이미 실행한 출처/규칙/방법론 연결 원국 T5 부분 설명 존재. 대표 실제 명식 `1955-10-31 19:35`, `1967-08-22 10:28`. 기존 다섯 분야 통합 화면 본문 하단에는 원본 T5/출처가 있으나 첫 화면 다섯 관점 요약은 `출처 있는 원국 중심 복합 해석 축`이라는 부족 사유만 노출하고, 총운 카드 본문 시작에서도 `현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.`라고 표시하여 T5 보존 현황과 충돌했다.
