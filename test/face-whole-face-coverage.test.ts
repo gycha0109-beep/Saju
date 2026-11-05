@@ -133,7 +133,7 @@ describe('local canonical whole-face coverage audit', () => {
   it('fails closed on forged parser authority and duplicated capture references', () => {
     const a = {
       captureRef: 'capture-04',
-      viewRole: 'frontal',
+      viewRole: 'frontal' as const,
       metrics: [],
       parsing: {
         ...parsing(),
