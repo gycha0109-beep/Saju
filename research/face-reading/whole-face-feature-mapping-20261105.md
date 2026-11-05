@@ -179,3 +179,30 @@ Watchtower-Track: face-observation-engine
 | `chin_lower_face.relative_projection` | FR295/299 protocol | 3DDFA-V2 상대3D 후보 | 독립 3D 측면 턱끝 참조 | projection 오차·시점 반복 |
 
 **선택 우선순위:** 기존 MediaPipe/FR293 계산기와 PR #2453의 BiSeNet 후보 → 동일 사진에서 FaceXFormer(선택적) → 해당 부위 전용 관측기(학습 데이터 있을 때) → 독립 3D 참조가 있는 경우에만 3DDFA-V2 결과 검토. 모든 단계의 실패·가림은 부위별 `unavailable`로 보존한다.
+
+## 부록 C. 딥리서치 반영 — 추가 세부 요구 18개의 직접 작업 선택
+
+이 항목은 **FR282의 새 정규 키가 아니다**. 기존 29개 정규 항목으로 표현 가능 여부를 검토하며, 일부는 `extension_candidate`에 머물러야 한다. **아직 정답·학습 데이터와 상용권을 갖췄다고 주장하지 않는다.**
+
+| 추가 관측 요구 | 적용할 기술 경로 | 필요한 증거 / 불허 대체 |
+|---|---|---|
+| 미간 실제 눈썹 사이 거리 | 기존 eyebrow parsing + FR292 기하 재사용 | 실제 눈썹 내측 경계 라벨/가림; 별도 신모델 우선 불필요 |
+| 미간의 상대적 입체 깊이 | FR295/299 + 3DDFA-V2 연구 후보 | 독립 3D 미간 기준면·실측 reference 확보 전 unavailable |
+| 눈썹 실제 털 폭/굵기 | BiSeNet 비교→별도 고해상도 ROI 분할 학습 후보 | 털 실제 폭/마스크·화장/문신 보류 GT |
+| 눈썹산 높이·좌우 비대칭 | FR292 기하+eyebrow segmentation 재사용 | 실제 내/외 끝·중심곡선·head-roll 교정 |
+| 눈꺼풀 주름/덮임 형태 | 전용 눈꺼풀 ROI 소형 모델 학습 후보 | 주름 visible/hooded/partial/unknown 사람 합의 라벨 |
+| 안구 돌출·함몰 | 단안 3D 근거만으로 제품 발행 금지 | 독립 3D 안구/안와 기준; 현재 확장 후보 |
+| 코뿌리 실제 높이 | FR298/299+3DDFA 연구 | 콧대 root 높이 reference; mm 단정 금지 |
+| 콧볼 펼쳐짐·콧구멍 둘레 | FR290 재사용+nostril 전용 segmentation 후보 | 보이는 alar/nostril 구분·부분 가림 라벨 |
+| 광대 전방 돌출 | FR295/299+3DDFA 연구 | 동일 사진 독립 3D zygoma 주변 참조 |
+| 볼 꺼짐·깊이·살집 | cheek 상대3D 후보+전용 볼 형태 지표 연구 | 광대와 다른 볼 표면·표정/체형 변수; 직접 GT |
+| 턱의 각짐·둥글기 | FR216/289 윤곽 계산 재사용 | 실제 가시 턱 contour와 수염/머리 가림 |
+| 턱끝 전방 돌출 | FR295/299+3DDFA 연구 | 독립 측면/3D 턱끝 reference |
+| 귓바퀴/귓불 세부 형상 | ear visibility gate→전용 귀 파트 모델 학습 후보 | 각 귀 helix/lobe visible labels·부분 가림 |
+| 귀의 펼쳐짐·부착 각도 | 사선/측면·3D 독립 관측 연구 | ear bbox 대체 금지; 현재 unavailable |
+| 헤어라인 M형·좌우 후퇴 | 기존 168장 전용·모근 실제 경계 모델 후보 | 실제 보이는 hair-skin polyline/occlusion; 숨은 영역 추정 금지 |
+| 관자놀이 곡면·이마 볼록함 | FR295/299+3DDFA 연구 | 독립 3D 이마/관자 부위 reference |
+| 삼정의 세로 기준점 | FRB005 기존 7개 neutral reference 계약 | 모근 포함 동일 frame/출처 기준·span 미발행 |
+| 오관·십이궁·부위 간 균형 | FR258/FR311/FRB/T5/T6 기존 authority | 각 전통의 완전한 조건·출처·중립 관측 검증; 새 classifier 발행 금지 |
+
+**기준:** 부위 형태를 정확히 관측하는지 비교하고, 실제 정답이 없으면 `not_evaluated`; 촬영에서 보이지 않으면 `unavailable`. 전통 형태를 사진 자동으로 매칭하기 전 F1 출처/인간 판정 검증은 별도다.
