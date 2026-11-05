@@ -522,6 +522,7 @@ npm run face:coverage -- --intake .cache/face-reading/fr2337-intake
 
 - 첫 명령은 정규 계산기 목록만 검사합니다. **사진 0장은 모델 정확도 0점이나 관측 가능 0개라는 의미가 아닙니다.**
 - 둘째 명령은 기존 `two-view-runs` / `parsing-runs` 저장 결과의 **검증된 스칼라 요약**을 읽습니다. 기존 브라우저 분석이나 사진 추론을 다시 실행하지 않습니다.
+- 정면 측정 기록과 얼굴 분할 기록은 서로 독립적으로 점검합니다. 한 종류의 저장 실행 기록만 있거나 아직 분석하지 않은 사진 목록만 있어도 전체 점검은 중단하지 않으며, `frontalMetricsSavedAndValidated`, `parsingSavedAndValidated`, `evidenceSource`에 근거 확보 상태를 표시합니다.
 - 출력은 특징별 전체 후보 건수뿐입니다. **원본 이미지·경로·촬영 ID·마스크·원시 좌표·얼굴 식별자**를 출력하거나 저장하지 않습니다.
 - `partial_engineering_proxy_only`는 눈꼬리 모델 극점·눈썹 가로폭·입술 중앙 단면·코 class 폭 등 **해당 정규 특징과 동일하지 않은 연구 후보**를 뜻합니다.
 - `canonicalCalculatorMaterialized=true`는 계산 코드가 있다는 의미이지 **사진에서 자동 관측되어 정확도가 입증됐다는 의미가 아닙니다.** `canonicalPhotoMeasurementVerified`, `traditionalBindingApplied`, `productionAuthorized`는 항상 false입니다.

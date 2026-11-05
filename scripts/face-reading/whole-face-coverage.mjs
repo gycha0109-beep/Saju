@@ -49,13 +49,16 @@ async function loadLocal(intake) {
     ...extra.map((r) => [r.recordId, r.viewRole]),
   ]);
 
-  const metricActive = await readJson(join(intake, 'two-view-runs', 'active.json'));
-  if (!/^[a-f0-9-]{36}$/.test(metricActive.runId)) throw Error('METRICS_RUN_INVALID');
-  const metricSaved = await readJson(
-    join(intake, 'two-view-runs', metricActive.runId, 'metrics.json'),
-  );
-  const validMetrics = validateBatch(metricSaved, ids, roles);
-  const metrics = new Map(validMetrics.map((r) => [r.captureRef, r.metrics]));
+  // The original local preview permits metric and parsing runs independently.
+  // A missing active run is not evidence that a model failed.
+  const metrics = new Map();
+  const metricActive = await maybeJson(join(intake, 'two-view-runs', 'active.json'));
+  if (metricActive) {
+    if (!/^[a-f0-9-]{36}$/.test(metricActive.runId)) throw Error('METRICS_RUN_INVALID');
+    const saved = await readJson(join(intake, 'two-view-runs', metricActive.runId, 'metrics.json'));
+    const validated = validateBatch(saved, ids, roles);
+    for (const record of validated) metrics.set(record.captureRef, record.metrics);
+  }
 
   const parserActive = await maybeJson(join(intake, 'parsing-runs', 'active.json'));
   const parsing = new Map();
@@ -82,9 +85,10 @@ async function loadLocal(intake) {
     records: ids.map((captureRef) => ({
       captureRef,
       viewRole: roles.get(captureRef),
-      metrics: metrics.get(captureRef),
+      metrics: metrics.get(captureRef) ?? [],
       parsing: parsing.get(captureRef) ?? null,
     })),
+    metricsValidated: Boolean(metricActive),
     parsingValidated: Boolean(parserActive),
   };
 }
@@ -102,7 +106,7 @@ async function main() {
   assertFR293ProductColumnMap();
   const schemaOnly = args[0] === '--schema-only';
   const local = schemaOnly
-    ? { records: [], parsingValidated: false }
+    ? { records: [], metricsValidated: false, parsingValidated: false }
     : await loadLocal(resolve(args[1]));
   const report = summarizeWholeFaceCoverage(FR293_PRODUCT_COLUMN_MAP, local.records);
   // Intentionally aggregate only: no capture ID, source filename, mask or raw coordinates.
@@ -110,7 +114,12 @@ async function main() {
     JSON.stringify(
       {
         ...report,
-        evidenceSource: schemaOnly ? 'canonical_schema_only' : 'validated_local_saved_runs',
+        evidenceSource: schemaOnly
+          ? 'canonical_schema_only'
+          : local.metricsValidated || local.parsingValidated
+            ? 'validated_local_saved_runs'
+            : 'local_inventory_only',
+        frontalMetricsSavedAndValidated: local.metricsValidated,
         parsingSavedAndValidated: local.parsingValidated,
       },
       null,
