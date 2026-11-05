@@ -8,6 +8,10 @@ import {
   eyebrowBinaryFromOverlayRGBA,
   measureVisibleBrowMaskEnvelope,
 } from './visible-brow-mask-envelope.mjs';
+import {
+  noseBinaryFromOverlayRGBA,
+  measureVisibleNoseMaskProfile,
+} from './visible-nose-mask-profile.mjs';
 const $ = (id) => document.getElementById(id);
 const reasons = {
   profile_method_not_implemented: '정면용 수치는 측면 사진에 적용하지 않습니다',
@@ -192,6 +196,83 @@ function renderVisibleBrowMaskExperiment(record, result, previous) {
       if (records[selected]?.captureRef === record.captureRef) render();
     });
 }
+// The same local, non-persistent experiment boundary as the brow preview.
+// A full-frame nose class silhouette cannot identify anatomical nose regions.
+async function inspectVisibleNoseMask(record, result) {
+  const maskImage = new Image();
+  maskImage.src = result.layerUrls.nose;
+  const sourceImage = new Image();
+  sourceImage.src = record.image;
+  await Promise.all([maskImage.decode(), sourceImage.decode()]);
+  if (
+    maskImage.naturalWidth !== 512 ||
+    maskImage.naturalHeight !== 512 ||
+    !sourceImage.naturalWidth ||
+    !sourceImage.naturalHeight
+  )
+    throw Error('NOSE_SOURCE_INVALID');
+  const canvas = document.createElement('canvas');
+  canvas.width = maskImage.naturalWidth;
+  canvas.height = maskImage.naturalHeight;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) throw Error('NOSE_CANVAS_UNAVAILABLE');
+  context.drawImage(maskImage, 0, 0);
+  const rgba = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const binary = noseBinaryFromOverlayRGBA(rgba, canvas.width, canvas.height);
+  return measureVisibleNoseMaskProfile(binary, canvas.width, canvas.height, {
+    imageWidth: sourceImage.naturalWidth,
+    imageHeight: sourceImage.naturalHeight,
+  });
+}
+function renderVisibleNoseMaskExperiment(record, result, previous) {
+  const node = $('nose-mask-experiment');
+  if (previous) {
+    node.textContent = '과거 분할 기록에는 현재 코 윤곽 실험을 적용하지 않습니다.';
+    return;
+  }
+  if (record.viewRole !== 'frontal') {
+    node.textContent = '이 실험은 정면 사진의 보이는 코 영역에만 적용합니다.';
+    return;
+  }
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    result.parsing.morphology?.noseExtent?.status !== 'available' ||
+    result.parsing.regionScreening?.regions?.nose?.status === 'suppressed' ||
+    !result.layerUrls?.nose
+  ) {
+    node.textContent = '현재 사진에 코 분할 윤곽과 단일 얼굴 근거가 충분하지 않습니다. 코끝·콧구멍·콧볼의 실제 형상은 판정하지 않습니다.';
+    return;
+  }
+  const observed = result.noseMaskCandidate;
+  if (observed?.status === 'available') {
+    const { upper, middle, lower } = observed.sections;
+    node.textContent =
+      `모델 코 영역의 위/중간/아래 단면 폭 ÷ 전체 마스크 가로폭: ${upper.visibleMaskWidthToBoundingXSpan.toFixed(3)} / ${middle.visibleMaskWidthToBoundingXSpan.toFixed(3)} / ${lower.visibleMaskWidthToBoundingXSpan.toFixed(3)}` +
+      ` · 아래 단면 중심의 위 단면 대비 가로 이동: ${observed.lowerVsUpperImagePlaneCentreShiftToBoundingXSpan.toFixed(3)}` +
+      ` · 원본 종횡비 보정 마스크 폭/높이: ${observed.apparentMaskXSpanToYSpan.toFixed(3)}` +
+      ' — 전체 코 클래스의 분할 후보입니다. 실제 산근·콧대·코끝·콧볼·비공 구획이나 전통 관상 판정은 아닙니다.';
+    return;
+  }
+  if (observed?.status === 'unavailable') {
+    node.textContent = '코 윤곽 후보 보류: 이어진 단일 코 마스크와 단면 경계가 확인되지 않았습니다. (' + observed.reason + ')';
+    return;
+  }
+  node.textContent = '이 사진의 코 분할 마스크에서 단면별 상대 폭을 관찰하는 중입니다.';
+  if (observed) return;
+  result.noseMaskCandidate = { status: 'loading' };
+  void inspectVisibleNoseMask(record, result)
+    .then((candidate) => {
+      if (results.get(record.captureRef) !== result) return;
+      result.noseMaskCandidate = candidate;
+      if (records[selected]?.captureRef === record.captureRef) render();
+    })
+    .catch(() => {
+      if (results.get(record.captureRef) !== result) return;
+      result.noseMaskCandidate = { status: 'unavailable', reason: 'NOSE_LAYER_NOT_READABLE' };
+      if (records[selected]?.captureRef === record.captureRef) render();
+    });
+}
 function render() {
   const record = records[selected];
   if (!record) return;
@@ -254,6 +335,7 @@ function render() {
     $('reading-evidence').append(node);
   }
   renderVisibleBrowMaskExperiment(record, result, previous);
+  renderVisibleNoseMaskExperiment(record, result, previous);
   const quality = parsing?.regionScreening?.regions;
   const regionNames = { skin: '피부', nose: '코', lips: '입술', brows: '눈썹', ears: '귀 후보' };
   const checked = quality
