@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import {
   GENERAL_NATAL_PEER_TAXONOMY_SOURCE,
@@ -69,6 +70,381 @@ describe('general natal Samyeong v7 peer-taxonomy scan-backed evidence', () => {
       exactTranscriptionIdentityEstablished: false,
       fullSourceIntegrityQualificationEstablished: false,
     });
+  });
+
+  it('limits the observed paragraph to research-only peer taxonomy, not consumer admission', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const scope = evidence.narrowTaxonomySupport;
+    const peer = GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES.find(
+      (rule) => rule.ruleId === scope.assessedRuleId,
+    );
+
+    expect(peer).toBeDefined();
+    expect(scope.assessedRuleId).toBe('RULE-GENERAL-NATAL-SOURCE-BOUNDED-FAMILY-PEER-PRESENT');
+    expect(scope.assessedClaimType).toBe(
+      'GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_PEER_PRESENT',
+    );
+    expect(scope.assessedClaimType).toBe(peer?.output.claimType);
+    expect(scope.observedSourceGlyphs).toBe(
+      evidence.peerOpeningProseImageCollation.paragraphBegins,
+    );
+    expect(scope.frozenRecordedGlyphs).toBe(
+      evidence.existingScanImageReinspection.directlyObserved.historicalGovernedRecordedProposition,
+    );
+    expect(scope.observedSourceGlyphs).not.toBe(scope.frozenRecordedGlyphs);
+    expect(scope.claimSupportDisposition).toBe('RESEARCH_NARROW_PEER_GROUPING_SUPPORTED');
+    expect(scope.supportedOnly).toEqual(['비견', '겁재']);
+    expect(scope.fullSectionTranscriptionRequiredToObserveThisEightGlyphGrouping).toBe(false);
+    expect(scope.fullSectionTranscriptionCompleted).toBe(false);
+    expect(peer?.status).toBe('research');
+    expect(peer?.quality.reviewerStatus).toBe('unreviewed');
+    expect(peer?.quality.provenanceQuality).toBe('secondary_only');
+  });
+
+  it('requires independent frozen glyph-registration review before any stronger authority', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const scope = evidence.narrowTaxonomySupport;
+    expect(scope.independentlyReviewedSourceReregistrationApproved).toBe(false);
+    expect(scope.literalIdentityWithFrozenRecordEstablished).toBe(false);
+    expect(scope.sourceIntegrityAdmissionAuthorized).toBe(false);
+    expect(scope.behavioralInferenceAuthorized).toBe(false);
+    expect(scope.consumerProjectionAuthorized).toBe(false);
+    expect(scope.bridgeReentryAuthorized).toBe(false);
+    expect(scope.productionAdmissionAuthorized).toBe(false);
+    expect(scope.nextResearchAction).toBe('INDEPENDENT_REVIEW_OF_FROZEN_GLYPH_REGISTRATION');
+    expect(evidence.peerOpeningProseImageCollation.qualification.openingProseIndependentReviewerApproved).toBe(false);
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.qualification.fullSourceIntegrityQualificationEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
+  it('reproduces the directly collated 117-glyph opening prose across PDF p174-p175', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const prose = evidence.peerOpeningProseImageCollation;
+
+    expect(prose.source).toBe('CADAL06066043');
+    expect(prose.section).toBe('兄弟引例章');
+    expect(prose.digitalPagesInspected).toEqual([174, 175]);
+    expect(prose.glyphStringWithoutPunctuation.startsWith(prose.paragraphBegins)).toBe(true);
+    expect(prose.glyphStringWithoutPunctuation.endsWith(prose.paragraphEnds)).toBe(true);
+    expect(prose.glyphStringWithoutPunctuation).toContain('如庚日生寅');
+    expect(prose.glyphStringWithoutPunctuation).not.toContain('如庚日坐寅');
+    expect(prose.glyphStringWithoutPunctuation).not.toContain('本經云');
+    expect(prose.glyphStringWithoutPunctuation).not.toContain('歌云');
+    expect(prose.unicodeNormalization).toBe('NONE');
+    expect(prose.insertedPunctuation).toBe(false);
+    expect(prose.glyphStringWithoutPunctuation.length).toBe(117);
+    expect(Buffer.byteLength(prose.glyphStringWithoutPunctuation, 'utf8')).toBe(351);
+    expect(prose.glyphCount).toBe(117);
+    expect(prose.utf8ByteLength).toBe(351);
+    expect(
+      createHash('sha256')
+        .update(prose.glyphStringWithoutPunctuation, 'utf8')
+        .digest('hex'),
+    ).toBe('f5f35344b0db4e699731ab158586677783e16d89ef611e16fe4fdca66297817b');
+    expect(prose.sha256).toBe(
+      'f5f35344b0db4e699731ab158586677783e16d89ef611e16fe4fdca66297817b',
+    );
+  });
+
+  it('keeps page-175 annotation, printed folio and 生/坐 variants separate from authority', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const prose = evidence.peerOpeningProseImageCollation;
+    expect(prose.printedInterlinearAnnotation).toEqual({
+      text: '本經云',
+      location: 'PDF p175, following 五行自然不和',
+      includedInMainString: false,
+    });
+    expect(prose.adjacentPageFolioObservation).toEqual({
+      digitalPage: 175,
+      marginalGlyphs: '九十一',
+      digitalPage174PhysicalFolioAuthenticated: false,
+    });
+    expect(prose.variantCollation).toEqual({
+      scanGlyphNearFirstExample: '如庚日生寅',
+      externallyTranscribedVariant: '如庚日坐寅',
+      literalMatch: false,
+      originalPageImageTakesPrecedence: true,
+      transcriptionAuthorityPromoted: false,
+    });
+    expect(prose.qualification).toEqual({
+      openingProseManualImageCollationRecorded: true,
+      openingProseIndependentReviewerApproved: false,
+      originalDjvuPageDirectlyPixelDecoded: false,
+      wholeSectionTranscribed: false,
+      fullSourceQualifiedWitnessDigestReproduced: false,
+      exactPrintedFolioOf174Established: false,
+      fixedWitnessReRegistrationAuthorized: false,
+      productionAdmissionAuthority: false,
+    });
+    expect(evidence.source.directScanObservedText).toBe('兄弟者即劫財比肩');
+    expect(evidence.qualification.fullSourceIntegrityQualificationEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
+  it('reproduces the actual original DjVu p174 pinned encoded FORM and Sjbz bytes', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const source = evidence.scanAuthority.directInspection;
+    const original = evidence.verifiedOriginDjvuBytes;
+
+    expect(original.fileName).toBe('CADAL06066043_三命通會·卷七.djvu');
+    expect(original.fileByteLength).toBe(9793070);
+    expect(original.fileSha1).toBe(source.uploadedDjvuSha1);
+    expect(original.fileSha256).toBe(
+      '406704d9095a6bf3635a9557dfcd27a93e051fb4ebbffe1c252ddfe4294f1d1a',
+    );
+    expect(original.multipageFormat).toBe('DJVM');
+    expect(original.numberOfDjvuPageForms).toBe(evidence.scanAuthority.pageCount);
+    expect(original.authenticatedDigitalPage).toBe(source.digitalScanPage);
+    expect(original.pageForm).toEqual({
+      byteOffset: 8566660,
+      byteLength: 44342,
+      rawFormWithHeaderSha256: source.pageFormDjvuSha256,
+      reproducesFrozenRegisteredHash: true,
+    });
+    expect(original.pageSjbzChunk).toEqual({
+      hashScope: 'CHUNK_HEADER_AND_BODY',
+      rawChunkWithHeaderSha256: source.pageSjbzSha256,
+      reproducesFrozenRegisteredHash: true,
+    });
+  });
+
+  it('distinguishes authenticated source bytes from page rendering and full-witness promotion', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    expect(evidence.verifiedOriginDjvuBytes.verification).toEqual({
+      sourceDjvuBytesAuthenticated: true,
+      exactPageEncodedBytesAuthenticated: true,
+      screenshotProvenDirectDjvuDecode: false,
+      pdfBinaryDerivationFromSourceDjvuVerified: false,
+      chapterFullGlyphCollationVerified: false,
+      printedFolioVerified: false,
+      fullPassageWitnessDigestReproduced: false,
+      completeSourceIntegrityAuthorized: false,
+      productionAdmissionAuthority: false,
+    });
+    expect(evidence.existingScanImageReinspection.suppliedAs.originDjvuByteIdentityVerified).toBe(false);
+    expect(evidence.existingScanImageReinspection.uploadedPdfPageBinding.uploadedPdfBoundToCatalogDjvuBytes).toBe(false);
+    expect(evidence.existingScanImageReinspection.exactGlyphRegistrationReview.originalDjvuIdentityStillRequired).toBe(false);
+    expect(evidence.qualification.exactWitnessHashReproducedFromScan).toBe(false);
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
+  it('records exact alternate PDF image location without elevating the governed witness', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const alternate = evidence.alternateScanCorroboration;
+
+    expect(alternate.authorityId).toBe('SCAN-SAMYEONG-SIKU-CADAL06056483');
+    expect(alternate.digitization).toBe('CADAL06056483');
+    expect(alternate.edition).toBe(evidence.scanAuthority.edition);
+    expect(alternate.pageCount).toBe(206);
+    expect(alternate.authenticatedDjvuSha1).toBe(
+      '87834f5ff930189c57a5031af2dfa1e6a6a43676',
+    );
+    expect(alternate.authenticatedDjvuSha256).toBe(
+      'debf222f9448e447217d21e11f116c285eb3ab57debdcd2c6c5acf8af2b351bd',
+    );
+    expect(alternate.directPdfImageInspection).toEqual({
+      splitPdfPageRange: '151-206',
+      splitPdfPage: 32,
+      digitalScanPageFromContiguousPdfSplit: 182,
+      sectionObserved: '兄弟引例章',
+      boundedPropositionObserved: '兄弟者即刼財比肩',
+      governedRecordedPropositionForComparison: '兄弟者即劫財比肩',
+      matchesGovernedScanRecordedBoundedProposition: false,
+      semanticCorrespondenceOnly: true,
+      originalPdfPages: 206,
+      originalPdfSha256: '87509016d7b897c1a1e92cf79bee6e00e19b3b09a010f9288a5c9d44fafaff21',
+      splitPdfSha256: 'cc82851a3b448cdba09bad22e812ff0720b3c257114b318645d2a44abf03b180',
+      originalPdfPageAndSplitPageRasterIdentical: true,
+      identicalRasterSha256At2xRgb: '6c2db6e0300cd502f8ae65f58e56f98636c84597981ae388d0deffd5e3677075',
+      originalDjvuPageImageIndependentlyDecoded: false,
+    });
+    expect(alternate.directPdfImageInspection.boundedPropositionObserved).not.toBe(
+      alternate.directPdfImageInspection.governedRecordedPropositionForComparison,
+    );
+    expect(alternate.directPdfImageInspection.matchesGovernedScanRecordedBoundedProposition).toBe(false);
+    expect(
+      alternate.directPdfImageInspection.digitalScanPageFromContiguousPdfSplit -
+        evidence.scanAuthority.directInspection.digitalScanPage,
+    ).toBe(8);
+    expect(alternate.pageCount - evidence.scanAuthority.pageCount).toBe(8);
+  });
+
+  it('preserves the older-page image glyph without promoting screenshot provenance', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const reinspection = evidence.existingScanImageReinspection;
+    const older = evidence.scanAuthority.directInspection;
+    const alternate = evidence.alternateScanCorroboration.directPdfImageInspection;
+
+    expect(reinspection.suppliedAs).toEqual({
+      digitization: 'CADAL06066043',
+      claimedDigitalScanPage: 174,
+      submittedImageSha256: 'ad13f9bb2dd1882a5e689f963eec8f5ac9f49df7891f3b722c074fb322f92b08',
+      imageWidth: 281,
+      imageHeight: 401,
+      originDjvuByteIdentityVerified: false,
+    });
+    expect(reinspection.directlyObserved).toEqual({
+      section: '兄弟引例章',
+      boundedProposition: '兄弟者即刼財比肩',
+      historicalGovernedRecordedProposition: '兄弟者即劫財比肩',
+      literalIdentityToHistoricalRecord: false,
+      literalIdentityToAlternatePdf: true,
+    });
+    expect(reinspection.directlyObserved.boundedProposition).toBe(
+      alternate.boundedPropositionObserved,
+    );
+    expect(reinspection.directlyObserved.historicalGovernedRecordedProposition).toBe(
+      older.boundedPropositionObserved,
+    );
+    expect(reinspection.directlyObserved.boundedProposition).not.toBe(
+      older.boundedPropositionObserved,
+    );
+    expect(reinspection.imageCorrespondence).toEqual({
+      alternateDigitization: 'CADAL06056483',
+      alternatePdfPage: 182,
+      algorithm: 'SIFT_RATIO_0_70_RANSAC_4PX',
+      featureMatches: 78,
+      geometricInlierMatches: 76,
+      nearIdenticalPrintedPageLayout: true,
+      independentWitnessCorroborationEstablished: false,
+    });
+  });
+
+  it('authenticates the uploaded full 198-page PDF p174 screenshot without claiming DjVu-byte identity', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const pdf = evidence.existingScanImageReinspection.uploadedPdfPageBinding;
+    const old = evidence.existingScanImageReinspection;
+
+    expect(pdf.pdfFile).toBe('CADAL06066043_三命通會·卷七.pdf');
+    expect(pdf.pdfSizeBytes).toBe(235952141);
+    expect(pdf.pdfPageCount).toBe(evidence.scanAuthority.pageCount);
+    expect(pdf.pdfSha256).toBe('42385450d1fc028baf16b648c0623b4b5064a952f92c98a8fb26d090498f281c');
+    expect(pdf.digitalPdfPage).toBe(evidence.scanAuthority.directInspection.digitalScanPage);
+    expect(pdf.renderedPage).toEqual({
+      scale: 2,
+      colorSpace: 'RGB',
+      alpha: false,
+      width: 1191,
+      height: 1684,
+      pixelSampleSha256: 'e1dcbfea6b2e9dc81d3c24a99869425ffbb2f200709cda1e0aee996f6bf63df9',
+    });
+    expect(pdf.userSubmittedScreenshot).toEqual({
+      pngSha256: 'aa2158758f659019b69de19e68c090caa660edc7c45199bc9088e8becd654368',
+      width: 287,
+      height: 388,
+      featureMatches: 719,
+      geometricInlierMatches: 700,
+      screenshotToPdfPageCorrespondenceVerified: true,
+    });
+    expect(pdf.alternatePdfCorrespondence).toEqual({
+      digitization: 'CADAL06056483',
+      alternatePdfPage: evidence.alternateScanCorroboration.directPdfImageInspection.digitalScanPageFromContiguousPdfSplit,
+      featureMatches: 3080,
+      geometricInlierMatches: 2222,
+      samePrintedLeafLayoutStronglyCorroborated: true,
+      rawRenderedRasterIdentical: false,
+      independentWitnessEstablished: false,
+    });
+    expect(pdf.sourceDjvuSha1KnownFromCatalog).toBe(
+      evidence.scanAuthority.directInspection.uploadedDjvuSha1,
+    );
+    expect(old.suppliedAs.originDjvuByteIdentityVerified).toBe(false);
+    expect(pdf.uploadedPdfBoundToCatalogDjvuBytes).toBe(false);
+  });
+
+  it('does not promote full source-integrity or physical folio from PDF image correspondence', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const p = evidence.existingScanImageReinspection.uploadedPdfPageBinding;
+    expect(p.exactPhysicalFolioReadFromImage).toBe(false);
+    expect(p.fullChapterGlyphTranscriptionVerified).toBe(false);
+    expect(p.chapterWitnessDigestReproduced).toBe(false);
+    expect(p.productionAdmissionAuthority).toBe(false);
+    expect(evidence.qualification.exactPhysicalPageOrFolioVerified).toBe(false);
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.qualification.fullSourceIntegrityQualificationEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
+  it('reproduces exact UTF-8 SHA-256 of the directly observed eight glyphs without Unicode normalization', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const d = evidence.existingScanImageReinspection.boundedClauseDigest;
+    const observed = evidence.existingScanImageReinspection.directlyObserved;
+    const hash = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
+
+    expect(d.scope).toBe('EIGHT_GLYPH_CLAUSE_ONLY');
+    expect(d.originalGlyphString).toBe(observed.boundedProposition);
+    expect(d.historicalRecordedString).toBe(observed.historicalGovernedRecordedProposition);
+    expect(d.encoding).toBe('UTF-8');
+    expect(d.unicodeNormalization).toBe('NONE');
+    expect(d.punctuationTransform).toBe('NONE');
+    expect(d.hashAlgorithm).toBe('SHA-256');
+    expect(Buffer.byteLength(d.originalGlyphString, 'utf8')).toBe(24);
+    expect(Buffer.byteLength(d.historicalRecordedString, 'utf8')).toBe(24);
+    expect(d.byteLengthEach).toBe(24);
+    expect(hash(d.originalGlyphString)).toBe(
+      '13d5f00d5a8575c28cb462b531c7e15aa621aa766635c6fe76daa5691c617096',
+    );
+    expect(hash(d.historicalRecordedString)).toBe(
+      'dcd8d2ae1f1e4daf64c6445f9f784d1a71e7b6cb337853f7cf4a1a3fb6d4876d',
+    );
+    expect(hash(d.originalGlyphString)).toBe(d.originalGlyphSha256);
+    expect(hash(d.historicalRecordedString)).toBe(d.historicalRecordedSha256);
+    expect(d.originalGlyphSha256).not.toBe(d.historicalRecordedSha256);
+    expect(d.hashesEqual).toBe(false);
+    expect(d.completePassageHashReproduced).toBe(false);
+    expect(d.sourceBoundWitnessDigestQualified).toBe(false);
+  });
+
+  it('requires reviewed glyph binding while keeping source registration immutable', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    expect(evidence.existingScanImageReinspection.exactGlyphRegistrationReview).toEqual({
+      disposition: 'REVIEW_REQUIRED_FOR_EXACT_GLYPH_BINDING',
+      originalDjvuIdentityStillRequired: false,
+      exactPrintedFolioStillRequired: true,
+      completePassageCollationStillRequired: true,
+      automaticWitnessReregistrationAuthorized: false,
+      fixedSourceTranscriptionMutationAuthorized: false,
+      reviewerApprovalRecorded: false,
+    });
+    expect(evidence.scanAuthority.directInspection.boundedPropositionObserved).toBe(
+      '兄弟者即劫財比肩',
+    );
+    expect(evidence.source.directScanObservedText).toBe('兄弟者即劫財比肩');
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.qualification.exactWitnessHashReproducedFromScan).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
+  it('does not upgrade source-integrity or production from page-image similarity', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    expect(evidence.existingScanImageReinspection.qualification).toEqual({
+      exactOriginScanImageAuthenticated: false,
+      physicalFolioVerified: false,
+      fullPassageGlyphIdentityEstablished: false,
+      scanDerivedWitnessDigestReproduced: false,
+      fullSourceIntegrityQualificationEstablished: false,
+      productionAdmissionAuthority: false,
+    });
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.qualification.fullSourceIntegrityQualificationEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
+  it('keeps all stronger source-integrity and production gates closed for alternate scan', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    expect(evidence.alternateScanCorroboration.qualification).toEqual({
+      exactPhysicalPageOrFolioVerified: false,
+      completePassageTranscriptionIdentityEstablished: false,
+      scanDerivedWitnessDigestReproduced: false,
+      fullSourceIntegrityQualificationEstablished: false,
+      productionAdmissionAuthority: false,
+    });
+    expect(evidence.qualification.exactPhysicalPageOrFolioVerified).toBe(false);
+    expect(evidence.qualification.exactWitnessHashReproducedFromScan).toBe(false);
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
   });
 
   it('keeps provenance, domain review, and Production authority fail-closed', () => {

@@ -53,7 +53,11 @@
     "format:check": "prettier --check src test package.json tsconfig.json tsconfig.build.json eslint.config.mjs .prettierrc.json .github/workflows/ci.yml",
     "test": "vitest run",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run preview:research:smoke",
+    "preview:natal:audit": "npm run build && node scripts/natal-personalization-audit.mjs",
+    "preview:natal:demo": "npm run build && node scripts/natal-personalized-preview.mjs",
+    "saju:read": "npm run build && node scripts/natal-five-domain-multifactor-research-demo.mjs --read",
     "preview:research": "npm run build && node scripts/research-ux-preview.mjs",
+    "research:r083:preflight": "npm run build && node scripts/r083-classical-replay-preflight.mjs",
     "preview:research:smoke": "MYEONGHWA_PREVIEW_SMOKE=1 node scripts/research-ux-preview.mjs",
     "face:verify:manifest": "node scripts/verify-face-reading-migration.mjs",
     "face:typecheck": "tsc -p tsconfig.face-reading.json --noEmit",
@@ -87,7 +91,13 @@
     "face:verify:hairline-multisignal-candidate": "python3 tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py --self-check",
     "face:review:hairline-multisignal": "npm run face:build && node scripts/run-multisignal-hairline-review-packet.mjs",
     "face:verify:hairline-multisignal-review-packet": "npm run face:build && node scripts/run-multisignal-hairline-review-packet.mjs --self-check",
-    "face:coverage": "npm run face:build && node scripts/face-reading/whole-face-coverage.mjs"
+    "face:coverage": "npm run face:build && node scripts/face-reading/whole-face-coverage.mjs",
+    "start:source-proof-staging": "node dist/source-reading-proof-server.js",
+    "preview:annual:demo": "npm run build && node scripts/annual-exploration-demo.mjs",
+    "preview:monthly:demo": "npm run build && node scripts/monthly-exploration-demo.mjs",
+    "preview:annual-monthly:demo": "npm run build && node scripts/annual-monthly-exploration-demo.mjs",
+    "preview:natal:reader": "npm run build && node scripts/natal-browser-reader.mjs",
+    "test:preview:natal:reader": "node --test scripts/natal-browser-reader.node-check.mjs"
   },
   "dependencies": {
     "manseryeok": "2.0.0"

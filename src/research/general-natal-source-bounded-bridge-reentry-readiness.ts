@@ -40,6 +40,9 @@ export interface GeneralNatalBridgeReentryEvidenceSnapshot {
     readonly exactWitnessHashReproducedFromScan: boolean;
     readonly exactTranscriptionIdentityEstablished: boolean;
     readonly fullSourceIntegrityQualificationEstablished: boolean;
+    readonly observedSourceGlyphs: string;
+    readonly frozenRegisteredGlyphs: string;
+    readonly literalIdentityWithFrozenRecordEstablished: boolean;
   };
   readonly laterGovernance: {
     readonly domainReviewAuthorityEstablished: boolean;
@@ -143,6 +146,10 @@ export function collectGeneralNatalBridgeReentryEvidence(): GeneralNatalBridgeRe
         peerTaxonomy.qualification.exactTranscriptionIdentityEstablished,
       fullSourceIntegrityQualificationEstablished:
         peerTaxonomy.qualification.fullSourceIntegrityQualificationEstablished,
+      observedSourceGlyphs: peerTaxonomy.narrowTaxonomySupport.observedSourceGlyphs,
+      frozenRegisteredGlyphs: peerTaxonomy.narrowTaxonomySupport.frozenRecordedGlyphs,
+      literalIdentityWithFrozenRecordEstablished:
+        peerTaxonomy.narrowTaxonomySupport.literalIdentityWithFrozenRecordEstablished,
     }),
     laterGovernance: Object.freeze({
       domainReviewAuthorityEstablished:
@@ -184,7 +191,9 @@ export function evaluateGeneralNatalBridgeReentryReadiness(
     evidence.peerTaxonomy.exactPhysicalPageOrFolioVerified &&
     evidence.peerTaxonomy.exactWitnessHashReproducedFromScan &&
     evidence.peerTaxonomy.exactTranscriptionIdentityEstablished &&
-    evidence.peerTaxonomy.fullSourceIntegrityQualificationEstablished;
+    evidence.peerTaxonomy.fullSourceIntegrityQualificationEstablished &&
+    evidence.peerTaxonomy.literalIdentityWithFrozenRecordEstablished &&
+    evidence.peerTaxonomy.observedSourceGlyphs === evidence.peerTaxonomy.frozenRegisteredGlyphs;
 
   const sourceIntegrityReady = fixedWitnessReady && peerTaxonomyReady;
 

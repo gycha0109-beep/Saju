@@ -8,8 +8,10 @@ import type {
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import {
   createMyeonghwaProductHost,
+  createMyeonghwaPreviewNatalFiveDomainHost,
   parseProductHostReadingRequest,
   type MyeonghwaProductHost,
+  type MyeonghwaProductHostDependencies,
 } from '../host/product-host.js';
 import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../reading/governed-reading-execution.js';
 import { normalizeConsumerReadingRequest } from '../reading/consumer-reading-request-adapter.js';
@@ -34,6 +36,8 @@ import {
   isPreviewE2eSupportedReadingSection,
 } from './preview-authority.js';
 import { requirePreviewSemanticAdmissionV1 } from './preview-semantic-admission.js';
+import { createGeneralNatalIntegratedPreviewProductHost } from '../host/general-natal-integrated-preview-host.js';
+import { createGeneralNatalIntegratedReadingRegistry } from '../interpretation/general-natal-integrated-reading-registry.js';
 
 export const PREVIEW_E2E_RUNTIME_VERSION = 'myeonghwa-preview-e2e-runtime-v3' as const;
 export const PREVIEW_E2E_OUTPUT_SCHEMA_VERSION = 'myeonghwa-narrative-draft-v1' as const;
@@ -485,19 +489,69 @@ class PreviewE2eNarrativeAdapter implements NarrativeModelAdapter {
   }
 }
 
-function createDefaultPreviewProductHost(now: Date): MyeonghwaProductHost {
-  return createMyeonghwaProductHost({
-    calculate(input) {
-      return calculateAuthorizedMyeonghwaProductionSnapshot(input).snapshot;
+/** Apply the same narrow admission guard to both the Preview and Source Proof spouse lanes. */
+async function loadAdmittedSpousePositionOnlyPreviewMaterialization() {
+  const admission = requirePreviewSemanticAdmissionV1(
+    'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE',
+    'relationship:natal:spouse',
+  );
+  if (
+    admission.disposition !== 'claim' ||
+    admission.semanticScope !== 'traditional_spouse_palace_day_branch_position_only' ||
+    !admission.boundaries.includes('OFFICIAL_READING_PREVIEW_ALLOWED')
+  ) {
+    throw new Error('Spouse position-only Preview semantic admission is not exact.');
+  }
+
+  return import(
+    '../research/relationship-spouse-t8-day-branch-palace-project-governed-narrative-materialization.js'
+  );
+}
+
+/** Shared governed Preview calculation and domain-scoped source-proof interpretation wiring. */
+export function createApprovedSourceProofPreviewDependenciesV1(
+  now: Date = new Date(),
+): MyeonghwaProductHostDependencies {
+  if (!PREVIEW_E2E_APPROVAL.approved) throw new Error('Preview E2E authority is not approved.');
+  return {
+    calculate(input, context) {
+      return calculateAuthorizedMyeonghwaProductionSnapshot(input, {
+        now: new Date(context.requestedAt),
+      }).snapshot;
     },
-    interpret(snapshot, context, requestContext) {
-      const registry = createBusinessNatalReadingCandidateRegistry(context.requestedAt);
+    async interpret(snapshot, context, requestContext, resolvedReadingRequest) {
+      const spouseNatal = resolvedReadingRequest?.intent.domain === 'relationship' &&
+        resolvedReadingRequest.intent.temporalScope === 'natal' &&
+        resolvedReadingRequest.intent.relationshipScope === 'spouse';
+      if (spouseNatal) {
+        // Share the exact bounded spouse execution and admission with the
+        // actual Preview lane; never use the broader specialist research pack.
+        const materializationModule =
+          await loadAdmittedSpousePositionOnlyPreviewMaterialization();
+        const interpretation =
+          await materializationModule.runRelationshipSpouseT8DayBranchPalaceNarrativeMaterializedShadowExecution(
+            snapshot,
+            { requestId: context.requestId, now: new Date(context.requestedAt) },
+          );
+        return {
+          registry:
+            materializationModule.RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_NARRATIVE_MATERIALIZED_REGISTRY,
+          interpretation,
+        };
+      }
+      // The source-proof issuer must not return General consumer syntheses
+      // excluded from the actual approved General Natal Preview HTTP lane.
+      const generalNatal = resolvedReadingRequest?.intent.domain === 'general' &&
+        resolvedReadingRequest.intent.temporalScope === 'natal';
+      const registry = generalNatal
+        ? createGeneralNatalIntegratedReadingRegistry(context.requestedAt)
+        : createBusinessNatalReadingCandidateRegistry(context.requestedAt);
       return {
         registry,
         interpretation: runInterpretation(snapshot, registry, {
           requestId: context.requestId,
           now: new Date(context.requestedAt),
-          ...(requestContext === undefined
+          ...(requestContext?.temporalFacts === undefined
             ? {}
             : { temporalFacts: requestContext.temporalFacts }),
         }),
@@ -515,32 +569,35 @@ function createDefaultPreviewProductHost(now: Date): MyeonghwaProductHost {
       narrativeNow: now,
       artifactGeneratedAt: now,
     },
+    readingOptionsForRequest(context) {
+      const requestedAt = new Date(context.requestedAt);
+      return {
+        outputSchemaVersion: PREVIEW_E2E_OUTPUT_SCHEMA_VERSION,
+        readingVersion: PREVIEW_E2E_RUNTIME_VERSION,
+        claimNarrativeProfiles: CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
+        narrativeNow: requestedAt,
+        artifactGeneratedAt: requestedAt,
+      };
+    },
     requestIdFactory: () => `preview_${randomUUID()}`,
-  });
+  };
+}
+
+function createDefaultPreviewProductHost(now: Date): MyeonghwaProductHost {
+  return createMyeonghwaProductHost(createApprovedSourceProofPreviewDependenciesV1(now));
 }
 
 async function createSpousePositionOnlyPreviewProductHost(
   now: Date,
 ): Promise<MyeonghwaProductHost> {
-  const admission = requirePreviewSemanticAdmissionV1(
-    'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE',
-    'relationship:natal:spouse',
-  );
-  if (
-    admission.disposition !== 'claim' ||
-    admission.semanticScope !== 'traditional_spouse_palace_day_branch_position_only' ||
-    !admission.boundaries.includes('OFFICIAL_READING_PREVIEW_ALLOWED')
-  ) {
-    throw new Error('Spouse position-only Preview semantic admission is not exact.');
-  }
-
-  const materializationModule = await import(
-    '../research/relationship-spouse-t8-day-branch-palace-project-governed-narrative-materialization.js'
-  );
+  const materializationModule =
+    await loadAdmittedSpousePositionOnlyPreviewMaterialization();
 
   return createMyeonghwaProductHost({
-    calculate(input) {
-      return calculateAuthorizedMyeonghwaProductionSnapshot(input).snapshot;
+    calculate(input, context) {
+      return calculateAuthorizedMyeonghwaProductionSnapshot(input, {
+        now: new Date(context.requestedAt),
+      }).snapshot;
     },
     async interpret(snapshot, context) {
       const interpretation =
@@ -563,29 +620,43 @@ async function createSpousePositionOnlyPreviewProductHost(
       narrativeNow: now,
       artifactGeneratedAt: now,
     },
+    readingOptionsForRequest(context) {
+      const requestedAt = new Date(context.requestedAt);
+      return {
+        outputSchemaVersion: PREVIEW_E2E_OUTPUT_SCHEMA_VERSION,
+        readingVersion: PREVIEW_E2E_RUNTIME_VERSION,
+        narrativeNow: requestedAt,
+        artifactGeneratedAt: requestedAt,
+      };
+    },
     requestIdFactory: () => `preview_spouse_${randomUUID()}`,
   });
 }
 
-function isSpousePositionOnlyPreviewRequest(body: unknown): boolean {
+type PreviewReadingLane = 'general_natal' | 'spouse_position_only' | 'default';
+
+function previewReadingLane(body: unknown): PreviewReadingLane {
   try {
     const parsed = parseProductHostReadingRequest(body);
     const normalized = normalizeConsumerReadingRequest({
-      requestId: 'preview_spouse_route_probe',
+      requestId: 'preview_route_probe',
       text: parsed.reading.text,
       ...(parsed.reading.targetPersonRef === undefined
         ? {}
         : { targetPersonRef: parsed.reading.targetPersonRef }),
     });
-    return (
-      normalized.state === 'resolved' &&
-      normalized.request?.intent.domain === 'relationship' &&
-      normalized.request.intent.temporalScope === 'natal' &&
-      normalized.request.intent.relationshipScope === 'spouse'
-    );
+    const intent = normalized.request?.intent;
+    if (normalized.state !== 'resolved' || intent?.temporalScope !== 'natal') {
+      return 'default';
+    }
+    if (intent.domain === 'general') return 'general_natal';
+    if (intent.domain === 'relationship' && intent.relationshipScope === 'spouse') {
+      return 'spouse_position_only';
+    }
   } catch {
-    return false;
+    // Let the existing host return the governed invalid-input result.
   }
+  return 'default';
 }
 
 export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
@@ -595,6 +666,12 @@ export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
 
   const now = new Date();
   const defaultHost = createDefaultPreviewProductHost(now);
+  const fiveDomainPreviewHost = createMyeonghwaPreviewNatalFiveDomainHost(
+    createApprovedSourceProofPreviewDependenciesV1(now),
+  );
+  // General's integrated bounded T8 registry excludes the research-only
+  // cross-family consumer synthesis bundled by the specialist registry.
+  const generalHost = createGeneralNatalIntegratedPreviewProductHost();
   let spouseHostPromise: Promise<MyeonghwaProductHost> | undefined;
 
   function spouseHost(): Promise<MyeonghwaProductHost> {
@@ -604,10 +681,11 @@ export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
 
   return {
     async requestReading(body: unknown) {
-      if (isSpousePositionOnlyPreviewRequest(body)) {
-        return (await spouseHost()).requestReading(body);
-      }
+      const lane = previewReadingLane(body);
+      if (lane === 'general_natal') return generalHost.requestReading(body);
+      if (lane === 'spouse_position_only') return (await spouseHost()).requestReading(body);
       return defaultHost.requestReading(body);
     },
+    requestNatalFiveDomains: fiveDomainPreviewHost.requestNatalFiveDomains,
   };
 }

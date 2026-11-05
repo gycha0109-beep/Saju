@@ -1,0 +1,39 @@
+{
+  "sourceSnapshotRef": "snapshot.synthetic.three-divisions.demo",
+  "assertionAuthority": "research_fixture",
+  "observation": {
+    "schemaVersion": "synthetic-shared-face-v3",
+    "capabilityVersion": "synthetic-capabilities-v1",
+    "extractorVersion": "synthetic-extractor-v1",
+    "modelVersion": "synthetic-model-v1",
+    "eligibility": { "status": "eligible", "humanFaceCount": 1, "reasons": [] },
+    "quality": { "pose": {}, "occludedRegions": [] },
+    "geometry": {
+      "metrics": [
+        {
+          "metricKey": "metric.shenxiang.three_divisions.upper_length",
+          "metricVersion": "0.1.0",
+          "value": 0.4,
+          "unit": "normalized_distance",
+          "confidence": 1
+        },
+        {
+          "metricKey": "metric.shenxiang.three_divisions.middle_length",
+          "metricVersion": "0.1.0",
+          "value": 0.35,
+          "unit": "normalized_distance",
+          "confidence": 1
+        },
+        {
+          "metricKey": "metric.shenxiang.three_divisions.lower_length",
+          "metricVersion": "0.1.0",
+          "value": 0.25,
+          "unit": "normalized_distance",
+          "confidence": 1
+        }
+      ]
+    },
+    "observations": {},
+    "evidenceRefs": ["evidence.synthetic.static-rule-demo"]
+  }
+}

@@ -166,6 +166,23 @@ export function prepareProductReading(
     return blockedFromNormalization(normalization);
   }
 
+  // A failed interpretation or invalid Claim Graph cannot become a consumer
+  // reading merely because its remaining T8 targets satisfy a ReadingProfile.
+  // Partial execution is intentionally allowed: coverage still decides which
+  // approved claims are sufficiently supported for this particular reading.
+  if (
+    !execution.integrity.valid ||
+    execution.run.status === 'failed' ||
+    execution.run.completeness.state === 'failed'
+  ) {
+    return buildResult(
+      'invariant_blocked',
+      normalization,
+      ['INTERPRETATION_EXECUTION_INTEGRITY_BLOCKED'],
+      invariantBlockedEligibility(),
+    );
+  }
+
   const composition = buildReadingCompositionEvidence(
     snapshot,
     execution,
@@ -204,6 +221,27 @@ export function prepareProductReading(
           'invariant_blocked',
           normalization,
           ['COMPLETE_SELECTION_REQUIRES_EVIDENCE_BUNDLE'],
+          invariantBlockedEligibility(),
+          composition,
+        );
+      }
+      // Coverage is not semantic materiality: a selected research T8 may
+      // structurally satisfy a Profile while explicitly forbidding consumer prose.
+      const targetClaimIds = new Set(composition.selection.targetClaimIds);
+      const projectionDenied = execution.claims.some(
+        (claim) =>
+          targetClaimIds.has(claim.claimId) &&
+          typeof claim.value === 'object' &&
+          claim.value !== null &&
+          !Array.isArray(claim.value) &&
+          'consumerProjectionAuthorized' in claim.value &&
+          claim.value.consumerProjectionAuthorized === false,
+      );
+      if (projectionDenied) {
+        return buildResult(
+          'invariant_blocked',
+          normalization,
+          ['TARGET_CLAIM_CONSUMER_PROJECTION_NOT_AUTHORIZED'],
           invariantBlockedEligibility(),
           composition,
         );

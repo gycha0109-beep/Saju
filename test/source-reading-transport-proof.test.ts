@@ -135,6 +135,43 @@ describe('2B-3B authenticated Preview-only source transport material', () => {
     expect(opts.claimNonceOnce).toHaveBeenCalledTimes(2);
   });
 
+  it('separates colon-colliding principals and rotated keys in shared replay persistence', async () => {
+    const used = new Set<string>();
+    const claimNonceOnce = vi.fn(async (replayKey: string) => {
+      if (used.has(replayKey)) return false;
+      used.add(replayKey);
+      return true;
+    });
+    const variants = [
+      { issuer: 'saju:alpha', audience: 'bridge', keyId: 'preview-key-v1' },
+      { issuer: 'saju', audience: 'alpha:bridge', keyId: 'preview-key-v1' },
+      { issuer: 'saju:alpha', audience: 'bridge', keyId: 'rotated-key-v2' },
+    ] as const;
+    for (const variant of variants) {
+      const proof = issueHeldSourceReadingTransportProofV1({
+        ...issuer(), issuer: variant.issuer, audience: variant.audience,
+        keyId: variant.keyId,
+      });
+      expect(proof).not.toBeNull();
+      const trust = {
+        ...verifier(), trustedIssuer: variant.issuer,
+        expectedAudience: variant.audience, trustedKeyId: variant.keyId,
+        claimNonceOnce,
+      };
+      expect((await verifyHeldSourceReadingTransportProofV1(proof, trust)).state)
+        .toBe('held');
+      // Only this precise issuer/audience/key/nonce tuple is a replay.
+      expect((await verifyHeldSourceReadingTransportProofV1(proof, trust)).state)
+        .toBe('blocked');
+    }
+    expect(used.size).toBe(3);
+    for (const replayKey of used) {
+      expect(replayKey).toMatch(/^saju-proof-v2:[a-f0-9]{64}$/u);
+    }
+    expect([...used]).toEqual(variants.map(({ issuer: identity, audience, keyId }) =>
+      'saju-proof-v2:' + deterministicContentHash([identity, audience, keyId, challenge])));
+  });
+
   it.each([
     ['request-mutation','verifier',['expectedRequestBody'],{ ...requestBody, reading: { text: '연애운' } }],
     ['response-mutation','verifier',['response','reading','sections','0','title'],'변조된 제목'],

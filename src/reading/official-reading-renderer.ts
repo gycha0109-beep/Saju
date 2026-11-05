@@ -46,6 +46,7 @@ import {
   buildOfficialReadingAnnualTemporalSectionV1,
 } from './official-reading-annual-temporal-presentation.js';
 import type { ReadingAnnualTemporalStructureV1 } from './annual-temporal-structure-projection.js';
+import { buildApprovedRelationshipMultifactorOverviewV1 } from './approved-relationship-multifactor-overview.js';
 
 export const OFFICIAL_READING_RENDERER_VERSION =
   'myeonghwa-official-reading-renderer-v1' as const;
@@ -477,11 +478,11 @@ function scenarioGroups(
     bySemanticKey.set(unit.semanticKey, current);
   }
 
+  // Even one scenario-qualified claim is conditional: rendering it as an
+  // ordinary insight silently drops its scenarioRef and makes it look certain.
+  // Keep grouping by semanticKey, without claiming that unrelated semantic
+  // axes are interchangeable scenario alternatives.
   return [...bySemanticKey.values()]
-    .filter(
-      (group) =>
-        new Set(group.map((unit) => unit.scenarioRef)).size > 1,
-    )
     .map((group) => ({ kind: 'scenario' as const, units: group }));
 }
 
@@ -610,7 +611,9 @@ function structurallyPreservedBlocks(
       }
       blocks.push({
         type: 'ambiguity',
-        summary: '서로 다른 시나리오를 하나로 합치지 않고 함께 표시합니다.',
+        summary: scenarioRefs.length > 1
+          ? '서로 다른 시나리오를 하나로 합치지 않고 함께 표시합니다.'
+          : '이 해석은 해당 시나리오에서만 성립하며, 다른 경우까지 확정하지 않습니다.',
         scenarios: scenarioRefs.map((scenarioRef, index) => {
           const scenarioUnits = unitsByScenario.get(scenarioRef) ?? [];
           return {
@@ -966,6 +969,59 @@ function renderOfficialReadingInternalV1(
       state: 'complete',
       explainabilityRefs: sectionExplainabilityRefs,
     });
+  }
+
+  const relationshipOverview = buildApprovedRelationshipMultifactorOverviewV1(
+    bundle,
+    plan,
+    effectiveDetailedRealization,
+    explainabilityEntries,
+  );
+  if (relationshipOverview !== undefined) {
+    // The detailed-report contract freezes section identity, block types,
+    // insight counts and explainability. Expand the exact existing T8
+    // insight's text rather than creating an additional semantic block.
+    const intro = relationshipOverview.blocks.find(block =>
+      block.type === 'paragraph',
+    );
+    const comparison = relationshipOverview.blocks.find(block =>
+      block.type === 'comparison',
+    );
+    if (intro?.type === 'paragraph' && comparison?.type === 'comparison') {
+      const perspectives = new Map(comparison.perspectives.map(perspective =>
+        [perspective.explainabilityRef, perspective] as const,
+      ));
+      let introInserted = false;
+      for (let index = 0; index < sections.length; index++) {
+        const section = sections[index];
+        if (section?.sectionType !== 'relationship') continue;
+        sections[index] = {
+          ...section,
+          blocks: section.blocks.map(block => {
+            if (block.type !== 'insights') return block;
+            return {
+              ...block,
+              items: block.items.map(item => {
+                const perspective = perspectives.get(item.explainabilityRef);
+                if (perspective === undefined) return item;
+                const prefix = introInserted ? '' :
+                  relationshipOverview.title + '\n\n' + intro.text + '\n\n';
+                introInserted = true;
+                return {
+                  ...item,
+                  summary: [
+                    item.summary,
+                    prefix + perspective.label + '\n' + perspective.text,
+                  ].filter((value): value is string =>
+                    value !== undefined && value.length > 0,
+                  ).join('\n\n'),
+                };
+              }),
+            };
+          }),
+        };
+      }
+    }
   }
 
   if (options.annualTemporalStructure !== undefined) {

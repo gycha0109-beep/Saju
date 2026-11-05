@@ -1,0 +1,39 @@
+name: Saju 500 Birth Eight-Menu Differentiation Audit
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/saju-500-eight-menu-audit.mjs'
+      - '.github/workflows/saju-500-reading-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Execute 500 Real Calculation Cases
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout audit commit
+        uses: actions/checkout@v4
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund --ignore-scripts
+      - name: Build the real Saju engine
+        run: npm run build
+      - name: Run deterministic 500-case audit with eight actual menu engines
+        run: node scripts/saju-500-eight-menu-audit.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json"
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-500-eight-menu-report
+          path: ${{ runner.temp }}/saju-500-eight-menu-report.json
+          if-no-files-found: warn
+          retention-days: 30

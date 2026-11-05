@@ -1,5 +1,6 @@
 import type { Server } from 'node:http';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type * as ProductionCalculationRuntime from '../src/production/production-calculation-runtime.js';
 import {
   createMyeonghwaProductionPreviewOnlyCalculationProcessV1,
   PRODUCTION_CALCULATION_PROCESS_ENV_V1,
@@ -19,6 +20,26 @@ import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
 } from '../src/research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js';
+
+const observedCanonicalSnapshots = vi.hoisted(() => ({
+  ids: [] as string[],
+}));
+
+// Observe the real governed Production calculation boundary while executing
+// the existing HTTP Preview requests; no alternate chart or authority mock.
+vi.mock('../src/production/production-calculation-runtime.js', async (importOriginal) => {
+  const original = await importOriginal<typeof ProductionCalculationRuntime>();
+  return {
+    ...original,
+    calculateAuthorizedMyeonghwaProductionSnapshot: (
+      ...args: Parameters<typeof original.calculateAuthorizedMyeonghwaProductionSnapshot>
+    ) => {
+      const result = original.calculateAuthorizedMyeonghwaProductionSnapshot(...args);
+      observedCanonicalSnapshots.ids.push(result.snapshot.snapshotId);
+      return result;
+    },
+  };
+});
 
 const ACTIVE_BEARER = 'preview-e2e-test-bearer';
 
@@ -128,6 +149,12 @@ describe('provisionally approved preview E2E runtime', () => {
       expect(serialized).toContain('"readingId":"official_reading_');
       expect(serialized).toContain('주요 해석');
       expect(serialized).toContain('해석 범위');
+      // The default specialist pack also contains unadmitted General
+      // cross-family consumer syntheses. General Preview must not use them.
+      expect(serialized).toContain('월지');
+      expect(serialized).not.toContain(
+        '여러 가지를 두루 생각하지만, 결국 직접 해보고 결과를 만들어야',
+      );
     } finally {
       await close(runtime.server);
     }
@@ -156,6 +183,65 @@ describe('provisionally approved preview E2E runtime', () => {
       const serialized = JSON.stringify(payload);
       expect(serialized).toContain('"readingId":"official_reading_');
       for (const expectedTitle of expectedTitles) expect(serialized).toContain(expectedTitle);
+    } finally {
+      await close(runtime.server);
+    }
+  });
+
+  it('preserves one canonical chart across all five real natal Preview HTTP domains', async () => {
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
+    const origin = await listenEphemeral(runtime.server);
+    observedCanonicalSnapshots.ids.length = 0;
+    const canonicalIdsByDomain: string[] = [];
+    const summaries: Array<{
+      pillars: Record<string, unknown>;
+      fiveElements?: readonly unknown[];
+      tenGods?: readonly unknown[];
+    }> = [];
+    try {
+      for (const domain of ['사주', '직업운', '재물운', '사업운', '연애운']) {
+        const snapshotCountBeforeRequest = observedCanonicalSnapshots.ids.length;
+        const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${ACTIVE_BEARER}`,
+            'content-type': 'application/json',
+          },
+          body: readingRequest(domain),
+        });
+        expect(response.status).toBe(200);
+        const payload = (await response.json()) as {
+          state?: unknown;
+          reading?: {
+            calculationSummary?: {
+              pillars: Record<string, unknown>;
+              fiveElements?: readonly unknown[];
+              tenGods?: readonly unknown[];
+            };
+          };
+        };
+        expect(payload.state).toBe('delivered');
+        const calculationSummary = payload.reading?.calculationSummary;
+        expect(calculationSummary?.pillars).toBeDefined();
+        if (calculationSummary === undefined) {
+          throw new Error(`Missing real canonical calculation summary for ${domain}.`);
+        }
+        summaries.push(calculationSummary);
+        const requestSnapshotIds =
+          observedCanonicalSnapshots.ids.slice(snapshotCountBeforeRequest);
+        expect(requestSnapshotIds.length).toBeGreaterThan(0);
+        expect(new Set(requestSnapshotIds).size).toBe(1);
+        canonicalIdsByDomain.push(requestSnapshotIds[0]!);
+      }
+      expect(summaries).toHaveLength(5);
+      // The consumer contract hides snapshotId, so verify it at the actual
+      // governed calculation seam, not by inferring it from display pillars.
+      expect(new Set(canonicalIdsByDomain).size).toBe(1);
+      for (const summary of summaries.slice(1)) {
+        expect(summary.pillars).toEqual(summaries[0]?.pillars);
+        expect(summary.fiveElements).toEqual(summaries[0]?.fiveElements);
+        expect(summary.tenGods).toEqual(summaries[0]?.tenGods);
+      }
     } finally {
       await close(runtime.server);
     }

@@ -61,6 +61,21 @@ type TargetPeriodResolution =
         | 'REFERENCE_DATETIME_INVALID';
     };
 
+// Exact product-card titles are navigation, not new interpretation authority.
+// Family requires parents/children and the question card requires actual text.
+const MENU_CARD_INTENTS: Readonly<Record<string, ReadingIntent>> = Object.freeze({
+  '전체 사주': { domain: 'general', temporalScope: 'natal' },
+  '직업·커리어': { domain: 'career', temporalScope: 'natal' },
+  '재물': { domain: 'wealth', temporalScope: 'natal' },
+  '연애·관계': { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'general' },
+  '사업': { domain: 'business', temporalScope: 'natal' },
+  '삶의 단계': { domain: 'life_stage', temporalScope: 'life_stage' },
+  '올해': { domain: 'general', temporalScope: 'annual' },
+  '이번 달': { domain: 'general', temporalScope: 'monthly' },
+  '배우자·관계': { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'spouse' },
+  '궁합': { domain: 'compatibility', temporalScope: 'natal' },
+});
+
 const SEMANTIC_ALIASES: readonly SemanticAlias[] = [
   { aliases: ['사주', '일반 사주', '전체 사주', '종합 사주'], domain: 'general' },
   { aliases: ['부모운', '부모 운'], domain: 'family', relationshipScope: 'parents' },
@@ -221,6 +236,29 @@ function periodNumber(date: Date, type: 'year' | 'month'): number {
   return parsed;
 }
 
+// A Date constructor alone silently rolls over impossible calendar dates
+// (e.g. 2026-02-30 => 2026-03-02). Require an unambiguous offset-bearing
+// date-time and validate the written calendar day before parsing its instant.
+const REFERENCE_DATETIME_WITH_OFFSET =
+  /^(\d{4})-(\d{2})-(\d{2})T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,9})?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/u;
+
+function parseValidReferenceDateTime(value: string): Date | undefined {
+  const match = REFERENCE_DATETIME_WITH_OFFSET.exec(value);
+  if (match === null) return undefined;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (year < 1 || month < 1 || month > 12 || day < 1) return undefined;
+
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const maxDays = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (day > maxDays[month - 1]!) return undefined;
+
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed : undefined;
+}
+
 function resolveTargetPeriod(
   intent: ReadingIntent,
   referenceDateTime: string | undefined,
@@ -232,8 +270,8 @@ function resolveTargetPeriod(
     return { state: 'invalid', reasonCode: 'REFERENCE_DATETIME_REQUIRED_FOR_RELATIVE_PERIOD' };
   }
 
-  const reference = new Date(referenceDateTime);
-  if (Number.isNaN(reference.getTime())) {
+  const reference = parseValidReferenceDateTime(referenceDateTime);
+  if (reference === undefined) {
     return { state: 'invalid', reasonCode: 'REFERENCE_DATETIME_INVALID' };
   }
   const canonicalReferenceDateTime = reference.toISOString();
@@ -383,7 +421,45 @@ export function normalizeConsumerReadingRequest(
     if (question.length === 0) {
       return makeResult(input, normalizedText, 'invalid', ['QUESTION_TEXT_REQUIRED'], [intent]);
     }
+
+    // An exact, already-governed menu topic is a request for that existing
+    // reading, NOT a newly inferred T11 answer. Reuse the identical profile,
+    // explicit period and second-person guards as its non-question entrypoint.
+    // Open-ended questions must stay in the original question-specific route.
+    const existingTopicIntent =
+      containsAny(question, ANNUAL_MARKERS) && containsAny(question, MONTHLY_MARKERS)
+        ? undefined
+        : DIRECT_GENERAL_PERIOD_ALIASES[question] ??
+          directNatalIntent(question) ??
+          parseTemporalPrefix(question);
+    if (existingTopicIntent !== undefined) {
+      return validatedResolvedResult(input, normalizedText, existingTopicIntent);
+    }
     return validatedResolvedResult(input, normalizedText, intent, question);
+  }
+
+  if (normalizedText === '가족') {
+    const parents: ReadingIntent = {
+      domain: 'family', temporalScope: 'natal', relationshipScope: 'parents',
+    };
+    const children: ReadingIntent = {
+      domain: 'family', temporalScope: 'natal', relationshipScope: 'children',
+    };
+    return makeResult(
+      input, normalizedText, 'ambiguous',
+      ['FAMILY_RELATIONSHIP_SCOPE_REQUIRED'], [parents, children],
+    );
+  }
+  if (normalizedText === '지금 고민으로 보기') {
+    return makeResult(
+      input, normalizedText, 'invalid', ['QUESTION_TEXT_REQUIRED'],
+      [{ domain: 'question_specific', temporalScope: 'natal' }],
+    );
+  }
+  const selectedMenu = MENU_CARD_INTENTS[normalizedText];
+  if (selectedMenu !== undefined) {
+    // A matching authorized ReadingIntent is NOT a completed semantic reading.
+    return validatedResolvedResult(input, normalizedText, selectedMenu);
   }
 
   const annualDetected = containsAny(normalizedText, ANNUAL_MARKERS);

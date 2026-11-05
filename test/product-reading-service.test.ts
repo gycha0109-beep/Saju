@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import * as productReadingPublic from '../src/product-reading.js';
+import { runProductReadingInternals } from '../src/reading/product-reading-service.js';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import type {
   CalculationPolicySnapshot,
@@ -208,6 +209,56 @@ describe('Product Reading Service Facade', () => {
     expect(result.reading).toBeDefined();
   });
 
+  it('provides the same Official semantic unit source internally for a short Reader summary and full Records report', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const wealthBase = claim(
+      currentSnapshot.snapshotId,
+      'claim-wealth-semantic-handoff',
+      'T8',
+      'wealth',
+      'friction',
+    );
+    const wealth: InterpretationClaim = {
+      ...wealthBase,
+      predicate: 'wealth_conclusion',
+      value: {
+        wealthKind: 'friction',
+        headline: '준비와 결과 사이의 긴장',
+        summary: '준비와 성과를 함께 살펴보는 기존 근거의 범위입니다.',
+        futureMoneyTimingAuthorized: false,
+        numericScoringAuthorized: false,
+      },
+    };
+    const internals = await runProductReadingInternals(
+      currentSnapshot,
+      interpretationWithClaims(currentSnapshot, registry, [wealth]),
+      registry,
+      { requestId: 'official-source-handoff', text: '재물운' },
+      serviceOptions,
+    );
+    expect(internals.response.state).toBe('delivered');
+    expect(internals.execution.canonicalSemantics).toBeDefined();
+    expect(internals.execution.officialReadingReport).toBeDefined();
+    const handoff = internals.officialSemanticSourceHandoff;
+    expect(handoff).toBeDefined();
+    expect(handoff?.officialReportHash)
+      .toBe(internals.execution.officialReadingReport?.reportHash);
+    expect(handoff?.semanticHash)
+      .toBe(internals.execution.canonicalSemantics?.semanticHash);
+    expect(handoff?.postPurchaseSummary.referenceReportId)
+      .toBe(handoff?.longFormRecord.referenceReportId);
+    expect(handoff?.postPurchaseSummary.eligiblePrimaryUnitRefs.length)
+      .toBeGreaterThan(0);
+    expect(handoff?.constraints.mayGrantReaderAccess).toBe(false);
+    expect(handoff?.constraints.mayGrantRecordStorage).toBe(false);
+    expect(handoff?.constraints.mayGrantCommerce).toBe(false);
+    expect(internals.response).not.toHaveProperty('officialSemanticSourceHandoff');
+    expect(JSON.stringify(internals.response)).not.toContain(
+      handoff?.officialReportHash,
+    );
+  });
+
   it('returns temporarily_unavailable for a Legacy request when no Legacy runtime is supplied', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
@@ -278,6 +329,8 @@ describe('Product Reading Service Facade', () => {
     );
 
     expect(result.state).toBe('partial_evidence');
+    expect(result.coverage?.explanation).toContain('부족');
+    expect(result.coverage?.explanation).not.toMatch(/_CLAIM_REQUIRED|RULE-|SRC-/u);
     expect(result.coverage?.state).toBe('partial');
     expect(adapter.calls).toHaveLength(0);
     expect(result.reading).toBeUndefined();
@@ -327,9 +380,77 @@ describe('Product Reading Service Facade', () => {
     ).rejects.toThrow('outputSchemaVersion must be a non-empty string');
   });
 
+  it('composes five independent existing natal responses from one chart without treating partial delivery as complete synthesis', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const wealthBase = claim(
+      currentSnapshot.snapshotId, 'claim-wealth-service-bundle',
+      'T8', 'wealth', 'friction',
+    );
+    const wealth: InterpretationClaim = {
+      ...wealthBase,
+      predicate: 'wealth_conclusion',
+      value: {
+        wealthKind: 'friction',
+        headline: '준비와 결과 사이의 긴장',
+        summary: '배움에 더 투자할지 지금 결과를 만들지 사이에서 긴장이 생길 수 있습니다.',
+        futureMoneyTimingAuthorized: false,
+        numericScoringAuthorized: false,
+      },
+    };
+    const interpretation = interpretationWithClaims(currentSnapshot, registry, [wealth]);
+    const bundle = await productReadingPublic.requestNatalFiveDomainReadings(
+      currentSnapshot,
+      interpretation,
+      registry,
+      { requestId: 'five-natal' },
+      serviceOptions,
+    );
+
+    expect(bundle.domains.map(item => item.domain)).toEqual([
+      'general', 'career', 'wealth', 'business', 'relationship',
+    ]);
+    expect(bundle.domains.map(item => item.title)).toEqual([
+      '전체 사주', '직업·커리어', '재물', '사업', '연애·관계',
+    ]);
+    expect(bundle.domains).toHaveLength(5);
+    expect(bundle.domains.find(item => item.domain === 'wealth')?.state).toBe('delivered');
+    expect(bundle.domains.find(item => item.domain === 'wealth')?.response.reading).toBeDefined();
+    expect(bundle.deliveryState).toBe('some_delivered');
+    expect(bundle.deliveredDomainCount).toBe(1);
+    expect(bundle.bundleId).toMatch(/^natal_bundle_[a-f0-9]{24}$/u);
+    expect(JSON.stringify(bundle)).not.toContain(currentSnapshot.snapshotId);
+    expect(JSON.stringify(bundle)).not.toContain(currentSnapshot.calculationHash);
+    expect(JSON.stringify(bundle)).not.toContain(wealth.claimId);
+    expect(bundle.domains.every(item => !('artifact' in item.response) &&
+      !('audit' in item.response) && !('provenance' in item.response))).toBe(true);
+
+    const repeat = await productReadingPublic.requestNatalFiveDomainReadings(
+      currentSnapshot, interpretation, registry, { requestId: 'five-natal' }, serviceOptions,
+    );
+    expect(repeat.bundleId).toBe(bundle.bundleId);
+  });
+
+  it('rejects cross-chart interpretation and blank bundle requestId', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const interpretation = interpretationWithClaims(currentSnapshot, registry, []);
+    await expect(productReadingPublic.requestNatalFiveDomainReadings(
+      currentSnapshot, interpretation, registry, { requestId: '' }, serviceOptions,
+    )).rejects.toThrow('requestId');
+    await expect(productReadingPublic.requestNatalFiveDomainReadings(
+      currentSnapshot,
+      { ...interpretation, run: { ...interpretation.run, snapshotId: 'not-this-chart' } },
+      registry, { requestId: 'mismatch' }, serviceOptions,
+    )).rejects.toThrow('same canonical snapshot');
+  });
+
   it('exposes only the facade function and version as runtime values from the product-reading entrypoint', () => {
     expect(Object.keys(productReadingPublic).sort()).toEqual([
+      'NATAL_FIVE_DOMAIN_PRODUCT_BUNDLE_VERSION',
+      'NATAL_FIVE_DOMAIN_PRODUCT_ORDER',
       'PRODUCT_READING_SERVICE_VERSION',
+      'requestNatalFiveDomainReadings',
       'requestProductReading',
     ]);
     expect(productReadingPublic).not.toHaveProperty('prepareProductReading');

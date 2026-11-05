@@ -1,0 +1,2657 @@
+import { describe, expect, it } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
+import {
+  evaluateFamilySourceScopeV1, evaluatePairwiseSourceScopeV1,
+  selectR070FamilyResearchTransferForContext,
+  explainR070FamilyResearchUnavailabilityKo,
+  FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION,
+} from '../src/research/family-pair-source-scope-handoff.js';
+import {
+  R070_CLAIM_LAYERS, R070_FAMILY_DOMAIN_CLAIM_CORPUS_VERSION,
+} from '../src/research/general-natal-family-domain-claim-corpus.js';
+import {
+  R068_DIRECT_CLAIMS,
+} from '../src/research/general-natal-relationship-claim-corpus.js';
+import {
+  R069_DIRECT_CLAIMS,
+} from '../src/research/general-natal-spouse-claim-corpus.js';
+
+const now = new Date('2026-10-22T02:00:00.000Z');
+function chart(input: {
+  year?: number;
+  day?: number;
+  sex?: 'male' | 'female' | 'unspecified';
+  timeKnown?: boolean;
+} = {}) {
+  return calculateCanonicalSajuSnapshot({
+    calendarType: 'solar',
+    date: { year: input.year ?? 1990, month: 5, day: input.day ?? 15 },
+    time: input.timeKnown === false
+      ? { known: false as const }
+      : { known: true as const, hour: 14, minute: 30 },
+    sexForTraditionalCalculation: input.sex ?? 'unspecified',
+  }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now });
+}
+
+function familyCandidate(
+  report: ReturnType<typeof evaluateFamilySourceScopeV1>,
+  surface: string,
+) {
+  const candidate = report.methodCandidates.find(item => item.sourceSurface === surface);
+  if (!candidate) throw new TypeError('Missing R070 historical source surface: ' + surface);
+  return candidate;
+}
+
+describe('R070 family source scope against actual Canonical birth evidence', () => {
+  it('distinguishes exact parent month domain wording from male-only alternative and section-specific star', () => {
+    const snapshot = chart();
+    const report = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    expect(report.version).toBe(FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION);
+    expect(report.snapshotId).toBe(snapshot.snapshotId);
+    expect(report.calculationHash).toBe(snapshot.calculationHash);
+    expect(report.corpusVersion).toBe(R070_FAMILY_DOMAIN_CLAIM_CORPUS_VERSION);
+    const month = familyCandidate(report, '月為父母兄弟門戶');
+    expect(month.disposition).toBe('APPLICABLE_BOUNDED');
+    expect(month.observedFactPath).toBe('pillars.month');
+    expect(month.observedPillar).toBe(
+      snapshot.pillars.month.status === 'resolved'
+        ? snapshot.pillars.month.value.stem.value + snapshot.pillars.month.value.branch.value
+        : undefined,
+    );
+    expect(month.familyMeaningAuthorized).toBe(false);
+    expect(familyCandidate(report, '年為父').disposition).toBe('NARROW_OR_REPLACE');
+    expect(report.methodCoexistences).toEqual([]);
+    expect(familyCandidate(report, '父以偏財論').disposition).toBe('INCONCLUSIVE');
+    expect(familyCandidate(report, '母以印綬論').disposition).toBe('INCONCLUSIVE');
+    expect(report.methodCandidates.every(item =>
+      R070_CLAIM_LAYERS.some(layer =>
+        layer.id === item.sourceLayerId &&
+        (layer.sourceSurfaces as readonly string[]).includes(item.sourceSurface),
+      ),
+    )).toBe(true);
+    expect(report.methodCandidates.some(item => item.sourceSurface === '子嗣者即官星也')).toBe(false);
+    expect(report.interpretationDisposition).toBe('INCONCLUSIVE');
+    expect(report.familyT8Admitted).toBe(false);
+    expect(report.researchOnly).toBe(true);
+    expect(report.mayGrantOfficialAuthority).toBe(false);
+    expect(report.mayMarkMenuAvailable).toBe(false);
+    expect(report.mayPersist).toBe(false);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+    expect(evaluateFamilySourceScopeV1(snapshot, 'parents')).toEqual(report);
+  });
+
+  it('preserves the historic male father mapping and refuses a missing fetal calculation or full family method', () => {
+    const report = evaluateFamilySourceScopeV1(chart({ sex: 'male' }), 'parents');
+    expect(familyCandidate(report, '年為父').disposition).toBe('APPLICABLE_BOUNDED');
+    expect(familyCandidate(report, '年為父').observedFactPath).toBe('pillars.year');
+    expect(familyCandidate(report, '胎為母').disposition).toBe('INCONCLUSIVE');
+    expect(familyCandidate(report, '胎為母').missingPrerequisites).toContain(
+      'FETAL_PILLAR_NOT_DEFINED_BY_CANONICAL_SNAPSHOT',
+    );
+    expect(familyCandidate(report, '月為父母兄弟門戶').disposition).toBe('APPLICABLE_BOUNDED');
+    expect(report.missingPrerequisites).toContain('FAMILY_METHOD_SELECTION');
+    expect(report.missingPrerequisites).toContain('PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION');
+    expect(report.methodCoexistences).toEqual([{
+      sourceSurfaces: ['月為父母兄弟門戶', '年為父'],
+      calculatedFactPaths: ['pillars.month', 'pillars.year'],
+      state: 'COEXISTING_NOT_RECONCILED',
+      methodSelectionAuthorized: false,
+      missingPrerequisites: [
+        'FAMILY_METHOD_SELECTION',
+        'PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION',
+      ],
+    }]);
+    expect(report.familyT8Admitted).toBe(false);
+  });
+
+  it('keeps child hour domain separate from gender-scoped child star methodology', () => {
+    const female = evaluateFamilySourceScopeV1(chart({ sex: 'female' }), 'children');
+    const male = evaluateFamilySourceScopeV1(chart({ sex: 'male' }), 'children');
+    expect(familyCandidate(female, '時為子息').disposition).toBe('APPLICABLE_BOUNDED');
+    expect(familyCandidate(female, '時為子息').observedFactPath).toBe('pillars.hour');
+    expect(familyCandidate(female, '時為子孫').disposition).toBe('NARROW_OR_REPLACE');
+    expect(familyCandidate(male, '時為子孫').disposition).toBe('APPLICABLE_BOUNDED');
+    expect(familyCandidate(female, '我生者為子').disposition).toBe('INCONCLUSIVE');
+    expect(familyCandidate(male, '我生者為子').disposition).toBe('NARROW_OR_REPLACE');
+    expect(familyCandidate(female, '子嗣者即官星也').disposition).toBe('INCONCLUSIVE');
+    expect(female.methodCoexistences).toEqual([]);
+    expect(male.methodCoexistences).toEqual([{
+      sourceSurfaces: ['時為子息', '時為子孫'],
+      calculatedFactPaths: ['pillars.hour'],
+      state: 'COEXISTING_NOT_RECONCILED',
+      methodSelectionAuthorized: false,
+      missingPrerequisites: [
+        'FAMILY_METHOD_SELECTION',
+        'PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION',
+      ],
+    }]);
+    expect(female.methodCandidates.some(item => item.sourceSurface === '父以偏財論')).toBe(false);
+    expect(female.familyT8Admitted).toBe(false);
+    expect(male.familyT8Admitted).toBe(false);
+  });
+
+  it('keeps R070 brother clauses outside both parent and child research scopes', () => {
+    for (const scope of ['parents', 'children'] as const) {
+      const report = evaluateFamilySourceScopeV1(
+        chart({ sex: 'male' }), scope,
+      );
+      expect(report.excludedSiblingSourceSurfaces.map(item => item.sourceSurface))
+        .toEqual(['月為兄弟', '兄弟者即劫財比肩']);
+      for (const item of report.excludedSiblingSourceSurfaces) {
+        expect(item.requestedScope).toBe(scope);
+        expect(item.originalRelationScope).toBe('siblings');
+        expect(item.disposition).toBe('NARROW_OR_REPLACE');
+        expect(item.admittedAsParentsOrChildrenSource).toBe(false);
+        expect(item.missingPrerequisites).toEqual([
+          'SIBLING_DOMAIN_IS_NOT_PARENTS_OR_CHILDREN',
+        ]);
+        expect(R070_CLAIM_LAYERS.some(layer =>
+          layer.id === item.sourceLayerId &&
+          layer.sexScope === item.originalSexScope &&
+          (layer.sourceSurfaces as readonly string[]).includes(item.sourceSurface),
+        )).toBe(true);
+        expect(report.methodCandidates.every(candidate =>
+          candidate.sourceSurface !== item.sourceSurface)).toBe(true);
+      }
+      expect(report.familyT8Admitted).toBe(false);
+    }
+    const male = evaluateFamilySourceScopeV1(chart({ sex: 'male' }), 'parents');
+    const female = evaluateFamilySourceScopeV1(chart({ sex: 'female' }), 'parents');
+    expect(male.excludedSiblingSourceSurfaces).toEqual(female.excludedSiblingSourceSurfaces);
+    expect(male.methodCandidates.find(candidate =>
+      candidate.sourceSurface === '月為父母兄弟門戶')?.familyMeaningAuthorized).toBe(false);
+  });
+
+  it('compares exact R070 parent pillar sources against father/mother star methods without combining family meanings', () => {
+    const cases = [
+      {
+        snapshot: chart({ sex: 'unspecified' }),
+        expectedPairs: [
+          ['月為父母兄弟門戶', '父以偏財論'],
+          ['月為父母兄弟門戶', '母以印綬論'],
+        ],
+      },
+      {
+        snapshot: chart({ sex: 'male' }),
+        expectedPairs: [
+          ['月為父母兄弟門戶', '父以偏財論'],
+          ['月為父母兄弟門戶', '母以印綬論'],
+          ['年為父', '父以偏財論'],
+        ],
+      },
+    ] as const;
+    for (const input of cases) {
+      const result = evaluateFamilySourceScopeV1(input.snapshot, 'parents');
+      expect(result.crossLayerMethodComparisons.map(c => c.sourceSurfaces))
+        .toEqual(input.expectedPairs);
+      for (const comparison of result.crossLayerMethodComparisons) {
+        const pillar = familyCandidate(result, comparison.sourceSurfaces[0]);
+        const star = familyCandidate(result, comparison.sourceSurfaces[1]);
+        expect(pillar.disposition).toBe('APPLICABLE_BOUNDED');
+        expect(star.disposition).toBe('INCONCLUSIVE');
+        expect(comparison.sourceLayerIds)
+          .toEqual([pillar.sourceLayerId, star.sourceLayerId]);
+        expect(comparison.pillarObservation).toEqual({
+          factPath: pillar.observedFactPath,
+          observedPillar: pillar.observedPillar,
+        });
+        expect(comparison.starObservation).toEqual(star.tenGodObservation);
+        expect(comparison.independentlyAdmittedFamilyClaims).toBe(0);
+        expect(comparison.methodSelectionAuthorized).toBe(false);
+        expect(comparison.familyMeaningAuthorized).toBe(false);
+        expect(comparison.state).toBe('PILLAR_AND_STAR_METHODS_NOT_RECONCILED');
+        expect(comparison.missingPrerequisites)
+          .toContain('PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION');
+        expect(comparison.missingPrerequisites)
+          .toContain('HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED');
+      }
+      expect(result.familyT8Admitted).toBe(false);
+      expect(result.mayPublish).toBe(false);
+    }
+  });
+
+  it('compares child pillar and historical star methods only within their admitted source-sex contexts', () => {
+    const cases = [
+      {
+        sex: 'male' as const,
+        pairs: [
+          ['時為子息', '子嗣者即官星也'],
+          ['時為子孫', '子嗣者即官星也'],
+        ],
+      },
+      {
+        sex: 'female' as const,
+        pairs: [
+          ['時為子息', '子嗣者即官星也'],
+          ['時為子息', '我生者為子'],
+        ],
+      },
+      {
+        sex: 'unspecified' as const,
+        pairs: [['時為子息', '子嗣者即官星也']],
+      },
+    ] as const;
+    for (const input of cases) {
+      const result = evaluateFamilySourceScopeV1(
+        chart({ sex: input.sex }), 'children',
+      );
+      expect(result.crossLayerMethodComparisons.map(c => c.sourceSurfaces))
+        .toEqual(input.pairs);
+      for (const comparison of result.crossLayerMethodComparisons) {
+        expect(comparison.pillarObservation.factPath).toBe('pillars.hour');
+        expect(comparison.starObservation.sourceFactPath).toBe('derivedFacts.tenGods');
+        expect(comparison.starObservation.historicalRelativeRoleAuthorized).toBe(false);
+        expect(comparison.independentlyAdmittedFamilyClaims).toBe(0);
+        expect(comparison.methodSelectionAuthorized).toBe(false);
+        expect(comparison.familyMeaningAuthorized).toBe(false);
+        expect(comparison.missingPrerequisites).toContain('FAMILY_METHOD_SELECTION');
+      }
+      expect(result.familyT8Admitted).toBe(false);
+    }
+  });
+
+  it('distinguishes R070 pillar-local and outside-only T5 facts across real calculated family charts', () => {
+    const inputCases = [
+      { year: 1990, day: 15, sex: 'male' as const },
+      { year: 1997, day: 8, sex: 'female' as const },
+      { year: 2001, day: 24, sex: 'unspecified' as const },
+      { year: 1988, day: 11, sex: 'female' as const },
+    ];
+    const seenStates = new Set<string>();
+    for (const birth of inputCases) {
+      const snapshot = chart(birth);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        for (const comparison of report.crossLayerMethodComparisons) {
+          const contrast = comparison.starPillarPositionContrast;
+          seenStates.add(contrast.state);
+          expect(contrast.pillarFactPath).toBe(comparison.pillarObservation.factPath);
+          expect(contrast.pillarFactPath).toBe('pillars.' + contrast.pillarSlot);
+          expect(contrast.locationBasedFamilyInferenceAuthorized).toBe(false);
+          expect(contrast.inReferencedPillar.every(position =>
+            position.slot === contrast.pillarSlot)).toBe(true);
+          expect(contrast.outsideReferencedPillar.every(position =>
+            position.slot !== contrast.pillarSlot)).toBe(true);
+          expect(contrast.unresolvedReferencedPillarPaths.every(path =>
+            path.startsWith('derivedFacts.tenGods.' + contrast.pillarSlot + '.'))).toBe(true);
+          expect([
+            ...contrast.inReferencedPillar, ...contrast.outsideReferencedPillar,
+          ].map(position => position.path).sort()).toEqual(
+            comparison.starObservation.observedPositions.map(position => position.path).sort(),
+          );
+          expect(contrast.unresolvedReferencedPillarPaths).toEqual(
+            comparison.starObservation.unresolvedFactPaths.filter(path =>
+              path.startsWith('derivedFacts.tenGods.' + contrast.pillarSlot + '.')),
+          );
+          if (contrast.state === 'STAR_OBSERVED_IN_REFERENCED_PILLAR') {
+            expect(contrast.inReferencedPillar.length).toBeGreaterThan(0);
+          } else if (contrast.state === 'REFERENCED_PILLAR_T5_UNRESOLVED') {
+            expect(contrast.inReferencedPillar).toHaveLength(0);
+            expect(contrast.unresolvedReferencedPillarPaths.length).toBeGreaterThan(0);
+            expect(comparison.missingPrerequisites).toContain(
+              'R070_REFERENCED_PILLAR_T5_POSITION_UNRESOLVED',
+            );
+          } else if (contrast.state === 'STAR_OBSERVED_ONLY_OUTSIDE_REFERENCED_PILLAR') {
+            expect(contrast.inReferencedPillar).toHaveLength(0);
+            expect(contrast.outsideReferencedPillar.length).toBeGreaterThan(0);
+            expect(contrast.unresolvedReferencedPillarPaths).toHaveLength(0);
+            expect(comparison.missingPrerequisites).toContain(
+              'R070_OUTSIDE_PILLAR_T5_IS_NOT_NEGATIVE_FAMILY_EVIDENCE',
+            );
+          } else {
+            expect(contrast.state).toBe('STAR_NOT_OBSERVED_IN_RESOLVED_T5_SURFACE');
+            expect(contrast.inReferencedPillar).toHaveLength(0);
+            expect(contrast.outsideReferencedPillar).toHaveLength(0);
+            expect(contrast.unresolvedReferencedPillarPaths).toHaveLength(0);
+            expect(comparison.missingPrerequisites).toContain(
+              'R070_UNOBSERVED_T5_IS_NOT_RELATIVE_ABSENCE',
+            );
+          }
+          expect(comparison.missingPrerequisites).toContain(
+            'R070_PILLAR_STAR_LOCATION_SYNTHESIS_RULE_NOT_SOURCED',
+          );
+          expect(report.missingPrerequisites).toContain(
+            'R070_PILLAR_STAR_LOCATION_SYNTHESIS_RULE_NOT_SOURCED',
+          );
+          expect(comparison.methodSelectionAuthorized).toBe(false);
+          expect(comparison.independentlyAdmittedFamilyClaims).toBe(0);
+          expect(report.familyT8Admitted).toBe(false);
+        }
+      }
+    }
+    expect(seenStates.has('STAR_OBSERVED_IN_REFERENCED_PILLAR')).toBe(true);
+    expect(seenStates.has('STAR_OBSERVED_ONLY_OUTSIDE_REFERENCED_PILLAR')).toBe(true);
+  });
+
+  it('keeps the known parent pillar location independent from unresolved hour T5 and refuses the child bridge', () => {
+    const snapshot = chart({ year: 1997, sex: 'female', timeKnown: false });
+    const parents = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+    expect(children.crossLayerMethodComparisons).toEqual([]);
+    expect(parents.crossLayerMethodComparisons).toHaveLength(2);
+    for (const comparison of parents.crossLayerMethodComparisons) {
+      const contrast = comparison.starPillarPositionContrast;
+      expect(contrast.pillarSlot).toBe('month');
+      expect(contrast.unresolvedReferencedPillarPaths).toEqual([
+        'derivedFacts.tenGods.month.stem',
+        'derivedFacts.tenGods.month.branch',
+      ]);
+      expect(contrast.state).toBe('REFERENCED_PILLAR_T5_UNRESOLVED');
+      expect(comparison.starObservation.unresolvedFactPaths).toContain(
+        'derivedFacts.tenGods.hour.stem',
+      );
+      expect(comparison.starObservation.unresolvedFactPaths).toContain(
+        'derivedFacts.tenGods.hour.branch',
+      );
+      expect(comparison.missingPrerequisites).toContain(
+        'TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED',
+      );
+      expect(contrast.locationBasedFamilyInferenceAuthorized).toBe(false);
+    }
+    expect(parents.familyT8Admitted).toBe(false);
+    expect(children.familyT8Admitted).toBe(false);
+  });
+
+  it('does not manufacture a child pillar/star bridge if the Canonical birth hour is missing', () => {
+    const input = chart({ sex: 'female', timeKnown: false });
+    const child = evaluateFamilySourceScopeV1(input, 'children');
+    const parents = evaluateFamilySourceScopeV1(input, 'parents');
+    expect(child.crossLayerMethodComparisons).toEqual([]);
+    expect(child.methodCandidates.find(x => x.sourceSurface === '時為子息')
+      ?.disposition).toBe('INCONCLUSIVE');
+    expect(child.methodCandidates.find(x => x.sourceSurface === '我生者為子')
+      ?.tenGodObservation?.status).toBe('incomplete_input');
+    expect(parents.crossLayerMethodComparisons).toHaveLength(2);
+    for (const comparison of parents.crossLayerMethodComparisons) {
+      expect(comparison.starObservation.status).toBe('incomplete_input');
+      expect(comparison.missingPrerequisites)
+        .toContain('TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED');
+    }
+    expect(child.familyT8Admitted).toBe(false);
+    expect(parents.familyT8Admitted).toBe(false);
+  });
+
+  it('preserves R070 configuration phrases as method-unassigned and distinguishes branch-clash facts from outcome interpretation', () => {
+    const snapshot = chart({ year: 1997, sex: 'male' });
+    const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+    const registered = R070_CLAIM_LAYERS.find(layer =>
+      layer.id === 'CONFIGURATION-OUTCOME');
+    expect(registered).toBeDefined();
+    expect(parent.unassignedConfigurationInputs.map(item => item.sourceSurface))
+      .toEqual(registered?.sourceSurfaces);
+    expect(children.unassignedConfigurationInputs.map(item => item.sourceSurface))
+      .toEqual(registered?.sourceSurfaces);
+    expect(parent.unassignedConfigurationInputs).toEqual(children.unassignedConfigurationInputs);
+    expect(parent.unassignedConfigurationInputs.every(item =>
+      item.sourceLayerId === 'CONFIGURATION-OUTCOME' &&
+      item.familyScopeResolved === false &&
+      item.disposition === 'INCONCLUSIVE' &&
+      item.familyOutcomeAuthorized === false &&
+      item.missingPrerequisites.includes('CONFIGURATION_OUTCOME_SETTLEMENT'),
+    )).toBe(true);
+    for (const item of parent.unassignedConfigurationInputs) {
+      if (item.sourceSurface === '刑沖破害') {
+        const raw = snapshot.derivedFacts.structuralRelations;
+        const expected = raw?.status === 'resolved'
+          ? raw.value.filter(relation => relation.kind === 'branch_clash')
+            .map(relation => relation.relationId) : [];
+        expect(item.observedBranchClashIds).toEqual(expected);
+        expect(item.canonicalObservationCoverage).toBe(raw?.status === 'resolved'
+          ? 'branch_clash_only' : 'none');
+        expect(item.missingPrerequisites)
+          .toContain('XING_PO_HAI_AND_CONFIGURATION_INTERACTION_NOT_SETTLED');
+      } else if (item.sourceSurface === '官煞混雜' || item.sourceSurface === '財印') {
+        const t5 = snapshot.derivedFacts.tenGods;
+        expect(item.canonicalObservationCoverage).toBe(t5.status === 'resolved'
+          ? 'visible_t5_search_categories_only' : 'none');
+        expect(item.canonicalFactPath).toBe(t5.status === 'resolved'
+          ? 'derivedFacts.tenGods' : undefined);
+        expect(item.observedBranchClashIds).toEqual([]);
+        expect(item.tenGodSearchTerms?.map(term => term.sourceTerm))
+          .toEqual(item.sourceSurface === '官煞混雜'
+            ? ['官', '煞'] : ['財', '印']);
+        expect(item.tenGodSearchTerms).toHaveLength(2);
+        for (const term of item.tenGodSearchTerms ?? []) {
+          expect(term.configurationMeaningAuthorized).toBe(false);
+          for (const position of term.observedPositions) {
+            expect(position.path).toBe(
+              'derivedFacts.tenGods.' + position.slot + '.' + position.channel,
+            );
+            expect(term.canonicalSearchCategories).toContain(position.value);
+            if (t5.status !== 'resolved') throw new TypeError('Missing raw chart fact');
+            const raw = t5.value[position.slot][position.channel];
+            expect(raw?.status).toBe('resolved');
+            if (raw?.status === 'resolved') expect(position.value).toBe(raw.value);
+          }
+        }
+        expect(item.missingPrerequisites)
+          .toContain('R070_TEN_GOD_COEXISTENCE_METHOD_NOT_ESTABLISHED');
+        expect(item.missingPrerequisites).toContain('HIDDEN_VS_VISIBLE_STAR_HANDLING');
+      } else {
+        expect(item.canonicalObservationCoverage).toBe('none');
+        expect(item.observedBranchClashIds).toEqual([]);
+        expect(item.tenGodSearchTerms).toBeUndefined();
+        expect(item.canonicalFactPath).toBeUndefined();
+      }
+    }
+    expect(parent.familyT8Admitted).toBe(false);
+    expect(children.familyT8Admitted).toBe(false);
+  });
+
+  it('ties R070 刑沖破害 only to actual branch-clash participation of eligible parent and child pillars', () => {
+    const states = new Set<string>();
+    for (const year of [1987, 1988, 1990, 1991, 1993, 1995, 1997, 1999, 2001, 2003, 2005]) {
+      for (const day of [5, 15, 25]) {
+        const snapshot = chart({ year, day, sex: 'male' });
+        const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
+        const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+        const raw = snapshot.derivedFacts.structuralRelations;
+        const actualClashes = raw?.status === 'resolved'
+          ? raw.value.filter(item => item.kind === 'branch_clash') : [];
+        expect(parent.branchClashPillarObservations.map(item => item.pillarSourceSurface))
+          .toEqual(['月為父母兄弟門戶', '年為父']);
+        expect(children.branchClashPillarObservations.map(item => item.pillarSourceSurface))
+          .toEqual(['時為子息', '時為子孫']);
+        for (const report of [parent, children]) {
+          for (const observation of report.branchClashPillarObservations) {
+            states.add(observation.state);
+            expect(observation.sourceLayerId).toBe('CONFIGURATION-OUTCOME');
+            expect(observation.sourceSurface).toBe('刑沖破害');
+            expect(observation.requestedScope).toBe(report.scope);
+            expect(observation.referencePillarFactPath)
+              .toBe('pillars.' + observation.referencePillarSlot);
+            expect(observation.referenceBranchFactPath)
+              .toBe('pillars.' + observation.referencePillarSlot + '.branch');
+            const branch = snapshot.pillars[observation.referencePillarSlot];
+            expect(branch.status).toBe('resolved');
+            if (branch.status === 'resolved') {
+              expect(observation.observedReferenceBranch).toBe(branch.value.branch.value);
+            }
+            expect(observation.missingPrerequisites).toContain(
+              'R070_BRANCH_CLASH_PILLAR_TO_FAMILY_EFFECT_NOT_SOURCED',
+            );
+            expect(observation.missingPrerequisites).toContain('CONFIGURATION_OUTCOME_SETTLEMENT');
+            expect(report.missingPrerequisites).toContain(
+              'R070_BRANCH_CLASH_PILLAR_TO_FAMILY_EFFECT_NOT_SOURCED',
+            );
+            expect(observation.independentlyAdmittedFamilyClaims).toBe(0);
+            expect(observation.configurationOutcomeAuthorized).toBe(false);
+            expect(observation.familyT8Admitted).toBe(false);
+            const joined = [...observation.participatingClashes, ...observation.outsideClashes];
+            expect(joined.map(item => item.relationId).sort())
+              .toEqual(actualClashes.map(item => item.relationId).sort());
+            for (const reference of joined) {
+              const actual = actualClashes.find(item => item.relationId === reference.relationId);
+              expect(actual).toBeDefined();
+              expect(reference.factPath).toBe('derivedFacts.structuralRelations');
+              expect(reference.kind).toBe('branch_clash');
+              expect(reference.participants).toEqual(actual?.participants);
+              expect(reference.sourceIds).toEqual(actual?.sourceIds);
+              expect(reference.structuralMatchOnly).toBe(true);
+              expect(reference.transformationEstablished).toBe(false);
+            }
+            for (const clash of observation.participatingClashes) {
+              expect(clash.participants.some(participant =>
+                participant.component === 'branch' &&
+                participant.pillar === observation.referencePillarSlot)).toBe(true);
+            }
+            for (const clash of observation.outsideClashes) {
+              expect(clash.participants.some(participant =>
+                participant.component === 'branch' &&
+                participant.pillar === observation.referencePillarSlot)).toBe(false);
+            }
+            if (raw?.status === 'resolved') {
+              expect(observation.state).toBe(
+                observation.participatingClashes.length > 0
+                  ? 'REFERENCED_PILLAR_PARTICIPATES_IN_CLASH'
+                  : observation.outsideClashes.length > 0
+                    ? 'CLASH_ONLY_OUTSIDE_REFERENCED_PILLAR'
+                    : 'NO_CLASH_CANDIDATE_IN_RESOLVED_CHART',
+              );
+            } else {
+              expect(observation.state).toBe('STRUCTURAL_CLASH_CANDIDATES_UNRESOLVED');
+            }
+          }
+          expect(report.familyT8Admitted).toBe(false);
+          expect(report.unassignedConfigurationInputs.find(item =>
+            item.sourceSurface === '刑沖破害')?.familyScopeResolved).toBe(false);
+        }
+        const [generalChild, maleChild] = children.branchClashPillarObservations;
+        if (generalChild === undefined || maleChild === undefined) {
+          throw new Error('Both original male child pillar methods must be observed.');
+        }
+        expect(generalChild.participatingClashes).toEqual(maleChild.participatingClashes);
+        expect(generalChild.outsideClashes).toEqual(maleChild.outsideClashes);
+      }
+    }
+    expect(states.has('REFERENCED_PILLAR_PARTICIPATES_IN_CLASH')).toBe(true);
+    expect(states.has('CLASH_ONLY_OUTSIDE_REFERENCED_PILLAR')).toBe(true);
+  });
+
+  it('hands off exact menu-specific unsupported reasons separately from excluded sex-scoped sources', () => {
+    const cases = [
+      { sex: 'male' as const, scope: 'parents' as const, excluded: [],
+        expectedMethodPairs: 4 },
+      { sex: 'female' as const, scope: 'parents' as const,
+        excluded: ['年為父', '胎為母'], expectedMethodPairs: 2 },
+      { sex: 'unspecified' as const, scope: 'parents' as const,
+        excluded: ['年為父', '胎為母'], expectedMethodPairs: 2 },
+      { sex: 'male' as const, scope: 'children' as const,
+        excluded: ['我生者為子'], expectedMethodPairs: 3 },
+      { sex: 'female' as const, scope: 'children' as const,
+        excluded: ['時為子孫'], expectedMethodPairs: 3 },
+      { sex: 'unspecified' as const, scope: 'children' as const,
+        excluded: ['時為子孫', '我生者為子'], expectedMethodPairs: 1 },
+    ];
+    for (const input of cases) {
+      const snapshot = chart({ year: 1990, day: 15, sex: input.sex });
+      const report = evaluateFamilySourceScopeV1(snapshot, input.scope);
+      const menu = report.menuSupportHandoff;
+      const blockers = report.interpretationBlockers;
+      expect(menu.requestedScope).toBe(input.scope);
+      expect(menu.historicalSex).toBe(input.sex);
+      expect(menu.supportState).toBe('UNAVAILABLE_RESEARCH_ONLY');
+      expect(menu.excludedHistoricalSources.map(item => item.sourceSurface))
+        .toEqual(input.excluded);
+      expect(menu.excludedHistoricalSources.every(item =>
+        item.historicalSex === input.sex &&
+        item.exclusionIsMenuUnavailabilityReason === false &&
+        item.missingPrerequisites.includes('HISTORICAL_SEX_SCOPE_NOT_MATCHED_OR_NOT_SPECIFIED'),
+      )).toBe(true);
+      const otherConditions = blockers.sourceConditionHolds.filter(item =>
+        item.blockerKind !== 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE');
+      expect(menu.unsupportedReasons).toHaveLength(
+        1 + otherConditions.length + input.expectedMethodPairs,
+      );
+      const authority = menu.unsupportedReasons[0];
+      expect(authority?.reasonCode).toBe('R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED');
+      expect(authority?.category).toBe('OFFICIAL_AUTHORITY');
+      expect(authority?.missingPrerequisites)
+        .toEqual(['R070_FAMILY_T8_OFFICIAL_METHOD_NOT_ADMITTED']);
+      for (const [index, condition] of otherConditions.entries()) {
+        const reason = menu.unsupportedReasons[index + 1];
+        if (reason === undefined) throw new Error('Source hold must have a menu reason.');
+        expect(reason.reasonCode).toBe(
+          condition.blockerKind === 'CALCULATED_PILLAR_POSITION_ONLY'
+            ? 'R070_MENU_PILLAR_POSITION_NOT_FAMILY_INTERPRETATION'
+            : condition.blockerKind === 'SOURCE_CONTEXT_METHOD_NOT_SELECTED'
+              ? 'R070_MENU_SOURCE_CONTEXT_METHOD_NOT_SELECTED'
+              : condition.blockerKind === 'REFERENCE_PILLAR_INPUT_UNRESOLVED'
+                ? 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED'
+                : 'R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE',
+        );
+        expect(reason.sourceLayerIds).toEqual([condition.sourceLayerId]);
+        expect(reason.sourceSurfaces).toEqual([condition.sourceSurface]);
+        expect(reason.observedFactPaths).toEqual(condition.observedFactPaths);
+        expect(reason.unresolvedFactPaths).toEqual(condition.unresolvedFactPaths);
+        expect(reason.missingPrerequisites).toEqual(condition.missingPrerequisites);
+        expect(reason.officialMenuCanBeEnabledFromThisReason).toBe(false);
+      }
+      const methodReasons = menu.unsupportedReasons.filter(item =>
+        item.reasonCode === 'R070_MENU_HISTORICAL_METHODS_NOT_RECONCILED');
+      expect(methodReasons).toHaveLength(input.expectedMethodPairs);
+      for (const [i, reason] of methodReasons.entries()) {
+        const method = blockers.methodSelectionHolds[i];
+        if (method === undefined) throw new Error('Method-selection hold lost.');
+        expect(reason.sourceSurfaces).toEqual(method.sourceSurfaces);
+        expect(reason.sourceLayerIds).toEqual(method.sourceLayerIds);
+        expect(reason.observedFactPaths).toEqual(method.observedFactPaths);
+        expect(reason.missingPrerequisites).toEqual(method.missingPrerequisites);
+        expect(reason.category).toBe('METHOD_SELECTION');
+      }
+      const expectedUnresolvedPaths = [...new Set(
+        otherConditions.flatMap(item => item.unresolvedFactPaths),
+      )];
+      expect(menu.unresolvedCanonicalInputs.map(item => item.factPath))
+        .toEqual(expectedUnresolvedPaths);
+      for (const item of menu.unresolvedCanonicalInputs) {
+        expect(item.canonicalInputKind).toBe(
+          item.factPath.startsWith('pillars.')
+            ? 'pillar'
+            : item.factPath.startsWith('derivedFacts.tenGods.')
+              ? 'visible_t5' : 'hidden_stem_membership',
+        );
+        expect(item.affectedOriginalSources).toEqual(otherConditions
+          .filter(source => source.unresolvedFactPaths.includes(item.factPath))
+          .map(source => ({
+            sourceLayerId: source.sourceLayerId,
+            sourceSurface: source.sourceSurface,
+          })));
+        expect(item.substituteAnotherPillarAuthorized).toBe(false);
+        expect(item.familyMeaningAuthorized).toBe(false);
+      }
+      expect(menu.unassignedConfigurationSources).toEqual(blockers.configurationHolds);
+      expect(menu.unassignedConfigurationSources.map(item => item.sourceSurface))
+        .toEqual(['旺衰', '生旺死絕', '刑沖破害', '官煞混雜', '財印']);
+      const excludedSurfaces = new Set<string>(input.excluded);
+      expect(menu.unsupportedReasons.every(reason =>
+        reason.officialMenuCanBeEnabledFromThisReason === false &&
+        !reason.sourceSurfaces.some(surface => excludedSurfaces.has(surface)))).toBe(true);
+      expect(menu.menuBlockingPrerequisites).toEqual([...new Set(
+        menu.unsupportedReasons.flatMap(item => item.missingPrerequisites),
+      )]);
+      expect(menu.unassignedConfigurationPrerequisites).toEqual([...new Set(
+        menu.unassignedConfigurationSources.flatMap(item => item.missingPrerequisites),
+      )]);
+      expect(menu.missingPrerequisites).toEqual([...new Set([
+        ...menu.menuBlockingPrerequisites,
+        ...menu.unassignedConfigurationPrerequisites,
+      ])]);
+      expect(menu.menuBlockingPrerequisites)
+        .toContain('R070_FAMILY_T8_OFFICIAL_METHOD_NOT_ADMITTED');
+      expect(menu.unassignedConfigurationPrerequisites)
+        .not.toContain('R070_FAMILY_T8_OFFICIAL_METHOD_NOT_ADMITTED');
+      expect(menu.unassignedConfigurationPrerequisites)
+        .toContain('CONFIGURATION_OUTCOME_SETTLEMENT');
+      expect(menu.prerequisiteTrace.map(item => item.prerequisiteCode))
+        .toEqual(menu.menuBlockingPrerequisites);
+      expect(report.missingPrerequisites).toEqual(
+        expect.arrayContaining([...menu.missingPrerequisites]),
+      );
+      expect(menu.admittedFamilyClaimCount).toBe(0);
+      expect(menu.familyT8Admitted).toBe(false);
+      expect(menu.mayEnableMenu).toBe(false);
+      expect(menu.mayDisplayFamilyInterpretation).toBe(false);
+      expect(menu.mayPersist).toBe(false);
+      expect(menu.mayPublish).toBe(false);
+      expect(menu.maySell).toBe(false);
+      expect(report.mayMarkMenuAvailable).toBe(false);
+    }
+  });
+
+  it('retains unassigned R070 configuration prerequisite provenance separately from family menu blockers', () => {
+    const samples = [
+      { year: 1990, day: 15, sex: 'male' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'female' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'unspecified' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'female' as const, timeKnown: false },
+    ];
+    for (const sample of samples) {
+      const snapshot = chart(sample);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const menu = report.menuSupportHandoff;
+        const transfer = report.engineTransferBoundary;
+        const configHolds = menu.unassignedConfigurationSources;
+        const expectedCodes = [...new Set(configHolds.flatMap(item =>
+          item.missingPrerequisites))];
+        expect(menu.unassignedConfigurationPrerequisites).toEqual(expectedCodes);
+        expect(menu.unassignedConfigurationPrerequisiteTrace.map(item =>
+          item.prerequisiteCode)).toEqual(expectedCodes);
+        for (const item of menu.unassignedConfigurationPrerequisiteTrace) {
+          expect(item.origins).toEqual(configHolds
+            .filter(source => source.missingPrerequisites.includes(item.prerequisiteCode))
+            .map(source => ({
+              sourceLayerId: source.sourceLayerId,
+              sourceSurface: source.sourceSurface,
+              canonicalObservationCoverage: source.canonicalObservationCoverage,
+            })));
+          expect(item.origins.length).toBeGreaterThan(0);
+          expect(item.origins.every(origin =>
+            origin.sourceLayerId === 'CONFIGURATION-OUTCOME')).toBe(true);
+          expect(item.configurationIsFamilyMeaningAuthorized).toBe(false);
+          expect(item.repeatedSourceIsIndependentFamilyEvidence).toBe(false);
+        }
+        const sharedCodes = menu.menuBlockingPrerequisites.filter(code =>
+          menu.unassignedConfigurationPrerequisites.includes(code));
+        expect(menu.crossLanePrerequisiteOverlaps.map(item => item.prerequisiteCode))
+          .toEqual(sharedCodes);
+        for (const item of menu.crossLanePrerequisiteOverlaps) {
+          const menuTrace = menu.prerequisiteTrace.find(trace =>
+            trace.prerequisiteCode === item.prerequisiteCode);
+          const configTrace = menu.unassignedConfigurationPrerequisiteTrace.find(trace =>
+            trace.prerequisiteCode === item.prerequisiteCode);
+          expect(item.menuOrigins).toEqual(menuTrace?.origins);
+          expect(item.unassignedConfigurationOrigins).toEqual(configTrace?.origins);
+          expect(item.menuOrigins.length).toBeGreaterThan(0);
+          expect(item.unassignedConfigurationOrigins.length).toBeGreaterThan(0);
+          expect(item.menuAndConfigurationMethodsReconciled).toBe(false);
+          expect(item.independentlyAdmittedFamilyClaims).toBe(0);
+        }
+        expect(transfer.unassignedConfigurationPrerequisiteTrace)
+          .toEqual(menu.unassignedConfigurationPrerequisiteTrace);
+        expect(transfer.crossLanePrerequisiteOverlaps)
+          .toEqual(menu.crossLanePrerequisiteOverlaps);
+        expect(menu.prerequisiteTrace.map(item => item.prerequisiteCode))
+          .toEqual(menu.menuBlockingPrerequisites);
+        expect(menu.missingPrerequisites).toEqual([...new Set([
+          ...menu.menuBlockingPrerequisites,
+          ...menu.unassignedConfigurationPrerequisites,
+        ])]);
+        expect(menu.admittedFamilyClaimCount).toBe(0);
+        expect(transfer.researchEvidenceMayBecomeFamilyClaim).toBe(false);
+        expect(transfer.canSelectHistoricalMethod).toBe(false);
+        expect(transfer.canGrantFamilyT8Authority).toBe(false);
+        expect(transfer.canEnableMenu).toBe(false);
+        expect(transfer.canPublishOrSell).toBe(false);
+      }
+    }
+  });
+
+  it('selects a family engine research transfer only for the exact requested menu and calculation identity', () => {
+    const cases = [
+      { year: 1990, day: 15, sex: 'male' as const, timeKnown: true },
+      { year: 1993, day: 15, sex: 'female' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'unspecified' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'female' as const, timeKnown: false },
+    ];
+    const differentSnapshot = chart({ year: 2001, day: 8, sex: 'male' });
+    for (const input of cases) {
+      const snapshot = chart(input);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const expected = {
+          scope,
+          snapshotId: snapshot.snapshotId,
+          calculationHash: snapshot.calculationHash,
+        };
+        const transfer = selectR070FamilyResearchTransferForContext(report, expected);
+        expect(transfer).toBe(report.engineTransferBoundary);
+        expect(transfer.route).toBe('R070_RESEARCH_ONLY_NOT_EXECUTABLE');
+        expect(transfer.menuBlockingPrerequisites).toEqual(
+          report.menuSupportHandoff.menuBlockingPrerequisites,
+        );
+        expect(transfer.unassignedConfigurationPrerequisites).toEqual(
+          report.menuSupportHandoff.unassignedConfigurationPrerequisites,
+        );
+        expect(transfer.canGrantFamilyT8Authority).toBe(false);
+        expect(transfer.canEnableMenu).toBe(false);
+        expect(() => selectR070FamilyResearchTransferForContext(report, {
+          ...expected, scope: scope === 'parents' ? 'children' : 'parents',
+        })).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext(report, {
+          ...expected, snapshotId: differentSnapshot.snapshotId,
+        })).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext(report, {
+          ...expected, calculationHash: differentSnapshot.calculationHash,
+        })).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext(report, {
+          ...expected, snapshotId: snapshot.snapshotId + '-different-person',
+        })).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext({
+          ...report, mayMarkMenuAvailable: true,
+        } as unknown as typeof report, expected)).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext({
+          ...report, researchOnly: false,
+        } as unknown as typeof report, expected)).toThrow(TypeError);
+        expect(() => selectR070FamilyResearchTransferForContext({
+          ...report,
+          engineTransferBoundary: {
+            ...report.engineTransferBoundary, canGrantFamilyT8Authority: true,
+          },
+        } as unknown as typeof report, expected)).toThrow(TypeError);
+        expect(report.familyT8Admitted).toBe(false);
+        expect(report.mayMarkMenuAvailable).toBe(false);
+      }
+    }
+  });
+
+  it('rejects inconsistent source or authority lanes even when R070 snapshot and hash match', () => {
+    for (const sex of ['male', 'female', 'unspecified'] as const) {
+      for (const scope of ['parents', 'children'] as const) {
+        const snapshot = chart({ year: 1997, day: 15, sex, timeKnown: false });
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const expected = {
+          scope, snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
+        };
+        // Engine ingress must also accept an ordinary JSON-transferred research artifact.
+        const serialized = JSON.parse(JSON.stringify(report)) as typeof report;
+        expect(selectR070FamilyResearchTransferForContext(serialized, expected))
+          .toEqual(report.engineTransferBoundary);
+        const expectBlocked = (tampered: typeof report) => {
+          expect(() => selectR070FamilyResearchTransferForContext(tampered, expected))
+            .toThrow(TypeError);
+          expect(() => explainR070FamilyResearchUnavailabilityKo(tampered, expected))
+            .toThrow(TypeError);
+        };
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff, requestedScope:
+              scope === 'parents' ? 'children' : 'parents',
+          },
+        });
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff, supportState: 'AVAILABLE',
+          },
+        } as unknown as typeof report);
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff, mayEnableMenu: true,
+          },
+        } as unknown as typeof report);
+        expectBlocked({
+          ...report, engineTransferBoundary: {
+            ...report.engineTransferBoundary, researchEvidenceMayBecomeFamilyClaim: true,
+          },
+        } as unknown as typeof report);
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff,
+            unsupportedReasons: report.menuSupportHandoff.unsupportedReasons.slice(1),
+          },
+        });
+        expectBlocked({
+          ...report, engineTransferBoundary: {
+            ...report.engineTransferBoundary,
+            sourceAndMethodHolds: [],
+          },
+        });
+        expectBlocked({
+          ...report, engineTransferBoundary: {
+            ...report.engineTransferBoundary,
+            unresolvedCanonicalInputs: [],
+          },
+        });
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff, menuBlockingPrerequisites: [],
+          },
+        });
+        expectBlocked({
+          ...report, menuSupportHandoff: {
+            ...report.menuSupportHandoff, unassignedConfigurationPrerequisites: [],
+          },
+        });
+        expectBlocked({
+          ...report, engineTransferBoundary: {
+            ...report.engineTransferBoundary, officialAuthorityHold: {
+              ...report.engineTransferBoundary.officialAuthorityHold,
+              sourceSurfaces: ['父以偏財論'],
+            },
+          },
+        });
+        expect(report.familyT8Admitted).toBe(false);
+        expect(report.mayMarkMenuAvailable).toBe(false);
+      }
+    }
+  });
+
+  it('renders distinct Korean R070 unsupported notices without creating parent or child interpretations', () => {
+    const samples = [
+      { year: 1990, day: 15, sex: 'male' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'female' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'unspecified' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'female' as const, timeKnown: false },
+    ];
+    for (const sample of samples) {
+      const snapshot = chart(sample);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const expected = {
+          scope,
+          snapshotId: snapshot.snapshotId,
+          calculationHash: snapshot.calculationHash,
+        };
+        const explanation = explainR070FamilyResearchUnavailabilityKo(report, expected);
+        expect(explanation.locale).toBe('ko');
+        expect(explanation.scope).toBe(scope);
+        expect(explanation.snapshotId).toBe(snapshot.snapshotId);
+        expect(explanation.calculationHash).toBe(snapshot.calculationHash);
+        expect(explanation.availability).toBe('unsupported');
+        expect(explanation.heading).toBe(
+          scope === 'parents' ? '부모 풀이를 아직 제공할 수 없습니다.'
+            : '자녀 풀이를 아직 제공할 수 없습니다.',
+        );
+        const expectedOriginalSurfaces = [...new Set(
+          report.menuSupportHandoff.unsupportedReasons.flatMap(reason => reason.sourceSurfaces),
+        )];
+        expect(explanation.reviewedOriginalSourceSurfaces).toEqual(expectedOriginalSurfaces);
+        expect(explanation.sourceScopeNotice).toContain(
+          scope === 'parents' ? '부모 메뉴' : '자녀 메뉴',
+        );
+        expect(explanation.sourceScopeNotice).toContain('원문 검토 범위와 가족운 해석 승인');
+        for (const originalSurface of expectedOriginalSurfaces) {
+          expect(explanation.sourceScopeNotice).toContain('「' + originalSurface + '」');
+        }
+        expect(explanation.explanation).toBe([
+          explanation.heading,
+          explanation.sourceScopeNotice,
+          ...explanation.inputNotices,
+          explanation.methodNotice,
+          explanation.authorityNotice,
+        ].join(' '));
+        expect(explanation.methodNotice).toContain('선택·조정 근거');
+        expect(explanation.authorityNotice).toContain('공식 가족 T8 해석 권한');
+        expect(explanation.sourceReasons).toHaveLength(
+          report.menuSupportHandoff.unsupportedReasons.length,
+        );
+        for (const [i, detail] of explanation.sourceReasons.entries()) {
+          const original = report.menuSupportHandoff.unsupportedReasons[i];
+          if (original === undefined) throw new TypeError('Missing original R070 reason.');
+          expect(detail.reasonCode).toBe(original.reasonCode);
+          expect(detail.category).toBe(original.category);
+          expect(detail.sourceSurfaces).toEqual(original.sourceSurfaces);
+          expect(detail.observedFactPaths).toEqual(original.observedFactPaths);
+          expect(detail.unresolvedFactPaths).toEqual(original.unresolvedFactPaths);
+          expect(detail.missingPrerequisites).toEqual(original.missingPrerequisites);
+          expect(detail.koreanExplanation.length).toBeGreaterThan(15);
+          for (const surface of original.sourceSurfaces) {
+            expect(detail.koreanExplanation).toContain('「' + surface + '」');
+          }
+          if (detail.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED') {
+            for (const path of detail.unresolvedFactPaths) {
+              expect(detail.koreanExplanation).toContain(path);
+            }
+          }
+        }
+        const excludedSourceSurfaces = new Set<string>(
+          report.menuSupportHandoff.excludedHistoricalSources.map(source => source.sourceSurface),
+        );
+        expect(explanation.sourceReasons.every(reason =>
+          reason.sourceSurfaces.every(surface => !excludedSourceSurfaces.has(surface))))
+          .toBe(true);
+        expect(explanation.reviewedOriginalSourceSurfaces.every(surface =>
+          !excludedSourceSurfaces.has(surface))).toBe(true);
+        expect(explanation.sourceReasons[0]?.reasonCode)
+          .toBe('R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED');
+        expect(explanation.unresolvedCanonicalFactPaths).toEqual(
+          report.engineTransferBoundary.unresolvedCanonicalInputs.map(item => item.factPath),
+        );
+        expect(explanation.inputRemediation.map(item => item.factPath))
+          .toEqual(explanation.unresolvedCanonicalFactPaths);
+        for (const remediation of explanation.inputRemediation) {
+          const inputGap = report.engineTransferBoundary.unresolvedCanonicalInputs
+            .find(item => item.factPath === remediation.factPath);
+          if (!inputGap) throw new TypeError('Unresolved original Canonical fact disappeared.');
+          expect(remediation.canonicalInputKind).toBe(inputGap.canonicalInputKind);
+          expect(remediation.sourceSurfaces).toEqual(
+            inputGap.affectedOriginalSources.map(item => item.sourceSurface),
+          );
+          expect(remediation.nextStep).toBe(
+            remediation.factPath === 'pillars.hour' && remediation.canonicalInputKind === 'pillar'
+              ? 'CHECK_BIRTH_TIME_AND_RECALCULATE' : 'REQUIRES_CANONICAL_FACT_RESOLUTION',
+          );
+          expect(remediation.koreanNotice.length).toBeGreaterThan(20);
+          expect(remediation.correctionAloneEnablesFamilyInterpretation).toBe(false);
+          expect(remediation.correctionAloneGrantsOfficialAuthority).toBe(false);
+        }
+        expect(explanation.missingCanonicalConceptSourceSurfaces).toEqual(
+          [...new Set(report.engineTransferBoundary.canonicalInputAndConceptHolds
+            .filter(item => item.reasonCode === 'R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE')
+            .flatMap(item => item.sourceSurfaces))],
+        );
+        expect(explanation.readingMeaningAdmitted).toBe(false);
+        expect(explanation.officialReadingAuthorized).toBe(false);
+        expect(explanation.productMenuCanBeEnabled).toBe(false);
+        expect(explanation.mayPersist).toBe(false);
+        expect(explanation.mayPublish).toBe(false);
+        expect(explanation.maySell).toBe(false);
+        expect(explainR070FamilyResearchUnavailabilityKo(report, expected))
+          .toEqual(explanation);
+        expect(() => explainR070FamilyResearchUnavailabilityKo(report, {
+          ...expected, scope: scope === 'parents' ? 'children' : 'parents',
+        })).toThrow(TypeError);
+        expect(() => explainR070FamilyResearchUnavailabilityKo(report, {
+          ...expected, snapshotId: snapshot.snapshotId + '-other',
+        })).toThrow(TypeError);
+        expect(() => explainR070FamilyResearchUnavailabilityKo(report, {
+          ...expected, calculationHash: snapshot.calculationHash + '-other',
+        })).toThrow(TypeError);
+      }
+    }
+  });
+
+  it('shows actual unknown-hour gaps separately from irreparable historical-method blockers', () => {
+    const known = chart({ year: 1997, day: 15, sex: 'female', timeKnown: true });
+    const unknown = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const knownReport = evaluateFamilySourceScopeV1(known, 'children');
+    const unknownReport = evaluateFamilySourceScopeV1(unknown, 'children');
+    const knownNotice = explainR070FamilyResearchUnavailabilityKo(knownReport, {
+      scope: 'children', snapshotId: known.snapshotId, calculationHash: known.calculationHash,
+    });
+    const unknownNotice = explainR070FamilyResearchUnavailabilityKo(unknownReport, {
+      scope: 'children', snapshotId: unknown.snapshotId, calculationHash: unknown.calculationHash,
+    });
+    expect(unknownNotice.unresolvedCanonicalFactPaths).toContain('pillars.hour');
+    expect(unknownNotice.inputRemediation.find(item =>
+      item.factPath === 'pillars.hour')).toMatchObject({
+        canonicalInputKind: 'pillar',
+        sourceSurfaces: ['時為子息'],
+        nextStep: 'CHECK_BIRTH_TIME_AND_RECALCULATE',
+        correctionAloneEnablesFamilyInterpretation: false,
+        correctionAloneGrantsOfficialAuthority: false,
+      });
+    expect(knownNotice.inputRemediation.some(item =>
+      item.nextStep === 'CHECK_BIRTH_TIME_AND_RECALCULATE')).toBe(false);
+    expect(unknownNotice.inputRemediation.filter(item =>
+      item.canonicalInputKind === 'visible_t5' ||
+      item.canonicalInputKind === 'hidden_stem_membership').every(item =>
+      item.nextStep === 'REQUIRES_CANONICAL_FACT_RESOLUTION')).toBe(true);
+    const hourReason = unknownNotice.sourceReasons.find(reason =>
+      reason.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED' &&
+      reason.sourceSurfaces.includes('時為子息'));
+    expect(hourReason?.koreanExplanation).toContain('pillars.hour');
+    expect(hourReason?.koreanExplanation).toContain('입력이 미확정');
+    expect(knownNotice.sourceReasons.some(reason =>
+      reason.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED' &&
+      reason.sourceSurfaces.includes('時為子息'))).toBe(false);
+    const femaleMethods = unknownNotice.sourceReasons.find(reason =>
+      reason.reasonCode === 'R070_MENU_HISTORICAL_METHODS_NOT_RECONCILED' &&
+      reason.sourceSurfaces.includes('我生者為子'));
+    expect(femaleMethods?.koreanExplanation).toContain('선택·조정 규칙');
+    expect(unknownNotice.inputNotices.some(notice =>
+      notice.includes('기둥이 확정되지 않았습니다'))).toBe(true);
+    expect(knownNotice.unresolvedCanonicalFactPaths).not.toContain('pillars.hour');
+    expect(knownNotice.inputNotices.some(notice =>
+      notice.includes('기둥이 확정되지 않았습니다'))).toBe(false);
+    expect(unknownNotice.methodNotice).toBe(knownNotice.methodNotice);
+    expect(unknownNotice.authorityNotice).toBe(knownNotice.authorityNotice);
+    expect(unknownNotice.explanation).not.toBe(knownNotice.explanation);
+    expect(unknownNotice.officialReadingAuthorized).toBe(false);
+    expect(knownNotice.officialReadingAuthorized).toBe(false);
+
+    const male = chart({ year: 1990, day: 15, sex: 'male' });
+    const female = chart({ year: 1990, day: 15, sex: 'female' });
+    const maleReport = evaluateFamilySourceScopeV1(male, 'parents');
+    const femaleReport = evaluateFamilySourceScopeV1(female, 'parents');
+    const maleNotice = explainR070FamilyResearchUnavailabilityKo(maleReport, {
+      scope: 'parents', snapshotId: male.snapshotId, calculationHash: male.calculationHash,
+    });
+    const femaleNotice = explainR070FamilyResearchUnavailabilityKo(femaleReport, {
+      scope: 'parents', snapshotId: female.snapshotId, calculationHash: female.calculationHash,
+    });
+    expect(maleNotice.missingCanonicalConceptSourceSurfaces).toContain('胎為母');
+    expect(maleNotice.reviewedOriginalSourceSurfaces).toContain('年為父');
+    expect(maleNotice.reviewedOriginalSourceSurfaces).toContain('胎為母');
+    expect(femaleNotice.reviewedOriginalSourceSurfaces).not.toContain('年為父');
+    expect(femaleNotice.reviewedOriginalSourceSurfaces).not.toContain('胎為母');
+    expect(maleNotice.sourceScopeNotice).not.toBe(femaleNotice.sourceScopeNotice);
+    expect(maleNotice.inputRemediation.every(item =>
+      !item.factPath.includes('fetus') && !item.factPath.includes('胎'))).toBe(true);
+    expect(maleNotice.explanation).toContain('태주 계산 사실이 정의되지 않았습니다');
+    expect(femaleNotice.missingCanonicalConceptSourceSurfaces).not.toContain('胎為母');
+    expect(femaleNotice.explanation).not.toContain('태주 계산 사실이 정의되지 않았습니다');
+    const maleChildren = evaluateFamilySourceScopeV1(male, 'children');
+    const femaleChildren = evaluateFamilySourceScopeV1(female, 'children');
+    const maleChildNotice = explainR070FamilyResearchUnavailabilityKo(maleChildren, {
+      scope: 'children', snapshotId: male.snapshotId, calculationHash: male.calculationHash,
+    });
+    const femaleChildNotice = explainR070FamilyResearchUnavailabilityKo(femaleChildren, {
+      scope: 'children', snapshotId: female.snapshotId, calculationHash: female.calculationHash,
+    });
+    expect(maleChildNotice.reviewedOriginalSourceSurfaces).toContain('時為子孫');
+    expect(maleChildNotice.reviewedOriginalSourceSurfaces).not.toContain('我生者為子');
+    expect(femaleChildNotice.reviewedOriginalSourceSurfaces).toContain('我生者為子');
+    expect(femaleChildNotice.reviewedOriginalSourceSurfaces).not.toContain('時為子孫');
+    expect(maleChildNotice.sourceScopeNotice).not.toBe(femaleChildNotice.sourceScopeNotice);
+    expect(maleChildNotice.productMenuCanBeEnabled).toBe(false);
+    expect(femaleChildNotice.productMenuCanBeEnabled).toBe(false);
+    expect(maleNotice.explanation).not.toContain('가족운 결론을 발행할 수 있습니다');
+    expect(maleNotice.productMenuCanBeEnabled).toBe(false);
+  });
+
+  it('keeps R070 research engine transfer separated by Canonical input, source-method and authority hold', () => {
+    const cases = [
+      { year: 1988, day: 8, sex: 'male' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'female' as const, timeKnown: true },
+      { year: 1993, day: 15, sex: 'unspecified' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'female' as const, timeKnown: false },
+    ];
+    for (const input of cases) {
+      const snapshot = chart(input);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const transfer = report.engineTransferBoundary;
+        const menu = report.menuSupportHandoff;
+        expect(transfer.route).toBe('R070_RESEARCH_ONLY_NOT_EXECUTABLE');
+        expect(transfer.requestedScope).toBe(scope);
+        expect(transfer.sourceSnapshotId).toBe(snapshot.snapshotId);
+        expect(transfer.sourceCalculationHash).toBe(snapshot.calculationHash);
+        expect(transfer.unresolvedCanonicalInputs).toEqual(menu.unresolvedCanonicalInputs);
+        expect(transfer.canonicalInputAndConceptHolds).toEqual(
+          menu.unsupportedReasons.filter(reason => reason.category === 'CANONICAL_INPUT'),
+        );
+        expect(transfer.sourceAndMethodHolds).toEqual(
+          menu.unsupportedReasons.filter(reason =>
+            reason.category === 'SOURCE_APPLICABILITY' ||
+            reason.category === 'SOURCE_CONTEXT' ||
+            reason.category === 'METHOD_SELECTION'),
+        );
+        expect(transfer.officialAuthorityHold).toEqual(
+          menu.unsupportedReasons.find(reason =>
+            reason.reasonCode === 'R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED'),
+        );
+        expect(transfer.officialAuthorityHold.category).toBe('OFFICIAL_AUTHORITY');
+        expect(transfer.excludedHistoricalSources).toEqual(menu.excludedHistoricalSources);
+        expect(transfer.unassignedConfigurationSources)
+          .toEqual(menu.unassignedConfigurationSources);
+        expect(transfer.prerequisiteTrace).toEqual(menu.prerequisiteTrace);
+        expect(transfer.menuBlockingPrerequisites).toEqual(menu.menuBlockingPrerequisites);
+        expect(transfer.unassignedConfigurationPrerequisites)
+          .toEqual(menu.unassignedConfigurationPrerequisites);
+        expect(transfer.menuBlockingPrerequisites).toEqual([...new Set(
+          menu.unsupportedReasons.flatMap(reason => reason.missingPrerequisites),
+        )]);
+        expect(transfer.unassignedConfigurationPrerequisites).toEqual([...new Set(
+          menu.unassignedConfigurationSources.flatMap(reason => reason.missingPrerequisites),
+        )]);
+        expect(transfer.canonicalInputAndConceptHolds.every(reason =>
+          reason.category === 'CANONICAL_INPUT')).toBe(true);
+        expect(transfer.sourceAndMethodHolds.every(reason =>
+          reason.category !== 'CANONICAL_INPUT' &&
+          reason.category !== 'OFFICIAL_AUTHORITY')).toBe(true);
+        expect(transfer.unresolvedCanonicalInputs.every(fact =>
+          fact.substituteAnotherPillarAuthorized === false &&
+          fact.familyMeaningAuthorized === false)).toBe(true);
+        expect(transfer.prerequisiteTrace.every(trace =>
+          trace.repetitionIsIndependentEvidence === false &&
+          trace.familyMeaningAuthorized === false)).toBe(true);
+        expect(transfer.researchEvidenceMayBecomeFamilyClaim).toBe(false);
+        expect(transfer.canSelectHistoricalMethod).toBe(false);
+        expect(transfer.canGrantFamilyT8Authority).toBe(false);
+        expect(transfer.canEnableMenu).toBe(false);
+        expect(transfer.canPublishOrSell).toBe(false);
+        expect(report.familyT8Admitted).toBe(false);
+        expect(report.mayGrantOfficialAuthority).toBe(false);
+        expect(report.mayMarkMenuAvailable).toBe(false);
+        expect(report.mayPersist).toBe(false);
+        expect(report.mayPublish).toBe(false);
+        expect(report.maySell).toBe(false);
+      }
+    }
+  });
+
+  it('does not equate unimplemented fetal concept, unknown hour, and missing hidden membership', () => {
+    const maleParent = evaluateFamilySourceScopeV1(
+      chart({ year: 1990, day: 15, sex: 'male' }), 'parents');
+    const fetalGap = maleParent.engineTransferBoundary.canonicalInputAndConceptHolds
+      .find(reason => reason.sourceSurfaces.includes('胎為母'));
+    expect(fetalGap?.reasonCode).toBe('R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE');
+    expect(fetalGap?.unresolvedFactPaths).toEqual([]);
+    expect(maleParent.engineTransferBoundary.unresolvedCanonicalInputs
+      .some(item => item.factPath.includes('fetus'))).toBe(false);
+
+    const unknownHour = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const child = evaluateFamilySourceScopeV1(unknownHour, 'children');
+    const transfer = child.engineTransferBoundary;
+    expect(transfer.unresolvedCanonicalInputs.map(item => item.factPath))
+      .toEqual(child.menuSupportHandoff.unresolvedCanonicalInputs.map(item => item.factPath));
+    expect(transfer.unresolvedCanonicalInputs.some(item =>
+      item.factPath === 'pillars.hour' && item.canonicalInputKind === 'pillar')).toBe(true);
+    expect(transfer.unresolvedCanonicalInputs.some(item =>
+      item.factPath === 'derivedFacts.tenGods.hour.branch' &&
+      item.canonicalInputKind === 'visible_t5')).toBe(true);
+    expect(transfer.unresolvedCanonicalInputs.some(item =>
+      item.factPath === 'derivedFacts.hiddenStems.hour' &&
+      item.canonicalInputKind === 'hidden_stem_membership')).toBe(true);
+    expect(transfer.canonicalInputAndConceptHolds.some(reason =>
+      reason.sourceSurfaces.includes('時為子息') &&
+      reason.unresolvedFactPaths.includes('pillars.hour'))).toBe(true);
+    expect(transfer.sourceAndMethodHolds.some(reason =>
+      reason.reasonCode === 'R070_MENU_HISTORICAL_METHODS_NOT_RECONCILED' &&
+      reason.sourceSurfaces.includes('我生者為子'))).toBe(true);
+    expect(transfer.excludedHistoricalSources.map(source => source.sourceSurface))
+      .toEqual(['時為子孫']);
+    const derivedFacts = { ...unknownHour.derivedFacts };
+    delete derivedFacts.hiddenStems;
+    const absent = evaluateFamilySourceScopeV1(
+      { ...unknownHour, derivedFacts }, 'children');
+    const absentTransfer = absent.engineTransferBoundary;
+    expect(absentTransfer.unresolvedCanonicalInputs.filter(item =>
+      item.canonicalInputKind === 'hidden_stem_membership').map(item => item.factPath))
+      .toEqual([
+        'derivedFacts.hiddenStems.year',
+        'derivedFacts.hiddenStems.month',
+        'derivedFacts.hiddenStems.day',
+        'derivedFacts.hiddenStems.hour',
+      ]);
+    expect(absentTransfer.excludedHistoricalSources.map(source => source.sourceSurface))
+      .toEqual(['時為子孫']);
+    expect(absentTransfer.canGrantFamilyT8Authority).toBe(false);
+    expect(absentTransfer.canEnableMenu).toBe(false);
+    expect(absentTransfer.canPublishOrSell).toBe(false);
+  });
+
+  it('traces each R070 menu prerequisite back to eligible source and method reasons without evidence weighting', () => {
+    const samples = [
+      { year: 1990, day: 15, sex: 'male' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'female' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'unspecified' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'female' as const, timeKnown: false },
+    ];
+    for (const sample of samples) {
+      const snapshot = chart(sample);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const menu = report.menuSupportHandoff;
+        const expectedCodes = [...new Set(menu.unsupportedReasons.flatMap(reason =>
+          reason.missingPrerequisites))];
+        expect(menu.prerequisiteTrace.map(entry => entry.prerequisiteCode))
+          .toEqual(expectedCodes);
+        expect(menu.menuBlockingPrerequisites).toEqual(expectedCodes);
+        expect(menu.unassignedConfigurationPrerequisites).toEqual([...new Set(
+          menu.unassignedConfigurationSources.flatMap(source => source.missingPrerequisites),
+        )]);
+        const excluded = new Set(menu.excludedHistoricalSources.map(
+          source => source.sourceSurface));
+        for (const entry of menu.prerequisiteTrace) {
+          const expectedOrigins = menu.unsupportedReasons
+            .filter(reason => reason.missingPrerequisites.includes(entry.prerequisiteCode));
+          expect(entry.origins).toEqual(expectedOrigins.map(reason => ({
+            reasonCode: reason.reasonCode,
+            category: reason.category,
+            sourceLayerIds: reason.sourceLayerIds,
+            sourceSurfaces: reason.sourceSurfaces,
+            observedFactPaths: reason.observedFactPaths,
+            unresolvedFactPaths: reason.unresolvedFactPaths,
+          })));
+          expect(entry.origins.length).toBeGreaterThan(0);
+          expect(entry.origins.every(origin =>
+            origin.sourceSurfaces.every(surface => !excluded.has(surface)))).toBe(true);
+          expect(entry.repetitionIsIndependentEvidence).toBe(false);
+          expect(entry.familyMeaningAuthorized).toBe(false);
+          expect(menu.missingPrerequisites).toContain(entry.prerequisiteCode);
+        }
+        const authority = menu.prerequisiteTrace.find(entry =>
+          entry.prerequisiteCode === 'R070_FAMILY_T8_OFFICIAL_METHOD_NOT_ADMITTED');
+        expect(authority?.origins).toEqual([{
+          reasonCode: 'R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED',
+          category: 'OFFICIAL_AUTHORITY',
+          sourceLayerIds: [],
+          sourceSurfaces: [],
+          observedFactPaths: [],
+          unresolvedFactPaths: [],
+        }]);
+        expect(menu.prerequisiteTrace.some(entry =>
+          entry.prerequisiteCode === 'HISTORICAL_SEX_SCOPE_NOT_MATCHED_OR_NOT_SPECIFIED'))
+          .toBe(false);
+        expect(menu.admittedFamilyClaimCount).toBe(0);
+        expect(report.familyT8Admitted).toBe(false);
+        expect(menu.mayEnableMenu).toBe(false);
+        expect(menu.mayDisplayFamilyInterpretation).toBe(false);
+        expect(menu.mayPublish).toBe(false);
+        expect(menu.maySell).toBe(false);
+      }
+    }
+  });
+
+  it('keeps repeated star-source method gaps separate from raw hidden membership omissions', () => {
+    const sample = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const report = evaluateFamilySourceScopeV1(sample, 'children');
+    const menu = report.menuSupportHandoff;
+    const historicalStarMethod = menu.prerequisiteTrace.find(entry =>
+      entry.prerequisiteCode === 'SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED');
+    expect(historicalStarMethod?.origins.some(origin =>
+      origin.sourceSurfaces.includes('子嗣者即官星也'))).toBe(true);
+    expect(historicalStarMethod?.origins.some(origin =>
+      origin.sourceSurfaces.includes('我生者為子'))).toBe(true);
+    const missingMembership = menu.prerequisiteTrace.find(entry =>
+      entry.prerequisiteCode === 'CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE');
+    expect(missingMembership?.origins.filter(origin =>
+      origin.category === 'SOURCE_CONTEXT').map(origin => origin.sourceSurfaces[0]))
+      .toEqual(['子嗣者即官星也', '我生者為子']);
+    expect(missingMembership?.origins.every(origin =>
+      origin.unresolvedFactPaths.includes('derivedFacts.hiddenStems.hour'))).toBe(true);
+    expect(menu.unresolvedCanonicalInputs.filter(item =>
+      item.factPath === 'derivedFacts.hiddenStems.hour')).toHaveLength(1);
+    expect(historicalStarMethod?.repetitionIsIndependentEvidence).toBe(false);
+    expect(missingMembership?.repetitionIsIndependentEvidence).toBe(false);
+    expect(menu.admittedFamilyClaimCount).toBe(0);
+    expect(menu.mayEnableMenu).toBe(false);
+  });
+
+  it('reports missing-hour and missing-fetal-pillar menu reasons without inventing family claims', () => {
+    const unknownHour = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const child = evaluateFamilySourceScopeV1(unknownHour, 'children');
+    const parents = evaluateFamilySourceScopeV1(unknownHour, 'parents');
+    const childMenu = child.menuSupportHandoff;
+    const childHour = childMenu.unsupportedReasons.find(reason =>
+      reason.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED' &&
+      reason.sourceSurfaces.includes('時為子息'));
+    expect(childHour?.unresolvedFactPaths).toContain('pillars.hour');
+    const missingHour = childMenu.unresolvedCanonicalInputs.find(item =>
+      item.factPath === 'pillars.hour');
+    expect(missingHour?.canonicalInputKind).toBe('pillar');
+    expect(missingHour?.affectedOriginalSources.map(item => item.sourceSurface))
+      .toEqual(['時為子息']);
+    const hiddenHour = childMenu.unresolvedCanonicalInputs.find(item =>
+      item.factPath === 'derivedFacts.hiddenStems.hour');
+    expect(hiddenHour?.canonicalInputKind).toBe('hidden_stem_membership');
+    expect(hiddenHour?.affectedOriginalSources.map(item => item.sourceSurface))
+      .toEqual(['子嗣者即官星也', '我生者為子']);
+    const t5Hour = childMenu.unresolvedCanonicalInputs.find(item =>
+      item.factPath === 'derivedFacts.tenGods.hour.stem');
+    expect(t5Hour?.canonicalInputKind).toBe('visible_t5');
+    expect(t5Hour?.affectedOriginalSources.map(item => item.sourceSurface))
+      .toEqual(['子嗣者即官星也', '我生者為子']);
+    expect(childMenu.unresolvedCanonicalInputs.every(item =>
+      item.affectedOriginalSources.every(source =>
+        source.sourceSurface !== '時為子孫'))).toBe(true);
+    expect(childMenu.unsupportedReasons.some(reason =>
+      reason.reasonCode === 'R070_MENU_HISTORICAL_METHODS_NOT_RECONCILED' &&
+      reason.sourceSurfaces.includes('我生者為子'))).toBe(true);
+    expect(childMenu.unsupportedReasons.some(reason =>
+      reason.reasonCode === 'R070_MENU_SOURCE_CONTEXT_METHOD_NOT_SELECTED' &&
+      reason.unresolvedFactPaths.includes('derivedFacts.hiddenStems.hour'))).toBe(true);
+    expect(childMenu.excludedHistoricalSources.map(item => item.sourceSurface))
+      .toEqual(['時為子孫']);
+    expect(parents.menuSupportHandoff.unsupportedReasons.some(reason =>
+      reason.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED')).toBe(false);
+
+    const maleParents = evaluateFamilySourceScopeV1(
+      chart({ year: 1990, day: 15, sex: 'male' }), 'parents');
+    const fetal = maleParents.menuSupportHandoff.unsupportedReasons.find(reason =>
+      reason.reasonCode === 'R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE' &&
+      reason.sourceSurfaces.includes('胎為母'));
+    expect(fetal?.missingPrerequisites)
+      .toContain('FETAL_PILLAR_NOT_DEFINED_BY_CANONICAL_SNAPSHOT');
+    expect(fetal?.observedFactPaths).toEqual([]);
+    expect(fetal?.unresolvedFactPaths).toEqual([]);
+    expect(maleParents.menuSupportHandoff.admittedFamilyClaimCount).toBe(0);
+    expect(childMenu.mayEnableMenu).toBe(false);
+    expect(childMenu.mayPublish).toBe(false);
+    expect(maleParents.menuSupportHandoff.maySell).toBe(false);
+  });
+
+  it('itemizes R070 historical source applicability and method selection separately for parents/children', () => {
+    const cases = [
+      { sex: 'male' as const, scope: 'parents' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'CALCULATED_PILLAR_POSITION_ONLY',
+          'CANONICAL_CONCEPT_NOT_AVAILABLE', 'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+        ],
+        methodKinds: [
+          'ALTERNATIVE_PILLAR_DOMAIN_WORDINGS', 'PILLAR_DOMAIN_VS_STAR_RELATION',
+          'PILLAR_DOMAIN_VS_STAR_RELATION', 'PILLAR_DOMAIN_VS_STAR_RELATION',
+        ] },
+      { sex: 'female' as const, scope: 'parents' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+          'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE', 'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+        ],
+        methodKinds: ['PILLAR_DOMAIN_VS_STAR_RELATION', 'PILLAR_DOMAIN_VS_STAR_RELATION'] },
+      { sex: 'unspecified' as const, scope: 'parents' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+          'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE', 'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+        ],
+        methodKinds: ['PILLAR_DOMAIN_VS_STAR_RELATION', 'PILLAR_DOMAIN_VS_STAR_RELATION'] },
+      { sex: 'male' as const, scope: 'children' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'CALCULATED_PILLAR_POSITION_ONLY',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+        ],
+        methodKinds: [
+          'ALTERNATIVE_PILLAR_DOMAIN_WORDINGS', 'PILLAR_DOMAIN_VS_STAR_RELATION',
+          'PILLAR_DOMAIN_VS_STAR_RELATION',
+        ] },
+      { sex: 'female' as const, scope: 'children' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED', 'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+        ],
+        methodKinds: [
+          'PILLAR_DOMAIN_VS_STAR_RELATION', 'PILLAR_DOMAIN_VS_STAR_RELATION',
+          'FEMALE_CHILD_STAR_RELATION_ALTERNATIVES',
+        ] },
+      { sex: 'unspecified' as const, scope: 'children' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+        ],
+        methodKinds: ['PILLAR_DOMAIN_VS_STAR_RELATION'] },
+    ];
+    for (const input of cases) {
+      const snapshot = chart({ year: 1990, day: 15, sex: input.sex });
+      const report = evaluateFamilySourceScopeV1(snapshot, input.scope);
+      const blockers = report.interpretationBlockers;
+      expect(blockers.requestedScope).toBe(input.scope);
+      expect(blockers.historicalSex).toBe(input.sex);
+      expect(blockers.sourceConditionHolds.map(item => item.blockerKind)).toEqual(
+        input.sourceKinds,
+      );
+      expect(blockers.methodSelectionHolds.map(item => item.methodPairKind)).toEqual(
+        input.methodKinds,
+      );
+      expect(blockers.configurationHolds.map(item => item.sourceSurface)).toEqual(
+        ['旺衰', '生旺死絕', '刑沖破害', '官煞混雜', '財印'],
+      );
+      for (const [i, condition] of blockers.sourceConditionHolds.entries()) {
+        const source = report.methodCandidates[i];
+        if (source === undefined) throw new Error('Source candidate has no blocker record.');
+        expect(condition.sourceLayerId).toBe(source.sourceLayerId);
+        expect(condition.sourceSurface).toBe(source.sourceSurface);
+        expect(condition.originalSexScope).toBe(source.originalSexScope);
+        expect(condition.disposition).toBe(source.disposition);
+        expect(condition.familyMeaningAuthorized).toBe(false);
+        expect(condition.observedFactPaths).toEqual([...new Set([
+          ...(source.observedFactPath === undefined ? [] : [source.observedFactPath]),
+          ...(source.tenGodObservation?.observedPositions.map(item => item.path) ?? []),
+          ...(source.relativeStarHiddenStemBoundary?.pillarObservations.flatMap(item =>
+            item.status === 'resolved' ? [item.membershipFactPath] : []) ?? []),
+        ])]);
+        expect(condition.unresolvedFactPaths).toEqual([...new Set([
+          ...(source.observedFactPath !== undefined && source.disposition === 'INCONCLUSIVE' &&
+            source.tenGodObservation === undefined ? [source.observedFactPath] : []),
+          ...(source.tenGodObservation?.unresolvedFactPaths ?? []),
+          ...(source.relativeStarHiddenStemBoundary
+            ?.unresolvedHiddenStemMembershipFactPaths ?? []),
+        ])]);
+        expect(condition.missingPrerequisites).toEqual([
+          ...source.missingPrerequisites,
+          ...(source.disposition === 'APPLICABLE_BOUNDED'
+            ? ['R070_PILLAR_LOCATION_IS_NOT_FAMILY_OUTCOME_RULE'] : []),
+        ]);
+        expect(blockers.missingPrerequisites).toEqual(expect.arrayContaining([...condition.missingPrerequisites]));
+      }
+      for (const [i, condition] of blockers.methodSelectionHolds.entries()) {
+        expect(condition.coPresenceIsVerifiedContradiction).toBe(false);
+        expect(condition.methodSelectionAuthorized).toBe(false);
+        expect(condition.independentlyAdmittedFamilyClaims).toBe(0);
+        expect(condition.sourceSurfaces).toHaveLength(2);
+        expect(condition.sourceLayerIds).toHaveLength(2);
+        for (const [sourceIndex, surface] of condition.sourceSurfaces.entries()) {
+          const source = report.methodCandidates.find(item => item.sourceSurface === surface);
+          expect(source?.sourceLayerId).toBe(condition.sourceLayerIds[sourceIndex]);
+          expect(source?.disposition).not.toBe('NARROW_OR_REPLACE');
+        }
+        expect(blockers.missingPrerequisites).toEqual(expect.arrayContaining([...condition.missingPrerequisites]));
+        if (condition.methodPairKind === 'FEMALE_CHILD_STAR_RELATION_ALTERNATIVES') {
+          expect(condition.sourceSurfaces).toEqual(['子嗣者即官星也', '我生者為子']);
+          expect(condition.missingPrerequisites).toContain(
+            'R070_CHILD_STAR_RELATION_ALTERNATIVES_NOT_RECONCILED',
+          );
+        }
+        expect(i).toBeLessThan(5);
+      }
+      for (const [i, item] of blockers.configurationHolds.entries()) {
+        const source = report.unassignedConfigurationInputs[i];
+        if (source === undefined) throw new Error('R070 configuration source missing.');
+        expect(item.sourceLayerId).toBe(source.sourceLayerId);
+        expect(item.canonicalObservationCoverage).toBe(source.canonicalObservationCoverage);
+        expect(item.missingPrerequisites).toEqual(source.missingPrerequisites);
+        expect(item.familyScopeResolved).toBe(false);
+        expect(item.familyOutcomeAuthorized).toBe(false);
+      }
+      expect(blockers.originalTextContradictionEstablished).toBe(false);
+      expect(blockers.interpretationMethodSelected).toBe(false);
+      expect(blockers.independentlyAdmittedFamilyClaims).toBe(0);
+      expect(blockers.familyT8Admitted).toBe(false);
+      expect(report.missingPrerequisites).toEqual(expect.arrayContaining([...blockers.missingPrerequisites]));
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.mayMarkMenuAvailable).toBe(false);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+  });
+
+  it('retains unknown-hour family blockers rather than synthesizing an alternative child method', () => {
+    const snapshot = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const parents = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+    expect(parents.interpretationBlockers.sourceConditionHolds[0]?.blockerKind)
+      .toBe('CALCULATED_PILLAR_POSITION_ONLY');
+    expect(children.interpretationBlockers.sourceConditionHolds[0]?.blockerKind)
+      .toBe('REFERENCE_PILLAR_INPUT_UNRESOLVED');
+    expect(children.interpretationBlockers.sourceConditionHolds[0]?.unresolvedFactPaths)
+      .toContain('pillars.hour');
+    expect(children.interpretationBlockers.methodSelectionHolds.map(item =>
+      item.methodPairKind)).toEqual(['FEMALE_CHILD_STAR_RELATION_ALTERNATIVES']);
+    expect(children.interpretationBlockers.methodSelectionHolds[0]?.observedFactPaths)
+      .toEqual([...new Set([
+        ...(familyCandidate(children, '子嗣者即官星也')
+          .tenGodObservation?.observedPositions.map(item => item.path) ?? []),
+        ...(familyCandidate(children, '我生者為子')
+          .tenGodObservation?.observedPositions.map(item => item.path) ?? []),
+      ])]);
+    for (const surface of ['子嗣者即官星也', '我生者為子']) {
+      const candidate = children.interpretationBlockers.sourceConditionHolds.find(item =>
+        item.sourceSurface === surface);
+      expect(candidate?.blockerKind).toBe('SOURCE_CONTEXT_METHOD_NOT_SELECTED');
+      expect(candidate?.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+      expect(candidate?.unresolvedFactPaths).toContain('derivedFacts.hiddenStems.hour');
+    }
+    expect(children.interpretationBlockers.interpretationMethodSelected).toBe(false);
+    expect(children.interpretationBlockers.originalTextContradictionEstablished).toBe(false);
+    expect(children.familyT8Admitted).toBe(false);
+    expect(children.mayPersist).toBe(false);
+  });
+
+  it('links existing R070 pillar, star and branch-clash fact references without multiplying evidence', () => {
+    const cases = [
+      { year: 1988, day: 5, sex: 'male' as const },
+      { year: 1990, day: 15, sex: 'female' as const },
+      { year: 1993, day: 25, sex: 'unspecified' as const },
+      { year: 1997, day: 8, sex: 'male' as const },
+      { year: 2001, day: 24, sex: 'female' as const },
+    ];
+    for (const birth of cases) {
+      const snapshot = chart(birth);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        expect(report.pillarStarClashOverlaps).toHaveLength(
+          report.crossLayerMethodComparisons.length,
+        );
+        const rawObservedT5: string[] = [];
+        const rawClashIds: string[] = [];
+        for (let i = 0; i < report.pillarStarClashOverlaps.length; i++) {
+          const comparison = report.crossLayerMethodComparisons[i];
+          const triple = report.pillarStarClashOverlaps[i];
+          if (comparison === undefined || triple === undefined) {
+            throw new Error('Each original pillar-star pair must have one triple-layer input.');
+          }
+          const clash = report.branchClashPillarObservations.find(item =>
+            item.pillarSourceLayerId === comparison.sourceLayerIds[0] &&
+            item.pillarSourceSurface === comparison.sourceSurfaces[0]);
+          if (clash === undefined) {
+            throw new Error('Original R070 pillar must share the exact clash reference.');
+          }
+          expect(triple.requestedScope).toBe(scope);
+          expect(triple.sourceLayerIds).toEqual([
+            ...comparison.sourceLayerIds, 'CONFIGURATION-OUTCOME',
+          ]);
+          expect(triple.sourceSurfaces).toEqual([
+            ...comparison.sourceSurfaces, '刑沖破害',
+          ]);
+          expect(triple.pillarSlot).toBe(comparison.starPillarPositionContrast.pillarSlot);
+          expect(triple.pillarFactPath).toBe(comparison.pillarObservation.factPath);
+          expect(triple.visibleT5FactPath).toBe('derivedFacts.tenGods');
+          expect(triple.structuralFactPath).toBe('derivedFacts.structuralRelations');
+          expect(triple.observedT5PositionsInPillar)
+            .toEqual(comparison.starPillarPositionContrast.inReferencedPillar);
+          expect(triple.unresolvedT5FactPathsInPillar)
+            .toEqual(comparison.starPillarPositionContrast.unresolvedReferencedPillarPaths);
+          expect(triple.participatingClashes).toEqual(clash.participatingClashes);
+          expect(triple.outsideClashRelationIds)
+            .toEqual(clash.outsideClashes.map(item => item.relationId));
+          expect(triple.clashObservationState).toBe(clash.state);
+          const incomplete = triple.unresolvedT5FactPathsInPillar.length > 0 ||
+            clash.state === 'REFERENCED_PILLAR_UNRESOLVED' ||
+            clash.state === 'STRUCTURAL_CLASH_CANDIDATES_UNRESOLVED';
+          const starSeen = triple.observedT5PositionsInPillar.length > 0;
+          const clashSeen = triple.participatingClashes.length > 0;
+          expect(triple.factOverlapState).toBe(
+            incomplete ? 'INCOMPLETE_FACT_INPUTS'
+              : starSeen && clashSeen ? 'VISIBLE_T5_AND_BRANCH_CLASH_COLOCATED'
+                : starSeen ? 'VISIBLE_T5_WITHOUT_REFERENCE_BRANCH_CLASH'
+                  : clashSeen ? 'REFERENCE_BRANCH_CLASH_WITHOUT_VISIBLE_T5'
+                    : 'NO_VISIBLE_T5_OR_REFERENCE_BRANCH_CLASH',
+          );
+          rawObservedT5.push(...triple.observedT5PositionsInPillar.map(item => item.path));
+          rawClashIds.push(...triple.participatingClashes.map(item => item.relationId));
+          for (const candidate of triple.participatingClashes) {
+            expect(candidate.participants.some(participant =>
+              participant.pillar === triple.pillarSlot &&
+              participant.component === 'branch')).toBe(true);
+            expect(candidate.structuralMatchOnly).toBe(true);
+            expect(candidate.transformationEstablished).toBe(false);
+          }
+          expect(triple.missingPrerequisites).toContain(
+            'R070_PILLAR_STAR_CLASH_TRIPLE_SYNTHESIS_NOT_SOURCED',
+          );
+          expect(triple.missingPrerequisites).toContain(
+            'R070_SHARED_CALCULATION_FACT_IS_NOT_MULTIPLE_FAMILY_CLAIMS',
+          );
+          expect(triple.crossLayerMethodReconciled).toBe(false);
+          expect(triple.configurationEffectAuthorized).toBe(false);
+          expect(triple.independentFamilyEvidenceWeightAssigned).toBe(false);
+          expect(triple.independentlyAdmittedFamilyClaims).toBe(0);
+          expect(triple.familyT8Admitted).toBe(false);
+        }
+        const reuse = report.tripleLayerFactReuse;
+        const uniqueT5 = [...new Set(rawObservedT5)];
+        const uniqueClashIds = [...new Set(rawClashIds)];
+        expect(reuse.uniqueVisibleT5FactPaths).toEqual(uniqueT5);
+        expect(reuse.uniqueBranchClashRelationIds).toEqual(uniqueClashIds);
+        expect(reuse.repeatedVisibleT5FactPaths).toEqual(uniqueT5.filter(path =>
+          rawObservedT5.filter(item => item === path).length > 1));
+        expect(reuse.repeatedBranchClashRelationIds).toEqual(uniqueClashIds.filter(id =>
+          rawClashIds.filter(item => item === id).length > 1));
+        expect(reuse.distinctHistoricalSourceCountIsEvidenceWeight).toBe(false);
+        expect(reuse.independentlyAdmittedFamilyClaims).toBe(0);
+        if (report.pillarStarClashOverlaps.length > 0) {
+          expect(report.missingPrerequisites).toContain(
+            'R070_SHARED_CALCULATION_FACT_IS_NOT_MULTIPLE_FAMILY_CLAIMS',
+          );
+        }
+        expect(report.familyT8Admitted).toBe(false);
+        expect(report.researchOnly).toBe(true);
+        expect(report.mayGrantOfficialAuthority).toBe(false);
+        expect(report.mayMarkMenuAvailable).toBe(false);
+        expect(report.mayPersist).toBe(false);
+        expect(report.mayPublish).toBe(false);
+        expect(report.maySell).toBe(false);
+      }
+    }
+  });
+
+  it('retains parent partial inputs while omitting unsourced child triples for unknown birth hour', () => {
+    const snapshot = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const parents = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+    expect(parents.pillarStarClashOverlaps).toHaveLength(2);
+    expect(children.pillarStarClashOverlaps).toEqual([]);
+    expect(children.tripleLayerFactReuse).toEqual({
+      uniqueVisibleT5FactPaths: [],
+      repeatedVisibleT5FactPaths: [],
+      uniqueBranchClashRelationIds: [],
+      repeatedBranchClashRelationIds: [],
+      distinctHistoricalSourceCountIsEvidenceWeight: false,
+      independentlyAdmittedFamilyClaims: 0,
+    });
+    for (const triple of parents.pillarStarClashOverlaps) {
+      expect(triple.pillarSlot).toBe('month');
+      expect(triple.factOverlapState).toBe('INCOMPLETE_FACT_INPUTS');
+      expect(triple.unresolvedT5FactPathsInPillar).toEqual([
+        'derivedFacts.tenGods.month.stem',
+        'derivedFacts.tenGods.month.branch',
+      ]);
+      expect(triple.missingPrerequisites).toContain(
+        'R070_TRIPLE_LAYER_CANONICAL_INPUTS_PARTIAL',
+      );
+      expect(triple.independentlyAdmittedFamilyClaims).toBe(0);
+    }
+    expect(parents.familyT8Admitted).toBe(false);
+    expect(children.familyT8Admitted).toBe(false);
+    expect(children.mayPublish).toBe(false);
+  });
+
+  it('preserves historical sex exclusion and unknown-hour clash omissions without allocating family outcomes', () => {
+    const femaleSnapshot = chart({ year: 1997, sex: 'female', timeKnown: false });
+    const unspecifiedSnapshot = chart({ year: 1997, sex: 'unspecified' });
+    const femaleParents = evaluateFamilySourceScopeV1(femaleSnapshot, 'parents');
+    const femaleChildren = evaluateFamilySourceScopeV1(femaleSnapshot, 'children');
+    const unspecifiedParents = evaluateFamilySourceScopeV1(unspecifiedSnapshot, 'parents');
+    expect(femaleParents.branchClashPillarObservations.map(item => item.pillarSourceSurface))
+      .toEqual(['月為父母兄弟門戶']);
+    expect(femaleChildren.branchClashPillarObservations.map(item => item.pillarSourceSurface))
+      .toEqual(['時為子息']);
+    expect(unspecifiedParents.branchClashPillarObservations.map(item => item.pillarSourceSurface))
+      .toEqual(['月為父母兄弟門戶']);
+    const child = femaleChildren.branchClashPillarObservations[0];
+    const parent = femaleParents.branchClashPillarObservations[0];
+    if (child === undefined || parent === undefined) {
+      throw new Error('Eligible parent/child pillar observation must be retained.');
+    }
+    expect(child.state).toBe('REFERENCED_PILLAR_UNRESOLVED');
+    expect(child.observedReferenceBranch).toBeUndefined();
+    expect(child.referencePillarFactPath).toBe('pillars.hour');
+    expect(child.missingPrerequisites).toContain('CANONICAL_HOUR_PILLAR_UNRESOLVED');
+    expect(child.missingPrerequisites).toContain(
+      'R070_BRANCH_CLASH_PILLAR_TO_FAMILY_EFFECT_NOT_SOURCED',
+    );
+    expect(parent.referencePillarFactPath).toBe('pillars.month');
+    expect(femaleParents.familyT8Admitted).toBe(false);
+    expect(femaleChildren.familyT8Admitted).toBe(false);
+    expect(femaleChildren.mayPublish).toBe(false);
+    expect(femaleChildren.maySell).toBe(false);
+  });
+
+  it('separates observed 官煞混雜 and 財印 T5 group placement from unapproved configuration meaning', () => {
+    const cases = [
+      { year: 1988, day: 5, sex: 'female' as const },
+      { year: 1990, day: 15, sex: 'male' as const },
+      { year: 1993, day: 25, sex: 'unspecified' as const },
+      { year: 1997, day: 8, sex: 'female' as const },
+      { year: 2001, day: 24, sex: 'male' as const },
+      { year: 2005, day: 15, sex: 'female' as const },
+    ];
+    for (const birth of cases) {
+      const snapshot = chart(birth);
+      const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
+      const child = evaluateFamilySourceScopeV1(snapshot, 'children');
+      for (const sourceSurface of ['官煞混雜', '財印'] as const) {
+        const firstReport = parent.unassignedConfigurationInputs.find(
+          item => item.sourceSurface === sourceSurface,
+        );
+        const secondReport = child.unassignedConfigurationInputs.find(
+          item => item.sourceSurface === sourceSurface,
+        );
+        if (firstReport === undefined || secondReport === undefined ||
+            firstReport.tenGodGroupContrast === undefined ||
+            firstReport.tenGodSearchTerms === undefined) {
+          throw new Error('Existing R070 configuration source and T5 contrast must be retained.');
+        }
+        expect(secondReport).toEqual(firstReport);
+        const contrast = firstReport.tenGodGroupContrast;
+        const [first, second] = firstReport.tenGodSearchTerms;
+        if (first === undefined || second === undefined) {
+          throw new Error('Both original R070 configuration lookup groups must be retained.');
+        }
+        expect(contrast.sourceLayerId).toBe('CONFIGURATION-OUTCOME');
+        expect(contrast.sourceSurface).toBe(sourceSurface);
+        expect(contrast.sourceTerms).toEqual(
+          sourceSurface === '官煞混雜' ? ['官', '煞'] : ['財', '印'],
+        );
+        expect(contrast.sourceTerms).toEqual([first.sourceTerm, second.sourceTerm]);
+        expect(firstReport.disposition).toBe('INCONCLUSIVE');
+        expect(firstReport.canonicalObservationCoverage).toBe(
+          snapshot.derivedFacts.tenGods.status === 'resolved'
+            ? 'visible_t5_search_categories_only' : 'none',
+        );
+        const chartTenGods = snapshot.derivedFacts.tenGods;
+        for (const term of [first, second]) {
+          for (const position of term.observedPositions) {
+            expect(position.path).toBe(
+              'derivedFacts.tenGods.' + position.slot + '.' + position.channel,
+            );
+            if (chartTenGods.status !== 'resolved') {
+              throw new Error('T5 position cannot be observed without Canonical T5.');
+            }
+            const fact = chartTenGods.value[position.slot][position.channel];
+            expect(fact?.status).toBe('resolved');
+            if (fact?.status === 'resolved') expect(position.value).toBe(fact.value);
+            expect(term.canonicalSearchCategories).toContain(position.value);
+          }
+          expect(term.configurationMeaningAuthorized).toBe(false);
+        }
+        const slots = ['year', 'month', 'day', 'hour'] as const;
+        const firstSlots = slots.filter(slot =>
+          first.observedPositions.some(position => position.slot === slot));
+        const secondSlots = slots.filter(slot =>
+          second.observedPositions.some(position => position.slot === slot));
+        const shared = firstSlots.filter(slot => secondSlots.includes(slot));
+        const firstOnly = firstSlots.filter(slot => !secondSlots.includes(slot));
+        const secondOnly = secondSlots.filter(slot => !firstSlots.includes(slot));
+        const count = Number(first.observedPositions.length > 0) +
+          Number(second.observedPositions.length > 0);
+        expect(contrast.observedGroupCount).toBe(count);
+        expect(contrast.sharedPillarSlots).toEqual(shared);
+        expect(contrast.firstGroupOnlyPillarSlots).toEqual(firstOnly);
+        expect(contrast.secondGroupOnlyPillarSlots).toEqual(secondOnly);
+        expect(contrast.observationState).toBe(
+          count === 2
+            ? shared.length > 0
+              ? 'BOTH_GROUPS_OBSERVED_IN_AT_LEAST_ONE_SHARED_PILLAR'
+              : 'BOTH_GROUPS_OBSERVED_ONLY_IN_DISTINCT_PILLARS'
+            : count === 1
+              ? 'ONLY_ONE_GROUP_OBSERVED_IN_VISIBLE_T5'
+              : 'NEITHER_GROUP_OBSERVED_IN_VISIBLE_T5',
+        );
+        expect(contrast.unresolvedFactPaths).toEqual([...new Set([
+          ...first.unresolvedFactPaths, ...second.unresolvedFactPaths,
+        ])]);
+        expect(contrast.inputCoverage).toBe(
+          contrast.unresolvedFactPaths.length > 0
+            ? 'PARTIAL_VISIBLE_T5' : 'RESOLVED_VISIBLE_T5',
+        );
+        expect(contrast.originalConfigurationConditionEstablished).toBe(false);
+        expect(contrast.configurationInteractionOrPriorityEstablished).toBe(false);
+        expect(contrast.familyRelativeEffectAuthorized).toBe(false);
+        expect(contrast.familyT8Admitted).toBe(false);
+        expect(firstReport.familyScopeResolved).toBe(false);
+        expect(firstReport.familyOutcomeAuthorized).toBe(false);
+        expect(firstReport.missingPrerequisites).toContain(
+          'R070_VISIBLE_T5_COOBSERVATION_IS_NOT_CLASSICAL_CONFIGURATION',
+        );
+        expect(firstReport.missingPrerequisites).toContain(
+          'R070_CONFIGURATION_TO_FAMILY_EFFECT_NOT_SOURCED',
+        );
+        expect(parent.familyT8Admitted).toBe(false);
+        expect(child.familyT8Admitted).toBe(false);
+        expect(parent.mayGrantOfficialAuthority).toBe(false);
+        expect(child.maySell).toBe(false);
+      }
+    }
+  });
+
+  it('does not treat missing hour and unobserved T5 groups as classical configuration absence', () => {
+    const snapshot = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    const child = evaluateFamilySourceScopeV1(snapshot, 'children');
+    for (const report of [parent, child]) {
+      for (const sourceSurface of ['官煞混雜', '財印']) {
+        const item = report.unassignedConfigurationInputs.find(
+          candidate => candidate.sourceSurface === sourceSurface,
+        );
+        const contrast = item?.tenGodGroupContrast;
+        if (contrast === undefined || item?.tenGodSearchTerms === undefined) {
+          throw new Error('R070 T5 partial coverage must be exposed even for unknown hour.');
+        }
+        expect(contrast.inputCoverage).toBe('PARTIAL_VISIBLE_T5');
+        expect(contrast.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+        expect(contrast.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.branch');
+        expect(contrast.originalConfigurationConditionEstablished).toBe(false);
+        expect(contrast.familyRelativeEffectAuthorized).toBe(false);
+        expect(contrast.familyT8Admitted).toBe(false);
+        expect(item.familyOutcomeAuthorized).toBe(false);
+        expect(item.missingPrerequisites).toContain('CANONICAL_T5_CONFIGURATION_GROUPS_PARTIAL');
+        if (contrast.observedGroupCount < 2) {
+          expect(item.missingPrerequisites).toContain(
+            'R070_UNOBSERVED_VISIBLE_T5_GROUP_IS_NOT_NEGATIVE_CONFIGURATION_EVIDENCE',
+          );
+        }
+      }
+      expect(report.interpretationDisposition).toBe('INCONCLUSIVE');
+      expect(report.mayMarkMenuAvailable).toBe(false);
+      expect(report.mayPublish).toBe(false);
+      expect(report.mayPersist).toBe(false);
+    }
+  });
+
+  it('preserves R070 hidden-stem membership exactly without promoting raw stems into T5 groups', () => {
+    const births = [
+      { year: 1988, day: 5, sex: 'female' as const },
+      { year: 1990, day: 15, sex: 'male' as const },
+      { year: 1997, day: 8, sex: 'unspecified' as const },
+    ];
+    const slots = ['year', 'month', 'day', 'hour'] as const;
+    for (const birth of births) {
+      const snapshot = chart(birth);
+      const hiddenStems = snapshot.derivedFacts.hiddenStems;
+      if (hiddenStems === undefined) {
+        throw new Error('Production Canonical must expose hidden-stem membership.');
+      }
+      const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
+      const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+      for (const sourceSurface of ['官煞混雜', '財印']) {
+        const parentItem = parent.unassignedConfigurationInputs.find(
+          item => item.sourceSurface === sourceSurface,
+        );
+        const childItem = children.unassignedConfigurationInputs.find(
+          item => item.sourceSurface === sourceSurface,
+        );
+        const contrast = parentItem?.tenGodGroupContrast;
+        const hidden = contrast?.hiddenStemMembershipContrast;
+        if (contrast === undefined || hidden === undefined) {
+          throw new Error('R070 configuration contrast and separate membership must exist.');
+        }
+        expect(childItem).toEqual(parentItem);
+        expect(hidden.sourceFactPath).toBe('derivedFacts.hiddenStems');
+        expect(hidden.visibleT5FactPath).toBe('derivedFacts.tenGods');
+        expect(hidden.coverage).toBe('RESOLVED_MEMBERSHIP_ONLY');
+        expect(hidden.unresolvedMembershipFactPaths).toEqual([]);
+        expect(hidden.pillarObservations.map(item => item.pillarSlot)).toEqual(slots);
+        for (const observation of hidden.pillarObservations) {
+          const canonical = hiddenStems[observation.pillarSlot];
+          const pillar = snapshot.pillars[observation.pillarSlot];
+          expect(observation.membershipFactPath)
+            .toBe('derivedFacts.hiddenStems.' + observation.pillarSlot);
+          expect(observation.branchFactPath)
+            .toBe('pillars.' + observation.pillarSlot + '.branch');
+          expect(observation.status).toBe(canonical.status);
+          expect(canonical.status).toBe('resolved');
+          if (canonical.status !== 'resolved' || pillar.status !== 'resolved') {
+            throw new Error('Known-time Canonical hidden membership must be resolved.');
+          }
+          expect(observation.observedBranch).toBe(pillar.value.branch.value);
+          expect(observation.rawMembershipPositions).toEqual(
+            canonical.value.map((stem, storageIndex) => ({ stem, storageIndex })),
+          );
+          expect(observation.hiddenStemT5ClassificationAuthorized).toBe(false);
+        }
+        expect(hidden.hiddenStemContributionToObservedT5GroupCount).toBe(0);
+        expect(hidden.canonicalStorageOrderIsStrengthPriority).toBe(false);
+        expect(hidden.historicalConfigurationConditionEstablished).toBe(false);
+        expect(hidden.hiddenStemRelativeRoleAuthorized).toBe(false);
+        expect(parentItem?.missingPrerequisites).toContain(
+          'R070_HIDDEN_STEM_MEMBERSHIP_IS_NOT_HIDDEN_T5_CLASSIFICATION',
+        );
+        expect(parent.missingPrerequisites).toContain(
+          'R070_HIDDEN_STEM_MEMBERSHIP_IS_NOT_HIDDEN_T5_CLASSIFICATION',
+        );
+        expect(children.missingPrerequisites).toContain(
+          'R070_HIDDEN_STEM_CONFIGURATION_METHOD_NOT_SOURCED',
+        );
+        expect(parentItem?.missingPrerequisites).toContain(
+          'R070_HIDDEN_STEM_STRENGTH_AND_PRIORITY_NOT_SETTLED',
+        );
+        expect(parentItem?.missingPrerequisites).toContain(
+          'R070_HIDDEN_STEM_CONFIGURATION_METHOD_NOT_SOURCED',
+        );
+        const originalT5GroupCount = parentItem?.tenGodSearchTerms?.filter(
+          group => group.observedPositions.length > 0,
+        ).length;
+        expect(contrast.observedGroupCount).toBe(originalT5GroupCount);
+        expect(contrast.originalConfigurationConditionEstablished).toBe(false);
+        expect(parent.familyT8Admitted).toBe(false);
+        expect(children.familyT8Admitted).toBe(false);
+      }
+    }
+  });
+
+  it('retains unknown-hour and unavailable membership separately from visible T5', () => {
+    const snapshot = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const report = evaluateFamilySourceScopeV1(snapshot, 'children');
+    const canonicalHidden = snapshot.derivedFacts.hiddenStems;
+    if (canonicalHidden === undefined) {
+      throw new Error('Known Canonical enriches hidden-stem membership.');
+    }
+    for (const sourceSurface of ['官煞混雜', '財印']) {
+      const input = report.unassignedConfigurationInputs.find(
+        item => item.sourceSurface === sourceSurface,
+      );
+      const contrast = input?.tenGodGroupContrast;
+      const hidden = contrast?.hiddenStemMembershipContrast;
+      if (contrast === undefined || hidden === undefined) {
+        throw new Error('Unknown birth hour must retain separate Canonical evidence.');
+      }
+      expect(hidden.coverage).toBe('PARTIAL_MEMBERSHIP');
+      expect(hidden.unresolvedMembershipFactPaths).toEqual(
+        ['derivedFacts.hiddenStems.hour'],
+      );
+      for (const observation of hidden.pillarObservations) {
+        const canonical = canonicalHidden[observation.pillarSlot];
+        expect(observation.status).toBe(canonical.status);
+        if (canonical.status === 'resolved') {
+          expect(observation.rawMembershipPositions).toEqual(
+            canonical.value.map((stem, storageIndex) => ({ stem, storageIndex })),
+          );
+        } else {
+          expect(observation.rawMembershipPositions).toEqual([]);
+        }
+      }
+      const hour = hidden.pillarObservations.find(item => item.pillarSlot === 'hour');
+      if (hour === undefined) throw new Error('Hourly hidden membership missing.');
+      expect(hour.status).toBe('unavailable');
+      expect(hour.observedBranch).toBeUndefined();
+      expect(hour.hiddenStemT5ClassificationAuthorized).toBe(false);
+      expect(contrast.inputCoverage).toBe('PARTIAL_VISIBLE_T5');
+      expect(contrast.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+      expect(input?.missingPrerequisites).toContain(
+        'CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE',
+      );
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.mayPublish).toBe(false);
+    }
+  });
+
+  it('fails closed when the optional Canonical hidden-stem fact is not provided', () => {
+    const original = chart({ year: 1990, day: 15, sex: 'male' });
+    const derivedFacts = { ...original.derivedFacts };
+    delete derivedFacts.hiddenStems;
+    const snapshot = { ...original, derivedFacts };
+    const report = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    for (const sourceSurface of ['官煞混雜', '財印']) {
+      const input = report.unassignedConfigurationInputs.find(
+        item => item.sourceSurface === sourceSurface,
+      );
+      const contrast = input?.tenGodGroupContrast;
+      const hidden = contrast?.hiddenStemMembershipContrast;
+      if (contrast === undefined || hidden === undefined) {
+        throw new Error('Missing optional hidden-stem input must be explicit.');
+      }
+      expect(hidden.coverage).toBe('MEMBERSHIP_FACTS_NOT_PROVIDED');
+      expect(hidden.unresolvedMembershipFactPaths).toEqual([
+        'derivedFacts.hiddenStems.year',
+        'derivedFacts.hiddenStems.month',
+        'derivedFacts.hiddenStems.day',
+        'derivedFacts.hiddenStems.hour',
+      ]);
+      expect(hidden.pillarObservations.every(item =>
+        item.status === 'not_provided' &&
+        item.rawMembershipPositions.length === 0 &&
+        item.hiddenStemT5ClassificationAuthorized === false)).toBe(true);
+      expect(input?.missingPrerequisites).toContain(
+        'CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE',
+      );
+      expect(contrast.observedGroupCount).toBe(
+        input?.tenGodSearchTerms?.filter(group => group.observedPositions.length > 0).length,
+      );
+      expect(contrast.hiddenStemMembershipContrast.hiddenStemContributionToObservedT5GroupCount)
+        .toBe(0);
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.researchOnly).toBe(true);
+      expect(report.mayMarkMenuAvailable).toBe(false);
+    }
+  });
+
+  it('keeps unassigned R070 官煞混雜 and 財印 as partially observed T5 search terms with unknown hour', () => {
+    const report = evaluateFamilySourceScopeV1(
+      chart({ timeKnown: false, sex: 'female' }), 'children',
+    );
+    for (const surface of ['官煞混雜', '財印'] as const) {
+      const item = report.unassignedConfigurationInputs.find(
+        candidate => candidate.sourceSurface === surface,
+      );
+      expect(item?.disposition).toBe('INCONCLUSIVE');
+      expect(item?.familyScopeResolved).toBe(false);
+      expect(item?.familyOutcomeAuthorized).toBe(false);
+      expect(item?.tenGodSearchTerms?.map(term => term.sourceTerm)).toEqual(
+        surface === '官煞混雜' ? ['官', '煞'] : ['財', '印'],
+      );
+      for (const term of item?.tenGodSearchTerms ?? []) {
+        expect(term.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+        expect(term.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.branch');
+      }
+      expect(item?.missingPrerequisites).toContain('CANONICAL_T5_CONFIGURATION_GROUPS_PARTIAL');
+    }
+    expect(report.familyT8Admitted).toBe(false);
+  });
+
+  it('exposes exact R070 parent and child star-source hidden membership separately from visible T5', () => {
+    const cases = [
+      { sex: 'male' as const, scope: 'parents' as const,
+        sources: ['父以偏財論', '母以印綬論'] },
+      { sex: 'female' as const, scope: 'parents' as const,
+        sources: ['父以偏財論', '母以印綬論'] },
+      { sex: 'unspecified' as const, scope: 'parents' as const,
+        sources: ['父以偏財論', '母以印綬論'] },
+      { sex: 'male' as const, scope: 'children' as const,
+        sources: ['子嗣者即官星也'] },
+      { sex: 'female' as const, scope: 'children' as const,
+        sources: ['子嗣者即官星也', '我生者為子'] },
+      { sex: 'unspecified' as const, scope: 'children' as const,
+        sources: ['子嗣者即官星也'] },
+    ];
+    for (const input of cases) {
+      const snapshot = chart({ year: 1997, day: 8, sex: input.sex });
+      const hiddenStems = snapshot.derivedFacts.hiddenStems;
+      if (hiddenStems === undefined) {
+        throw new Error('Production Canonical hidden membership is required for this test.');
+      }
+      const report = evaluateFamilySourceScopeV1(snapshot, input.scope);
+      const starCandidates = report.methodCandidates.filter(candidate =>
+        ['父以偏財論', '母以印綬論', '子嗣者即官星也', '我生者為子']
+          .includes(candidate.sourceSurface),
+      );
+      expect(starCandidates.map(candidate =>
+        candidate.relativeStarHiddenStemBoundary === undefined
+          ? undefined : candidate.sourceSurface).filter(Boolean)).toEqual(input.sources);
+      for (const candidate of starCandidates) {
+        if (candidate.disposition === 'NARROW_OR_REPLACE') {
+          expect(candidate.relativeStarHiddenStemBoundary).toBeUndefined();
+          expect(candidate.tenGodObservation).toBeUndefined();
+          continue;
+        }
+        const visible = candidate.tenGodObservation;
+        const boundary = candidate.relativeStarHiddenStemBoundary;
+        if (visible === undefined || boundary === undefined) {
+          throw new Error('In-scope R070 family-star source must preserve both fact surfaces.');
+        }
+        expect(boundary.sourceSurface).toBe(candidate.sourceSurface);
+        expect(boundary.sourceLayerId).toBe(candidate.sourceLayerId);
+        expect(boundary.originalSexScope).toBe(candidate.originalSexScope);
+        expect(boundary.requestedScope).toBe(input.scope);
+        expect(boundary.historicalSex).toBe(input.sex);
+        expect(boundary.visibleT5FactPath).toBe('derivedFacts.tenGods');
+        expect(boundary.hiddenStemFactPath).toBe('derivedFacts.hiddenStems');
+        expect(boundary.observedModernT5Group).toBe(visible.observedGroup);
+        expect(boundary.visibleT5ObservationStatus).toBe(visible.status);
+        expect(boundary.hiddenStemMembershipCoverage).toBe('RESOLVED_MEMBERSHIP_ONLY');
+        expect(boundary.unresolvedHiddenStemMembershipFactPaths).toEqual([]);
+        expect(boundary.pillarObservations.map(item => item.pillarSlot))
+          .toEqual(['year', 'month', 'day', 'hour']);
+        expect(boundary.pillarObservations.flatMap(item => item.visibleT5Positions))
+          .toEqual(visible.observedPositions);
+        expect(boundary.pillarObservations.flatMap(item =>
+          item.unresolvedVisibleT5FactPaths)).toEqual(visible.unresolvedFactPaths);
+        for (const pillar of boundary.pillarObservations) {
+          const canonical = hiddenStems[pillar.pillarSlot];
+          expect(pillar.membershipFactPath)
+            .toBe('derivedFacts.hiddenStems.' + pillar.pillarSlot);
+          expect(pillar.branchFactPath).toBe('pillars.' + pillar.pillarSlot + '.branch');
+          expect(pillar.status).toBe(canonical.status);
+          if (canonical.status !== 'resolved') {
+            throw new Error('Known-time original chart must resolve all hidden memberships.');
+          }
+          expect(pillar.rawMembershipPositions).toEqual(
+            canonical.value.map((stem, storageIndex) => ({ storageIndex, stem })),
+          );
+          expect(pillar.visibleT5Positions.every(item =>
+            item.slot === pillar.pillarSlot)).toBe(true);
+          expect(pillar.hiddenStemT5ClassificationAuthorized).toBe(false);
+        }
+        expect(boundary.hiddenStemTenGodClassificationAuthorized).toBe(false);
+        expect(boundary.visibleAndHiddenStarMethodReconciled).toBe(false);
+        expect(boundary.historicalRelativeRoleAuthorized).toBe(false);
+        expect(boundary.independentlyAdmittedFamilyClaims).toBe(0);
+        expect(boundary.familyT8Admitted).toBe(false);
+        expect(boundary.missingPrerequisites).toContain(
+          'R070_FAMILY_STAR_HIDDEN_STEM_T5_CLASSIFICATION_NOT_ESTABLISHED',
+        );
+        expect(boundary.missingPrerequisites).toContain(
+          'R070_FAMILY_STAR_HIDDEN_STEM_RELATIVE_ROLE_METHOD_NOT_SOURCED',
+        );
+        expect(candidate.missingPrerequisites).toContain(
+          'R070_FAMILY_STAR_HIDDEN_STEM_RELATIVE_ROLE_METHOD_NOT_SOURCED',
+        );
+        expect(report.missingPrerequisites).toContain(
+          'R070_FAMILY_STAR_HIDDEN_STEM_RELATIVE_ROLE_METHOD_NOT_SOURCED',
+        );
+      }
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.researchOnly).toBe(true);
+      expect(report.mayGrantOfficialAuthority).toBe(false);
+      expect(report.mayMarkMenuAvailable).toBe(false);
+      expect(report.mayPersist).toBe(false);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+  });
+
+  it('does not fill unknown-hour family-star evidence using raw hidden stems', () => {
+    const snapshot = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    for (const scope of ['parents', 'children'] as const) {
+      const report = evaluateFamilySourceScopeV1(snapshot, scope);
+      const surfaceNames = scope === 'parents'
+        ? ['父以偏財論', '母以印綬論']
+        : ['子嗣者即官星也', '我生者為子'];
+      for (const sourceSurface of surfaceNames) {
+        const candidate = familyCandidate(report, sourceSurface);
+        const boundary = candidate.relativeStarHiddenStemBoundary;
+        const visible = candidate.tenGodObservation;
+        if (boundary === undefined || visible === undefined) {
+          throw new Error('Unknown hour must preserve source-bound incomplete observations.');
+        }
+        expect(boundary.hiddenStemMembershipCoverage).toBe('PARTIAL_MEMBERSHIP');
+        expect(boundary.unresolvedHiddenStemMembershipFactPaths)
+          .toContain('derivedFacts.hiddenStems.hour');
+        const hour = boundary.pillarObservations.find(item => item.pillarSlot === 'hour');
+        if (hour === undefined) throw new Error('Hour slot missing.');
+        expect(hour.status).toBe('unavailable');
+        expect(hour.rawMembershipPositions).toEqual([]);
+        expect(hour.visibleT5Positions).toEqual([]);
+        expect(hour.unresolvedVisibleT5FactPaths).toEqual([
+          'derivedFacts.tenGods.hour.stem',
+          'derivedFacts.tenGods.hour.branch',
+        ]);
+        expect(boundary.visibleT5ObservationStatus).toBe('incomplete_input');
+        expect(boundary.missingPrerequisites).toContain(
+          'CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE',
+        );
+        expect(boundary.missingPrerequisites).toContain(
+          'TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED',
+        );
+        expect(boundary.hiddenStemTenGodClassificationAuthorized).toBe(false);
+        expect(boundary.historicalRelativeRoleAuthorized).toBe(false);
+      }
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.mayPublish).toBe(false);
+    }
+  });
+
+  it('keeps original family-star source scope even when hiddenStems is omitted', () => {
+    const original = chart({ year: 1990, day: 15, sex: 'female' });
+    const derivedFacts = { ...original.derivedFacts };
+    delete derivedFacts.hiddenStems;
+    const report = evaluateFamilySourceScopeV1({ ...original, derivedFacts }, 'children');
+    for (const sourceSurface of ['子嗣者即官星也', '我生者為子']) {
+      const candidate = familyCandidate(report, sourceSurface);
+      const boundary = candidate.relativeStarHiddenStemBoundary;
+      if (boundary === undefined) throw new Error('Boundary must retain missing evidence.');
+      expect(boundary.hiddenStemMembershipCoverage).toBe('MEMBERSHIP_FACTS_NOT_PROVIDED');
+      expect(boundary.unresolvedHiddenStemMembershipFactPaths).toEqual([
+        'derivedFacts.hiddenStems.year',
+        'derivedFacts.hiddenStems.month',
+        'derivedFacts.hiddenStems.day',
+        'derivedFacts.hiddenStems.hour',
+      ]);
+      expect(boundary.pillarObservations.every(item =>
+        item.status === 'not_provided' &&
+        item.rawMembershipPositions.length === 0 &&
+        item.hiddenStemT5ClassificationAuthorized === false)).toBe(true);
+      expect(boundary.missingPrerequisites).toContain(
+        'CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE',
+      );
+      expect(candidate.tenGodObservation?.sourceFactPath).toBe('derivedFacts.tenGods');
+      const expectedMissingPaths = [
+        'derivedFacts.hiddenStems.year',
+        'derivedFacts.hiddenStems.month',
+        'derivedFacts.hiddenStems.day',
+        'derivedFacts.hiddenStems.hour',
+      ];
+      const gaps = report.menuSupportHandoff.unresolvedCanonicalInputs;
+      for (const path of expectedMissingPaths) {
+        const gap = gaps.find(item => item.factPath === path);
+        expect(gap?.canonicalInputKind).toBe('hidden_stem_membership');
+        expect(gap?.affectedOriginalSources.map(item => item.sourceSurface))
+          .toEqual(['子嗣者即官星也', '我生者為子']);
+        expect(gap?.substituteAnotherPillarAuthorized).toBe(false);
+        expect(gap?.familyMeaningAuthorized).toBe(false);
+      }
+      expect(gaps.filter(item =>
+        item.canonicalInputKind === 'hidden_stem_membership')).toHaveLength(4);
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+  });
+
+  it('records literal parent and child T5 occurrences with paths, without turning them into family outcomes', () => {
+    const maleSnapshot = chart({ sex: 'male' });
+    const femaleSnapshot = chart({ sex: 'female' });
+    const maleParents = evaluateFamilySourceScopeV1(maleSnapshot, 'parents');
+    const femaleChildren = evaluateFamilySourceScopeV1(femaleSnapshot, 'children');
+
+    const cases = [
+      {
+        snapshot: maleSnapshot,
+        report: maleParents,
+        surface: '父以偏財論',
+        group: '편재',
+        values: ['편재'],
+      },
+      {
+        snapshot: maleSnapshot,
+        report: maleParents,
+        surface: '母以印綬論',
+        group: '인성 계열',
+        values: ['편인', '정인'],
+      },
+      {
+        snapshot: femaleSnapshot,
+        report: femaleChildren,
+        surface: '子嗣者即官星也',
+        group: '관성 계열',
+        values: ['편관', '정관'],
+      },
+      {
+        snapshot: femaleSnapshot,
+        report: femaleChildren,
+        surface: '我生者為子',
+        group: '식상 계열',
+        values: ['식신', '상관'],
+      },
+    ] as const;
+    for (const candidate of cases) {
+      const source = familyCandidate(candidate.report, candidate.surface);
+      const t5 = source.tenGodObservation;
+      expect(source.disposition).toBe('INCONCLUSIVE');
+      expect(t5?.sourceSurface).toBe(candidate.surface);
+      expect(t5?.sourceFactPath).toBe('derivedFacts.tenGods');
+      expect(t5?.observedGroup).toBe(candidate.group);
+      expect(t5?.coverage).toBe('visible_stems_and_representative_branch_only');
+      expect(t5?.historicalRelativeRoleAuthorized).toBe(false);
+      expect(t5?.observedPositions.every(position =>
+        candidate.values.some(value => value === position.value))).toBe(true);
+      const chartTenGods = candidate.snapshot.derivedFacts.tenGods;
+      for (const observed of t5?.observedPositions ?? []) {
+        expect(observed.path).toBe(
+          'derivedFacts.tenGods.' + observed.slot + '.' + observed.channel,
+        );
+        if (chartTenGods.status !== 'resolved') throw new TypeError('T5 observation without T5');
+        const direct = chartTenGods.value[observed.slot][observed.channel];
+        expect(direct?.status).toBe('resolved');
+        if (direct?.status === 'resolved') expect(observed.value).toBe(direct.value);
+      }
+      expect(source.missingPrerequisites).toContain('HIDDEN_VS_VISIBLE_STAR_HANDLING');
+      expect(source.missingPrerequisites)
+        .toContain('SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED');
+      expect(candidate.report.familyT8Admitted).toBe(false);
+    }
+    expect(
+      familyCandidate(maleParents, '父以偏財論').tenGodObservation?.sourceSurface,
+    ).not.toEqual(
+      familyCandidate(femaleChildren, '我生者為子').tenGodObservation?.sourceSurface,
+    );
+  });
+
+  it('preserves incomplete T5 source positions on unknown birth hour without inferring absent relatives', () => {
+    const snapshot = chart({ sex: 'female', timeKnown: false });
+    const report = evaluateFamilySourceScopeV1(snapshot, 'children');
+    const relation = familyCandidate(report, '我生者為子');
+    const observation = relation.tenGodObservation;
+    expect(observation).toBeDefined();
+    expect(relation.disposition).toBe('INCONCLUSIVE');
+    expect(observation?.status).toBe('incomplete_input');
+    expect(observation?.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+    expect(observation?.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.branch');
+    expect(relation.missingPrerequisites).toContain('TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED');
+    expect(observation?.historicalRelativeRoleAuthorized).toBe(false);
+    expect(report.familyT8Admitted).toBe(false);
+  });
+
+  it('does not promote a child interpretation when birth hour is unknown', () => {
+    const snapshot = chart({ year: 1993, timeKnown: false });
+    const child = evaluateFamilySourceScopeV1(snapshot, 'children');
+    const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    expect(familyCandidate(child, '時為子息').disposition).toBe('INCONCLUSIVE');
+    expect(familyCandidate(child, '時為子息').observedPillar).toBeUndefined();
+    expect(familyCandidate(child, '時為子息').missingPrerequisites)
+      .toContain('CANONICAL_HOUR_PILLAR_UNRESOLVED');
+    expect(familyCandidate(parent, '月為父母兄弟門戶').disposition)
+      .toBe('APPLICABLE_BOUNDED');
+    expect(child.familyT8Admitted).toBe(false);
+    expect(() => evaluateFamilySourceScopeV1(
+      snapshot, 'family' as 'parents',
+    )).toThrow('exact parents/children');
+  });
+});
+
+describe('R068/R069 pairwise source boundary on two real Canonical charts', () => {
+  it('records the actual 4+4 chart comparison without converting social or spouse corpus into T10', () => {
+    const subject = chart({ year: 1989, day: 17 });
+    const target = chart({ year: 1995, day: 23 });
+    const report = evaluatePairwiseSourceScopeV1(
+      { personRef: 'self', snapshot: subject },
+      { personRef: 'partner', snapshot: target },
+    );
+    expect(report.subject.snapshotId).toBe(subject.snapshotId);
+    expect(report.target.snapshotId).toBe(target.snapshotId);
+    expect(report.subject.calculationHash).not.toBe(report.target.calculationHash);
+    expect(report.subject.originalScenarioIds)
+      .toEqual(subject.scenarios.map(scenario => scenario.scenarioId));
+    expect(report.target.originalScenarioIds)
+      .toEqual(target.scenarios.map(scenario => scenario.scenarioId));
+    expect(report.subject.ambiguousFactPaths).toEqual(subject.completeness.ambiguousPaths);
+    expect(report.target.unavailableFactPaths).toEqual(target.completeness.unavailablePaths);
+    expect(report.factualPairObservations.map(item => item.pillarSlot))
+      .toEqual(['year', 'month', 'day', 'hour']);
+    expect(report.factualPairObservations.every(item =>
+      item.status === 'both_resolved' && item.pairwiseMeaningAuthorized === false))
+      .toBe(true);
+    expect(report.factualPairObservations.some(item =>
+      item.exactPillarIdentity === 'different')).toBe(true);
+    expect(report.factualPairObservations[2]?.subjectFactPath).toBe('subject.pillars.day');
+    expect(report.factualPairObservations[2]?.targetFactPath).toBe('target.pillars.day');
+    expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R068')
+      .map(item => item.sourceSurface)).toEqual(R068_DIRECT_CLAIMS.map(item => item.sourceSurface));
+    expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R069')
+      .map(item => item.sourceSurface)).toEqual(R069_DIRECT_CLAIMS.map(item => item.sourceSurface));
+    expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R068')
+      .map(item => item.originalClaimId)).toEqual(R068_DIRECT_CLAIMS.map(item => item.id));
+    expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R069')
+      .map(item => item.originalClaimId)).toEqual(R069_DIRECT_CLAIMS.map(item => item.id));
+    const social = report.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'SOCIAL-FRIENDLINESS-SANHE-LIUHE');
+    const context = report.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'COMBINATION-CONTEXT-VARIANCE');
+    const spouse = report.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'FEMALE-CONTROLS-ME-HUSBAND');
+    expect(social?.missingPrerequisites).toContain('ROMANCE_TRANSFER_EVIDENCE');
+    expect(social?.missingPrerequisites).toContain('SOCIAL_VS_KIN_SCOPE');
+    expect(context?.missingPrerequisites).toContain('CONTEXT_EFFECT_SETTLEMENT');
+    expect(context?.missingPrerequisites).toContain('MULTI_RELATION_CONFLICT');
+    expect(spouse?.historicalSexScope).toBe('FEMALE_CHART');
+    expect(spouse?.missingPrerequisites).toContain('PAIRWISE_COMPATIBILITY_BRIDGE');
+    expect(spouse?.disposition).toBe('REJECTED');
+    expect(report.comparedSourceSurfaces.every(item => !item.eligiblePairwiseClaim)).toBe(true);
+    expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R068')
+      .every(item => item.disposition === 'NARROW_OR_REPLACE')).toBe(true);
+    expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R069')
+      .every(item => item.disposition === 'REJECTED')).toBe(true);
+    expect(report.missingPrerequisites).toContain('ROMANCE_TRANSFER_EVIDENCE');
+    expect(report.missingPrerequisites)
+      .toContain('EXACT_CROSS_CHART_T10_RULE_WITH_DIRECT_PAIRWISE_SOURCE_NOT_ESTABLISHED');
+    expect(report.pairwiseT10Admitted).toBe(false);
+    expect(report.pairwiseDisposition).toBe('INCONCLUSIVE');
+    expect(report.researchOnly).toBe(true);
+    expect(report.mayGrantOfficialAuthority).toBe(false);
+    expect(report.mayMarkMenuAvailable).toBe(false);
+    expect(report.mayPersist).toBe(false);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+    expect(evaluatePairwiseSourceScopeV1(
+      { personRef: 'self', snapshot: subject },
+      { personRef: 'partner', snapshot: target },
+    )).toEqual(report);
+  });
+
+  it('keeps R068 六合/三合 structural candidates within each natal chart, not between people', () => {
+    const subject = chart({ year: 1985, day: 18 });
+    const target = chart({ year: 2001, day: 22 });
+    const handoff = evaluatePairwiseSourceScopeV1(
+      { personRef: 'self', snapshot: subject },
+      { personRef: 'other', snapshot: target },
+    );
+    const social = handoff.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'SOCIAL-FRIENDLINESS-SANHE-LIUHE');
+    const conditional = handoff.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'COMBINATION-CONTEXT-VARIANCE');
+    const kin = handoff.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'KIN-FRIEND-BOND-HARM-CONFIGURATION');
+    expect(kin?.singleChartCombinationObservations).toBeUndefined();
+    expect(social?.singleChartCombinationObservations).toEqual(
+      conditional?.singleChartCombinationObservations,
+    );
+    const observations = social?.singleChartCombinationObservations;
+    expect(observations?.map(item => item.personRole)).toEqual(['subject', 'target']);
+    for (const [index, original] of [subject, target].entries()) {
+      const observation = observations?.[index];
+      const fact = original.derivedFacts.structuralRelations;
+      expect(observation?.sourceFactPath).toBe('derivedFacts.structuralRelations');
+      expect(observation?.calculationState).toBe(fact?.status === 'resolved'
+        ? 'resolved' : 'incomplete');
+      const expected = fact?.status === 'resolved'
+        ? fact.value.filter(item =>
+          item.kind === 'branch_six_combination' ||
+          item.kind === 'branch_three_combination',
+        ).map(item => ({
+          relationId: item.relationId, kind: item.kind, sourceIds: item.sourceIds,
+        }))
+        : [];
+      expect(observation?.observedCombinationCandidates).toEqual(expected);
+      expect(observation?.pairwiseMeaningAuthorized).toBe(false);
+      expect(observation?.socialOutcomeAuthorized).toBe(false);
+    }
+    expect(handoff.pairwiseT10Admitted).toBe(false);
+    expect(social?.eligiblePairwiseClaim).toBe(false);
+  });
+
+  it('tracks the literal R068 傷官/七煞 natal terms while holding missing 羊刃 and kinship context', () => {
+    const first = chart({ year: 1987, day: 13 });
+    const second = chart({ year: 1992, day: 26 });
+    const report = evaluatePairwiseSourceScopeV1(
+      { personRef: 'source', snapshot: first },
+      { personRef: 'target', snapshot: second },
+    );
+    const clause = report.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'KIN-FRIEND-BOND-HARM-CONFIGURATION');
+    expect(clause?.sourceSurface).toBe('羊刃逢傷官七煞，骨肉親友傷情');
+    expect(clause?.eligiblePairwiseClaim).toBe(false);
+    expect(clause?.singleChartCombinationObservations).toBeUndefined();
+    const observations = clause?.singleChartKinConditionObservations;
+    expect(observations?.map(item => item.personRole)).toEqual(['subject', 'target']);
+    for (const [index, snapshot] of [first, second].entries()) {
+      const observation = observations?.[index];
+      expect(observation?.sourceFactPath).toBe('derivedFacts.tenGods');
+      expect(observation?.terms.map(term => term.exactHistoricalTerm))
+        .toEqual(['傷官', '七煞']);
+      expect(observation?.terms.map(term => term.canonicalSearchCategory))
+        .toEqual(['상관', '편관']);
+      const canonical = snapshot.derivedFacts.tenGods;
+      for (const term of observation?.terms ?? []) {
+        expect(term.observationCoverage)
+          .toBe('visible_stems_and_representative_branch_only');
+        for (const position of term.observedPositions) {
+          expect(position.path).toBe(
+            'derivedFacts.tenGods.' + position.slot + '.' + position.channel,
+          );
+          expect(position.value).toBe(term.canonicalSearchCategory);
+          if (canonical.status !== 'resolved') throw new TypeError('Canonical T5 missing');
+          const raw = canonical.value[position.slot][position.channel];
+          expect(raw?.status).toBe('resolved');
+          if (raw?.status === 'resolved') expect(raw.value).toBe(position.value);
+        }
+      }
+      expect(observation?.yangrenInput).toBe('not_defined_by_canonical');
+      expect(observation?.conjunctionOfTermsEstablished).toBe(false);
+      expect(observation?.historicalKinFriendContextEstablished).toBe(false);
+      expect(observation?.natalKinOutcomeAuthorized).toBe(false);
+      expect(observation?.pairwiseMeaningAuthorized).toBe(false);
+      expect(observation?.missingPrerequisites)
+        .toContain('YANGREN_CANONICAL_INPUT_NOT_DEFINED');
+      expect(observation?.missingPrerequisites)
+        .toContain('R068_THREE_TERM_CONJUNCTION_METHOD_NOT_SELECTED');
+    }
+    expect(report.pairwiseT10Admitted).toBe(false);
+  });
+
+  it('preserves separate unresolved hour positions and person-swap ownership for R068 kin research', () => {
+    const known = chart({ year: 1991 });
+    const unknownTime = chart({ year: 1994, timeKnown: false });
+    const forward = evaluatePairwiseSourceScopeV1(
+      { personRef: 'complete', snapshot: known },
+      { personRef: 'unknown', snapshot: unknownTime },
+    );
+    const reverse = evaluatePairwiseSourceScopeV1(
+      { personRef: 'unknown', snapshot: unknownTime },
+      { personRef: 'complete', snapshot: known },
+    );
+    const getKin = (report: typeof forward) =>
+      report.comparedSourceSurfaces.find(item =>
+        item.originalClaimId === 'KIN-FRIEND-BOND-HARM-CONFIGURATION'
+      )?.singleChartKinConditionObservations;
+    const terms = getKin(forward)?.[1]?.terms;
+    expect(terms).toBeDefined();
+    for (const term of terms ?? []) {
+      expect(term.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+      expect(term.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.branch');
+    }
+    expect(getKin(forward)?.[0]).toEqual({
+      ...getKin(reverse)?.[1], personRole: 'subject',
+    });
+    expect(getKin(forward)?.[1]).toEqual({
+      ...getKin(reverse)?.[0], personRole: 'target',
+    });
+    expect(getKin(forward)?.[1]?.missingPrerequisites)
+      .toContain('R068_TEN_GOD_OBSERVATIONS_PARTIAL');
+    expect(forward.pairwiseT10Admitted).toBe(false);
+    expect(reverse.pairwiseT10Admitted).toBe(false);
+  });
+
+  it('keeps R069 historical spouse input scope distinct for each person without ever granting pairwise authority', () => {
+    const male = chart({ year: 1988, sex: 'male' });
+    const female = chart({ year: 1996, sex: 'female' });
+    const report = evaluatePairwiseSourceScopeV1(
+      { personRef: 'man', snapshot: male },
+      { personRef: 'woman', snapshot: female },
+    );
+    const source = (id: string) => {
+      const item = report.comparedSourceSurfaces.find(value =>
+        value.corpusId === 'R069' && value.originalClaimId === id,
+      );
+      if (!item?.oneChartScopeObservations) {
+        throw new TypeError('R069 clause missing separated natal input observations: ' + id);
+      }
+      return item.oneChartScopeObservations;
+    };
+
+    const day = source('MALE-DAY-SELF-WIFE');
+    expect(day[0].personRole).toBe('subject');
+    expect(day[1].personRole).toBe('target');
+    expect(day[0].historicalScopeMatch).toBe('matched');
+    expect(day[0].disposition).toBe('BOUNDED_FACT_OBSERVED');
+    expect(day[0].observedFactPaths).toEqual(['pillars.day']);
+    expect(day[0].observedDayPillar).toBe(
+      male.pillars.day.status === 'resolved'
+        ? male.pillars.day.value.stem.value + male.pillars.day.value.branch.value
+        : undefined,
+    );
+    expect(day[1].historicalScopeMatch).toBe('mismatched');
+    expect(day[1].disposition).toBe('NARROW_OR_REPLACE');
+    expect(day[1].observedFactPaths).toEqual([]);
+    expect(day[1].observedDayPillar).toBeUndefined();
+
+    const wealth = source('MALE-I-CONTROL-WIFE');
+    expect(wealth[0].historicalScopeMatch).toBe('matched');
+    expect(wealth[1].historicalScopeMatch).toBe('mismatched');
+    expect(wealth[0].observedTenGodPositions.every(position =>
+      ['편재', '정재'].includes(position.value))).toBe(true);
+    expect(wealth[0].observedFactPaths).toEqual(
+      wealth[0].observedTenGodPositions.map(position => position.path),
+    );
+    const officials = source('FEMALE-CONTROLS-ME-HUSBAND');
+    expect(officials[0].historicalScopeMatch).toBe('mismatched');
+    expect(officials[1].historicalScopeMatch).toBe('matched');
+    expect(officials[1].observedTenGodPositions.every(position =>
+      ['편관', '정관'].includes(position.value))).toBe(true);
+    const configuration = source('DAY-WEALTH-CONFIGURATION-WIFE-CLAIMS');
+    expect(configuration[0].disposition).toBe('INCONCLUSIVE');
+    expect(configuration[0].missingPrerequisites)
+      .toContain('R069_CONFIGURATION_METHOD_NOT_ESTABLISHED');
+    expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R069')
+      .every(item => item.eligiblePairwiseClaim === false &&
+        item.oneChartScopeObservations?.every(one =>
+          one.oneChartSpouseMeaningAuthorized === false &&
+          one.pairwiseMeaningAuthorized === false))).toBe(true);
+
+    const swapped = evaluatePairwiseSourceScopeV1(
+      { personRef: 'woman', snapshot: female },
+      { personRef: 'man', snapshot: male },
+    );
+    const swappedMale = swapped.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'MALE-DAY-SELF-WIFE')?.oneChartScopeObservations;
+    expect(swappedMale?.[0].historicalScopeMatch).toBe('mismatched');
+    expect(swappedMale?.[1].historicalScopeMatch).toBe('matched');
+    expect(swapped.pairwiseT10Admitted).toBe(false);
+  });
+
+  it('keeps unspecified historical sex and unknown star positions as nonadmitted R069 research', () => {
+    const unspecified = chart({ sex: 'unspecified' });
+    const malePartial = chart({ sex: 'male', timeKnown: false });
+    const report = evaluatePairwiseSourceScopeV1(
+      { personRef: 'unmarked', snapshot: unspecified },
+      { personRef: 'unknown-time', snapshot: malePartial },
+    );
+    const claim = report.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'MALE-I-CONTROL-WIFE');
+    expect(claim?.oneChartScopeObservations?.[0].historicalScopeMatch).toBe('unspecified');
+    expect(claim?.oneChartScopeObservations?.[0].disposition).toBe('NARROW_OR_REPLACE');
+    const partial = claim?.oneChartScopeObservations?.[1];
+    expect(partial?.historicalScopeMatch).toBe('matched');
+    expect(partial?.disposition).toBe('INCONCLUSIVE');
+    expect(partial?.missingPrerequisites).toContain('R069_TEN_GOD_INPUT_PARTIAL');
+    expect(partial?.oneChartSpouseMeaningAuthorized).toBe(false);
+    expect(report.pairwiseT10Admitted).toBe(false);
+  });
+
+  it('keeps a missing target birth hour and identical charts as facts, not an affinity score', () => {
+    const subject = chart({ year: 1990 });
+    const target = chart({ year: 1990, timeKnown: false });
+    const report = evaluatePairwiseSourceScopeV1(
+      { personRef: 'self', snapshot: subject },
+      { personRef: 'other', snapshot: target },
+    );
+    expect(report.target.birthTimeKnown).toBe(false);
+    expect(report.subject.originalScenarioIds)
+      .toEqual(subject.scenarios.map(scenario => scenario.scenarioId));
+    expect(report.target.originalScenarioIds)
+      .toEqual(target.scenarios.map(scenario => scenario.scenarioId));
+    expect(report.target.ambiguousFactPaths).toEqual(target.completeness.ambiguousPaths);
+    expect(report.target.unavailableFactPaths).toEqual(target.completeness.unavailablePaths);
+    expect(report.factualPairObservations[3]?.status).toBe('incomplete');
+    expect(report.factualPairObservations[3]?.exactPillarIdentity).toBeUndefined();
+    expect(report.missingPrerequisites).toContain('TARGET_HOUR_INPUT_UNRESOLVED');
+    expect(report.pairwiseT10Admitted).toBe(false);
+
+    const same = evaluatePairwiseSourceScopeV1(
+      { personRef: 'self', snapshot: subject },
+      { personRef: 'different-person', snapshot: subject },
+    );
+    expect(same.subject.calculationHash).toBe(same.target.calculationHash);
+    expect(same.factualPairObservations.every(item =>
+      item.status === 'both_resolved' && item.exactPillarIdentity === 'same')).toBe(true);
+    expect(same.pairwiseT10Admitted).toBe(false);
+  });
+
+  it('swaps observed facts but never authorizes directional or symmetric interpersonal meaning', () => {
+    const first = chart({ year: 1985, day: 18 });
+    const second = chart({ year: 2001, day: 22 });
+    const forward = evaluatePairwiseSourceScopeV1(
+      { personRef: 'person-one', snapshot: first },
+      { personRef: 'person-two', snapshot: second },
+    );
+    const backward = evaluatePairwiseSourceScopeV1(
+      { personRef: 'person-two', snapshot: second },
+      { personRef: 'person-one', snapshot: first },
+    );
+    expect(forward.factualPairObservations.map(item => item.exactPillarIdentity))
+      .toEqual(backward.factualPairObservations.map(item => item.exactPillarIdentity));
+    for (let i = 0; i < forward.factualPairObservations.length; i++) {
+      expect(forward.factualPairObservations[i]?.subjectPillar)
+        .toEqual(backward.factualPairObservations[i]?.targetPillar);
+      expect(forward.factualPairObservations[i]?.targetPillar)
+        .toEqual(backward.factualPairObservations[i]?.subjectPillar);
+    }
+    expect(forward.subject.originalScenarioIds).toEqual(backward.target.originalScenarioIds);
+    expect(forward.target.originalScenarioIds).toEqual(backward.subject.originalScenarioIds);
+    expect(forward.subject.ambiguousFactPaths).toEqual(backward.target.ambiguousFactPaths);
+    expect(forward.pairwiseT10Admitted).toBe(false);
+    expect(backward.pairwiseT10Admitted).toBe(false);
+    expect(forward.comparedSourceSurfaces.every(x => x.eligiblePairwiseClaim === false))
+      .toBe(true);
+  });
+
+  it('rejects self pairing and non-comparable policy without issuing a T10 conclusion', () => {
+    const subject = chart();
+    expect(() => evaluatePairwiseSourceScopeV1(
+      { personRef: 'same', snapshot: subject },
+      { personRef: 'same', snapshot: subject },
+    )).toThrow('two different');
+    expect(() => evaluatePairwiseSourceScopeV1(
+      { personRef: 'self', snapshot: subject },
+      { personRef: 'other', snapshot: {
+        ...chart({ year: 2000 }),
+        policy: { ...subject.policy, policyVersion: 'incompatible-research-policy' },
+      } },
+    )).toThrow('comparable governed');
+  });
+});

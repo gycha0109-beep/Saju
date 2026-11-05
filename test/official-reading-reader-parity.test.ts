@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { deterministicContentHash } from '../src/interpretation/rule-registry.js';
 import type { InterpretationClaim } from '../src/contracts/interpretation.js';
 import {
   GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
@@ -7,6 +8,7 @@ import {
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
+import { buildOfficialReadingSemanticSourceHandoff } from '../src/reading/official-reading-semantic-source-handoff.js';
 import {
   assertOfficialReadingReaderParityReceiptV1,
   assertOfficialReadingReaderSemanticParityV1,
@@ -134,8 +136,89 @@ function response(): ProductReadingResponse {
 function reportFor(summary = '실행과 준비가 서로 견제합니다.') {
   const bundle = semantics(summary);
   const plan = buildOfficialReadingPlanV1(bundle);
-  return { bundle, report: renderOfficialReadingV1(bundle, plan) };
+  return { bundle, plan, report: renderOfficialReadingV1(bundle, plan) };
 }
+
+describe('one Official meaning source for post-purchase summary and Records', () => {
+  it('binds both consumers to the same report, plan, claim sources and qualifiers without granting access', () => {
+    const { bundle, plan, report } = reportFor();
+    const handoff = buildOfficialReadingSemanticSourceHandoff(bundle, plan, report);
+    expect(handoff.officialReportId).toBe(report.reportId);
+    expect(handoff.officialReportHash).toBe(report.reportHash);
+    expect(handoff.officialPlanHash).toBe(plan.planHash);
+    expect(handoff.semanticHash).toBe(bundle.semanticHash);
+    expect(handoff.snapshotId).toBe(bundle.snapshotId);
+    expect(handoff.postPurchaseSummary.referenceReportHash)
+      .toBe(handoff.longFormRecord.referenceReportHash);
+    expect(handoff.postPurchaseSummary.referenceReportId)
+      .toBe(handoff.longFormRecord.referenceReportId);
+    const first = handoff.units.find(item =>
+      item.claimId === 'claim-general-tension');
+    expect(first).toBeDefined();
+    expect(first?.methodology.id).toBe('method-1');
+    expect(first?.sourceRefs).toContain('source-1');
+    expect(first?.upstreamClaimRefs).toContain('claim-general-support');
+    expect(handoff.postPurchaseSummary.eligiblePrimaryUnitRefs)
+      .toContain(first?.unitId);
+    expect(handoff.longFormRecord.referencedUnitRefs)
+      .toContain(first?.unitId);
+    expect(handoff.constraints).toEqual({
+      internalReferenceOnly: true,
+      mayGrantReaderAccess: false,
+      mayGrantRecordStorage: false,
+      mayGrantPublication: false,
+      mayGrantCommerce: false,
+      mayGenerateNewMeaning: false,
+    });
+    expect(handoff.postPurchaseSummary.mayGenerateNewMeaning).toBe(false);
+    expect(handoff.longFormRecord.mayGenerateNewMeaning).toBe(false);
+    expect(buildOfficialReadingSemanticSourceHandoff(bundle, plan, report)).toEqual(handoff);
+  });
+
+  it('rejects a changed rendered Korean phrase even when its report ID was copied intact', () => {
+    const { bundle, plan, report } = reportFor();
+    expect(report.sections.length).toBeGreaterThan(0);
+    const forged = {
+      ...report,
+      sections: report.sections.map((section, i) =>
+        i === 0 ? { ...section, title: '승인 없이 끼워 넣은 사주 단정' } : section),
+    };
+    expect(() => buildOfficialReadingSemanticSourceHandoff(
+      bundle, plan, forged,
+    )).toThrow('altered semantic/report identity');
+  });
+
+  it('rejects a different semantic source and its plan even if the rendered format is valid', () => {
+    const first = reportFor('같은 명식의 실제 원국 결론 A');
+    const second = reportFor('서로 다른 연구 의미 B');
+    expect(first.bundle.semanticHash).not.toBe(second.bundle.semanticHash);
+    expect(() => buildOfficialReadingSemanticSourceHandoff(
+      first.bundle, first.plan, second.report,
+    )).toThrow('mismatched or altered');
+    expect(() => buildOfficialReadingSemanticSourceHandoff(
+      second.bundle, first.plan, first.report,
+    )).toThrow();
+  });
+
+  it('requires actual Official renderer explainability refs for the selected primary units', () => {
+    const { bundle, plan, report } = reportFor();
+    const altered = {
+      ...report,
+      explainability: { entries: [] },
+    };
+    const actualHash = deterministicContentHash(Object.fromEntries(
+      Object.entries(altered).filter(([key]) => key !== 'reportId' && key !== 'reportHash'),
+    ));
+    const forged = {
+      ...altered,
+      reportHash: actualHash,
+      reportId: 'official_reading_report_' + actualHash.slice(0, 24),
+    };
+    expect(() => buildOfficialReadingSemanticSourceHandoff(
+      bundle, plan, forged,
+    )).toThrow('missing rendered primary explainability');
+  });
+});
 
 describe('Official Reading ↔ Reader semantic parity', () => {
   it('builds Reader grounding only from the same canonical semantic hash as the Official report', () => {

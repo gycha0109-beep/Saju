@@ -316,6 +316,24 @@ describe('Product Reading Consumer Transport Response', () => {
     });
   });
 
+  it('projects the bounded Korean explanation into partial coverage without exposing internal identifiers', () => {
+    const response = buildProductReadingResponse(delivered({
+      state: 'insufficient_evidence',
+      messageCode: 'READING_EVIDENCE_INSUFFICIENT',
+      requiredAction: 'none',
+      artifact: null,
+      coverage: {
+        state: 'insufficient',
+        hasAvailableEvidence: false,
+        missingRequirementCount: 1,
+        explanation: '명식의 여러 특징을 종합할 해석 근거가 부족합니다.',
+      },
+    }));
+    expect(response.coverage?.explanation).toContain('종합할 해석 근거');
+    expect(response.reading).toBeUndefined();
+    expect(JSON.stringify(response)).not.toContain('NATAL_GENERAL_SYNTHESIS_CLAIM_REQUIRED');
+  });
+
   it('keeps response identity stable when internal audit identifiers change', () => {
     const first = buildProductReadingResponse(delivered());
     const second = buildProductReadingResponse(

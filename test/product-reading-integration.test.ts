@@ -10,6 +10,9 @@ import {
   type InterpretationClaim,
   type InterpretationExecutionResult,
 } from '../src/index.js';
+import { executeProductReading } from '../src/reading/governed-reading-execution.js';
+import { buildProductReadingDelivery } from '../src/reading/product-reading-delivery.js';
+import { buildProductReadingResponse } from '../src/reading/product-reading-response.js';
 
 const FIXED_READING_REFERENCE = '2026-09-03T12:00:00.000Z';
 
@@ -292,6 +295,78 @@ describe('Product Reading Integration Boundary', () => {
     expect(result.normalization.request?.question).toBe('지금 이직을 고민해도 될까');
     expect(result.normalization.request?.outputPreferences?.preferredDetail).toBe('concise');
     expect(result).not.toHaveProperty('narrativeRequest');
+  });
+
+  it('rejects corrupt or failed interpretation before consumer evidence or Official Reading delivery', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const career = claim(currentSnapshot.snapshotId, {
+      id: 'actual-birth-career-evidence',
+      tier: 'T8',
+      category: 'career',
+    });
+    const valid = executionWithClaims(currentSnapshot, registry, [career]);
+    const request = { requestId: 'failed-run-2024-03-10', text: '직업운' } as const;
+    expect(prepareProductReading(currentSnapshot, valid, registry, request).state)
+      .toBe('ready_for_execution');
+
+    const invalidRuns: readonly InterpretationExecutionResult[] = [
+      { ...valid, integrity: { valid: false, errors: ['graph-integrity-failed'] } },
+      { ...valid, run: { ...valid.run, status: 'failed' } },
+      { ...valid, run: {
+        ...valid.run,
+        completeness: { ...valid.run.completeness, state: 'failed' },
+      } },
+    ];
+
+    for (const invalid of invalidRuns) {
+      const prepared = prepareProductReading(
+        currentSnapshot, invalid, registry, request,
+      );
+      expect(prepared.state).toBe('invariant_blocked');
+      expect(prepared.reasonCodes).toEqual(['INTERPRETATION_EXECUTION_INTEGRITY_BLOCKED']);
+      expect(prepared.executionEligibility.readingExecution).toBe('blocked_invariant');
+      expect(prepared.composition).toBeUndefined();
+
+      const executed = await executeProductReading(
+        currentSnapshot, invalid, registry, request,
+        { outputSchemaVersion: 'v1', readingVersion: 'integrity-gate-test-v1' },
+      );
+      expect(executed.state).toBe('invariant_blocked');
+      expect(executed.modelCalls).toBe(0);
+      expect(executed.artifact).toBeUndefined();
+      const response = buildProductReadingResponse(buildProductReadingDelivery(executed));
+      expect(response.state).toBe('temporarily_unavailable');
+      expect(response.reading).toBeUndefined();
+      expect(JSON.stringify(response)).not.toContain('graph-integrity-failed');
+      expect(JSON.stringify(response)).not.toContain('INTERPRETATION_EXECUTION_INTEGRITY_BLOCKED');
+    }
+  });
+
+  it('keeps legitimate partial interpretation eligible for independently complete domain evidence', () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const career = claim(currentSnapshot.snapshotId, {
+      id: 'partial-run-career-evidence',
+      tier: 'T8',
+      category: 'career',
+    });
+    const valid = executionWithClaims(currentSnapshot, registry, [career]);
+    const partial: InterpretationExecutionResult = {
+      ...valid,
+      run: {
+        ...valid.run,
+        status: 'partial',
+        completeness: { ...valid.run.completeness, state: 'partial' },
+      },
+    };
+    const result = prepareProductReading(
+      currentSnapshot, partial, registry,
+      { requestId: 'valid-partial-2024-03-10', text: '직업운' },
+    );
+    expect(result.state).toBe('ready_for_execution');
+    expect(result.executionEligibility.readingExecution).toBe('allowed');
+    expect(result.composition?.selection.coverageState).toBe('complete');
   });
 
   it('is deterministic for identical snapshot, interpretation, consumer input, and narrative contract versions', () => {
