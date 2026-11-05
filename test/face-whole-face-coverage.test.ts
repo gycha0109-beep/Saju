@@ -235,7 +235,7 @@ describe('source-derived whole-face execution trace', () => {
     const elevated = a.map((entry, index) =>
       index === 0 ? { ...entry, traditionalBindingIssued: true } : entry,
     );
-    expect(() => traceWholeFaceSourceGaps(FR293_PRODUCT_COLUMN_MAP, elevated, [])).toThrow(
+    expect(() => traceWholeFaceSourceGaps(FR293_PRODUCT_COLUMN_MAP, elevated as unknown as typeof FR282_RGB_SELFIE_FEATURE_ENTRIES, [])).toThrow(
       'COVERAGE_AUTHORITY_DRIFT',
     );
   });
