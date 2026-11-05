@@ -141,3 +141,41 @@ Watchtower-Track: face-observation-engine
 | `chin_lower_face.relative_projection` | `provider_neutral_rgb_relative_3d_chin_projection` | 없음 (독립 관측기 필요) |
 
 **다음 구현 검증:** 구현자는 이 부록의 원래 source 경로와 FR293의 최종 materialized 항목을 비교하여, 이미 계산 가능한 값을 재구현하지 않고 `실제 사진→가시 관측→정규 값`에서 끊기는 정확한 단계만 표시한다.
+
+## 부록 B. 딥리서치 반영 — 정규 29개별 모델·정답·채택 기준
+
+> [기술·데이터 선정 명세](whole-face-model-data-decision-20261105.md)와 함께 사용한다. **기존 계산기 있음/없음과 사진 추출 검증됨/안 됨은 별개**이며 모든 후보의 인간 정답 정확도는 아직 `not_evaluated`. 아래 모델명은 **채택 승인 아닌 비교 후보**다. 인물·촬영·가중치·전통 의미의 권한 경계를 그대로 적용한다.
+
+| 정규 featureKey | 먼저 재사용할 것 | 비교 또는 새 학습 필요한 것 | 실제 정답 입력 | 비교·가림 검증 |
+|---|---|---|---|---|
+| `forehead.visible_width_shape` | 기존 face geometry+파싱 후보 | BiSeNet↔FaceXFormer 피부/이마 보이는 경계 | 보이는 이마 mask/피부 상단·측면 | IoU·경계 오차·머리 가림/부분 보류 |
+| `forehead.visible_hairline_boundary` | 헤어라인 연구 데이터/프리뷰 | 헤어-피부 접점 후보 비교; 필요시 별도 경계기 | 수동 실제 보이는 모근 polyline/가림 구간 | Chamfer·Hausdorff·숨은 경계 허위 완성 |
+| `forehead.relative_surface_curvature` | FR295 프로토콜 | 3DDFA-V2 후보(독립 참조 전 제품 불가) | 동일 촬영/등록 독립 3D 이마 면 | 상대곡률 오차·시점/조명 안정성 |
+| `eyebrow.span_arch_tail_orientation` | FR292 정규 계산+PR2453 눈썹 span | 실제 털 상하 경계 마스크 비교 | 내/외 눈썹 끝·중심 곡선, 부분가림 | 곡선 거리·각도 MAE·좌우 역할 |
+| `eyebrow.visible_hair_density_texture` | PR2453 눈썹 class는 면적 후보만 | 전용 고해상 ROI/소형 Keras·torch 학습 필요 | 털 폭/피복/밀도 별도 라벨·화장/문신 보류 | 사람 합의·두께 MAE·density κ |
+| `eye.width_height_ratio` | FR284~293 계산·MediaPipe | 눈 윤곽 parsing 비교만 | 실제 보이는 양안 윤곽/개안 상태 | 가로세로비 MAE·눈감김 제외 |
+| `eye.inter_eye_spacing_ratio` | 기존 MediaPipe/FR284~293 | 내안각 실제 역할 검증 | 두 눈 안쪽 실제 눈구석(미간과 별개) | 정규 거리 오차·roll/yaw 민감도 |
+| `eye.outer_corner_tilt` | FR283 관측 맥락+PR2453 방향 | 실제 canthus endpoint 확인 | 양안 실제 내/외 눈구석 점 | 각도 MAE·가림/극점 오분류 |
+| `eye.bilateral_shape_asymmetry` | 기존 2D 눈 기하 | 좌우 가시 윤곽·포즈 보정 비교 | 좌우 눈 윤곽/중립 표정 | 비대칭값 오차·mirror/roll |
+| `eye.eyelid_crease_or_hooded_category` | 기존 눈 ROI·분할은 불충분 | 전용 lid/fold ROI 분할 또는 Keras·torch 분류기 필요 | fold visibility/덮임/보류 교정 라벨 | macro-F1·사람 합의·가림 보류 |
+| `nose.bridge_centerline_deviation` | 기존 FR287 중심선 계산 | 실제 코 중심선 경계 확인 | 코 축/코뿌리 visible 포인트 | 중심선 편차·pose 안정성 |
+| `nose.tip_contour_circularity` | 기존 FR287 코끝 계산 | 코끝 실제 가시 윤곽 검증 | 코끝 폐곡선/가림 라벨 | 원형도 오차·윤곽 boundary F1 |
+| `nose.alar_width_and_nostril_geometry` | FR290 계산+PR2453 nose mask 범위 | 비공/콧볼 **전용 분할·keypoints** 후보 | 콧볼/각 비공 보이는 경계·가림 | 정규 너비 MAE·비공 경계 F1 |
+| `nose.tip_bridge_relative_projection` | FR298 기하축+FR295/299 | 3DDFA-V2 상대3D 후보 | 독립 RGB↔3D 동일 촬영·등록 | 무차원 projection 오류·repeatability |
+| `mouth.width_and_relative_size` | 기존 FR285 입 비율 계산 | 실제 입외곽 mask 검증 | 중립 입 경계/입 양끝 | 정규 비율 오차·표정 |
+| `mouth.corner_orientation` | FR212/285 계산 | 양쪽 실제 입꼬리 검증 | 양쪽 입꼬리·중립 표정 | 각도 MAE·입꼬리 가림 |
+| `mouth.outline_angularity` | FR214/285 계산 | 실제 입술 윤곽 추출 개선 | 닫힌 입 외곽 경계·가림 | 경계 F1·각짐 MAE |
+| `mouth.visible_lip_fullness` | FR293 계산+PR2453 center thickness | BiSeNet lip mask 범위 vs 정밀 윤곽 후보 | 위·아래 실제 입술 내부/외부 윤곽 | 두께 MAE·중첩/교차 판정 |
+| `mouth.philtrum_length_width` | FR291 정규 계산 | 인중 기둥/골 전용 point 후보 | subnasale·입술상단·인중 기둥 | 길이/너비 NME·가림 |
+| `mouth.visible_lip_color` | 기존 정규 계산 없음; F5 비활성 | 통제 조명 색상 모델 후보만 | 색 보정 기준·조명·화장 상태 | 본 v1에서 판독 미활성/측정 불가 |
+| `ear.visible_boundary_height_shape` | PR2453 ear class는 후보 | 귀 가시성 게이트→귀 전용 parts segmenter | 각 귀 실제 귓바퀴/귓불/가림 | 귀 boundary F1·가림 오확정 |
+| `ear.thickness_attachment_canal_boundary` | 현행 RGB 권한 없음 | 직접 대체 모델 선정 불가; 연구만 | 기존 RGB로 실제 검증 정답 없음 | unavailable 유지; 추정 금지 |
+| `cheek_midface.visible_width_ratio` | FR211/286 중안면 비율 | 기존 윤곽 vs skin boundary | 볼/중안면 가시 경계 | 정규 너비 MAE·hair occlusion |
+| `cheek_midface.visible_contour_prominence` | FR217/286 보이는 윤곽 | 기존 FR217 검증+프리뷰 | 광대·볼 외곽의 실제 가시 윤곽 | 2D contour 오차·yaw |
+| `cheek_midface.relative_3d_prominence` | FR295/299 protocol | 3DDFA-V2 상대3D 후보 | 독립 3D 볼·광대 부위 참조 | 상대 돌출 오차·평면 폭 대체 금지 |
+| `chin_lower_face.visible_width_ratio` | FR213/286 하관 비율 | 기존 landmark+face contour | 하관 폭 경계·수염 가림 | 정규 너비 오차·pose |
+| `chin_lower_face.visible_contour` | FR216/286 하관 윤곽 | 파싱/랜드마크 위치 검증 | 턱 아래 가시 경계 | curve distance·수염/목 |
+| `chin_lower_face.chin_height_width_center_deviation` | FR289 정규 계산 | 턱끝 중심 정의/실제 턱 윤곽 | 턱끝 가시 구간 및 중심 역할 | 정규 길이·너비·중심오차 |
+| `chin_lower_face.relative_projection` | FR295/299 protocol | 3DDFA-V2 상대3D 후보 | 독립 3D 측면 턱끝 참조 | projection 오차·시점 반복 |
+
+**선택 우선순위:** 기존 MediaPipe/FR293 계산기와 PR #2453의 BiSeNet 후보 → 동일 사진에서 FaceXFormer(선택적) → 해당 부위 전용 관측기(학습 데이터 있을 때) → 독립 3D 참조가 있는 경우에만 3DDFA-V2 결과 검토. 모든 단계의 실패·가림은 부위별 `unavailable`로 보존한다.
