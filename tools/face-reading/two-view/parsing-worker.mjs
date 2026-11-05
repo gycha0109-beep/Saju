@@ -6,6 +6,7 @@ const qualityReady = import('./region-quality.mjs');
 const profileReady = import('./profile-metrics.mjs');
 const eyeDirectionReady = import('./eye-direction.mjs');
 const morphologyReady = import('./morphology-geometry.mjs');
+const lipClassReady = import('./visible-lip-class-profile.mjs');
 let session, localizer, FaceLandmarker, ort;
 async function localizationModel() {
   if (!localizer) {
@@ -363,6 +364,19 @@ self.onmessage = async ({ data }) => {
       earMask = screenedEar.mask;
       screened.quality.ears = screenedEar.quality;
     }
+    // Transient browser-only candidate, outside parser 0.7 summaries and saves.
+    // Require the same single-face lip contour evidence already admitted for
+    // the local model comparison; never infer lip anatomy from class names.
+    const { measureVisibleLipClassProfile } = await lipClassReady;
+    const lipClassCandidate =
+      viewRole === 'frontal' &&
+      morphology.lipBalance?.status === 'available' &&
+      screened.quality.lips?.status === 'screened'
+        ? measureVisibleLipClassProfile(display, size, {
+            imageWidth: bitmap.width,
+            imageHeight: bitmap.height,
+          })
+        : null;
     const contact = contactPixels(display, size, size),
       layers = {};
     for (const group of PARSING_GROUPS) {
@@ -381,6 +395,7 @@ self.onmessage = async ({ data }) => {
       generation,
       captureRef,
       layers,
+      lipClassCandidate,
       parsing: {
         methodVersion: PARSING_VERSION,
         candidateOnly: true,

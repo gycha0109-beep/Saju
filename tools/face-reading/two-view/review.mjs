@@ -273,6 +273,44 @@ function renderVisibleNoseMaskExperiment(record, result, previous) {
       if (records[selected]?.captureRef === record.captureRef) render();
     });
 }
+// Transient output from the current screened parser worker, never the 0.7
+// stored summary. Source classes do not prove anatomical upper/lower edges.
+function renderVisibleLipClassExperiment(record, result, previous) {
+  const node = $('lip-class-experiment');
+  if (previous) {
+    node.textContent = '과거 분할 기록에는 새 입술 클래스 관측을 적용하지 않습니다.';
+    return;
+  }
+  if (record.viewRole !== 'frontal') {
+    node.textContent = '이 후보는 정면 사진에서만 관찰합니다.';
+    return;
+  }
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    result.parsing.morphology?.lipBalance?.status !== 'available' ||
+    result.parsing.regionScreening?.regions?.lips?.status !== 'screened'
+  ) {
+    node.textContent = '같은 사진의 입술 모델 경계와 분할 클래스가 확인되지 않아 관측을 보류했습니다.';
+    return;
+  }
+  const candidate = result.lipClassCandidate;
+  if (candidate?.status === 'unavailable') {
+    node.textContent = '위·아래 입술 분할 클래스 관측 보류: ' + candidate.reason;
+    return;
+  }
+  if (candidate?.status !== 'available') {
+    node.textContent = '이 사진의 위·아래 입술 클래스 추가 분석 결과가 없습니다.';
+    return;
+  }
+  node.textContent =
+    `모델 윗입술/아랫입술 클래스 면적 비: ${candidate.upperToLowerVisibleClassAreaRatio.toFixed(3)}` +
+    ` · 전체 입 가로폭 대비 각 클래스 폭: ${candidate.upperVisibleWidthToCombinedXSpan.toFixed(3)} / ${candidate.lowerVisibleWidthToCombinedXSpan.toFixed(3)}` +
+    ` · 원본 비율 보정 높이: ${candidate.upperVisibleHeightToCombinedXSpan.toFixed(3)} / ${candidate.lowerVisibleHeightToCombinedXSpan.toFixed(3)}` +
+    ` · 클래스 중심 세로 거리: ${candidate.centreYSeparationToCombinedXSpan.toFixed(3)}` +
+    ` · 아랫입술 클래스 중심의 사진상 가로 이동: ${candidate.lowerVsUpperCentreXOffsetToCombinedXSpan.toFixed(3)}` +
+    ' — 두 분할 클래스의 평면 후보로, 실제 입술 경계·두꺼움/얇음·전통 관상 판정은 아닙니다.';
+}
 function render() {
   const record = records[selected];
   if (!record) return;
@@ -336,6 +374,7 @@ function render() {
   }
   renderVisibleBrowMaskExperiment(record, result, previous);
   renderVisibleNoseMaskExperiment(record, result, previous);
+  renderVisibleLipClassExperiment(record, result, previous);
   const quality = parsing?.regionScreening?.regions;
   const regionNames = { skin: '피부', nose: '코', lips: '입술', brows: '눈썹', ears: '귀 후보' };
   const checked = quality
