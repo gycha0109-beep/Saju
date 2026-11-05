@@ -102,3 +102,42 @@
 원본 얼굴 사진, 귀·눈썹 등의 세부 좌표, 원본 segmentation masks, 재구성 가능한 생체 자료와 모델 출력은 비공개 로컬 자료다. 공개 PR에는 코드·명세·합성 자료·안전한 집계만 기록한다. 사진을 다른 실명/사주 명식과 결합하지 않는다.
 
 Watchtower-Track: face-observation-engine
+
+
+## 부록 A. 기존 FR284 관측 입력 경로와 원래 필요 extractor
+
+아래는 **FR284가 기록했던 입력 소스/필요 extractor를 정확히 전사한 기술 탐색 목록**이다. FR285~FR293에서 정규 계산기가 추가로 구현된 항목은 이미 해결된 계산 로직이 있으므로, 이 부록의 과거 `requiredExtractor`를 *현재 미구현 상태*로 단정하지 않는다. **사진에서 실제 윤곽·좌표를 확보할 필요가 있는지**를 확인하는 출발점으로만 사용한다.
+
+| 정규 키 | FR284 초기 필요 extractor | FR284 기록 소스 경로 |
+|---|---|---|
+| `forehead.visible_width_shape` | `visible_forehead_segmentation_geometry` | `packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts` |
+| `forehead.visible_hairline_boundary` | `visible_hairline_boundary_segmentation` | `packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts` |
+| `forehead.relative_surface_curvature` | `provider_neutral_rgb_relative_3d_forehead_shape` | 없음 (독립 관측기 필요) |
+| `eyebrow.span_arch_tail_orientation` | `canonical_eyebrow_geometry_binding` | `packages/face-reading/src/cross-face-neutral-observable-primitives-fr208.ts`, `packages/face-reading/src/mediapipe-published-eyebrow-component-decomposition-fr39.ts` |
+| `eyebrow.visible_hair_density_texture` | `visible_eyebrow_hair_appearance_model` | `packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts` |
+| `eye.width_height_ratio` | `canonical_eye_pair_morphology_fr284` | `packages/face-reading/src/eye-neutral-axis-bundle-fr210.ts`, `packages/face-reading/src/eye-pair-geometric-y-span-runtime-fr178.ts` |
+| `eye.inter_eye_spacing_ratio` | `canonical_eye_pair_morphology_fr284` | `packages/face-reading/src/eye-neutral-axis-bundle-fr210.ts` |
+| `eye.outer_corner_tilt` | `canonical_eye_pair_morphology_fr284` | `packages/face-reading/src/cross-face-neutral-observable-primitives-fr208.ts`, `packages/face-reading/src/eye-neutral-axis-bundle-fr210.ts`, `packages/face-reading/src/observable-morphology-fr76-eye-chord-propagation-fr283.ts` |
+| `eye.bilateral_shape_asymmetry` | `canonical_eye_pair_morphology_fr284` | `packages/face-reading/src/eye-asymmetry-surface-fr215.ts` |
+| `eye.eyelid_crease_or_hooded_category` | `eyelid_visible_appearance_model` | `packages/face-reading/src/face-reading-observable-morphology-measurement-boundary-fr206.ts` |
+| `nose.bridge_centerline_deviation` | `canonical_nose_geometry_binding` | `packages/face-reading/src/nose-geometry.ts` |
+| `nose.tip_contour_circularity` | `canonical_nose_geometry_binding` | `packages/face-reading/src/nose-geometry.ts` |
+| `nose.alar_width_and_nostril_geometry` | `visible_alar_and_nostril_contour_geometry` | `packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts` |
+| `nose.tip_bridge_relative_projection` | `provider_neutral_rgb_relative_3d_nose_projection` | `packages/face-reading/src/nasal-apex-geometry-candidate-study-fr267.ts`, `packages/face-reading/src/nasal-apex-empirical-bundle-fr268.ts` |
+| `mouth.width_and_relative_size` | `canonical_mouth_geometry_binding` | `packages/face-reading/src/neutral-mouth-contour-metric-fr80.ts`, `packages/face-reading/src/neutral-mouth-relative-size-metric-fr82.ts` |
+| `mouth.corner_orientation` | `canonical_mouth_geometry_binding` | `packages/face-reading/src/visible-mouth-corner-orientation-fr212.ts` |
+| `mouth.outline_angularity` | `canonical_mouth_geometry_binding` | `packages/face-reading/src/role-free-mouth-outline-angularity-fr214.ts` |
+| `mouth.visible_lip_fullness` | `governed_visible_upper_lower_lip_fullness_geometry` | `packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts` |
+| `mouth.philtrum_length_width` | `canonical_visible_philtrum_geometry` | 없음 (독립 관측기 필요) |
+| `mouth.visible_lip_color` | `controlled_visible_lip_color_observation` | `packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts` |
+| `ear.visible_boundary_height_shape` | `visible_ear_admission_and_shape_model` | `packages/face-reading/src/face-reading-product-capture-view-contract-fr191.ts`, `packages/face-geometry/README.md` |
+| `ear.thickness_attachment_canal_boundary` | `none_current_rgb_selfie_authority_unavailable` | `packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts` |
+| `cheek_midface.visible_width_ratio` | `canonical_midface_geometry_binding` | `packages/face-reading/src/visible-midface-band-fr211.ts` |
+| `cheek_midface.visible_contour_prominence` | `canonical_midface_geometry_binding` | `packages/face-reading/src/visible-cheek-contour-prominence-fr217.ts` |
+| `cheek_midface.relative_3d_prominence` | `provider_neutral_rgb_relative_3d_cheek_prominence` | 없음 (독립 관측기 필요) |
+| `chin_lower_face.visible_width_ratio` | `canonical_lower_face_geometry_binding` | `packages/face-reading/src/visible-lower-face-width-fr213.ts` |
+| `chin_lower_face.visible_contour` | `canonical_lower_face_geometry_binding` | `packages/face-reading/src/canonical-visible-lower-face-contour-fr216.ts` |
+| `chin_lower_face.chin_height_width_center_deviation` | `canonical_chin_dimension_and_centering_geometry` | `packages/face-reading/src/canonical-visible-lower-face-contour-fr216.ts`, `packages/face-reading/src/central-chin-reference-trace-protocol-fr54.ts` |
+| `chin_lower_face.relative_projection` | `provider_neutral_rgb_relative_3d_chin_projection` | 없음 (독립 관측기 필요) |
+
+**다음 구현 검증:** 구현자는 이 부록의 원래 source 경로와 FR293의 최종 materialized 항목을 비교하여, 이미 계산 가능한 값을 재구현하지 않고 `실제 사진→가시 관측→정규 값`에서 끊기는 정확한 단계만 표시한다.
