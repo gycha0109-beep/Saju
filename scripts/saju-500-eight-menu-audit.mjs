@@ -293,6 +293,7 @@ export function runFiveHundredSajuAudit() {
   const wealthCrossResourceCases = [];
   const wealthCrossPeerCases = [];
   const generalT5ContextCases = [];
+  const natalT5SingleCopyChecks = {general:0,career:0,business:0,relationship:0};
   const generalTensionFirstScreenCases = [];
   const wealthIndependentLimitedCases = [];
   const wealthPartialCoreUnusedT5Cases = [];
@@ -552,6 +553,33 @@ export function runFiveHundredSajuAudit() {
           wealthMissingCases.push(
             diagnoseMissingWealthReading(snapshot, interpretation, registry, report, stamp),
           );
+        }
+      }
+      // Consumer Korean quality: the original T5 summary is already inside
+      // context.paragraph, so the source/provenance list must not repeat it.
+      // This applies to both no-T8 and partially supported General readings.
+      const sourceCopyDomains = ['general','career','business','relationship'];
+      if (sourceCopyDomains.some(domain =>
+          natalReports[domain].availableThemeContext !== undefined)) {
+        const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+        for (const domain of sourceCopyDomains) {
+          const context = natalReports[domain].availableThemeContext;
+          if (!context) continue;
+          const card = html.split('<h2 id="domain-' + domain + '">')[1]
+            ?.split('</article>')[0];
+          if (!card || !card.includes('<p>' + escapedHtmlText(context.paragraph) + '</p>') ||
+              context.themes.some(theme =>
+                !card.includes(escapedHtmlText(theme.claimId)) ||
+                !card.includes(escapedHtmlText(theme.ruleIds[0])) ||
+                !card.includes(escapedHtmlText(theme.sourceIds[0])) ||
+                !card.includes(escapedHtmlText(theme.observedFactPaths[0])) ||
+                !context.paragraph.includes(theme.summary) ||
+                card.split(escapedHtmlText(theme.summary)).length !== 2)) {
+            throw new Error(domain +
+              ' existing natal T5 meaning duplicated or lost provenance in consumer Korean: ' +
+              stamp);
+          }
+          natalT5SingleCopyChecks[domain]++;
         }
       }
       // All five reports are assembled here, so verify that an actual
@@ -1086,6 +1114,12 @@ export function runFiveHundredSajuAudit() {
         count: wealthPartialCoreUnusedT5Cases.length,
         examples: wealthPartialCoreUnusedT5Cases.slice(0, 6),
       },
+      natalT5SingleCopyConsumer: {
+        examined: COUNT,
+        ...natalT5SingleCopyChecks,
+        total: Object.values(natalT5SingleCopyChecks).reduce((sum,count)=>sum+count,0),
+        noExtraInterpretiveCopy: true,
+      },
       generalBoundedT5OnNoT8: {
         examined: generalT5ContextCases.length,
         withoutGeneralT8: generalT5ContextCases.filter(c => c.withoutGeneralT8).length,
@@ -1256,6 +1290,10 @@ export function runFiveHundredSajuAudit() {
       threeMenuT5WithoutT8 !==
         result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only ||
       DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
+      natalT5SingleCopyChecks.general !==
+        generalT5ContextCases.filter(c => c.withSourcedT5Context).length ||
+      Object.entries(otherNatalT5PartialCases).some(([domain,cases]) =>
+        natalT5SingleCopyChecks[domain] !== cases.length) ||
       result.rootCauseDiagnostics.generalBoundedT5OnNoT8.examined !== COUNT ||
       result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8 !==
         result.menuResults['전체 사주'].withoutReadableText ||
