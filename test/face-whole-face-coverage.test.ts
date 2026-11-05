@@ -271,7 +271,7 @@ describe('document-driven extension requirement trace', () => {
   it('rejects missing or reordered extension source rows and duplicate canonical keys', () => {
     expect(() => traceWholeFaceExtensionRequirements(source.replace('미간 실제 눈썹 사이 거리', 'REMOVED'), keys))
       .toThrow('COVERAGE_EXTENSION_SOURCE_DRIFT');
-    expect(() => traceWholeFaceExtensionRequirements(source, [...keys.slice(1), keys[1]]))
+    expect(() => traceWholeFaceExtensionRequirements(source, [...keys.slice(1), keys[1]!]))
       .toThrow('COVERAGE_EXTENSION_SOURCE_DRIFT');
   });
 });
