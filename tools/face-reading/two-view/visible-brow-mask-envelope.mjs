@@ -166,11 +166,21 @@ export function measureVisibleBrowMaskEnvelope(
     );
   }
 
+  // Image-side mask edges only: not the anatomical glabella or hair roots.
+  // Both gap and widths are horizontal spans in the same original-image frame;
+  // their ratio is scale-independent and never proxies eye spacing.
+  const maskGap = components[1].minX - components[0].maxX - 1;
+  const meanMaskXSpan =
+    (components[0].maxX - components[0].minX + 1 +
+      (components[1].maxX - components[1].minX + 1)) /
+    2;
+
   return Object.freeze({
     methodVersion: VISIBLE_BROW_MASK_ENVELOPE_VERSION,
     source: SOURCE,
     status: 'available',
     brows: Object.freeze(brows),
+    apparentInterBrowGapToMeanMaskXSpan: maskGap / meanMaskXSpan,
     candidateOnly: true,
     individualHairThicknessMeasured: false,
     hairDensityMeasured: false,

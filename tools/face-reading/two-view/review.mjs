@@ -166,12 +166,13 @@ function renderVisibleBrowMaskExperiment(record, result, previous) {
             `${b.imageSide === 'left' ? '사진 왼쪽' : '사진 오른쪽'}: 분할된 눈썹 면적 기반 상대 띠 두께 ${b.apparentMaskThicknessToLongSpan.toFixed(3)}`,
         )
         .join(' · ') +
-      ' — 모델 후보입니다. 실제 털 굵기·밀도, 눈썹의 해부학적 두께, 전통 관상 판정은 아닙니다.';
+      ` · 눈썹 사이 모델 분할 간격/평균 눈썹 가로폭 ${observed.apparentInterBrowGapToMeanMaskXSpan.toFixed(3)}` +
+      ' — 모델 후보입니다. 눈 사이 거리나 실제 미간 해부학적 너비, 털 굵기·밀도, 전통 관상 판정은 아닙니다.';
     return;
   }
   if (observed?.status === 'unavailable') {
     node.textContent =
-      '눈썹 띠 두께 관측 보류: 분할 영역이 끊기거나 합쳐짐·가림·경계 오류가 있습니다. (' +
+      '눈썹 띠 두께·분할 간격 관측 보류: 분할 영역이 끊기거나 합쳐짐·가림·경계 오류가 있습니다. (' +
       observed.reason +
       ')';
     return;

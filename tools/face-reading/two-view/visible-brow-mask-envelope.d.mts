@@ -21,6 +21,7 @@ export type BrowEnvelopeResult =
       source: string;
       status: 'available';
       brows: readonly BrowEnvelopeSide[];
+      apparentInterBrowGapToMeanMaskXSpan: number;
       candidateOnly: true;
       individualHairThicknessMeasured: false;
       hairDensityMeasured: false;

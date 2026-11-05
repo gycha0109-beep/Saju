@@ -39,6 +39,8 @@ describe('visible eyebrow mask envelope candidate', () => {
     expect(measured.brows.map((x) => x.imageSide)).toEqual(['left', 'right']);
     expect(measured.brows[0]?.apparentMaskThicknessToLongSpan).toBeCloseTo(0.25);
     expect(measured.brows[1]?.apparentMaskThicknessToLongSpan).toBeCloseTo(0.5);
+    // 13 mask columns between two eight-column eyebrow regions.
+    expect(measured.apparentInterBrowGapToMeanMaskXSpan).toBeCloseTo(13 / 8);
   });
 
   it('corrects original image aspect ratio before area/axis measurement', () => {
@@ -53,6 +55,38 @@ describe('visible eyebrow mask envelope candidate', () => {
     expect(stretched.brows[0]?.apparentMaskThicknessToLongSpan).toBeCloseTo(
       square.brows[0]!.apparentMaskThicknessToLongSpan / 2,
     );
+    expect(stretched.apparentInterBrowGapToMeanMaskXSpan).toBeCloseTo(
+      square.apparentInterBrowGapToMeanMaskXSpan,
+    );
+  });
+
+  it('tracks visible inner-mask gap independently from brow band thickness', () => {
+    const original = measureVisibleBrowMaskEnvelope(paired(), width, height);
+    const fartherMask = mask();
+    rectangle(fartherMask, 4, 7, 8, 2);
+    rectangle(fartherMask, 29, 6, 8, 4);
+    const farther = measureVisibleBrowMaskEnvelope(fartherMask, width, height);
+    expect(original.status).toBe('available');
+    expect(farther.status).toBe('available');
+    if (original.status !== 'available' || farther.status !== 'available') throw Error();
+    expect(farther.apparentInterBrowGapToMeanMaskXSpan).toBeCloseTo(17 / 8);
+    expect(farther.brows[0]?.apparentMaskThicknessToLongSpan).toBeCloseTo(
+      original.brows[0]!.apparentMaskThicknessToLongSpan,
+    );
+    expect(farther.brows[1]?.apparentMaskThicknessToLongSpan).toBeCloseTo(
+      original.brows[1]!.apparentMaskThicknessToLongSpan,
+    );
+  });
+
+  it('does not issue a gap candidate when paired mask regions are untrustworthy', () => {
+    const missing = measureVisibleBrowMaskEnvelope(mask(), width, height);
+    expect(missing.status).toBe('unavailable');
+    expect('apparentInterBrowGapToMeanMaskXSpan' in missing).toBe(false);
+    const overlapping = paired();
+    rectangle(overlapping, 11, 7, 15, 1);
+    const joined = measureVisibleBrowMaskEnvelope(overlapping, width, height);
+    expect(joined.status).toBe('unavailable');
+    expect('apparentInterBrowGapToMeanMaskXSpan' in joined).toBe(false);
   });
 
   it('rejects one, three, joined, clipped or degenerate brow areas rather than guessing', () => {
