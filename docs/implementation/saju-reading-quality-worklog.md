@@ -1,5 +1,12 @@
 # 사주 엔진 해석 품질 개선 워크로그
 
+## 2026-11-05 — 작업 101 CI RED 수정 · 원본 T5 동일 의미 공유와 500명 실패 원인 가시화 (단계 5·7)
+- **실패 실행:** 최종 작업 101 이전 커밋 `cc091ae`의 [CI Tests (5/16), run 41944368185](https://github.com/gycha0109-beep/Saju/actions/runs/41944368185/job/126974579020)에서 772개 중 769개 통과·3개 실패. `natal-five-domain-multifactor-reader.test.ts` 93·428·481행의 `summary` 한 번 표시 검사가 모두 '2회 출력'을 발견했다. [500명 감사 41944368241](https://github.com/gycha0109-beep/Saju/actions/runs/41944368241/job/126972783421)는 500명 실행 후 `compareFixedSaju500Baseline`에서 `failedCases !== 0` 등 동일 시드 검증 요건을 충족하지 못해 'Before/after requires identical verified 500-case sample'로 실패했다. 이 예외는 개별 실패 원인을 숨기는 두 번째 현상이었다.
+- **실제 원인:** `natal-five-domain-multifactor-reader.ts`에서 목록의 한국어 요약 중복을 제거한 것만으로는 충분하지 않았다. 여러 별도 T5 Claim(예: 천간과 지지 관측)이 **동일한 등록 한국어 `summary`**를 공유할 때 `natal-existing-t5-source-context.ts`의 `context.paragraph` 자체가 같은 의미 문장을 두 번 합성했다. 따라서 회귀 검사의 기대 횟수를 느슨하게 바꾸지 않고 본문 중복 원천을 수정한다.
+- **코드 수정:** `natal-existing-t5-source-context.ts`는 출처가 있는 모든 원본 Claim·제목·계산 위치·Rule·Methodology·Source·`themes`를 그대로 유지한다. 설명 문단 합성 시에만 동일한 정확한 `theme.summary`의 한국어 원문을 첫 사용 한 번만 노출한다(`051ef21`). 동일 출처 의미의 합리적 재사용을 새 해석으로 꾸미지 않는다. 기존 총운·직업·사업·관계 회귀에서 각 카드의 문단 1회 표시·Claim/위치/출처 보존을 계속 검사한다.
+- **실패 진단 개선:** `scripts/saju-500-eight-menu-audit.mjs`는 실측 실패 명식이 존재하면 전후 비교의 추상적인 시드 불일치보다 먼저 **실제 실패 인원과 예시·오류 문자열**을 표시하며 실패 처리하도록 수정(`f8f4114`). 고정 500명·같은 시드·비교 기준·기존 오류 차단 기준은 완화하지 않는다.
+- **남은 검증:** 두 수정 이후의 최신 커밋 CI·500명 감사 통과 전에는 RED 해결을 확정하지 않는다. PR #2745를 병합하지 않고 7단계 최종 승인도 유보한다.
+
 ## 2026-11-05 — 작업 101 · 기존 T5 한국어 설명의 불필요한 중복 제거 (단계 5·7)
 - **출발 CI 사실:** 직전 커밋 `b10f75e`의 [전체 CI 41908306245](https://github.com/gycha0109-beep/Saju/actions/runs/41908306245), [고정 500명 감사 41908306250](https://github.com/gycha0109-beep/Saju/actions/runs/41908306250), [계산 컨테이너 41908306244](https://github.com/gycha0109-beep/Saju/actions/runs/41908306244) 성공. 기존 [PIE 41908306922](https://github.com/gycha0109-beep/Saju/actions/runs/41908306922)는 취소됐지만 동일 SHA의 [대체 PIE 41908337469](https://github.com/gycha0109-beep/Saju/actions/runs/41908337469)는 성공이다.
 - **실제 출력 경로 결함:** `natal-existing-t5-source-context.ts`가 원본 연구 T5 각 `summary`를 해당 `context.paragraph`에 합성하고, `natal-five-domain-multifactor-reader.ts`는 그 문단을 노출한 뒤 각 `li`의 `<p>`에도 동일 `theme.summary`를 다시 출력했다. 이 중복은 등록된 명리 의미 차이가 아니라 동일 해석 한국어 문장 재출력이다. 기존 500명 결과에서 총운 **356건**(종합 T8 없음 22, 보조 긴장 부분 70, 부분 중심 264), 직업 22·관계 4·사업 6건에 출처 있는 T5 문맥이 있다.
