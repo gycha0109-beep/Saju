@@ -100,3 +100,29 @@ export declare function traceWholeFaceSourceGaps(
   authorityEntries: readonly SourceTraceAuthority[],
   captures: readonly CoverageCapture[],
 ): SourceTraceReport;
+
+export interface ExtensionTraceFeature {
+  readonly requirement: string;
+  readonly existingCanonicalFeatureKeys: readonly string[];
+  readonly mappingReference: string;
+  readonly initialObservationRoute: string;
+  readonly missingObservationEvidence: string;
+  readonly studyTechniqueFromSpecification: string;
+  readonly requiredIndependentEvidence: string;
+  readonly authorityState: 'extension_candidate_not_admitted';
+  readonly independentAccuracyState: 'not_evaluated';
+  readonly traditionalBindingIssued: false;
+  readonly productInterpretationAuthorized: false;
+}
+export interface ExtensionTraceReport {
+  readonly schemaVersion: 'local-whole-face-extension-trace@0.1.0';
+  readonly extensionRequirementCount: number;
+  readonly canonicalKeyCountUnchanged: number;
+  readonly sourceDocument: 'research/face-reading/whole-face-feature-mapping-20261105.md';
+  readonly allExtensionsUnapproved: true;
+  readonly features: readonly ExtensionTraceFeature[];
+}
+export declare function traceWholeFaceExtensionRequirements(
+  sourceMarkdown: string,
+  canonicalFeatureKeys: readonly string[],
+): ExtensionTraceReport;

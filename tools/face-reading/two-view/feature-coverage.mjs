@@ -240,3 +240,75 @@ export function traceWholeFaceSourceGaps(columns, authorityEntries, captures) {
     features: Object.freeze(features),
   });
 }
+
+const EXTENSION_REQUIREMENTS_HEADING = '## 3. 사용자가 요구한 세부 관상 정보와 추가 갭';
+const EXTENSION_DECISIONS_HEADING =
+  '## 부록 C. 딥리서치 반영 — 추가 세부 요구 18개의 직접 작업 선택';
+
+function readSourceMappingRows(document, heading, columns) {
+  const start = document.indexOf(heading);
+  if (start < 0 || document.indexOf(heading, start + heading.length) !== -1)
+    throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
+  const next = document.indexOf('\n## ', start + heading.length);
+  if (next < 0) throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
+  const section = document.slice(start + heading.length, next);
+  const lines = section.split('\n').filter((line) => line.startsWith('|'));
+  if (
+    lines.length !== 20 ||
+    !/^\|[\s:|-]+\|$/.test(lines[1])
+  )
+    throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
+  return lines.slice(2).map((line) => {
+    if (!line.endsWith('|')) throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
+    const cells = line.slice(1, -1).split('|').map((part) => part.trim());
+    if (cells.length !== columns || cells.some((part) => !part))
+      throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
+    return cells;
+  });
+}
+
+// Reads the two already-approved specification tables; it does not mint 18
+// extra canonical keys. No photograph, capture ID or person-derived data is read.
+export function traceWholeFaceExtensionRequirements(sourceMarkdown, canonicalFeatureKeys) {
+  if (
+    typeof sourceMarkdown !== 'string' ||
+    !Array.isArray(canonicalFeatureKeys) ||
+    canonicalFeatureKeys.length !== 29 ||
+    new Set(canonicalFeatureKeys).size !== 29
+  )
+    throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
+  const requirements = readSourceMappingRows(
+    sourceMarkdown,
+    EXTENSION_REQUIREMENTS_HEADING,
+    4,
+  );
+  const decisions = readSourceMappingRows(sourceMarkdown, EXTENSION_DECISIONS_HEADING, 3);
+  const seen = new Set();
+  const features = requirements.map(([name, related, initialRoute, gap], index) => {
+    const [decisionName, technique, independentEvidence] = decisions[index];
+    if (name !== decisionName || seen.has(name)) throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
+    seen.add(name);
+    const relatedFeatureKeys = canonicalFeatureKeys.filter((key) => related.includes(key));
+    return Object.freeze({
+      requirement: name,
+      existingCanonicalFeatureKeys: Object.freeze(relatedFeatureKeys),
+      mappingReference: related,
+      initialObservationRoute: initialRoute,
+      missingObservationEvidence: gap,
+      studyTechniqueFromSpecification: technique,
+      requiredIndependentEvidence: independentEvidence,
+      authorityState: 'extension_candidate_not_admitted',
+      independentAccuracyState: 'not_evaluated',
+      traditionalBindingIssued: false,
+      productInterpretationAuthorized: false,
+    });
+  });
+  return Object.freeze({
+    schemaVersion: 'local-whole-face-extension-trace@0.1.0',
+    extensionRequirementCount: features.length,
+    canonicalKeyCountUnchanged: canonicalFeatureKeys.length,
+    sourceDocument: 'research/face-reading/whole-face-feature-mapping-20261105.md',
+    allExtensionsUnapproved: true,
+    features: Object.freeze(features),
+  });
+}

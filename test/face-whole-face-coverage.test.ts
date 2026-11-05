@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { FR293_PRODUCT_COLUMN_MAP } from '../packages/face-reading/src/rgb-selfie-product-column-map-fr293.js';
 import { FR282_RGB_SELFIE_FEATURE_ENTRIES } from '../packages/face-reading/src/rgb-selfie-feature-authority-matrix-fr282.js';
 import {
@@ -6,6 +7,7 @@ import {
   COVERAGE_VERSION,
   traceWholeFaceSourceGaps,
   SOURCE_TRACE_VERSION,
+  traceWholeFaceExtensionRequirements,
 } from '../tools/face-reading/two-view/feature-coverage.mjs';
 import {
   METHOD_VERSION,
@@ -238,5 +240,38 @@ describe('source-derived whole-face execution trace', () => {
     expect(() => traceWholeFaceSourceGaps(FR293_PRODUCT_COLUMN_MAP, elevated as unknown as typeof FR282_RGB_SELFIE_FEATURE_ENTRIES, [])).toThrow(
       'COVERAGE_AUTHORITY_DRIFT',
     );
+  });
+});
+
+describe('document-driven extension requirement trace', () => {
+  const source = readFileSync(
+    new URL('../research/face-reading/whole-face-feature-mapping-20261105.md', import.meta.url),
+    'utf8',
+  );
+  const keys = FR293_PRODUCT_COLUMN_MAP.map((entry) => entry.featureKey);
+
+  it('cross-checks all 18 noncanonical requirements against their two source tables', () => {
+    const trace = traceWholeFaceExtensionRequirements(source, keys);
+    expect(trace.extensionRequirementCount).toBe(18);
+    expect(trace.canonicalKeyCountUnchanged).toBe(29);
+    expect(trace.allExtensionsUnapproved).toBe(true);
+    expect(trace.features.find((item) => item.requirement === '미간 실제 눈썹 사이 거리'))
+      .toMatchObject({
+        existingCanonicalFeatureKeys: [
+          'eyebrow.span_arch_tail_orientation',
+          'eye.inter_eye_spacing_ratio',
+        ],
+        traditionalBindingIssued: false,
+        independentAccuracyState: 'not_evaluated',
+      });
+    expect(trace.features.every((item) => item.productInterpretationAuthorized === false))
+      .toBe(true);
+  });
+
+  it('rejects missing or reordered extension source rows and duplicate canonical keys', () => {
+    expect(() => traceWholeFaceExtensionRequirements(source.replace('미간 실제 눈썹 사이 거리', 'REMOVED'), keys))
+      .toThrow('COVERAGE_EXTENSION_SOURCE_DRIFT');
+    expect(() => traceWholeFaceExtensionRequirements(source, [...keys.slice(1), keys[1]]))
+      .toThrow('COVERAGE_EXTENSION_SOURCE_DRIFT');
   });
 });
