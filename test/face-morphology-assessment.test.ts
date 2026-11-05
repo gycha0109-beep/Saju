@@ -336,4 +336,80 @@ describe('visible morphology measurements and item-first assessment', () => {
       validateMorphology(unavailableMorphology('PROFILE_VIEW'), { viewRole: 'frontal' }),
     ).toThrow();
   });
+
+  it('keeps five same-capture eye-plane candidates together even without a valid eye-tail reading', () => {
+    const keys = [
+      ['eye_aperture_ratio', 0.32],
+      ['eye_span_ratio', 0.2],
+      ['eye_spacing_ratio', 0.42],
+      ['eye_span_difference', 0],
+      ['eye_aperture_difference', 0],
+    ] as const;
+    const metrics = keys.map(([key, value]) => ({
+      captureRef: 'capture-01',
+      viewRole: 'frontal',
+      methodVersion: 'frontal-image-plane-model-geometry@0.1.0',
+      metricKey: 'engineering.frontal.' + key,
+      status: 'available',
+      candidateOnly: true,
+      unit: 'ratio',
+      value,
+    }));
+    const cards = assessMorphology({
+      record: { captureRef: 'capture-01', viewRole: 'frontal' },
+      result: { metrics },
+      catalogue: readingCatalogue(),
+    });
+    const eye = cards.find((card) => card.id === 'eyes');
+    expect(eye).toMatchObject({
+      status: 'partial',
+      classification: null,
+      traditionalBindingAuthorized: false,
+    });
+    expect(eye?.measurements).toHaveLength(5);
+    expect(eye?.measurements.join(' ')).toContain('양쪽 눈 폭의 상대 차이: 0.000');
+    expect(eye?.missing).toContain('실제 눈꺼풀 주름·덮임의 이미지 근거');
+
+    const previous = assessMorphology({
+      record: { captureRef: 'capture-01', viewRole: 'frontal' },
+      result: { metrics, previousParsing: {} },
+      catalogue: readingCatalogue(),
+      previous: true,
+    });
+    expect(previous.find((card) => card.id === 'eyes')?.status).toBe('unavailable');
+    expect(previous.find((card) => card.id === 'eyes')?.measurements).toHaveLength(0);
+  });
+
+  it('excludes forged, failed, mismatched-view and other-photo eye numbers', () => {
+    const make = (captureRef: string, key: string, value: number, props = {}) => ({
+      captureRef,
+      viewRole: 'frontal',
+      methodVersion: 'frontal-image-plane-model-geometry@0.1.0',
+      metricKey: 'engineering.frontal.' + key,
+      candidateOnly: true,
+      status: 'available',
+      unit: 'ratio',
+      value,
+      ...props,
+    });
+    const cards = assessMorphology({
+      record: { captureRef: 'capture-01', viewRole: 'frontal' },
+      result: {
+        metrics: [
+          make('other', 'eye_spacing_ratio', 0.43),
+          make('capture-01', 'eye_span_ratio', 0.2, { viewRole: 'profile' }),
+          make('capture-01', 'eye_aperture_ratio', 0.3, { candidateOnly: false }),
+          make('capture-01', 'eye_span_difference', -0.2),
+          make('capture-01', 'eye_aperture_difference', Number.NaN),
+          make('capture-01', 'eye_spacing_ratio', 0.41),
+        ],
+      },
+      catalogue: readingCatalogue(),
+    });
+    expect(cards.find((card) => card.id === 'eyes')?.measurements).toEqual([
+      '눈 중심 간격 / 모델 얼굴 폭: 0.410 (모델 후보)',
+    ]);
+    expect(cards.find((card) => card.id === 'eyes')?.status).toBe('partial');
+  });
+
 });

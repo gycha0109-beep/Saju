@@ -33,17 +33,34 @@ export function assessMorphology({ record, result, catalogue, previous = false }
   } catch {
     /* Invalid evidence is withheld. */
   }
-  const metric = (key) =>
+  const metric = (key, zeroAllowed = false) =>
     result?.metrics?.find(
       (m) =>
         m.captureRef === record.captureRef &&
         m.viewRole === record.viewRole &&
         m.methodVersion === METHOD_VERSION &&
         m.metricKey === 'engineering.frontal.' + key &&
+        m.candidateOnly === true &&
         m.status === 'available' &&
+        m.unit === 'ratio' &&
         Number.isFinite(m.value) &&
-        m.value > 0,
+        (zeroAllowed ? m.value >= 0 : m.value > 0),
     );
+  // Image-plane candidates belong in the photo's eye item, not as F0
+  // canonical measurements or a traditional eye-type classifier.
+  const eyeMeasurements =
+    !previous && record.viewRole === 'frontal'
+      ? [
+          ['eye_aperture_ratio', '평균 눈 경계 높이 / 폭'],
+          ['eye_span_ratio', '평균 눈 폭 / 모델 얼굴 폭'],
+          ['eye_spacing_ratio', '눈 중심 간격 / 모델 얼굴 폭'],
+          ['eye_span_difference', '양쪽 눈 폭의 상대 차이'],
+          ['eye_aperture_difference', '양쪽 눈 종횡비 차이'],
+        ].flatMap(([key, label]) => {
+          const value = metric(key, key.endsWith('_difference'));
+          return value ? [`${label}: ${value.value.toFixed(3)} (모델 후보)`] : [];
+        })
+      : [];
   const profileMetric = (key) =>
     parsing?.profile?.status === 'completed'
       ? parsing.profile.metrics.find(
@@ -74,23 +91,33 @@ export function assessMorphology({ record, result, catalogue, previous = false }
       return card;
     };
     if (item.id === 'eyes') {
-      if (
-        !parsing?.eyeDirection ||
-        (record.viewRole === 'profile' && parsing.eyeDirection.status === 'available')
-      )
-        return absent();
-      const value = parsing.eyeDirection;
+      const direction = parsing?.eyeDirection;
+      if (!direction || (record.viewRole === 'profile' && direction.status === 'available')) {
+        absent();
+        if (eyeMeasurements.length) {
+          card.status = 'partial';
+          card.observation =
+            '눈 경계의 모델 비율·좌우 차이만 확인했습니다. 눈꼬리 방향과 눈꺼풀의 실제 형태는 별도 검토가 필요합니다.';
+          card.measurements = eyeMeasurements;
+          card.missing = ['눈꼬리 끝점 역할·위치 확인', '실제 눈꺼풀 주름·덮임의 이미지 근거'];
+        }
+        return card;
+      }
       try {
-        card.observation = describeEyeDirection(value).text;
-        if (value.status === 'available') {
+        card.observation = describeEyeDirection(direction).text;
+        if (direction.status === 'available') {
           card.status = 'observed';
           card.classification = 'model_eye_endpoint_direction';
-          card.measurements = value.eyes.map(angleText);
+          card.measurements = direction.eyes.map(angleText);
         }
       } catch {
         return absent();
       }
-      card.missing = ['모델 끝점과 실제 눈꼬리의 위치 대응'];
+      if (eyeMeasurements.length) {
+        card.measurements.push(...eyeMeasurements);
+        if (direction.status !== 'available') card.status = 'partial';
+      }
+      card.missing = ['모델 끝점과 실제 눈꼬리의 위치 대응', '실제 눈꺼풀 주름·덮임의 이미지 근거'];
       return card;
     }
     if (item.id === 'brows') {
