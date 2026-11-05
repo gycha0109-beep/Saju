@@ -324,6 +324,7 @@ export async function createLocalReviewServer({
       'eye-direction.mjs',
       'morphology-geometry.mjs',
       'morphology-assessment.mjs',
+      'visible-brow-mask-envelope.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const [route, asset] of experienceAssets()) assets.set(route, asset);

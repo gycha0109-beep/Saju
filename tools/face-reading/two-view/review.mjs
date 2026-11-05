@@ -4,6 +4,10 @@ import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
 import { PARSING_GROUPS, PARSING_VERSION, containSize } from './parsing-contract.mjs';
 import { PROFILE_DEFINITIONS } from './profile-metrics.mjs';
 import { assessMorphology } from './morphology-assessment.mjs';
+import {
+  eyebrowBinaryFromOverlayRGBA,
+  measureVisibleBrowMaskEnvelope,
+} from './visible-brow-mask-envelope.mjs';
 const $ = (id) => document.getElementById(id);
 const reasons = {
   profile_method_not_implemented: '정면용 수치는 측면 사진에 적용하지 않습니다',
@@ -106,6 +110,87 @@ function stop() {
   $('batch').disabled = false;
   $('analyze').disabled = files.size === 0;
 }
+// A separate local experiment: do not extend the eight traditional-source cards
+// or write a new parser summary/receipt. The overlay is already in this browser.
+async function inspectVisibleBrowMask(record, result) {
+  const maskImage = new Image();
+  maskImage.src = result.layerUrls.brows;
+  const sourceImage = new Image();
+  sourceImage.src = record.image;
+  await Promise.all([maskImage.decode(), sourceImage.decode()]);
+  if (
+    maskImage.naturalWidth !== 512 ||
+    maskImage.naturalHeight !== 512 ||
+    !sourceImage.naturalWidth ||
+    !sourceImage.naturalHeight
+  )
+    throw Error('BROW_SOURCE_INVALID');
+  const canvas = document.createElement('canvas');
+  canvas.width = maskImage.naturalWidth;
+  canvas.height = maskImage.naturalHeight;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) throw Error('BROW_CANVAS_UNAVAILABLE');
+  context.drawImage(maskImage, 0, 0);
+  const rgba = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const binary = eyebrowBinaryFromOverlayRGBA(rgba, canvas.width, canvas.height);
+  return measureVisibleBrowMaskEnvelope(binary, canvas.width, canvas.height, {
+    imageWidth: sourceImage.naturalWidth,
+    imageHeight: sourceImage.naturalHeight,
+  });
+}
+function renderVisibleBrowMaskExperiment(record, result, previous) {
+  const node = $('brow-mask-experiment');
+  if (previous) {
+    node.textContent = '과거 분할 기록의 형상과 현재 방법은 혼합하지 않습니다.';
+    return;
+  }
+  if (record.viewRole !== 'frontal') {
+    node.textContent = '이 실험은 정면 사진의 보이는 눈썹 영역에만 적용합니다.';
+    return;
+  }
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    !result.layerUrls?.brows
+  ) {
+    node.textContent =
+      '현재 사진에 검증 가능한 눈썹 마스크가 없습니다. 개별 털의 두께나 밀도를 추정하지 않습니다.';
+    return;
+  }
+  const observed = result.browMaskCandidate;
+  if (observed?.status === 'available') {
+    node.textContent =
+      observed.brows
+        .map(
+          (b) =>
+            `${b.imageSide === 'left' ? '사진 왼쪽' : '사진 오른쪽'}: 분할된 눈썹 면적 기반 상대 띠 두께 ${b.apparentMaskThicknessToLongSpan.toFixed(3)}`,
+        )
+        .join(' · ') +
+      ' — 모델 후보입니다. 실제 털 굵기·밀도, 눈썹의 해부학적 두께, 전통 관상 판정은 아닙니다.';
+    return;
+  }
+  if (observed?.status === 'unavailable') {
+    node.textContent =
+      '눈썹 띠 두께 관측 보류: 분할 영역이 끊기거나 합쳐짐·가림·경계 오류가 있습니다. (' +
+      observed.reason +
+      ')';
+    return;
+  }
+  node.textContent = '현재 사진의 눈썹 분할 마스크에서 후보 두께 비율을 계산 중입니다.';
+  if (observed) return;
+  result.browMaskCandidate = { status: 'loading' };
+  void inspectVisibleBrowMask(record, result)
+    .then((candidate) => {
+      if (results.get(record.captureRef) !== result) return;
+      result.browMaskCandidate = candidate;
+      if (records[selected]?.captureRef === record.captureRef) render();
+    })
+    .catch(() => {
+      if (results.get(record.captureRef) !== result) return;
+      result.browMaskCandidate = { status: 'unavailable', reason: 'BROW_LAYER_NOT_READABLE' };
+      if (records[selected]?.captureRef === record.captureRef) render();
+    });
+}
 function render() {
   const record = records[selected];
   if (!record) return;
@@ -167,6 +252,7 @@ function render() {
     }
     $('reading-evidence').append(node);
   }
+  renderVisibleBrowMaskExperiment(record, result, previous);
   const quality = parsing?.regionScreening?.regions;
   const regionNames = { skin: '피부', nose: '코', lips: '입술', brows: '눈썹', ears: '귀 후보' };
   const checked = quality
