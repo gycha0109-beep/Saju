@@ -7,6 +7,7 @@ const profileReady = import('./profile-metrics.mjs');
 const eyeDirectionReady = import('./eye-direction.mjs');
 const morphologyReady = import('./morphology-geometry.mjs');
 const lipClassReady = import('./visible-lip-class-profile.mjs');
+const eyeClassReady = import('./visible-eye-class-profile.mjs');
 let session, localizer, FaceLandmarker, ort;
 async function localizationModel() {
   if (!localizer) {
@@ -377,6 +378,14 @@ self.onmessage = async ({ data }) => {
             imageHeight: bitmap.height,
           })
         : null;
+    const { measureVisibleEyeClassProfile } = await eyeClassReady;
+    const eyeClassCandidate =
+      viewRole === 'frontal' && eyeDirection.status === 'available'
+        ? measureVisibleEyeClassProfile(display, size, {
+            imageWidth: bitmap.width,
+            imageHeight: bitmap.height,
+          })
+        : null;
     const contact = contactPixels(display, size, size),
       layers = {};
     for (const group of PARSING_GROUPS) {
@@ -396,6 +405,7 @@ self.onmessage = async ({ data }) => {
       captureRef,
       layers,
       lipClassCandidate,
+      eyeClassCandidate,
       parsing: {
         methodVersion: PARSING_VERSION,
         candidateOnly: true,

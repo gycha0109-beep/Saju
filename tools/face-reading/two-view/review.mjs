@@ -241,7 +241,8 @@ function renderVisibleNoseMaskExperiment(record, result, previous) {
     result.parsing.regionScreening?.regions?.nose?.status === 'suppressed' ||
     !result.layerUrls?.nose
   ) {
-    node.textContent = '현재 사진에 코 분할 윤곽과 단일 얼굴 근거가 충분하지 않습니다. 코끝·콧구멍·콧볼의 실제 형상은 판정하지 않습니다.';
+    node.textContent =
+      '현재 사진에 코 분할 윤곽과 단일 얼굴 근거가 충분하지 않습니다. 코끝·콧구멍·콧볼의 실제 형상은 판정하지 않습니다.';
     return;
   }
   const observed = result.noseMaskCandidate;
@@ -255,7 +256,10 @@ function renderVisibleNoseMaskExperiment(record, result, previous) {
     return;
   }
   if (observed?.status === 'unavailable') {
-    node.textContent = '코 윤곽 후보 보류: 이어진 단일 코 마스크와 단면 경계가 확인되지 않았습니다. (' + observed.reason + ')';
+    node.textContent =
+      '코 윤곽 후보 보류: 이어진 단일 코 마스크와 단면 경계가 확인되지 않았습니다. (' +
+      observed.reason +
+      ')';
     return;
   }
   node.textContent = '이 사진의 코 분할 마스크에서 단면별 상대 폭을 관찰하는 중입니다.';
@@ -291,7 +295,8 @@ function renderVisibleLipClassExperiment(record, result, previous) {
     result.parsing.morphology?.lipBalance?.status !== 'available' ||
     result.parsing.regionScreening?.regions?.lips?.status !== 'screened'
   ) {
-    node.textContent = '같은 사진의 입술 모델 경계와 분할 클래스가 확인되지 않아 관측을 보류했습니다.';
+    node.textContent =
+      '같은 사진의 입술 모델 경계와 분할 클래스가 확인되지 않아 관측을 보류했습니다.';
     return;
   }
   const candidate = result.lipClassCandidate;
@@ -310,6 +315,32 @@ function renderVisibleLipClassExperiment(record, result, previous) {
     ` · 클래스 중심 세로 거리: ${candidate.centreYSeparationToCombinedXSpan.toFixed(3)}` +
     ` · 아랫입술 클래스 중심의 사진상 가로 이동: ${candidate.lowerVsUpperCentreXOffsetToCombinedXSpan.toFixed(3)}` +
     ' — 두 분할 클래스의 평면 후보로, 실제 입술 경계·두꺼움/얇음·전통 관상 판정은 아닙니다.';
+}
+function renderVisibleEyeClassExperiment(record, result, previous) {
+  const node = $('eye-class-experiment');
+  const eye = result?.eyeClassCandidate;
+  if (previous) node.textContent = '과거 기록에는 새 눈 클래스 측정을 적용하지 않습니다.';
+  else if (record.viewRole !== 'frontal') node.textContent = '정면 사진에만 적용됩니다.';
+  else if (
+    result?.parsing?.methodVersion !== PARSING_VERSION ||
+    result?.parsing?.eyeDirection?.status !== 'available'
+  )
+    node.textContent = '양쪽 눈의 같은 사진 모델 근거가 없어 보류했습니다.';
+  else if (eye?.status === 'unavailable') node.textContent = '눈 클래스 후보 보류: ' + eye.reason;
+  else if (eye?.status === 'available')
+    node.textContent =
+      '왼쪽/오른쪽 눈 클래스 높이·폭 비: ' +
+      eye.imageLeftHeightToWidth.toFixed(3) +
+      ' / ' +
+      eye.imageRightHeightToWidth.toFixed(3) +
+      ' · 두 클래스 면적 비: ' +
+      eye.imageLeftToRightClassAreaRatio.toFixed(3) +
+      ' · 폭 비: ' +
+      eye.imageLeftToRightWidthRatio.toFixed(3) +
+      ' · 중심 간격: ' +
+      eye.centreSpacingToMeanWidth.toFixed(3) +
+      ' — 모델의 2D 영역 후보이며 실제 눈꺼풀·쌍꺼풀·전통 형태 판정은 아닙니다.';
+  else node.textContent = '현재 사진의 눈 클래스 후보가 없습니다.';
 }
 function render() {
   const record = records[selected];
@@ -374,6 +405,7 @@ function render() {
   }
   renderVisibleBrowMaskExperiment(record, result, previous);
   renderVisibleNoseMaskExperiment(record, result, previous);
+  renderVisibleEyeClassExperiment(record, result, previous);
   renderVisibleLipClassExperiment(record, result, previous);
   const quality = parsing?.regionScreening?.regions;
   const regionNames = { skin: '피부', nose: '코', lips: '입술', brows: '눈썹', ears: '귀 후보' };
