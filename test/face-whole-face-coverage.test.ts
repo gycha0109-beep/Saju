@@ -177,6 +177,94 @@ describe('local canonical whole-face coverage audit', () => {
   });
 });
 
+describe('human review evidence in whole-face coverage', () => {
+  const capture = { captureRef: 'reviewed-01', viewRole: 'frontal' as const, metrics: [] };
+  const review = {
+    captureRef: 'reviewed-01',
+    imageLeft: 'visible',
+    imageRight: 'no_visible_crease',
+    humanReviewed: true,
+    independentAccuracyValidated: false,
+    modelTrainingAuthorized: false,
+  };
+
+  it('connects one local eyelid review to the existing canonical feature without accuracy promotion', () => {
+    const report = summarizeWholeFaceCoverage(FR293_PRODUCT_COLUMN_MAP, [capture], [review]);
+    const eye = feature(report, 'eye.eyelid_crease_or_hooded_category');
+    expect(eye).toMatchObject({
+      humanReviewPhotoCount: 1,
+      humanReviewState: 'single_reviewer_unverified',
+      humanReviewLabelCounts: {
+        imageLeft: { visible: 1 },
+        imageRight: { no_visible_crease: 1 },
+      },
+      humanReviewAccuracyValidated: false,
+      canonicalPhotoMeasurementVerified: false,
+      traditionalBindingApplied: false,
+      productInterpretationAuthorized: false,
+    });
+    expect(report.humanReviewedCaptureCount).toBe(1);
+    expect(report.humanReviewFeatureCount).toBe(1);
+    expect(report.humanReviewAccuracyValidated).toBe(false);
+    expect(report.actualHumanAccuracyVerified).toBe(false);
+    expect(JSON.stringify(report)).not.toContain('reviewed-01');
+  });
+
+  it('keeps human labels distinct from model candidates and exposes the next independent review requirement', () => {
+    const trace = traceWholeFaceSourceGaps(
+      FR293_PRODUCT_COLUMN_MAP,
+      FR282_RGB_SELFIE_FEATURE_ENTRIES,
+      [capture],
+      [review],
+    );
+    const eye = trace.features.find(
+      (row) => row.featureKey === 'eye.eyelid_crease_or_hooded_category',
+    );
+    expect(eye).toMatchObject({
+      localPhotoProxyCount: 0,
+      localHumanReviewCount: 1,
+      humanReviewState: 'single_reviewer_unverified',
+      humanReviewAccuracyValidated: false,
+      independentAccuracyState: 'not_evaluated',
+      traditionalBindingIssued: false,
+      interpretationAuthorized: false,
+    });
+    expect(eye?.nextMissingEvidence).toBe(
+      'independent_second_reviewer_and_repeat_capture_validation',
+    );
+    expect(trace.humanReviewedCaptureCount).toBe(1);
+    expect(trace.humanReviewAccuracyValidated).toBe(false);
+    expect(JSON.stringify(trace)).not.toContain('reviewed-01');
+  });
+
+  it('rejects profile, duplicate, invalid and authority-elevated human review labels', () => {
+    expect(() =>
+      summarizeWholeFaceCoverage(
+        FR293_PRODUCT_COLUMN_MAP,
+        [{ ...capture, viewRole: 'profile' }],
+        [review],
+      ),
+    ).toThrow('COVERAGE_HUMAN_REVIEW_INVALID');
+    expect(() =>
+      summarizeWholeFaceCoverage(FR293_PRODUCT_COLUMN_MAP, [capture], [review, review]),
+    ).toThrow('COVERAGE_HUMAN_REVIEW_INVALID');
+    expect(() =>
+      summarizeWholeFaceCoverage(
+        FR293_PRODUCT_COLUMN_MAP,
+        [capture],
+        [{ ...review, imageLeft: 'not_a_review_state' }],
+      ),
+    ).toThrow('COVERAGE_HUMAN_REVIEW_INVALID');
+    expect(() =>
+      summarizeWholeFaceCoverage(
+        FR293_PRODUCT_COLUMN_MAP,
+        [capture],
+        [{ ...review, independentAccuracyValidated: true }],
+      ),
+    ).toThrow('COVERAGE_HUMAN_REVIEW_INVALID');
+  });
+});
+
 describe('source-derived whole-face execution trace', () => {
   it('ties every FR293 calculator to the matching FR282 observation and evidence gap', () => {
     const trace = traceWholeFaceSourceGaps(

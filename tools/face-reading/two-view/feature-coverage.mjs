@@ -1,9 +1,11 @@
 import { METHOD_VERSION, METRIC_DEFINITIONS } from './frontal-metrics.mjs';
 import { validateParsingSummary } from './parsing-contract.mjs';
+import { EYE_FOLD_REVIEW_STATES } from './eye-fold-review.mjs';
 
-export const COVERAGE_VERSION = 'local-whole-face-coverage@0.1.0';
+export const COVERAGE_VERSION = 'local-whole-face-coverage@0.2.0';
 
 const VALID_METRICS = new Set(METRIC_DEFINITIONS.map((entry) => entry.id));
+const HUMAN_REVIEW_FEATURES = Object.freeze(['eye.eyelid_crease_or_hooded_category']);
 
 // These are image-plane / model-boundary proxies, not the canonical FR293
 // feature or a traditional named-form verdict. Keep the map deliberately narrow.
@@ -63,9 +65,60 @@ function availableSource(capture, parsing, source) {
   throw Error('COVERAGE_UNKNOWN_SOURCE');
 }
 
-// Only aggregates validated, locally saved candidate summaries. Never emit
-// capture refs, filenames, raw contours, masks, identity, or original scores.
-export function summarizeWholeFaceCoverage(columns, captures) {
+function summarizeHumanReviewEvidence(columns, captures, humanReviews) {
+  if (!Array.isArray(humanReviews)) throw Error('COVERAGE_HUMAN_REVIEW_INVALID');
+  const captureByRef = new Map(captures.map((capture) => [capture.captureRef, capture]));
+  const counts = new Map(
+    columns.map((column) => [
+      column.featureKey,
+      {
+        photoCount: 0,
+        imageLeft: Object.fromEntries(EYE_FOLD_REVIEW_STATES.map((state) => [state, 0])),
+        imageRight: Object.fromEntries(EYE_FOLD_REVIEW_STATES.map((state) => [state, 0])),
+      },
+    ]),
+  );
+  const seen = new Set();
+  for (const review of humanReviews) {
+    const keys = [
+      'captureRef',
+      'imageLeft',
+      'imageRight',
+      'humanReviewed',
+      'independentAccuracyValidated',
+      'modelTrainingAuthorized',
+    ];
+    const capture = captureByRef.get(review?.captureRef);
+    if (
+      !review ||
+      typeof review !== 'object' ||
+      Array.isArray(review) ||
+      Object.keys(review).length !== keys.length ||
+      keys.some((key) => !Object.hasOwn(review, key)) ||
+      typeof review.captureRef !== 'string' ||
+      seen.has(review.captureRef) ||
+      !capture ||
+      capture.viewRole !== 'frontal' ||
+      !EYE_FOLD_REVIEW_STATES.includes(review.imageLeft) ||
+      !EYE_FOLD_REVIEW_STATES.includes(review.imageRight) ||
+      review.humanReviewed !== true ||
+      review.independentAccuracyValidated !== false ||
+      review.modelTrainingAuthorized !== false
+    )
+      throw Error('COVERAGE_HUMAN_REVIEW_INVALID');
+    seen.add(review.captureRef);
+    const featureCounts = counts.get('eye.eyelid_crease_or_hooded_category');
+    if (!featureCounts) throw Error('COVERAGE_HUMAN_REVIEW_FEATURE_DRIFT');
+    featureCounts.photoCount++;
+    featureCounts.imageLeft[review.imageLeft]++;
+    featureCounts.imageRight[review.imageRight]++;
+  }
+  return counts;
+}
+
+// Only aggregates validated candidate summaries and local human review labels.
+// Never emit capture refs, filenames, raw contours, masks, identity or scores.
+export function summarizeWholeFaceCoverage(columns, captures, humanReviews = []) {
   if (
     !Array.isArray(columns) ||
     columns.length !== 29 ||
@@ -74,7 +127,7 @@ export function summarizeWholeFaceCoverage(columns, captures) {
   )
     throw Error('COVERAGE_SCHEMA_DRIFT');
 
-  for (const feature of Object.keys(CANDIDATE_SOURCES))
+  for (const feature of [...Object.keys(CANDIDATE_SOURCES), ...HUMAN_REVIEW_FEATURES])
     if (!columns.some((column) => column.featureKey === feature))
       throw Error('COVERAGE_SOURCE_KEY_DRIFT');
 
@@ -101,15 +154,24 @@ export function summarizeWholeFaceCoverage(columns, captures) {
         counts.set(feature, counts.get(feature) + 1);
   }
 
+  const humanReviewCounts = summarizeHumanReviewEvidence(columns, captures, humanReviews);
   const features = columns.map((column) => {
     const calculationAvailable = column.implementationState === 'canonical_extractor_materialized';
     const deferred = column.implementationState === 'deferred_unavailable';
     const candidateCount = counts.get(column.featureKey);
+    const humanReview = humanReviewCounts.get(column.featureKey);
     return Object.freeze({
       featureKey: column.featureKey,
       regionKey: column.regionKey,
       canonicalCalculatorMaterialized: calculationAvailable,
       candidatePhotoCount: candidateCount,
+      humanReviewPhotoCount: humanReview.photoCount,
+      humanReviewState: humanReview.photoCount > 0 ? 'single_reviewer_unverified' : 'not_started',
+      humanReviewLabelCounts: Object.freeze({
+        imageLeft: Object.freeze(humanReview.imageLeft),
+        imageRight: Object.freeze(humanReview.imageRight),
+      }),
+      humanReviewAccuracyValidated: false,
       localEvidenceState: deferred
         ? 'unavailable_by_current_authority'
         : candidateCount > 0
@@ -135,6 +197,9 @@ export function summarizeWholeFaceCoverage(columns, captures) {
       .length,
     unresolvedCanonicalCount: features.filter((x) => !x.canonicalCalculatorMaterialized).length,
     featuresWithLocalPhotoProxy: features.filter((x) => x.candidatePhotoCount > 0).length,
+    humanReviewedCaptureCount: humanReviews.length,
+    humanReviewFeatureCount: features.filter((x) => x.humanReviewPhotoCount > 0).length,
+    humanReviewAccuracyValidated: false,
     actualHumanAccuracyVerified: false,
     traditionalBindingApplied: false,
     productionAuthorized: false,
@@ -143,14 +208,14 @@ export function summarizeWholeFaceCoverage(columns, captures) {
   });
 }
 
-export const SOURCE_TRACE_VERSION = 'local-whole-face-source-trace@0.1.0';
+export const SOURCE_TRACE_VERSION = 'local-whole-face-source-trace@0.2.0';
 
 // A source-derived execution inventory, not another canonical feature registry.
 // The authoritative keys and calculator state come from FR293; observation
-// readiness and camera limitations come from FR282. Local photo evidence is
-// limited to the independently validated engineering proxies above.
-export function traceWholeFaceSourceGaps(columns, authorityEntries, captures) {
-  const report = summarizeWholeFaceCoverage(columns, captures);
+// readiness and camera limitations come from FR282. Engineering proxies and
+// single-reviewer labels are separate, unverified evidence classes.
+export function traceWholeFaceSourceGaps(columns, authorityEntries, captures, humanReviews = []) {
+  const report = summarizeWholeFaceCoverage(columns, captures, humanReviews);
   if (
     !Array.isArray(authorityEntries) ||
     authorityEntries.length !== report.canonicalFeatureCount ||
@@ -191,11 +256,13 @@ export function traceWholeFaceSourceGaps(columns, authorityEntries, captures) {
           : 'not_observed';
     const nextMissingEvidence = unavailable
       ? 'current_rgb_authority_unavailable'
-      : coverage.candidatePhotoCount > 0
-        ? 'canonical_input_binding_and_independent_human_reference'
-        : coverage.canonicalCalculatorMaterialized
-          ? 'actual_photo_extraction_and_independent_human_reference'
-          : 'missing_image_extractor_and_independent_human_reference';
+      : coverage.humanReviewPhotoCount > 0
+        ? 'independent_second_reviewer_and_repeat_capture_validation'
+        : coverage.candidatePhotoCount > 0
+          ? 'canonical_input_binding_and_independent_human_reference'
+          : coverage.canonicalCalculatorMaterialized
+            ? 'actual_photo_extraction_and_independent_human_reference'
+            : 'missing_image_extractor_and_independent_human_reference';
     return Object.freeze({
       featureKey: column.featureKey,
       regionKey: column.regionKey,
@@ -219,6 +286,10 @@ export function traceWholeFaceSourceGaps(columns, authorityEntries, captures) {
       ]),
       localPhotoProxyCount: coverage.candidatePhotoCount,
       photoEvidenceState,
+      localHumanReviewCount: coverage.humanReviewPhotoCount,
+      humanReviewState: coverage.humanReviewState,
+      humanReviewLabelCounts: coverage.humanReviewLabelCounts,
+      humanReviewAccuracyValidated: false,
       canonicalPhotoMeasurementVerified: false,
       traditionalSourcePredicateMapped: false,
       traditionalBindingIssued: false,
@@ -236,6 +307,9 @@ export function traceWholeFaceSourceGaps(columns, authorityEntries, captures) {
     featuresWithLocalEngineeringProxy: features.filter(
       (feature) => feature.photoEvidenceState === 'candidate_only',
     ).length,
+    humanReviewedCaptureCount: report.humanReviewedCaptureCount,
+    humanReviewFeatureCount: report.humanReviewFeatureCount,
+    humanReviewAccuracyValidated: false,
     sourcePredicateMappingsAdmitted: 0,
     privacy: 'repository_source_paths_and_aggregate_counts_only',
     features: Object.freeze(features),
