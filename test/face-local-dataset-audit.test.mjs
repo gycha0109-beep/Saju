@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import test from 'node:test';
+import { afterEach, test } from 'vitest';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -8,9 +8,15 @@ import { createHash } from 'node:crypto';
 import { auditPhotoDatasets, parseManifestCsv } from '../tools/face-reading/two-view/local-dataset-audit.mjs';
 
 const hash = data => createHash('sha256').update(data).digest('hex');
-async function fixture(t) {
+const temporaryRoots = new Set();
+afterEach(async () => {
+  await Promise.all([...temporaryRoots].map(root => rm(root, { recursive: true, force: true })));
+  temporaryRoots.clear();
+});
+
+async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'face-dataset-audit-'));
-  t.after(() => rm(root, { recursive: true, force: true }));
+  temporaryRoots.add(root);
   const base = join(root, 'base');
   const east = join(root, 'regional');
   await mkdir(join(base, 'photos'), { recursive: true });
@@ -36,8 +42,8 @@ test('manifest parser handles BOM, quoted commas and multi-line strings without 
   assert.equal(rows[0].attribution, 'quoted, author\nwith "quotes"');
 });
 
-test('complete manifests are verified and identical content across sets counted once', async t => {
-  const f = await fixture(t);
+test('complete manifests are verified and identical content across sets counted once', async () => {
+  const f = await fixture();
   const baseRow = await f.populate(f.base, 'f1.jpg', 'same picture');
   const regionalRow = await f.populate(f.east, 'e1.jpg', 'same picture');
   await f.save([baseRow], [regionalRow]);
@@ -50,8 +56,8 @@ test('complete manifests are verified and identical content across sets counted 
   assert.doesNotMatch(JSON.stringify(result), /f1\.jpg|e1\.jpg|face-dataset-audit-|same picture/);
 });
 
-test('missing and mismatched photos block completeness without printing photo identities', async t => {
-  const f = await fixture(t);
+test('missing and mismatched photos block completeness without printing photo identities', async () => {
+  const f = await fixture();
   const missingRow = await f.populate(f.base, 'missing.jpg', 'absent', { absent: true });
   const badRow = await f.populate(f.base, 'bad.jpg', 'actual bytes', { digest: hash('different') });
   const validRegional = await f.populate(f.east, 'valid.jpg', 'valid');
@@ -66,9 +72,9 @@ test('missing and mismatched photos block completeness without printing photo id
   assert.doesNotMatch(JSON.stringify(result), /missing\.jpg|bad\.jpg|unlisted\.jpg/);
 });
 
-test('malformed CSV, directory traversal and repeated manifest entries are rejected', async t => {
+test('malformed CSV, directory traversal and repeated manifest entries are rejected', async () => {
   assert.throws(() => parseManifestCsv('file,sha256,license,license_url,commons_page\n"x'), /UNTERMINATED_CSV_QUOTE/);
-  const f = await fixture(t);
+  const f = await fixture();
   const good = await f.populate(f.base, 'f1.jpg', 'data');
   const external = '../outside.jpg,' + hash('foo') + ',CC,https://l,https://s,author\n';
   const regional = await f.populate(f.east, 'e1.jpg', 'different');
