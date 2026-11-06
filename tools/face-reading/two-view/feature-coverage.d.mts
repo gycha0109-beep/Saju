@@ -1,3 +1,20 @@
+export type EyeFoldReviewState =
+  'visible' | 'hooded' | 'no_visible_crease' | 'partial' | 'occluded' | 'out_of_frame' | 'unknown';
+
+export interface HumanReviewLabelCounts {
+  readonly imageLeft: Readonly<Record<EyeFoldReviewState, number>>;
+  readonly imageRight: Readonly<Record<EyeFoldReviewState, number>>;
+}
+
+export interface CoverageHumanReview {
+  readonly captureRef: string;
+  readonly imageLeft: EyeFoldReviewState;
+  readonly imageRight: EyeFoldReviewState;
+  readonly humanReviewed: true;
+  readonly independentAccuracyValidated: false;
+  readonly modelTrainingAuthorized: false;
+}
+
 export interface CoverageColumn {
   readonly featureKey: string;
   readonly regionKey: string;
@@ -17,6 +34,10 @@ export interface CoverageFeature {
   readonly regionKey: string;
   readonly canonicalCalculatorMaterialized: boolean;
   readonly candidatePhotoCount: number;
+  readonly humanReviewPhotoCount: number;
+  readonly humanReviewState: 'not_started' | 'single_reviewer_unverified';
+  readonly humanReviewLabelCounts: HumanReviewLabelCounts;
+  readonly humanReviewAccuracyValidated: false;
   readonly localEvidenceState:
     | 'unavailable_by_current_authority'
     | 'partial_engineering_proxy_only'
@@ -38,16 +59,20 @@ export interface CoverageReport {
   readonly canonicalCalculatorMaterializedCount: number;
   readonly unresolvedCanonicalCount: number;
   readonly featuresWithLocalPhotoProxy: number;
+  readonly humanReviewedCaptureCount: number;
+  readonly humanReviewFeatureCount: number;
+  readonly humanReviewAccuracyValidated: false;
   readonly actualHumanAccuracyVerified: false;
   readonly traditionalBindingApplied: false;
   readonly productionAuthorized: false;
   readonly rawSourcePersistedOrEmitted: false;
   readonly features: readonly CoverageFeature[];
 }
-export declare const COVERAGE_VERSION: 'local-whole-face-coverage@0.1.0';
-export declare function summarizeWholeFaceCoverage(
+export declare const COVERAGE_VERSION: 'local-whole-face-coverage@0.2.0';
+export function summarizeWholeFaceCoverage(
   columns: readonly CoverageColumn[],
   captures: readonly CoverageCapture[],
+  humanReviews?: readonly CoverageHumanReview[],
 ): CoverageReport;
 
 export interface SourceTraceAuthority {
@@ -77,7 +102,12 @@ export interface SourceTraceFeature {
   readonly requiredExtractor: string;
   readonly localEngineeringProxySources: readonly string[];
   readonly localPhotoProxyCount: number;
-  readonly photoEvidenceState: 'unavailable' | 'candidate_only' | 'calculation_only' | 'not_observed';
+  readonly photoEvidenceState:
+    'unavailable' | 'candidate_only' | 'calculation_only' | 'not_observed';
+  readonly localHumanReviewCount: number;
+  readonly humanReviewState: 'not_started' | 'single_reviewer_unverified';
+  readonly humanReviewLabelCounts: HumanReviewLabelCounts;
+  readonly humanReviewAccuracyValidated: false;
   readonly canonicalPhotoMeasurementVerified: false;
   readonly traditionalSourcePredicateMapped: false;
   readonly traditionalBindingIssued: false;
@@ -90,15 +120,19 @@ export interface SourceTraceReport {
   readonly canonicalFeatureCount: number;
   readonly calculatedOnlyOrUnverifiedCount: number;
   readonly featuresWithLocalEngineeringProxy: number;
+  readonly humanReviewedCaptureCount: number;
+  readonly humanReviewFeatureCount: number;
+  readonly humanReviewAccuracyValidated: false;
   readonly sourcePredicateMappingsAdmitted: 0;
   readonly privacy: 'repository_source_paths_and_aggregate_counts_only';
   readonly features: readonly SourceTraceFeature[];
 }
-export declare const SOURCE_TRACE_VERSION: 'local-whole-face-source-trace@0.1.0';
-export declare function traceWholeFaceSourceGaps(
+export declare const SOURCE_TRACE_VERSION: 'local-whole-face-source-trace@0.2.0';
+export function traceWholeFaceSourceGaps(
   columns: readonly SourceTraceColumn[],
   authorityEntries: readonly SourceTraceAuthority[],
   captures: readonly CoverageCapture[],
+  humanReviews?: readonly CoverageHumanReview[],
 ): SourceTraceReport;
 
 export interface ExtensionTraceFeature {

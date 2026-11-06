@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { EyeFoldReviewState } from '../tools/face-reading/two-view/eye-fold-review.mjs';
 import {
   createEyeFoldReviewRecord,
   EYE_FOLD_REVIEW_SCHEMA_VERSION,
@@ -10,7 +11,10 @@ import {
 const sourceSha256 = 'a'.repeat(64);
 const reviewedAt = '2026-11-07T00:00:00.000Z';
 
-function create(imageLeft = 'visible', imageRight = 'hooded') {
+function create(
+  imageLeft: EyeFoldReviewState = 'visible',
+  imageRight: EyeFoldReviewState = 'hooded',
+) {
   return createEyeFoldReviewRecord(
     { imageLeft, imageRight },
     {
@@ -55,14 +59,16 @@ describe('local human eye-fold review contract', () => {
 
   it('rejects missing, invalid or extra human labels', () => {
     expect(() =>
-      createEyeFoldReviewRecord(
-        { imageLeft: 'visible', imageRight: 'unreviewed' },
-        { captureRef: 'capture-01', sourceSha256, revision: 1, reviewedAt },
-      ),
+      createEyeFoldReviewRecord({ imageLeft: 'visible', imageRight: 'unreviewed' } as never, {
+        captureRef: 'capture-01',
+        sourceSha256,
+        revision: 1,
+        reviewedAt,
+      }),
     ).toThrow('EYE_FOLD_REVIEW_INVALID');
     expect(() =>
       createEyeFoldReviewRecord(
-        { imageLeft: 'visible', imageRight: 'hooded', anatomicalLeft: 'visible' },
+        { imageLeft: 'visible', imageRight: 'hooded', anatomicalLeft: 'visible' } as never,
         { captureRef: 'capture-01', sourceSha256, revision: 1, reviewedAt },
       ),
     ).toThrow('EYE_FOLD_REVIEW_INVALID');

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { FR293_PRODUCT_COLUMN_MAP } from '../packages/face-reading/src/rgb-selfie-product-column-map-fr293.js';
 import { FR282_RGB_SELFIE_FEATURE_ENTRIES } from '../packages/face-reading/src/rgb-selfie-feature-authority-matrix-fr282.js';
+import type { CoverageHumanReview } from '../tools/face-reading/two-view/feature-coverage.mjs';
 import {
   summarizeWholeFaceCoverage,
   COVERAGE_VERSION,
@@ -179,7 +180,7 @@ describe('local canonical whole-face coverage audit', () => {
 
 describe('human review evidence in whole-face coverage', () => {
   const capture = { captureRef: 'reviewed-01', viewRole: 'frontal' as const, metrics: [] };
-  const review = {
+  const review: CoverageHumanReview = {
     captureRef: 'reviewed-01',
     imageLeft: 'visible',
     imageRight: 'no_visible_crease',
@@ -252,14 +253,14 @@ describe('human review evidence in whole-face coverage', () => {
       summarizeWholeFaceCoverage(
         FR293_PRODUCT_COLUMN_MAP,
         [capture],
-        [{ ...review, imageLeft: 'not_a_review_state' }],
+        [{ ...review, imageLeft: 'not_a_review_state' } as unknown as CoverageHumanReview],
       ),
     ).toThrow('COVERAGE_HUMAN_REVIEW_INVALID');
     expect(() =>
       summarizeWholeFaceCoverage(
         FR293_PRODUCT_COLUMN_MAP,
         [capture],
-        [{ ...review, independentAccuracyValidated: true }],
+        [{ ...review, independentAccuracyValidated: true } as unknown as CoverageHumanReview],
       ),
     ).toThrow('COVERAGE_HUMAN_REVIEW_INVALID');
   });
