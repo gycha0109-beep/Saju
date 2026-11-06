@@ -635,3 +635,23 @@ npm run face:coverage -- --intake .cache/face-reading/fr2337-intake
 - 합성 두 클래스 영역·이미지 종횡비·오염/부분 누락 검사는 코드로
   확인하나 비공개 23장 재실행, 인간 정답 대비 정확도, 표정/가림에
   따른 재현성은 아직 `not_evaluated`입니다.
+
+## 기존 2,000장 헤어라인 관측 결과와 실제 사람 정답 준비도 (2026-11-06)
+
+기존 연구 데이터셋에서 모델을 다시 추론하지 않고 **2026-11-04에 생성된** 관측 기록을
+교차 점검하려면 아래 명령을 사용합니다. 데이터셋 폴더는 리포지토리 밖에 보관합니다.
+
+```powershell
+node tools/face-reading/two-view/real-photo-evidence-audit.mjs "C:\Users\M\Documents\MyeongHa-Facial-500\evaluation_2000"
+```
+
+입력은 기존 `summary.json`, `results.csv`, `manual_review_queue.csv`,
+`manual_ground_truth_168.json`이며, 출력은 3개 데이터 묶음의 집계만 포함합니다.
+기록의 누락/중복, 후보 상태·총계 불일치, 검토표의 존재하지 않는 사진 참조는 오류로
+거절합니다. 원본 사진·개별 파일명·얼굴 좌표·사람이 그린 경계선은 출력하지 않습니다.
+
+`singleFaceLandmarks`는 모델 경계점 존재 여부이고 `hairlineInterfaceCandidates`는
+**자동 검출 후보**입니다. `reviewDecisionCounts`는 판독 메모의 수일 뿐 독립
+정답 대비 실제 정확도가 아닙니다. 사람이 경계선을 그려 검토한 기록과 정확도 검증은
+별도 단계이며, 본 보고서는 `independentBoundaryAccuracyValidated=false`를 유지합니다.
+기존 얼굴 관측 29개 정규 항목, 전통 F1 및 제품 판독 권한은 변경하지 않습니다.
