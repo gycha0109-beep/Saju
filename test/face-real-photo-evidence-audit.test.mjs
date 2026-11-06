@@ -35,7 +35,9 @@ function fixtures() {
     },
   };
   const results = ['dataset,photo_id,landmark_face_status,hairline_state'];
-  const queue = ['dataset,photo_id,human_review_decision,human_review_notes,reviewed_at'];
+  const queue = [
+    'dataset,photo_id,human_review_decision,human_review_notes,reviewed_at,review_case,landmark_face_status,hairline_state',
+  ];
   for (const [dataset, n] of Object.entries(groups)) {
     for (let i = 0; i < n; i++) {
       const key = 'private-photo-' + i;
@@ -49,6 +51,9 @@ function fixtures() {
             decision,
             decision ? '"Observed, but wrong"' : '',
             decision ? '2026-11-04' : '',
+            'hairline_candidate_needs_review',
+            'face_landmarks',
+            'visible_interface_candidate',
           ].join(','),
         );
       }
@@ -80,6 +85,20 @@ describe('private 2,000-photo evidence audit', () => {
     expect(report.humanReview).toMatchObject({
       reviewQueueSize: 168,
       reviewDecisionCounts: { wrong: 30, undecided: 138 },
+      stratifiedReview: {
+        byDataset: {
+          first_500: { selected: 56, decisions: { wrong: 10, undecided: 46 } },
+          additional_1000: { selected: 56, decisions: { wrong: 10, undecided: 46 } },
+          east_asia_source_500: { selected: 56, decisions: { wrong: 10, undecided: 46 } },
+        },
+        byModelReviewCase: {
+          hairline_candidate_needs_review: {
+            selected: 168,
+            decisions: { wrong: 30, undecided: 138 },
+          },
+        },
+        populationAccuracyEstimationAuthorized: false,
+      },
       draftBoundaryRecords: 1,
       recordsWithDrawnSegments: 0,
       reviewerFlaggedBoundaryRecords: 0,
@@ -130,6 +149,31 @@ describe('private 2,000-photo evidence audit', () => {
     };
     expect(() => auditRealPhotoEvidence(f.summary, f.results, f.queue, f.gt)).toThrow(
       'EVIDENCE_ANNOTATION_INVALID',
+    );
+  });
+
+  it('rejects review states or case labels that disagree with the model record', () => {
+    const f = fixtures();
+    const caseMismatch = f.queue.replace(
+      'hairline_candidate_needs_review,face_landmarks,visible_interface_candidate',
+      'hairline_not_visible,face_landmarks,visible_interface_candidate',
+    );
+    expect(() => auditRealPhotoEvidence(f.summary, f.results, caseMismatch, f.gt)).toThrow(
+      'EVIDENCE_QUEUE_INVALID',
+    );
+    const stateMismatch = f.queue.replace(
+      'hairline_candidate_needs_review,face_landmarks,visible_interface_candidate',
+      'hairline_candidate_needs_review,face_landmarks,no_visible_hairline_candidate',
+    );
+    expect(() => auditRealPhotoEvidence(f.summary, f.results, stateMismatch, f.gt)).toThrow(
+      'EVIDENCE_QUEUE_INVALID',
+    );
+    const faceMismatch = f.queue.replace(
+      'hairline_candidate_needs_review,face_landmarks,visible_interface_candidate',
+      'hairline_candidate_needs_review,no_face,visible_interface_candidate',
+    );
+    expect(() => auditRealPhotoEvidence(f.summary, f.results, faceMismatch, f.gt)).toThrow(
+      'EVIDENCE_QUEUE_INVALID',
     );
   });
 

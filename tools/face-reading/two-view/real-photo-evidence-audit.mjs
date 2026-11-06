@@ -13,6 +13,17 @@ const STATES = [
 ];
 const FACES = ['face_landmarks', 'no_face', 'multiple_faces', 'error'];
 const REQUIRED = ['dataset', 'photo_id', 'landmark_face_status', 'hairline_state'];
+const REVIEW_CASES = Object.freeze({
+  face_not_single: 'not_run',
+  hairline_candidate_needs_review: 'visible_interface_candidate',
+  hairline_not_visible: 'no_visible_hairline_candidate',
+  hairline_partial_or_occluded: 'partially_visible_or_occluded',
+  hairline_unavailable: 'unavailable',
+});
+const REVIEW_DECISIONS = Object.freeze(['correct', 'wrong', 'partial', 'unknown', 'undecided']);
+function decisionCounts() {
+  return Object.fromEntries(REVIEW_DECISIONS.map((decision) => [decision, 0]));
+}
 
 export function parseEvidenceCsv(text) {
   if (typeof text !== 'string') throw Error('EVIDENCE_CSV_INVALID');
@@ -139,14 +150,19 @@ export function auditRealPhotoEvidence(summary, resultsCsv, reviewCsv, gt) {
     'human_review_decision',
     'human_review_notes',
     'reviewed_at',
+    'review_case',
+    'landmark_face_status',
+    'hairline_state',
   ]);
   const seen = new Set(),
+    modelByKey = new Map(),
     byGroup = Object.fromEntries(Object.keys(SIZES).map((k) => [k, []]));
   for (const row of results.rows) {
     if (!Object.hasOwn(SIZES, row.dataset) || !row.photo_id) throw Error('EVIDENCE_ROW_INVALID');
     const key = row.dataset + ':' + row.photo_id;
     if (seen.has(key)) throw Error('EVIDENCE_DUPLICATE_ROW');
     seen.add(key);
+    modelByKey.set(key, row);
     byGroup[row.dataset].push(row);
   }
   const groups = {};
@@ -164,11 +180,26 @@ export function auditRealPhotoEvidence(summary, resultsCsv, reviewCsv, gt) {
   const all = tally(results.rows);
   verifySummary(summary.results.all, all);
   const selected = new Set(),
-    decisions = { correct: 0, wrong: 0, partial: 0, unknown: 0, undecided: 0 };
+    decisions = decisionCounts();
   const queueByGroup = Object.fromEntries(Object.keys(SIZES).map((k) => [k, 0]));
+  const byDataset = Object.fromEntries(
+    Object.keys(SIZES).map((k) => [k, { selected: 0, decisions: decisionCounts() }]),
+  );
+  const byReviewCase = Object.fromEntries(
+    Object.keys(REVIEW_CASES).map((k) => [k, { selected: 0, decisions: decisionCounts() }]),
+  );
   for (const row of review.rows) {
     const key = row.dataset + ':' + row.photo_id;
-    if (!seen.has(key) || selected.has(key)) throw Error('EVIDENCE_QUEUE_INVALID');
+    const matched = modelByKey.get(key);
+    if (
+      !matched ||
+      selected.has(key) ||
+      !Object.hasOwn(REVIEW_CASES, row.review_case) ||
+      row.hairline_state !== matched.hairline_state ||
+      row.landmark_face_status !== matched.landmark_face_status ||
+      row.hairline_state !== REVIEW_CASES[row.review_case]
+    )
+      throw Error('EVIDENCE_QUEUE_INVALID');
     selected.add(key);
     queueByGroup[row.dataset] += 1;
     const choice = row.human_review_decision || 'undecided';
@@ -176,6 +207,10 @@ export function auditRealPhotoEvidence(summary, resultsCsv, reviewCsv, gt) {
     if ((choice === 'undecided') !== (row.reviewed_at.trim().length === 0))
       throw Error('EVIDENCE_QUEUE_INVALID');
     decisions[choice] += 1;
+    byDataset[row.dataset].selected += 1;
+    byDataset[row.dataset].decisions[choice] += 1;
+    byReviewCase[row.review_case].selected += 1;
+    byReviewCase[row.review_case].decisions[choice] += 1;
   }
   if (selected.size !== 168 || Object.values(queueByGroup).some((n) => n !== 56))
     throw Error('EVIDENCE_QUEUE_INVALID');
@@ -184,7 +219,7 @@ export function auditRealPhotoEvidence(summary, resultsCsv, reviewCsv, gt) {
     reviewerFlaggedRecords = 0;
   for (const [key, item] of Object.entries(gt.records)) {
     if (
-      !seen.has(key) ||
+      !selected.has(key) ||
       !item ||
       typeof item !== 'object' ||
       !Array.isArray(item.segments) ||
@@ -197,7 +232,7 @@ export function auditRealPhotoEvidence(summary, resultsCsv, reviewCsv, gt) {
     if (item.humanReviewed && item.segments.length > 0) reviewerFlaggedRecords++;
   }
   return Object.freeze({
-    schemaVersion: 'local-2000-photo-evidence-and-review-readiness@0.1.0',
+    schemaVersion: 'local-2000-photo-evidence-and-review-readiness@0.2.0',
     source: 'existing_local_20261104_mediapipe_hairline_evaluation',
     modelEvidence: {
       processed: all.processed,
@@ -212,6 +247,12 @@ export function auditRealPhotoEvidence(summary, resultsCsv, reviewCsv, gt) {
     humanReview: {
       reviewQueueSize: selected.size,
       reviewDecisionCounts: decisions,
+      stratifiedReview: {
+        byDataset,
+        byModelReviewCase: byReviewCase,
+        selection: 'stratified_case_queue_not_random_population_sample',
+        populationAccuracyEstimationAuthorized: false,
+      },
       draftBoundaryRecords,
       recordsWithDrawnSegments: manuallyMarkedBoundaryRecords,
       reviewerFlaggedBoundaryRecords: reviewerFlaggedRecords,
