@@ -154,8 +154,7 @@ export function traceWholeFaceSourceGaps(columns, authorityEntries, captures) {
   if (
     !Array.isArray(authorityEntries) ||
     authorityEntries.length !== report.canonicalFeatureCount ||
-    new Set(authorityEntries.map((entry) => entry.featureKey)).size !==
-      report.canonicalFeatureCount
+    new Set(authorityEntries.map((entry) => entry.featureKey)).size !== report.canonicalFeatureCount
   )
     throw Error('COVERAGE_AUTHORITY_DRIFT');
   const authorityByKey = new Map(authorityEntries.map((entry) => [entry.featureKey, entry]));
@@ -215,7 +214,9 @@ export function traceWholeFaceSourceGaps(columns, authorityEntries, captures) {
       canonicalCalculatorMaterialized: coverage.canonicalCalculatorMaterialized,
       implementationSourcePaths: Object.freeze(sourcePaths),
       requiredExtractor: column.requiredExtractor,
-      localEngineeringProxySources: Object.freeze([...(CANDIDATE_SOURCES[column.featureKey] || [])]),
+      localEngineeringProxySources: Object.freeze([
+        ...(CANDIDATE_SOURCES[column.featureKey] || []),
+      ]),
       localPhotoProxyCount: coverage.candidatePhotoCount,
       photoEvidenceState,
       canonicalPhotoMeasurementVerified: false,
@@ -253,14 +254,14 @@ function readSourceMappingRows(document, heading, columns) {
   if (next < 0) throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
   const section = document.slice(start + heading.length, next);
   const lines = section.split('\n').filter((line) => line.startsWith('|'));
-  if (
-    lines.length !== 20 ||
-    !/^\|[\s:|-]+\|$/.test(lines[1])
-  )
+  if (lines.length !== 20 || !/^\|[\s:|-]+\|$/.test(lines[1]))
     throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
   return lines.slice(2).map((line) => {
     if (!line.endsWith('|')) throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
-    const cells = line.slice(1, -1).split('|').map((part) => part.trim());
+    const cells = line
+      .slice(1, -1)
+      .split('|')
+      .map((part) => part.trim());
     if (cells.length !== columns || cells.some((part) => !part))
       throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
     return cells;
@@ -277,12 +278,9 @@ export function traceWholeFaceExtensionRequirements(sourceMarkdown, canonicalFea
     new Set(canonicalFeatureKeys).size !== 29
   )
     throw Error('COVERAGE_EXTENSION_SOURCE_DRIFT');
-  const requirements = readSourceMappingRows(
-    sourceMarkdown,
-    EXTENSION_REQUIREMENTS_HEADING,
-    4,
-  );
-  const decisions = readSourceMappingRows(sourceMarkdown, EXTENSION_DECISIONS_HEADING, 3);
+  const normalizedMarkdown = sourceMarkdown.replaceAll('\r\n', '\n');
+  const requirements = readSourceMappingRows(normalizedMarkdown, EXTENSION_REQUIREMENTS_HEADING, 4);
+  const decisions = readSourceMappingRows(normalizedMarkdown, EXTENSION_DECISIONS_HEADING, 3);
   const seen = new Set();
   const features = requirements.map(([name, related, initialRoute, gap], index) => {
     const [decisionName, technique, independentEvidence] = decisions[index];

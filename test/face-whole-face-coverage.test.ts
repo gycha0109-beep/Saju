@@ -189,7 +189,9 @@ describe('source-derived whole-face execution trace', () => {
     expect(trace.calculatedOnlyOrUnverifiedCount).toBe(18);
     expect(trace.featuresWithLocalEngineeringProxy).toBe(0);
     expect(trace.sourcePredicateMappingsAdmitted).toBe(0);
-    expect(trace.features.every((row) => row.independentAccuracyState === 'not_evaluated')).toBe(true);
+    expect(trace.features.every((row) => row.independentAccuracyState === 'not_evaluated')).toBe(
+      true,
+    );
     const eye = trace.features.find((row) => row.featureKey === 'eye.width_height_ratio');
     expect(eye).toMatchObject({
       photoEvidenceState: 'calculation_only',
@@ -198,11 +200,12 @@ describe('source-derived whole-face execution trace', () => {
       nextMissingEvidence: 'actual_photo_extraction_and_independent_human_reference',
     });
     expect(eye?.implementationSourcePaths.length).toBeGreaterThan(0);
-    expect(trace.features.find((row) => row.featureKey === 'ear.thickness_attachment_canal_boundary'))
-      .toMatchObject({
-        photoEvidenceState: 'unavailable',
-        nextMissingEvidence: 'current_rgb_authority_unavailable',
-      });
+    expect(
+      trace.features.find((row) => row.featureKey === 'ear.thickness_attachment_canal_boundary'),
+    ).toMatchObject({
+      photoEvidenceState: 'unavailable',
+      nextMissingEvidence: 'current_rgb_authority_unavailable',
+    });
   });
 
   it('exposes a local engineering photo proxy without promoting a canonical measurement', () => {
@@ -211,15 +214,16 @@ describe('source-derived whole-face execution trace', () => {
       FR282_RGB_SELFIE_FEATURE_ENTRIES,
       [{ captureRef: 'capture-21', viewRole: 'frontal', metrics: metrics('capture-21') }],
     );
-    expect(trace.features.find((row) => row.featureKey === 'eye.width_height_ratio'))
-      .toMatchObject({
+    expect(trace.features.find((row) => row.featureKey === 'eye.width_height_ratio')).toMatchObject(
+      {
         photoEvidenceState: 'candidate_only',
         localPhotoProxyCount: 1,
         canonicalPhotoMeasurementVerified: false,
         traditionalSourcePredicateMapped: false,
         interpretationAuthorized: false,
         nextMissingEvidence: 'canonical_input_binding_and_independent_human_reference',
-      });
+      },
+    );
     expect(JSON.stringify(trace)).not.toContain('capture-21');
   });
 
@@ -237,9 +241,13 @@ describe('source-derived whole-face execution trace', () => {
     const elevated = a.map((entry, index) =>
       index === 0 ? { ...entry, traditionalBindingIssued: true } : entry,
     );
-    expect(() => traceWholeFaceSourceGaps(FR293_PRODUCT_COLUMN_MAP, elevated as unknown as typeof FR282_RGB_SELFIE_FEATURE_ENTRIES, [])).toThrow(
-      'COVERAGE_AUTHORITY_DRIFT',
-    );
+    expect(() =>
+      traceWholeFaceSourceGaps(
+        FR293_PRODUCT_COLUMN_MAP,
+        elevated as unknown as typeof FR282_RGB_SELFIE_FEATURE_ENTRIES,
+        [],
+      ),
+    ).toThrow('COVERAGE_AUTHORITY_DRIFT');
   });
 });
 
@@ -255,23 +263,39 @@ describe('document-driven extension requirement trace', () => {
     expect(trace.extensionRequirementCount).toBe(18);
     expect(trace.canonicalKeyCountUnchanged).toBe(29);
     expect(trace.allExtensionsUnapproved).toBe(true);
-    expect(trace.features.find((item) => item.requirement === '미간 실제 눈썹 사이 거리'))
-      .toMatchObject({
-        existingCanonicalFeatureKeys: [
-          'eyebrow.span_arch_tail_orientation',
-          'eye.inter_eye_spacing_ratio',
-        ],
-        traditionalBindingIssued: false,
-        independentAccuracyState: 'not_evaluated',
-      });
-    expect(trace.features.every((item) => item.productInterpretationAuthorized === false))
-      .toBe(true);
+    expect(
+      trace.features.find((item) => item.requirement === '미간 실제 눈썹 사이 거리'),
+    ).toMatchObject({
+      existingCanonicalFeatureKeys: [
+        'eyebrow.span_arch_tail_orientation',
+        'eye.inter_eye_spacing_ratio',
+      ],
+      traditionalBindingIssued: false,
+      independentAccuracyState: 'not_evaluated',
+    });
+    expect(trace.features.every((item) => item.productInterpretationAuthorized === false)).toBe(
+      true,
+    );
+  });
+
+  it('accepts LF and Windows CRLF without weakening source table drift checks', () => {
+    const lf = source.replace(/\r\n/g, '\n');
+    const crlf = lf.replace(/\n/g, '\r\n');
+    const first = traceWholeFaceExtensionRequirements(lf, keys);
+    const second = traceWholeFaceExtensionRequirements(crlf, keys);
+    expect(second).toEqual(first);
+    expect(second.extensionRequirementCount).toBe(18);
   });
 
   it('rejects missing or reordered extension source rows and duplicate canonical keys', () => {
-    expect(() => traceWholeFaceExtensionRequirements(source.replace('미간 실제 눈썹 사이 거리', 'REMOVED'), keys))
-      .toThrow('COVERAGE_EXTENSION_SOURCE_DRIFT');
-    expect(() => traceWholeFaceExtensionRequirements(source, [...keys.slice(1), keys[1]!]))
-      .toThrow('COVERAGE_EXTENSION_SOURCE_DRIFT');
+    expect(() =>
+      traceWholeFaceExtensionRequirements(
+        source.replace('미간 실제 눈썹 사이 거리', 'REMOVED'),
+        keys,
+      ),
+    ).toThrow('COVERAGE_EXTENSION_SOURCE_DRIFT');
+    expect(() => traceWholeFaceExtensionRequirements(source, [...keys.slice(1), keys[1]!])).toThrow(
+      'COVERAGE_EXTENSION_SOURCE_DRIFT',
+    );
   });
 });
