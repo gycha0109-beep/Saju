@@ -3,7 +3,20 @@
 > Hosting authority: MyeongHa `docs/architecture/SAJU_PRODUCTION_HOSTING_DECISION_V1.md`  
 > Region: `asia-southeast1` (Singapore)  
 > Production workflow: `.github/workflows/production-cloud-run.yml`  
-> Status: implementation contract only; production activation requires the external prerequisites below.
+> Status: historical exact-digest Production deployment and rollback drill verified; current read-only lineage is recorded below. Current MyeongHa Worker compatibility, active/previous credential rotation, and any new deployment authorization remain separate acceptance gates.
+
+
+## Current Production evidence snapshot — 2026-11-06
+
+This runbook is not merely a proposed deployment contract: the following historical Production operations actually ran. Their success does not authorize a new deployment or prove the latest MyeongHa Worker release is compatible.
+
+- [Production Cloud Run #35622856668](https://github.com/gycha0109-beep/Saju/actions/runs/35622856668) succeeded on 2026-09-21. It built/pushed an exact source image, deployed a no-traffic candidate, passed authenticated candidate smoke, promoted the candidate to 100% traffic, and passed post-promotion smoke.
+- [Production Cloud Run Rollback Drill #35724573502](https://github.com/gycha0109-beep/Saju/actions/runs/35724573502) succeeded on 2026-09-22. It switched 100% traffic to the manifest-bound prior revision, passed authenticated smoke, restored the original revision's traffic, passed smoke again, and uploaded sanitized evidence.
+- Latest [read-only Cloud Run lineage #42207998063](https://github.com/gycha0109-beep/Saju/actions/runs/42207998063) succeeded on 2026-11-06 at Saju `main` `db6879a36003d65e9c5eda3688f8815cd340fba2`. It observed service `saju-production` in `asia-southeast1`, one Ready revision `saju-production-00013-lar` serving 100% traffic, image digest `sha256:a911e244d91fd03b72cf94553c90cf72cc2bbb51a9b82255fb45379e53c37d67`, source tag `candidate-54667c70e461`, readable Cloud Audit history, and 54 selected traffic events. The sanitized original is preserved in MyeongHa as `docs/operations/SAJU_CLOUD_RUN_LINEAGE_OBSERVATION_20261106.json` (39,017 bytes; SHA-256 `bc17711444e997bb7ed1494d001637d9fc765f504d0eea26281416b705abc6e6`). The lineage collector intentionally leaves `rollbackTargetAuthorized=false`; do not infer a predecessor from revision ordering.
+- The deployed source prefix resolves to commit `54667c70e46140b004d3b81c5797191538f6cbc3`, which is an ancestor of current Saju `main` by 861 commits. Source comparison found the Dockerfile, production server entrypoint, service Bearer authorizer, calculation response schema, calculation authority/runtime, and `/api/calculations` handler unchanged. Later changes added reading/face routes and altered process composition; this source-level comparison is not a live current-Worker E2E.
+- MyeongHa's current product API is the Cloudflare Worker calculation-only adapter, not the historical Vercel path. The last documented positive authenticated Member/DB/Saju E2E is pinned to Worker #122 in [MyeongHa run #40261086788](https://github.com/gycha0109-beep/MyeongHa/actions/runs/40261086788). A newer/current Worker version requires its own exact-version positive E2E. That workflow uses production Member credentials and creates a synthetic Guest fixture; it requires explicit confirmation and must not be run without the applicable approval.
+- The 2026-10-28 MyeongHa operations decision states that no additional paid infrastructure was approved. The historical deployment and current read-only lineage do not authorize another paid resource, Cloud Run deployment, traffic migration, IAM change, or Secret Manager update/rotation. No such mutation was performed during the 2026-11-06 lineage capture.
+- Read-only GitHub settings show Saju `main` is not branch-protected. The `production-saju` environment allowlists `main` but has no required-reviewer protection; this is not a complete controlled-promotion gate.
 
 ## 1. Operational boundary
 
