@@ -163,6 +163,37 @@
       .tabs .active {
         border-color: #a8b7ff;
       }
+      .eye-fold-review-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 12px 0;
+      }
+      .eye-fold-review-side {
+        background: #192331;
+        border: 1px solid #344156;
+        border-radius: 9px;
+        padding: 12px;
+      }
+      .eye-fold-review-side h3 {
+        margin: 0 0 8px;
+      }
+      .eye-fold-review-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .eye-fold-review-options button {
+        padding: 7px 9px;
+        font-size: 12px;
+      }
+      .eye-fold-review-options button.active {
+        border-color: #a8b7ff;
+        background: #30415c;
+      }
+      #eye-fold-review-status {
+        min-height: 22px;
+      }
       .error {
         color: #ffb6a7;
       }
@@ -196,6 +227,9 @@
           font-size: 18px;
         }
         .inputs {
+          grid-template-columns: 1fr;
+        }
+        .eye-fold-review-grid {
           grid-template-columns: 1fr;
         }
         .viewer {
@@ -273,6 +307,45 @@
           양쪽 눈 클래스의 폭·높이·면적·중심 간격을 확인합니다. 눈꺼풀 실제 경계·쌍꺼풀·전통
           관상형은 판정하지 않습니다.
         </p>
+      </section>
+      <section id="eye-fold-review" aria-labelledby="eye-fold-review-heading" hidden>
+        <h2 id="eye-fold-review-heading">눈꺼풀 주름·덮임 — 사람 검토 라벨</h2>
+        <p class="note">
+          원본 정면 사진에서 화면 왼쪽·오른쪽 눈을 각각 검토합니다. 화면 좌우는 인물의 해부학적 좌우를 뜻하지 않습니다.
+          모델이 자동으로 분류하지 않으며, 이 라벨은 연구용 검토 자료입니다. 사람 간 합의와 정확도 검증 전에는 모델 학습·정규 관측·전통 판독에 사용하지 않습니다.
+        </p>
+        <p id="eye-fold-review-count" class="note"></p>
+        <div class="eye-fold-review-grid">
+          <div class="eye-fold-review-side">
+            <h3>화면 왼쪽 눈</h3>
+            <div id="eye-fold-left-options" class="eye-fold-review-options">
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="visible">쌍꺼풀 선 보임</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="hooded">쌍꺼풀 선이 덮여 보임</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="no_visible_crease">쌍꺼풀 선 보이지 않음</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="partial">일부만 보임</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="occluded">가려짐</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="out_of_frame">사진 밖</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="unknown">판단 불가</button>
+            </div>
+          </div>
+          <div class="eye-fold-review-side">
+            <h3>화면 오른쪽 눈</h3>
+            <div id="eye-fold-right-options" class="eye-fold-review-options">
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="visible">쌍꺼풀 선 보임</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="hooded">쌍꺼풀 선이 덮여 보임</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="no_visible_crease">쌍꺼풀 선 보이지 않음</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="partial">일부만 보임</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="occluded">가려짐</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="out_of_frame">사진 밖</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="unknown">판단 불가</button>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button id="eye-fold-review-save" disabled>사람 검토 저장</button>
+          <button id="eye-fold-review-reset" disabled>저장 전 선택 취소</button>
+        </div>
+        <p id="eye-fold-review-status" class="note" role="status"></p>
       </section>
       <section aria-labelledby="lip-class-experiment-heading">
         <h2 id="lip-class-experiment-heading">위·아래 입술 분할 클래스 — 모델 형태 후보</h2>

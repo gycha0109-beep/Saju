@@ -22,6 +22,12 @@ import { validateParsingBatch } from './parsing-storage.mjs';
 import { INSTANCE_PIN } from './instance-frame.mjs';
 import { readingCatalogue } from './reading-catalogue.mjs';
 import { experienceAssets } from './experience-server.mjs';
+import {
+  EYE_FOLD_REVIEW_SCHEMA_VERSION,
+  createEyeFoldReviewRecord,
+  validateEyeFoldReviewStore,
+  projectEyeFoldReviewForUi,
+} from './eye-fold-review.mjs';
 
 const sourceDir = dirname(fileURLToPath(import.meta.url));
 const repository = resolve(sourceDir, '../../..');
@@ -197,6 +203,25 @@ export async function createLocalReviewServer({
       };
     }),
   );
+  const sourceDigestByRecord = new Map(
+    await Promise.all(
+      inventory.map(async (record) => [
+        record.recordId,
+        createHash('sha256').update(await readFile(record.sourcePath)).digest('hex'),
+      ]),
+    ),
+  );
+  const eyeFoldReviewPath = resolve(intake, 'eye-fold-human-reviews.json');
+  let eyeFoldReviews = new Map();
+  let eyeFoldReviewRestoreFailed = false;
+  let eyeFoldReviewSaving = false;
+  try {
+    const stored = JSON.parse(await readFile(eyeFoldReviewPath, 'utf8'));
+    const validated = validateEyeFoldReviewStore(stored, ids);
+    eyeFoldReviews = new Map(Object.entries(validated.records));
+  } catch (error) {
+    if (error.code !== 'ENOENT') eyeFoldReviewRestoreFailed = true;
+  }
   const token = randomBytes(24).toString('hex');
   const origin = 'http://127.0.0.1:' + port;
   const runRoot = resolve(intake, 'two-view-runs');
@@ -328,6 +353,7 @@ export async function createLocalReviewServer({
       'visible-nose-mask-profile.mjs',
       'visible-lip-class-profile.mjs',
       'visible-eye-class-profile.mjs',
+      'eye-fold-review.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const [route, asset] of experienceAssets()) assets.set(route, asset);
@@ -425,6 +451,28 @@ export async function createLocalReviewServer({
     res.writeHead(200, { ...staticHeaders, 'Content-Type': 'text/html; charset=utf-8' });
     res.end(html);
   }
+  async function currentEyeFoldReviewState() {
+    const records = {};
+    let staleCount = 0;
+    for (const [captureRef, review] of eyeFoldReviews) {
+      try {
+        const source = inventory.find((item) => item.recordId === captureRef);
+        if (!source) {
+          staleCount++;
+          continue;
+        }
+        const digest = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
+        if (digest !== review.sourceSha256) {
+          staleCount++;
+          continue;
+        }
+        records[captureRef] = projectEyeFoldReviewForUi(review);
+      } catch {
+        staleCount++;
+      }
+    }
+    return { records, staleCount };
+  }
   async function handle(req, res) {
     if (req.headers.host !== '127.0.0.1:' + port)
       return json(res, 403, { error: 'LOCAL_HOST_REQUIRED' });
@@ -446,11 +494,15 @@ export async function createLocalReviewServer({
     if (req.method === 'GET' && url.pathname === '/') return rootPage(res, url);
     if (req.method === 'GET' && url.pathname === '/two-view')
       return file(res, resolve(sourceDir, 'review.html'), 'text/html; charset=utf-8');
-    if (req.method === 'GET' && url.pathname === '/two-view/state')
+    if (req.method === 'GET' && url.pathname === '/two-view/state') {
+      const eyeFoldReviewState = await currentEyeFoldReviewState();
       return json(res, 200, {
         token,
         records,
         savedRecords,
+        eyeFoldReviews: eyeFoldReviewState.records,
+        eyeFoldReviewStaleCount: eyeFoldReviewState.staleCount,
+        eyeFoldReviewRestoreFailed,
         readingCatalogue: catalogue,
         parsingAvailable: Boolean(parsingModel),
         parsingRestoreFailed,
@@ -483,6 +535,7 @@ export async function createLocalReviewServer({
         formalValidation: false,
         authorityPromoted: false,
       });
+    }
     if (req.method === 'GET' && url.pathname.startsWith('/parsing-artifact/')) {
       const match = /^\/parsing-artifact\/(capture-[0-9]{2,})\/([a-z]+)\.png$/.exec(url.pathname);
       const runId = url.searchParams.get('run');
@@ -629,6 +682,64 @@ export async function createLocalReviewServer({
         parsingSaving = false;
       }
     }
+    if (req.method === 'POST' && url.pathname === '/two-view/eye-fold-reviews') {
+      if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
+      const input = await requestJson(req, 12000);
+      const allowedKeys = new Set(['token', 'captureRef', 'imageLeft', 'imageRight']);
+      if (
+        !input ||
+        typeof input !== 'object' ||
+        Array.isArray(input) ||
+        Object.keys(input).some((key) => !allowedKeys.has(key))
+      )
+        throw Error('EYE_FOLD_REVIEW_INVALID');
+      if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
+      if (eyeFoldReviewSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
+      const captureRef = input.captureRef;
+      const source = inventory.find((item) => item.recordId === captureRef);
+      if (!source || roles.get(captureRef) !== 'frontal') throw Error('EYE_FOLD_REVIEW_INVALID');
+      eyeFoldReviewSaving = true;
+      try {
+        const original = sourceFileStates.find((item) => item.recordId === captureRef);
+        const current = await stat(source.sourcePath);
+        if (
+          !original ||
+          current.size !== original.size ||
+          current.mtimeMs !== original.mtimeMs ||
+          current.ino !== original.ino
+        )
+          throw Error('SOURCE_CHANGED');
+        const sourceSha256 = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
+        if (sourceSha256 !== sourceDigestByRecord.get(captureRef)) throw Error('SOURCE_CHANGED');
+        const previous = eyeFoldReviews.get(captureRef);
+        const review = createEyeFoldReviewRecord(
+          { imageLeft: input.imageLeft, imageRight: input.imageRight },
+          {
+            captureRef,
+            sourceSha256,
+            revision: (previous?.revision || 0) + 1,
+            reviewedAt: new Date().toISOString(),
+          },
+        );
+        const nextRecords = Object.fromEntries(eyeFoldReviews);
+        nextRecords[captureRef] = review;
+        const temporaryPath = resolve(intake, 'eye-fold-human-reviews-' + randomUUID() + '.tmp');
+        await writeFile(
+          temporaryPath,
+          JSON.stringify({ schemaVersion: EYE_FOLD_REVIEW_SCHEMA_VERSION, records: nextRecords }, null, 2) +
+            '\n',
+          { flag: 'wx' },
+        );
+        await rename(temporaryPath, eyeFoldReviewPath);
+        eyeFoldReviews.set(captureRef, review);
+        eyeFoldReviewRestoreFailed = false;
+        return json(res, 200, { saved: true, review: projectEyeFoldReviewForUi(review) });
+      } finally {
+        eyeFoldReviewSaving = false;
+      }
+    }
     return json(res, 404, { error: 'NOT_FOUND' });
   }
   return http.createServer((req, res) => {
@@ -639,6 +750,7 @@ export async function createLocalReviewServer({
         'PARSING_LAYERS_INVALID',
         'BATCH_INVALID',
         'METRIC_INVALID',
+        'EYE_FOLD_REVIEW_INVALID',
         'REQUEST_TOO_LARGE',
         'SOURCE_CHANGED',
       ].includes(error.message)

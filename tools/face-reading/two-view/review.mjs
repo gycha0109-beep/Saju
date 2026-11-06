@@ -40,7 +40,10 @@ let state,
   busy = false;
 const results = new Map(),
   blobUrls = new Set(),
-  files = new Map();
+  files = new Map(),
+  eyeFoldDrafts = new Map();
+let eyeFoldSaveBusy = false;
+let eyeFoldSaveError = null;
 function urlFor(blob) {
   const url = URL.createObjectURL(blob);
   blobUrls.add(url);
@@ -342,6 +345,125 @@ function renderVisibleEyeClassExperiment(record, result, previous) {
       ' — 모델의 2D 영역 후보이며 실제 눈꺼풀·쌍꺼풀·전통 형태 판정은 아닙니다.';
   else node.textContent = '현재 사진의 눈 클래스 후보가 없습니다.';
 }
+const eyeFoldStatusLabels = Object.freeze({
+  visible: '쌍꺼풀 선 보임',
+  hooded: '쌍꺼풀 선이 덮여 보임',
+  no_visible_crease: '쌍꺼풀 선 보이지 않음',
+  partial: '일부만 보임',
+  occluded: '가려짐',
+  out_of_frame: '사진 밖',
+  unknown: '판단 불가',
+});
+function renderEyeFoldReview(record) {
+  const panel = $('eye-fold-review');
+  const available = mode === 'existing' && record.viewRole === 'frontal';
+  panel.hidden = !available;
+  if (!available) return;
+
+  const saved = state.eyeFoldReviews?.[record.captureRef] || null;
+  let draft = eyeFoldDrafts.get(record.captureRef);
+  if (!draft) {
+    draft = {
+      imageLeft: saved?.imageLeft || null,
+      imageRight: saved?.imageRight || null,
+      dirty: false,
+    };
+    eyeFoldDrafts.set(record.captureRef, draft);
+  }
+  for (const button of panel.querySelectorAll('[data-eye-fold-side]')) {
+    const active = draft[button.dataset.eyeFoldSide] === button.dataset.eyeFoldStatus;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+    button.disabled = eyeFoldSaveBusy;
+  }
+
+  const complete =
+    Object.hasOwn(eyeFoldStatusLabels, draft.imageLeft) &&
+    Object.hasOwn(eyeFoldStatusLabels, draft.imageRight);
+  $('eye-fold-review-save').disabled =
+    eyeFoldSaveBusy ||
+    state.eyeFoldReviewRestoreFailed ||
+    !draft.dirty ||
+    !complete ||
+    !original;
+  $('eye-fold-review-reset').disabled = eyeFoldSaveBusy || !draft.dirty;
+  const frontalCount = state.records.filter((item) => item.viewRole === 'frontal').length;
+  const reviewedCount = Object.values(state.eyeFoldReviews || {}).filter(
+    (item) => item.humanReviewed,
+  ).length;
+  $('eye-fold-review-count').textContent =
+    `사람 검토 저장: ${reviewedCount}/${frontalCount}장 · 좌우 눈 모두 저장된 사진 기준`;
+
+  if (!original)
+    $('eye-fold-review-status').textContent =
+      '먼저 위의 원본 보기를 눌러 원본 사진을 표시하세요. 분할·측정 표시 위에서는 검토할 수 없습니다.';
+  else if (state.eyeFoldReviewRestoreFailed)
+    $('eye-fold-review-status').textContent =
+      '이전 사람 검토 자료를 읽지 못했습니다. 기존 파일을 덮어쓰지 않고 새 검토 저장을 보류합니다.';
+  else if (eyeFoldSaveError?.captureRef === record.captureRef)
+    $('eye-fold-review-status').textContent =
+      `사람 검토 저장 실패: ${eyeFoldSaveError.message}. 선택한 라벨은 화면에 유지됩니다.`;
+  else if (draft.dirty)
+    $('eye-fold-review-status').textContent =
+      '좌우 눈 상태를 선택했습니다. 저장하면 이 사진의 SHA-256에 연결된 로컬 검토 기록으로 남습니다.';
+  else if (state.eyeFoldReviewStaleCount)
+    $('eye-fold-review-status').textContent =
+      '원본 사진이 바뀐 것으로 확인된 기존 라벨이 있습니다. 해당 라벨은 자동 적용하지 않았습니다.';
+  else if (saved)
+    $('eye-fold-review-status').textContent =
+      `저장된 사람 검토 ${saved.revision}차 · ${new Date(saved.reviewedAt).toLocaleString('ko-KR')} · 정확도·사람 간 합의 검증 전`;
+  else $('eye-fold-review-status').textContent = '아직 사람 검토가 없습니다. 좌우 눈 상태를 각각 선택하세요.';
+  document.body.dataset.eyeFoldReviewAvailable = 'true';
+}
+async function saveEyeFoldReview() {
+  const record = records[selected];
+  const draft = record && eyeFoldDrafts.get(record.captureRef);
+  if (
+    !record ||
+    mode !== 'existing' ||
+    record.viewRole !== 'frontal' ||
+    !original ||
+    state.eyeFoldReviewRestoreFailed ||
+    !draft?.dirty ||
+    !Object.hasOwn(eyeFoldStatusLabels, draft.imageLeft) ||
+    !Object.hasOwn(eyeFoldStatusLabels, draft.imageRight)
+  )
+    return;
+
+  eyeFoldSaveError = null;
+  eyeFoldSaveBusy = true;
+  renderEyeFoldReview(record);
+  try {
+    const response = await fetch('/two-view/eye-fold-reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: state.token,
+        captureRef: record.captureRef,
+        imageLeft: draft.imageLeft,
+        imageRight: draft.imageRight,
+      }),
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.saved !== true || !payload.review)
+      throw Error(payload.error || 'EYE_FOLD_REVIEW_SAVE_FAILED');
+    state.eyeFoldReviews = {
+      ...(state.eyeFoldReviews || {}),
+      [record.captureRef]: payload.review,
+    };
+    state.eyeFoldReviewRestoreFailed = false;
+    state.eyeFoldReviewStaleCount = 0;
+    eyeFoldDrafts.delete(record.captureRef);
+  } catch (error) {
+    eyeFoldSaveError = {
+      captureRef: record.captureRef,
+      message: error.message || '저장 오류',
+    };
+  } finally {
+    eyeFoldSaveBusy = false;
+    renderEyeFoldReview(record);
+  }
+}
 function render() {
   const record = records[selected];
   if (!record) return;
@@ -407,6 +529,7 @@ function render() {
   renderVisibleNoseMaskExperiment(record, result, previous);
   renderVisibleEyeClassExperiment(record, result, previous);
   renderVisibleLipClassExperiment(record, result, previous);
+  renderEyeFoldReview(record);
   const quality = parsing?.regionScreening?.regions;
   const regionNames = { skin: '피부', nose: '코', lips: '입술', brows: '눈썹', ears: '귀 후보' };
   const checked = quality
@@ -889,6 +1012,35 @@ $('old-overlay').onchange = () => {
   render();
 };
 $('previous-parsing').onchange = render;
+document.querySelectorAll('[data-eye-fold-side]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const record = records[selected];
+    if (!record || mode !== 'existing' || record.viewRole !== 'frontal') return;
+    const side = button.dataset.eyeFoldSide;
+    const status = button.dataset.eyeFoldStatus;
+    if (!['imageLeft', 'imageRight'].includes(side) || !Object.hasOwn(eyeFoldStatusLabels, status))
+      return;
+    const saved = state.eyeFoldReviews?.[record.captureRef];
+    const draft = eyeFoldDrafts.get(record.captureRef) || {
+      imageLeft: saved?.imageLeft || null,
+      imageRight: saved?.imageRight || null,
+      dirty: false,
+    };
+    draft[side] = status;
+    draft.dirty = true;
+    eyeFoldDrafts.set(record.captureRef, draft);
+    eyeFoldSaveError = null;
+    renderEyeFoldReview(record);
+  });
+});
+$('eye-fold-review-save').onclick = saveEyeFoldReview;
+$('eye-fold-review-reset').onclick = () => {
+  const record = records[selected];
+  if (!record) return;
+  eyeFoldDrafts.delete(record.captureRef);
+  eyeFoldSaveError = null;
+  renderEyeFoldReview(record);
+};
 $('image').onerror = () => {
   const record = records[selected];
   if (record && $('image').getAttribute('src') !== record.image) {
