@@ -655,3 +655,27 @@ node tools/face-reading/two-view/real-photo-evidence-audit.mjs "C:\Users\M\Docum
 정답 대비 실제 정확도가 아닙니다. 사람이 경계선을 그려 검토한 기록과 정확도 검증은
 별도 단계이며, 본 보고서는 `independentBoundaryAccuracyValidated=false`를 유지합니다.
 기존 얼굴 관측 29개 정규 항목, 전통 F1 및 제품 판독 권한은 변경하지 않습니다.
+
+## 사람 헤어라인 경계와 연구 후보의 사진 해시 일치 비교 (2026-11-06)
+
+기존 로컬 수동 검토 도구에서 작성한 `manual_ground_truth_168.json`과
+`run_multisignal_visible_hairline_candidate.py`가 생성한 `candidate.json` 파일을
+**같은 원본 사진의 SHA-256이 일치할 때만** 비교할 수 있습니다.
+
+```powershell
+node tools/face-reading/two-view/hairline-boundary-reference.mjs "C:\Users\M\Documents\MyeongHa-Facial-500\evaluation_2000\manual_ground_truth_168.json" "C:\Users\M\Documents\MyeongHa-Facial-500\evaluation_2000\bench_cache"
+```
+
+두 번째 인수는 각 하위 폴더에 `candidate.json`을 가진 비공개 모델
+출력 디렉터리입니다. 그 파일의 원본 사진 경로를 로컬에서 해시로 검사합니다.
+사람 경계가 `marked` 또는 `partial`로 표시되어 있고, 모델 후보가
+`visible_interface_candidate`로 노출된 경우에만 표시된 사람 경계점과 모델
+폴리라인 사이의 최근접 거리를 계산합니다. 가려진 부분, 진단용 후보,
+원본이 다른 사진은 비교하지 않습니다.
+
+출력은 수량과 정규화된 평균 거리만 포함하며 개인별 사진/경계선/좌표/원본
+해시·경로는 포함하지 않습니다. 꼭짓점 기반 단방향 거리이고 독립 인체
+정답에 대한 정확도·재현율·전통 명칭 판정이 아닙니다. 사람이 그린 경계가
+없으면 거리 출력은 `null`이고 `populationAccuracyValidated=false`를
+유지합니다. 기존 관상 F0·F1/제품 판단, 원본 사진, 저장/복원 형식은
+변경하지 않습니다.
