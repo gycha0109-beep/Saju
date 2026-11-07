@@ -22,6 +22,7 @@ import { validateParsingBatch } from './parsing-storage.mjs';
 import { INSTANCE_PIN } from './instance-frame.mjs';
 import { readingCatalogue } from './reading-catalogue.mjs';
 import { experienceAssets } from './experience-server.mjs';
+import { projectPrivatePhotoReadiness } from './private-readiness-view.mjs';
 import {
   EYELID_CONTOUR_REVIEW_VERSION,
   createEyelidContourReviewRecord,
@@ -641,6 +642,42 @@ export async function createLocalReviewServer({
     }
     return { records, staleCount };
   }
+  async function privatePhotoReadinessState() {
+    const withheld = { status: 'unavailable', reason: 'PRIVATE_READINESS_NOT_CURRENT' };
+    if (savedRecords.length !== ids.length || parsingSaved.length !== ids.length)
+      return withheld;
+    try {
+      const metricActive = JSON.parse(await readFile(resolve(runRoot, 'active.json'), 'utf8'));
+      const parsingActive = JSON.parse(await readFile(resolve(parsingRoot, 'active.json'), 'utf8'));
+      if (!/^[a-f0-9-]{36}$/.test(metricActive.runId || '') ||
+          !/^[a-f0-9-]{36}$/.test(parsingActive.runId || '') ||
+          parsingActive.runId !== parsingRunId)
+        return withheld;
+      const reportFile = 'whole-face-per-photo-readiness-v1-' +
+        metricActive.runId.slice(0, 8) + '-' + parsingActive.runId.slice(0, 8) + '.json';
+      const stored = JSON.parse(await readFile(resolve(intake, reportFile), 'utf8'));
+      const previous = JSON.parse(
+        await readFile(resolve(intake, 'coverage-summary-20261107.json'), 'utf8'),
+      );
+      const expectedKeys = previous.features?.map((f) => f.featureKey);
+      if (!Array.isArray(expectedKeys) || expectedKeys.length !== 29 ||
+          previous.canonicalCalculatorMaterializedCount !== 18 ||
+          previous.unresolvedCanonicalCount !== 11)
+        return withheld;
+      for (const original of inventory) {
+        const digest = createHash('sha256')
+          .update(await readFile(original.sourcePath)).digest('hex');
+        if (digest !== sourceDigestByRecord.get(original.recordId))
+          return withheld;
+      }
+      return projectPrivatePhotoReadiness(stored, records, expectedKeys, {
+        metric: METHOD_VERSION,
+        parsing: parsingSaved[0]?.parsing?.methodVersion,
+      });
+    } catch {
+      return withheld;
+    }
+  }
   async function handle(req, res) {
     if (req.headers.host !== '127.0.0.1:' + port)
       return json(res, 403, { error: 'LOCAL_HOST_REQUIRED' });
@@ -669,10 +706,12 @@ export async function createLocalReviewServer({
       const earReviewState = await currentEarReviewState();
       const lipReviewState = await currentLipReviewState();
       const eyelidContourState = await currentEyelidContourState();
+      const perCaptureReadiness = await privatePhotoReadinessState();
       return json(res, 200, {
         token,
         records,
         savedRecords,
+        perCaptureReadiness,
         eyeFoldReviews: eyeFoldReviewState.records,
         eyeFoldReviewStaleCount: eyeFoldReviewState.staleCount,
         eyeFoldReviewRestoreFailed,

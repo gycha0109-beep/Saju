@@ -735,6 +735,59 @@ $('eyelid-contour-review-activate').onclick = () => {
   original = true;
   render();
 };
+const readinessStates = {
+  not_evaluated: '평가 기록 없음',
+  calculation_only: '계산기만 연결',
+  candidate_only: '모델 관측 후보',
+  partial: '일부 사람 검토',
+  observed: '정규 관측',
+  unavailable: '현재 관측 불가',
+};
+const readinessReasons = {
+  CURRENT_RGB_AUTHORITY_UNAVAILABLE: '현재 RGB 정규 관측 권한 없음',
+  PHOTO_RUN_EVIDENCE_MISSING: '사진별 분석 기록 부족',
+  ENGINEERING_PROXY_NOT_CANONICAL: '모델 후보로 정규 측정 검증 전',
+  SINGLE_REVIEWER_NOT_INDEPENDENT_GROUND_TRUTH: '독립 사람 정답이 아님',
+  FRONTAL_CAPTURE_REQUIRED: '정면 사진 필요',
+  CANONICAL_CALCULATOR_WITHOUT_VERIFIED_PHOTO_INPUT: '사진 입력 경계 검증 필요',
+  NO_VERIFIED_IMAGE_EXTRACTOR: '검증된 부위별 이미지 관측기 없음',
+};
+function renderPhotoReadiness(record) {
+  const info = state?.perCaptureReadiness;
+  const entry = mode === 'existing' && info?.status === 'available'
+    ? info.captures?.[record.captureRef] : null;
+  const label = $('readiness-status');
+  const details = $('readiness-details');
+  const target = $('readiness-features');
+  target.replaceChildren();
+  details.hidden = !entry;
+  if (!entry) {
+    label.textContent = mode !== 'existing'
+      ? '새 사진은 비공개 검증 저장 후 항목별 상태를 확인할 수 있습니다.'
+      : '현재 사진에 연결된 최신 비공개 29개 관측 검증 기록이 없습니다. 이전 결과는 표시하지 않습니다.';
+    return;
+  }
+  const counts = Object.fromEntries(Object.keys(readinessStates).map((key) => [key, 0]));
+  for (const feature of entry.features) counts[feature.state]++;
+  label.textContent =
+    '현재 사진 29항목 · 모델 후보 ' + counts.candidate_only +
+    ' · 계산기만 ' + counts.calculation_only +
+    ' · 보류 ' + counts.unavailable +
+    (counts.partial ? ' · 일부 검토 ' + counts.partial : '') +
+    ' · 독립 검증된 정규 관측 0 · 전통 관상 판독에 사용 불가';
+  for (const feature of entry.features) {
+    const item = document.createElement('p');
+    item.className = 'note';
+    const title = document.createElement('strong');
+    title.textContent = feature.featureKey + ' — ' +
+      (readinessStates[feature.state] || '판정 보류');
+    const reason = document.createElement('span');
+    reason.textContent = ' · ' +
+      (readinessReasons[feature.reason] || '근거 확인 필요');
+    item.append(title, reason);
+    target.append(item);
+  }
+}
 function render() {
   const record = records[selected];
   if (!record) return;
@@ -751,6 +804,7 @@ function render() {
       : result?.overlayUrl || record.image;
   const previous = $('previous-parsing').checked && Boolean(result?.previousParsing);
   const parsing = previous ? result?.previousParsing : result?.parsing;
+  renderPhotoReadiness(record);
   $('reading-evidence').replaceChildren();
   const cards = state.readingCatalogue
     ? assessMorphology({ record, result, catalogue: state.readingCatalogue, previous })
@@ -1121,6 +1175,8 @@ function base64(blob) {
 }
 async function start(tasks, save) {
   stop();
+  // Never display saved-run evidence as if it described a newly computed preview.
+  if (state) state.perCaptureReadiness = { status: 'unavailable', reason: 'NEW_RUN_UNAUDITED' };
   const localGeneration = runGeneration;
   busy = true;
   $('cancel').hidden = false;
