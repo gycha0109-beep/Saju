@@ -23,6 +23,14 @@ import { INSTANCE_PIN } from './instance-frame.mjs';
 import { readingCatalogue } from './reading-catalogue.mjs';
 import { experienceAssets } from './experience-server.mjs';
 import {
+  LIP_BORDER_REVIEW_SCHEMA_VERSION,
+  LIP_BORDER_LINES,
+  LIP_BORDER_POINTS,
+  createLipBorderHumanReviewRecord,
+  validateLipBorderHumanReviewStore,
+  projectLipBorderHumanReviewForUi,
+} from './lip-border-human-review.mjs';
+import {
   EAR_DETAIL_REVIEW_SCHEMA_VERSION,
   createEarDetailReviewRecord,
   validateEarDetailReviewStore,
@@ -271,6 +279,16 @@ export async function createLocalReviewServer({
   } catch (error) {
     if (error.code !== 'ENOENT') earReviewRestoreFailed = true;
   }
+  const lipReviewPath = resolve(intake, 'lip-border-human-reviews.json');
+  let lipReviews = new Map();
+  let lipReviewRestoreFailed = false;
+  let lipReviewSaving = false;
+  try {
+    const stored = JSON.parse(await readFile(lipReviewPath, 'utf8'));
+    lipReviews = new Map(Object.entries(validateLipBorderHumanReviewStore(stored, ids).records));
+  } catch (error) {
+    if (error.code !== 'ENOENT') lipReviewRestoreFailed = true;
+  }
   const token = randomBytes(24).toString('hex');
   const origin = 'http://127.0.0.1:' + port;
   const runRoot = resolve(intake, 'two-view-runs');
@@ -412,6 +430,8 @@ export async function createLocalReviewServer({
       'ear-detail-review-ui.mjs',
       'visible-ear-mask-silhouette.mjs',
       'visible-hair-skin-interface.mjs',
+      'lip-border-human-review.mjs',
+      'lip-border-human-review-ui.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const [route, asset] of experienceAssets()) assets.set(route, asset);
@@ -573,6 +593,20 @@ export async function createLocalReviewServer({
     }
     return { records: valid, staleCount };
   }
+  async function currentLipReviewState() {
+    const records = {};
+    let staleCount = 0;
+    for (const [captureRef, review] of lipReviews) {
+      try {
+        const source = inventory.find((item) => item.recordId === captureRef);
+        if (!source) { staleCount++; continue; }
+        const digest = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
+        if (digest !== review.sourceSha256) { staleCount++; continue; }
+        records[captureRef] = projectLipBorderHumanReviewForUi(review);
+      } catch { staleCount++; }
+    }
+    return { records, staleCount };
+  }
   async function handle(req, res) {
     if (req.headers.host !== '127.0.0.1:' + port)
       return json(res, 403, { error: 'LOCAL_HOST_REQUIRED' });
@@ -599,6 +633,7 @@ export async function createLocalReviewServer({
       const browReviewState = await currentBrowReviewState();
       const noseReviewState = await currentNoseReviewState();
       const earReviewState = await currentEarReviewState();
+      const lipReviewState = await currentLipReviewState();
       return json(res, 200, {
         token,
         records,
@@ -615,6 +650,9 @@ export async function createLocalReviewServer({
         earReviews: earReviewState.records,
         earReviewStaleCount: earReviewState.staleCount,
         earReviewRestoreFailed,
+        lipReviews: lipReviewState.records,
+        lipReviewStaleCount: lipReviewState.staleCount,
+        lipReviewRestoreFailed,
         readingCatalogue: catalogue,
         parsingAvailable: Boolean(parsingModel),
         parsingRestoreFailed,
@@ -792,6 +830,50 @@ export async function createLocalReviewServer({
         return json(res, 200, { saved: true, count: next.length, formalValidation: false });
       } finally {
         parsingSaving = false;
+      }
+    }
+    if (req.method === 'POST' && url.pathname === '/two-view/lip-border-reviews') {
+      if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
+      const input = await requestJson(req, 160000);
+      const allowed = new Set(['token', 'captureRef', ...LIP_BORDER_LINES, ...LIP_BORDER_POINTS]);
+      if (!input || typeof input !== 'object' || Array.isArray(input) ||
+          Object.keys(input).length !== allowed.size ||
+          Object.keys(input).some((key) => !allowed.has(key)))
+        throw Error('LIP_BORDER_REVIEW_INVALID');
+      if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
+      if (lipReviewSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
+      const captureRef = input.captureRef;
+      const source = inventory.find((item) => item.recordId === captureRef);
+      if (!source || roles.get(captureRef) !== 'frontal' || lipReviewRestoreFailed)
+        throw Error('LIP_BORDER_REVIEW_INVALID');
+      lipReviewSaving = true;
+      try {
+        const original = sourceFileStates.find((item) => item.recordId === captureRef);
+        const current = await stat(source.sourcePath);
+        if (!original || current.size !== original.size ||
+            current.mtimeMs !== original.mtimeMs || current.ino !== original.ino)
+          throw Error('SOURCE_CHANGED');
+        const sourceSha256 = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
+        if (sourceSha256 !== sourceDigestByRecord.get(captureRef)) throw Error('SOURCE_CHANGED');
+        const previous = lipReviews.get(captureRef);
+        const review = createLipBorderHumanReviewRecord(
+          Object.fromEntries([...LIP_BORDER_LINES, ...LIP_BORDER_POINTS]
+            .map((key) => [key, input[key]])),
+          { captureRef, sourceSha256,
+            revision: (previous?.revision || 0) + 1,
+            reviewedAt: new Date().toISOString() },
+        );
+        const records = Object.fromEntries(lipReviews);
+        records[captureRef] = review;
+        const temporary = resolve(intake, 'lip-border-human-reviews-' + randomUUID() + '.tmp');
+        await writeFile(temporary, JSON.stringify({
+          schemaVersion: LIP_BORDER_REVIEW_SCHEMA_VERSION, records,
+        }, null, 2) + '\n', { flag: 'wx' });
+        await rename(temporary, lipReviewPath);
+        lipReviews.set(captureRef, review);
+        return json(res, 200, { saved: true, review: projectLipBorderHumanReviewForUi(review) });
+      } finally {
+        lipReviewSaving = false;
       }
     }
     if (req.method === 'POST' && url.pathname === '/two-view/ear-detail-reviews') {
@@ -989,6 +1071,7 @@ export async function createLocalReviewServer({
         'BROW_CENTERLINE_REVIEW_INVALID',
         'NOSE_DETAIL_REVIEW_INVALID',
         'EAR_DETAIL_REVIEW_INVALID',
+        'LIP_BORDER_REVIEW_INVALID',
         'REQUEST_TOO_LARGE',
         'SOURCE_CHANGED',
       ].includes(error.message)

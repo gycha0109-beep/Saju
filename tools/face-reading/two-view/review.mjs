@@ -7,6 +7,7 @@ import { assessMorphology } from './morphology-assessment.mjs';
 import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
 import { attachNoseDetailReview } from './nose-detail-review-ui.mjs';
 import { attachEarDetailReview } from './ear-detail-review-ui.mjs';
+import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
 import {
   earBinaryFromOverlayRGBA,
   measureVisibleEarMaskSilhouette,
@@ -698,6 +699,11 @@ const earDetailReview = attachEarDetailReview({
   getRecord: () => records[selected],
   canAnnotate: () => original && activeAnnotationTool === 'ear',
 });
+const lipBorderHumanReview = attachLipBorderHumanReview({
+  getState: () => state,
+  getRecord: () => records[selected],
+  canAnnotate: () => original && activeAnnotationTool === 'lip',
+});
 $('brow-review-activate').onclick = () => {
   activeAnnotationTool = 'brow';
   original = true;
@@ -710,6 +716,11 @@ $('nose-review-activate').onclick = () => {
 };
 $('ear-review-activate').onclick = () => {
   activeAnnotationTool = 'ear';
+  original = true;
+  render();
+};
+$('lip-border-review-activate').onclick = () => {
+  activeAnnotationTool = 'lip';
   original = true;
   render();
 };
@@ -784,6 +795,7 @@ function render() {
   browReview.render();
   noseDetailReview.render();
   earDetailReview.render();
+  lipBorderHumanReview.render();
   if (record.viewRole === 'frontal' && mode === 'existing')
     renderBrowHumanComparison(record, result, previous);
   const quality = parsing?.regionScreening?.regions;

@@ -95,6 +95,25 @@
       .viewer p {
         color: #adbbd1;
       }
+      .viewer #lip-border-review-canvas {
+        position: absolute;
+        z-index: 5;
+        touch-action: none;
+        pointer-events: none;
+      }
+      #lip-border-review .lip-border-review-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin: 8px 0;
+      }
+      #lip-border-review .lip-border-review-group strong { min-width: 155px; }
+      #lip-border-review .lip-border-review-group button { padding: 7px 10px; }
+      #lip-border-review .lip-border-review-group button.active {
+        border-color: #a8b7ff;
+        background: #30415c;
+      }
       .viewer #ear-review-canvas {
         position: absolute;
         z-index: 4;
@@ -331,6 +350,7 @@
         <svg id="brow-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="눈썹 중심선 표시" hidden></svg>
         <svg id="nose-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="코끝과 콧볼·콧구멍 경계 사람 표시" hidden></svg>
         <svg id="ear-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="귀 외곽·귓불·부착부 사람 표시" hidden></svg>
+        <svg id="lip-border-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="입술·인중 경계와 입꼬리 사람 표시" hidden></svg>
       </div>
       <nav id="strip" class="strip" aria-label="전체 사진 목록"></nav>
       <section aria-labelledby="reading-heading">
@@ -375,6 +395,25 @@
           양쪽 눈 클래스의 폭·높이·면적·중심 간격을 확인합니다. 눈꺼풀 실제 경계·쌍꺼풀·전통
           관상형은 판정하지 않습니다.
         </p>
+      </section>
+      <section id="lip-border-review" aria-labelledby="lip-border-review-heading" hidden>
+        <h2 id="lip-border-review-heading">입술·인중 경계 — 사람 직접 표시</h2>
+        <p class="note">
+          정면 원본 사진에서 윗입술/아랫입술의 실제 보이는 경계, 인중 양쪽 경계,
+          화면 기준 좌우 입꼬리를 구분해 검토합니다. 분할 클래스 비율은 실제 입술 피부 경계의 정답이 아닙니다.
+          가려지거나 확인되지 않는 부분은 해당 부위만 보류합니다.
+          사람 표시 후보는 정확도 검증 전 모델 학습·정규 관측·전통 판독에 사용하지 않습니다.
+        </p>
+        <button type="button" id="lip-border-review-activate">입술 경계 표시 모드 선택</button>
+        <p id="lip-border-review-count" class="note"></p>
+        <div id="lip-border-review-options"></div>
+        <div class="toolbar">
+          <button type="button" id="lip-border-review-done">현재 표시 완료</button>
+          <button type="button" id="lip-border-review-undo">마지막 획 취소</button>
+          <button type="button" id="lip-border-review-reset">저장 전 표시 초기화</button>
+          <button type="button" id="lip-border-review-save" disabled>비공개 사람 표시 저장</button>
+        </div>
+        <p id="lip-border-review-status" class="note" role="status"></p>
       </section>
       <section id="ear-review" aria-labelledby="ear-review-heading" hidden>
         <h2 id="ear-review-heading">귀 외곽·귓불·부착부 — 사람 직접 표시</h2>
