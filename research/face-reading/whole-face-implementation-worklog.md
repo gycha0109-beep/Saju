@@ -343,8 +343,8 @@ Watchtower-Track: face-observation-engine
 ### 2026-11-08 — FR294 사람 검토 증거 연결 후 코드 서식 정리
 
 - **작업 목표:** 동일 관상 엔진 구현 단위의 신규 헤드 CI에 제출할 서버·화면 코드를 프로젝트의 기존 Prettier 서식 기준과 일치시킨다. 비공개 원본·권한·판정 계산이나 사용자 데이터·운영 트랙은 변경하지 않는다.
-- **변경 파일:** `tools/face-reading/two-view/server.mjs`, `review.mjs` (서식만 일괄 정리), 기존 `research/face-reading/whole-face-implementation-worklog.md` (본 근거 기록). 기존 기능 구현 공동 커밋 `f7d2820baa4af034f9bd19a37ca2a77f28ead6e3`, 확정 WORKLOG 기록 커밋 `fb9cfad3c12f650b28db6eda39d58352d6d272ae`, 브랜치 `codex/face-two-view-local-preview-2452`, PR #2453.
-- **테스트·CI:** 새 6개 및 관련 6파일 총 **40/40 PASS**, TypeScript typecheck·ESLint·전체 수정 JS 파일 Prettier 형식 확인·diff 검사 PASS. 실사진 18장에 대한 실제 로컬 Chrome 검증은 앞선 동일 기능 커밋 수행 후 PASS이며, 서식 정리 이후 별도 재촬영/사람 주석 추가는 하지 않았다. 신규 커밋 CI는 GitHub 검사 확인 전까지 성공 미판정.
+- **변경 파일:** `tools/face-reading/two-view/server.mjs`, `review.mjs` (서식만 일괄 정리), 기존 `research/face-reading/whole-face-implementation-worklog.md` (본 근거 기록). 기존 기능 구현 공동 커밋 `f7d2820baa4af034f9bd19a37ca2a77f28ead6e3`, 확정 WORKLOG 기록 커밋 `fb9cfad3c12f650b28db6eda39d58352d6d272ae`, 서식·검증 기록 공동 커밋 `41c6f6cc795e21ccad198136781c338b34887ce7` (`style(face): normalize FR294 human evidence review source formatting`), 브랜치 `codex/face-two-view-local-preview-2452`, PR #2453.
+- **테스트·CI:** 새 6개 및 관련 6파일 총 **40/40 PASS**, TypeScript typecheck·ESLint·전체 수정 JS 파일 Prettier 형식 확인·diff 검사 PASS. 서식 정리 이후에도 실제 로컬 Chrome에서 기존 비공개 실사진 18장/29항목과 FR294 11개 경로·6개 사람 검토 증거 상태·두 번째 사진 선택·비공개 정보 비노출·브라우저 오류 없음이 모두 PASS했다. 재촬영/사람 주석 추가는 하지 않았다. 신규 커밋 CI는 GitHub 검사 확인 전까지 성공 미판정.
 - **완료/미완료·다음 작업:** 코드 서식과 검증 경로 정리 완료. 사람 정답 0/0/0건, 독립 검증·반복 관측·상대 3D 및 전통 판정은 미완료 유지. 다음은 실제 검토 데이터 확보 또는 기존 연구용 독립 참조 계약 검증; 모델 후보로 임의 F0/전통/제품 정확도 승격 금지.
 - **블로커·승인사항:** 본 연구 코드 정리에 별도 승인 필요 없음. 독립 사람 참조·상업 사용권 등 제품 조건은 미확보. 로드맵 1~3단계 진행 중, 4~7 미완료, ROADMAP_COMPLETE 아님.
 
