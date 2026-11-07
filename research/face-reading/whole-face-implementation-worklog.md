@@ -374,3 +374,16 @@ Watchtower-Track: face-observation-engine
 - **블로커·승인사항:** 승인된 비공개 로컬 연구 코드 수정에 추가 승인 불필요. 독립 사람 정답·상업적 사용 권리·전향적 반복 촬영 데이터 미확보. 외부 수집, 모델 학습, 제품/정규 F0/전통 판독 승격 없음. 로드맵 1~3단계 진행 중, 4~7단계 미완료, `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — FR294 6개 이미지·귀 미지원 특징의 사진별 영역 품질 구분
+
+- **작업 목표·로드맵:** 관상 엔진 7단계 로드맵 2~3단계의 미완료 작업인 실제 사진 입력과 부위별 2D 품질/가시성 단서 구분을 보강한다. FR294의 별도 이미지 모델 5항목과 귀 가시성 선행 1항목에만 기존 파싱 모델의 위치 검사·영역 후보 유무를 연결하며, 실제 해부학적 특징 가시성·색상 보정·정확도나 제품 F0를 주장하지 않는다.
+- **기준/브랜치/PR:** `gycha0109-beep/Saju` 원격 확인, 기존 `codex/face-two-view-local-preview-2452` 및 [PR #2453](https://github.com/gycha0109-beep/Saju/pull/2453), 시작 커밋 `806c280f3bf3930b3cd7ec7b55e19c3857558ed7`. 기존 `research/face-reading/whole-face-observation-reading-roadmap-20261105.md` 및 본 WORKLOG와 FR294 원본을 대조함. 시작 CI는 GitHub Actions **4개 SUCCESS, CI/Face Reading CI 2개 IN_PROGRESS**, 성공으로 추정하지 않음. 다른 트랙/저장소 변경 없음.
+- **변경 파일:** `tools/face-reading/two-view/fr294-image-region-quality.mjs`·`.d.mts`(기존 실제 18장 검증된 파싱 상태 × FR294 6항목 대조·정량 원본 비공개 투영), `server.mjs`(기존 원본 SHA와 파싱 실행 근거가 현재일 때만 `fr294ImageQuality` 전달, 불일치 시 withheld), `review.mjs`(기존 사진별 29항목 화면에서 모델 영역 위치 검사·미검사·단서 없음·특징 직접 검증 아님 표시), `test/face-fr294-image-region-quality.test.ts`(6가지 합성 상태·변조 차단/측면 사진 차단), `READING-PLAN.md` 및 본 기존 WORKLOG.
+- **실제 완료 근거:** 기존 비공개 18장 로컬 서버 + Chrome 검증에서 18×29 관측 상태, FR294 11×18 미지원 상태, FR294의 이미지·귀 6×18 **108개 모델 영역 품질 상태**가 현재 저장된 `engineering.face-parsing.yakhyo-resnet18@0.7.0`에 대응. 눈썹 영역 모델 위치 검사 16, 미검사 1, 후보 단서 없음 1; 입술 17/1; 귀 12/미검사 1/후보 없음 5. 이마 피부 후보 18, 헤어·피부 접촉 후보 17, 눈 영역 후보 18은 직접적인 이마 폭·헤어라인·눈꺼풀 주름/털 밀도/색상 검증을 의미하지 않는다. 원래 귀 모델 후보 13건 중 현재 영역 위치 검사 12건·미검사 1건으로 분리됨. 원시 픽셀 수·마스크·좌표·원본 사진 경로/SHA·색상 수치는 새 출력에 없음. 독립 사람 기준·정규 관측 0 유지.
+- **테스트·CI 근거:** 신규 품질 합성 경계 테스트 6개 PASS, TypeScript 6.0.2 typecheck·ESLint 초기 오류 수정 후 PASS, 18장 Chrome 브라우저 상태·기존 독립 검토 0건·정규 승격 false·정보 비노출 검증 PASS. 기존 관련 FR294·파싱 품질·사람 검토·비공개 상태 10개 파일을 함께 재실행하여 **67/67 PASS**. Node v24.14.0, TypeScript 6.0.2 typecheck·ESLint·Prettier·Git diff 검사 PASS. 모델 영역 108개 상태에 대한 비공개 실사진 18장 Chrome 실행·정보 비노출 검사 PASS. 신규 커밋의 GitHub CI는 푸시 후 결과가 확인될 때까지 미판정.
+- **완료/미완료·다음 작업:** 이번 단위는 기존 파싱 모델 영역 분류 근거를 사진별 품질 후보 상태로 연결하는 작업만 완료. 5개 새 이미지 모델과 귀 가시성의 독립적 기준, 이미지 조명/색상 보정, 4개 상대 3D 독립 기준, 전통/종합/제품 판독은 모두 미완료. 다음은 실제 사람 품질·가시성 주석과 이번 모델 후보를 비교하거나, FR159/160이 이미 정의한 새 전향적 촬영 참조가 합법적으로 확보된 경우 해당 규약에 따라 검증한다.
+- **브랜치·커밋·PR:** 기존 브랜치와 PR #2453 유지, 작업 커밋 제목 `feat(face): connect saved parsing quality to FR294 image gaps`. 확정 SHA는 이 WORKLOG 후속 커밋에 기록하고 신규 CI 완료를 추정하지 않는다.
+- **블로커·승인사항:** 기존 로컬·비공개 연구 코드 구현에 추가 승인 필요 없음. 독립 사람 정답/동의·상업 이용 권리·전향적 반복 촬영 자료 미확보. 외부 접촉·원시 개인정보 유출·모델 재학습·정규 F0/전통/제품 승격 없음. 로드맵 1~3 진행 중, 4~7 미완료, `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine

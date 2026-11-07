@@ -24,6 +24,7 @@ import { readingCatalogue } from './reading-catalogue.mjs';
 import { experienceAssets } from './experience-server.mjs';
 import { projectPrivatePhotoReadiness } from './private-readiness-view.mjs';
 import { traceFr294PhotoHardGaps } from './fr294-photo-gap-bridge.mjs';
+import { traceFr294ImageRegionQuality } from './fr294-image-region-quality.mjs';
 import { traceFr294HumanEvidenceReadiness } from './fr294-human-evidence-readiness.mjs';
 import {
   readCurrentFr294IndependentPairLedger,
@@ -791,6 +792,24 @@ export async function createLocalReviewServer({
       const eyelidContourState = await currentEyelidContourState();
       let perCaptureReadiness = await privatePhotoReadinessState();
       if (perCaptureReadiness.status === 'available') {
+        try {
+          perCaptureReadiness = {
+            ...perCaptureReadiness,
+            fr294ImageQuality: traceFr294ImageRegionQuality(
+              perCaptureReadiness.fr294HardGaps,
+              records,
+              parsingSaved,
+            ),
+          };
+        } catch {
+          perCaptureReadiness = {
+            ...perCaptureReadiness,
+            fr294ImageQuality: {
+              status: 'withheld',
+              reason: 'PARSING_REGION_QUALITY_NOT_CURRENT',
+            },
+          };
+        }
         try {
           perCaptureReadiness = {
             ...perCaptureReadiness,

@@ -795,6 +795,14 @@ const readinessReasons = {
   CANONICAL_CALCULATOR_WITHOUT_VERIFIED_PHOTO_INPUT: '사진 입력 경계 검증 필요',
   NO_VERIFIED_IMAGE_EXTRACTOR: '검증된 부위별 이미지 관측기 없음',
 };
+const fr294RegionQualityLabels = {
+  screened_region_proxy: '영역 분할 후보 위치 검사됨(특징 검증 아님)',
+  unscreened_region_proxy: '영역 후보 있으나 위치 검사 미통과·미실시',
+  unspecific_region_proxy: '부위 비특정 모델 영역만 확인(특징 검증 아님)',
+  no_region_proxy: '연결할 모델 영역 단서 없음',
+  profile_not_frontal_evidence: '정면 가시성 판단에 측면 사진 사용 불가',
+  parsing_unavailable: '최신 이미지 분석 영역 검사 자료 없음',
+};
 const fr294GapLaneLabels = {
   new_image_model: 'FR294 · 별도 이미지 관측·검증 필요',
   rgb_relative_3d_benchmark: 'FR294 · 상대 3D 독립 기준 비교 필요',
@@ -811,6 +819,14 @@ function renderPhotoReadiness(record) {
       : null;
   const gaps = Array.isArray(gapEntries)
     ? new Map(gapEntries.map((item) => [item.featureKey, item]))
+    : null;
+  const imageQuality = info?.fr294ImageQuality;
+  const imageQualityRows =
+    mode === 'existing' && imageQuality?.mappedFeatureCount === 6
+      ? imageQuality.captures?.[record.captureRef]
+      : null;
+  const imageQualityByFeature = Array.isArray(imageQualityRows)
+    ? new Map(imageQualityRows.map((row) => [row.featureKey, row]))
     : null;
   const pairAudit = info?.fr294IndependentPairAudit;
   const human = info?.fr294HumanEvidence;
@@ -864,6 +880,17 @@ function renderPhotoReadiness(record) {
       ' · ' +
       (readinessReasons[feature.reason] || '근거 확인 필요') +
       (gap ? ' · ' + (fr294GapLaneLabels[gap.lane] || 'FR294 검증 보류') : '');
+    const quality = imageQualityByFeature?.get(feature.featureKey);
+    if (quality && quality.anatomicalFeatureVisibilityVerified === false) {
+      reason.textContent +=
+        ' · 모델 품질: ' + (fr294RegionQualityLabels[quality.modelRegionScreening] || '판정 보류');
+    } else if (
+      gap &&
+      ['new_image_model', 'ear_visibility_then_image_model'].includes(gap.lane) &&
+      imageQuality?.status === 'withheld'
+    ) {
+      reason.textContent += ' · 모델 영역 품질 근거 무결성 보류';
+    }
     const review = humanByFeature?.get(feature.featureKey);
     if (review) {
       if (review.reviewPath === 'no_dedicated_human_review') {
