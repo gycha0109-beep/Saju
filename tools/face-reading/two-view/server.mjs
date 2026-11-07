@@ -411,6 +411,7 @@ export async function createLocalReviewServer({
       'ear-detail-review.mjs',
       'ear-detail-review-ui.mjs',
       'visible-ear-mask-silhouette.mjs',
+      'visible-hair-skin-interface.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const [route, asset] of experienceAssets()) assets.set(route, asset);

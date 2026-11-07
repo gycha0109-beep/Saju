@@ -13,6 +13,10 @@ import {
 } from './visible-ear-mask-silhouette.mjs';
 import { compareBrowCenterlinesToHumanReview } from './brow-centerline-comparison.mjs';
 import {
+  interfaceBinaryFromOverlayRGBA,
+  measureVisibleHairSkinInterface,
+} from './visible-hair-skin-interface.mjs';
+import {
   eyebrowBinaryFromOverlayRGBA,
   measureVisibleBrowMaskEnvelope,
 } from './visible-brow-mask-envelope.mjs';
@@ -275,6 +279,76 @@ function renderBrowHumanComparison(record, result, previous) {
       result.browHumanComparison = { revision: reviewed.revision, status: 'failed' };
       if (records[selected]?.captureRef === record.captureRef) render();
     });
+}
+// Existing pinned hair/skin contact layer. This cannot establish a true scalp hairline.
+async function inspectHairSkinInterface(result) {
+  const image = new Image();
+  image.src = result.layerUrls.interface;
+  await image.decode();
+  if (image.naturalWidth !== 512 || image.naturalHeight !== 512)
+    throw Error('HAIR_SKIN_INTERFACE_FRAME_INVALID');
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw Error('HAIR_SKIN_INTERFACE_CANVAS_UNAVAILABLE');
+  ctx.drawImage(image, 0, 0);
+  const binary = interfaceBinaryFromOverlayRGBA(
+    ctx.getImageData(0, 0, canvas.width, canvas.height).data,
+    canvas.width, canvas.height,
+  );
+  return measureVisibleHairSkinInterface(binary, canvas.width, canvas.height);
+}
+function renderHairSkinInterfaceExperiment(record, result, previous) {
+  const node = $('hair-skin-experiment');
+  if (previous) {
+    node.textContent = '기존 모델의 접경과 현재 분할 근거를 혼합하지 않습니다.';
+    return;
+  }
+  if (record.viewRole !== 'frontal') {
+    node.textContent = '이마 모근선 자동 판정은 측면 사진에서 제공하지 않습니다.';
+    return;
+  }
+  if (result?.parsing?.status !== 'completed' ||
+      result.parsing.methodVersion !== PARSING_VERSION ||
+      !result.layerUrls?.interface) {
+    node.textContent = '현재 사진에 최신 머리–피부 접경 분할 근거가 없습니다.';
+    return;
+  }
+  const candidate = result.hairSkinContactCandidate;
+  if (candidate?.status === 'available' || candidate?.status === 'partial') {
+    const ranges = candidate.segments
+      .map((s) =>
+        `사진 가로 ${(s.startXToImageWidth * 100).toFixed(1)}–${(s.endXToImageWidth * 100).toFixed(1)}%`,
+      )
+      .join(' · ');
+    node.textContent =
+      `머리–피부 접경 후보 ${candidate.segments.length}구간, ` +
+      `전체 가로열의 ${(candidate.coverageFractionOfImageWidth * 100).toFixed(1)}%에서 보임. ` +
+      ranges + (candidate.status === 'partial' ? ` · 일부 보류(${candidate.reason})` : '') +
+      ' — 접경 픽셀의 위치만 나타냅니다. 실제 모근선·이마 높이·M자 형태·전통 관상형으로 해석하지 않습니다.';
+    return;
+  }
+  if (candidate?.status === 'unavailable') {
+    node.textContent = '모발–피부 접경 후보 보류: ' + candidate.reason +
+      ' · 이마 모근선을 확인한 것으로 간주하지 않습니다.';
+    return;
+  }
+  node.textContent = '기존 분할 마스크의 머리–피부 접경 가시 구간을 확인 중입니다.';
+  if (candidate) return;
+  result.hairSkinContactCandidate = { status: 'loading' };
+  void inspectHairSkinInterface(result).then((value) => {
+    if (results.get(record.captureRef) !== result) return;
+    result.hairSkinContactCandidate = value;
+    if (records[selected]?.captureRef === record.captureRef) render();
+  }).catch(() => {
+    if (results.get(record.captureRef) !== result) return;
+    result.hairSkinContactCandidate = {
+      status: 'unavailable',
+      reason: 'HAIR_SKIN_CONTACT_LAYER_NOT_READABLE',
+    };
+    if (records[selected]?.captureRef === record.captureRef) render();
+  });
 }
 // Image-plane silhouette of the existing 7/8 ear classes only. No anatomical parts.
 async function inspectVisibleEarMask(record, result) {
@@ -701,6 +775,7 @@ function render() {
     $('reading-evidence').append(node);
   }
   renderVisibleBrowMaskExperiment(record, result, previous);
+  renderHairSkinInterfaceExperiment(record, result, previous);
   renderVisibleEarMaskExperiment(record, result, previous);
   renderVisibleNoseMaskExperiment(record, result, previous);
   renderVisibleEyeClassExperiment(record, result, previous);
