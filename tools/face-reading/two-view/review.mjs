@@ -163,7 +163,10 @@ async function readVisibleBrowMask(record, result) {
   };
 }
 async function inspectVisibleBrowMask(record, result) {
-  const { mask, width, height, imageWidth, imageHeight } = await readVisibleBrowMask(record, result);
+  const { mask, width, height, imageWidth, imageHeight } = await readVisibleBrowMask(
+    record,
+    result,
+  );
   return measureVisibleBrowMaskEnvelope(mask, width, height, { imageWidth, imageHeight });
 }
 async function inspectBrowHumanComparison(record, result, humanReview) {
@@ -240,7 +243,8 @@ function renderBrowHumanComparison(record, result, previous) {
     result.parsing.methodVersion !== PARSING_VERSION ||
     !result.layerUrls?.brows
   ) {
-    node.textContent = '사람 표시선은 저장되어 있으나 현재 모델의 눈썹 분할 마스크가 없어 비교를 보류합니다.';
+    node.textContent =
+      '사람 표시선은 저장되어 있으나 현재 모델의 눈썹 분할 마스크가 없어 비교를 보류합니다.';
     return;
   }
   const comparison = result.browHumanComparison;
@@ -250,16 +254,17 @@ function renderBrowHumanComparison(record, result, previous) {
       return;
     }
     const values = comparison.value;
-    node.textContent = [
-      ['화면 왼쪽', values.imageLeft],
-      ['화면 오른쪽', values.imageRight],
-    ]
-      .map(([label, side]) =>
-        side.status === 'available' || side.status === 'partial'
-          ? `${label}: 사람 중심선 대비 모델 분할 띠 중앙의 평균 거리 ${side.meanMaskColumnToHumanLineDistancePx.toFixed(2)}px · 비교한 열 ${side.comparedMaskColumns}/${side.totalMaskColumns}`
-          : `${label}: 비교 보류(${side.reason})`,
-      )
-      .join(' · ') +
+    node.textContent =
+      [
+        ['화면 왼쪽', values.imageLeft],
+        ['화면 오른쪽', values.imageRight],
+      ]
+        .map(([label, side]) =>
+          side.status === 'available' || side.status === 'partial'
+            ? `${label}: 사람 중심선 대비 모델 분할 띠 중앙의 평균 거리 ${side.meanMaskColumnToHumanLineDistancePx.toFixed(2)}px · 비교한 열 ${side.comparedMaskColumns}/${side.totalMaskColumns}`
+            : `${label}: 비교 보류(${side.reason})`,
+        )
+        .join(' · ') +
       ' — 한 사람의 표시와 모델 후보를 기술적으로 비교한 값입니다. 독립 정답 정확도·관상형 판정은 아닙니다.';
     return;
   }
@@ -297,7 +302,8 @@ async function inspectHairSkinInterface(result) {
   ctx.drawImage(image, 0, 0);
   const binary = interfaceBinaryFromOverlayRGBA(
     ctx.getImageData(0, 0, canvas.width, canvas.height).data,
-    canvas.width, canvas.height,
+    canvas.width,
+    canvas.height,
   );
   return measureVisibleHairSkinInterface(binary, canvas.width, canvas.height);
 }
@@ -311,46 +317,54 @@ function renderHairSkinInterfaceExperiment(record, result, previous) {
     node.textContent = '이마 모근선 자동 판정은 측면 사진에서 제공하지 않습니다.';
     return;
   }
-  if (result?.parsing?.status !== 'completed' ||
-      result.parsing.methodVersion !== PARSING_VERSION ||
-      !result.layerUrls?.interface) {
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    !result.layerUrls?.interface
+  ) {
     node.textContent = '현재 사진에 최신 머리–피부 접경 분할 근거가 없습니다.';
     return;
   }
   const candidate = result.hairSkinContactCandidate;
   if (candidate?.status === 'available' || candidate?.status === 'partial') {
     const ranges = candidate.segments
-      .map((s) =>
-        `사진 가로 ${(s.startXToImageWidth * 100).toFixed(1)}–${(s.endXToImageWidth * 100).toFixed(1)}%`,
+      .map(
+        (s) =>
+          `사진 가로 ${(s.startXToImageWidth * 100).toFixed(1)}–${(s.endXToImageWidth * 100).toFixed(1)}%`,
       )
       .join(' · ');
     node.textContent =
       `머리–피부 접경 후보 ${candidate.segments.length}구간, ` +
       `전체 가로열의 ${(candidate.coverageFractionOfImageWidth * 100).toFixed(1)}%에서 보임. ` +
-      ranges + (candidate.status === 'partial' ? ` · 일부 보류(${candidate.reason})` : '') +
+      ranges +
+      (candidate.status === 'partial' ? ` · 일부 보류(${candidate.reason})` : '') +
       ' — 접경 픽셀의 위치만 나타냅니다. 실제 모근선·이마 높이·M자 형태·전통 관상형으로 해석하지 않습니다.';
     return;
   }
   if (candidate?.status === 'unavailable') {
-    node.textContent = '모발–피부 접경 후보 보류: ' + candidate.reason +
+    node.textContent =
+      '모발–피부 접경 후보 보류: ' +
+      candidate.reason +
       ' · 이마 모근선을 확인한 것으로 간주하지 않습니다.';
     return;
   }
   node.textContent = '기존 분할 마스크의 머리–피부 접경 가시 구간을 확인 중입니다.';
   if (candidate) return;
   result.hairSkinContactCandidate = { status: 'loading' };
-  void inspectHairSkinInterface(result).then((value) => {
-    if (results.get(record.captureRef) !== result) return;
-    result.hairSkinContactCandidate = value;
-    if (records[selected]?.captureRef === record.captureRef) render();
-  }).catch(() => {
-    if (results.get(record.captureRef) !== result) return;
-    result.hairSkinContactCandidate = {
-      status: 'unavailable',
-      reason: 'HAIR_SKIN_CONTACT_LAYER_NOT_READABLE',
-    };
-    if (records[selected]?.captureRef === record.captureRef) render();
-  });
+  void inspectHairSkinInterface(result)
+    .then((value) => {
+      if (results.get(record.captureRef) !== result) return;
+      result.hairSkinContactCandidate = value;
+      if (records[selected]?.captureRef === record.captureRef) render();
+    })
+    .catch(() => {
+      if (results.get(record.captureRef) !== result) return;
+      result.hairSkinContactCandidate = {
+        status: 'unavailable',
+        reason: 'HAIR_SKIN_CONTACT_LAYER_NOT_READABLE',
+      };
+      if (records[selected]?.captureRef === record.captureRef) render();
+    });
 }
 // Image-plane silhouette of the existing 7/8 ear classes only. No anatomical parts.
 async function inspectVisibleEarMask(record, result) {
@@ -359,8 +373,12 @@ async function inspectVisibleEarMask(record, result) {
   const sourceImage = new Image();
   sourceImage.src = record.image;
   await Promise.all([maskImage.decode(), sourceImage.decode()]);
-  if (maskImage.naturalWidth !== 512 || maskImage.naturalHeight !== 512 ||
-      !sourceImage.naturalWidth || !sourceImage.naturalHeight)
+  if (
+    maskImage.naturalWidth !== 512 ||
+    maskImage.naturalHeight !== 512 ||
+    !sourceImage.naturalWidth ||
+    !sourceImage.naturalHeight
+  )
     throw Error('EAR_SOURCE_INVALID');
   const canvas = document.createElement('canvas');
   canvas.width = maskImage.naturalWidth;
@@ -370,10 +388,12 @@ async function inspectVisibleEarMask(record, result) {
   ctx.drawImage(maskImage, 0, 0);
   const binary = earBinaryFromOverlayRGBA(
     ctx.getImageData(0, 0, canvas.width, canvas.height).data,
-    canvas.width, canvas.height,
+    canvas.width,
+    canvas.height,
   );
   return measureVisibleEarMaskSilhouette(binary, canvas.width, canvas.height, {
-    imageWidth: sourceImage.naturalWidth, imageHeight: sourceImage.naturalHeight,
+    imageWidth: sourceImage.naturalWidth,
+    imageHeight: sourceImage.naturalHeight,
   });
 }
 function renderVisibleEarMaskExperiment(record, result, previous) {
@@ -386,19 +406,26 @@ function renderVisibleEarMaskExperiment(record, result, previous) {
     node.textContent = '현재 귀 분할 영역 실험은 정면 사진에만 적용합니다.';
     return;
   }
-  if (result?.parsing?.status !== 'completed' ||
-      result.parsing.methodVersion !== PARSING_VERSION ||
-      !result.layerUrls?.ears) {
-    node.textContent = '현재 사진에 최신 귀 분할 마스크가 없습니다. 귀 외곽·귓불은 자동 확정하지 않습니다.';
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    !result.layerUrls?.ears
+  ) {
+    node.textContent =
+      '현재 사진에 최신 귀 분할 마스크가 없습니다. 귀 외곽·귓불은 자동 확정하지 않습니다.';
     return;
   }
   const observed = result.earMaskCandidate;
   if (observed?.status === 'available' || observed?.status === 'partial') {
-    node.textContent = observed.regions.map(
-      (region) =>
-        `귀 영역 후보 ${region.imageOrder}: 상대 폭/높이 ${region.visibleMaskWidthToImageWidth.toFixed(3)}/${region.visibleMaskHeightToImageHeight.toFixed(3)}, 전체 사진 내 면적 비율 ${region.visibleMaskAreaToImageArea.toFixed(4)}` +
-        (region.status === 'partial' ? ' · 사진 경계에 걸림' : ''),
-    ).join(' · ') + ' — 귀 전체 마스크 후보이며 귓바퀴·귓불·부착부·귀 두께·펼쳐짐을 식별하거나 관상형을 판정하지 않습니다.';
+    node.textContent =
+      observed.regions
+        .map(
+          (region) =>
+            `귀 영역 후보 ${region.imageOrder}: 상대 폭/높이 ${region.visibleMaskWidthToImageWidth.toFixed(3)}/${region.visibleMaskHeightToImageHeight.toFixed(3)}, 전체 사진 내 면적 비율 ${region.visibleMaskAreaToImageArea.toFixed(4)}` +
+            (region.status === 'partial' ? ' · 사진 경계에 걸림' : ''),
+        )
+        .join(' · ') +
+      ' — 귀 전체 마스크 후보이며 귓바퀴·귓불·부착부·귀 두께·펼쳐짐을 식별하거나 관상형을 판정하지 않습니다.';
     return;
   }
   if (observed?.status === 'unavailable') {
@@ -408,15 +435,17 @@ function renderVisibleEarMaskExperiment(record, result, previous) {
   node.textContent = '현재 사진의 귀 마스크에서 전체 가시 영역 후보를 확인 중입니다.';
   if (observed) return;
   result.earMaskCandidate = { status: 'loading' };
-  void inspectVisibleEarMask(record, result).then((candidate) => {
-    if (results.get(record.captureRef) !== result) return;
-    result.earMaskCandidate = candidate;
-    if (records[selected]?.captureRef === record.captureRef) render();
-  }).catch(() => {
-    if (results.get(record.captureRef) !== result) return;
-    result.earMaskCandidate = { status: 'unavailable', reason: 'EAR_LAYER_NOT_READABLE' };
-    if (records[selected]?.captureRef === record.captureRef) render();
-  });
+  void inspectVisibleEarMask(record, result)
+    .then((candidate) => {
+      if (results.get(record.captureRef) !== result) return;
+      result.earMaskCandidate = candidate;
+      if (records[selected]?.captureRef === record.captureRef) render();
+    })
+    .catch(() => {
+      if (results.get(record.captureRef) !== result) return;
+      result.earMaskCandidate = { status: 'unavailable', reason: 'EAR_LAYER_NOT_READABLE' };
+      if (records[selected]?.captureRef === record.captureRef) render();
+    });
 }
 // The same local, non-persistent experiment boundary as the brow preview.
 // A full-frame nose class silhouette cannot identify anatomical nose regions.
@@ -600,11 +629,7 @@ function renderEyeFoldReview(record) {
     Object.hasOwn(eyeFoldStatusLabels, draft.imageLeft) &&
     Object.hasOwn(eyeFoldStatusLabels, draft.imageRight);
   $('eye-fold-review-save').disabled =
-    eyeFoldSaveBusy ||
-    state.eyeFoldReviewRestoreFailed ||
-    !draft.dirty ||
-    !complete ||
-    !original;
+    eyeFoldSaveBusy || state.eyeFoldReviewRestoreFailed || !draft.dirty || !complete || !original;
   $('eye-fold-review-reset').disabled = eyeFoldSaveBusy || !draft.dirty;
   const frontalCount = state.records.filter((item) => item.viewRole === 'frontal').length;
   const reviewedCount = Object.values(state.eyeFoldReviews || {}).filter(
@@ -631,7 +656,9 @@ function renderEyeFoldReview(record) {
   else if (saved)
     $('eye-fold-review-status').textContent =
       `저장된 사람 검토 ${saved.revision}차 · ${new Date(saved.reviewedAt).toLocaleString('ko-KR')} · 정확도·사람 간 합의 검증 전`;
-  else $('eye-fold-review-status').textContent = '아직 사람 검토가 없습니다. 좌우 눈 상태를 각각 선택하세요.';
+  else
+    $('eye-fold-review-status').textContent =
+      '아직 사람 검토가 없습니다. 좌우 눈 상태를 각각 선택하세요.';
   document.body.dataset.eyeFoldReviewAvailable = 'true';
 }
 function invalidateFr294HumanSummaryAfterSave() {
@@ -772,34 +799,41 @@ const fr294GapLaneLabels = {
 };
 function renderPhotoReadiness(record) {
   const info = state?.perCaptureReadiness;
-  const entry = mode === 'existing' && info?.status === 'available'
-    ? info.captures?.[record.captureRef] : null;
-  const gapEntries = mode === 'existing' && info?.status === 'available'
-    ? info.fr294HardGaps?.captures?.[record.captureRef] : null;
+  const entry =
+    mode === 'existing' && info?.status === 'available' ? info.captures?.[record.captureRef] : null;
+  const gapEntries =
+    mode === 'existing' && info?.status === 'available'
+      ? info.fr294HardGaps?.captures?.[record.captureRef]
+      : null;
   const gaps = Array.isArray(gapEntries)
-    ? new Map(gapEntries.map((item) => [item.featureKey, item])) : null;
+    ? new Map(gapEntries.map((item) => [item.featureKey, item]))
+    : null;
   const human = info?.fr294HumanEvidence;
-  const humanRefs = human?.status === 'available'
-    ? human.captures?.[record.captureRef] : null;
+  const humanRefs = human?.status === 'available' ? human.captures?.[record.captureRef] : null;
   const humanByFeature = Array.isArray(humanRefs)
-    ? new Map(humanRefs.map((item) => [item.featureKey, item])) : null;
+    ? new Map(humanRefs.map((item) => [item.featureKey, item]))
+    : null;
   const label = $('readiness-status');
   const details = $('readiness-details');
   const target = $('readiness-features');
   target.replaceChildren();
   details.hidden = !entry;
   if (!entry) {
-    label.textContent = mode !== 'existing'
-      ? '새 사진은 비공개 검증 저장 후 항목별 상태를 확인할 수 있습니다.'
-      : '현재 사진에 연결된 최신 비공개 29개 관측 검증 기록이 없습니다. 이전 결과는 표시하지 않습니다.';
+    label.textContent =
+      mode !== 'existing'
+        ? '새 사진은 비공개 검증 저장 후 항목별 상태를 확인할 수 있습니다.'
+        : '현재 사진에 연결된 최신 비공개 29개 관측 검증 기록이 없습니다. 이전 결과는 표시하지 않습니다.';
     return;
   }
   const counts = Object.fromEntries(Object.keys(readinessStates).map((key) => [key, 0]));
   for (const feature of entry.features) counts[feature.state]++;
   label.textContent =
-    '현재 사진 29항목 · 모델 후보 ' + counts.candidate_only +
-    ' · 계산기만 ' + counts.calculation_only +
-    ' · 보류 ' + counts.unavailable +
+    '현재 사진 29항목 · 모델 후보 ' +
+    counts.candidate_only +
+    ' · 계산기만 ' +
+    counts.calculation_only +
+    ' · 보류 ' +
+    counts.unavailable +
     (counts.partial ? ' · 일부 검토 ' + counts.partial : '') +
     (gaps ? ' · FR294 연구 경로 11항목 확인' : ' · FR294 경로 검증 보류') +
     ' · 독립 검증된 정규 관측 0 · 전통 관상 판독에 사용 불가';
@@ -807,11 +841,12 @@ function renderPhotoReadiness(record) {
     const item = document.createElement('p');
     item.className = 'note';
     const title = document.createElement('strong');
-    title.textContent = feature.featureKey + ' — ' +
-      (readinessStates[feature.state] || '판정 보류');
+    title.textContent =
+      feature.featureKey + ' — ' + (readinessStates[feature.state] || '판정 보류');
     const reason = document.createElement('span');
     const gap = gaps?.get(feature.featureKey);
-    reason.textContent = ' · ' +
+    reason.textContent =
+      ' · ' +
       (readinessReasons[feature.reason] || '근거 확인 필요') +
       (gap ? ' · ' + (fr294GapLaneLabels[gap.lane] || 'FR294 검증 보류') : '');
     const review = humanByFeature?.get(feature.featureKey);
@@ -829,9 +864,10 @@ function renderPhotoReadiness(record) {
       }
       reason.textContent += ' · 독립 사람 정답·반복 관측 미검증';
     } else if (gap && human?.status === 'withheld') {
-      reason.textContent += human.reason === 'HUMAN_REVIEW_UPDATED_RELOAD_REQUIRED'
-        ? ' · 새 검토 저장됨 · 갱신된 검토 요약은 페이지 새로고침 후 표시'
-        : ' · 사람 검토 자료 무결성 확인 불가';
+      reason.textContent +=
+        human.reason === 'HUMAN_REVIEW_UPDATED_RELOAD_REQUIRED'
+          ? ' · 새 검토 저장됨 · 갱신된 검토 요약은 페이지 새로고침 후 표시'
+          : ' · 사람 검토 자료 무결성 확인 불가';
     }
     if (gap) reason.title = gap.nextEvidenceRequirement;
     item.append(title, reason);

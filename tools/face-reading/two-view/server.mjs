@@ -243,7 +243,9 @@ export async function createLocalReviewServer({
     await Promise.all(
       inventory.map(async (record) => [
         record.recordId,
-        createHash('sha256').update(await readFile(record.sourcePath)).digest('hex'),
+        createHash('sha256')
+          .update(await readFile(record.sourcePath))
+          .digest('hex'),
       ]),
     ),
   );
@@ -562,7 +564,9 @@ export async function createLocalReviewServer({
           staleCount++;
           continue;
         }
-        const digest = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
+        const digest = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
         if (digest !== review.sourceSha256) {
           staleCount++;
           continue;
@@ -580,11 +584,21 @@ export async function createLocalReviewServer({
     for (const [captureRef, review] of browReviews) {
       try {
         const source = inventory.find((r) => r.recordId === captureRef);
-        if (!source) { staleCount++; continue; }
-        const digest = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
-        if (digest !== review.sourceSha256) { staleCount++; continue; }
+        if (!source) {
+          staleCount++;
+          continue;
+        }
+        const digest = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
+        if (digest !== review.sourceSha256) {
+          staleCount++;
+          continue;
+        }
         records[captureRef] = projectBrowCenterlineReviewForUi(review);
-      } catch { staleCount++; }
+      } catch {
+        staleCount++;
+      }
     }
     return { records, staleCount };
   }
@@ -594,11 +608,21 @@ export async function createLocalReviewServer({
     for (const [captureRef, review] of noseReviews) {
       try {
         const source = inventory.find((item) => item.recordId === captureRef);
-        if (!source) { staleCount++; continue; }
-        const digest = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
-        if (digest !== review.sourceSha256) { staleCount++; continue; }
+        if (!source) {
+          staleCount++;
+          continue;
+        }
+        const digest = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
+        if (digest !== review.sourceSha256) {
+          staleCount++;
+          continue;
+        }
         records[captureRef] = projectNoseDetailReviewForUi(review);
-      } catch { staleCount++; }
+      } catch {
+        staleCount++;
+      }
     }
     return { records, staleCount };
   }
@@ -608,11 +632,21 @@ export async function createLocalReviewServer({
     for (const [captureRef, review] of earReviews) {
       try {
         const source = inventory.find((item) => item.recordId === captureRef);
-        if (!source) { staleCount++; continue; }
-        const sha = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
-        if (sha !== review.sourceSha256) { staleCount++; continue; }
+        if (!source) {
+          staleCount++;
+          continue;
+        }
+        const sha = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
+        if (sha !== review.sourceSha256) {
+          staleCount++;
+          continue;
+        }
         valid[captureRef] = projectEarDetailReviewForUi(review);
-      } catch { staleCount++; }
+      } catch {
+        staleCount++;
+      }
     }
     return { records: valid, staleCount };
   }
@@ -622,11 +656,21 @@ export async function createLocalReviewServer({
     for (const [captureRef, review] of lipReviews) {
       try {
         const source = inventory.find((item) => item.recordId === captureRef);
-        if (!source) { staleCount++; continue; }
-        const digest = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
-        if (digest !== review.sourceSha256) { staleCount++; continue; }
+        if (!source) {
+          staleCount++;
+          continue;
+        }
+        const digest = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
+        if (digest !== review.sourceSha256) {
+          staleCount++;
+          continue;
+        }
         records[captureRef] = projectLipBorderHumanReviewForUi(review);
-      } catch { staleCount++; }
+      } catch {
+        staleCount++;
+      }
     }
     return { records, staleCount };
   }
@@ -636,49 +680,71 @@ export async function createLocalReviewServer({
     for (const [captureRef, review] of eyelidContourReviews) {
       try {
         const source = inventory.find((item) => item.recordId === captureRef);
-        if (!source) { staleCount++; continue; }
-        const digest = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
-        if (digest !== review.sourceSha256) { staleCount++; continue; }
+        if (!source) {
+          staleCount++;
+          continue;
+        }
+        const digest = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
+        if (digest !== review.sourceSha256) {
+          staleCount++;
+          continue;
+        }
         records[captureRef] = projectEyelidContourReviewForUi(review);
-      } catch { staleCount++; }
+      } catch {
+        staleCount++;
+      }
     }
     return { records, staleCount };
   }
   async function privatePhotoReadinessState() {
     const withheld = { status: 'unavailable', reason: 'PRIVATE_READINESS_NOT_CURRENT' };
-    if (savedRecords.length !== ids.length || parsingSaved.length !== ids.length)
-      return withheld;
+    if (savedRecords.length !== ids.length || parsingSaved.length !== ids.length) return withheld;
     try {
       const metricActive = JSON.parse(await readFile(resolve(runRoot, 'active.json'), 'utf8'));
       const parsingActive = JSON.parse(await readFile(resolve(parsingRoot, 'active.json'), 'utf8'));
-      if (!/^[a-f0-9-]{36}$/.test(metricActive.runId || '') ||
-          !/^[a-f0-9-]{36}$/.test(parsingActive.runId || '') ||
-          parsingActive.runId !== parsingRunId)
+      if (
+        !/^[a-f0-9-]{36}$/.test(metricActive.runId || '') ||
+        !/^[a-f0-9-]{36}$/.test(parsingActive.runId || '') ||
+        parsingActive.runId !== parsingRunId
+      )
         return withheld;
-      const reportFile = 'whole-face-per-photo-readiness-v1-' +
-        metricActive.runId.slice(0, 8) + '-' + parsingActive.runId.slice(0, 8) + '.json';
+      const reportFile =
+        'whole-face-per-photo-readiness-v1-' +
+        metricActive.runId.slice(0, 8) +
+        '-' +
+        parsingActive.runId.slice(0, 8) +
+        '.json';
       const stored = JSON.parse(await readFile(resolve(intake, reportFile), 'utf8'));
       const previous = JSON.parse(
         await readFile(resolve(intake, 'coverage-summary-20261107.json'), 'utf8'),
       );
       const expectedKeys = previous.features?.map((f) => f.featureKey);
-      if (!Array.isArray(expectedKeys) || expectedKeys.length !== 29 ||
-          previous.canonicalCalculatorMaterializedCount !== 18 ||
-          previous.unresolvedCanonicalCount !== 11)
+      if (
+        !Array.isArray(expectedKeys) ||
+        expectedKeys.length !== 29 ||
+        previous.canonicalCalculatorMaterializedCount !== 18 ||
+        previous.unresolvedCanonicalCount !== 11
+      )
         return withheld;
       for (const original of inventory) {
         const digest = createHash('sha256')
-          .update(await readFile(original.sourcePath)).digest('hex');
-        if (digest !== sourceDigestByRecord.get(original.recordId))
-          return withheld;
+          .update(await readFile(original.sourcePath))
+          .digest('hex');
+        if (digest !== sourceDigestByRecord.get(original.recordId)) return withheld;
       }
       const readiness = projectPrivatePhotoReadiness(stored, records, expectedKeys, {
         metric: METHOD_VERSION,
         parsing: parsingSaved[0]?.parsing?.methodVersion,
       });
-      const fr294Source = await readFile(resolve(
-        sourceDir, '../../../packages/face-reading/src/rgb-selfie-hard-gap-frontier-fr294.ts',
-      ), 'utf8');
+      const fr294Source = await readFile(
+        resolve(
+          sourceDir,
+          '../../../packages/face-reading/src/rgb-selfie-hard-gap-frontier-fr294.ts',
+        ),
+        'utf8',
+      );
       return {
         ...readiness,
         fr294HardGaps: traceFr294PhotoHardGaps(fr294Source, readiness, expectedKeys),
@@ -958,9 +1024,13 @@ export async function createLocalReviewServer({
       if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
       const input = await requestJson(req, 160000);
       const allowed = new Set(['token', 'captureRef', 'imageLeft', 'imageRight']);
-      if (!input || typeof input !== 'object' || Array.isArray(input) ||
-          Object.keys(input).length !== allowed.size ||
-          Object.keys(input).some((key) => !allowed.has(key)))
+      if (
+        !input ||
+        typeof input !== 'object' ||
+        Array.isArray(input) ||
+        Object.keys(input).length !== allowed.size ||
+        Object.keys(input).some((key) => !allowed.has(key))
+      )
         throw Error('EYELID_CONTOUR_REVIEW_INVALID');
       if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
       if (eyelidContourSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
@@ -972,28 +1042,45 @@ export async function createLocalReviewServer({
       try {
         const initial = sourceFileStates.find((r) => r.recordId === captureRef);
         const current = await stat(source.sourcePath);
-        if (!initial || current.size !== initial.size ||
-            current.mtimeMs !== initial.mtimeMs || current.ino !== initial.ino)
+        if (
+          !initial ||
+          current.size !== initial.size ||
+          current.mtimeMs !== initial.mtimeMs ||
+          current.ino !== initial.ino
+        )
           throw Error('SOURCE_CHANGED');
         const sourceSha256 = createHash('sha256')
-          .update(await readFile(source.sourcePath)).digest('hex');
-        if (sourceSha256 !== sourceDigestByRecord.get(captureRef))
-          throw Error('SOURCE_CHANGED');
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
+        if (sourceSha256 !== sourceDigestByRecord.get(captureRef)) throw Error('SOURCE_CHANGED');
         const previous = eyelidContourReviews.get(captureRef);
-        const review = createEyelidContourReviewRecord({
-          imageLeft: input.imageLeft,
-          imageRight: input.imageRight,
-        }, {
-          captureRef, sourceSha256,
-          revision: (previous?.revision || 0) + 1,
-          reviewedAt: new Date().toISOString(),
-        });
+        const review = createEyelidContourReviewRecord(
+          {
+            imageLeft: input.imageLeft,
+            imageRight: input.imageRight,
+          },
+          {
+            captureRef,
+            sourceSha256,
+            revision: (previous?.revision || 0) + 1,
+            reviewedAt: new Date().toISOString(),
+          },
+        );
         const records = Object.fromEntries(eyelidContourReviews);
         records[captureRef] = review;
         const tmp = resolve(intake, 'eyelid-contour-human-reviews-' + randomUUID() + '.tmp');
-        await writeFile(tmp, JSON.stringify({
-          schemaVersion: EYELID_CONTOUR_REVIEW_VERSION, records,
-        }, null, 2) + '\n', { flag: 'wx' });
+        await writeFile(
+          tmp,
+          JSON.stringify(
+            {
+              schemaVersion: EYELID_CONTOUR_REVIEW_VERSION,
+              records,
+            },
+            null,
+            2,
+          ) + '\n',
+          { flag: 'wx' },
+        );
         await rename(tmp, eyelidContourPath);
         eyelidContourReviews.set(captureRef, review);
         return json(res, 200, { saved: true, review: projectEyelidContourReviewForUi(review) });
@@ -1005,9 +1092,13 @@ export async function createLocalReviewServer({
       if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
       const input = await requestJson(req, 160000);
       const allowed = new Set(['token', 'captureRef', ...LIP_BORDER_LINES, ...LIP_BORDER_POINTS]);
-      if (!input || typeof input !== 'object' || Array.isArray(input) ||
-          Object.keys(input).length !== allowed.size ||
-          Object.keys(input).some((key) => !allowed.has(key)))
+      if (
+        !input ||
+        typeof input !== 'object' ||
+        Array.isArray(input) ||
+        Object.keys(input).length !== allowed.size ||
+        Object.keys(input).some((key) => !allowed.has(key))
+      )
         throw Error('LIP_BORDER_REVIEW_INVALID');
       if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
       if (lipReviewSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
@@ -1019,25 +1110,44 @@ export async function createLocalReviewServer({
       try {
         const original = sourceFileStates.find((item) => item.recordId === captureRef);
         const current = await stat(source.sourcePath);
-        if (!original || current.size !== original.size ||
-            current.mtimeMs !== original.mtimeMs || current.ino !== original.ino)
+        if (
+          !original ||
+          current.size !== original.size ||
+          current.mtimeMs !== original.mtimeMs ||
+          current.ino !== original.ino
+        )
           throw Error('SOURCE_CHANGED');
-        const sourceSha256 = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
+        const sourceSha256 = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
         if (sourceSha256 !== sourceDigestByRecord.get(captureRef)) throw Error('SOURCE_CHANGED');
         const previous = lipReviews.get(captureRef);
         const review = createLipBorderHumanReviewRecord(
-          Object.fromEntries([...LIP_BORDER_LINES, ...LIP_BORDER_POINTS]
-            .map((key) => [key, input[key]])),
-          { captureRef, sourceSha256,
+          Object.fromEntries(
+            [...LIP_BORDER_LINES, ...LIP_BORDER_POINTS].map((key) => [key, input[key]]),
+          ),
+          {
+            captureRef,
+            sourceSha256,
             revision: (previous?.revision || 0) + 1,
-            reviewedAt: new Date().toISOString() },
+            reviewedAt: new Date().toISOString(),
+          },
         );
         const records = Object.fromEntries(lipReviews);
         records[captureRef] = review;
         const temporary = resolve(intake, 'lip-border-human-reviews-' + randomUUID() + '.tmp');
-        await writeFile(temporary, JSON.stringify({
-          schemaVersion: LIP_BORDER_REVIEW_SCHEMA_VERSION, records,
-        }, null, 2) + '\n', { flag: 'wx' });
+        await writeFile(
+          temporary,
+          JSON.stringify(
+            {
+              schemaVersion: LIP_BORDER_REVIEW_SCHEMA_VERSION,
+              records,
+            },
+            null,
+            2,
+          ) + '\n',
+          { flag: 'wx' },
+        );
         await rename(temporary, lipReviewPath);
         lipReviews.set(captureRef, review);
         return json(res, 200, { saved: true, review: projectLipBorderHumanReviewForUi(review) });
@@ -1049,9 +1159,13 @@ export async function createLocalReviewServer({
       if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
       const input = await requestJson(req, 160000);
       const keys = new Set(['token', 'captureRef', 'imageLeft', 'imageRight']);
-      if (!input || typeof input !== 'object' || Array.isArray(input) ||
-          Object.keys(input).length !== keys.size ||
-          Object.keys(input).some((key) => !keys.has(key)))
+      if (
+        !input ||
+        typeof input !== 'object' ||
+        Array.isArray(input) ||
+        Object.keys(input).length !== keys.size ||
+        Object.keys(input).some((key) => !keys.has(key))
+      )
         throw Error('EAR_DETAIL_REVIEW_INVALID');
       if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
       if (earReviewSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
@@ -1063,23 +1177,44 @@ export async function createLocalReviewServer({
       try {
         const start = sourceFileStates.find((r) => r.recordId === input.captureRef);
         const current = await stat(source.sourcePath);
-        if (!start || current.size !== start.size ||
-            current.mtimeMs !== start.mtimeMs || current.ino !== start.ino)
+        if (
+          !start ||
+          current.size !== start.size ||
+          current.mtimeMs !== start.mtimeMs ||
+          current.ino !== start.ino
+        )
           throw Error('SOURCE_CHANGED');
-        const sourceSha256 = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
-        if (sourceSha256 !== sourceDigestByRecord.get(input.captureRef)) throw Error('SOURCE_CHANGED');
+        const sourceSha256 = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
+        if (sourceSha256 !== sourceDigestByRecord.get(input.captureRef))
+          throw Error('SOURCE_CHANGED');
         const previous = earReviews.get(input.captureRef);
         const review = createEarDetailReviewRecord(
           { imageLeft: input.imageLeft, imageRight: input.imageRight },
-          { captureRef: input.captureRef, sourceSha256, viewRole,
-            revision: (previous?.revision || 0) + 1, reviewedAt: new Date().toISOString() },
+          {
+            captureRef: input.captureRef,
+            sourceSha256,
+            viewRole,
+            revision: (previous?.revision || 0) + 1,
+            reviewedAt: new Date().toISOString(),
+          },
         );
         const nextRecords = Object.fromEntries(earReviews);
         nextRecords[input.captureRef] = review;
         const pending = resolve(intake, 'ear-detail-human-reviews-' + randomUUID() + '.tmp');
-        await writeFile(pending, JSON.stringify({
-          schemaVersion: EAR_DETAIL_REVIEW_SCHEMA_VERSION, records: nextRecords,
-        }, null, 2) + '\n', { flag: 'wx' });
+        await writeFile(
+          pending,
+          JSON.stringify(
+            {
+              schemaVersion: EAR_DETAIL_REVIEW_SCHEMA_VERSION,
+              records: nextRecords,
+            },
+            null,
+            2,
+          ) + '\n',
+          { flag: 'wx' },
+        );
         await rename(pending, earReviewPath);
         earReviews.set(input.captureRef, review);
         return json(res, 200, { saved: true, review: projectEarDetailReviewForUi(review) });
@@ -1091,9 +1226,13 @@ export async function createLocalReviewServer({
       if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
       const input = await requestJson(req, 150000);
       const allowed = new Set(['token', 'captureRef', 'tip', ...NOSE_CONTOUR_PARTS]);
-      if (!input || typeof input !== 'object' || Array.isArray(input) ||
-          Object.keys(input).length !== allowed.size ||
-          Object.keys(input).some((key) => !allowed.has(key)))
+      if (
+        !input ||
+        typeof input !== 'object' ||
+        Array.isArray(input) ||
+        Object.keys(input).length !== allowed.size ||
+        Object.keys(input).some((key) => !allowed.has(key))
+      )
         throw Error('NOSE_DETAIL_REVIEW_INVALID');
       if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
       if (noseReviewSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
@@ -1104,37 +1243,63 @@ export async function createLocalReviewServer({
       try {
         const initial = sourceFileStates.find((item) => item.recordId === input.captureRef);
         const current = await stat(source.sourcePath);
-        if (!initial || current.size !== initial.size ||
-            current.mtimeMs !== initial.mtimeMs || current.ino !== initial.ino)
+        if (
+          !initial ||
+          current.size !== initial.size ||
+          current.mtimeMs !== initial.mtimeMs ||
+          current.ino !== initial.ino
+        )
           throw Error('SOURCE_CHANGED');
-        const sourceSha256 = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
-        if (sourceSha256 !== sourceDigestByRecord.get(input.captureRef)) throw Error('SOURCE_CHANGED');
+        const sourceSha256 = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
+        if (sourceSha256 !== sourceDigestByRecord.get(input.captureRef))
+          throw Error('SOURCE_CHANGED');
         const previous = noseReviews.get(input.captureRef);
-        const review = createNoseDetailReviewRecord({
-          tip: input.tip,
-          ...Object.fromEntries(NOSE_CONTOUR_PARTS.map((key) => [key, input[key]])),
-        }, {
-          captureRef: input.captureRef, sourceSha256,
-          revision: (previous?.revision || 0) + 1,
-          reviewedAt: new Date().toISOString(),
-        });
+        const review = createNoseDetailReviewRecord(
+          {
+            tip: input.tip,
+            ...Object.fromEntries(NOSE_CONTOUR_PARTS.map((key) => [key, input[key]])),
+          },
+          {
+            captureRef: input.captureRef,
+            sourceSha256,
+            revision: (previous?.revision || 0) + 1,
+            reviewedAt: new Date().toISOString(),
+          },
+        );
         const records = Object.fromEntries(noseReviews);
         records[input.captureRef] = review;
         const temporary = resolve(intake, 'nose-detail-human-reviews-' + randomUUID() + '.tmp');
-        await writeFile(temporary, JSON.stringify({
-          schemaVersion: NOSE_DETAIL_REVIEW_SCHEMA_VERSION, records,
-        }, null, 2) + '\n', { flag: 'wx' });
+        await writeFile(
+          temporary,
+          JSON.stringify(
+            {
+              schemaVersion: NOSE_DETAIL_REVIEW_SCHEMA_VERSION,
+              records,
+            },
+            null,
+            2,
+          ) + '\n',
+          { flag: 'wx' },
+        );
         await rename(temporary, noseReviewPath);
         noseReviews.set(input.captureRef, review);
         return json(res, 200, { saved: true, review: projectNoseDetailReviewForUi(review) });
-      } finally { noseReviewSaving = false; }
+      } finally {
+        noseReviewSaving = false;
+      }
     }
     if (req.method === 'POST' && url.pathname === '/two-view/brow-centerline-reviews') {
       if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
       const input = await requestJson(req, 500000);
       const allowedKeys = new Set(['token', 'captureRef', 'imageLeft', 'imageRight']);
-      if (!input || typeof input !== 'object' || Array.isArray(input) ||
-          Object.keys(input).some((key) => !allowedKeys.has(key)))
+      if (
+        !input ||
+        typeof input !== 'object' ||
+        Array.isArray(input) ||
+        Object.keys(input).some((key) => !allowedKeys.has(key))
+      )
         throw Error('BROW_CENTERLINE_REVIEW_INVALID');
       if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
       if (browReviewSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
@@ -1146,27 +1311,48 @@ export async function createLocalReviewServer({
       try {
         const original = sourceFileStates.find((item) => item.recordId === captureRef);
         const current = await stat(source.sourcePath);
-        if (!original || current.size !== original.size ||
-            current.mtimeMs !== original.mtimeMs || current.ino !== original.ino)
+        if (
+          !original ||
+          current.size !== original.size ||
+          current.mtimeMs !== original.mtimeMs ||
+          current.ino !== original.ino
+        )
           throw Error('SOURCE_CHANGED');
-        const sourceSha256 = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
+        const sourceSha256 = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
         if (sourceSha256 !== sourceDigestByRecord.get(captureRef)) throw Error('SOURCE_CHANGED');
         const previous = browReviews.get(captureRef);
         const review = createBrowCenterlineReviewRecord(
           { imageLeft: input.imageLeft, imageRight: input.imageRight },
-          { captureRef, sourceSha256, revision: (previous?.revision || 0) + 1,
-            reviewedAt: new Date().toISOString() },
+          {
+            captureRef,
+            sourceSha256,
+            revision: (previous?.revision || 0) + 1,
+            reviewedAt: new Date().toISOString(),
+          },
         );
         const nextRecords = Object.fromEntries(browReviews);
         nextRecords[captureRef] = review;
         const tempPath = resolve(intake, 'brow-centerline-human-reviews-' + randomUUID() + '.tmp');
-        await writeFile(tempPath, JSON.stringify({
-          schemaVersion: BROW_CENTERLINE_REVIEW_SCHEMA_VERSION, records: nextRecords,
-        }, null, 2) + '\n', { flag: 'wx' });
+        await writeFile(
+          tempPath,
+          JSON.stringify(
+            {
+              schemaVersion: BROW_CENTERLINE_REVIEW_SCHEMA_VERSION,
+              records: nextRecords,
+            },
+            null,
+            2,
+          ) + '\n',
+          { flag: 'wx' },
+        );
         await rename(tempPath, browReviewPath);
         browReviews.set(captureRef, review);
         return json(res, 200, { saved: true, review: projectBrowCenterlineReviewForUi(review) });
-      } finally { browReviewSaving = false; }
+      } finally {
+        browReviewSaving = false;
+      }
     }
     if (req.method === 'POST' && url.pathname === '/two-view/eye-fold-reviews') {
       if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
@@ -1214,8 +1400,11 @@ export async function createLocalReviewServer({
         const temporaryPath = resolve(intake, 'eye-fold-human-reviews-' + randomUUID() + '.tmp');
         await writeFile(
           temporaryPath,
-          JSON.stringify({ schemaVersion: EYE_FOLD_REVIEW_SCHEMA_VERSION, records: nextRecords }, null, 2) +
-            '\n',
+          JSON.stringify(
+            { schemaVersion: EYE_FOLD_REVIEW_SCHEMA_VERSION, records: nextRecords },
+            null,
+            2,
+          ) + '\n',
           { flag: 'wx' },
         );
         await rename(temporaryPath, eyeFoldReviewPath);
