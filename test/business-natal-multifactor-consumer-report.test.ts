@@ -115,8 +115,13 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
       for(const section of report.sections) {
         explainedSections++;
         expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
-        expect(section.paragraph).toContain('십신 계열이 함께 확인되므로');
+        expect(section.paragraph).toContain(
+          `${section.upstreamClaimIds.length}개 십신 계열이 ${section.channel === 'visible_stems' ? '천간' : '지지 대표 십신'} 관측 범위의 서로 다른 명식 위치에서 각각 확인됩니다`,
+        );
+        expect(section.paragraph).toContain('이 계산 근거에 한해');
         expect(section.paragraph).toContain('구조적 관점으로 연결해 읽습니다');
+        expect(section.paragraph).not.toContain('같은 천간에서');
+        expect(section.paragraph).not.toContain('같은 지지 대표 십신에서');
         expect(section.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
         for(const position of section.observedPositions) {
           expect(section.paragraph).toContain(position);
@@ -124,10 +129,28 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
         expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(section.sourceIds.length).toBeGreaterThan(0);
       }
+      if (report.readingGuide !== undefined) {
+        for (const support of report.sections.slice(1)) {
+          expect(report.readingGuide.paragraph).toContain(
+            `‘${support.headline}’이라는 별도 관점은`);
+          expect(report.readingGuide.paragraph).not.toContain(
+            `또 다른 관점인 ‘${support.headline}’은`);
+        }
+      }
       if(report.state !== 'complete') {
         explainedPartials++;
-        expect(report.missing.join(' ')).toMatch(/추가 해석 축 [1-3]개/u);
-        expect(report.missing.join(' ')).toContain('이 명식에서 확인된 해석 축');
+        const missing = report.missing.join(' ');
+        expect(missing).toContain('이 명식에서 확인된 해석 축');
+        const core = report.sections[0]?.axis !== 'coordination' &&
+          report.sections.length > 0;
+        if (core) {
+          expect(missing).toMatch(/중심 결론과 구별되는 추가 해석 축 [1-2]개가 부족합니다/u);
+          expect(missing).not.toContain('출처 있는 중심 복합 해석 근거가 먼저 필요합니다');
+        } else {
+          expect(missing).toContain('출처 있는 중심 복합 해석 근거가 먼저 필요합니다');
+          expect(missing).not.toMatch(/추가 해석 축 [1-3]개/u);
+          expect(missing).toContain('중심 결론이나 독립 보조 축 수를 대신하지 않습니다');
+        }
       }
       expect(report.researchOnly).toBe(true);
       expect(report.mayPublish).toBe(false);
@@ -157,6 +180,11 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
         expect(report.sections[0]?.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
         expect(report.missing.join(' ')).toContain('중심 해석 근거가 없어');
+        expect(report.missing.join(' ')).toContain('출처 있는 중심 복합 해석 근거가 먼저 필요합니다');
+        expect(report.missing.join(' ')).toContain(
+          '조율(' + (report.sections[0]?.channel === 'visible_stems' ? '천간' : '지지 대표 십신'),
+        );
+        expect(report.missing.join(' ')).not.toMatch(/추가 해석 축 [1-3]개/u);
         expect(report.researchOnly).toBe(true);
         expect(report.usefulComplete).toBe(false);
         expect(report.mayPublish).toBe(false);

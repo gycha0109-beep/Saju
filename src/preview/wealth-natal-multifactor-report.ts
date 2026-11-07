@@ -1,5 +1,6 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
-import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { selectBestNatalCoreWithinPriorityAxis, selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { observeHiddenWealthMembership, type WealthHiddenStemObservation } from './wealth-hidden-stem-observations.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -8,12 +9,17 @@ import { buildReadingCompositionEvidence } from '../reading/reading-intent-compo
 import {
   WEALTH_NATAL_MULTIFACTOR_PACK,
   WEALTH_NATAL_MULTIFACTOR_NARRATIVES,
+  WEALTH_NATAL_CROSS_CHANNEL_NARRATIVES,
+  WEALTH_NATAL_CROSS_CHANNEL_OFFICER_NARRATIVES,
+  WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_NARRATIVES,
+  WEALTH_NATAL_CROSS_CHANNEL_PEER_NARRATIVES,
 } from '../research/wealth-natal-multifactor-candidate.js';
 
 export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
 type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension' | 'context';
 type Status = 'complete' | 'partial' | 'insufficient';
-type Channel = 'visible_stems' | 'branches';
+type ObservationChannel = 'visible_stems' | 'branches';
+type Channel = ObservationChannel | 'cross_channel';
 export interface WealthNatalMultifactorSection {
   claimType: string;
   pattern: string;
@@ -26,6 +32,32 @@ export interface WealthNatalMultifactorSection {
   ruleId: string;
   observedPositions: readonly string[];
   observedFactPaths: readonly string[];
+}
+/** Existing source-qualified T5 observations, NOT a Wealth T8 synthesis.
+ * Available both when no Wealth T8 is selected and when the only selected T8
+ * describes indirect context without a direct Wealth-family core. */
+export interface WealthNatalAvailableThemeContext {
+  title: string;
+  paragraph: string;
+  wealthConclusionAuthorized: false;
+  hiddenWealthMembership: readonly WealthHiddenStemObservation[];
+  hiddenWealthEvidenceStatus: 'resolved' | 'unavailable';
+  hiddenWealthUnavailableReason?: string;
+  /** Calculated hidden membership only: never a source for Wealth T5/T8. */
+  hiddenWealthT5Boundary?: 'membership_only' | 'no_membership_observed' | 'membership_unavailable';
+  themes: readonly {
+    claimId: string;
+    claimType: string;
+    channel: Channel;
+    family: string;
+    headline: string;
+    summary: string;
+    sourceIds: readonly string[];
+    ruleIds: readonly string[];
+    methodologyId: string;
+    observedPositions: readonly string[];
+    observedFactPaths: readonly string[];
+  }[];
 }
 export interface WealthNatalReadingGuide {
   title: string;
@@ -46,6 +78,7 @@ export interface WealthNatalMultifactorReport {
   introduction: string;
   sections: readonly WealthNatalMultifactorSection[];
   readingGuide?: WealthNatalReadingGuide;
+  availableThemeContext?: WealthNatalAvailableThemeContext;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -102,9 +135,10 @@ function guard(v: unknown, message: string): asserts v {
 function explainMissingWealthT8(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
+  selectedTension: WealthNatalMultifactorSection | undefined,
 ): string | undefined {
   if (!snapshot.completeness.birthTimeKnown) return undefined;
-  const activeFamilies = new Map<Channel, Set<string>>([
+  const activeFamilies = new Map<ObservationChannel, Set<string>>([
     ['visible_stems', new Set<string>()],
     ['branches', new Set<string>()],
   ]);
@@ -123,7 +157,7 @@ function explainMissingWealthT8(
       .exec(claim.claimType);
     if (!match) continue;
     const family = match[1]!.toLowerCase();
-    const channel = match[2]!.toLowerCase() as Channel;
+    const channel = match[2]!.toLowerCase() as ObservationChannel;
     activeFamilies.get(channel)!.add(family);
   }
 
@@ -141,23 +175,201 @@ function explainMissingWealthT8(
     : '현재 적용 가능한 출처 연결 십신 관점이 확인되지 않습니다. ';
   const hasWealth = activeFamilies.get('visible_stems')!.has('wealth') ||
     activeFamilies.get('branches')!.has('wealth');
-  const reason = hasWealth
-    ? '재성 관련 십신 관점은 있지만 기존 재물 종합 규칙이 요구하는 같은 관측 범위 안의 다른 십신 계열과 결합되지 않아, 출처가 있는 재물 종합 결론을 만들 수 없습니다. '
-    : '기존 십신 관점 규칙에서 재성 계열의 활성 근거가 확인되지 않아, 등록된 재물 복합 해석 규칙을 적용할 수 없습니다. ';
+  const wealthOnlyAcrossChannels =
+    (['visible_stems', 'branches'] as const).some(channel =>
+      activeFamilies.get(channel)!.has('wealth') &&
+      activeFamilies.get(channel)!.size === 1 &&
+      [...activeFamilies.get(channel === 'visible_stems' ? 'branches' : 'visible_stems')!]
+        .some(family => family !== 'wealth')) &&
+    !(['visible_stems', 'branches'] as const).some(channel =>
+      activeFamilies.get(channel)!.has('wealth') &&
+      [...activeFamilies.get(channel)!].some(family => family !== 'wealth'));
+  const tensionObservation = selectedTension?.channel === 'cross_channel'
+    ? '천간과 지지 대표 십신의 서로 다른 관측 범위에서 비겁·재성의 구조적 긴장 해석 근거가 확인됐지만'
+    : '같은 관측 범위 안에서 비겁·재성의 긴장 관계는 실제 확인됐지만';
+  const reason = selectedTension !== undefined && hasWealth
+    ? tensionObservation + ', 이 관계는 등록된 재물 중심 복합 해석 축이 아니라 제한된 긴장 관점입니다. 확인된 긴장 관계를 재물 전체의 중심 결론으로 승격하지 않습니다. '
+    : wealthOnlyAcrossChannels
+      ? '재성 근거와 다른 십신 계열의 근거가 천간과 지지 대표 십신으로 나뉘어 있습니다. 서로 다른 관측 범위의 관계도 등록된 출처와 규칙에 따라 실제 실행·선택되면 함께 읽을 수 있지만, 이 명식에서 재물 중심 종합 결론으로 선택된 관계 근거는 없습니다. '
+    : hasWealth
+      ? '재성 관련 십신 관점은 확인됐지만 이 명식에서 출처가 연결된 재물 중심 복합 해석은 실제 선택되지 않았습니다. 개별 십신의 존재나 관측 범위만으로 재물 종합 결론을 새로 만들 수 없습니다. '
+      : '기존 십신 관점 규칙에서 재성 계열의 활성 근거가 확인되지 않아, 등록된 재물 복합 해석 규칙을 적용할 수 없습니다. ';
   return sourceNote + reason +
     '이는 재성이 없거나 돈이 없다는 판정이 아니며, 실제 소득·재산·재물운의 좋고 나쁨을 뜻하지 않습니다.';
 }
 
+/**
+ * Preserve actual, individually sourced T5 meanings when no direct Wealth
+ * synthesis is selected. An indirect context-only T8 is not a Wealth conclusion.
+ * T5 remains independently sourced observation, not a new T8 or a substitute
+ * for the existing EvidenceSelector.
+ */
+function buildAvailableThemeContext(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+  alreadyExplainedClaimIds: readonly string[] = [],
+  hasSelectedCore = false,
+): WealthNatalAvailableThemeContext | undefined {
+  const tenGodFact = snapshot.derivedFacts.tenGods;
+  if (!snapshot.completeness.birthTimeKnown || tenGodFact.status !== 'resolved') return undefined;
+  const themes: WealthNatalAvailableThemeContext['themes'][number][] = [];
+  const alreadyExplained = new Set(alreadyExplainedClaimIds);
+  const claims = execution.claims.filter(c => c.state === 'active' &&
+    !alreadyExplained.has(c.claimId) &&
+    c.snapshotId === snapshot.snapshotId && c.scenarioRef === undefined &&
+    c.taxonomy.tier === 'T5' && c.predicate === 'ten_god_theme' &&
+    c.sourceRefs.length > 0)
+    .sort((a, b) => a.claimType.localeCompare(b.claimType));
+  for (const claim of claims) {
+    const match = /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+      .exec(claim.claimType);
+    if (!match) continue;
+    const family = match[1]!.toLowerCase();
+    const channel = match[2]!.toLowerCase() as ObservationChannel;
+    const value = claim.value as Record<string, unknown>;
+    guard(value.family === family && value.channel === channel &&
+      value.fortunePolarity === 'not_determined' &&
+      value.dominance === 'not_scored' &&
+      typeof value.headline === 'string' && value.headline.length > 0 &&
+      typeof value.summary === 'string' && value.summary.length > 0,
+      'T5 source theme is not a bounded same-chart observation');
+    const key = channel === 'visible_stems' ? 'stem' : 'branch';
+    const slots: readonly PillarSlot[] = channel === 'visible_stems'
+      ? ['year', 'month', 'hour'] : ['year', 'month', 'day', 'hour'];
+    const observations = slots.flatMap(slot => {
+      const tenGod = tenGodFact.value[slot][key];
+      if (tenGod?.status !== 'resolved' ||
+          !FAMILIES[family]?.includes(tenGod.value)) return [];
+      return [{
+        display: `${SLOT_NAMES[slot]} ${channel === 'visible_stems' ? '천간' : '지지 대표 십신'} ${tenGod.value}`,
+        factPath: `derivedFacts.tenGods.value.${slot}.${key}.value`,
+      }];
+    });
+    guard(observations.length > 0, 'T5 theme has no actual supporting chart position');
+    // Only expose the exact registered T5 rule and executed methodology:
+    // a real Claim must be traceable through its matching evaluation and source.
+    const ruleRef = claim.ruleRefs[0];
+    const sourceRule = registry.rules.find(rule =>
+      rule.ruleId === ruleRef?.ruleId && rule.version === ruleRef.version);
+    const evaluation = execution.evaluations.find(item =>
+      item.evaluationId === ruleRef?.evaluationId);
+    const method = registry.methodologies.find(item =>
+      item.methodologyId === claim.methodologyRef.id &&
+      item.version === claim.methodologyRef.version);
+    const registeredMeaning = sourceRule?.output.value as Record<string, unknown> | undefined;
+    const registeredSources = new Set(sourceRule?.sourceRefs.map(ref => ref.sourceId) ?? []);
+    // Partial Wealth T5 copy must be the actual registered Claim meaning,
+    // not merely a plausible-looking active claim with nonempty source IDs.
+    // This is the same authority check applied to existing General T5 copy.
+    guard(claim.ruleRefs.length === 1 && sourceRule !== undefined &&
+      sourceRule.status === 'research' &&
+      sourceRule.taxonomy.tier === 'T5' &&
+      sourceRule.taxonomy.category === 'ten_gods' &&
+      sourceRule.output.claimType === claim.claimType &&
+      sourceRule.output.predicate === claim.predicate &&
+      sourceRule.output.subject === claim.subject &&
+      sourceRule.methodologyRef.id === claim.methodologyRef.id &&
+      sourceRule.methodologyRef.version === claim.methodologyRef.version &&
+      registeredMeaning?.family === family &&
+      registeredMeaning?.channel === channel &&
+      registeredMeaning?.headline === value.headline &&
+      registeredMeaning?.summary === value.summary &&
+      method?.status === 'research' &&
+      method.sourceIds.every(id => registeredSources.has(id)) &&
+      evaluation?.status === 'matched' &&
+      evaluation.snapshotId === snapshot.snapshotId &&
+      evaluation.scenarioRef === undefined &&
+      evaluation.ruleRef.id === ruleRef?.ruleId &&
+      evaluation.ruleRef.version === ruleRef?.version &&
+      evaluation.interpretationPackRef.id === registry.pack.packId &&
+      evaluation.interpretationPackRef.version === registry.pack.version &&
+      evaluation.emittedClaimIds.includes(claim.claimId) &&
+      registeredSources.size > 0 &&
+      claim.sourceRefs.length === registeredSources.size &&
+      claim.sourceRefs.every(id =>
+        registeredSources.has(id) &&
+        registry.sources.some(source => source.sourceId === id)),
+      'T5 partial meaning lacks its executed registered rule, method, source or original copy');
+    themes.push({
+      claimId: claim.claimId,
+      claimType: claim.claimType,
+      channel,
+      family,
+      headline: value.headline,
+      summary: value.summary,
+      sourceIds: [...claim.sourceRefs],
+      ruleIds: claim.ruleRefs.map(ref => ref.ruleId),
+      methodologyId: claim.methodologyRef.id,
+      observedPositions: observations.map(x => x.display),
+      observedFactPaths: observations.map(x => x.factPath),
+    });
+  }
+  if (!themes.length) return undefined;
+  const sorted = themes.sort((a,b) =>
+    (a.family === 'wealth' ? -1 : 0) - (b.family === 'wealth' ? -1 : 0) ||
+    (a.channel === 'visible_stems' ? -1 : 0) -
+      (b.channel === 'visible_stems' ? -1 : 0) ||
+    a.family.localeCompare(b.family));
+  const paragraphs = sorted.map(theme =>
+    `‘${theme.headline}’ — ${theme.observedPositions.join(' · ')}에서 확인됐습니다. ${theme.summary}`);
+  // R27 denies narrative materiality; its observations remain a separate
+  // calculated-facts appendix, never part of T5/T8 interpretive prose.
+  const hiddenAssessment = observeHiddenWealthMembership(snapshot);
+  const hiddenWealthMembership = hiddenAssessment.status === 'resolved'
+    ? hiddenAssessment.observations : [];
+  const hasExecutedDirectWealthT5 = execution.claims.some(claim =>
+    claim.state === 'active' && claim.snapshotId === snapshot.snapshotId &&
+    claim.taxonomy.tier === 'T5' && claim.predicate === 'ten_god_theme' &&
+    /^TEN_GOD_WEALTH_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(claim.claimType));
+  // R27 allows an appendix with hidden-stem MEMBERSHIP, not activation or
+  // interpretation. State the reason for withholding T8 when T5 is absent.
+  const hiddenWealthT5Boundary = !hasSelectedCore && !hasExecutedDirectWealthT5
+    ? hiddenAssessment.status === 'unavailable'
+      ? 'membership_unavailable' as const
+      : hiddenWealthMembership.length > 0
+        ? 'membership_only' as const : 'no_membership_observed' as const
+    : undefined;
+  return {
+    title: hasSelectedCore
+      ? '재물 중심 부분풀이와 구별되는 원국의 십신 주제'
+      : alreadyExplained.size
+        ? '앞서 선택된 부분 풀이와 구별되는 원국의 십신 주제'
+        : '재물 종합 결론 이전에 확인된 원국의 십신 주제',
+    paragraph: '아래는 기존 출처와 연결된 십신별 구조 설명입니다. ' +
+      (alreadyExplained.size
+        ? '위의 부분 풀이에 이미 사용된 십신 근거는 반복하지 않았습니다. '
+        : '') +
+      paragraphs.join(' ') +
+      (hasSelectedCore
+        ? ' 이 별도 관측은 선택된 재물 중심 풀이의 부족한 독립 보조 근거를 채우지 않으며, 새로운 재물 종합 결론이 아닙니다. '
+        : ' 이 관측들은 현재 등록된 재물 분야의 복합 해석 근거를 충족하지 못했습니다. ') +
+      '따라서 재물의 많고 적음, 소득, 투자 성과, 향후 재물운을 판단하는 해석으로 읽어서는 안 됩니다.',
+    wealthConclusionAuthorized: false,
+    hiddenWealthMembership,
+    hiddenWealthEvidenceStatus: hiddenAssessment.status,
+    ...(hiddenWealthT5Boundary === undefined ? {} : { hiddenWealthT5Boundary }),
+    ...(hiddenAssessment.status === 'unavailable'
+      ? { hiddenWealthUnavailableReason: hiddenAssessment.reasonCode } : {}),
+    themes: sorted,
+  };
+}
+
 function textFor(claimType: string, key: 'headline'|'summary') {
-  const profile = WEALTH_NATAL_MULTIFACTOR_NARRATIVES.find(p => p.claimType === claimType);
+  const profile = [...WEALTH_NATAL_MULTIFACTOR_NARRATIVES,
+    ...WEALTH_NATAL_CROSS_CHANNEL_NARRATIVES,
+    ...WEALTH_NATAL_CROSS_CHANNEL_OFFICER_NARRATIVES,
+    ...WEALTH_NATAL_CROSS_CHANNEL_RESOURCE_NARRATIVES,
+    ...WEALTH_NATAL_CROSS_CHANNEL_PEER_NARRATIVES]
+    .find(p => p.claimType === claimType);
   guard(profile, 'ClaimNarrativeProfile missing: ' + claimType);
   const matches = profile.templates?.filter(t => t.templateKey === key && t.language === 'ko') ?? [];
   guard(matches.length === 1 && matches[0]!.text.length > 0, 'Korean narrative template missing');
   return matches[0]!.text;
 }
-function positions(snapshot: CanonicalSajuSnapshot, channel: Channel, families: readonly string[]) {
+function positions(snapshot: CanonicalSajuSnapshot, channel: ObservationChannel, families: readonly string[]) {
   const fact = snapshot.derivedFacts.tenGods;
-  guard(fact.status === 'resolved' && families.length >= 2 &&
+  guard(fact.status === 'resolved' && families.length >= 1 &&
     families.length <= 3 && new Set(families).size === families.length &&
     families.every(f => FAMILIES[f] !== undefined),
     'unresolved or unsupported exact chart input');
@@ -186,9 +398,33 @@ function toSection(
   registry: ResolvedRuleRegistrySnapshot,
 ): WealthNatalMultifactorSection {
   const value = claim.value as Record<string, unknown>;
+  const cross = value?.channel === 'cross_channel';
+  const channels = value?.familyChannels as Record<string, unknown> | undefined;
+  const outputWealthCross = cross && value.pattern === 'OUTPUT_WEALTH' &&
+    JSON.stringify(value.families) === JSON.stringify(['output', 'wealth']) &&
+    channels !== undefined &&
+    ((channels.output === 'visible_stems' && channels.wealth === 'branches') ||
+      (channels.output === 'branches' && channels.wealth === 'visible_stems'));
+  const wealthOfficerCross = cross && value.pattern === 'WEALTH_OFFICER' &&
+    JSON.stringify(value.families) === JSON.stringify(['wealth', 'officer']) &&
+    channels !== undefined &&
+    ((channels.wealth === 'visible_stems' && channels.officer === 'branches') ||
+      (channels.wealth === 'branches' && channels.officer === 'visible_stems'));
+  const wealthResourceCross = cross && value.pattern === 'WEALTH_RESOURCE' &&
+    JSON.stringify(value.families) === JSON.stringify(['wealth', 'resource']) &&
+    channels !== undefined &&
+    ((channels.wealth === 'visible_stems' && channels.resource === 'branches') ||
+      (channels.wealth === 'branches' && channels.resource === 'visible_stems'));
+  const peerWealthCross = cross && value.pattern === 'PEER_WEALTH' &&
+    JSON.stringify(value.families) === JSON.stringify(['peer', 'wealth']) &&
+    channels !== undefined &&
+    ((channels.peer === 'visible_stems' && channels.wealth === 'branches') ||
+      (channels.peer === 'branches' && channels.wealth === 'visible_stems'));
+  const validCross = outputWealthCross || wealthOfficerCross || wealthResourceCross ||
+    peerWealthCross;
   guard(value && typeof value === 'object' && typeof value.pattern === 'string' &&
     AXES.includes(value.axis as Axis) &&
-    (value.channel === 'visible_stems' || value.channel === 'branches') &&
+    (value.channel === 'visible_stems' || value.channel === 'branches' || validCross) &&
     Array.isArray(value.families) &&
     value.realLifeOutcomeAuthorized === false && value.futureTimingAuthorized === false &&
     value.healthOrMoneyOutcomeAuthorized === false && value.numericScoringAuthorized === false &&
@@ -197,7 +433,11 @@ function toSection(
     'invalid or overclaiming structured T8 meaning');
   const upstream = claim.upstreamClaimRefs.map(id => execution.claims.find(c => c.claimId === id));
   guard(claim.scenarioRef === undefined && claim.methodologyRef.id ===
-    'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1' &&
+    (outputWealthCross ? 'M-WEALTH-NATAL-WHOLE-CHART-OUTPUT-WEALTH-V1' :
+      wealthOfficerCross ? 'M-WEALTH-NATAL-WHOLE-CHART-WEALTH-OFFICER-V1' :
+      wealthResourceCross ? 'M-WEALTH-NATAL-WHOLE-CHART-WEALTH-RESOURCE-V1' :
+      peerWealthCross ? 'M-WEALTH-NATAL-WHOLE-CHART-PEER-WEALTH-V1' :
+        'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1') &&
     new Set(claim.upstreamClaimRefs).size === claim.upstreamClaimRefs.length &&
     upstream.every(c => c && c.state === 'active' && c.taxonomy.tier === 'T5' &&
       c.snapshotId === snapshot.snapshotId && c.scenarioRef === undefined),
@@ -232,7 +472,27 @@ function toSection(
     rule.sourceRefs.every(x => claim.sourceRefs.includes(x.sourceId)) &&
     claim.sourceRefs.every(id => registry.sources.some(x => x.sourceId === id)),
     'not exactly source-bound to Wealth T5 family and method inputs');
-  const locations = positions(snapshot, value.channel as Channel, value.families as string[]);
+  const locations = cross
+    ? outputWealthCross
+      ? [
+          ...positions(snapshot, channels!.output as ObservationChannel, ['output']),
+          ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
+        ]
+      : wealthOfficerCross
+        ? [
+            ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
+            ...positions(snapshot, channels!.officer as ObservationChannel, ['officer']),
+          ]
+        : wealthResourceCross
+          ? [
+              ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
+              ...positions(snapshot, channels!.resource as ObservationChannel, ['resource']),
+            ]
+          : [
+              ...positions(snapshot, channels!.peer as ObservationChannel, ['peer']),
+              ...positions(snapshot, channels!.wealth as ObservationChannel, ['wealth']),
+            ]
+    : positions(snapshot, value.channel as ObservationChannel, value.families as string[]);
   const observedByFamily = (value.families as string[]).map(family => {
     const actual = locations.filter(location => location.family === family);
     guard(actual.length > 0 && EVIDENCE_ROLES[family] !== undefined,
@@ -240,6 +500,10 @@ function toSection(
     return `${EVIDENCE_ROLES[family]}: ${actual.map(x => x.display).join(' · ')}`;
   });
   const observedChannel = value.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
+  const observation = cross
+    ? '천간과 지지 대표 십신의 서로 다른 관측 범위에서 확인된 두 십신 계열을'
+    : '서로 다른 원국 위치에서 확인된 십신 계열을 같은 ' +
+      observedChannel + ' 관측 범위의 근거로';
   const headline = textFor(claim.claimType, 'headline');
   return {
     claimType: claim.claimType,
@@ -247,7 +511,7 @@ function toSection(
     axis: value.axis as Axis,
     channel: value.channel as Channel,
     headline: textFor(claim.claimType,'headline'),
-    paragraph: `이 원국에서 확인된 근거는 ${observedByFamily.join(' / ')}입니다. 같은 ${observedChannel}에서 관측된 서로 다른 십신 계열을 ${describeQuotedReadingAxis(headline)} 구조적 관점에서 함께 읽습니다. ${textFor(claim.claimType,'summary')}`,
+    paragraph: `이 원국에서 확인된 근거는 ${observedByFamily.join(' / ')}입니다. ${observation} ${describeQuotedReadingAxis(headline)} 구조적 관점에서 함께 읽습니다. ${textFor(claim.claimType,'summary')}`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
@@ -295,7 +559,7 @@ function buildWealthNatalReadingGuide(
   const paragraphs = [
     `이 명식에서 재물과 자원을 읽는 중심 구조적 관점은 ‘${core.headline}’입니다. ${core.observedPositions.join(' · ')}에서 관측된 근거와 연결된 연구용 해석 후보입니다.`,
     ...supports.map((section, index) =>
-      `별도 관점인 ‘${section.headline}’은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 추가로 확인된 계산 근거를 바탕으로 함께 살핍니다.`),
+      `‘${section.headline}’이라는 별도 관점은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 추가로 확인된 계산 근거를 바탕으로 함께 살핍니다.`),
     ...(state === 'complete'
       ? ['중심 관점 하나와 독립적인 계산 근거를 더하는 보조 관점 두 가지를 구분해 읽을 수 있습니다. 다만 이 기준 충족은 실제 소득·재산·투자 성과의 판단이 아닙니다.']
       : [`독립적인 보조 관점은 현재 ${supporting.length}개만 확인되어 필요한 두 가지를 모두 설명하지 못합니다. 재물운 전체 종합 판단은 보류합니다.`]),
@@ -345,31 +609,44 @@ export function buildWealthNatalMultifactorReport(
         .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
           (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
     : [];
-  // Prefer the 3-input core. When not observed, a narrower two-input core can
-  // still be rendered, but completion needs two OTHER independently grounded axes.
-  const core = result.find(s => s.axis === 'core') ??
-    result.find(s => s.axis === 'creation') ??
-    result.find(s => s.axis === 'management') ??
-    result.find(s => s.axis === 'planning');
-  // Actual Wealth relations take priority. Context-only T8 may fill an otherwise
-  // empty research page, but never establishes the missing Wealth synthesis.
-  const supportSelection = core
-    ? selectIndependentNatalSupportingAxes(core, result.filter(section => section.axis !== 'context'))
-    : undefined;
+  // Preserve core > creation > management > planning. Within the FIRST
+  // available axis only, prefer a real T8 core yielding more independent supports.
+  const eligibleCores = result.filter(section =>
+    ['core', 'creation', 'management', 'planning'].includes(section.axis));
+  const selectedCore = selectBestNatalCoreWithinPriorityAxis(
+    eligibleCores,
+    result.filter(section => section.axis !== 'context'),
+  );
+  const core = selectedCore?.core;
+  // An indirect T8 context still cannot replace the missing direct Wealth core.
+  const supportSelection = selectedCore?.support;
   const tensionOnly = result.filter(section => section.axis === 'tension').slice(0, 1);
   const contextOnly = result.filter(section => section.axis === 'context').slice(0, 1);
+  // With no direct Wealth core, a real tension and an independent indirect
+  // source-owned T8 context may coexist. The previous either/or fallback
+  // silently discarded the context even when it had unused Canonical paths.
+  // These are TWO bounded partial interpretations, NEVER a synthesis core.
+  const independentIndirectContext = tensionOnly.length
+    ? selectIndependentNatalSupportingAxes(
+        tensionOnly[0]!, result.filter(section => section.axis === 'context'), 1,
+      ).supporting
+    : [];
   const chosen: WealthNatalMultifactorSection[] = core
     ? [core, ...(supportSelection?.supporting ?? [])]
-    : tensionOnly.length ? tensionOnly : contextOnly;
+    : tensionOnly.length ? [...tensionOnly, ...independentIndirectContext] : contextOnly;
   const missing: string[] = [];
-  if (snapshot.completeness.birthTimeKnown &&
-    (chosen.length === 0 || chosen[0]?.axis === 'context')) {
-    const sourceBoundReason = explainMissingWealthT8(snapshot, execution);
+  // Every no-core report needs the actual same-chart T5 coverage explanation.
+  // A tension-only T8 is not a Wealth core and must not hide that reason.
+  if (snapshot.completeness.birthTimeKnown && core === undefined) {
+    const sourceBoundReason = explainMissingWealthT8(
+      snapshot, execution, chosen.find(section => section.axis === 'tension'));
     if (sourceBoundReason) missing.push(sourceBoundReason);
   }
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
   if(!core && chosen[0]?.axis === 'tension') {
-    missing.push('중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.');
+    missing.push(independentIndirectContext.length
+      ? '재물 중심 종합근거는 없지만, 서로 다른 계산 위치에서 확인된 긴장 관계와 간접 구조 관점을 각각 부분적으로 보여줍니다. 이를 하나의 재물 종합 결론으로 결합하거나 실제 소득·재산·투자 결과로 확장하지 않습니다.'
+      : '중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.');
   }
   if(!core && chosen[0]?.axis === 'context') {
     missing.push('관성·인성 또는 관성·비겁의 간접적인 구조 설명만 확인됩니다. 이것은 재성 중심 재물운 종합 해석이 아니며 결과를 부분 연구 관점으로 제한합니다.');
@@ -377,13 +654,30 @@ export function buildWealthNatalMultifactorReport(
   if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
     missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
   }
-  const missingSupportingAxes = 2 - (core ? chosen.length - 1 : chosen.filter(s => s.axis === 'tension').length);
-  if(missingSupportingAxes > 0) missing.push(
-    `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
+  // A supporting-axis deficit only makes sense after a Wealth core exists.
+  // With no core, "two additional axes missing" wrongly suggests a core
+  // conclusion is already established, even for the 17 no-T8 audit cases.
+  if (core !== undefined) {
+    const missingSupportingAxes = 2 - (chosen.length - 1);
+    if (missingSupportingAxes > 0) missing.push(
+      `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
+  }
   const state: Status = snapshot.completeness.birthTimeKnown &&
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly WealthNatalMultifactorSection[] = chosen;
+  // Preserve source-qualified, unconsumed T5 in any uncompleted Wealth reading.
+  // For a selected partial core this is separate context ONLY; it cannot
+  // supply the missing independent T8 supports or change the report state.
+  const boundedNoCore = core === undefined &&
+    sections.every(section => section.axis === 'context' || section.axis === 'tension');
+  const boundedPartialCore = core !== undefined && state === 'partial';
+  const availableThemeContext = boundedNoCore || boundedPartialCore
+    ? buildAvailableThemeContext(
+        snapshot, execution, registry,
+        sections.flatMap(section => section.upstreamClaimIds),
+        boundedPartialCore,
+      ) : undefined;
   const readingGuide = buildWealthNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
@@ -400,6 +694,7 @@ export function buildWealthNatalMultifactorReport(
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(availableThemeContext === undefined ? {} : { availableThemeContext }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],

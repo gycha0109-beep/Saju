@@ -57,7 +57,7 @@ const BRANCH_HANJA: Readonly<Record<EarthlyBranch, string>> = {
   해: '亥',
 };
 
-export type MonthlyBranchRelationKind = 'clash' | 'none';
+export type MonthlyBranchRelationKind = 'clash' | 'six_combination' | 'none';
 export type MonthlySegmentId = 'before_jeol' | 'after_jeol';
 
 export interface MonthlyBranchRelationValue {
@@ -124,12 +124,15 @@ function branchRelation(
   natalPillar: PillarFact,
   monthlyPillar: PillarFact,
 ): MonthlyBranchRelationValue {
-  const relation = deriveStructuralRelationCandidates({
+  const candidates = deriveStructuralRelationCandidates({
     year: monthlyPillar,
     month: natalPillar,
-  }).some((candidate) => candidate.kind === 'branch_clash')
-    ? 'clash'
-    : 'none';
+  });
+  const relation: MonthlyBranchRelationKind = candidates.some(
+    candidate => candidate.kind === 'branch_clash',
+  ) ? 'clash' : candidates.some(
+    candidate => candidate.kind === 'branch_six_combination',
+  ) ? 'six_combination' : 'none';
 
   return {
     pillar: slot,

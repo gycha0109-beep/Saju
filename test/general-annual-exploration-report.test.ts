@@ -55,6 +55,7 @@ describe('opt-in consumer Annual exploration', () => {
       kind: 'core',
       interpretationStatus: 'internal_research',
     });
+    expect(result.sections[0]?.observedClash).toBeUndefined();
     expect(result.sections[0]?.text.length).toBeGreaterThan(30);
     expect(result.sections.every((section) => section.text.trim().length > 0)).toBe(true);
     expect(result.sections[0]).toMatchObject({
@@ -87,6 +88,10 @@ describe('opt-in consumer Annual exploration', () => {
       expect(report.sections[0]?.title).toBe(
         match?.templates?.find((t) => t.templateKey === 'headline')?.text,
       );
+      // Research future-tendency profiles already require this qualifier.
+      // Reuse it verbatim; never invent a different certainty statement.
+      expect(match?.mandatoryQualifier).toBeTruthy();
+      expect(report.sections[0]?.text).toContain(match?.mandatoryQualifier);
     }
   });
 
@@ -105,6 +110,10 @@ describe('opt-in consumer Annual exploration', () => {
     expect(report.unavailablePillars).toContain('hour');
     expect(report.sections.some((x) => x.relatedPillar === 'hour')).toBe(false);
     expect(report.caveats.join(' ')).toContain('확인되지 않은 기둥');
+    expect(report.caveats.join(' ')).toContain('충·육합 관계는 추정하지 않았습니다');
+    expect(report.caveats.join(' ')).toContain('합화나 실제 사건');
+    expect(report.sections.some(section => section.relatedPillar === 'hour' &&
+      section.kind === 'support')).toBe(false);
   });
 
   it('shows a resolved branch clash as conditional tension, not a concrete event', () => {
@@ -126,6 +135,16 @@ describe('opt-in consumer Annual exploration', () => {
     expect(tension?.kind).toBe('tension');
     expect(tension?.title).toContain('일주');
     expect(tension?.text).toContain('특정 사건의 예고로 보지');
+    expect(tension?.text).toContain(
+      '이는 해당 연도에 두드러질 수 있는 경향을 설명하며, 특정 사건이나 결과를 확정하지 않습니다.');
+    expect(tension?.observedClash).toEqual({
+      natalBranch: '자',
+      annualBranch: value.annualPillar.branch,
+      relation: 'clash',
+    });
+    expect(tension?.text).toContain('태어난 날 지지 자');
+    expect(tension?.text).toContain(`${value.targetYear}년 지지 ${value.annualPillar.branch}`);
+    expect(tension?.text).toContain('실제 사건의 발생을 뜻하지 않습니다');
     expect(tension?.candidateClaimType).toBe('GENERAL_ANNUAL_BRANCH_CLASH_TENSION');
     expect(tension?.calculationFactPaths).toEqual([
       'temporal.targetYear', 'temporal.annualPillar',
@@ -134,6 +153,39 @@ describe('opt-in consumer Annual exploration', () => {
     expect(tension?.evidenceStatus).toBe(
       'research_profile_projection_not_an_executed_official_claim',
     );
+  });
+
+  it('renders a real resolved 六合 pair as source-bounded context, never luck or 合化', () => {
+    const value = facts();
+    expect(value.annualPillar.branch).toBe('오');
+    const updated: AnnualInterpretationFacts = {
+      ...value,
+      annualBranchRelations: {
+        ...value.annualBranchRelations,
+        day: resolved({
+          pillar: 'day', natalBranch: '미',
+          annualBranch: '오', relation: 'six_combination',
+        }),
+      },
+    };
+    const report = buildGeneralAnnualExplorationReport(updated);
+    const support = report.sections.find(section =>
+      section.kind === 'support' && section.relatedPillar === 'day');
+    expect(support).toBeDefined();
+    expect(support?.id).toBe('ANNUAL_BRANCH_SIX_COMBINATION_DAY');
+    expect(support?.text).toContain('원국 일주의 지지와 해당 연도의 지지는 전통 명리의 육합(六合) 쌍');
+    expect(support?.text).toContain('지지 미와 2026년 지지 오');
+    expect(support?.text).toContain('합화나 사건 성립의 근거로 사용하지 않습니다');
+    // A structural six-combination observation is not a future tendency.
+    // No qualifier should be invented for a profile that does not own one.
+    expect(support?.text).not.toContain('이는 해당 연도에 두드러질 수 있는 경향');
+    expect(support?.observedCombination).toMatchObject({
+      natalBranch: '미', annualBranch: '오', relation: 'six_combination',
+      sourceId: 'SRC-T0-XUANZE-YAOLUE-UPPER',
+    });
+    expect(support?.calculationFactPaths).toContain('temporal.annualBranchRelations.day');
+    expect(report.permissions.mayPublish).toBe(false);
+    expect(report.permissions.maySell).toBe(false);
   });
 
   it('rejects contradictory relation payloads and never grants publication or commerce rights', () => {

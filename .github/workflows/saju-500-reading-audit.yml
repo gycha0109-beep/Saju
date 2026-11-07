@@ -4,6 +4,19 @@ on:
   pull_request:
     paths:
       - 'scripts/saju-500-eight-menu-audit.mjs'
+      - 'scripts/saju-500-root-cause.mjs'
+      - 'scripts/saju-500-root-cause-pure.mjs'
+      - 'scripts/saju-500-baseline-comparison.mjs'
+      - 'scripts/saju-500-historical-wealth-replay.mjs'
+      - 'scripts/saju-500-historical-wealth-compare.mjs'
+      - 'test/saju-500-historical-wealth-compare.test.mjs'
+      - 'test/saju-500-root-cause-summary.test.mjs'
+      - 'src/preview/wealth-hidden-stem-observations.ts'
+      - 'src/preview/wealth-natal-multifactor-report.ts'
+      - 'src/preview/natal-five-domain-multifactor-reader.ts'
+      - 'src/research/wealth-natal-multifactor-candidate.ts'
+      - 'test/wealth-hidden-stem-observations.test.ts'
+      - 'test/wealth-natal-multifactor-consumer-report.test.ts'
       - '.github/workflows/saju-500-reading-audit.yml'
   workflow_dispatch:
 
@@ -29,11 +42,33 @@ jobs:
         run: npm run build
       - name: Run deterministic 500-case audit with eight actual menu engines
         run: node scripts/saju-500-eight-menu-audit.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json"
+      - name: Checkout the exact original successful audit source commit
+        uses: actions/checkout@v4
+        with:
+          ref: 313635fcf8fdf0029eba9d463b22884b79d4007a
+          path: saju-original-500
+          persist-credentials: false
+      - name: Install original audit dependencies
+        working-directory: saju-original-500
+        run: npm ci --no-audit --no-fund --ignore-scripts
+      - name: Build original Saju engine from immutable historical source
+        working-directory: saju-original-500
+        run: npm run build
+      - name: Replay original Wealth T8 outcomes for the exact 500 charts
+        run: |
+          cp scripts/saju-500-historical-wealth-replay.mjs saju-original-500/scripts/saju-500-historical-wealth-replay.mjs
+          (cd saju-original-500 && node scripts/saju-500-historical-wealth-replay.mjs "$RUNNER_TEMP/saju-500-historical-wealth.json")
+      - name: Pair historical 111 empty Wealth T8 charts with current actual 500
+        run: |
+          node scripts/saju-500-historical-wealth-compare.mjs "$RUNNER_TEMP/saju-500-historical-wealth.json" "$RUNNER_TEMP/saju-500-eight-menu-report.json" "$RUNNER_TEMP/saju-500-wealth-before-after-cases.json"
       - name: Upload audit results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: saju-500-eight-menu-report
-          path: ${{ runner.temp }}/saju-500-eight-menu-report.json
+          path: |
+            ${{ runner.temp }}/saju-500-eight-menu-report.json
+            ${{ runner.temp }}/saju-500-historical-wealth.json
+            ${{ runner.temp }}/saju-500-wealth-before-after-cases.json
           if-no-files-found: warn
           retention-days: 30

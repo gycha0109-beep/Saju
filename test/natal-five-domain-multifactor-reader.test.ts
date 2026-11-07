@@ -53,7 +53,787 @@ function reports(snapshot: ReturnType<typeof sample>): NatalFiveDomainMultifacto
   };
 }
 
+describe('source-owned T5 observations when Career/Business/Relationship synthesis is absent', () => {
+  const sourceOnly = [
+    { domain: 'career' as const, year: 1955, month: 10, day: 31, hour: 19, minute: 35 },
+    { domain: 'business' as const, year: 2004, month: 8, day: 10, hour: 7, minute: 55 },
+    { domain: 'relationship' as const, year: 1975, month: 3, day: 26, hour: 1, minute: 34 },
+  ];
+  for (const birth of sourceOnly) {
+    it('preserves original T5 without a forged ' + birth.domain + ' T8', () => {
+      const snapshot = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar',
+        date: { year: birth.year, month: birth.month, day: birth.day },
+        time: { known: true, hour: birth.hour, minute: birth.minute },
+        sexForTraditionalCalculation: 'unspecified',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const all = reports(snapshot);
+      const report = all[birth.domain];
+      expect(report.state).toBe('insufficient');
+      expect(report.sections).toHaveLength(0);
+      expect(report.readingGuide).toBeUndefined();
+      const context = report.availableThemeContext;
+      expect(context).toBeDefined();
+      expect(context?.wholeChartSynthesisAuthorized).toBe(false);
+      expect(context?.themes.length).toBeGreaterThan(0);
+      const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, all);
+      const card = html.split('<h2 id="domain-' + birth.domain + '">')[1]!
+        .split('</article>')[0]!;
+      const escaped = (str: string) => str.replace(/[&<>"']/gu, ch => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
+      })[ch]!);
+      expect(card).toContain('aria-label="종합풀이 보류 시 기존 십신 부분 해석"');
+      expect(card).toContain('해당 분야의 종합 해석 아님');
+      expect(card).toContain('풀이 보류 · 근거 부족');
+      expect(card).not.toContain('연구용 최소 근거 충족');
+      for (const theme of context!.themes) {
+        expect(card).toContain(escaped(theme.summary));
+        // The existing Korean T5 summary belongs in the source paragraph
+        // exactly once, not again in its calculation/provenance list.
+        expect(card.split(escaped(theme.summary))).toHaveLength(2);
+        expect(card).toContain(escaped(theme.headline));
+        expect(card).toContain(escaped(theme.observedPositions[0]!));
+        expect(card).toContain(escaped(theme.observedFactPaths[0]!));
+        expect(card).toContain(escaped(theme.claimId));
+        expect(card).toContain(escaped(theme.ruleIds[0]!));
+        expect(card).toContain(escaped(theme.methodologyId));
+        expect(card).toContain(escaped(theme.sourceIds[0]!));
+      }
+      const overview = html.split('</nav>')[0]!;
+      expect(overview).toContain(escaped(context!.themes[0]!.summary));
+      expect(report.researchOnly).toBe(true);
+      expect(report.usefulComplete).toBe(false);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+      expect(renderNatalFiveDomainMultifactorResearchHtml(snapshot, all)).toBe(html);
+    });
+  }
+  it('does not invent source T5 interpretations when the original Ten Gods are unresolved', () => {
+    const snapshot = sample(3, 10, null);
+    const all = reports(snapshot);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, all);
+    for (const domain of ['career', 'business', 'relationship'] as const) {
+      expect(all[domain].state).toBe('insufficient');
+      expect(all[domain].availableThemeContext).toBeUndefined();
+      const card = html.split('<h2 id="domain-' + domain + '">')[1]!
+        .split('</article>')[0]!;
+      expect(card).not.toContain('aria-label="종합풀이 보류 시 기존 십신 부분 해석"');
+    }
+  });
+  it('rejects an unregistered T5 source list in the combined reader', () => {
+    const snapshot = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar', date: { year: 1955, month: 10, day: 31 },
+      time: { known: true, hour: 19, minute: 35 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const all = reports(snapshot);
+    const career = all.career;
+    const context = career.availableThemeContext!;
+    expect(context.themes.length).toBeGreaterThan(0);
+    const forged = {
+      ...all,
+      career: {
+        ...career,
+        availableThemeContext: {
+          ...context,
+          themes: [
+            { ...context.themes[0]!, sourceIds: [] },
+            ...context.themes.slice(1),
+          ],
+        },
+      },
+    };
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(snapshot, forged))
+      .toThrow('Other natal T5 explanation lost its original registered meaning or facts');
+  });
+});
+
 describe('same-chart five-domain multifactor Korean research reading', () => {
+  it('keeps both source-bound Wealth readings after independent cross-channel support is added', () => {
+    const examples = [
+      { year: 1960, month: 11, day: 15, hour: 12, minute: 41 },
+      { year: 1977, month: 6, day: 8, hour: 9, minute: 48 },
+    ] as const;
+    const escaped = (value: string) => value.replace(/[&<>"']/gu, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char]!);
+    let sourcedCrossCore = 0;
+    let originalLimitedTension = 0;
+    for (const birth of examples) {
+      const chart = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar',
+        date: { year: birth.year, month: birth.month, day: birth.day },
+        time: { known: true, hour: birth.hour, minute: birth.minute },
+        sexForTraditionalCalculation: 'male',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const all = reports(chart);
+      const wealth = all.wealth;
+      const core = wealth.sections[0];
+      const hasDirectCore = core !== undefined &&
+        ['core', 'creation', 'management', 'planning'].includes(core.axis);
+      const html = renderNatalFiveDomainMultifactorResearchHtml(chart, all);
+      const card = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+      const firstReading = card.split('<details class="full-claim-evidence"')[0]!;
+      expect(card).toContain('aria-label="재물운 명식별 풀이 본문"');
+      if (birth.year === 1960) {
+        // Formerly partial; a new, source-bound and independent management
+        // axis now legitimately meets the three-axis research criterion.
+        expect(wealth.state).toBe('complete');
+        expect(wealth.sections).toHaveLength(3);
+        expect(new Set(wealth.sections.map(section => section.axis)).size).toBe(3);
+        expect(wealth.sections.some(section =>
+          section.pattern === 'WEALTH_OFFICER' &&
+          section.channel === 'cross_channel' && section.axis === 'management')).toBe(true);
+      }
+      if (birth.year === 1977) {
+        // The registered axis priority chooses the source-owned management
+        // core ahead of planning. Wealth/Resource is independently tested
+        // on a chart where that T8 is actually selected for the reader.
+        expect(core?.channel).toBe('cross_channel');
+        expect(core?.axis).toBe('management');
+        expect(core?.pattern).toBe('WEALTH_OFFICER');
+        expect(core?.paragraph).toContain('재성과 관성은 동일 관측 채널이 아니라');
+      }
+      if (hasDirectCore) {
+        sourcedCrossCore++;
+        expect(core.channel).toBe('cross_channel');
+        expect(['creation', 'management', 'planning']).toContain(core.axis);
+        expect(core.pattern).toBe(core.axis === 'creation' ? 'OUTPUT_WEALTH' :
+          core.axis === 'management' ? 'WEALTH_OFFICER' : 'WEALTH_RESOURCE');
+        expect(wealth.readingGuide?.coreClaimType).toBe(core.claimType);
+        expect(core.paragraph).toContain('서로 다른 관측 범위');
+        expect(card).toContain('중심 관점 · ');
+        expect(card).not.toContain('재물운 중심 결론이 확립되지 않았습니다');
+        if (wealth.state === 'complete') {
+          expect(wealth.sections).toHaveLength(3);
+          expect(wealth.readingGuide?.supporting).toHaveLength(2);
+          expect(card).toContain('중심 하나와 서로 독립적인 보조 두 가지를 확인한 연구용 풀이');
+          expect(wealth.missing).toHaveLength(0);
+        } else {
+          expect(wealth.state).toBe('partial');
+          expect(card).toContain('아직 설명하지 못하는 부분');
+          expect(card).toContain('독립적인 추가 근거가 부족하여 종합 판단은 보류합니다');
+        }
+      } else {
+        originalLimitedTension++;
+        expect(wealth.state).toBe('partial');
+        expect(wealth.readingGuide).toBeUndefined();
+        expect(wealth.sections.map(section => section.axis)).toEqual(['tension', 'context']);
+        expect(card).toContain('아직 설명하지 못하는 부분');
+        expect(card).toContain('재물운 중심 결론이 확립되지 않았습니다');
+        expect(card).toContain('확인된 긴장 부분 관점');
+        expect(card).toContain('재성 중심 결론이 아닌 간접 맥락');
+      }
+      const usedPaths = new Set<string>();
+      for (const section of wealth.sections) {
+        expect(firstReading).toContain('<p>' + escaped(section.paragraph) + '</p>');
+        expect(section.sourceIds.length).toBeGreaterThan(0);
+        expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
+        expect(card).toContain('<h3>' + escaped(section.headline) + '</h3>');
+        expect(card).toContain(section.ruleId);
+        expect(card).toContain(section.sourceIds[0]!);
+        if (hasDirectCore) {
+          const fresh = section.observedFactPaths.filter(path => !usedPaths.has(path));
+          expect(fresh.length).toBeGreaterThan(0);
+          section.observedFactPaths.forEach(path => usedPaths.add(path));
+        }
+      }
+      expect(wealth.researchOnly).toBe(true);
+      expect(wealth.usefulComplete).toBe(false);
+      expect(wealth.mayPublish).toBe(false);
+      expect(wealth.maySell).toBe(false);
+    }
+    expect(sourcedCrossCore).toBe(2);
+    expect(originalLimitedTension).toBe(0);
+  }, 60000);
+
+
+  it('puts actual selected Wealth core and supports on the first screen without inventing extra meaning', () => {
+    const chart = sample(3, 10);
+    const all = reports(chart);
+    const wealth = all.wealth;
+    expect(wealth.readingGuide).toBeDefined();
+    expect(wealth.sections.length).toBeGreaterThan(0);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, all);
+    const wealthCard = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+    const firstReading = wealthCard.split('<details class="full-claim-evidence"')[0]!;
+    const escaped = (value: string) => value.replace(/[&<>"']/gu, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char]!);
+    expect(firstReading).toContain('aria-label="재물운 명식별 풀이 본문"');
+    expect(firstReading).toContain('중심 관점 · ');
+    expect(firstReading).not.toContain('긴장 부분 관점');
+    expect(firstReading).not.toContain('재성 중심 결론이 아닌 간접 맥락');
+    for (const section of wealth.sections) {
+      expect(firstReading).toContain('<p>' + escaped(section.paragraph) + '</p>');
+      expect(firstReading).toContain(escaped(section.headline));
+    }
+    expect(html).toContain('<details class="full-claim-evidence"');
+    expect(wealth.mayPublish).toBe(false);
+    expect(wealth.maySell).toBe(false);
+    expect(wealth.usefulComplete).toBe(false);
+    const forged = {
+      ...all,
+      wealth: {
+        ...wealth,
+        // Keep the existing report and all original T8 source bindings;
+        // a falsified indirect axis must not be shown as a selected core.
+        sections: [
+          { ...wealth.sections[0]!, axis: 'context' as const },
+          ...wealth.sections.slice(1),
+        ],
+      },
+    };
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
+      .toThrow('Wealth first-screen requires only the source-owned selected T8 reading');
+  });
+
+  it('renders unused sourced T5 beside a partial Wealth core without treating it as a supporting T8', () => {
+    let checked = false;
+    outer: for (const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
+      for (const day of [3,7,11,17,23]) {
+        for (const hour of [0,6,12,18]) {
+          const chart = sample(month, day, hour);
+          const execution = runInterpretation(chart, registry.wealth, { now: NOW });
+          const wealth = buildWealthNatalMultifactorReport(chart, execution, registry.wealth);
+          if (wealth.state !== 'partial' || wealth.readingGuide === undefined ||
+              wealth.availableThemeContext === undefined) continue;
+          const rendered = reports(chart);
+          const html = renderNatalFiveDomainMultifactorResearchHtml(chart, rendered);
+          const card = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+          expect(card).toContain('재물 중심 부분풀이와 구별되는 원국의 십신 주제');
+          expect(card).toContain('재물운 종합 해석 아님');
+          expect(card).toContain('중심 관점 · ');
+          expect(card).toContain('독립 보조 근거를 채우지 않으며');
+          const coreIds = new Set(wealth.sections.flatMap(section => section.upstreamClaimIds));
+          for (const theme of wealth.availableThemeContext.themes) {
+            expect(coreIds.has(theme.claimId)).toBe(false);
+            expect(card).toContain(theme.summary);
+            expect(card).toContain(theme.ruleIds[0]!);
+            expect(card).toContain(theme.methodologyId);
+            expect(card).toContain(theme.observedPositions[0]!);
+          }
+          expect(wealth.usefulComplete).toBe(false);
+          expect(wealth.mayPublish).toBe(false);
+          expect(wealth.maySell).toBe(false);
+          const forged = {
+            ...rendered,
+            wealth: {
+              ...wealth,
+              availableThemeContext: {
+                ...wealth.availableThemeContext,
+                themes: [{
+                  ...wealth.availableThemeContext.themes[0]!,
+                  claimId: wealth.sections[0]!.upstreamClaimIds[0]!,
+                }],
+              },
+            },
+          };
+          expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
+            .toThrow('existing theme context repeats an already interpreted T8 upstream claim');
+          checked = true;
+          break outer;
+        }
+      }
+    }
+    expect(checked).toBe(true);
+  }, 60000);
+
+  it('shows unconsumed source-owned General T5 beside a partial core and blocks duplicate claims', () => {
+    let verified = false;
+    outer: for (const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
+      for (const day of [3,7,11,17,23]) {
+        const chart = sample(month, day, 12);
+        const execution = runInterpretation(chart, registry.general, { now: NOW });
+        const general = buildGeneralNatalMultifactorReport(chart, execution, registry.general);
+        if (general.state !== 'partial' || general.sections.length === 0 ||
+            general.sections[0]!.axis === 'tension' || !general.availableThemeContext) continue;
+        const reading = reports(chart);
+        const card = renderNatalFiveDomainMultifactorResearchHtml(chart, reading)
+          .split('<h2 id="domain-general">')[1]!.split('</article>')[0]!;
+        expect(card).toContain('총운 중심 부분풀이와 구별되는 기존 십신 관점');
+        expect(card).toContain('원국 종합해석 아님');
+        const consumed = new Set(general.sections.flatMap(section => section.upstreamClaimIds));
+        for (const theme of general.availableThemeContext.themes) {
+          expect(consumed.has(theme.claimId)).toBe(false);
+          expect(card).toContain(theme.summary);
+          expect(card).toContain(theme.ruleIds[0]!);
+          expect(card).toContain(theme.sourceIds[0]!);
+          expect(card).toContain(theme.methodologyId);
+          expect(card).toContain(theme.observedFactPaths[0]!);
+        }
+        const duplicate = {
+          ...reading,
+          general: {
+            ...general,
+            availableThemeContext: {
+              ...general.availableThemeContext,
+              themes: [{
+                ...general.availableThemeContext.themes[0]!,
+                claimId: general.sections[0]!.upstreamClaimIds[0]!,
+              }],
+            },
+          },
+        };
+        expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, duplicate))
+          .toThrow('General T5 context cannot substitute');
+        expect(general.usefulComplete).toBe(false);
+        verified = true;
+        break outer;
+      }
+    }
+    expect(verified).toBe(true);
+  }, 60000);
+
+  it('shows unconsumed original T5 meanings beside a source-bound General tension without claiming a core', () => {
+    let verified = false;
+    outer: for (const month of [2,3,4,5,6,7,8,9,10,11,12,1]) {
+      for (const day of [3,7,11,17,23,27]) {
+        for (const hour of [0,12,20]) {
+          const chart = sample(month, day, hour);
+          const execution = runInterpretation(chart, registry.general, { now: NOW });
+          const general = buildGeneralNatalMultifactorReport(chart, execution, registry.general);
+          if (general.state !== 'partial' || general.sections.length !== 1 ||
+              general.sections[0]?.axis !== 'tension' ||
+              general.availableThemeContext === undefined) continue;
+          expect(general.readingGuide).toBeDefined();
+          expect(general.readingGuide!.sourceClaimType).toBe(general.sections[0]!.claimType);
+          expect(general.readingGuide!.supporting).toHaveLength(0);
+          expect(general.readingGuide!.sourceIds).toEqual(general.sections[0]!.sourceIds);
+          expect(general.readingGuide!.ruleIds).toEqual([general.sections[0]!.ruleId]);
+          expect(general.readingGuide!.paragraph).toContain(general.sections[0]!.paragraph);
+          const consumed = new Set(general.sections.flatMap(section => section.upstreamClaimIds));
+          expect(general.availableThemeContext.themes.length).toBeGreaterThan(0);
+          expect(general.availableThemeContext.themes.every(theme =>
+            !consumed.has(theme.claimId))).toBe(true);
+          const all = reports(chart);
+          const html = renderNatalFiveDomainMultifactorResearchHtml(chart, all);
+          const card = html.split('<h2 id="domain-general">')[1]!.split('</article>')[0]!;
+          expect(card).toContain('확인된 부분 관점');
+          expect(card).toContain('원국 종합해석 아님');
+          const firstMeaning = card.split('<details class="full-claim-evidence"')[0]!;
+          expect(firstMeaning).toContain('aria-label="총운 명식별 풀이 본문"');
+          expect(firstMeaning).toContain('총운의 중심 결론은 보류합니다');
+          expect(firstMeaning).toContain(general.sections[0]!.headline);
+          const escapedParagraph = general.sections[0]!.paragraph.replace(/[&<>"']/gu, char => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+          })[char]!);
+          expect(firstMeaning).toContain('<p>' + escapedParagraph + '</p>');
+          expect(firstMeaning).not.toContain('중심 관점 · ');
+          expect(card).toContain(general.sections[0]!.ruleId);
+          expect(card).toContain(general.sections[0]!.sourceIds[0]!);
+          for (const theme of general.availableThemeContext.themes) {
+            expect(card).toContain(theme.headline);
+            expect(card).toContain(theme.claimId);
+            expect(card.split(theme.summary)).toHaveLength(2);
+            expect(card).toContain(theme.observedFactPaths[0]!);
+            expect(card).toContain(theme.sourceIds[0]!);
+          }
+          expect(general.usefulComplete).toBe(false);
+          expect(general.mayPublish).toBe(false);
+          expect(general.maySell).toBe(false);
+          expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, {
+            ...all, general: {
+              ...all.general,
+              availableThemeContext: {
+                ...all.general.availableThemeContext!,
+                themes: [{
+                  ...all.general.availableThemeContext!.themes[0]!,
+                  claimId: all.general.sections[0]!.upstreamClaimIds[0]!,
+                }],
+              },
+            },
+          })).toThrow('General T5 context cannot substitute');
+          verified = true;
+          break outer;
+        }
+      }
+    }
+    expect(verified, 'at least one calculated tension-only General chart has independent unused T5 evidence').toBe(true);
+  }, 60000);
+
+  it('recovers actual existing T5 Korean partial meaning when whole-chart T8 is absent', () => {
+    let found = false;
+    for (let month = 1; month <= 12 && !found; month++) {
+      for (let day = 1; day <= 28 && !found; day++) {
+        for (const hour of [0, 12, 20]) {
+          const chart = sample(month, day, hour);
+          const execution = runInterpretation(chart, registry.general, { now: NOW });
+          const general = buildGeneralNatalMultifactorReport(chart, execution, registry.general);
+          if (general.sections.length !== 0 || !general.availableThemeContext) continue;
+          found = true;
+          expect(general.state).toBe('insufficient');
+          expect(general.readingGuide).toBeUndefined();
+          expect(general.availableThemeContext.wholeChartSynthesisAuthorized).toBe(false);
+          const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reports(chart));
+          const own = html.split('<h2 id="domain-general">')[1]!.split('</article>')[0]!;
+          const overview = html.split('</nav>')[0]!;
+          const firstT5 = general.availableThemeContext.themes[0]!;
+          expect(overview).toContain('전체 사주 종합풀이 보류 · 출처 있는 원국 십신 부분 관측: ');
+          expect(overview).toContain(firstT5.headline);
+          expect(overview).toContain(firstT5.summary);
+          expect(overview).not.toContain('확인된 부분 해석: ' + firstT5.headline);
+          expect(own).toContain('전체 사주의 복합 종합해석 근거는 아직 확인되지 않았습니다');
+          expect(own).not.toContain('현재 이 명식에서 근거가 확인된 해석 문단은 없습니다');
+          expect(own).toContain('전체 원국의 기존 십신 부분 해석');
+          expect(own).toContain('원국 종합해석 아님');
+          for (const theme of general.availableThemeContext.themes) {
+            expect(own.split(theme.summary)).toHaveLength(2);
+            expect(own).toContain(theme.claimId);
+            expect(own).toContain(theme.sourceIds[0]!);
+            expect(own).toContain(theme.observedPositions[0]!);
+            expect(own).toContain(theme.observedFactPaths[0]!);
+          }
+          expect(general.usefulComplete).toBe(false);
+          expect(general.mayPublish).toBe(false);
+          expect(general.maySell).toBe(false);
+          const forged = reports(chart);
+          expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, {
+            ...forged,
+            general: {
+              ...forged.general,
+              availableThemeContext: {
+                ...general.availableThemeContext!,
+                themes: [{
+                  ...general.availableThemeContext!.themes[0]!,
+                  observedFactPaths: ['invented.fact.path'],
+                }],
+              },
+            },
+          })).toThrow('General T5 partial reading lacks original rule');
+          break;
+        }
+      }
+    }
+    expect(found).toBe(true);
+  }, 60000);
+
+  it('labels a real context-only Wealth T8 as indirect rather than a direct Wealth core in overview', () => {
+    const chart = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 1964, month: 11, day: 14 },
+      time: { known: true, hour: 14, minute: 59 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const reading = reports(chart);
+    expect(reading.wealth.state).toBe('partial');
+    expect(reading.wealth.sections[0]?.axis).toBe('context');
+    expect(reading.wealth.readingGuide).toBeUndefined();
+    const overview = renderNatalFiveDomainMultifactorResearchHtml(chart, reading)
+      .split('</nav>')[0]!;
+    expect(overview).toContain('재물 종합 결론 보류 · 기존 간접 구조 부분풀이: ' +
+      reading.wealth.sections[0]!.headline);
+    expect(overview).toContain('아직 설명하지 못하는 부분:');
+    expect(overview).not.toContain('확인된 부분 해석: ' +
+      reading.wealth.sections[0]!.headline);
+    expect(reading.wealth.usefulComplete).toBe(false);
+    expect(reading.wealth.maySell).toBe(false);
+  });
+
+  it('actually displays existing source-qualified Ten-God context for an insufficient Wealth reading', () => {
+    const chart = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 1981, month: 2, day: 1 },
+      time: { known: true, hour: 13, minute: 52 },
+      sexForTraditionalCalculation: 'male',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const reading = reports(chart);
+    expect(reading.wealth.state).toBe('insufficient');
+    expect(reading.wealth.sections).toHaveLength(0);
+    expect(reading.wealth.missing[0]).toContain('실제로 확인된 출처 연결 십신 관점');
+    expect(reading.wealth.missing.join(' ')).not.toContain('추가 구조 축');
+    const context = reading.wealth.availableThemeContext!;
+    expect(context.wealthConclusionAuthorized).toBe(false);
+    expect(context.themes.length).toBeGreaterThan(0);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reading);
+    const overview = html.split('</nav>')[0]!;
+    expect(overview).toContain('재물 종합 결론 보류 · 출처 있는 십신 부분풀이: ');
+    expect(overview).toContain(context.themes[0]!.headline);
+    expect(overview).toContain(context.themes[0]!.summary);
+    expect(overview).not.toContain('재물 종합 결론 확보');
+    const wealthCard = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+    expect(wealthCard).toContain('aria-label="재물운 근거 있는 부분 설명"');
+    expect(wealthCard).toContain('재물운 종합 해석 아님');
+    expect(wealthCard).toContain(context.paragraph);
+    for (const membership of context.hiddenWealthMembership) {
+      expect(wealthCard).toContain('지장간의 재성 계열 구성 관측');
+      expect(wealthCard).toContain(membership.hiddenStem);
+      expect(wealthCard).toContain(membership.derivedTenGod);
+      expect(wealthCard).toContain(membership.membershipSourceUrl);
+    }
+    for (const theme of context.themes) {
+      expect(wealthCard).toContain(theme.headline);
+      expect(wealthCard).toContain(theme.claimType);
+      expect(wealthCard).toContain(theme.sourceIds[0]!);
+      expect(wealthCard).toContain(theme.ruleIds[0]!);
+      expect(wealthCard).toContain(theme.methodologyId);
+      expect(wealthCard).toContain(theme.observedPositions[0]!);
+    }
+    const forged = {
+      ...reading,
+      wealth: {
+        ...reading.wealth,
+        availableThemeContext: {
+          ...context,
+          themes: [{ ...context.themes[0]!, observedFactPaths: ['not-a-canonical-path'] }],
+        },
+      },
+    };
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
+      .toThrow('existing theme context has no actual sourced calculation evidence');
+    const missingMethod = {
+      ...reading,
+      wealth: {
+        ...reading.wealth,
+        availableThemeContext: {
+          ...context,
+          themes: [{ ...context.themes[0]!, methodologyId: '' }],
+        },
+      },
+    };
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, missingMethod))
+      .toThrow('existing theme context has no actual sourced calculation evidence');
+  }, 30000);
+
+  it('separates hidden-stem wealth membership from absent direct T5 in the actual insufficient charts', () => {
+    for (const birth of [
+      { year: 1981, month: 2, day: 1, hour: 13, minute: 52, expected: 'membership_only' },
+      { year: 1971, month: 3, day: 28, hour: 22, minute: 44,
+        expected: 'no_membership_observed' },
+    ] as const) {
+      const chart = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar', date: {
+          year: birth.year, month: birth.month, day: birth.day,
+        }, time: { known: true, hour: birth.hour, minute: birth.minute },
+        sexForTraditionalCalculation: 'unspecified',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const domainReports = reports(chart);
+      const wealth = domainReports.wealth;
+      expect(wealth.state).toBe('insufficient');
+      expect(wealth.sections).toHaveLength(0);
+      expect(wealth.availableThemeContext?.hiddenWealthT5Boundary).toBe(birth.expected);
+      expect(wealth.availableThemeContext?.hiddenWealthMembership.length === 0)
+        .toBe(birth.expected === 'no_membership_observed');
+      const html = renderNatalFiveDomainMultifactorResearchHtml(chart, domainReports);
+      const wealthCard = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+      expect(wealthCard).toContain('aria-label="지장간 계산과 재물운 해석의 구분"');
+      expect(wealthCard).toContain('새로운 운세 주장이 아닙니다');
+      expect(wealthCard).toContain(birth.expected === 'membership_only'
+        ? '재성 해석 근거(T5)가 아닙니다'
+        : '이 사실은 재산이나 돈이 없다는 뜻이 아니며');
+      expect(wealth.missing.join(' ')).toContain('재성 계열의 활성 근거가 확인되지 않아');
+      expect(wealth.mayPublish).toBe(false);
+      expect(wealth.maySell).toBe(false);
+      const altered = {
+        ...domainReports,
+        wealth: {
+          ...wealth,
+          availableThemeContext: {
+            ...wealth.availableThemeContext!,
+            hiddenWealthT5Boundary: birth.expected === 'membership_only'
+              ? 'no_membership_observed' as const : 'membership_only' as const,
+          },
+        },
+      };
+      expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, altered))
+        .toThrow('hidden wealth evidence is not an executed direct Wealth T5 theme');
+    }
+  });
+
+  it('displays already sourced T5 meanings alongside an indirect-only Wealth T8 paragraph', () => {
+    for (const birth of [
+      { year: 1964, month: 11, day: 14, hour: 14, minute: 59, pattern: 'OFFICER_RESOURCE_CONTEXT' },
+      { year: 1962, month: 5, day: 5, hour: 0, minute: 3, pattern: 'OFFICER_PEER_CONTEXT' },
+    ]) {
+      const chart = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar', date: {
+          year: birth.year, month: birth.month, day: birth.day,
+        },
+        time: { known: true, hour: birth.hour, minute: birth.minute },
+        sexForTraditionalCalculation: 'unspecified',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const reading = reports(chart);
+      const wealth = reading.wealth;
+      expect(wealth.state).toBe('partial');
+      expect(wealth.sections).toHaveLength(1);
+      expect(wealth.sections[0]?.pattern).toBe(birth.pattern);
+      expect(wealth.sections[0]?.axis).toBe('context');
+      expect(wealth.readingGuide).toBeUndefined();
+      const context = wealth.availableThemeContext!;
+      expect(context.wealthConclusionAuthorized).toBe(false);
+      expect(context.themes.length).toBeGreaterThanOrEqual(2);
+      const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reading);
+      const wealthCard = html.split('<h2 id="domain-wealth">')[1]!
+        .split('</article>')[0]!;
+      expect(wealthCard).toContain('aria-label="재물운 근거 있는 부분 설명"');
+      expect(wealthCard).toContain('현재 종합 풀이가 보류된 이유');
+      expect(wealthCard).toContain(wealth.missing[0]!);
+      expect(wealthCard).toContain(context.paragraph);
+      expect(context.themes.every(theme =>
+        !wealth.sections[0]!.upstreamClaimIds.includes(theme.claimId))).toBe(true);
+      // Rendered source paragraph is safely HTML-escaped (including quotes).
+      const escapedParagraph = wealth.sections[0]!.paragraph
+        .replace(/&/gu, '&amp;')
+        .replace(/</gu, '&lt;').replace(/>/gu, '&gt;')
+        .replace(/"/gu, '&quot;').replace(/'/gu, '&#39;');
+      expect(wealthCard).toContain('<p>' + escapedParagraph + '</p>');
+      expect(wealthCard).toContain('재물운 종합 해석 아님');
+      const duplicate = {
+        ...reading,
+        wealth: {
+          ...wealth,
+          availableThemeContext: {
+            ...context,
+            themes: [
+              { ...context.themes[0]!, claimId: wealth.sections[0]!.upstreamClaimIds[0]! },
+              ...context.themes.slice(1),
+            ],
+          },
+        },
+      };
+      expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, duplicate))
+        .toThrow('existing theme context repeats an already interpreted T8 upstream claim');
+      for (const theme of context.themes) {
+        expect(wealthCard).toContain(theme.headline);
+        expect(wealthCard).toContain(theme.ruleIds[0]!);
+        expect(wealthCard).toContain(theme.methodologyId);
+        expect(wealthCard).toContain(theme.sourceIds[0]!);
+        expect(wealthCard).toContain(theme.observedPositions[0]!);
+      }
+      // Injecting fallback T5 material alongside a real Wealth T8 core is forbidden.
+      const coreChart = sample(3, 10);
+      const validWealth = reports(coreChart);
+      expect(validWealth.wealth.readingGuide).toBeDefined();
+      const forged = {
+        ...validWealth,
+        wealth: { ...validWealth.wealth, availableThemeContext: context },
+      };
+      expect(() => renderNatalFiveDomainMultifactorResearchHtml(coreChart, forged))
+        .toThrow('existing theme context must not become a Wealth synthesis');
+      expect(wealth.mayPublish).toBe(false);
+      expect(wealth.maySell).toBe(false);
+    }
+  }, 30000);
+
+  it('keeps the actual Wealth tension and unused T5 themes distinct in the reader', () => {
+    let chart: ReturnType<typeof sample> | undefined;
+    for (let year = 1950; year <= 2005 && chart === undefined; year++) {
+      for (const month of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+        const current = calculateCanonicalSajuSnapshot({
+          calendarType: 'solar',
+          date: { year, month, day: 14 },
+          time: { known: true, hour: 12, minute: 0 },
+          sexForTraditionalCalculation: 'unspecified',
+        }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+        const run = runInterpretation(current, registry.wealth, { now: NOW });
+        const wealth = buildWealthNatalMultifactorReport(current, run, registry.wealth);
+        if (wealth.sections.length === 1 &&
+            wealth.sections[0]?.axis === 'tension' &&
+            (wealth.availableThemeContext?.themes.length ?? 0) > 0) {
+          chart = current;
+          break;
+        }
+      }
+    }
+    expect(chart).toBeDefined();
+    const reading = reports(chart!);
+    const wealth = reading.wealth;
+    expect(wealth.sections[0]?.axis).toBe('tension');
+    expect(wealth.missing[0]).toContain('현재 실제로 확인된 출처 연결 십신 관점');
+    expect(wealth.missing[0]).toContain('같은 관측 범위 안에서 비겁·재성의 긴장 관계는 실제 확인됐지만');
+    expect(wealth.missing[0]).toContain('등록된 재물 중심 복합 해석 축이 아니라 제한된 긴장 관점');
+    expect(wealth.missing[0]).not.toContain('같은 관측 범위에서 다른 십신 계열과 결합되지 않았다');
+    expect(wealth.missing.join(' ')).not.toContain('추가 구조 축');
+    const context = wealth.availableThemeContext!;
+    expect(context.wealthConclusionAuthorized).toBe(false);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart!, reading);
+    const wealthCard = html.split('<h2 id="domain-wealth">')[1]!
+      .split('</article>')[0]!;
+    expect(wealthCard).toContain('aria-label="재물운 근거 있는 부분 설명"');
+    expect(wealthCard).toContain(context.paragraph);
+    expect(wealthCard).toContain(wealth.missing[0]!);
+    expect(wealthCard).toContain('재물운 종합 해석 아님');
+    expect(wealthCard).toContain(wealth.sections[0]!.headline);
+    for (const theme of context.themes) {
+      expect(wealth.sections[0]!.upstreamClaimIds).not.toContain(theme.claimId);
+      expect(wealthCard).toContain(theme.sourceIds[0]!);
+      expect(wealthCard).toContain(theme.observedPositions[0]!);
+    }
+    expect(wealth.mayPublish).toBe(false);
+    expect(wealth.maySell).toBe(false);
+  }, 30000);
+
+  it('renders the actual cross-channel 食傷→財 T8 as a limited sourced reading', () => {
+    const chart = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 1955, month: 10, day: 31 },
+      time: { known: true, hour: 19, minute: 35 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const wealth = reports(chart).wealth;
+    expect(wealth.state).toBe('partial');
+    // The source-qualified opposite-channel 比劫↔財 tension is now an
+    // independent supporting axis, not a duplicate or a new Wealth core.
+    expect(wealth.sections).toHaveLength(2);
+    const section = wealth.sections[0]!;
+    const tension = wealth.sections[1]!;
+    expect(tension.axis).toBe('tension');
+    expect(tension.pattern).toBe('PEER_WEALTH');
+    expect(tension.channel).toBe('cross_channel');
+    expect(tension.paragraph).toContain('비겁과 재성은 동일 관측 채널이 아니라');
+    expect(tension.paragraph).toContain('실제 자산 손실');
+    expect(tension.sourceIds).toContain(
+      'SRC-SAMYEONG-TONGHOE-V5-FOUR-LIBRARIES-TENGOD-RELATIONS');
+    expect(tension.observedFactPaths.some(path =>
+      !section.observedFactPaths.includes(path))).toBe(true);
+    expect(wealth.readingGuide?.supporting).toHaveLength(1);
+    expect(wealth.readingGuide?.supporting[0]?.claimType).toBe(tension.claimType);
+    expect(wealth.readingGuide?.supporting[0]?.distinctObservedFactPaths.length)
+      .toBeGreaterThan(0);
+    expect(section.channel).toBe('cross_channel');
+    expect(section.axis).toBe('creation');
+    expect(section.pattern).toBe('OUTPUT_WEALTH');
+    expect(section.paragraph).toContain('서로 다른 관측 범위');
+    expect(section.observedFactPaths.some(path => path.endsWith('.stem.value'))).toBe(true);
+    expect(section.observedFactPaths.some(path => path.endsWith('.branch.value'))).toBe(true);
+    expect(section.sourceIds).toHaveLength(2);
+    expect(wealth.readingGuide?.coreClaimType).toBe(section.claimType);
+    expect(wealth.missing.join(' ')).toContain('추가 구조 축');
+    expect(wealth.availableThemeContext?.wealthConclusionAuthorized).not.toBe(true);
+    const explainedT5 = new Set(wealth.sections.flatMap(s => s.upstreamClaimIds));
+    expect(wealth.availableThemeContext?.themes.every(theme =>
+      !explainedT5.has(theme.claimId)) ?? true).toBe(true);
+    // When every source-qualified T5 was already consumed by the selected
+    // core and its independent tension, the separate unused-T5 appendix may
+    // correctly be absent. Still reject any double-counting if it exists.
+    expect((wealth.availableThemeContext?.themes ?? []).some(theme =>
+      theme.claimType === 'TEN_GOD_WEALTH_BRANCHES_THEME')).toBe(false);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reports(chart));
+    const wealthHtml = html.split('<h2 id="domain-wealth">')[1]!.split('</article>')[0]!;
+    const escapeHtmlParagraph = (paragraph: string) =>
+      paragraph.replace(/[&<>"']/gu, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      })[char]!);
+    expect(wealthHtml).toContain('aria-label="재물운 명식별 풀이 본문"');
+    expect(wealthHtml).toContain('중심 관점 · ');
+    expect(wealthHtml).toContain(escapeHtmlParagraph(section.paragraph));
+    expect(wealthHtml).toContain(escapeHtmlParagraph(tension.paragraph));
+    expect(wealthHtml).toContain(section.ruleId);
+    expect(wealthHtml).toContain(section.sourceIds[0]!);
+    // A real creation core plus one distinct Peer/Wealth supporting axis
+    // remains partial. The consumer must explain the missing second support,
+    // not display the older no-core/no-synthesis wording.
+    expect(wealthHtml).toContain('독립 보조 관점 · ');
+    expect(wealthHtml).toContain('독립적인 추가 근거가 부족하여 종합 판단은 보류합니다');
+    expect(wealthHtml).toContain('독립적인 보조 관점은 현재 1개만 확인');
+    expect(wealthHtml).toContain('재물운 전체 종합 판단은 보류합니다');
+    expect(wealthHtml).not.toContain('서로 다른 채널을 임의로 결합');
+    expect(wealth.usefulComplete).toBe(false);
+    expect(wealth.mayPublish).toBe(false);
+    expect(wealth.maySell).toBe(false);
+  }, 30000);
+
+
   it('renders five source-owned Korean meanings and evidence scopes on one real canonical chart', () => {
     const chart = sample(3, 10);
     const sections = reports(chart);
@@ -116,13 +896,44 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       expect(overview.indexOf(link)).toBeGreaterThan(previousLink);
       previousLink = overview.indexOf(link);
       const report = sections[domain];
-      expect(overview).toContain(report.sections[0]?.headline ??
+      const wealthT5 = domain === 'wealth' && report.sections.length === 0
+        ? (report as NatalFiveDomainMultifactorReports['wealth'])
+          .availableThemeContext?.themes[0] : undefined;
+      expect(overview).toContain(wealthT5?.headline ??
+        report.sections[0]?.headline ??
         report.missing[0] ?? '현재 확인된 해석 문단이 없습니다.');
     }
     expect(html).toContain('다섯 분야의 근거 기반 요약');
     expect(html.match(/<article aria-labelledby=/gu)).toHaveLength(5);
     expect(html).not.toContain('최소 유효 풀이: partial');
     expect(html).not.toContain('<script>');
+  });
+
+  it('shows each selected General T8 meaning once up front but retains its exact guide in details', () => {
+    const chart = sample(3, 10);
+    const reportSet = reports(chart);
+    const general = reportSet.general;
+    expect(general.sections.length).toBeGreaterThan(0);
+    expect(general.readingGuide).toBeDefined();
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reportSet);
+    const generalCard = html.split('<h2 id="domain-general">')[1]!.split('</article>')[0]!;
+    const firstScreen = generalCard.split('<details class="full-claim-evidence">')[0]!;
+    const details = generalCard.split('<details class="full-claim-evidence">')[1]!;
+    const escaped = (str: string) => str.replace(/[&<>"']/gu, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char]!);
+    for (const section of general.sections) {
+      expect(general.introduction).not.toContain(section.paragraph);
+      const actualText = escaped(section.paragraph);
+      expect(firstScreen.split('<p>' + actualText + '</p>')).toHaveLength(2);
+    }
+    expect(firstScreen).not.toContain('총운 근거 연결 설명');
+    expect(details).toContain('aria-label="총운 근거 연결 설명"');
+    expect(details).toContain(escaped(general.readingGuide!.paragraph));
+    expect(details).toContain(general.readingGuide!.sourceIds[0]!);
+    expect(details).toContain(general.readingGuide!.ruleIds[0]!);
+    expect(general.researchOnly).toBe(true);
+    expect(general.maySell).toBe(false);
   });
 
   it('puts exact source-bound General Korean interpretation first without granting new meaning', () => {
@@ -138,6 +949,15 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(first).toBeGreaterThanOrEqual(0);
     expect(details).toBeGreaterThan(first);
     expect(ownCard).toContain('aria-label="총운 명식별 풀이 본문"');
+    expect(ownCard).not.toContain('같은 천간에서 관측된 서로 다른 십신 계열');
+    expect(ownCard).not.toContain('같은 지지 대표 십신에서 관측된 서로 다른 십신 계열');
+    for (const section of general.sections) {
+      const channel = section.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
+      expect(ownCard).toContain(
+        '서로 다른 원국 위치에서 확인된 십신 계열은 모두 ' +
+        channel + '이라는 동일 관측 범위에 속합니다.');
+    }
+
     // The introduction may already repeat a sourced paragraph. Verify the
     // dedicated first-screen segment, not its first occurrence in the card.
     const firstScreen = ownCard.slice(first, details);
@@ -167,8 +987,10 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         readingGuide: { ...general.readingGuide!, sourceClaimType: 'FAKE_GENERAL_T8' },
       },
     };
+    // The dedicated expanded guide verifies the original selected T8 Claim
+    // before first-screen rendering; an altered guide must still fail closed.
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
-      .toThrow(/General first-screen reading/);
+      .toThrow(/General guide must retain its exact selected T8 provenance/);
   });
 
   it('puts exact Business and Relationship T8 Korean meaning before collapsed attribution', () => {
