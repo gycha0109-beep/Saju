@@ -8,6 +8,7 @@ import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
 import { attachNoseDetailReview } from './nose-detail-review-ui.mjs';
 import { attachEarDetailReview } from './ear-detail-review-ui.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
+import { attachEyelidContourHumanReview } from './eyelid-contour-human-review-ui.mjs';
 import {
   earBinaryFromOverlayRGBA,
   measureVisibleEarMaskSilhouette,
@@ -704,6 +705,11 @@ const lipBorderHumanReview = attachLipBorderHumanReview({
   getRecord: () => records[selected],
   canAnnotate: () => original && activeAnnotationTool === 'lip',
 });
+const eyelidContourHumanReview = attachEyelidContourHumanReview({
+  getState: () => state,
+  getRecord: () => records[selected],
+  canAnnotate: () => original && activeAnnotationTool === 'eyelid',
+});
 $('brow-review-activate').onclick = () => {
   activeAnnotationTool = 'brow';
   original = true;
@@ -721,6 +727,11 @@ $('ear-review-activate').onclick = () => {
 };
 $('lip-border-review-activate').onclick = () => {
   activeAnnotationTool = 'lip';
+  original = true;
+  render();
+};
+$('eyelid-contour-review-activate').onclick = () => {
+  activeAnnotationTool = 'eyelid';
   original = true;
   render();
 };
@@ -796,6 +807,7 @@ function render() {
   noseDetailReview.render();
   earDetailReview.render();
   lipBorderHumanReview.render();
+  eyelidContourHumanReview.render();
   if (record.viewRole === 'frontal' && mode === 'existing')
     renderBrowHumanComparison(record, result, previous);
   const quality = parsing?.regionScreening?.regions;

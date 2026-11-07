@@ -95,6 +95,25 @@
       .viewer p {
         color: #adbbd1;
       }
+      .viewer #eyelid-contour-review-canvas {
+        position: absolute;
+        z-index: 6;
+        touch-action: none;
+        pointer-events: none;
+      }
+      #eyelid-contour-review .eyelid-contour-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin: 8px 0;
+      }
+      #eyelid-contour-review .eyelid-contour-group strong { min-width: 170px; }
+      #eyelid-contour-review .eyelid-contour-group button { padding: 7px 10px; }
+      #eyelid-contour-review .eyelid-contour-group button.active {
+        border-color: #a8b7ff;
+        background: #30415c;
+      }
       .viewer #lip-border-review-canvas {
         position: absolute;
         z-index: 5;
@@ -351,6 +370,7 @@
         <svg id="nose-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="코끝과 콧볼·콧구멍 경계 사람 표시" hidden></svg>
         <svg id="ear-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="귀 외곽·귓불·부착부 사람 표시" hidden></svg>
         <svg id="lip-border-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="입술·인중 경계와 입꼬리 사람 표시" hidden></svg>
+        <svg id="eyelid-contour-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="눈꺼풀 윗경계·주름선·덮임 경계 사람 표시" hidden></svg>
       </div>
       <nav id="strip" class="strip" aria-label="전체 사진 목록"></nav>
       <section aria-labelledby="reading-heading">
@@ -395,6 +415,26 @@
           양쪽 눈 클래스의 폭·높이·면적·중심 간격을 확인합니다. 눈꺼풀 실제 경계·쌍꺼풀·전통
           관상형은 판정하지 않습니다.
         </p>
+      </section>
+      <section id="eyelid-contour-review" aria-labelledby="eyelid-contour-review-heading" hidden>
+        <h2 id="eyelid-contour-review-heading">눈꺼풀 실제 경계·주름선 — 사람 직접 표시</h2>
+        <p class="note">
+          정면 원본 사진에서 화면 왼쪽·오른쪽의 눈꺼풀 윗경계, 쌍꺼풀 주름선 및
+          피부 덮임의 가시 경계를 따로 표시합니다. 보이지 않는 주름은
+          임의로 생성하지 않고 해당 부위만 보류합니다.
+          기존 쌍꺼풀 보임/덮임 상태 라벨과 별개인 연구 검토 자료이며,
+          한 사람의 선은 검증된 해부학적 정답·입체 돌출·전통 관상형이 아닙니다.
+        </p>
+        <button type="button" id="eyelid-contour-review-activate">눈꺼풀 경계 표시 모드 선택</button>
+        <p id="eyelid-contour-review-count" class="note"></p>
+        <div id="eyelid-contour-review-options"></div>
+        <div class="toolbar">
+          <button type="button" id="eyelid-contour-review-done">현재 표시 완료</button>
+          <button type="button" id="eyelid-contour-review-undo">마지막 획 취소</button>
+          <button type="button" id="eyelid-contour-review-reset">저장 전 표시 초기화</button>
+          <button type="button" id="eyelid-contour-review-save" disabled>비공개 사람 표시 저장</button>
+        </div>
+        <p id="eyelid-contour-review-status" class="note" role="status"></p>
       </section>
       <section id="lip-border-review" aria-labelledby="lip-border-review-heading" hidden>
         <h2 id="lip-border-review-heading">입술·인중 경계 — 사람 직접 표시</h2>

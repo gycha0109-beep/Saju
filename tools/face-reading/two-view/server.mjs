@@ -23,6 +23,12 @@ import { INSTANCE_PIN } from './instance-frame.mjs';
 import { readingCatalogue } from './reading-catalogue.mjs';
 import { experienceAssets } from './experience-server.mjs';
 import {
+  EYELID_CONTOUR_REVIEW_VERSION,
+  createEyelidContourReviewRecord,
+  validateEyelidContourReviewStore,
+  projectEyelidContourReviewForUi,
+} from './eyelid-contour-human-review.mjs';
+import {
   LIP_BORDER_REVIEW_SCHEMA_VERSION,
   LIP_BORDER_LINES,
   LIP_BORDER_POINTS,
@@ -289,6 +295,18 @@ export async function createLocalReviewServer({
   } catch (error) {
     if (error.code !== 'ENOENT') lipReviewRestoreFailed = true;
   }
+  const eyelidContourPath = resolve(intake, 'eyelid-contour-human-reviews.json');
+  let eyelidContourReviews = new Map();
+  let eyelidContourRestoreFailed = false;
+  let eyelidContourSaving = false;
+  try {
+    const stored = JSON.parse(await readFile(eyelidContourPath, 'utf8'));
+    eyelidContourReviews = new Map(
+      Object.entries(validateEyelidContourReviewStore(stored, ids).records),
+    );
+  } catch (error) {
+    if (error.code !== 'ENOENT') eyelidContourRestoreFailed = true;
+  }
   const token = randomBytes(24).toString('hex');
   const origin = 'http://127.0.0.1:' + port;
   const runRoot = resolve(intake, 'two-view-runs');
@@ -432,6 +450,8 @@ export async function createLocalReviewServer({
       'visible-hair-skin-interface.mjs',
       'lip-border-human-review.mjs',
       'lip-border-human-review-ui.mjs',
+      'eyelid-contour-human-review.mjs',
+      'eyelid-contour-human-review-ui.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const [route, asset] of experienceAssets()) assets.set(route, asset);
@@ -607,6 +627,20 @@ export async function createLocalReviewServer({
     }
     return { records, staleCount };
   }
+  async function currentEyelidContourState() {
+    const records = {};
+    let staleCount = 0;
+    for (const [captureRef, review] of eyelidContourReviews) {
+      try {
+        const source = inventory.find((item) => item.recordId === captureRef);
+        if (!source) { staleCount++; continue; }
+        const digest = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
+        if (digest !== review.sourceSha256) { staleCount++; continue; }
+        records[captureRef] = projectEyelidContourReviewForUi(review);
+      } catch { staleCount++; }
+    }
+    return { records, staleCount };
+  }
   async function handle(req, res) {
     if (req.headers.host !== '127.0.0.1:' + port)
       return json(res, 403, { error: 'LOCAL_HOST_REQUIRED' });
@@ -634,6 +668,7 @@ export async function createLocalReviewServer({
       const noseReviewState = await currentNoseReviewState();
       const earReviewState = await currentEarReviewState();
       const lipReviewState = await currentLipReviewState();
+      const eyelidContourState = await currentEyelidContourState();
       return json(res, 200, {
         token,
         records,
@@ -653,6 +688,9 @@ export async function createLocalReviewServer({
         lipReviews: lipReviewState.records,
         lipReviewStaleCount: lipReviewState.staleCount,
         lipReviewRestoreFailed,
+        eyelidContourReviews: eyelidContourState.records,
+        eyelidContourStaleCount: eyelidContourState.staleCount,
+        eyelidContourRestoreFailed,
         readingCatalogue: catalogue,
         parsingAvailable: Boolean(parsingModel),
         parsingRestoreFailed,
@@ -830,6 +868,53 @@ export async function createLocalReviewServer({
         return json(res, 200, { saved: true, count: next.length, formalValidation: false });
       } finally {
         parsingSaving = false;
+      }
+    }
+    if (req.method === 'POST' && url.pathname === '/two-view/eyelid-contour-reviews') {
+      if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
+      const input = await requestJson(req, 160000);
+      const allowed = new Set(['token', 'captureRef', 'imageLeft', 'imageRight']);
+      if (!input || typeof input !== 'object' || Array.isArray(input) ||
+          Object.keys(input).length !== allowed.size ||
+          Object.keys(input).some((key) => !allowed.has(key)))
+        throw Error('EYELID_CONTOUR_REVIEW_INVALID');
+      if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
+      if (eyelidContourSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
+      const captureRef = input.captureRef;
+      const source = inventory.find((r) => r.recordId === captureRef);
+      if (!source || roles.get(captureRef) !== 'frontal' || eyelidContourRestoreFailed)
+        throw Error('EYELID_CONTOUR_REVIEW_INVALID');
+      eyelidContourSaving = true;
+      try {
+        const initial = sourceFileStates.find((r) => r.recordId === captureRef);
+        const current = await stat(source.sourcePath);
+        if (!initial || current.size !== initial.size ||
+            current.mtimeMs !== initial.mtimeMs || current.ino !== initial.ino)
+          throw Error('SOURCE_CHANGED');
+        const sourceSha256 = createHash('sha256')
+          .update(await readFile(source.sourcePath)).digest('hex');
+        if (sourceSha256 !== sourceDigestByRecord.get(captureRef))
+          throw Error('SOURCE_CHANGED');
+        const previous = eyelidContourReviews.get(captureRef);
+        const review = createEyelidContourReviewRecord({
+          imageLeft: input.imageLeft,
+          imageRight: input.imageRight,
+        }, {
+          captureRef, sourceSha256,
+          revision: (previous?.revision || 0) + 1,
+          reviewedAt: new Date().toISOString(),
+        });
+        const records = Object.fromEntries(eyelidContourReviews);
+        records[captureRef] = review;
+        const tmp = resolve(intake, 'eyelid-contour-human-reviews-' + randomUUID() + '.tmp');
+        await writeFile(tmp, JSON.stringify({
+          schemaVersion: EYELID_CONTOUR_REVIEW_VERSION, records,
+        }, null, 2) + '\n', { flag: 'wx' });
+        await rename(tmp, eyelidContourPath);
+        eyelidContourReviews.set(captureRef, review);
+        return json(res, 200, { saved: true, review: projectEyelidContourReviewForUi(review) });
+      } finally {
+        eyelidContourSaving = false;
       }
     }
     if (req.method === 'POST' && url.pathname === '/two-view/lip-border-reviews') {
@@ -1072,6 +1157,7 @@ export async function createLocalReviewServer({
         'NOSE_DETAIL_REVIEW_INVALID',
         'EAR_DETAIL_REVIEW_INVALID',
         'LIP_BORDER_REVIEW_INVALID',
+        'EYELID_CONTOUR_REVIEW_INVALID',
         'REQUEST_TOO_LARGE',
         'SOURCE_CHANGED',
       ].includes(error.message)
