@@ -582,3 +582,36 @@ FR311 지역별 카탈로그와 `whole-face-feature-mapping-20261105.md`를
 현재 검토 기록이 없는 실제 사진은 사람 대조 결과를 추가 생성하지
 않는다. 다음 실증은 원본·동의·두 독립 리뷰와 실제 눈썹 내측 경계 기준을
 확인할 수 있을 때에만 검토하며, 그 전까지 실제 정확도는 미평가.
+
+## 2026-11-08 — 위·아래 입술 모델 영역과 사람 경계선 가로폭 비교
+
+관상 엔진 로드맵 2~3단계의 정면 2D 관측 범위를 기존
+`visible-lip-class-profile.mjs`의 위·아래 입술 **모델 분할 클래스**
+(12/13)와 `lip-border-human-review.mjs`의 **동일 원본 사람 표시선**
+기록 사이로 확장했다. `lip-model-human-width-comparison.mjs`가
+각각 위/아래 가로폭 비율을 구해 기술적 차이만 표시한다.
+
+사람 상·하 경계선이 모두 `marked`인 단일 연속, 이미지 x축 단조
+표시선이고 두 입꼬리 지점이 `marked`이며 두 선이 입꼬리 좌우
+범위를 벗어나지 않은 때에만 비교한다. 부분 표시·선 분할·역주행·
+입꼬리 미표시·원시 마스크 유효성/현재 분할 품질 미확보이면
+`unavailable`/화면 보류로 표시한다. 기존 모델 분할 상태가
+`screened`인 최신 `PARSING_VERSION`만 화면 비교에 사용한다.
+새 화면 모듈은 로컬 서버의 정적 모듈 허용 목록에 등록한다.
+저장된 사람 표시가 갱신되면 같은 검토 화면에서 결과를 다시 계산한다.
+
+이 값은 **사람이 그린 상·하 경계선의 x 범위 비율**과
+**모델의 위·아래 분할 영역 x 범위 비율**의 차이다.
+각각 실제 입술 해부학 경계 전체를 대표한다는 검증 근거는 없으며
+실제 입술 두께/폭·색상·입술산·전통 명칭이나 F0/제품 판독 지표와
+혼용하지 않는다. `candidateOnly`, `singleReviewerUnverified`,
+`anatomicalLipBordersValidated=false`,
+`fullAnatomicalBorderCoverageCertified=false`,
+`modelHumanAgreementValidated=false`,
+`independentAccuracyValidated=false`, `canonicalF0Admitted=false` 및
+전통/제품 해석 권한 false 유지. 개인 원본 경로/해시/표시점 비노출.
+
+실제 비공개 실사진 18장의 입술 사람 표시 기록은 **0건**으로
+비교 가능한 실제 사람 정답도 0건. 합성 테스트에서만 값과 거부
+경계를 검증했다. FR294 `mouth.visible_lip_color` 하드갭의
+새 이미지 모델/색상 기준은 이 작업으로 해결되지 않는다.

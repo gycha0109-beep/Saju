@@ -8,6 +8,7 @@ import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
 import { attachNoseDetailReview } from './nose-detail-review-ui.mjs';
 import { attachEarDetailReview } from './ear-detail-review-ui.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
+import { compareLipClassWidthsToHumanBorders } from './lip-model-human-width-comparison.mjs';
 import { attachEyelidContourHumanReview } from './eyelid-contour-human-review-ui.mjs';
 import {
   earBinaryFromOverlayRGBA,
@@ -572,6 +573,32 @@ function renderVisibleLipClassExperiment(record, result, previous) {
     ` · 아랫입술 클래스 중심의 사진상 가로 이동: ${candidate.lowerVsUpperCentreXOffsetToCombinedXSpan.toFixed(3)}` +
     ' — 두 분할 클래스의 평면 후보로, 실제 입술 경계·두꺼움/얇음·전통 관상 판정은 아닙니다.';
 }
+function renderLipHumanWidthComparison(record, result, previous) {
+  if (previous || record.viewRole !== 'frontal') return;
+  const human = state.lipReviews?.[record.captureRef];
+  if (!human) return;
+  const node = $('lip-class-experiment');
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    result.parsing.morphology?.lipBalance?.status !== 'available' ||
+    result.parsing.regionScreening?.regions?.lips?.status !== 'screened'
+  ) {
+    node.textContent += ' · 사람 입술 경계선이 있어도 현재 분할 품질이 미확인되어 모델 비교 보류';
+    return;
+  }
+  const compared = compareLipClassWidthsToHumanBorders(result.lipClassCandidate, human);
+  if (compared.status === 'available') {
+    node.textContent +=
+      ` · 사람 표시 입술 상·하 경계선 가로폭 비 ${compared.drawnUpperToLowerHorizontalSpanRatio.toFixed(3)}` +
+      ` · 모델 상·하 입술 분할 가로폭 비 ${compared.modelClassUpperToLowerHorizontalSpanRatio.toFixed(3)}` +
+      ` · 두 연구 후보의 차이 ${compared.signedDrawnMinusModelRatio.toFixed(3)}` +
+      ' — 원본 한 사람의 표시와 모델 분할 영역을 병렬 비교한 값이며 실제 입술 경계·두께·정확도·전통 관상형 판정은 아닙니다.';
+  } else {
+    node.textContent +=
+      ' · 사람 표시선 대 모델 입술 분할 가로폭 비교 보류(' + compared.reason + ')';
+  }
+}
 function renderVisibleEyeClassExperiment(record, result, previous) {
   const node = $('eye-class-experiment');
   const eye = result?.eyeClassCandidate;
@@ -755,6 +782,7 @@ const lipBorderHumanReview = attachLipBorderHumanReview({
   getState: () => state,
   getRecord: () => records[selected],
   canAnnotate: () => original && activeAnnotationTool === 'lip',
+  onSaved: () => render(),
 });
 const eyelidContourHumanReview = attachEyelidContourHumanReview({
   getState: () => state,
@@ -1064,6 +1092,7 @@ function render() {
   renderVisibleNoseMaskExperiment(record, result, previous);
   renderVisibleEyeClassExperiment(record, result, previous);
   renderVisibleLipClassExperiment(record, result, previous);
+  renderLipHumanWidthComparison(record, result, previous);
   renderEyeFoldReview(record);
   browReview.render();
   noseDetailReview.render();

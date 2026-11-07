@@ -52,7 +52,12 @@ function newDraft(record) {
   result.dirty = false;
   return result;
 }
-export function attachLipBorderHumanReview({ getRecord, getState, canAnnotate }) {
+export function attachLipBorderHumanReview({
+  getRecord,
+  getState,
+  canAnnotate,
+  onSaved = () => {},
+}) {
   const panel = document.getElementById('lip-border-review');
   const overlay = document.getElementById('lip-border-review-canvas');
   const image = document.getElementById('image');
@@ -315,6 +320,7 @@ export function attachLipBorderHumanReview({ getRecord, getState, canAnnotate })
       if (!response.ok || result.saved !== true || !result.review)
         throw Error(result.error || 'SAVE_FAILED');
       getState().lipReviews = { ...(getState().lipReviews || {}), [ref]: result.review };
+      onSaved();
       if (recordRef === ref) {
         draft.dirty = false;
         error = '';

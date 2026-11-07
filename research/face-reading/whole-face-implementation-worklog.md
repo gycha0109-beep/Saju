@@ -438,3 +438,16 @@ Watchtower-Track: face-observation-engine
 - **블로커·다음 작업:** 본 연구용 코드 추가 승인 필요 없음. 실제 독립 눈썹 내측 경계 정답·전향적 반복 촬영/상업 이용 권한 미확보로 제품·전통 승격 불가. 다음은 기존 2D 관측 기능 중 실제 가시 경계와 미분리된 항목을 기존 입력/사람 검토 정의와 연결하고 독립 검증이 없는 곳은 보류. 전체 1~3단계 진행 중, 4~7단계 미완료로 `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — 위·아래 입술 모델 2D 가로폭과 사람 경계선 후보의 비승격 비교
+
+- **작업 목표/현 구현 위치:** 관상 엔진 7단계 로드맵의 2~3단계에서 눈썹 2D 모델/사람 표시선 대조 다음으로, 기존 `visible-lip-class-profile.mjs`(모델 입술 클래스 12/13)와 `lip-border-human-review.mjs`(사람 원본 경계선)의 미연결 2D 가로폭 근거를 연결. 29개 정규 키·추가 18개 요구·FR294 11개 하드갭 및 문헌 판독 권한은 변경하지 않는다.
+- **시작 기준·저장소·브랜치·PR·CI:** 원격 `gycha0109-beep/Saju`, 기준 HEAD `6f33b350d0609b85f6ed2329753520ea7dba9630`, 기존 `codex/face-two-view-local-preview-2452`, [관상 엔진 PR #2453](https://github.com/gycha0109-beep/Saju/pull/2453). 기존 `whole-face-implementation-worklog.md`, `whole-face-observation-reading-roadmap-20261105.md`, `whole-face-feature-mapping-20261105.md`, FR294·기존 입술 리뷰/분할 모듈 확인. 기준 커밋 GitHub Actions **6개 중 4개 SUCCESS, `CI`와 Face Reading CI 2개 IN_PROGRESS**였으며 이 상태를 새 커밋의 성공으로 간주하지 않는다. 시작 작업 폴더 clean.
+- **변경 파일:** `tools/face-reading/two-view/lip-model-human-width-comparison.mjs`·`.d.mts`(모델 분할 위/아래 가로폭 비율과 사람 상/하 경계선 x 범위 비율 및 부호 있는 차이, 정확도 미승격), `review.mjs`(정면/현재 분할 품질 확인 후 기존 입술 검토 패널에 후보 값·보류 사유 표시), `lip-border-human-review-ui.mjs`(저장 성공 시 화면 결과 재계산), `server.mjs`(새 브라우저 모듈의 정적 제공 허용), `test/face-lip-model-human-width-comparison.test.ts`(합성 경계·누락·변조·분할 검사 8개), `READING-PLAN.md`, 기존 `whole-face-feature-mapping-20261105.md`와 본 WORKLOG.
+- **구현/완료 근거:** 원본 사람 상·하 두 입술선이 모두 `marked`의 단일 x축 단조 연속 표시선이고 입꼬리 좌우 범위 안에 있으며 동일 사진의 유효 `screened` 분할 클래스가 있을 때만 연구용 비율과 차이를 계산. 부분/조각/중복/역주행/입꼬리 미표시·분할 품질 미확보는 보류. 인간 독립 정답·실제 입술 해부학 범위·전통 형태·제품 적용 등은 전부 미검증. **기존 개발 사진 18장의 사람 입술 경계선 저장 기록 0건**, 실제 사진 기반 사람-모델 입술 가로폭 비교 0건이며 합성 검증 외 실제 정확도 주장 없음.
+- **테스트·CI 근거:** 새 합성 비교 테스트 **8/8 PASS**, 관련 입술/눈썹/FR294/전체 얼굴 매핑 **18개 파일 133/133 PASS**, Node v24.14.0, TypeScript 6.0.2 `npm run typecheck`·ESLint·Prettier·`git diff --check` PASS. 새 화면 모듈 정적 허용 목록 누락 때문에 초기 Chrome 준비 검사 실패 → 같은 작업에서 서버 목록 수정; **최종 비공개 실사진 18장 Chrome PASS**(page ready, 두 번째 사진 선택, FR294 상태, 브라우저 오류 없음, SHA/원본 경로 비노출). 새로운 HEAD의 GitHub CI는 푸시 이후 확인하기 전까지 성공 미판정.
+- **브랜치·커밋·PR:** 기존 관상 엔진 브랜치와 PR #2453만 사용, `feat(face): compare original lip borders with screened model spans` 구현·테스트·문서·WORKLOG 공동 커밋. 실제 SHA는 푸시 후 같은 WORKLOG 후속 기록에 명시한다.
+- **미완료·다음 작업:** 2D 가로폭의 합성 기하와 검토 조건은 구현했지만 실제 독립 사람 경계/정답·반복 촬영 자료는 없음. 실제 사람 표시·원본 SHA와 분할 후보가 준비된 항목부터 비교할 수 있으나 독립 정확도 검증 및 문헌 조건 predicate와 제품 승격은 별도 증거가 있어야 한다. 다음은 기존 코·입술·귀 2D 모델 후보와 사람 검토가 연결되지 않은 항목을 중복 구현 없이 점검·보강한다. FR294 입술 색상 별도 모델/기준과 상대 3D·귀 방향·전통 판독은 계속 미완료.
+- **블로커/승인사항:** 이 연구용 코드 범위에 추가 승인 필요 없음. 독립 사람 정답·전향적 반복 촬영 참조·상업 이용 권한 미확보로 실제 정확도/전통/제품 승격 불가. 외부 연락·생체정보 업로드·모델 학습·운영 트랙 변경 없음. 전체 로드맵 단계 1~3 진행 중, 4~7 미완료, **`ROADMAP_COMPLETE` 아님**.
+
+Watchtower-Track: face-observation-engine
