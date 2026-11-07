@@ -663,6 +663,10 @@ function renderEyeFoldReview(record) {
 }
 function invalidateFr294HumanSummaryAfterSave() {
   if (state?.perCaptureReadiness?.status === 'available') {
+    state.perCaptureReadiness.fr294IndependentPairAudit = {
+      status: 'withheld',
+      reason: 'HUMAN_REVIEW_UPDATED_RELOAD_REQUIRED',
+    };
     state.perCaptureReadiness.fr294HumanEvidence = {
       status: 'withheld',
       reason: 'HUMAN_REVIEW_UPDATED_RELOAD_REQUIRED',
@@ -808,6 +812,7 @@ function renderPhotoReadiness(record) {
   const gaps = Array.isArray(gapEntries)
     ? new Map(gapEntries.map((item) => [item.featureKey, item]))
     : null;
+  const pairAudit = info?.fr294IndependentPairAudit;
   const human = info?.fr294HumanEvidence;
   const humanRefs = human?.status === 'available' ? human.captures?.[record.captureRef] : null;
   const humanByFeature = Array.isArray(humanRefs)
@@ -837,6 +842,16 @@ function renderPhotoReadiness(record) {
     (counts.partial ? ' · 일부 검토 ' + counts.partial : '') +
     (gaps ? ' · FR294 연구 경로 11항목 확인' : ' · FR294 경로 검증 보류') +
     ' · 독립 검증된 정규 관측 0 · 전통 관상 판독에 사용 불가';
+  if (pairAudit?.status === 'not_collected') {
+    label.textContent += ' · 독립 검토 코드 2인 대조 0건 · 반복 촬영 검증 없음';
+  } else if (pairAudit?.status === 'descriptive_pairs_only') {
+    label.textContent +=
+      ' · 검토자 코드 쌍 ' +
+      pairAudit.reviewerCodePairsRecorded +
+      '건(서술적 일치만, 실제 독립성·정확도 미확인)';
+  } else if (pairAudit?.status === 'withheld') {
+    label.textContent += ' · 독립 검토 대조 증거 유효성 보류';
+  }
   for (const feature of entry.features) {
     const item = document.createElement('p');
     item.className = 'note';
@@ -868,6 +883,31 @@ function renderPhotoReadiness(record) {
         human.reason === 'HUMAN_REVIEW_UPDATED_RELOAD_REQUIRED'
           ? ' · 새 검토 저장됨 · 갱신된 검토 요약은 페이지 새로고침 후 표시'
           : ' · 사람 검토 자료 무결성 확인 불가';
+    }
+    const independentPair =
+      pairAudit?.status === 'descriptive_pairs_only'
+        ? pairAudit.perCapture?.[record.captureRef]?.find(
+            (row) => row.featureKey === feature.featureKey,
+          )
+        : null;
+    if (independentPair) {
+      reason.textContent +=
+        ' · 서로 다른 검토자 코드 2개 기록' +
+        ' · 비교 가능 좌우 일치 ' +
+        independentPair.matchingComparableSides +
+        ' · 불일치 ' +
+        independentPair.differingComparableSides +
+        ' · 비교 불가 ' +
+        independentPair.notComparableSides +
+        ' · 실제 검토자 독립성·정답 검증 미확보';
+    } else if (
+      gap &&
+      pairAudit?.status === 'withheld' &&
+      ['eye.eyelid_crease_or_hooded_category', 'ear.visible_boundary_height_shape'].includes(
+        feature.featureKey,
+      )
+    ) {
+      reason.textContent += ' · 독립 검토 증거 무결성 확인 불가';
     }
     if (gap) reason.title = gap.nextEvidenceRequirement;
     item.append(title, reason);

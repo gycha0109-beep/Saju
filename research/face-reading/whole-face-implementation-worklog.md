@@ -349,3 +349,15 @@ Watchtower-Track: face-observation-engine
 - **블로커·승인사항:** 본 연구 코드 정리에 별도 승인 필요 없음. 독립 사람 참조·상업 사용권 등 제품 조건은 미확보. 로드맵 1~3단계 진행 중, 4~7 미완료, ROADMAP_COMPLETE 아님.
 
 Watchtower-Track: face-observation-engine
+### 2026-11-08 — 관상 엔진 FR294 독립 사람 검토 쌍 기술 대조와 반복 촬영 경계 구현
+
+- **작업 목표·로드맵 대조:** 관상 엔진의 기존 전체 얼굴 로드맵 2·3·7단계와 직전 WORKLOG의 미완료 작업인 **독립 사람 검토·반복 관측 증거**를 진행한다. FR159·FR160에 이미 존재하는 전향적 반복 촬영 계약은 재작성하거나 개발 사진으로 대체하지 않는다. 연구용 사진의 같은 원본에 대한 서로 다른 검토자 코드 2개의 **정적 범주 일치 개수만** 산출하는 기술적 계약을 구현하며, 실제 독립 기준/동일 인물의 새로운 반복 촬영 검증 완료와 구분한다.
+- **기준·저장소·CI:** `gycha0109-beep/Saju`, 기존 `codex/face-two-view-local-preview-2452`, [PR #2453](https://github.com/gycha0109-beep/Saju/pull/2453). 작업 시작 HEAD `ee2a0dbc5953c79923f376e803fe3621e6b63603`의 GitHub Actions 6개 **모두 success** 확인, clean worktree 및 WORKLOG·ROADMAP 대조. 운영·결제 트랙은 수정·접근하지 않았다.
+- **변경 파일:** `tools/face-reading/two-view/fr294-independent-review-pairs.mjs`, `fr294-independent-review-pairs.d.mts`(원본 SHA·두 개 가명 검토 코드·별도 세션·원본 역할·기존 FR294 사람 증거와 엄격하게 결합, 서술적 일치/불일치/비교 불가만 집계), `server.mjs`(선택적 비공개 로컬 증거 파일만 읽기, 원본 실제 바이트 SHA 재확인, 오류/변조 시 withheld), `review.mjs`(독립 검토 코드 쌍 현재 0건/서술적 쌍/증거 보류 표시, 새 단일 검토 저장 시 지난 요약 무효화), `test/face-fr294-independent-review-pairs.test.ts`(8가지 합성 쌍 변조·정확도 승격 방어), `READING-PLAN.md` 및 기존 본 WORKLOG.
+- **실제 완료·검증 범위:** 현재 실사진 18장의 FR294 11항목 × 18 결과와 눈꺼풀/귀 사람 주석 0/0/0 유지. 로컬 서버의 `fr294IndependentPairAudit`는 **`not_collected`, 쌍 0건**, 비교 일치·불일치·비교 불가 0건. 독립 검토자·세션·원본 SHA·범주 판정, 실제 사진 좌표/마스크/경로는 웹에 노출하지 않는다. 한쪽이 가려졌거나 촬영 화면 밖이면 비교 가능 개수에 포함시키지 않는다. 서로 다른 검토자 코드의 자기진술도 **다른 실제 사람의 독립적 평가**나 정답/정확도로 승격하지 않는다. 새 전향적 캡처는 0건이며 `prospectiveRepeatCaptureValidated=false` 유지.
+- **테스트·CI 증거:** 새 합성 대조·위변조 방어 테스트 **8개 통과**, TypeScript typecheck·ESLint 검증 통과. 기존 비공개 실사진 18장 로컬 Chrome 실행에서 독립 쌍 0, 정확도 false, 29/11/6 기존 상태 및 원본 경로/SHA 비노출, 브라우저 오류 없음 확인. 기존 40개 관련 테스트를 함께 재실행하여 7개 파일 총 **48/48 PASS**, TypeScript 6.0.2 typecheck·ESLint·Prettier·diff 검사 PASS. 신규 코드 서식 정리 후에도 로컬 실사진 18장 Chrome 검증 PASS. 신규 커밋 GitHub CI는 push 이후 확인 전까지 성공 미판정.
+- **브랜치·커밋·PR:** 기존 브랜치/PR #2453 유지, 구현·기록 공동 커밋 제목 `feat(face): audit optional independent review pairs without ground-truth promotion`. 실제 커밋 SHA는 push 후 같은 WORKLOG에 후속 기록, 새 PR/운영 트랙 생성 없음.
+- **미완료·다음 작업:** 연구 동의와 독립 기준의 실제 증빙, 두 사람의 독립 평가 획득, 카메라/시점·두 회차 이상의 전향적 새 촬영, 검토자 간 신뢰도 및 재현성 실측, 상대 3D 정답 확보는 모두 미완료. 다음은 합법적으로 수집된 독립 쌍이 있을 때만 사람 간 의견 차이의 재현성 분석/검토 조건을 진행하고, 별도 FR159/160 새 촬영 검증을 따른다. 개발 사진 18장을 신규 Prospective 증거로 재분류하지 않는다.
+- **블로커·승인 사항:** 이번 기존 로컬 연구 코드 및 비공개 읽기 전용 상태 검증에는 추가 승인 없음. 실제 독립 사람 정답·원본 연구 사용 동의/상업 권리, 반복 촬영 자료 미확보. 외부 접촉/자동 수집/모델 훈련/제품 승격 없음. 1~3단계 진행 중, 4~7 미완료, **ROADMAP_COMPLETE 아님**.
+
+Watchtower-Track: face-observation-engine
