@@ -290,3 +290,14 @@
 - **다음 작업:** 실제 사람이 표시한 세부 눈꺼풀 정답이 확보될 경우 동일 원본 사진과 좌표계에서 비교. 독립적으로 승인된 미완료 작업인 29개 실제 사진 대응 상태 정리와 상대 3D의 검증 가능한 범위 식별을 우선 검토·구현.
 - **블로커 및 승인사항:** 승인된 연구용 코드 구현은 진행 가능. 실제 사람 정답과 모델/자료 상업 이용권은 미확보로 제품 승격 보류.
 - **PR/CI:** 기존 PR #2453에 반영하고 이 커밋의 CI는 독립 확인한다.
+
+### 2026-11-07 — 실제 18장 × 정규 29항목 사진별 관측 상태 보강
+
+- **작업 목표:** 전체 관상 엔진 공식 로드맵 1·2단계의 미완료 항목 중, 기존 비공개 사진 18장과 FR293 정규 29개 항목의 항목별 `사진→관측 상태`를 코드로 교차 검증한다. 기존 집계·뷰어·관측 엔진을 중복 구축하지 않는다.
+- **기준과 브랜치·PR:** `gycha0109-beep/Saju`; 작업 기준 HEAD `e36b147d2fc30436d6a002adeebb0e7705b4167a`(2026-11-07), PR [#2453](https://github.com/gycha0109-beep/Saju/pull/2453), 대상 브랜치 `codex/face-two-view-local-preview-2452`. 작업 커밋 제목 `feat(face): audit persisted per-photo whole-face readiness`로 동일 PR에 반영한다. 로컬 체크아웃은 detached HEAD이며 지정 PR 브랜치에 push한다.
+- **변경 파일:** `tools/face-reading/two-view/feature-coverage.mjs`(기존 정규 맵 재사용 사진별 상태), `feature-coverage.d.mts`(형식), `private-photo-readiness-run.mjs`(비공개 저장 결과 재검증·보고), `test/face-per-capture-readiness.test.ts`(합성/권한/사진별 상태 테스트), `tools/face-reading/two-view/READING-PLAN.md`(방법/한계), 기존 `research/face-reading/whole-face-implementation-worklog.md`(본 기록).
+- **완료 및 실제 근거:** 기존 18장 원본 모두 재해시, SHA-256 고유 18장. 저장된 계산/분할 결과를 검증해 각 29항목의 사진별 상태 총 522건을 로컬에서 재구성했다. `candidate_only` 158, `calculation_only` 179, `unavailable` 185, `partial` 0, `not_evaluated` 0, `observed` 0. 이전 사진별 모델 후보 집계와 일치하며 29개 항목·18개 계산기·11개 하드갭 불변. JSON은 **기존 비공개 intake 안에만** `whole-face-per-photo-readiness-v1-1c5f5390-2f298a44.json`로 기록했고 같은 결과 재실행 시 변경 없이 읽었다. 개인 이미지·원본 경로·해시·원시 수치는 공개 GitHub에 올리지 않는다.
+- **테스트·CI 근거:** 신규 사진별 상태/기존 집계 테스트 2개 파일 **20개 통과**, TypeScript·ESLint·Prettier·diff 검사 통과, 비공개 18장 실제 저장 결과 실행 및 동일 결과 재실행 통과. 기준 커밋 `e36b147d`의 관련 GitHub CI **6/6 success** 확인; 본 작업 신규 커밋 CI는 push 후 별도 확인하며 이전 성공으로 통과 선언하지 않는다.
+- **미완료:** 사람이 그린 독립 정답·반복성·카메라 시점별 실제 정확도는 미확보. 185건의 `unavailable`은 이 저장 자료·현재 증거에서 관측 불가를 뜻하며 사람이 영원히 측정 불가능한 특징 185개를 뜻하지 않는다. 24장 원본 누락 6개, 이전 별도 23장 최신 재실행, 실사진 세부 2D 정답, 상대 3D·전통 조건·종합 판독은 미완료.
+- **다음 작업:** 사진별 `unavailable`/계산기만 존재/모델 대리 근거와 실제 검증 자산을 대조해, 기존 관측 화면에 연결되지 않은 항목의 정확한 부족 요소를 채우고, 승인된 상대 3D·귀 방향 연구의 참조 확보 가능 범위를 진행한다. 별도의 사람 정답이 없는 결과는 정확도로 승격하지 않는다.
+- **블로커 및 승인사항:** 기존 로드맵 내 계산/검토 코드는 승인 대기 없음. 실제 사람 독립 정답과 모델·데이터 상업 사용권은 미확보이며 이 권한을 대신 승인하거나 관상 풀이로 승격하지 않는다. 신규 커밋 CI는 결과 확인 전까지 대기 상태다.

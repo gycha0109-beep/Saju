@@ -384,3 +384,101 @@ export function traceWholeFaceExtensionRequirements(sourceMarkdown, canonicalFea
     features: Object.freeze(features),
   });
 }
+
+export const PER_CAPTURE_READINESS_VERSION = 'local-whole-face-per-capture-readiness@0.1.0';
+
+// Research-only, photo-scoped continuation of the existing FR293 coverage calculation.
+// Reuse the validated source matching above instead of inventing a second extractor.
+// Keep capture-level references strictly inside the private local intake.
+export function traceWholeFacePerCaptureReadiness(columns, captures, humanReviews = []) {
+  const global = summarizeWholeFaceCoverage(columns, captures, humanReviews);
+  const reviewByCapture = new Map(humanReviews.map((entry) => [entry.captureRef, entry]));
+  const rows = captures.map((capture) => {
+    // A single capture must pass the same validation as the global report.
+    const review = reviewByCapture.get(capture.captureRef);
+    const local = summarizeWholeFaceCoverage(columns, [capture], review ? [review] : []);
+    const hasRunEvidence = capture.metrics.length > 0 || Boolean(capture.parsing);
+    const features = local.features.map((feature) => {
+      const deferred =
+        columns.find((col) => col.featureKey === feature.featureKey)?.implementationState ===
+        'deferred_unavailable';
+      const candidate = feature.candidatePhotoCount > 0;
+      const reviewerOnly = feature.humanReviewPhotoCount > 0;
+      let state, reason;
+      if (deferred) {
+        state = 'unavailable';
+        reason = 'CURRENT_RGB_AUTHORITY_UNAVAILABLE';
+      } else if (!hasRunEvidence) {
+        state = 'not_evaluated';
+        reason = 'PHOTO_RUN_EVIDENCE_MISSING';
+      } else if (candidate) {
+        state = 'candidate_only';
+        reason = 'ENGINEERING_PROXY_NOT_CANONICAL';
+      } else if (reviewerOnly) {
+        state = 'partial';
+        reason = 'SINGLE_REVIEWER_NOT_INDEPENDENT_GROUND_TRUTH';
+      } else if (capture.viewRole !== 'frontal') {
+        state = 'unavailable';
+        reason = 'FRONTAL_CAPTURE_REQUIRED';
+      } else if (feature.canonicalCalculatorMaterialized) {
+        state = 'calculation_only';
+        reason = 'CANONICAL_CALCULATOR_WITHOUT_VERIFIED_PHOTO_INPUT';
+      } else {
+        state = 'unavailable';
+        reason = 'NO_VERIFIED_IMAGE_EXTRACTOR';
+      }
+      return Object.freeze({
+        featureKey: feature.featureKey,
+        regionKey: feature.regionKey,
+        state,
+        reason,
+        canonicalCalculatorMaterialized: feature.canonicalCalculatorMaterialized,
+        engineeringProxyMatched: candidate,
+        singleReviewerLabelPresent: reviewerOnly,
+        independentHumanGroundTruthPresent: false,
+        canonicalObservationAdmitted: false,
+        traditionalBindingAuthorized: false,
+        productInterpretationAuthorized: false,
+      });
+    });
+    return Object.freeze({
+      captureRef: capture.captureRef,
+      viewRole: capture.viewRole,
+      hasPersistedExecutionEvidence: hasRunEvidence,
+      canonicalFeatureCount: features.length,
+      features: Object.freeze(features),
+    });
+  });
+  const states = [
+    'not_evaluated',
+    'calculation_only',
+    'candidate_only',
+    'partial',
+    'observed',
+    'unavailable',
+  ];
+  const tally = Object.fromEntries(states.map((state) => [state, 0]));
+  for (const capture of rows) for (const feature of capture.features) tally[feature.state]++;
+  if (
+    rows.length !== global.totalCaptureCount ||
+    tally.candidate_only !==
+      global.features.reduce((total, feature) => total + feature.candidatePhotoCount, 0) ||
+    tally.observed !== 0
+  )
+    throw Error('PER_CAPTURE_READINESS_SOURCE_MISMATCH');
+  return Object.freeze({
+    schemaVersion: PER_CAPTURE_READINESS_VERSION,
+    lifecycle: 'private_local_research_only',
+    photoCount: rows.length,
+    canonicalFeatureCount: global.canonicalFeatureCount,
+    canonicalCalculatorCount: global.canonicalCalculatorMaterializedCount,
+    canonicalHardGapCount: global.unresolvedCanonicalCount,
+    statusCounts: Object.freeze(tally),
+    independentAccuracyValidated: false,
+    admittedCanonicalMeasurements: 0,
+    traditionalBindingAuthorized: false,
+    productionAuthorized: false,
+    containsRawBiometricMeasurements: false,
+    captures: Object.freeze(rows),
+  });
+}

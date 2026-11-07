@@ -160,3 +160,50 @@ export declare function traceWholeFaceExtensionRequirements(
   sourceMarkdown: string,
   canonicalFeatureKeys: readonly string[],
 ): ExtensionTraceReport;
+
+export declare const PER_CAPTURE_READINESS_VERSION: 'local-whole-face-per-capture-readiness@0.1.0';
+export interface PerCaptureReadinessFeature {
+  readonly featureKey: string;
+  readonly regionKey: string;
+  readonly state:
+    | 'not_evaluated'
+    | 'calculation_only'
+    | 'candidate_only'
+    | 'partial'
+    | 'observed'
+    | 'unavailable';
+  readonly reason: string;
+  readonly canonicalCalculatorMaterialized: boolean;
+  readonly engineeringProxyMatched: boolean;
+  readonly singleReviewerLabelPresent: boolean;
+  readonly independentHumanGroundTruthPresent: false;
+  readonly canonicalObservationAdmitted: false;
+  readonly traditionalBindingAuthorized: false;
+  readonly productInterpretationAuthorized: false;
+}
+export interface PerCaptureReadinessReport {
+  readonly schemaVersion: typeof PER_CAPTURE_READINESS_VERSION;
+  readonly lifecycle: 'private_local_research_only';
+  readonly photoCount: number;
+  readonly canonicalFeatureCount: number;
+  readonly canonicalCalculatorCount: number;
+  readonly canonicalHardGapCount: number;
+  readonly statusCounts: Readonly<Record<PerCaptureReadinessFeature['state'], number>>;
+  readonly independentAccuracyValidated: false;
+  readonly admittedCanonicalMeasurements: 0;
+  readonly traditionalBindingAuthorized: false;
+  readonly productionAuthorized: false;
+  readonly containsRawBiometricMeasurements: false;
+  readonly captures: readonly {
+    readonly captureRef: string;
+    readonly viewRole: 'frontal' | 'profile';
+    readonly hasPersistedExecutionEvidence: boolean;
+    readonly canonicalFeatureCount: number;
+    readonly features: readonly PerCaptureReadinessFeature[];
+  }[];
+}
+export function traceWholeFacePerCaptureReadiness(
+  columns: readonly CoverageColumn[],
+  captures: readonly CoverageCapture[],
+  humanReviews?: readonly CoverageHumanReview[],
+): PerCaptureReadinessReport;
