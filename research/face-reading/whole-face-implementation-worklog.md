@@ -413,3 +413,16 @@ Watchtower-Track: face-observation-engine
 - **블로커·승인사항:** 본 연구용 UI·증거 대조 코드에 추가 승인 필요 없음. 독립 사람 정답·전향적 반복 촬영·상업 이용 권리 미확보로 정확도/전통/제품 승격 차단. 외부 접촉·자동 수집·모델 학습·운영 트랙 변경 없음. 로드맵 1~3 진행 중, 4~7 미완료, `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — 얼굴 전체 29개·추가 18개 요구의 코드·출처 대응표 통합
+
+- **목표·로﻿드맵:** 전체 관상 로드맵의 명시적인 1단계 미완료(정규 29항목·세부 확장 18요구에 코드·출처·실제 사진 경계 결속)를 우선 진행. 기존 `feature-coverage.mjs`가 이미 29개/18개 요구를 별도 검증하고 기존 눈썹 마스크 간격 후보도 계산함을 확인, 중복 계산기·키를 만들지 않고 두 기존 추적을 하나의 소스 기반 검증표로 연결.
+- **현재 기준/브랜치/PR/CI:** `gycha0109-beep/Saju`, 시작 HEAD `6fc92f5dbef02aeb5f8d11e24827d3d7c4b548fd`, 기존 `codex/face-two-view-local-preview-2452`, [PR #2453](https://github.com/gycha0109-beep/Saju/pull/2453). WORKLOG·`whole-face-observation-reading-roadmap-20261105.md`·`whole-face-feature-mapping-20261105.md` 및 FR282/FR293/FR294/FR311·로컬 2D 코드 대조. 시작 HEAD GitHub Actions 6개 중 **4 SUCCESS/2 IN_PROGRESS**, 완료로 추정하지 않음. 작업 트리 시작 시 clean.
+- **변경 파일:** `tools/face-reading/two-view/whole-face-source-mapping-audit.mjs`·`.d.mts`(실제 코드/문서 기준 29+18 통합, FR294 분류·FR311 출처 지역 문맥·소스 파일 실존 검사, 권한 승격 차단), `test/face-whole-face-source-mapping-audit.test.ts`(키/계산기/소스 문서/출처 변경·CRLF 변조 방어와 대응표 동기화 검증), `research/face-reading/whole-face-source-implementation-audit-20261108.md`(자동 생성된 29+18 행 결과), 기존 `whole-face-feature-mapping-20261105.md`, `tools/face-reading/two-view/READING-PLAN.md`, 본 기존 WORKLOG.
+- **구현·검증 완료 근거:** 29개 정규 관측, 18개 FR293 계산기, FR294 미해결 11개(이미지 5/상대 3D 4/귀 가시성 1/현행 RGB 불가 1)와 추가 세부 요구 18개를 현재 소스와 대조. FR282/FR293 source primitive 파일 참조 누락 **0건**, 단 이는 코드 파일 존재 확인이지 사진 추출/정확도/문헌 조건 검증 근거가 아님. 기존 연구 코드 `visible-brow-mask-envelope.mjs`의 `apparentInterBrowGapToMeanMaskXSpan`을 `미간 실제 눈썹 사이 거리` 관련 **마스크 영역 간격 후보**로만 기록하며 실제 해부학적 눈썹 안쪽 경계/눈 사이 거리 정답과 구별. 지역별 FR311 문헌 후보는 형태 조건 predicate 매핑 `0건`, 인간 독립 정확도 `not_evaluated`, 제품/전통/정규 승격 false 유지.
+- **테스트·CI:** 신규 29+18 검증·변조 방어·생성 문서 동기화 **7/7 PASS**, 기존 FR294·전체 얼굴 관측·눈썹 마스크 후보를 함께 포함한 **13개 테스트 파일 95/95 PASS**. Node v24.14.0, TypeScript 6.0.2 `npm run typecheck`·ESLint·Prettier·Git diff 검사 PASS. 대응표는 현재 repository 소스/문서/FR311 지역 카탈로그만 사용하며 비공개 얼굴 사진·실명·좌표를 읽지 않았다. 기존 CI 성공은 새 HEAD 근거로 옮기지 않으며 새 GitHub Actions는 push 후 확인할 때까지 미판정.
+- **브랜치·커밋·PR:** 위 기존 브랜치/PR #2453 재사용, 코드·대응표·테스트·WORKLOG 공동 커밋 제목 `feat(face): audit complete 29 plus 18 requirement source mapping`. 확정 SHA는 후속 WORKLOG 커밋으로 기록. 운영·재해복구 트랙이나 다른 PR은 수정하지 않음.
+- **미완료·다음 작업:** 세부 18개 중 연구 후보 1건은 계산기·실사진 정확도 검증이 아닌 별도 이미지 마스크 계산 후보만 확인. 사용자 요구를 충분히 담지 못하는 확장 관측은 여전히 비승인이고, 실제 사진→해부학적 측정과 FR311 문헌 조건별 대응, 독립 사람 정답, 상대 3D, 귀 방향은 미완료. 다음은 2D 세부 관측을 실제 사람/모델 비교로 검증할 수 있는 범위(기존 FR207·FR293 입력 소스/마스크)부터 순차적으로 보강한다.
+- **블로커·승인사항:** 승인된 비공개 연구용 소스/문서 변경에 추가 승인 불필요. 실제 독립 정답·전향적 촬영·상업 이용 권리 미확보. 모델 학습·정규 F0·전통 F1·제품/운영 트랙 승격 없음. 단계 1은 코드 대응 부분 진행, 2~3 진행, 4~7 미완료. `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine

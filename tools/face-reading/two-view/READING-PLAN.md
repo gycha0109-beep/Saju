@@ -539,3 +539,23 @@ SHA는 HTTP 응답에 포함되지 않는다. 여기서 증거 파일을 자동 
 `anatomicalFeatureVisibilityVerified=false`,
 `canonicalF0Admitted=false`와 전통·제품 권한 false를 유지한다.
 FR159/FR160 전향적 반복 촬영과 이 18장 개발용 자료를 혼용하지 않는다.
+
+## 2026-11-08 — 로드맵 1단계 코드·출처 통합 검증
+
+기존 `feature-coverage.mjs`의 29개 정규 추적과 18개 추가 요구 추적을
+재사용합니다. `whole-face-source-mapping-audit.mjs`는
+FR282/FR293 29개 키·18개 계산기, FR294 11개(5/4/1/1),
+FR311 지역별 카탈로그와 `whole-face-feature-mapping-20261105.md`를
+검사하고 단일 대응표
+`research/face-reading/whole-face-source-implementation-audit-20261108.md`를 만듭니다.
+
+현재 18개의 추가 요구는 전부 비승인으로 유지합니다. 이전부터 존재했던
+`apparentInterBrowGapToMeanMaskXSpan`만 미간 눈썹 간격의
+**모델 마스크 연구 후보**로 연결하며 새 정규 키나 실제 눈썹 뿌리 거리로
+승격하지 않습니다. 지역별 FR311 source catalogue는 해당 부위 문헌
+내용의 존재 근거이지 사진 기반 외형 조건 predicate 검증이 아닙니다.
+누락 소스 파일 참조, 변경된 키·출력 유형·매핑·FR294 분류, 출처 권한 승격은
+테스트에서 실패합니다. 원본 사진/경로/SHA·생체 좌표를 읽지 않습니다.
+
+이 작업은 코드 대조와 결손 추적의 개선이지 로드맵 1단계의 모든
+문헌 출처·촬영별 사람 정답 승인 완료가 아닙니다.
