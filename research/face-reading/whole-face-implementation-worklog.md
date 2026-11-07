@@ -326,3 +326,16 @@
 - **블로커/승인사항:** 승인된 연구용 코드 변경에 추가 승인 필요 없음. 독립 사람 정답, 상대 3D 참조 및 상업 이용 권리 미확보로 실제 제품/해석 단계는 보류. `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — FR294 6개 이미지·귀 항목에 원본 검증된 사람 검토 증거 연결
+
+- **작업 목표:** 본 관상 엔진 7단계 로드맵 2·3단계의 검토/독립 정확도 미확보 상태를 사진별로 드러내도록, FR294의 5개 새 이미지 모델 항목과 1개 귀 가시성 하드갭에 기존 눈꺼풀 주름 분류·눈꺼풀 윤곽·귀 외곽 **사람 검토 저장소**를 연결한다. 새로운 계산기·전통 분류기·독립 인물 정답을 만들지 않는다.
+- **대조 기준:** `gycha0109-beep/Saju` · 기존 `codex/face-two-view-local-preview-2452` · [PR #2453](https://github.com/gycha0109-beep/Saju/pull/2453), 시작 HEAD `f03dc7717a2e1aa9783af8dfdb0b2b1e30e49aa8`의 GitHub Actions **6개 모두 success**, 기존 WORKLOG·`whole-face-observation-reading-roadmap-20261105.md`·FR294 5/4/1/1 확인, 작업 트리 깨끗함. 해당 PR 외 운영·결제 트랙은 수정하지 않았다.
+- **변경 파일:** `tools/face-reading/two-view/fr294-human-evidence-readiness.mjs`, `fr294-human-evidence-readiness.d.mts`(기존 FR294 6개 키와 SHA 확인된 단일 사람 검토 증거를 검증·투영), `server.mjs`(유효 최신 비공개 관측 결과에만 연결, 저장소 이상 시 withheld), `review.mjs`(사람 검토 미기록/단일 기록/정답 부재 표시, 저장 직후 이전 요약 폐기), `ear-detail-review-ui.mjs`·`eyelid-contour-human-review-ui.mjs`(성공한 저장에서만 이전 요약 무효화), `test/face-fr294-human-evidence-readiness.test.ts`(합성 6가지 검토·변조·저장소 실패 조건), `READING-PLAN.md`와 본 WORKLOG.
+- **완료와 실사진 근거:** 기존 비공개 18장에 대해 현행 관측 29항목 × 18, FR294 11항목 × 18의 정확한 연구 경로 연결을 유지. 18장 원본의 실존 사람 검토 기록은 **주름 분류 0 / 눈꺼풀 윤곽 0 / 귀 외곽 0건**, 저장소 복원 오류 없음. 6개 이미지·귀 항목 × 18장 = 108건 모두 검토 미기록; 기록이 있는 척하거나 인공적인 사람 주석을 만들지 않았다. Chrome 로컬 두 번째 사진 검토 화면 및 상태 JSON에서 독립 정답·반복 관측 false, 유효 사람 검토 0건, 원본 경로/SHA 비노출, 브라우저 오류 없음 확인.
+- **테스트·CI 근거:** 신규 합성 테스트 **6개**, 관련 6파일 **40/40 PASS**; TypeScript typecheck, ESLint, Prettier, diff 검사 통과. 기준 HEAD `f03dc771` CI 6/6 성공을 확인했으며 신규 커밋 CI는 push 후 따로 확인, 전 커밋 성공을 새 커밋 결과로 전용하지 않는다.
+- **브랜치·커밋·PR:** 기존 연구 PR #2453 및 브랜치 유지, 구현 커밋 제목 `feat(face): connect FR294 photo gaps to verified human review evidence`. 확정 SHA는 같은 WORKLOG에 후속 기록한다.
+- **미완료·다음 작업:** 사람 주석 직접 취득과 독립 두 번째 사람 참조/반복 촬영·검토자 간 일치도 확보, 4개 독립 상대 3D 비교, 귀 각도와 기타 모델 성능 검증은 미완료. 다음은 이미 있는 원본 사람 검토 UI를 이용해 이미지 항목별 가시성·품질 판정 및 두 사람/반복 관측의 별도 증거 계약을 명확히 하거나 실제 독립 참조가 있을 때만 정확도 비교를 수행한다. FR282/FR293 29/18/11과 FR294 권한, F0/문헌/제품/상업 권한 변경 없음.
+- **블로커·승인사항:** 승인된 로컬 연구 구현에 추가 내부 승인 필요 없음. 실제 두 사람 정답·반복 촬영 참조·상업 이용 권리가 없으므로 인가된 정확도/전통 판정/제품 적용 승격은 차단. 전체 7단계 로드맵 아직 진행 중, `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine

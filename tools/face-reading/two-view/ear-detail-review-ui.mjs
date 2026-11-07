@@ -42,7 +42,7 @@ function isDrawn(status) {
   return status === 'marked' || status === 'partial';
 }
 
-export function attachEarDetailReview({ getRecord, getState, canAnnotate }) {
+export function attachEarDetailReview({ getRecord, getState, canAnnotate, onSaved }) {
   const panel = document.getElementById('ear-review');
   const overlay = document.getElementById('ear-review-canvas');
   const image = document.getElementById('image');
@@ -343,6 +343,7 @@ export function attachEarDetailReview({ getRecord, getState, canAnnotate }) {
       if (!response.ok || payload.saved !== true || !payload.review)
         throw Error(payload.error || 'SAVE_FAILED');
       getState().earReviews = { ...(getState().earReviews || {}), [ref]: payload.review };
+      onSaved?.();
       if (currentRef === ref) {
         draft.dirty = false;
         error = '';

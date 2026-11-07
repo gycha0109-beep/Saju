@@ -634,6 +634,15 @@ function renderEyeFoldReview(record) {
   else $('eye-fold-review-status').textContent = '아직 사람 검토가 없습니다. 좌우 눈 상태를 각각 선택하세요.';
   document.body.dataset.eyeFoldReviewAvailable = 'true';
 }
+function invalidateFr294HumanSummaryAfterSave() {
+  if (state?.perCaptureReadiness?.status === 'available') {
+    state.perCaptureReadiness.fr294HumanEvidence = {
+      status: 'withheld',
+      reason: 'HUMAN_REVIEW_UPDATED_RELOAD_REQUIRED',
+    };
+    if (records[selected]) renderPhotoReadiness(records[selected]);
+  }
+}
 async function saveEyeFoldReview() {
   const record = records[selected];
   const draft = record && eyeFoldDrafts.get(record.captureRef);
@@ -673,6 +682,7 @@ async function saveEyeFoldReview() {
     state.eyeFoldReviewRestoreFailed = false;
     state.eyeFoldReviewStaleCount = 0;
     eyeFoldDrafts.delete(record.captureRef);
+    invalidateFr294HumanSummaryAfterSave();
   } catch (error) {
     eyeFoldSaveError = {
       captureRef: record.captureRef,
@@ -699,6 +709,7 @@ const earDetailReview = attachEarDetailReview({
   getState: () => state,
   getRecord: () => records[selected],
   canAnnotate: () => original && activeAnnotationTool === 'ear',
+  onSaved: invalidateFr294HumanSummaryAfterSave,
 });
 const lipBorderHumanReview = attachLipBorderHumanReview({
   getState: () => state,
@@ -709,6 +720,7 @@ const eyelidContourHumanReview = attachEyelidContourHumanReview({
   getState: () => state,
   getRecord: () => records[selected],
   canAnnotate: () => original && activeAnnotationTool === 'eyelid',
+  onSaved: invalidateFr294HumanSummaryAfterSave,
 });
 $('brow-review-activate').onclick = () => {
   activeAnnotationTool = 'brow';
@@ -766,6 +778,11 @@ function renderPhotoReadiness(record) {
     ? info.fr294HardGaps?.captures?.[record.captureRef] : null;
   const gaps = Array.isArray(gapEntries)
     ? new Map(gapEntries.map((item) => [item.featureKey, item])) : null;
+  const human = info?.fr294HumanEvidence;
+  const humanRefs = human?.status === 'available'
+    ? human.captures?.[record.captureRef] : null;
+  const humanByFeature = Array.isArray(humanRefs)
+    ? new Map(humanRefs.map((item) => [item.featureKey, item])) : null;
   const label = $('readiness-status');
   const details = $('readiness-details');
   const target = $('readiness-features');
@@ -797,6 +814,25 @@ function renderPhotoReadiness(record) {
     reason.textContent = ' · ' +
       (readinessReasons[feature.reason] || '근거 확인 필요') +
       (gap ? ' · ' + (fr294GapLaneLabels[gap.lane] || 'FR294 검증 보류') : '');
+    const review = humanByFeature?.get(feature.featureKey);
+    if (review) {
+      if (review.reviewPath === 'no_dedicated_human_review') {
+        reason.textContent += ' · 직접 사람 기준 검토 경로 없음';
+      } else if (!review.recordedHumanReview) {
+        reason.textContent += ' · 사람 검토 미기록';
+      } else {
+        const components = [];
+        if (review.qualitativeEyeFoldReviewed) components.push('주름 분류');
+        if (review.eyelidContourReviewed) components.push('눈꺼풀 윤곽');
+        if (review.earOutlineReviewed) components.push('귀 외곽');
+        reason.textContent += ' · 단일 검토 ' + components.join('/') + ' 기록';
+      }
+      reason.textContent += ' · 독립 사람 정답·반복 관측 미검증';
+    } else if (gap && human?.status === 'withheld') {
+      reason.textContent += human.reason === 'HUMAN_REVIEW_UPDATED_RELOAD_REQUIRED'
+        ? ' · 새 검토 저장됨 · 갱신된 검토 요약은 페이지 새로고침 후 표시'
+        : ' · 사람 검토 자료 무결성 확인 불가';
+    }
     if (gap) reason.title = gap.nextEvidenceRequirement;
     item.append(title, reason);
     target.append(item);

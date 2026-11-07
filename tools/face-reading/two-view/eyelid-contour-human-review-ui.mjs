@@ -40,7 +40,7 @@ function cloneDraft(review) {
 }
 const drawn = (value) => value.status === 'marked' || value.status === 'partial';
 
-export function attachEyelidContourHumanReview({ getRecord, getState, canAnnotate }) {
+export function attachEyelidContourHumanReview({ getRecord, getState, canAnnotate, onSaved }) {
   const panel = document.getElementById('eyelid-contour-review');
   const canvas = document.getElementById('eyelid-contour-review-canvas');
   const image = document.getElementById('image');
@@ -297,6 +297,7 @@ export function attachEyelidContourHumanReview({ getRecord, getState, canAnnotat
         ...(getState().eyelidContourReviews || {}),
         [submittedRef]: payload.review,
       };
+      onSaved?.();
       if (ref === submittedRef) {
         draft.dirty = false;
         saveError = '';

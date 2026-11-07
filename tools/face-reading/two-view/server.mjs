@@ -24,6 +24,7 @@ import { readingCatalogue } from './reading-catalogue.mjs';
 import { experienceAssets } from './experience-server.mjs';
 import { projectPrivatePhotoReadiness } from './private-readiness-view.mjs';
 import { traceFr294PhotoHardGaps } from './fr294-photo-gap-bridge.mjs';
+import { traceFr294HumanEvidenceReadiness } from './fr294-human-evidence-readiness.mjs';
 import {
   EYELID_CONTOUR_REVIEW_VERSION,
   createEyelidContourReviewRecord,
@@ -714,7 +715,43 @@ export async function createLocalReviewServer({
       const earReviewState = await currentEarReviewState();
       const lipReviewState = await currentLipReviewState();
       const eyelidContourState = await currentEyelidContourState();
-      const perCaptureReadiness = await privatePhotoReadinessState();
+      let perCaptureReadiness = await privatePhotoReadinessState();
+      if (perCaptureReadiness.status === 'available') {
+        try {
+          perCaptureReadiness = {
+            ...perCaptureReadiness,
+            fr294HumanEvidence: traceFr294HumanEvidenceReadiness(
+              perCaptureReadiness.fr294HardGaps,
+              records,
+              eyeFoldReviewState.records,
+              eyelidContourState.records,
+              earReviewState.records,
+              {
+                eyeFold: {
+                  staleCount: eyeFoldReviewState.staleCount,
+                  restoreFailed: eyeFoldReviewRestoreFailed,
+                },
+                eyelidContour: {
+                  staleCount: eyelidContourState.staleCount,
+                  restoreFailed: eyelidContourRestoreFailed,
+                },
+                ear: {
+                  staleCount: earReviewState.staleCount,
+                  restoreFailed: earReviewRestoreFailed,
+                },
+              },
+            ),
+          };
+        } catch {
+          perCaptureReadiness = {
+            ...perCaptureReadiness,
+            fr294HumanEvidence: {
+              status: 'withheld',
+              reason: 'HUMAN_REVIEW_EVIDENCE_INVALID',
+            },
+          };
+        }
+      }
       return json(res, 200, {
         token,
         records,
