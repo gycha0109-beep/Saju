@@ -23,6 +23,12 @@ import { INSTANCE_PIN } from './instance-frame.mjs';
 import { readingCatalogue } from './reading-catalogue.mjs';
 import { experienceAssets } from './experience-server.mjs';
 import {
+  EAR_DETAIL_REVIEW_SCHEMA_VERSION,
+  createEarDetailReviewRecord,
+  validateEarDetailReviewStore,
+  projectEarDetailReviewForUi,
+} from './ear-detail-review.mjs';
+import {
   NOSE_DETAIL_REVIEW_SCHEMA_VERSION,
   NOSE_CONTOUR_PARTS,
   createNoseDetailReviewRecord,
@@ -255,6 +261,16 @@ export async function createLocalReviewServer({
   } catch (error) {
     if (error.code !== 'ENOENT') noseReviewRestoreFailed = true;
   }
+  const earReviewPath = resolve(intake, 'ear-detail-human-reviews.json');
+  let earReviews = new Map();
+  let earReviewRestoreFailed = false;
+  let earReviewSaving = false;
+  try {
+    const stored = JSON.parse(await readFile(earReviewPath, 'utf8'));
+    earReviews = new Map(Object.entries(validateEarDetailReviewStore(stored, records).records));
+  } catch (error) {
+    if (error.code !== 'ENOENT') earReviewRestoreFailed = true;
+  }
   const token = randomBytes(24).toString('hex');
   const origin = 'http://127.0.0.1:' + port;
   const runRoot = resolve(intake, 'two-view-runs');
@@ -392,6 +408,9 @@ export async function createLocalReviewServer({
       'brow-centerline-comparison.mjs',
       'nose-detail-review.mjs',
       'nose-detail-review-ui.mjs',
+      'ear-detail-review.mjs',
+      'ear-detail-review-ui.mjs',
+      'visible-ear-mask-silhouette.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const [route, asset] of experienceAssets()) assets.set(route, asset);
@@ -539,6 +558,20 @@ export async function createLocalReviewServer({
     }
     return { records, staleCount };
   }
+  async function currentEarReviewState() {
+    const valid = {};
+    let staleCount = 0;
+    for (const [captureRef, review] of earReviews) {
+      try {
+        const source = inventory.find((item) => item.recordId === captureRef);
+        if (!source) { staleCount++; continue; }
+        const sha = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
+        if (sha !== review.sourceSha256) { staleCount++; continue; }
+        valid[captureRef] = projectEarDetailReviewForUi(review);
+      } catch { staleCount++; }
+    }
+    return { records: valid, staleCount };
+  }
   async function handle(req, res) {
     if (req.headers.host !== '127.0.0.1:' + port)
       return json(res, 403, { error: 'LOCAL_HOST_REQUIRED' });
@@ -564,6 +597,7 @@ export async function createLocalReviewServer({
       const eyeFoldReviewState = await currentEyeFoldReviewState();
       const browReviewState = await currentBrowReviewState();
       const noseReviewState = await currentNoseReviewState();
+      const earReviewState = await currentEarReviewState();
       return json(res, 200, {
         token,
         records,
@@ -577,6 +611,9 @@ export async function createLocalReviewServer({
         noseReviews: noseReviewState.records,
         noseReviewStaleCount: noseReviewState.staleCount,
         noseReviewRestoreFailed,
+        earReviews: earReviewState.records,
+        earReviewStaleCount: earReviewState.staleCount,
+        earReviewRestoreFailed,
         readingCatalogue: catalogue,
         parsingAvailable: Boolean(parsingModel),
         parsingRestoreFailed,
@@ -756,6 +793,48 @@ export async function createLocalReviewServer({
         parsingSaving = false;
       }
     }
+    if (req.method === 'POST' && url.pathname === '/two-view/ear-detail-reviews') {
+      if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
+      const input = await requestJson(req, 160000);
+      const keys = new Set(['token', 'captureRef', 'imageLeft', 'imageRight']);
+      if (!input || typeof input !== 'object' || Array.isArray(input) ||
+          Object.keys(input).length !== keys.size ||
+          Object.keys(input).some((key) => !keys.has(key)))
+        throw Error('EAR_DETAIL_REVIEW_INVALID');
+      if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
+      if (earReviewSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
+      const source = inventory.find((r) => r.recordId === input.captureRef);
+      const viewRole = roles.get(input.captureRef);
+      if (!source || !['frontal', 'profile'].includes(viewRole) || earReviewRestoreFailed)
+        throw Error('EAR_DETAIL_REVIEW_INVALID');
+      earReviewSaving = true;
+      try {
+        const start = sourceFileStates.find((r) => r.recordId === input.captureRef);
+        const current = await stat(source.sourcePath);
+        if (!start || current.size !== start.size ||
+            current.mtimeMs !== start.mtimeMs || current.ino !== start.ino)
+          throw Error('SOURCE_CHANGED');
+        const sourceSha256 = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
+        if (sourceSha256 !== sourceDigestByRecord.get(input.captureRef)) throw Error('SOURCE_CHANGED');
+        const previous = earReviews.get(input.captureRef);
+        const review = createEarDetailReviewRecord(
+          { imageLeft: input.imageLeft, imageRight: input.imageRight },
+          { captureRef: input.captureRef, sourceSha256, viewRole,
+            revision: (previous?.revision || 0) + 1, reviewedAt: new Date().toISOString() },
+        );
+        const nextRecords = Object.fromEntries(earReviews);
+        nextRecords[input.captureRef] = review;
+        const pending = resolve(intake, 'ear-detail-human-reviews-' + randomUUID() + '.tmp');
+        await writeFile(pending, JSON.stringify({
+          schemaVersion: EAR_DETAIL_REVIEW_SCHEMA_VERSION, records: nextRecords,
+        }, null, 2) + '\n', { flag: 'wx' });
+        await rename(pending, earReviewPath);
+        earReviews.set(input.captureRef, review);
+        return json(res, 200, { saved: true, review: projectEarDetailReviewForUi(review) });
+      } finally {
+        earReviewSaving = false;
+      }
+    }
     if (req.method === 'POST' && url.pathname === '/two-view/nose-detail-reviews') {
       if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
       const input = await requestJson(req, 150000);
@@ -908,6 +987,7 @@ export async function createLocalReviewServer({
         'EYE_FOLD_REVIEW_INVALID',
         'BROW_CENTERLINE_REVIEW_INVALID',
         'NOSE_DETAIL_REVIEW_INVALID',
+        'EAR_DETAIL_REVIEW_INVALID',
         'REQUEST_TOO_LARGE',
         'SOURCE_CHANGED',
       ].includes(error.message)

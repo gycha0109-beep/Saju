@@ -6,6 +6,11 @@ import { PROFILE_DEFINITIONS } from './profile-metrics.mjs';
 import { assessMorphology } from './morphology-assessment.mjs';
 import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
 import { attachNoseDetailReview } from './nose-detail-review-ui.mjs';
+import { attachEarDetailReview } from './ear-detail-review-ui.mjs';
+import {
+  earBinaryFromOverlayRGBA,
+  measureVisibleEarMaskSilhouette,
+} from './visible-ear-mask-silhouette.mjs';
 import { compareBrowCenterlinesToHumanReview } from './brow-centerline-comparison.mjs';
 import {
   eyebrowBinaryFromOverlayRGBA,
@@ -270,6 +275,72 @@ function renderBrowHumanComparison(record, result, previous) {
       result.browHumanComparison = { revision: reviewed.revision, status: 'failed' };
       if (records[selected]?.captureRef === record.captureRef) render();
     });
+}
+// Image-plane silhouette of the existing 7/8 ear classes only. No anatomical parts.
+async function inspectVisibleEarMask(record, result) {
+  const maskImage = new Image();
+  maskImage.src = result.layerUrls.ears;
+  const sourceImage = new Image();
+  sourceImage.src = record.image;
+  await Promise.all([maskImage.decode(), sourceImage.decode()]);
+  if (maskImage.naturalWidth !== 512 || maskImage.naturalHeight !== 512 ||
+      !sourceImage.naturalWidth || !sourceImage.naturalHeight)
+    throw Error('EAR_SOURCE_INVALID');
+  const canvas = document.createElement('canvas');
+  canvas.width = maskImage.naturalWidth;
+  canvas.height = maskImage.naturalHeight;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw Error('EAR_CANVAS_UNAVAILABLE');
+  ctx.drawImage(maskImage, 0, 0);
+  const binary = earBinaryFromOverlayRGBA(
+    ctx.getImageData(0, 0, canvas.width, canvas.height).data,
+    canvas.width, canvas.height,
+  );
+  return measureVisibleEarMaskSilhouette(binary, canvas.width, canvas.height, {
+    imageWidth: sourceImage.naturalWidth, imageHeight: sourceImage.naturalHeight,
+  });
+}
+function renderVisibleEarMaskExperiment(record, result, previous) {
+  const node = $('ear-mask-experiment');
+  if (previous) {
+    node.textContent = '이전 귀 마스크와 현재 후보 계산을 혼합하지 않습니다.';
+    return;
+  }
+  if (record.viewRole !== 'frontal') {
+    node.textContent = '현재 귀 분할 영역 실험은 정면 사진에만 적용합니다.';
+    return;
+  }
+  if (result?.parsing?.status !== 'completed' ||
+      result.parsing.methodVersion !== PARSING_VERSION ||
+      !result.layerUrls?.ears) {
+    node.textContent = '현재 사진에 최신 귀 분할 마스크가 없습니다. 귀 외곽·귓불은 자동 확정하지 않습니다.';
+    return;
+  }
+  const observed = result.earMaskCandidate;
+  if (observed?.status === 'available' || observed?.status === 'partial') {
+    node.textContent = observed.regions.map(
+      (region) =>
+        `귀 영역 후보 ${region.imageOrder}: 상대 폭/높이 ${region.visibleMaskWidthToImageWidth.toFixed(3)}/${region.visibleMaskHeightToImageHeight.toFixed(3)}, 전체 사진 내 면적 비율 ${region.visibleMaskAreaToImageArea.toFixed(4)}` +
+        (region.status === 'partial' ? ' · 사진 경계에 걸림' : ''),
+    ).join(' · ') + ' — 귀 전체 마스크 후보이며 귓바퀴·귓불·부착부·귀 두께·펼쳐짐을 식별하거나 관상형을 판정하지 않습니다.';
+    return;
+  }
+  if (observed?.status === 'unavailable') {
+    node.textContent = '귀 전체 마스크 관측 보류: ' + observed.reason;
+    return;
+  }
+  node.textContent = '현재 사진의 귀 마스크에서 전체 가시 영역 후보를 확인 중입니다.';
+  if (observed) return;
+  result.earMaskCandidate = { status: 'loading' };
+  void inspectVisibleEarMask(record, result).then((candidate) => {
+    if (results.get(record.captureRef) !== result) return;
+    result.earMaskCandidate = candidate;
+    if (records[selected]?.captureRef === record.captureRef) render();
+  }).catch(() => {
+    if (results.get(record.captureRef) !== result) return;
+    result.earMaskCandidate = { status: 'unavailable', reason: 'EAR_LAYER_NOT_READABLE' };
+    if (records[selected]?.captureRef === record.captureRef) render();
+  });
 }
 // The same local, non-persistent experiment boundary as the brow preview.
 // A full-frame nose class silhouette cannot identify anatomical nose regions.
@@ -548,6 +619,11 @@ const noseDetailReview = attachNoseDetailReview({
   getRecord: () => records[selected],
   canAnnotate: () => original && activeAnnotationTool === 'nose',
 });
+const earDetailReview = attachEarDetailReview({
+  getState: () => state,
+  getRecord: () => records[selected],
+  canAnnotate: () => original && activeAnnotationTool === 'ear',
+});
 $('brow-review-activate').onclick = () => {
   activeAnnotationTool = 'brow';
   original = true;
@@ -555,6 +631,11 @@ $('brow-review-activate').onclick = () => {
 };
 $('nose-review-activate').onclick = () => {
   activeAnnotationTool = 'nose';
+  original = true;
+  render();
+};
+$('ear-review-activate').onclick = () => {
+  activeAnnotationTool = 'ear';
   original = true;
   render();
 };
@@ -620,12 +701,14 @@ function render() {
     $('reading-evidence').append(node);
   }
   renderVisibleBrowMaskExperiment(record, result, previous);
+  renderVisibleEarMaskExperiment(record, result, previous);
   renderVisibleNoseMaskExperiment(record, result, previous);
   renderVisibleEyeClassExperiment(record, result, previous);
   renderVisibleLipClassExperiment(record, result, previous);
   renderEyeFoldReview(record);
   browReview.render();
   noseDetailReview.render();
+  earDetailReview.render();
   if (record.viewRole === 'frontal' && mode === 'existing')
     renderBrowHumanComparison(record, result, previous);
   const quality = parsing?.regionScreening?.regions;

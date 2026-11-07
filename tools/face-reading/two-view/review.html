@@ -95,6 +95,25 @@
       .viewer p {
         color: #adbbd1;
       }
+      .viewer #ear-review-canvas {
+        position: absolute;
+        z-index: 4;
+        touch-action: none;
+        pointer-events: none;
+      }
+      #ear-review .ear-review-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin: 8px 0;
+      }
+      #ear-review .ear-review-group strong { min-width: 150px; }
+      #ear-review .ear-review-group button { padding: 7px 10px; }
+      #ear-review .ear-review-group button.active {
+        border-color: #a8b7ff;
+        background: #30415c;
+      }
       .viewer #nose-review-canvas {
         position: absolute;
         z-index: 3;
@@ -311,6 +330,7 @@
         <img id="image" alt="선택한 사진의 측정 표시" hidden />
         <svg id="brow-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="눈썹 중심선 표시" hidden></svg>
         <svg id="nose-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="코끝과 콧볼·콧구멍 경계 사람 표시" hidden></svg>
+        <svg id="ear-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="귀 외곽·귓불·부착부 사람 표시" hidden></svg>
       </div>
       <nav id="strip" class="strip" aria-label="전체 사진 목록"></nav>
       <section aria-labelledby="reading-heading">
@@ -327,6 +347,13 @@
           굵기·밀도, 전통 관상 형태 판정은 하지 않습니다.
         </p>
       </section>
+      <section aria-labelledby="ear-experiment-heading">
+        <h2 id="ear-experiment-heading">귀 전체 분할 가시 영역 — 2D 모델 후보</h2>
+        <p id="ear-mask-experiment" class="note" role="status">
+          기존 귀 전체 마스크의 상대 폭·높이·면적을 사진별로 비교합니다.
+          분할된 귀 전체 영역을 귓바퀴·귓불·부착부로 나누거나 실제 귀 두께·펼쳐짐을 측정하지 않습니다.
+        </p>
+      </section>
       <section aria-labelledby="nose-experiment-heading">
         <h2 id="nose-experiment-heading">코 분할 윤곽의 단면별 폭과 중심 이동 — 모델 후보</h2>
         <p id="nose-mask-experiment" class="note" role="status">
@@ -341,6 +368,24 @@
           양쪽 눈 클래스의 폭·높이·면적·중심 간격을 확인합니다. 눈꺼풀 실제 경계·쌍꺼풀·전통
           관상형은 판정하지 않습니다.
         </p>
+      </section>
+      <section id="ear-review" aria-labelledby="ear-review-heading" hidden>
+        <h2 id="ear-review-heading">귀 외곽·귓불·부착부 — 사람 직접 표시</h2>
+        <p class="note">
+          정면 및 선택적 측면 사진에서 실제 보이는 귀의 외곽·귓불 경계와 얼굴에 맞닿는 점을 각각 기록합니다.
+          화면 좌우는 인물의 해부학적 좌우가 아닙니다. 불확실한 부위는 가림·사진 밖·판단 보류로 표시하세요.
+          이 결과는 연구용 사람 검토이며, 정면 사진만으로 귀 두께·펼쳐짐·전통 관상형을 판정하지 않습니다.
+        </p>
+        <button type="button" id="ear-review-activate">귀 표시 모드 선택</button>
+        <p id="ear-review-count" class="note"></p>
+        <div id="ear-review-options"></div>
+        <div class="toolbar">
+          <button type="button" id="ear-review-done">현재 표시 완료</button>
+          <button type="button" id="ear-review-undo">마지막 획 취소</button>
+          <button type="button" id="ear-review-reset">저장 전 표시 초기화</button>
+          <button type="button" id="ear-review-save" disabled>비공개 사람 표시 저장</button>
+        </div>
+        <p id="ear-review-status" class="note" role="status"></p>
       </section>
       <section id="nose-review" aria-labelledby="nose-review-heading" hidden>
         <h2 id="nose-review-heading">코끝·콧볼·콧구멍 — 사람 직접 표시</h2>
