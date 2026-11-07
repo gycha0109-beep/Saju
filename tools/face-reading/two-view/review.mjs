@@ -5,6 +5,7 @@ import { PARSING_GROUPS, PARSING_VERSION, containSize } from './parsing-contract
 import { PROFILE_DEFINITIONS } from './profile-metrics.mjs';
 import { assessMorphology } from './morphology-assessment.mjs';
 import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
+import { attachNoseDetailReview } from './nose-detail-review-ui.mjs';
 import { compareBrowCenterlinesToHumanReview } from './brow-centerline-comparison.mjs';
 import {
   eyebrowBinaryFromOverlayRGBA,
@@ -535,12 +536,28 @@ async function saveEyeFoldReview() {
     renderEyeFoldReview(record);
   }
 }
+let activeAnnotationTool = 'brow';
 const browReview = attachBrowCenterlineReview({
   getState: () => state,
   getRecord: () => records[selected],
-  isOriginal: () => original,
+  isOriginal: () => original && activeAnnotationTool === 'brow',
   onSaved: () => render(),
 });
+const noseDetailReview = attachNoseDetailReview({
+  getState: () => state,
+  getRecord: () => records[selected],
+  canAnnotate: () => original && activeAnnotationTool === 'nose',
+});
+$('brow-review-activate').onclick = () => {
+  activeAnnotationTool = 'brow';
+  original = true;
+  render();
+};
+$('nose-review-activate').onclick = () => {
+  activeAnnotationTool = 'nose';
+  original = true;
+  render();
+};
 function render() {
   const record = records[selected];
   if (!record) return;
@@ -608,6 +625,7 @@ function render() {
   renderVisibleLipClassExperiment(record, result, previous);
   renderEyeFoldReview(record);
   browReview.render();
+  noseDetailReview.render();
   if (record.viewRole === 'frontal' && mode === 'existing')
     renderBrowHumanComparison(record, result, previous);
   const quality = parsing?.regionScreening?.regions;

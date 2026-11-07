@@ -95,6 +95,25 @@
       .viewer p {
         color: #adbbd1;
       }
+      .viewer #nose-review-canvas {
+        position: absolute;
+        z-index: 3;
+        touch-action: none;
+        pointer-events: none;
+      }
+      #nose-review .nose-review-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin: 8px 0;
+      }
+      #nose-review .nose-review-group strong { min-width: 145px; }
+      #nose-review .nose-review-group button { padding: 7px 10px; }
+      #nose-review .nose-review-group button.active {
+        border-color: #a8b7ff;
+        background: #30415c;
+      }
       .viewer #brow-review-canvas {
         position: absolute;
         z-index: 2;
@@ -291,6 +310,7 @@
         <p id="empty">원본과 측정 표시를 여기서 확인합니다.</p>
         <img id="image" alt="선택한 사진의 측정 표시" hidden />
         <svg id="brow-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="눈썹 중심선 표시" hidden></svg>
+        <svg id="nose-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="코끝과 콧볼·콧구멍 경계 사람 표시" hidden></svg>
       </div>
       <nav id="strip" class="strip" aria-label="전체 사진 목록"></nav>
       <section aria-labelledby="reading-heading">
@@ -322,9 +342,28 @@
           관상형은 판정하지 않습니다.
         </p>
       </section>
+      <section id="nose-review" aria-labelledby="nose-review-heading" hidden>
+        <h2 id="nose-review-heading">코끝·콧볼·콧구멍 — 사람 직접 표시</h2>
+        <p class="note">모델은 코끝·콧볼·콧구멍의 독립 해부학적 경계를 확정하지 못합니다.
+          정면 원본 사진을 보면서 보이는 부분만 직접 표시합니다.
+          화면 좌우는 인물의 해부학적 좌우가 아니며, 사람 표시선은 독립 정답·전통 판독이 아닙니다.</p>
+        <div class="toolbar">
+          <button id="nose-review-activate" type="button">코 표시 모드 선택</button>
+        </div>
+        <p id="nose-review-count" class="note"></p>
+        <div id="nose-review-options"></div>
+        <div class="toolbar">
+          <button id="nose-review-done" type="button">현재 표시 완료</button>
+          <button id="nose-review-undo" type="button">마지막 획 취소</button>
+          <button id="nose-review-reset" type="button">저장 전 표시 초기화</button>
+          <button id="nose-review-save" type="button" disabled>비공개 사람 표시 저장</button>
+        </div>
+        <p id="nose-review-status" class="note" role="status"></p>
+      </section>
       <section id="brow-review" aria-labelledby="brow-review-heading" hidden>
         <h2 id="brow-review-heading">눈썹 중심선 — 사람 직접 표시</h2>
         <p class="note">모델 분할선이 아닌 원본 사진 위에 사람이 표시합니다. 화면 왼쪽·오른쪽 구별만 사용하며 전통 관상 판정이나 모델 학습에 자동 연결되지 않습니다.</p>
+        <button id="brow-review-activate" type="button">눈썹 표시 모드 선택</button>
         <p id="brow-review-count" class="note"></p>
         <div class="toolbar">
           <button type="button" data-brow-side="imageLeft" data-brow-state="marked">왼쪽 전체 표시</button>
