@@ -23,6 +23,7 @@ import { INSTANCE_PIN } from './instance-frame.mjs';
 import { readingCatalogue } from './reading-catalogue.mjs';
 import { experienceAssets } from './experience-server.mjs';
 import { projectPrivatePhotoReadiness } from './private-readiness-view.mjs';
+import { traceFr294PhotoHardGaps } from './fr294-photo-gap-bridge.mjs';
 import {
   EYELID_CONTOUR_REVIEW_VERSION,
   createEyelidContourReviewRecord,
@@ -670,10 +671,17 @@ export async function createLocalReviewServer({
         if (digest !== sourceDigestByRecord.get(original.recordId))
           return withheld;
       }
-      return projectPrivatePhotoReadiness(stored, records, expectedKeys, {
+      const readiness = projectPrivatePhotoReadiness(stored, records, expectedKeys, {
         metric: METHOD_VERSION,
         parsing: parsingSaved[0]?.parsing?.methodVersion,
       });
+      const fr294Source = await readFile(resolve(
+        sourceDir, '../../../packages/face-reading/src/rgb-selfie-hard-gap-frontier-fr294.ts',
+      ), 'utf8');
+      return {
+        ...readiness,
+        fr294HardGaps: traceFr294PhotoHardGaps(fr294Source, readiness, expectedKeys),
+      };
     } catch {
       return withheld;
     }

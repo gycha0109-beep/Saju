@@ -752,10 +752,20 @@ const readinessReasons = {
   CANONICAL_CALCULATOR_WITHOUT_VERIFIED_PHOTO_INPUT: '사진 입력 경계 검증 필요',
   NO_VERIFIED_IMAGE_EXTRACTOR: '검증된 부위별 이미지 관측기 없음',
 };
+const fr294GapLaneLabels = {
+  new_image_model: 'FR294 · 별도 이미지 관측·검증 필요',
+  rgb_relative_3d_benchmark: 'FR294 · 상대 3D 독립 기준 비교 필요',
+  ear_visibility_then_image_model: 'FR294 · 귀 가시성 확인 후 모델 검증',
+  remain_unavailable: 'FR294 · 현행 RGB 관측 불가 유지',
+};
 function renderPhotoReadiness(record) {
   const info = state?.perCaptureReadiness;
   const entry = mode === 'existing' && info?.status === 'available'
     ? info.captures?.[record.captureRef] : null;
+  const gapEntries = mode === 'existing' && info?.status === 'available'
+    ? info.fr294HardGaps?.captures?.[record.captureRef] : null;
+  const gaps = Array.isArray(gapEntries)
+    ? new Map(gapEntries.map((item) => [item.featureKey, item])) : null;
   const label = $('readiness-status');
   const details = $('readiness-details');
   const target = $('readiness-features');
@@ -774,6 +784,7 @@ function renderPhotoReadiness(record) {
     ' · 계산기만 ' + counts.calculation_only +
     ' · 보류 ' + counts.unavailable +
     (counts.partial ? ' · 일부 검토 ' + counts.partial : '') +
+    (gaps ? ' · FR294 연구 경로 11항목 확인' : ' · FR294 경로 검증 보류') +
     ' · 독립 검증된 정규 관측 0 · 전통 관상 판독에 사용 불가';
   for (const feature of entry.features) {
     const item = document.createElement('p');
@@ -782,8 +793,11 @@ function renderPhotoReadiness(record) {
     title.textContent = feature.featureKey + ' — ' +
       (readinessStates[feature.state] || '판정 보류');
     const reason = document.createElement('span');
+    const gap = gaps?.get(feature.featureKey);
     reason.textContent = ' · ' +
-      (readinessReasons[feature.reason] || '근거 확인 필요');
+      (readinessReasons[feature.reason] || '근거 확인 필요') +
+      (gap ? ' · ' + (fr294GapLaneLabels[gap.lane] || 'FR294 검증 보류') : '');
+    if (gap) reason.title = gap.nextEvidenceRequirement;
     item.append(title, reason);
     target.append(item);
   }

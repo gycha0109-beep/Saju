@@ -313,3 +313,16 @@
 - **미완료:** 독립 사람 정답과 해당 사진의 모델 후보 오류/재현성 미측정, 실제 상대 3D 참조·귀 시점 충분성 미검증, FR311 전통 형태 판정 및 종합 한국어 풀이 미연결. 사진별 후보 숫자는 정확도나 사람 평가 건수가 아니다.
 - **블로커·승인사항:** 승인된 로컬 코드 변경에 추가 승인 없음. 사람 독립 정답·모델/데이터의 상업적 사용권 확보 전 제품·전통 의미 승격 금지. 진행 중 CI는 별도 확인.
 - **다음 작업:** 기존 185개 보류 원인을 FR294의 5개 이미지·4개 상대 3D·1개 귀 가시성·1개 현행 불가 범주와 정확히 연결하고, 독립 참조/실사진 가시성 증거를 확보할 수 있는 항목부터 진행한다.
+
+### 2026-11-08 — 관상 엔진 트랙 복구 및 FR294 11개 미지원 관측 경로 연결
+
+- **작업 목표/트랙 복구:** 직전 대화의 운영·재해복구 트랙 오지정을 정정하고 본 프로젝트의 실제 관상 엔진 트랙 `face-observation-engine`만 재개한다. 저장소 `gycha0109-beep/Saju`, 기존 PR [#2453](https://github.com/gycha0109-beep/Saju/pull/2453), 기준 HEAD `96b4cce134446f54c4115fc6e24d3b74043ede81`. 해당 기준 커밋의 GitHub Actions **6/6 success**, 로컬 작업 트리 깨끗함 확인. 운영 트랙 저장소/브랜치/PR은 이 작업에서 접근·수정·병합하지 않았다.
+- **로드맵 대조:** 최신 `research/face-reading/whole-face-observation-reading-roadmap-20261105.md`와 기존 본 WORKLOG의 직전 미완료 작업은 `unavailable=185`의 기술 경로를 FR294 공식 11개 하드갭의 5/4/1/1 분류와 일치시키는 것. 기존 18장 × 29항목의 상태, 18개 계산기/11개 미지원, 실제 사람 정답·상대 3D 검증 부재는 그대로.
+- **변경 파일:** `tools/face-reading/two-view/fr294-photo-gap-bridge.mjs`, `fr294-photo-gap-bridge.d.mts`(공식 FR294 TypeScript 소스의 구조적 11개 항목을 단독 원본으로 읽어 기존 사진 상태와 엄격히 대조), `server.mjs`(최신 비공개 검증 결과에서만 연구 경로 전송), `review.mjs`(기존 사진 검토 화면에 단계별 부족 증거 표시), `test/face-fr294-photo-gap-bridge.test.ts`(FR294/FR293 연동·변조 방어·후보 오해 방지), `tools/face-reading/two-view/READING-PLAN.md`(관측 제한), 기존 본 WORKLOG.
+- **실제 검증 결과:** 비공개 기존 실사진 18장 읽기 전용 Chrome 테스트에서 18장 × 29항목, FR294 분류 총 198개를 재검증. `new_image_model` 90 unavailable, `rgb_relative_3d_benchmark` 72 unavailable, `ear_visibility_then_image_model` 5 unavailable + 13 candidate_only, `remain_unavailable` 18 unavailable. 합계 미지원 185와 귀 모델 후보 13. FR294 외 항목의 unavailable 0. 화면 렌더링·두 번째 사진 선택·브라우저 오류 없음·원본 경로/원본 SHA 비노출 확인. **독립 사람 정답·실제 3D·전통 형태 판정·모델 정확도는 모두 미확보.**
+- **테스트·CI:** 신규 FR294 합성 소스/권한/상태 테스트 5개 통과, TypeScript typecheck·ESLint·구문 검사 통과. 이전 HEAD CI 6/6 성공 확인; 본 신규 커밋 CI는 push 이후 별도로 확인해야 하며 이전 성공으로 완료를 추정하지 않는다. Node v24.14.0, 프로젝트 기존 TypeScript 6.0.2/Vitest 4.1.10 고정 버전을 사용했고 다른 트랙/기능 의존성 업그레이드는 하지 않았다.
+- **브랜치·커밋·PR:** 기존 `codex/face-two-view-local-preview-2452`, PR #2453 유지, 작업 커밋 제목 `feat(face): link private photo gap states to FR294 frontier`. 확정 SHA는 커밋 후 같은 WORKLOG에 후속 기록한다. 별도 PR/브랜치나 운영 트랙 변경 없음.
+- **완료/미완료 및 다음 작업:** 이번 단위는 실제 18장 관측 불가 상태를 FR294 공식 4개 연구 경로에 연결한 소스/화면 작업만 완료. 1~3단계는 진행 중, 4~7단계 미완료. 다음은 별도 이미지형 하드갭의 실제 사람 검토와 품질·재현성 기준(이미 있는 로컬 검토 자료)의 연동, 상대 3D·귀 방향 독립 참조 가능 범위를 확인한다. 검증된 기준 없이 F0·전통·제품 승격 금지.
+- **블로커/승인사항:** 승인된 연구용 코드 변경에 추가 승인 필요 없음. 독립 사람 정답, 상대 3D 참조 및 상업 이용 권리 미확보로 실제 제품/해석 단계는 보류. `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine
