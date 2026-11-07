@@ -400,3 +400,16 @@ Watchtower-Track: face-observation-engine
 - **블로커/승인사항:** 기존 비공개 연구 코드 변경에 별도 승인 불필요. 독립 검토자 정답·반복 촬영·상업 사용권 미확보. 외부 접촉, 개인 생체자료 업로드, 모델 학습, 제품 판정 승격 없음. 로드맵 1~3 진행 중, 4~7 미완료, `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — FR294 이미지 품질·사람 검토 존재 여부 사진별 대조
+
+- **작업 목표·로드맵 기준:** 기존 관상 엔진 로드맵 2·3단계의 미완료 작업, FR294의 사진별 품질 보류 상태와 사람이 실제로 남긴 검토 기록을 동일 사진·공식 6개 하드갭에서 함께 표시한다. FR294 외 키를 만들거나 사람 정답·정확도를 추정하지 않는다.
+- **기준 저장소·브랜치·PR·CI:** `gycha0109-beep/Saju` · `codex/face-two-view-local-preview-2452` · [관상 엔진 PR #2453](https://github.com/gycha0109-beep/Saju/pull/2453). 시작 HEAD `d9f80d8cd105037bcc4aab98a2f9b58142029711`의 GitHub Actions 6개 중 4개 SUCCESS·2개 IN_PROGRESS 확인. 기존 `research/face-reading/whole-face-implementation-worklog.md`, `whole-face-observation-reading-roadmap-20261105.md`, `READING-PLAN.md` 및 기존 FR294 품질·사람 검토 코드를 대조. 운영 트랙은 수정하지 않았다.
+- **변경 파일:** `tools/face-reading/two-view/fr294-quality-human-crosscheck.mjs`, `.d.mts`(두 기존 비승격 연구용 증거의 같은 사진/같은 6개 키·기술 상태·사람 기록을 교차검증 및 보수적으로 집계), `server.mjs`(모델 품질과 사람 검토가 둘 다 유효할 때에만 대조; 불일치 시 withheld), `review.mjs`(사진별 모델·사람 기록 병렬 표시, 직접 검토 경로 유무 구분, 사람 검토 저장 직후 오래된 대조 폐기), `test/face-fr294-quality-human-crosscheck.test.ts`(검토 미기록/합성 검토/모델 미검사/경계 위조·교차 불일치 8개 검사), `READING-PLAN.md` 및 본 기존 WORKLOG.
+- **완료/실제 근거:** 기존 개발 사진 18장에 FR294 6항목 ×18장 **108개 병렬 근거**를 연결. 직접 사람 검토 경로 없는 이마 폭/헤어라인/눈썹 밀도/입술 색상 4항목 72개는 정답 경로 없음으로 남긴다. 눈꺼풀 주름은 18장 모두 사람 검토 미기록(모델 눈 영역의 비특정 후보만 있음), 귀는 위치 검사된 모델 후보 12장·나머지 6장 모두 사람 검토 미기록. 실제 사람 검토 기록 0/0/0건 및 독립 검토 쌍 0건 유지. Chrome 로컬 화면에서 `모델·사람 기록 병렬 대조:` 렌더링·두 번째 사진 선택·18장 상태·정규 승격 false·원본 SHA/경로/마스크 비노출 확인. **일치도/정답/해부학적 가시성은 검증하지 않았다.**
+- **테스트·CI:** 신규 합성 교차검증 **8/8 PASS**, 기존 FR294·파싱·사람 검토 관련 11개 테스트 파일 합계 **79/79 PASS**. Node v24.14.0 / Vitest 4.1.10 / TypeScript 6.0.2 타입 검사·ESLint·Prettier·Git diff 검사 PASS. 비공개 기존 사진 18장 Chrome 실구동에서 눈 주름 18/18 미검토, 귀 영역 위치 검사 12장/기타 6장 모두 미검토, 대조 화면 표시·원본 SHA/경로 비노출·브라우저 오류 없음 PASS. 기준 HEAD CI 일부 진행 중인 것은 신규 HEAD 성공 근거가 아니며 신규 GitHub CI는 확인 전까지 성공 미판정.
+- **브랜치·커밋·PR:** 기존 관상 엔진 브랜치·PR #2453만 재사용. 이번 단위 코드·테스트·WORKLOG 공동 커밋 제목 `feat(face): crosscheck private model quality with human review records`; 실제 SHA는 후속 WORKLOG 커밋에 확정한다.
+- **남은 과제·다음 작업:** 실제 사람 검토·독립 기준·반복 촬영 참조는 아직 0건. 직접 사람 검토 경로가 없는 이마/눈썹 털 밀도/입술 색상 등 FR294 이미지 항목은 별도 승인된 새 인간 검토 정의·원본 관측 근거 없이 임의 판정하지 않는다. 다음은 기존 로드맵의 2D 세부 관측 측정 가능 범위와 상대 3D/귀 방향 **독립 기준 필요 조건**을 대조해 실제 증거가 있는 검증 작업부터 진행한다.
+- **블로커·승인사항:** 본 연구용 UI·증거 대조 코드에 추가 승인 필요 없음. 독립 사람 정답·전향적 반복 촬영·상업 이용 권리 미확보로 정확도/전통/제품 승격 차단. 외부 접촉·자동 수집·모델 학습·운영 트랙 변경 없음. 로드맵 1~3 진행 중, 4~7 미완료, `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine

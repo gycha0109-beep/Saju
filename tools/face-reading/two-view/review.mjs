@@ -663,6 +663,10 @@ function renderEyeFoldReview(record) {
 }
 function invalidateFr294HumanSummaryAfterSave() {
   if (state?.perCaptureReadiness?.status === 'available') {
+    state.perCaptureReadiness.fr294QualityHumanCrosscheck = {
+      status: 'withheld',
+      reason: 'HUMAN_REVIEW_UPDATED_RELOAD_REQUIRED',
+    };
     state.perCaptureReadiness.fr294IndependentPairAudit = {
       status: 'withheld',
       reason: 'HUMAN_REVIEW_UPDATED_RELOAD_REQUIRED',
@@ -842,6 +846,14 @@ function renderPhotoReadiness(record) {
   const imageQualityByFeature = Array.isArray(imageQualityRows)
     ? new Map(imageQualityRows.map((row) => [row.featureKey, row]))
     : null;
+  const joint = info?.fr294QualityHumanCrosscheck;
+  const jointRows =
+    mode === 'existing' && joint?.status === 'available'
+      ? joint.captures?.[record.captureRef]
+      : null;
+  const jointByFeature = Array.isArray(jointRows)
+    ? new Map(jointRows.map((row) => [row.featureKey, row]))
+    : null;
   const pairAudit = info?.fr294IndependentPairAudit;
   const human = info?.fr294HumanEvidence;
   const humanRefs = human?.status === 'available' ? human.captures?.[record.captureRef] : null;
@@ -872,6 +884,11 @@ function renderPhotoReadiness(record) {
     (counts.partial ? ' · 일부 검토 ' + counts.partial : '') +
     (gaps ? ' · FR294 연구 경로 11항목 확인' : ' · FR294 경로 검증 보류') +
     ' · 독립 검증된 정규 관측 0 · 전통 관상 판독에 사용 불가';
+  if (joint?.status === 'available') {
+    label.textContent += ' · 모델 영역·사람 검토 병렬 대조 6항목(일치도 아님)';
+  } else if (joint?.status === 'withheld') {
+    label.textContent += ' · 모델·사람 검토 대조 무결성 보류';
+  }
   if (pairAudit?.status === 'not_collected') {
     label.textContent += ' · 독립 검토 코드 2인 대조 0건 · 반복 촬영 검증 없음';
   } else if (pairAudit?.status === 'descriptive_pairs_only') {
@@ -909,6 +926,20 @@ function renderPhotoReadiness(record) {
       imageQuality?.status === 'withheld'
     ) {
       reason.textContent += ' · 모델 영역 품질 근거 무결성 보류';
+    }
+    const jointRow = jointByFeature?.get(feature.featureKey);
+    if (jointRow && jointRow.jointEvidenceStatus !== 'no_direct_human_review_path') {
+      reason.textContent += jointRow.singleHumanReviewRecorded
+        ? ' · 모델·사람 기록 병렬 대조: 단일 사람 검토 존재(일치 여부 미검증)'
+        : ' · 모델·사람 기록 병렬 대조: 해당 사람 검토 없음';
+    } else if (
+      gap &&
+      joint?.status === 'withheld' &&
+      ['eye.eyelid_crease_or_hooded_category', 'ear.visible_boundary_height_shape'].includes(
+        feature.featureKey,
+      )
+    ) {
+      reason.textContent += ' · 모델·사람 검토 대조 근거 보류';
     }
     const review = humanByFeature?.get(feature.featureKey);
     if (review) {

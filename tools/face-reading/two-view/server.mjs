@@ -27,6 +27,10 @@ import { traceFr294PhotoHardGaps } from './fr294-photo-gap-bridge.mjs';
 import { traceFr294ImageRegionQuality } from './fr294-image-region-quality.mjs';
 import { traceFr294HumanEvidenceReadiness } from './fr294-human-evidence-readiness.mjs';
 import {
+  crosscheckFr294QualityAndHumanReview,
+  withheldFr294QualityHumanCrosscheck,
+} from './fr294-quality-human-crosscheck.mjs';
+import {
   readCurrentFr294IndependentPairLedger,
   auditFr294IndependentScreenReviewPairs,
   withheldFr294IndependentPairs,
@@ -844,6 +848,24 @@ export async function createLocalReviewServer({
             },
           };
         }
+      }
+      if (perCaptureReadiness.status === 'available') {
+        let crosscheck;
+        if (perCaptureReadiness.fr294ImageQuality?.mappedFeatureCount !== 6) {
+          crosscheck = withheldFr294QualityHumanCrosscheck('MODEL_QUALITY_UNAVAILABLE');
+        } else if (perCaptureReadiness.fr294HumanEvidence?.status !== 'available') {
+          crosscheck = withheldFr294QualityHumanCrosscheck('HUMAN_REVIEW_UNAVAILABLE');
+        } else {
+          try {
+            crosscheck = crosscheckFr294QualityAndHumanReview(
+              perCaptureReadiness.fr294ImageQuality,
+              perCaptureReadiness.fr294HumanEvidence,
+            );
+          } catch {
+            crosscheck = withheldFr294QualityHumanCrosscheck('SOURCE_EVIDENCE_MISMATCH');
+          }
+        }
+        perCaptureReadiness = { ...perCaptureReadiness, fr294QualityHumanCrosscheck: crosscheck };
       }
       if (perCaptureReadiness.status === 'available') {
         let pairAudit;

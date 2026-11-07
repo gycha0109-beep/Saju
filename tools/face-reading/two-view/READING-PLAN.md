@@ -503,3 +503,39 @@ SHA는 HTTP 응답에 포함되지 않는다. 여기서 증거 파일을 자동 
 `independentAccuracyValidated=false`, `canonicalF0Admitted=false`,
 전통·제품 해석 권한 false 유지. 다른 5개 FR294 상대3D/현 RGB 불가 항목의
 권한이나 기존 18장 × 29개 평가 결과·사람 정답 0건은 변경하지 않는다.
+
+## 2026-11-08 FR294 모델 영역 품질 × 사람 검토 존재 여부 대조
+
+기존 FR294 이미지·귀 6개 하드갭의 **모델 영역 후보 근거**와
+기존 SHA-원본 일치 사람이 검토한 **기록의 존재 여부**를 사진별로
+병렬 대조한다. 새로운 검토자·정답·임의 관측 데이터를 만들지 않는다.
+
+`fr294-quality-human-crosscheck.mjs`는 현재 사진별 품질
+`local-fr294-parsing-region-quality@0.2.0`와
+`local-fr294-human-evidence-readiness@0.1.0`의 사진 참조 6개 키·
+기술적 품질 사유·관측/검증 미승격 플래그를 교차검증한다. 서로 어긋나거나
+사람 검토 저장소가 손상·오래되면 `withheld`로 처리하며,
+새 눈꺼풀·귀 검토를 저장한 직후에도 기존 대조 요약은 무효로 한다.
+
+직접 사람 검토 경로가 이미 있는 두 항목은
+`eye.eyelid_crease_or_hooded_category`의 주름 분류·눈꺼풀 윤곽과
+`ear.visible_boundary_height_shape`의 귀 외곽뿐이다.
+이마 폭·헤어라인·눈썹 털 밀도·입술 색상 4항목은 직접 대응하는
+사람 정답 경로가 **아직 없으며**, 기존 피부·눈썹 중심선·입술 테두리
+검토를 임의로 정답으로 사용하지 않는다.
+
+현재 기존 비공개 사진 **18장 × 6항목 = 108개**를 대조했다.
+직접 사람 검토 경로 없는 4항목은 72개,
+눈꺼풀 주름은 모델 눈 클래스만 있는 18장 모두 사람 검토 대기,
+귀는 모델 영역 위치 검사된 12장과 그 외 6장 모두 사람 검토 대기다.
+기존 세 종류의 사람 검토 기록은 여전히 0/0/0건,
+독립 검토자 코드 쌍도 0건이며 독립 사람 정답은 없다.
+
+대조 화면에는 **모델·사람 기록의 존재를 병렬 표시**할 뿐
+모델-사람 판정 일치/불일치나 모델 정확도를 계산하지 않는다.
+개별 판정/좌표/마스크/원본 사진 SHA·경로/검토자 코드를 추가 노출하지 않으며
+`modelHumanAgreementValidated=false`,
+`independentHumanReferenceValidated=false`,
+`anatomicalFeatureVisibilityVerified=false`,
+`canonicalF0Admitted=false`와 전통·제품 권한 false를 유지한다.
+FR159/FR160 전향적 반복 촬영과 이 18장 개발용 자료를 혼용하지 않는다.
