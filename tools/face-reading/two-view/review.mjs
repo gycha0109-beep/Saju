@@ -7,6 +7,7 @@ import { assessMorphology } from './morphology-assessment.mjs';
 import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
 import { attachNoseDetailReview } from './nose-detail-review-ui.mjs';
 import { attachEarDetailReview } from './ear-detail-review-ui.mjs';
+import { compareEarMaskToHumanOuterRim } from './ear-model-human-rim-span.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
 import { compareLipClassWidthsToHumanBorders } from './lip-model-human-width-comparison.mjs';
 import { attachEyelidContourHumanReview } from './eyelid-contour-human-review-ui.mjs';
@@ -480,6 +481,36 @@ async function inspectVisibleNoseMask(record, result) {
     imageWidth: sourceImage.naturalWidth,
     imageHeight: sourceImage.naturalHeight,
   });
+}
+function renderEarHumanSpanComparison(record, result, previous) {
+  if (previous || record.viewRole !== 'frontal') return;
+  const human = state.earReviews?.[record.captureRef];
+  if (!human) return;
+  const node = $('ear-mask-experiment');
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    result.parsing.regionScreening?.regions?.ears?.status !== 'screened'
+  ) {
+    node.textContent +=
+      ' · 사람 귀 외곽 표시가 있어도 현재 모델 귀 영역 품질이 확인되지 않아 비교 보류';
+    return;
+  }
+  const compared = compareEarMaskToHumanOuterRim(result.earMaskCandidate, human);
+  if (compared.status === 'available') {
+    node.textContent +=
+      compared.sides
+        .map(
+          (side) =>
+            ` · ${side.imageSide === 'imageLeft' ? '화면 왼쪽' : '화면 오른쪽'} 귀 표시 외곽 가로/세로 ${side.drawnOuterRimXSpanToImageWidth.toFixed(3)}/${side.drawnOuterRimYSpanToImageHeight.toFixed(3)}` +
+            ` · 모델 귀 영역 가로/세로 ${side.modelRegionXSpanToImageWidth.toFixed(3)}/${side.modelRegionYSpanToImageHeight.toFixed(3)}` +
+            ` · 표시-모델 차이 ${side.signedDrawnMinusModelXSpan.toFixed(3)}/${side.signedDrawnMinusModelYSpan.toFixed(3)}`,
+        )
+        .join('') +
+      ' — 원본 화면 좌우에 있는 모델 귀 전체 영역과 단일 사람 표시선의 2D 범위 차이만 비교한 연구 후보입니다. 실제 귓바퀴·귓불·부착부·두께·돌출이나 독립 정답을 검증한 것이 아닙니다.';
+  } else {
+    node.textContent += ' · 사람 귀 외곽 표시-모델 비교 보류(' + compared.reason + ')';
+  }
 }
 function renderVisibleNoseMaskExperiment(record, result, previous) {
   const node = $('nose-mask-experiment');
@@ -1089,6 +1120,7 @@ function render() {
   renderVisibleBrowMaskExperiment(record, result, previous);
   renderHairSkinInterfaceExperiment(record, result, previous);
   renderVisibleEarMaskExperiment(record, result, previous);
+  renderEarHumanSpanComparison(record, result, previous);
   renderVisibleNoseMaskExperiment(record, result, previous);
   renderVisibleEyeClassExperiment(record, result, previous);
   renderVisibleLipClassExperiment(record, result, previous);

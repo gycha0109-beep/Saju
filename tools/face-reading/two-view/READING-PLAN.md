@@ -615,3 +615,39 @@ FR311 지역별 카탈로그와 `whole-face-feature-mapping-20261105.md`를
 비교 가능한 실제 사람 정답도 0건. 합성 테스트에서만 값과 거부
 경계를 검증했다. FR294 `mouth.visible_lip_color` 하드갭의
 새 이미지 모델/색상 기준은 이 작업으로 해결되지 않는다.
+
+## 2026-11-08 — 화면 좌우 귀 모델 마스크와 사람 외곽 표시선의 2D 범위 대조
+
+관상 엔진 로드맵 2~3단계에 맞춰 기존
+`visible-ear-mask-silhouette.mjs`의 ResNet18 귀 전체 마스크 후보와
+`ear-detail-review.mjs`의 원본 사진 사람 귀 외곽선 표시를 연결했다.
+`ear-model-human-rim-span.mjs`는 모델 영역 가로·세로 크기/전체 이미지 크기와
+한 사람의 외곽선 표시 꼭짓점 가로·세로 범위/전체 이미지 크기를
+화면 왼쪽·오른쪽 각각 계산하고 부호 있는 차이만 비교한다.
+
+비교는 **동일 원본의 정면 사진**에서 **현재 파싱 버전**과 귀 영역
+`screened` 상태가 있고, 귀 마스크에 가로 가운데를 사이에 둔
+좌/우 두 개의 분리된 미절단 영역이 존재하며, 사람 외곽 표시는
+각 화면 쪽 `marked` 단일 선(3점 이상, 이미지 범위 내부)이
+있는 경우에만 허용한다. 한쪽 귀 모델만 보이거나 중앙 판정이
+애매하거나, 일부만 표시했거나, 여러 조각/프레임 절단/다른 위치
+표시이면 `unavailable`로 보류한다. 화면 좌·우가 생물학적 좌·우를
+뜻하는 것은 아니다. 표시선의 전체 외곽 완전성도 증명하지 않는다.
+
+이는 **모델의 귀 전체 영역 바운딩 박스**와 **사람이 표시한
+귀 외곽선의 점들로 만든 바운딩 박스**의 차이이며, 외이륜,
+귓불, 부착부, 정면 대비 돌출도, 두께의 해부학적 정답이나
+문헌 관상형 검증이 아니다. 비교 결과에는 원본 SHA·경로·
+선 좌표·모델 마스크를 포함하지 않는다. `candidateOnly=true`,
+`anatomicalOuterRimValidated=false`,
+`modelHumanAgreementValidated=false`,
+`anatomicalLateralityAssigned=false`,
+`earProjectionMeasured=false`, `earThicknessMeasured=false`,
+`independentAccuracyValidated=false`, `canonicalF0Admitted=false`,
+전통·제품 권한 false를 유지한다.
+
+현재 실사진 18장의 귀 사람 외곽 검토 원본은 **0건**이며,
+실제 사람-모델 범위 정확도 비교도 0건이다. 합성 2D 입력과
+실제 화면 동작만 검증했다. 기존 관상 FR294의 귀 가시성
+모델 신규 근거 미확보 상태나 4개의 상대 3D 미해결 항목은
+이번 작업으로 변경되지 않는다.

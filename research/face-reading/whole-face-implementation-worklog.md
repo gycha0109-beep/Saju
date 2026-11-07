@@ -451,3 +451,16 @@ Watchtower-Track: face-observation-engine
 - **블로커/승인사항:** 이 연구용 코드 범위에 추가 승인 필요 없음. 독립 사람 정답·전향적 반복 촬영 참조·상업 이용 권한 미확보로 실제 정확도/전통/제품 승격 불가. 외부 연락·생체정보 업로드·모델 학습·운영 트랙 변경 없음. 전체 로드맵 단계 1~3 진행 중, 4~7 미완료, **`ROADMAP_COMPLETE` 아님**.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — 귀 모델 마스크와 단일 사람 외곽 표시의 보수적 2D 범위 대조
+
+- **작업 목표·로드맵:** 관상 엔진 로드맵 2~3단계의 세부 2D 관측 공백 중 직전 입술 가로폭 다음의 **귀 전체 모델 분할 마스크 ↔ 동일 원본 사람 귀 외곽 표시** 연결을 구현했다. 기존 귀 마스크 후보·외곽선 리뷰 기능을 중복 생성하지 않았고, 정규 29개/확장 18개/FR294 11개와 전통·제품 승인 상태는 그대로 유지했다.
+- **기준 저장소·브랜치·PR·CI:** `gycha0109-beep/Saju`, 기존 `codex/face-two-view-local-preview-2452`, [PR #2453](https://github.com/gycha0109-beep/Saju/pull/2453), 시작 HEAD `c65669cd4b1f974a3c0c92bede85a98e6065d4cd`. 해당 커밋의 GitHub Actions **6/6 SUCCESS** 확인. 최신 `research/face-reading/whole-face-implementation-worklog.md`, `whole-face-observation-reading-roadmap-20261105.md`, `whole-face-feature-mapping-20261105.md`, `READING-PLAN.md` 및 귀 분할·사람 검토 원본 코드 대조, 초기 작업 트리 clean. 다른 트랙/PR은 변경하지 않음.
+- **변경 파일:** `tools/face-reading/two-view/ear-model-human-rim-span.mjs`·`.d.mts`(기존 귀 모델 마스크 두 화면 위치와 사람 원본 귀 외곽 단일 표시선의 x/y 범위·부호 있는 차이, 불충분 시 보류), `review.mjs`(기존 귀 모델 후보 패널에 사람 표시 대비 기술적 차이/보류 표시 및 사람 귀 검토 저장 후 갱신), `server.mjs`(정적 화면 모듈 허용 목록), `test/face-ear-model-human-rim-span.test.ts`(합성 형상/한쪽 모델/중앙 위치 모호성/프레임 절단/부분 표시/위조 승인 차단), `READING-PLAN.md`, 기존 `whole-face-feature-mapping-20261105.md`와 본 WORKLOG.
+- **구현·완료 범위:** 최신 현재 분할 버전의 귀 영역 `screened`, 비절단된 모델 좌·우 영역의 명확한 화면 위치, 양쪽 `marked` 단일 외곽 표시선이 있을 때만 두 바운딩 범위의 normalized x/y 크기와 차이 표시. 모델이 한 귀만 잡았거나 위치가 모호한 경우·가림/일부 표시·다중 선·경계 절단 등은 보류. 생물학적 귀 좌우·귓불·부착부·귀 두께/돌출 측정, 사람 외곽 진실성·정규 F0·전통/제품 판독은 **전부 미검증**. 비공개 실사진 **18장 사람 귀 외곽 리뷰 0건**으로 실제 모델-사람 범위 비교 0건 유지.
+- **테스트·CI 근거:** 신규 합성 귀 범위 모듈 테스트 **7/7 PASS**, 귀/입술/눈썹/FR294/29+18 대응표 관련 **21개 테스트 파일 총 153/153 PASS**. Node v24.14.0, TypeScript v6.0.2 typecheck·ESLint·Prettier·Git diff 검사 PASS. 기존 비공개 실사진 18장 로컬 Chrome 실행에서 page ready, 둘째 사진 선택, FR294 표시, JS 오류 없음, 원본 SHA/경로 비노출 PASS. 시작 커밋의 CI 6/6 SUCCESS는 이번 신규 HEAD의 성공 근거가 아니며, 신규 커밋 CI는 푸시 뒤 확인 전까지 성공 미판정.
+- **브랜치·커밋·PR:** 기존 관상 PR #2453와 해당 브랜치만 이용. 코드·테스트·기존 문서·WORKLOG 공동 커밋 제목 `feat(face): compare human ear rim spans with model mask silhouettes`. 구현 커밋 실제 SHA는 push 후 같은 WORKLOG 후속 기록으로 확정한다.
+- **남은 작업·다음 구현:** 실제 독립 사람 귀 외곽 기준·동의된 반복 촬영·정규 사진 측정 정확도와 3D 돌출·귓불/부착부·문헌 해석 검증은 미완료. 다음 작업은 기존 코 세부 2D 모델 영역과 사람 콧볼·콧구멍 윤곽/코끝 검토의 **동일 원본 병렬 증거**와 정규 관측 미승격 경계부터 확인하고, 독립 기준이 없는 3D/형태 조건은 계속 보류한다.
+- **블로커·승인사항:** 추가 승인 없이 기존 연구용 로컬 코드 범위에서 진행. 독립 사람 정답·전향적 반복 촬영 자료·상업 사용 권리 미확보로 정확도/전통 F1/제품 F0 승격 불가. 외부 문의·모델 재학습·생체원본 업로드·운영 트랙 변경 없음. 로드맵 1~3 진행 중, 4~7 미완료. `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine
