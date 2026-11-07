@@ -6,7 +6,7 @@ const copySide = (side) => ({
   segments: side.segments.map((line) => line.map((p) => [...p])),
 });
 
-export function attachBrowCenterlineReview({ getState, getRecord, isOriginal }) {
+export function attachBrowCenterlineReview({ getState, getRecord, isOriginal, onSaved = () => {} }) {
   const panel = document.getElementById('brow-review');
   const canvas = document.getElementById('brow-review-canvas');
   const image = document.getElementById('image');
@@ -248,6 +248,7 @@ export function attachBrowCenterlineReview({ getState, getRecord, isOriginal }) 
       state().browReviews = { ...(state().browReviews || {}), [draftRef]: payload.review };
       draft.dirty = false;
       saveError = '';
+      onSaved(draftRef);
     } catch (error) {
       saveError = error.message || 'SAVE_FAILED';
     } finally {

@@ -372,6 +372,7 @@ export async function createLocalReviewServer({
       'eye-fold-review.mjs',
       'brow-centerline-review.mjs',
       'brow-centerline-review-ui.mjs',
+      'brow-centerline-comparison.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const [route, asset] of experienceAssets()) assets.set(route, asset);

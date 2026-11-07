@@ -5,6 +5,7 @@ import { PARSING_GROUPS, PARSING_VERSION, containSize } from './parsing-contract
 import { PROFILE_DEFINITIONS } from './profile-metrics.mjs';
 import { assessMorphology } from './morphology-assessment.mjs';
 import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
+import { compareBrowCenterlinesToHumanReview } from './brow-centerline-comparison.mjs';
 import {
   eyebrowBinaryFromOverlayRGBA,
   measureVisibleBrowMaskEnvelope,
@@ -120,7 +121,7 @@ function stop() {
 }
 // A separate local experiment: do not extend the eight traditional-source cards
 // or write a new parser summary/receipt. The overlay is already in this browser.
-async function inspectVisibleBrowMask(record, result) {
+async function readVisibleBrowMask(record, result) {
   const maskImage = new Image();
   maskImage.src = result.layerUrls.brows;
   const sourceImage = new Image();
@@ -141,10 +142,21 @@ async function inspectVisibleBrowMask(record, result) {
   context.drawImage(maskImage, 0, 0);
   const rgba = context.getImageData(0, 0, canvas.width, canvas.height).data;
   const binary = eyebrowBinaryFromOverlayRGBA(rgba, canvas.width, canvas.height);
-  return measureVisibleBrowMaskEnvelope(binary, canvas.width, canvas.height, {
+  return {
+    mask: binary,
+    width: canvas.width,
+    height: canvas.height,
     imageWidth: sourceImage.naturalWidth,
     imageHeight: sourceImage.naturalHeight,
-  });
+  };
+}
+async function inspectVisibleBrowMask(record, result) {
+  const { mask, width, height, imageWidth, imageHeight } = await readVisibleBrowMask(record, result);
+  return measureVisibleBrowMaskEnvelope(mask, width, height, { imageWidth, imageHeight });
+}
+async function inspectBrowHumanComparison(record, result, humanReview) {
+  const input = await readVisibleBrowMask(record, result);
+  return compareBrowCenterlinesToHumanReview({ ...input, humanReview });
 }
 function renderVisibleBrowMaskExperiment(record, result, previous) {
   const node = $('brow-mask-experiment');
@@ -197,6 +209,64 @@ function renderVisibleBrowMaskExperiment(record, result, previous) {
     .catch(() => {
       if (results.get(record.captureRef) !== result) return;
       result.browMaskCandidate = { status: 'unavailable', reason: 'BROW_LAYER_NOT_READABLE' };
+      if (records[selected]?.captureRef === record.captureRef) render();
+    });
+}
+function renderBrowHumanComparison(record, result, previous) {
+  const node = $('brow-review-comparison');
+  const reviewed = state.browReviews?.[record.captureRef];
+  if (!reviewed) {
+    node.textContent = '저장된 사람 중심선이 없습니다. 모델 분할 정확도는 평가하지 않았습니다.';
+    return;
+  }
+  if (previous) {
+    node.textContent = '이전 모델의 분할선과 현재 사람 표시를 혼합하지 않습니다.';
+    return;
+  }
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    !result.layerUrls?.brows
+  ) {
+    node.textContent = '사람 표시선은 저장되어 있으나 현재 모델의 눈썹 분할 마스크가 없어 비교를 보류합니다.';
+    return;
+  }
+  const comparison = result.browHumanComparison;
+  if (comparison?.revision === reviewed.revision && comparison.status !== 'loading') {
+    if (comparison.status === 'failed') {
+      node.textContent = '눈썹 비교 보류: 모델 분할을 읽을 수 없습니다.';
+      return;
+    }
+    const values = comparison.value;
+    node.textContent = [
+      ['화면 왼쪽', values.imageLeft],
+      ['화면 오른쪽', values.imageRight],
+    ]
+      .map(([label, side]) =>
+        side.status === 'available' || side.status === 'partial'
+          ? `${label}: 사람 중심선 대비 모델 분할 띠 중앙의 평균 거리 ${side.meanMaskColumnToHumanLineDistancePx.toFixed(2)}px · 비교한 열 ${side.comparedMaskColumns}/${side.totalMaskColumns}`
+          : `${label}: 비교 보류(${side.reason})`,
+      )
+      .join(' · ') +
+      ' — 한 사람의 표시와 모델 후보를 기술적으로 비교한 값입니다. 독립 정답 정확도·관상형 판정은 아닙니다.';
+    return;
+  }
+  if (comparison?.revision === reviewed.revision && comparison.status === 'loading') {
+    node.textContent = '로컬 사진에서 사람 표시와 모델 눈썹 분할 후보를 비교하고 있습니다.';
+    return;
+  }
+  result.browHumanComparison = { revision: reviewed.revision, status: 'loading' };
+  node.textContent = '로컬 사진에서 사람 표시와 모델 눈썹 분할 후보를 비교하고 있습니다.';
+  void inspectBrowHumanComparison(record, result, reviewed)
+    .then((value) => {
+      if (results.get(record.captureRef) !== result) return;
+      if (state.browReviews?.[record.captureRef]?.revision !== reviewed.revision) return;
+      result.browHumanComparison = { revision: reviewed.revision, status: 'completed', value };
+      if (records[selected]?.captureRef === record.captureRef) render();
+    })
+    .catch(() => {
+      if (results.get(record.captureRef) !== result) return;
+      result.browHumanComparison = { revision: reviewed.revision, status: 'failed' };
       if (records[selected]?.captureRef === record.captureRef) render();
     });
 }
@@ -469,6 +539,7 @@ const browReview = attachBrowCenterlineReview({
   getState: () => state,
   getRecord: () => records[selected],
   isOriginal: () => original,
+  onSaved: () => render(),
 });
 function render() {
   const record = records[selected];
@@ -537,6 +608,8 @@ function render() {
   renderVisibleLipClassExperiment(record, result, previous);
   renderEyeFoldReview(record);
   browReview.render();
+  if (record.viewRole === 'frontal' && mode === 'existing')
+    renderBrowHumanComparison(record, result, previous);
   const quality = parsing?.regionScreening?.regions;
   const regionNames = { skin: '피부', nose: '코', lips: '입술', brows: '눈썹', ears: '귀 후보' };
   const checked = quality
