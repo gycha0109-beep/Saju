@@ -1,4 +1,4 @@
-export const BROW_CENTERLINE_COMPARISON_VERSION: 'engineering.brow-centerline-human-comparison@0.1.0';
+export const BROW_CENTERLINE_COMPARISON_VERSION: 'engineering.brow-centerline-human-comparison@0.2.0';
 export type BrowComparisonSide = {
   readonly status: 'available' | 'partial' | 'unavailable';
   readonly reason?: string;
@@ -9,12 +9,39 @@ export type BrowComparisonSide = {
   readonly comparedMaskColumnFraction?: number;
   readonly humanReviewStatus?: 'marked' | 'partial';
 };
+export type BrowApparentGapComparison =
+  | Readonly<{
+      status: 'unavailable';
+      reason: string;
+      candidateOnly: true;
+      singleReviewerUnverified: true;
+      anatomicalInnerBrowEndsValidated: false;
+      independentAccuracyValidated: false;
+      canonicalF0Admitted: false;
+      traditionalBindingAuthorized: false;
+      productInterpretationAuthorized: false;
+    }>
+  | Readonly<{
+      status: 'available';
+      drawnCenterlineGapToMeanDrawnXSpan: number;
+      modelMaskGapToMeanMaskXSpan: number;
+      signedDrawnMinusModelRatio: number;
+      drawingCoverageCertified: false;
+      candidateOnly: true;
+      singleReviewerUnverified: true;
+      anatomicalInnerBrowEndsValidated: false;
+      independentAccuracyValidated: false;
+      canonicalF0Admitted: false;
+      traditionalBindingAuthorized: false;
+      productInterpretationAuthorized: false;
+    }>;
 export interface BrowComparisonResult {
   readonly methodVersion: typeof BROW_CENTERLINE_COMPARISON_VERSION;
   readonly status: 'available' | 'partial' | 'unavailable';
   readonly reason: string | null;
   readonly imageLeft: BrowComparisonSide;
   readonly imageRight: BrowComparisonSide;
+  readonly apparentBrowGapComparison: BrowApparentGapComparison;
   readonly candidateOnly: true;
   readonly singleReviewerUnverified: true;
   readonly independentAccuracyValidated: false;

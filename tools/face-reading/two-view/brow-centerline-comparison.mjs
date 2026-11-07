@@ -1,7 +1,7 @@
 import { measureVisibleBrowMaskEnvelope } from './visible-brow-mask-envelope.mjs';
 
 export const BROW_CENTERLINE_COMPARISON_VERSION =
-  'engineering.brow-centerline-human-comparison@0.1.0';
+  'engineering.brow-centerline-human-comparison@0.2.0';
 
 function unavailable(reason) {
   return Object.freeze({
@@ -42,6 +42,52 @@ function squaredSegmentDistance(px, py, ax, ay, bx, by) {
   const x = ax + t * dx;
   const y = ay + t * dy;
   return (px - x) ** 2 + (py - y) ** 2;
+}
+
+// Span of *drawn centreline annotations*, not true eyebrow roots. Only a
+// continuous, strictly image-x-monotonic line on each fully marked image side
+// is comparable; arbitrary partial lines never become an anatomical endpoint.
+function compareApparentBrowGapToHumanLines(envelope, human) {
+  const candidateOnly = {
+    candidateOnly: true,
+    singleReviewerUnverified: true,
+    anatomicalInnerBrowEndsValidated: false,
+    independentAccuracyValidated: false,
+    canonicalF0Admitted: false,
+    traditionalBindingAuthorized: false,
+    productInterpretationAuthorized: false,
+  };
+  const unavailable = (reason) =>
+    Object.freeze({ ...candidateOnly, status: 'unavailable', reason });
+  const sides = [human.imageLeft, human.imageRight];
+  if (sides.some((side) => side.status !== 'marked' || side.segments.length !== 1))
+    return unavailable('FULL_SINGLE_SEGMENT_PER_BROW_REQUIRED');
+  const spans = sides.map((side) => {
+    const points = side.segments[0];
+    const xs = points.map((point) => point[0]);
+    if (xs.length < 2) return null;
+    const sign = Math.sign(xs[1] - xs[0]);
+    if (!sign || xs.some((x, i) => i > 0 && Math.sign(x - xs[i - 1]) !== sign)) return null;
+    const min = Math.min(...xs);
+    const max = Math.max(...xs);
+    return max > min ? { min, max, span: max - min } : null;
+  });
+  if (spans.some((span) => !span)) return unavailable('ANNOTATION_HORIZONTAL_SPAN_INVALID');
+  const [left, right] = spans;
+  if (!(left.max < right.min)) return unavailable('ANNOTATED_IMAGE_SIDES_OVERLAP');
+  const avgSpan = (left.span + right.span) / 2;
+  const observed = (right.min - left.max) / avgSpan;
+  const model = envelope.apparentInterBrowGapToMeanMaskXSpan;
+  if (!(Number.isFinite(observed) && Number.isFinite(model) && observed >= 0 && model >= 0))
+    return unavailable('GAP_RATIO_INVALID');
+  return Object.freeze({
+    ...candidateOnly,
+    status: 'available',
+    drawnCenterlineGapToMeanDrawnXSpan: observed,
+    modelMaskGapToMeanMaskXSpan: model,
+    signedDrawnMinusModelRatio: observed - model,
+    drawingCoverageCertified: false,
+  });
 }
 
 function maskColumnRuns(mask, width, height) {
@@ -142,6 +188,7 @@ export function compareBrowCenterlinesToHumanReview({
     reason: null,
     imageLeft: unavailable('NOT_EVALUATED'),
     imageRight: unavailable('NOT_EVALUATED'),
+    apparentBrowGapComparison: unavailable('NOT_EVALUATED'),
     candidateOnly: true,
     singleReviewerUnverified: true,
     independentAccuracyValidated: false,
@@ -150,7 +197,12 @@ export function compareBrowCenterlinesToHumanReview({
     productInterpretationAuthorized: false,
     modelTrainingAuthorized: false,
   };
-  if (!humanReview) return Object.freeze({ ...summary, reason: 'HUMAN_REVIEW_UNAVAILABLE' });
+  if (!humanReview)
+    return Object.freeze({
+      ...summary,
+      reason: 'HUMAN_REVIEW_UNAVAILABLE',
+      apparentBrowGapComparison: unavailable('HUMAN_REVIEW_UNAVAILABLE'),
+    });
   if (
     humanReview.humanReviewed !== true ||
     humanReview.independentAccuracyValidated !== false ||
@@ -158,14 +210,26 @@ export function compareBrowCenterlinesToHumanReview({
     !validHumanSide(humanReview.imageLeft) ||
     !validHumanSide(humanReview.imageRight)
   )
-    return Object.freeze({ ...summary, reason: 'HUMAN_REVIEW_INVALID' });
+    return Object.freeze({
+      ...summary,
+      reason: 'HUMAN_REVIEW_INVALID',
+      apparentBrowGapComparison: unavailable('HUMAN_REVIEW_INVALID'),
+    });
 
   const envelope = measureVisibleBrowMaskEnvelope(mask, width, height, { imageWidth, imageHeight });
   if (envelope.status !== 'available')
-    return Object.freeze({ ...summary, reason: 'MODEL_' + envelope.reason });
+    return Object.freeze({
+      ...summary,
+      reason: 'MODEL_' + envelope.reason,
+      apparentBrowGapComparison: unavailable('MODEL_' + envelope.reason),
+    });
   const runs = maskColumnRuns(mask, width, height);
   if (runs.length !== 2)
-    return Object.freeze({ ...summary, reason: 'MODEL_SIDE_SPLIT_UNAVAILABLE' });
+    return Object.freeze({
+      ...summary,
+      reason: 'MODEL_SIDE_SPLIT_UNAVAILABLE',
+      apparentBrowGapComparison: unavailable('MODEL_SIDE_SPLIT_UNAVAILABLE'),
+    });
   const imageLeft = compareSide(
     mask,
     width,
@@ -198,5 +262,6 @@ export function compareBrowCenterlinesToHumanReview({
     reason: available.length === 0 ? 'NO_COMPARABLE_SIDES' : null,
     imageLeft,
     imageRight,
+    apparentBrowGapComparison: compareApparentBrowGapToHumanLines(envelope, humanReview),
   });
 }

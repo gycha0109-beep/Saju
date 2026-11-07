@@ -153,3 +153,116 @@ describe('local mask-column to human eyebrow midline comparison', () => {
     ).toThrow('BROW_COMPARISON_INPUT_INVALID');
   });
 });
+
+describe('candidate-only brow gap versus marked human centreline span', () => {
+  const gap = (result: ReturnType<typeof compare>) => result.apparentBrowGapComparison;
+  it('compares the image-plane drawn-line gap with the existing model-mask gap', () => {
+    const observed = gap(compare());
+    expect(observed).toMatchObject({
+      status: 'available',
+      candidateOnly: true,
+      singleReviewerUnverified: true,
+      anatomicalInnerBrowEndsValidated: false,
+      independentAccuracyValidated: false,
+      canonicalF0Admitted: false,
+      traditionalBindingAuthorized: false,
+      productInterpretationAuthorized: false,
+      drawingCoverageCertified: false,
+    });
+    if (observed.status !== 'available') throw Error('synthetic mark failed');
+    expect(observed.drawnCenterlineGapToMeanDrawnXSpan).toBeCloseTo(10 / 8);
+    expect(observed.modelMaskGapToMeanMaskXSpan).toBeCloseTo(9 / 9);
+    expect(observed.signedDrawnMinusModelRatio).toBeCloseTo(10 / 8 - 1);
+    expect(JSON.stringify(observed)).not.toMatch(
+      /captureRef|sourceSha|segment|landmarks|rawCoordinates/,
+    );
+  });
+  it('accepts reverse drawing direction while preserving image-side order', () => {
+    const reversed = gap(
+      compare(
+        mask(),
+        human({
+          left: { status: 'marked', segments: [line(12.5, 4.5)] },
+          right: { status: 'marked', segments: [line(30.5, 22.5)] },
+        }),
+      ),
+    );
+    expect(reversed.status).toBe('available');
+    if (reversed.status === 'available')
+      expect(reversed.drawnCenterlineGapToMeanDrawnXSpan).toBeCloseTo(1.25);
+  });
+  it('withholds drawn-gap comparison on partial or missing side', () => {
+    const partial = gap(
+      compare(
+        mask(),
+        human({
+          left: { status: 'partial', segments: [line(4.5, 12.5)] },
+        }),
+      ),
+    );
+    expect(partial).toMatchObject({
+      status: 'unavailable',
+      reason: 'FULL_SINGLE_SEGMENT_PER_BROW_REQUIRED',
+      independentAccuracyValidated: false,
+    });
+    expect(gap(compare(mask(), null))).toMatchObject({
+      status: 'unavailable',
+      reason: 'HUMAN_REVIEW_UNAVAILABLE',
+    });
+  });
+  it('withholds fragments, loops and overlapping left/right annotations', () => {
+    const fragmented = gap(
+      compare(
+        mask(),
+        human({
+          left: { status: 'marked', segments: [line(4.5, 8.5), line(9.5, 12.5)] },
+        }),
+      ),
+    );
+    expect(fragmented).toMatchObject({
+      status: 'unavailable',
+      reason: 'FULL_SINGLE_SEGMENT_PER_BROW_REQUIRED',
+    });
+    const zigzag = gap(
+      compare(
+        mask(),
+        human({
+          left: {
+            status: 'marked',
+            segments: [
+              [
+                [4.5 / width, 9.5 / height],
+                [10.5 / width, 9.5 / height],
+                [8.5 / width, 9.5 / height],
+              ],
+            ],
+          },
+        }),
+      ),
+    );
+    expect(zigzag).toMatchObject({
+      status: 'unavailable',
+      reason: 'ANNOTATION_HORIZONTAL_SPAN_INVALID',
+    });
+    const overlap = gap(
+      compare(
+        mask(),
+        human({
+          left: { status: 'marked', segments: [line(4.5, 28.5)] },
+        }),
+      ),
+    );
+    expect(overlap).toMatchObject({
+      status: 'unavailable',
+      reason: 'ANNOTATED_IMAGE_SIDES_OVERLAP',
+    });
+  });
+  it('never returns a drawn-gap estimate from corrupted/edge-clipped model masks', () => {
+    const clipped = mask();
+    for (let x = 0; x <= 4; x++) clipped[8 * width + x] = 1;
+    expect(gap(compare(clipped)).status).toBe('unavailable');
+    expect(
+      gap(compare(mask(), { ...human(), independentAccuracyValidated: true } as never)),
+    ).toMatchObject({ status: 'unavailable', reason: 'HUMAN_REVIEW_INVALID' });
+  });
+});

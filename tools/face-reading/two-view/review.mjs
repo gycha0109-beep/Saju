@@ -265,7 +265,12 @@ function renderBrowHumanComparison(record, result, previous) {
             : `${label}: 비교 보류(${side.reason})`,
         )
         .join(' · ') +
-      ' — 한 사람의 표시와 모델 후보를 기술적으로 비교한 값입니다. 독립 정답 정확도·관상형 판정은 아닙니다.';
+      (values.apparentBrowGapComparison?.status === 'available'
+        ? ` · 화면상 두 눈썹 표시선 간격/평균 표시선 가로폭 ${values.apparentBrowGapComparison.drawnCenterlineGapToMeanDrawnXSpan.toFixed(3)} · 모델 마스크 간격/평균 가로폭 ${values.apparentBrowGapComparison.modelMaskGapToMeanMaskXSpan.toFixed(3)} · 표시선-모델 차이 ${values.apparentBrowGapComparison.signedDrawnMinusModelRatio.toFixed(3)}`
+        : ' · 눈썹 사이 표시선 간격 비교 보류(' +
+          (values.apparentBrowGapComparison?.reason || '근거 없음') +
+          ')') +
+      ' — 화면의 한 사람 표시선 전체 가로폭과 모델 분할 경계 사이 후보 차이입니다. 눈썹 안쪽 모근·미간 실제 거리, 독립 정답 정확도·관상형 판정은 아닙니다.';
     return;
   }
   if (comparison?.revision === reviewed.revision && comparison.status === 'loading') {

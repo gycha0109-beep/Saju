@@ -559,3 +559,26 @@ FR311 지역별 카탈로그와 `whole-face-feature-mapping-20261105.md`를
 
 이 작업은 코드 대조와 결손 추적의 개선이지 로드맵 1단계의 모든
 문헌 출처·촬영별 사람 정답 승인 완료가 아닙니다.
+
+## 2026-11-08 — 미간 눈썹 사이 2D 표시선·분할 마스크의 보수적 비교
+
+기존 `visible-brow-mask-envelope.mjs`에서 모델 마스크 눈썹 사이 간격
+비율을 이미 구하므로 계산기나 새 정규 키를 중복 발행하지 않는다.
+기존 사람 눈썹 중심선 리뷰와 비교 모듈
+`brow-centerline-comparison.mjs`에 연구용 `apparentBrowGapComparison`
+출력을 추가한다. 사람 양쪽 `marked` 단일 연속·가로 단조 중심선의
+가로 범위를 모델 분할 눈썹 마스크의 가로 범위와 같은 이미지 축에서
+나란히 계산하여 **비율 차이만** 표시한다.
+
+사람 중심선 일부/여러 선/교차·역주행/마스크 조각·가림은
+`unavailable`로 보류한다. 화면 좌우는 해부학적 좌우가 아니며,
+사람 중심선 끝은 실제 눈썹 안쪽 모근 경계 검증이 아니다.
+`candidateOnly=true`, `singleReviewerUnverified=true`,
+`anatomicalInnerBrowEndsValidated=false`,
+`independentAccuracyValidated=false`, `canonicalF0Admitted=false`,
+전통·제품 해석 권한 false를 고정한다. 저장·원시 좌표 공개 없음.
+원본 사진 비공개 저장소와 29/18/11 정규 집계/FR294 레인은 변경 없음.
+
+현재 검토 기록이 없는 실제 사진은 사람 대조 결과를 추가 생성하지
+않는다. 다음 실증은 원본·동의·두 독립 리뷰와 실제 눈썹 내측 경계 기준을
+확인할 수 있을 때에만 검토하며, 그 전까지 실제 정확도는 미평가.
