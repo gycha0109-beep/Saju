@@ -26,7 +26,7 @@ import { projectPrivatePhotoReadiness } from './private-readiness-view.mjs';
 import { traceFr294PhotoHardGaps } from './fr294-photo-gap-bridge.mjs';
 import { traceFr294HumanEvidenceReadiness } from './fr294-human-evidence-readiness.mjs';
 import {
-  FR294_INDEPENDENT_PAIR_LEDGER_VERSION,
+  readCurrentFr294IndependentPairLedger,
   auditFr294IndependentScreenReviewPairs,
   withheldFr294IndependentPairs,
 } from './fr294-independent-review-pairs.mjs';
@@ -317,16 +317,9 @@ export async function createLocalReviewServer({
   } catch (error) {
     if (error.code !== 'ENOENT') eyelidContourRestoreFailed = true;
   }
-  // Optional locally supplied independent categorical annotations; never expose
-  // raw reviewer codes, review statuses, consent attestations or source digests.
+  // Optional local evidence remains private, and is rechecked for every
+  // state request: never retain a deleted/replaced file's old positive count.
   const independentPairPath = resolve(intake, 'fr294-independent-pairs-private.json');
-  let independentPairLedger = { schemaVersion: FR294_INDEPENDENT_PAIR_LEDGER_VERSION, pairs: [] };
-  let independentPairRestoreFailed = false;
-  try {
-    independentPairLedger = JSON.parse(await readFile(independentPairPath, 'utf8'));
-  } catch (error) {
-    if (error.code !== 'ENOENT') independentPairRestoreFailed = true;
-  }
   const token = randomBytes(24).toString('hex');
   const origin = 'http://127.0.0.1:' + port;
   const runRoot = resolve(intake, 'two-view-runs');
@@ -835,35 +828,37 @@ export async function createLocalReviewServer({
       }
       if (perCaptureReadiness.status === 'available') {
         let pairAudit;
-        if (independentPairRestoreFailed) {
-          pairAudit = withheldFr294IndependentPairs('LEDGER_RESTORE_FAILED');
-        } else if (perCaptureReadiness.fr294HumanEvidence?.status !== 'available') {
+        if (perCaptureReadiness.fr294HumanEvidence?.status !== 'available') {
           pairAudit = withheldFr294IndependentPairs('HUMAN_READINESS_UNAVAILABLE');
         } else {
-          try {
-            // Check current bytes rather than relying on startup digests; old
-            // source images can never be promoted after being replaced.
-            const currentHashes = new Map(
-              await Promise.all(
-                inventory.map(async (item) => [
-                  item.recordId,
-                  {
-                    sourceSha256: createHash('sha256')
-                      .update(await readFile(item.sourcePath))
-                      .digest('hex'),
-                    viewRole: roles.get(item.recordId),
-                  },
-                ]),
-              ),
-            );
-            pairAudit = auditFr294IndependentScreenReviewPairs(
-              independentPairLedger,
-              currentHashes,
-              perCaptureReadiness.fr294HumanEvidence,
-            );
-          } catch {
-            pairAudit = withheldFr294IndependentPairs('STALE_SOURCE_OR_INVALID_LEDGER');
-          }
+          const currentLedger = await readCurrentFr294IndependentPairLedger(independentPairPath);
+          if (currentLedger.status === 'withheld') {
+            pairAudit = withheldFr294IndependentPairs('LEDGER_RESTORE_FAILED');
+          } else
+            try {
+              // Check current bytes rather than relying on startup digests; old
+              // source images can never be promoted after being replaced.
+              const currentHashes = new Map(
+                await Promise.all(
+                  inventory.map(async (item) => [
+                    item.recordId,
+                    {
+                      sourceSha256: createHash('sha256')
+                        .update(await readFile(item.sourcePath))
+                        .digest('hex'),
+                      viewRole: roles.get(item.recordId),
+                    },
+                  ]),
+                ),
+              );
+              pairAudit = auditFr294IndependentScreenReviewPairs(
+                currentLedger.ledger,
+                currentHashes,
+                perCaptureReadiness.fr294HumanEvidence,
+              );
+            } catch {
+              pairAudit = withheldFr294IndependentPairs('STALE_SOURCE_OR_INVALID_LEDGER');
+            }
         }
         perCaptureReadiness = { ...perCaptureReadiness, fr294IndependentPairAudit: pairAudit };
       }

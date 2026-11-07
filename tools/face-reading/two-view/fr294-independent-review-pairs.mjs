@@ -1,11 +1,55 @@
 // Local research-only optional ledger. Same-frame agreement is descriptive,
 // NOT reviewer identity proof, ground truth, or prospective repeatability.
+import { lstat, open } from 'node:fs/promises';
 import { EYE_FOLD_REVIEW_STATES } from './eye-fold-review.mjs';
 import { EAR_DETAIL_STATES } from './ear-detail-review.mjs';
 
 export const FR294_INDEPENDENT_PAIR_LEDGER_VERSION =
   'myeongha-fr294-independent-screen-review-pairs-v1';
 export const FR294_INDEPENDENT_PAIR_AUDIT_VERSION = 'local-fr294-independent-pair-audit@0.1.0';
+export const FR294_INDEPENDENT_PAIR_FILE_MAX_BYTES = 262144;
+
+// Read every time a user opens the local review state: a deleted/replaced
+// evidence file must never leave a prior positive pair count in memory.
+export async function readCurrentFr294IndependentPairLedger(path) {
+  if (typeof path !== 'string' || !path) invalid();
+  try {
+    const before = await lstat(path);
+    if (!before.isFile() || before.size <= 0 || before.size > FR294_INDEPENDENT_PAIR_FILE_MAX_BYTES)
+      return { status: 'withheld', reason: 'LEDGER_RESTORE_FAILED' };
+    const handle = await open(path, 'r');
+    try {
+      const during = await handle.stat();
+      if (
+        !during.isFile() ||
+        during.ino !== before.ino ||
+        during.dev !== before.dev ||
+        during.size !== before.size ||
+        during.size > FR294_INDEPENDENT_PAIR_FILE_MAX_BYTES
+      )
+        return { status: 'withheld', reason: 'LEDGER_RESTORE_FAILED' };
+      const bytes = await handle.readFile();
+      const after = await handle.stat();
+      if (
+        bytes.byteLength !== during.size ||
+        bytes.byteLength > FR294_INDEPENDENT_PAIR_FILE_MAX_BYTES ||
+        after.size !== during.size ||
+        after.mtimeMs !== during.mtimeMs
+      )
+        return { status: 'withheld', reason: 'LEDGER_RESTORE_FAILED' };
+      return { status: 'loaded', ledger: JSON.parse(bytes.toString('utf8')) };
+    } finally {
+      await handle.close();
+    }
+  } catch (error) {
+    if (error?.code === 'ENOENT')
+      return {
+        status: 'not_collected',
+        ledger: { schemaVersion: FR294_INDEPENDENT_PAIR_LEDGER_VERSION, pairs: [] },
+      };
+    return { status: 'withheld', reason: 'LEDGER_RESTORE_FAILED' };
+  }
+}
 const TARGETS = Object.freeze({
   'eye.eyelid_crease_or_hooded_category': Object.freeze({
     kind: 'eye_fold_screen_category',

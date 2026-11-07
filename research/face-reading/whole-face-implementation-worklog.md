@@ -361,3 +361,16 @@ Watchtower-Track: face-observation-engine
 - **블로커·승인 사항:** 이번 기존 로컬 연구 코드 및 비공개 읽기 전용 상태 검증에는 추가 승인 없음. 실제 독립 사람 정답·원본 연구 사용 동의/상업 권리, 반복 촬영 자료 미확보. 외부 접촉/자동 수집/모델 훈련/제품 승격 없음. 1~3단계 진행 중, 4~7 미완료, **ROADMAP_COMPLETE 아님**.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — 독립 검토 쌍 비공개 파일의 최신성 검증과 이전 결과 보류
+
+- **작업 목표:** 관상 엔진 로드맵 2·3·7단계 및 직전 FR294 독립 검토 쌍 증거 작업의 미완료인 **증거 파일의 변조·변경 시 이전 결과 무효화**를 구현. 서버 실행 중 파일 추가·교체·삭제·손상을 기존 긍정적 검토 쌍으로 잘못 유지하지 않도록 한다.
+- **기준 확인:** `gycha0109-beep/Saju` / `codex/face-two-view-local-preview-2452` / [PR #2453](https://github.com/gycha0109-beep/Saju/pull/2453) / 시작 HEAD `07ceca652fc9efa403dc7f0113068ae35b1fce9d`; 기존 `whole-face-implementation-worklog.md` 및 `whole-face-observation-reading-roadmap-20261105.md` 확인. 시작 HEAD의 CI 6개 중 4개 SUCCESS, `CI`와 Face Reading CI 2개 IN_PROGRESS(시점 기준). 기존 운영 트랙은 수정하지 않음.
+- **변경 파일:** `tools/face-reading/two-view/fr294-independent-review-pairs.mjs`, `.d.mts`(파일 크기 제한, 동일 원본 핸들 확인·실행 중 최신 파일 재조회, 누락/실패 구분), `server.mjs`(상태 요청 시 현재 파일과 현재 사진 SHA를 다시 검증하고 이전 쌍을 폐기), `test/face-fr294-independent-review-file-freshness.test.ts`(합성 임시 파일 추가·교체·삭제·손상·과대/디렉터리·오래된 SHA 거부), `tools/face-reading/two-view/READING-PLAN.md` 및 이 기존 WORKLOG.
+- **완료/근거:** 서버 시작 시 일회성으로 보관하던 파일 상태를 제거하고 상태 조회마다 파일을 새로 열도록 변경. 파일 없음은 쌍 0건 `not_collected`, 현재 유효한 파일만 처리, 손상·과대(256 KiB 초과)·비파일/심볼릭 링크·읽기 도중 파일 변조는 `withheld` 처리. 개인 정보·실제 검토자 판정/코드·원본 사진 SHA·경로는 응답에 내보내지 않는다. 합성 테스트에서는 유효 쌍 1건을 기록한 파일을 빈 파일로 교체하면 즉시 0건이 되며, 사진 SHA 변경 시 합성 증거 전체를 거부한다.
+- **테스트·CI 근거:** 신규 파일 최신성 테스트 **4/4 PASS**, 기존 독립 검토 계약 **8/8 PASS**; Node v24.14.0, TypeScript 6.0.2 typecheck, ESLint와 Prettier PASS. 기존 관련 FR294 관측/화면 테스트와 신규 테스트를 함께 실행해 **8개 파일 52/52 PASS**, TypeScript 6.0.2 typecheck·ESLint·Prettier·diff 검사 PASS. 기존 비공개 실사진 18장 Chrome 읽기 전용 확인에서도 `not_collected`/쌍 0건/정확도 false, FR294 11×18 관측 상태와 화면 렌더링·경로/SHA 비노출·브라우저 오류 없음 PASS. 기존 HEAD의 CI 상태는 신규 HEAD 통과 근거가 아니며 새 커밋의 GitHub CI 확인 전까지 성공 미판정.
+- **브랜치·커밋·PR:** 기존 관상 엔진 PR #2453 / `codex/face-two-view-local-preview-2452` 유지, 공동 작업 커밋 제목 `fix(face): refresh optional independent pair evidence on every state read`; 실제 SHA는 커밋 후 같은 WORKLOG 후속 기록으로 확정한다. 새 브랜치·운영 트랙 커밋 없음.
+- **남은 과제/다음 작업:** 실제 사람 두 명의 독립 검토·동의·반복 촬영 자료 0건으로 정답 정확도와 재현성은 미검증. 다음은 FR294에서 사람 검토 경로가 비어 있는 이미지 가시성·품질 항목을 기존 로드맵 범위에서 점검하고, 적법한 독립 참조가 확보된 항목만 분석한다. FR159/160 전향적 새 촬영과 개발용 18장 혼용 금지.
+- **블로커·승인사항:** 승인된 비공개 로컬 연구 코드 수정에 추가 승인 불필요. 독립 사람 정답·상업적 사용 권리·전향적 반복 촬영 데이터 미확보. 외부 수집, 모델 학습, 제품/정규 F0/전통 판독 승격 없음. 로드맵 1~3단계 진행 중, 4~7단계 미완료, `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine

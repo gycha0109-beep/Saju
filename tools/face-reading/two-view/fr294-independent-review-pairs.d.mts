@@ -1,5 +1,13 @@
 export const FR294_INDEPENDENT_PAIR_LEDGER_VERSION: 'myeongha-fr294-independent-screen-review-pairs-v1';
 export const FR294_INDEPENDENT_PAIR_AUDIT_VERSION: 'local-fr294-independent-pair-audit@0.1.0';
+export const FR294_INDEPENDENT_PAIR_FILE_MAX_BYTES: 262144;
+export function readCurrentFr294IndependentPairLedger(
+  path: string,
+): Promise<
+  | Readonly<{ status: 'not_collected'; ledger: FR294PairLedger }>
+  | Readonly<{ status: 'loaded'; ledger: unknown }>
+  | Readonly<{ status: 'withheld'; reason: 'LEDGER_RESTORE_FAILED' }>
+>;
 export type FR294PairEntry = Readonly<{
   captureRef: string;
   sourceSha256: string;
