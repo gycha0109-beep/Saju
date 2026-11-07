@@ -23,6 +23,12 @@ import { INSTANCE_PIN } from './instance-frame.mjs';
 import { readingCatalogue } from './reading-catalogue.mjs';
 import { experienceAssets } from './experience-server.mjs';
 import {
+  BROW_CENTERLINE_REVIEW_SCHEMA_VERSION,
+  createBrowCenterlineReviewRecord,
+  validateBrowCenterlineReviewStore,
+  projectBrowCenterlineReviewForUi,
+} from './brow-centerline-review.mjs';
+import {
   EYE_FOLD_REVIEW_SCHEMA_VERSION,
   createEyeFoldReviewRecord,
   validateEyeFoldReviewStore,
@@ -222,6 +228,16 @@ export async function createLocalReviewServer({
   } catch (error) {
     if (error.code !== 'ENOENT') eyeFoldReviewRestoreFailed = true;
   }
+  const browReviewPath = resolve(intake, 'brow-centerline-human-reviews.json');
+  let browReviews = new Map();
+  let browReviewRestoreFailed = false;
+  let browReviewSaving = false;
+  try {
+    const stored = JSON.parse(await readFile(browReviewPath, 'utf8'));
+    browReviews = new Map(Object.entries(validateBrowCenterlineReviewStore(stored, ids).records));
+  } catch (error) {
+    if (error.code !== 'ENOENT') browReviewRestoreFailed = true;
+  }
   const token = randomBytes(24).toString('hex');
   const origin = 'http://127.0.0.1:' + port;
   const runRoot = resolve(intake, 'two-view-runs');
@@ -354,6 +370,8 @@ export async function createLocalReviewServer({
       'visible-lip-class-profile.mjs',
       'visible-eye-class-profile.mjs',
       'eye-fold-review.mjs',
+      'brow-centerline-review.mjs',
+      'brow-centerline-review-ui.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const [route, asset] of experienceAssets()) assets.set(route, asset);
@@ -473,6 +491,20 @@ export async function createLocalReviewServer({
     }
     return { records, staleCount };
   }
+  async function currentBrowReviewState() {
+    const records = {};
+    let staleCount = 0;
+    for (const [captureRef, review] of browReviews) {
+      try {
+        const source = inventory.find((r) => r.recordId === captureRef);
+        if (!source) { staleCount++; continue; }
+        const digest = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
+        if (digest !== review.sourceSha256) { staleCount++; continue; }
+        records[captureRef] = projectBrowCenterlineReviewForUi(review);
+      } catch { staleCount++; }
+    }
+    return { records, staleCount };
+  }
   async function handle(req, res) {
     if (req.headers.host !== '127.0.0.1:' + port)
       return json(res, 403, { error: 'LOCAL_HOST_REQUIRED' });
@@ -496,6 +528,7 @@ export async function createLocalReviewServer({
       return file(res, resolve(sourceDir, 'review.html'), 'text/html; charset=utf-8');
     if (req.method === 'GET' && url.pathname === '/two-view/state') {
       const eyeFoldReviewState = await currentEyeFoldReviewState();
+      const browReviewState = await currentBrowReviewState();
       return json(res, 200, {
         token,
         records,
@@ -503,6 +536,9 @@ export async function createLocalReviewServer({
         eyeFoldReviews: eyeFoldReviewState.records,
         eyeFoldReviewStaleCount: eyeFoldReviewState.staleCount,
         eyeFoldReviewRestoreFailed,
+        browReviews: browReviewState.records,
+        browReviewStaleCount: browReviewState.staleCount,
+        browReviewRestoreFailed,
         readingCatalogue: catalogue,
         parsingAvailable: Boolean(parsingModel),
         parsingRestoreFailed,
@@ -682,6 +718,45 @@ export async function createLocalReviewServer({
         parsingSaving = false;
       }
     }
+    if (req.method === 'POST' && url.pathname === '/two-view/brow-centerline-reviews') {
+      if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
+      const input = await requestJson(req, 500000);
+      const allowedKeys = new Set(['token', 'captureRef', 'imageLeft', 'imageRight']);
+      if (!input || typeof input !== 'object' || Array.isArray(input) ||
+          Object.keys(input).some((key) => !allowedKeys.has(key)))
+        throw Error('BROW_CENTERLINE_REVIEW_INVALID');
+      if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
+      if (browReviewSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
+      const captureRef = input.captureRef;
+      const source = inventory.find((item) => item.recordId === captureRef);
+      if (!source || roles.get(captureRef) !== 'frontal' || browReviewRestoreFailed)
+        throw Error('BROW_CENTERLINE_REVIEW_INVALID');
+      browReviewSaving = true;
+      try {
+        const original = sourceFileStates.find((item) => item.recordId === captureRef);
+        const current = await stat(source.sourcePath);
+        if (!original || current.size !== original.size ||
+            current.mtimeMs !== original.mtimeMs || current.ino !== original.ino)
+          throw Error('SOURCE_CHANGED');
+        const sourceSha256 = createHash('sha256').update(await readFile(source.sourcePath)).digest('hex');
+        if (sourceSha256 !== sourceDigestByRecord.get(captureRef)) throw Error('SOURCE_CHANGED');
+        const previous = browReviews.get(captureRef);
+        const review = createBrowCenterlineReviewRecord(
+          { imageLeft: input.imageLeft, imageRight: input.imageRight },
+          { captureRef, sourceSha256, revision: (previous?.revision || 0) + 1,
+            reviewedAt: new Date().toISOString() },
+        );
+        const nextRecords = Object.fromEntries(browReviews);
+        nextRecords[captureRef] = review;
+        const tempPath = resolve(intake, 'brow-centerline-human-reviews-' + randomUUID() + '.tmp');
+        await writeFile(tempPath, JSON.stringify({
+          schemaVersion: BROW_CENTERLINE_REVIEW_SCHEMA_VERSION, records: nextRecords,
+        }, null, 2) + '\n', { flag: 'wx' });
+        await rename(tempPath, browReviewPath);
+        browReviews.set(captureRef, review);
+        return json(res, 200, { saved: true, review: projectBrowCenterlineReviewForUi(review) });
+      } finally { browReviewSaving = false; }
+    }
     if (req.method === 'POST' && url.pathname === '/two-view/eye-fold-reviews') {
       if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
       const input = await requestJson(req, 12000);
@@ -751,6 +826,7 @@ export async function createLocalReviewServer({
         'BATCH_INVALID',
         'METRIC_INVALID',
         'EYE_FOLD_REVIEW_INVALID',
+        'BROW_CENTERLINE_REVIEW_INVALID',
         'REQUEST_TOO_LARGE',
         'SOURCE_CHANGED',
       ].includes(error.message)

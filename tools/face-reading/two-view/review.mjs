@@ -4,6 +4,7 @@ import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
 import { PARSING_GROUPS, PARSING_VERSION, containSize } from './parsing-contract.mjs';
 import { PROFILE_DEFINITIONS } from './profile-metrics.mjs';
 import { assessMorphology } from './morphology-assessment.mjs';
+import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
 import {
   eyebrowBinaryFromOverlayRGBA,
   measureVisibleBrowMaskEnvelope,
@@ -464,6 +465,11 @@ async function saveEyeFoldReview() {
     renderEyeFoldReview(record);
   }
 }
+const browReview = attachBrowCenterlineReview({
+  getState: () => state,
+  getRecord: () => records[selected],
+  isOriginal: () => original,
+});
 function render() {
   const record = records[selected];
   if (!record) return;
@@ -530,6 +536,7 @@ function render() {
   renderVisibleEyeClassExperiment(record, result, previous);
   renderVisibleLipClassExperiment(record, result, previous);
   renderEyeFoldReview(record);
+  browReview.render();
   const quality = parsing?.regionScreening?.regions;
   const regionNames = { skin: '피부', nose: '코', lips: '입술', brows: '눈썹', ears: '귀 후보' };
   const checked = quality
