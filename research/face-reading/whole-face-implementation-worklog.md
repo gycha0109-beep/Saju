@@ -387,3 +387,16 @@ Watchtower-Track: face-observation-engine
 - **블로커·승인사항:** 기존 로컬·비공개 연구 코드 구현에 추가 승인 필요 없음. 독립 사람 정답/동의·상업 이용 권리·전향적 반복 촬영 자료 미확보. 외부 접촉·원시 개인정보 유출·모델 재학습·정규 F0/전통/제품 승격 없음. 로드맵 1~3 진행 중, 4~7 미완료, `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — FR294 귀·눈썹·입술 모델 영역 보류의 기술적 근거 구분
+
+- **작업 목표/진행 위치:** 기존 7단계 관상 엔진 로드맵 2·3단계의 실사진 입력 품질 미완료 중, 직전 WORKLOG에 기록된 귀 모델 후보 1건·눈썹 2건·입술 1건의 품질 보류 사례를 기존 파싱 근거로 세분화한다. 실제 해부학적 관측, 모델 오류 원인 진단, F0/전통/제품 승격은 하지 않는다.
+- **기준 저장소·브랜치·PR·CI:** `gycha0109-beep/Saju`, `codex/face-two-view-local-preview-2452`, 기존 [PR #2453](https://github.com/gycha0109-beep/Saju/pull/2453), 시작 HEAD `35cdce7ba754936130d6a3f10d4b8db2d90f2e68`. 기존 `research/face-reading/whole-face-observation-reading-roadmap-20261105.md` 및 본 WORKLOG, `READING-PLAN.md`와 현재 코드를 대조. 시작 커밋 GitHub Actions 6개 중 4개 `success`, `CI`·`Face Reading CI` 2개 `in_progress`; 전체 성공으로 추정하지 않는다. 운영 트랙/저장소는 변경하지 않는다.
+- **변경 파일:** `tools/face-reading/two-view/fr294-image-region-quality.mjs` 및 `.d.mts`(기존 후보 상태에 원본 파싱 결과 기반의 `modelRegionEvidence`·사진별 기술 코드와 18장별 집계 추가, 내부 스키마 0.2.0), `review.mjs`(검토 화면에 보류의 기술적 근거 별도 설명), `test/face-fr294-image-region-quality.test.ts`(기존 6개 + 원인 범주/권한 위조 방어 4개 추가), `READING-PLAN.md` 및 이 기존 WORKLOG.
+- **완료/실사진 근거:** 실제 비공개 사진 18장에 저장된 `engineering.face-parsing.yakhyo-resnet18@0.7.0` 파싱 결과만 사용해 눈썹(클래스 없음 1/위치 검사 미확보 1/검사된 후보 16), 입술(0/1/17), 귀(5/1/12)를 원시 생체정보 없이 대조했다. 기존 FR294 6개 항목 × 18장 = 108건의 모델 영역 품질 후보 유지. 18장 Chrome에서 새로운 `기술적 근거:` 문구 렌더링, 두 번째 사진 선택, 모델 근거/독립 검토 0건·정규 관측 미승격, 원본 경로·SHA 비노출, 브라우저 오류 없음 확인. **검사 미확보의 실제 원인은 확정하지 않음**; 가림·조명·구도·인체 형태를 원인으로 추정하지 않는다.
+- **테스트/CI:** 신규 분류 테스트 포함 동일 품질 모듈 **10/10 PASS**, 관련 10개 테스트 파일 합계 **71/71 PASS**. Node v24.14.0, TypeScript v6.0.2 `npm run typecheck`, ESLint, Prettier, `git diff --check` PASS. 기준 HEAD CI 일부 실행 중; 새 HEAD의 GitHub CI는 푸시 이후 성공 확인 전까지 미판정.
+- **브랜치·커밋·PR:** 기존 PR #2453·브랜치 유지, 코드·문서·워크로그 공동 작업 커밋 제목 `feat(face): explain FR294 model-region screening evidence gaps`. 확정 SHA는 후속 WORKLOG 기록 커밋에 적으며, 새로운 PR이나 운영 트랙 커밋 없음.
+- **미완료/다음 작업:** 이 변경으로 해부학적 특징 관측이나 사람 검토 정답을 추가 확보한 것은 아님. 기존 귀·눈썹·입술 보류에서 실제 가시성 판정을 하려면 원본 검토 권한과 독립 사람 주석·반복 관측 참조가 필요. 다음은 승인된 2D 품질/가시성 연구 범위에서 기존 위치 검사 `unchecked`와 `suppressed`의 근거·사람 검토 경계를 기존 FR159/FR160 전향적 참조 프로토콜과 대조하고, 실제 증거가 없는 정확도 계산은 보류한다.
+- **블로커/승인사항:** 기존 비공개 연구 코드 변경에 별도 승인 불필요. 독립 검토자 정답·반복 촬영·상업 사용권 미확보. 외부 접촉, 개인 생체자료 업로드, 모델 학습, 제품 판정 승격 없음. 로드맵 1~3 진행 중, 4~7 미완료, `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine

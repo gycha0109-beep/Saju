@@ -198,3 +198,76 @@ describe('FR294 existing parser quality is only a noncanonical candidate', () =>
     );
   });
 });
+
+describe('FR294 parser evidence reasons remain distinct from photo diagnoses', () => {
+  const evidence = (result: ReturnType<typeof project>, key: string) =>
+    result.captures['capture-01']!.find((x) => x.featureKey === key)!.modelRegionEvidence;
+
+  it('distinguishes missing class, unchecked location and explicitly suppressed location', () => {
+    const brow = 'eyebrow.visible_hair_density_texture';
+    const ear = 'ear.visible_boundary_height_shape';
+    const lips = 'mouth.visible_lip_color';
+    const a = fixture();
+    a.parsing[0]!.parsing.regionScreening.regions.brows!.status = 'unchecked';
+    expect(evidence(project(a), brow)).toBe('region_screening_unchecked');
+    const b = fixture();
+    b.parsing[0]!.parsing.regionScreening.regions.ears!.status = 'suppressed';
+    expect(evidence(project(b), ear)).toBe('region_screening_suppressed');
+    const c = fixture();
+    c.parsing[0]!.parsing.counts[12] = 0;
+    c.parsing[0]!.parsing.counts[13] = 0;
+    c.parsing[0]!.parsing.counts[0] += 82;
+    expect(evidence(project(c), lips)).toBe('region_class_not_returned');
+    const d = project(fixture());
+    expect(evidence(d, ear)).toBe('region_screened_candidate_only');
+    expect(
+      d.captures['capture-01']!.find((x) => x.featureKey === ear)
+        ?.anatomicalFeatureVisibilityVerified,
+    ).toBe(false);
+  });
+
+  it('does not infer a visible hairline from skin or a crease from eye class', () => {
+    const result = project(fixture());
+    expect(evidence(result, 'forehead.visible_width_shape')).toBe('skin_class_candidate_only');
+    expect(evidence(result, 'forehead.visible_hairline_boundary')).toBe(
+      'hair_skin_contact_candidate_only',
+    );
+    expect(evidence(result, 'eye.eyelid_crease_or_hooded_category')).toBe(
+      'eye_class_candidate_only',
+    );
+    expect(result.independentAccuracyValidated).toBe(false);
+    expect(result.canonicalF0Admitted).toBe(false);
+  });
+
+  it('preserves exactly 18 per-feature reasons without exporting raw pixels', () => {
+    const result = project(fixture(18));
+    expect(result.schemaVersion).toBe('local-fr294-parsing-region-quality@0.2.0');
+    for (const [key, codes] of Object.entries(result.evidenceCounts)) {
+      expect(featureNames).toContain(key);
+      expect(Object.values(codes).reduce((sum, n) => sum + n, 0)).toBe(18);
+    }
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toMatch(
+      /sourceSha256|sourcePath|rawPixels|maskBuffer|landmarks|interfacePixels|segments/,
+    );
+    expect(result.modelRegionScreeningOnly).toBe(true);
+    expect(result.anatomicalFeatureVisibilityVerified).toBe(false);
+  });
+
+  it('uses a view or parsing reason instead of treating unavailable data as anatomical absence', () => {
+    const sideways = project(fixture(1, 'profile'));
+    expect(evidence(sideways, 'eyebrow.visible_hair_density_texture')).toBe(
+      'frontal_view_not_available',
+    );
+    const missing = fixture();
+    missing.parsing[0]!.parsing = {
+      methodVersion: PARSING_VERSION,
+      candidateOnly: true,
+      status: 'failed',
+      reason: 'PARSING_TIMEOUT',
+    } as unknown as ReturnType<typeof sampleParsing>;
+    expect(evidence(project(missing), 'ear.visible_boundary_height_shape')).toBe(
+      'parsing_not_completed',
+    );
+  });
+});

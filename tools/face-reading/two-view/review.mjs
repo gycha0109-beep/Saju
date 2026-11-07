@@ -803,6 +803,20 @@ const fr294RegionQualityLabels = {
   profile_not_frontal_evidence: '정면 가시성 판단에 측면 사진 사용 불가',
   parsing_unavailable: '최신 이미지 분석 영역 검사 자료 없음',
 };
+const fr294RegionEvidenceLabels = {
+  parsing_not_completed: '분할 모델 분석 완료 기록 없음',
+  frontal_view_not_available: '정면 사진 근거가 없어 세부 관측 보류',
+  skin_class_candidate_only: '피부 클래스 후보만 확인(이마 폭과 무관)',
+  skin_class_not_returned: '피부 클래스 후보가 반환되지 않음',
+  hair_skin_contact_candidate_only: '모발·피부 접촉 후보만 확인(실제 헤어라인 아님)',
+  hair_skin_contact_not_returned: '모발·피부 접촉 후보가 반환되지 않음',
+  eye_class_candidate_only: '눈 클래스 후보만 확인(눈꺼풀 주름 아님)',
+  eye_class_not_returned: '눈 클래스 후보가 반환되지 않음',
+  region_class_not_returned: '해당 부위 모델 클래스 후보 없음',
+  region_screened_candidate_only: '위치 검사된 모델 영역 후보(해부학적 확정 아님)',
+  region_screening_unchecked: '모델 영역 표식은 있으나 위치 검사 근거 미확보',
+  region_screening_suppressed: '모델 영역 위치 검사에서 후보 제외',
+};
 const fr294GapLaneLabels = {
   new_image_model: 'FR294 · 별도 이미지 관측·검증 필요',
   rgb_relative_3d_benchmark: 'FR294 · 상대 3D 독립 기준 비교 필요',
@@ -884,6 +898,11 @@ function renderPhotoReadiness(record) {
     if (quality && quality.anatomicalFeatureVisibilityVerified === false) {
       reason.textContent +=
         ' · 모델 품질: ' + (fr294RegionQualityLabels[quality.modelRegionScreening] || '판정 보류');
+      if (quality.modelRegionEvidence && quality.modelRegionScreening !== 'screened_region_proxy') {
+        reason.textContent +=
+          ' · 기술적 근거: ' +
+          (fr294RegionEvidenceLabels[quality.modelRegionEvidence] || '추가 확인 필요');
+      }
     } else if (
       gap &&
       ['new_image_model', 'ear_visibility_then_image_model'].includes(gap.lane) &&

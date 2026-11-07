@@ -2,7 +2,7 @@
 // visibility admission, an appearance/colour measurement, or independent truth.
 import { PARSING_VERSION } from './parsing-contract.mjs';
 
-export const FR294_REGION_QUALITY_VERSION = 'local-fr294-parsing-region-quality@0.1.0';
+export const FR294_REGION_QUALITY_VERSION = 'local-fr294-parsing-region-quality@0.2.0';
 const MATRIX = Object.freeze([
   { key: 'forehead.visible_width_shape', region: 'skin', channel: 'non_specific_skin_class' },
   {
@@ -30,6 +30,23 @@ const STATES = Object.freeze([
   'no_region_proxy',
   'profile_not_frontal_evidence',
   'parsing_unavailable',
+]);
+// These identify what was (or was not) seen in the saved model-screening
+// metadata. They are NOT root-cause diagnoses of a real image, occlusion,
+// lighting, or any anatomical feature.
+const EVIDENCE = Object.freeze([
+  'parsing_not_completed',
+  'frontal_view_not_available',
+  'skin_class_candidate_only',
+  'skin_class_not_returned',
+  'hair_skin_contact_candidate_only',
+  'hair_skin_contact_not_returned',
+  'eye_class_candidate_only',
+  'eye_class_not_returned',
+  'region_class_not_returned',
+  'region_screened_candidate_only',
+  'region_screening_unchecked',
+  'region_screening_suppressed',
 ]);
 const REGION_CLASSES = Object.freeze({
   skin: [1],
@@ -74,6 +91,9 @@ export function traceFr294ImageRegionQuality(gaps, captures, parsingRecords) {
   }
   const aggregate = Object.fromEntries(
     MATRIX.map(({ key }) => [key, Object.fromEntries(STATES.map((x) => [x, 0]))]),
+  );
+  const evidenceCounts = Object.fromEntries(
+    MATRIX.map(({ key }) => [key, Object.fromEntries(EVIDENCE.map((x) => [x, 0]))]),
   );
   const output = {};
   for (const photo of captures) {
@@ -141,35 +161,54 @@ export function traceFr294ImageRegionQuality(gaps, captures, parsingRecords) {
       )
         fail();
       let quality = 'parsing_unavailable';
+      let evidence = 'parsing_not_completed';
       if (summary.status === 'completed') {
-        if (role === 'profile' && region !== 'ears') quality = 'profile_not_frontal_evidence';
-        else {
+        if (role === 'profile' && region !== 'ears') {
+          quality = 'profile_not_frontal_evidence';
+          evidence = 'frontal_view_not_available';
+        } else {
           const hasClass = count(summary.counts, REGION_CLASSES[region]) > 0;
           const screen = region === 'eyes' ? null : summary.regionScreening.regions[region].status;
           // A class or contact can be present without proving the specific
           // visible anatomical feature that FR294 requires.
           if (region === 'skin') {
-            const indicator =
-              channel === 'hair_skin_contact_not_forehead' ? summary.interfacePixels > 0 : hasClass;
+            const isContact = channel === 'hair_skin_contact_not_forehead';
+            const indicator = isContact ? summary.interfacePixels > 0 : hasClass;
             quality = indicator ? 'unspecific_region_proxy' : 'no_region_proxy';
+            evidence = isContact
+              ? indicator
+                ? 'hair_skin_contact_candidate_only'
+                : 'hair_skin_contact_not_returned'
+              : indicator
+                ? 'skin_class_candidate_only'
+                : 'skin_class_not_returned';
           } else if (region === 'eyes') {
             quality = hasClass ? 'unspecific_region_proxy' : 'no_region_proxy';
+            evidence = hasClass ? 'eye_class_candidate_only' : 'eye_class_not_returned';
           } else if (!hasClass) {
             quality = 'no_region_proxy';
+            evidence = 'region_class_not_returned';
           } else if (screen === 'screened') {
             quality = 'screened_region_proxy';
+            evidence = 'region_screened_candidate_only';
           } else {
             quality = 'unscreened_region_proxy';
+            evidence =
+              screen === 'suppressed'
+                ? 'region_screening_suppressed'
+                : 'region_screening_unchecked';
           }
         }
       }
-      if (!STATES.includes(quality)) fail();
+      if (!STATES.includes(quality) || !EVIDENCE.includes(evidence)) fail();
       aggregate[key][quality]++;
+      evidenceCounts[key][evidence]++;
       entries.push(
         Object.freeze({
           featureKey: key,
           channel,
           modelRegionScreening: quality,
+          modelRegionEvidence: evidence,
           anatomicalFeatureVisibilityVerified: false,
           independentHumanReferenceValidated: false,
           colorCalibrationValidated: false,
@@ -185,6 +224,9 @@ export function traceFr294ImageRegionQuality(gaps, captures, parsingRecords) {
     seen.size !== gaps.captureCount ||
     Object.values(aggregate).some(
       (status) => Object.values(status).reduce((sum, n) => sum + n, 0) !== gaps.captureCount,
+    ) ||
+    Object.values(evidenceCounts).some(
+      (codes) => Object.values(codes).reduce((sum, n) => sum + n, 0) !== gaps.captureCount,
     )
   )
     fail();
@@ -199,6 +241,7 @@ export function traceFr294ImageRegionQuality(gaps, captures, parsingRecords) {
     canonicalF0Admitted: false,
     productInterpretationAuthorized: false,
     aggregate: Object.freeze(aggregate),
+    evidenceCounts: Object.freeze(evidenceCounts),
     captures: Object.freeze(output),
   });
 }

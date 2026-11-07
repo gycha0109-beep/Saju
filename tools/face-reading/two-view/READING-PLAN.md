@@ -472,3 +472,34 @@ SHA는 HTTP 응답에 포함되지 않는다. 여기서 증거 파일을 자동 
 `colorCalibrationValidated=false`, `independentAccuracyValidated=false`,
 `canonicalF0Admitted=false` 및 전통·제품 권한 false를 고정한다.
 기존 사람 검토·독립 참조 0건 역시 변경되지 않는다.
+
+## 2026-11-08 — FR294 눈썹·입술·귀 영역 품질 보류의 기술적 근거 구분
+
+기존 FR294 6개 이미지·귀 하드갭 품질 후보 `fr294ImageQuality`에서
+`modelRegionScreening`만으로는 모델 클래스 자체가 없었는지,
+클래스는 있지만 `regionScreening`이 `unchecked`인지,
+`suppressed`인지 구분할 수 없었다. 이제 기존 저장된
+`engineering.face-parsing.yakhyo-resnet18@0.7.0`의 클래스 개수와
+위치 검사 상태에서만 `modelRegionEvidence`를 생성한다.
+
+- `region_class_not_returned`: 관련 모델 클래스 후보가 저장 결과에 없음
+- `region_screening_unchecked`: 모델 클래스는 있으나 해당 위치 검사 완료 근거 없음
+- `region_screening_suppressed`: 모델 클래스는 있으나 해당 위치 검사의 후보 제외 상태
+- `region_screened_candidate_only`: 모델 클래스가 있고 위치 검사 결과 `screened`
+- 이마 피부·헤어/피부 접촉·눈 영역: 비특정 클래스 후보일 뿐, 직접 이마 폭/실제 헤어라인/눈꺼풀 주름 아님
+- 측면/파싱 미완료: `frontal_view_not_available` / `parsing_not_completed`
+
+**실제 기존 개발 사진 18장, 기존 비공개 파싱 요약만 이용한 기술적 집계:**
+눈썹 클래스 없음 1, 위치 검사 근거 없음 1, 위치 검사된 후보 16;
+입술 클래스 없음 0, 위치 검사 근거 없음 1, 위치 검사된 후보 17;
+귀 클래스 없음 5, 위치 검사 근거 없음 1, 위치 검사된 후보 12.
+이 3개 `unchecked` 사례의 *영상상 실제 원인*은 파싱 메타데이터만으로
+판정할 수 없다. 가림·반사·조명·구도 등의 원인을 추정·기록하지 않는다.
+그룹별 `evidenceCounts`는 숫자 집계만 공개하고, 원본 클래스 수·비율·마스크,
+좌표·사진 SHA·경로와 검토자 정보는 공개하지 않는다.
+
+이번 작업은 `local-fr294-parsing-region-quality@0.2.0`의 내부 연구용
+정보 표시 개선이다. `anatomicalFeatureVisibilityVerified=false`,
+`independentAccuracyValidated=false`, `canonicalF0Admitted=false`,
+전통·제품 해석 권한 false 유지. 다른 5개 FR294 상대3D/현 RGB 불가 항목의
+권한이나 기존 18장 × 29개 평가 결과·사람 정답 0건은 변경하지 않는다.
