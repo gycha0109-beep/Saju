@@ -7,6 +7,11 @@ import { assessMorphology } from './morphology-assessment.mjs';
 import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
 import { attachNoseDetailReview } from './nose-detail-review-ui.mjs';
 import { compareNoseMaskToHumanAlarSpans } from './nose-model-human-alar-span.mjs';
+import {
+  startNosePreview,
+  invalidateNosePreview,
+  isCurrentNosePreview,
+} from './nose-preview-epoch.mjs';
 import { attachEarDetailReview } from './ear-detail-review-ui.mjs';
 import { compareEarMaskToHumanOuterRim } from './ear-model-human-rim-span.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
@@ -457,7 +462,7 @@ function renderVisibleEarMaskExperiment(record, result, previous) {
 }
 // The same local, non-persistent experiment boundary as the brow preview.
 // A full-frame nose class silhouette cannot identify anatomical nose regions.
-async function inspectVisibleNoseMask(record, result) {
+async function inspectVisibleNoseMask(record, result, humanReviewSnapshot) {
   const maskImage = new Image();
   maskImage.src = result.layerUrls.nose;
   const sourceImage = new Image();
@@ -484,14 +489,14 @@ async function inspectVisibleNoseMask(record, result) {
   });
   // Compute once using the original image's transient binary mask; do not
   // store or serialize mask pixels or reviewed coordinates in the result.
-  result.noseHumanComparison = compareNoseMaskToHumanAlarSpans(
+  const comparison = compareNoseMaskToHumanAlarSpans(
     profile,
     binary,
     canvas.width,
     canvas.height,
-    state.noseReviews?.[record.captureRef],
+    humanReviewSnapshot,
   );
-  return profile;
+  return { candidate: profile, comparison };
 }
 function renderNoseHumanAlarComparison(record, result, previous) {
   if (previous || record.viewRole !== 'frontal') return;
@@ -587,16 +592,20 @@ function renderVisibleNoseMaskExperiment(record, result, previous) {
   }
   node.textContent = '이 사진의 코 분할 마스크에서 단면별 상대 폭을 관찰하는 중입니다.';
   if (observed) return;
+  const epoch = startNosePreview(result);
+  const humanReviewSnapshot = state.noseReviews?.[record.captureRef];
   result.noseMaskCandidate = { status: 'loading' };
-  void inspectVisibleNoseMask(record, result)
-    .then((candidate) => {
-      if (results.get(record.captureRef) !== result) return;
+  void inspectVisibleNoseMask(record, result, humanReviewSnapshot)
+    .then(({ candidate, comparison }) => {
+      if (results.get(record.captureRef) !== result || !isCurrentNosePreview(result, epoch)) return;
       result.noseMaskCandidate = candidate;
+      result.noseHumanComparison = comparison;
       if (records[selected]?.captureRef === record.captureRef) render();
     })
     .catch(() => {
-      if (results.get(record.captureRef) !== result) return;
+      if (results.get(record.captureRef) !== result || !isCurrentNosePreview(result, epoch)) return;
       result.noseMaskCandidate = { status: 'unavailable', reason: 'NOSE_LAYER_NOT_READABLE' };
+      result.noseHumanComparison = undefined;
       if (records[selected]?.captureRef === record.captureRef) render();
     });
 }
@@ -839,10 +848,7 @@ const noseDetailReview = attachNoseDetailReview({
   canAnnotate: () => original && activeAnnotationTool === 'nose',
   onSaved: (captureRef) => {
     const result = results.get(captureRef);
-    if (result) {
-      result.noseMaskCandidate = null;
-      result.noseHumanComparison = undefined;
-    }
+    if (result) invalidateNosePreview(result);
     render();
   },
 });

@@ -477,3 +477,16 @@ Watchtower-Track: face-observation-engine
 - **블로커 및 승인사항:** 기존 로컬 관상 연구 구현에 추가 사용자 승인 필요 없음. 정확도/전통/제품 적용에는 독립 참조·권한이 필요하며 미확보. 다른 트랙·운영·`MyeongHa/main` 변경 없음. 로드맵 1~3 진행 중, 4~7 미완료; `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — 코 모델·사람 검토 저장 중 비동기 사진 분석 결과 최신성 보강
+
+- **작업 목표·로드맵:** 관상 엔진 7단계 로드맵 2~3단계의 사진별 모델·사람 검토 **같은 원본/최신성 증거 경계**를 보강한다. 직전 코 콧볼 가로폭 대조에서 사람 검토 저장과 과거 사진 마스크 로딩이 교차하면 저장 전 후보가 나중에 나타날 수 있는 경합을 확인, 기존 F0/F1·전통/제품 권한과 29개 정규/18개 추가 요구/FR294 11개를 변경하지 않는다.
+- **시작 기준·브랜치·PR·CI:** 실제 관상 전용 저장소 `gycha0109-beep/Saju`, 기존 `codex/face-two-view-local-preview-2452` 및 [관상 엔진 PR #2453](https://github.com/gycha0109-beep/Saju/pull/2453), 시작 HEAD `f5d47b4a648b4b450d95f8dc9a93d175d61a2924`의 GitHub Actions **6/6 SUCCESS** 확인. 기존 `whole-face-implementation-worklog.md`, `whole-face-observation-reading-roadmap-20261105.md`, `READING-PLAN.md` 및 `server.mjs`의 원본 SHA 확인과 `review.mjs`·`nose-detail-review-ui.mjs` 코 데이터 흐름 대조. 시작 작업 트리 clean. 감시 문자열 `gycha0109-beep/MyeongHa/main`은 관상 작업 PR의 실제 저장소·HEAD가 아니므로 해당 CI 복구·운영 수정 없이 관상 작업만 진행.
+- **변경 파일:** `tools/face-reading/two-view/nose-preview-epoch.mjs`·`.d.mts`(사진 결과 객체별 비영속 분석 세대·저장 시 무효화·최신 여부 확인), `review.mjs`(비동기 원시 마스크 작업이 모델 후보·당시 사람 검토의 대조 후보를 함께 반환, 해당 사진의 최신 세대·결과 객체가 맞을 때만 정상/실패 상태를 캐시에 반영, 사람 검토 저장 시 이전 세대 폐기), `server.mjs`(새 로컬 브라우저 모듈의 정적 제공 허용), `test/face-nose-preview-epoch.test.ts`(저장 전후 경합·늦은 정상/오류 결과 무시·다른 사진 분리·비정상 세대 5개), `READING-PLAN.md` 및 본 기존 WORKLOG.
+- **구현·검증 완료 범위:** 기존 서버는 원본 사진의 SHA-256과 저장 시 원본 파일 상태를 확인해 검토 기록을 제공함. 여기에 페이지 내부 비동기 분석·저장 경합을 보수적으로 차단했고 오래된 작업은 비교 결과를 직접 덮어쓰지 않도록 변경했다. **외부 프로그램의 원본 파일 변경을 연 페이지에서 실시간으로 검출하는 기능은 추가하지 않음**, 기존 서버 갱신 시 원본 대조 경계와 구분한다. 원시 모델 마스크·사진 SHA·사람 표시 좌표 노출/정규 측정 승격 없음. 기존 비공개 실사진 **18장·코 사람 기록 0건·독립 정답/정확도 0건** 유지.
+- **테스트·CI:** 새 세대 순서/무효화 테스트 **5/5 PASS**, 관상 코/귀/입술/눈썹/FR294/전체 출처 대응 관련 **25개 테스트 파일 177/177 PASS**. Node v24.14.0, TypeScript 6.0.2 `npm run typecheck`·ESLint·Prettier·`git diff --check` PASS. 기존 비공개 실사진 18장 로컬 Chrome에서 두 번째 사진 선택·코 패널·FR294·브라우저 오류 없음·원본 SHA/경로 비노출 PASS. 기준 HEAD CI 6/6 GREEN은 신규 HEAD 통과 근거로 전용하지 않으며 신규 CI 완료 전까지 미판정.
+- **브랜치·커밋·PR:** 위 관상 엔진 PR #2453의 기존 브랜치만 사용, 코드·테스트·WORKLOG 공동 구현 커밋 제목 `fix(face): discard stale nose previews after human review save`. 실제 구현 SHA는 push 후 같은 WORKLOG 후속 기록에 확정한다. 다른 저장소·운영 트랙 커밋 없음.
+- **미완료·다음 작업:** 원본 사진에 대한 페이지 밖의 외부 동시 변경과 독립 사람 정답/반복 촬영은 미검증. 다음은 기존 사람 검토 기록 최신성/원본 파일 교체 시 `server.mjs`의 GET·모델 마스크 현재성 조건을 검증 가능한 범위에서 점검한다. 실제 가시 특징의 정답·상대 3D/귀 방향·전통 형태 조건·종합 판독·상업적 사용권은 여전히 미완료이며 근거 없는 단계 완료 판정·정규 F0 발행 없음.
+- **블로커·승인사항:** 현재 승인된 비공개 연구 코드 변경에 추가 승인 필요 없음. 실제 사람 독립 정답·전향적 촬영·상업 이용 권리 미확보. 외부 연락·생체 원본 반출·다른 트랙 변경 없음. 로드맵 1~3단계 진행 중, 4~7단계 미완료. `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine
