@@ -6,6 +6,7 @@ import { resolve, dirname, extname } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
+import { readCurrentPinnedPhoto } from './source-snapshot-guard.mjs';
 import {
   PARSING_VERSION,
   PARSING_LEGACY_VERSION,
@@ -259,6 +260,22 @@ export async function createLocalReviewServer({
       ]),
     ),
   );
+  const sourceById = new Map(inventory.map((record) => [record.recordId, record]));
+  const pinnedSourceStateById = new Map(
+    sourceFileStates.map((source) => [source.recordId, source]),
+  );
+  async function pinnedSource(captureRef) {
+    const source = sourceById.get(captureRef);
+    const pinned = pinnedSourceStateById.get(captureRef);
+    if (!source || !pinned) return { status: 'source_changed' };
+    return readCurrentPinnedPhoto(source.sourcePath, pinned, sourceDigestByRecord.get(captureRef));
+  }
+  async function allPinnedSourcesCurrent() {
+    const checks = await Promise.all(ids.map((captureRef) => pinnedSource(captureRef)));
+    return checks.every((check) => check.status === 'current');
+  }
+  const staleSourceResponse = (res) => json(res, 409, { error: 'SOURCE_CHANGED_RESTART_REQUIRED' });
+
   const eyeFoldReviewPath = resolve(intake, 'eye-fold-human-reviews.json');
   let eyeFoldReviews = new Map();
   let eyeFoldReviewRestoreFailed = false;
@@ -792,6 +809,7 @@ export async function createLocalReviewServer({
     if (req.method === 'GET' && url.pathname === '/two-view')
       return file(res, resolve(sourceDir, 'review.html'), 'text/html; charset=utf-8');
     if (req.method === 'GET' && url.pathname === '/two-view/state') {
+      if (!(await allPinnedSourcesCurrent())) return staleSourceResponse(res);
       const eyeFoldReviewState = await currentEyeFoldReviewState();
       const browReviewState = await currentBrowReviewState();
       const noseReviewState = await currentNoseReviewState();
@@ -982,20 +1000,22 @@ export async function createLocalReviewServer({
         )
       )
         return json(res, 404, { error: 'NOT_FOUND' });
+      if ((await pinnedSource(match[1])).status !== 'current') return staleSourceResponse(res);
       return file(res, resolve(parsingRoot, runId, match[1], match[2] + '.png'), 'image/png');
     }
     if (req.method === 'GET' && url.pathname.startsWith('/image/')) {
       const record = inventory.find((r) => r.recordId === url.pathname.slice(7));
       if (!record) return json(res, 404, { error: 'NOT_FOUND' });
-      return file(
-        res,
-        record.sourcePath,
+      const source = await pinnedSource(record.recordId);
+      if (source.status !== 'current') return staleSourceResponse(res);
+      const type =
         extname(record.sourcePath).toLowerCase() === '.png'
           ? 'image/png'
           : extname(record.sourcePath).toLowerCase() === '.webp'
             ? 'image/webp'
-            : 'image/jpeg',
-      );
+            : 'image/jpeg';
+      res.writeHead(200, { ...staticHeaders, 'Content-Type': type });
+      return res.end(source.bytes);
     }
     if (req.method === 'GET' && url.pathname.startsWith('/review-artifact/')) {
       const match =
@@ -1004,6 +1024,7 @@ export async function createLocalReviewServer({
         );
       if (!match || !manifest.recordIds.includes(match[1]))
         return json(res, 404, { error: 'NOT_FOUND' });
+      if ((await pinnedSource(match[1])).status !== 'current') return staleSourceResponse(res);
       return file(res, resolve(render.path, match[1], match[2] + '.png'), 'image/png');
     }
     if (req.method === 'POST' && url.pathname === '/two-view/results') {
@@ -1014,6 +1035,7 @@ export async function createLocalReviewServer({
       const next = validateBatch(input, ids, roles);
       saving = true;
       try {
+        if (!(await allPinnedSourcesCurrent())) throw Error('SOURCE_CHANGED');
         for (const previous of sourceFileStates) {
           const current = await stat(previous.sourcePath);
           if (
@@ -1062,6 +1084,7 @@ export async function createLocalReviewServer({
       const next = validateParsingBatch(input, ids, roles);
       parsingSaving = true;
       try {
+        if (!(await allPinnedSourcesCurrent())) throw Error('SOURCE_CHANGED');
         for (const previous of sourceFileStates) {
           const current = await stat(previous.sourcePath);
           if (

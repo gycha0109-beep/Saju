@@ -1709,6 +1709,11 @@ window.addEventListener('pagehide', () => {
 });
 try {
   const response = await fetch('/two-view/state');
+  if (response.status === 409) {
+    const conflict = await response.json().catch(() => null);
+    if (conflict?.error === 'SOURCE_CHANGED_RESTART_REQUIRED')
+      throw Error('SOURCE_CHANGED_RESTART_REQUIRED');
+  }
   if (!response.ok) throw Error('STATE_UNAVAILABLE');
   state = await response.json();
   for (const saved of state.savedRecords || []) results.set(saved.captureRef, saved);
