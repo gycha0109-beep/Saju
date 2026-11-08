@@ -53,8 +53,13 @@ function compareSide(model, human, side) {
   const lower = Math.max(minX, Math.min(...xs));
   const upper = Math.min(maxX, Math.max(...xs));
   if (!(upper > lower)) return unavailable('NO_SHARED_HORIZONTAL_COVERAGE');
-  // Restrict the manual polyline to the same horizontal interval. No
-  // extrapolation of partial/wrong-side strokes to the rest of the class.
+  // The parser's top Y is taken across its WHOLE class X envelope. Never
+  // compare that global extremum to a shorter human marking: its topmost
+  // class pixel could lie completely outside the human-covered interval.
+  if (Math.min(...xs) > minX || Math.max(...xs) < maxX)
+    return unavailable('FULL_MODEL_X_COVERAGE_REQUIRED');
+  // Restrict the human line to that fully covered model interval; neither
+  // extend a hand-drawn stroke nor treat a generic class as eyelid anatomy.
   const inRangeYs = [];
   for (let i = 1; i < line.length; i++) {
     const [ax, ay] = line[i - 1];

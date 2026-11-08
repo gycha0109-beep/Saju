@@ -16,6 +16,7 @@ import { attachEarDetailReview } from './ear-detail-review-ui.mjs';
 import { compareEarMaskToHumanOuterRim } from './ear-model-human-rim-span.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
 import { compareLipClassWidthsToHumanBorders } from './lip-model-human-width-comparison.mjs';
+import { compareLipClassVerticalEnvelopesToHumanBorders } from './lip-model-human-vertical-envelope.mjs';
 import { attachEyelidContourHumanReview } from './eyelid-contour-human-review-ui.mjs';
 import { compareEyeClassEnvelopeToHumanUpperMargin } from './eyelid-model-human-upper-edge.mjs';
 import { createSourceCurrentnessGate } from './source-currentness-gate.mjs';
@@ -710,6 +711,37 @@ function renderLipHumanWidthComparison(record, result, previous) {
       ' · 사람 표시선 대 모델 입술 분할 가로폭 비교 보류(' + compared.reason + ')';
   }
 }
+function renderLipHumanVerticalComparison(record, result, previous) {
+  if (mode !== 'existing' || previous || record.viewRole !== 'frontal') return;
+  const human = state.lipReviews?.[record.captureRef];
+  if (!human) return;
+  const node = $('lip-class-experiment');
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    result.parsing.morphology?.lipBalance?.status !== 'available' ||
+    result.parsing.regionScreening?.regions?.lips?.status !== 'screened' ||
+    !result.lipClassCandidate
+  ) {
+    node.textContent +=
+      ' · 사람 입술 표시 기록은 있지만 현재 정면 모델 클래스가 확인되지 않아 세로 비교 보류';
+    return;
+  }
+  const compared = compareLipClassVerticalEnvelopesToHumanBorders(result.lipClassCandidate, human);
+  for (const [part, label] of [
+    ['upperBorder', '윗입술 상단'],
+    ['lowerBorder', '아랫입술 하단'],
+  ]) {
+    const item = compared[part];
+    if (item.status === 'available')
+      node.textContent +=
+        ` · ${label} 사람 표시/모델 영역 위치 ${item.drawnBorderExtremeToImageHeight.toFixed(3)}/${item.modelClassExtremeToImageHeight.toFixed(3)}` +
+        ` · 위치 차이 ${item.signedDrawnMinusModelExtremeToImageHeight.toFixed(3)} (원본 사진 높이 비율)`;
+    else node.textContent += ` · ${label} 세로 대조 보류(${item.reason})`;
+  }
+  node.textContent +=
+    ' — 사람 경계선이 모델 클래스 가로 범위를 전부 덮은 경우만 비교한 2D 위치 후보입니다. 실제 입술 두께·정확도·전통 관상형 판정은 아닙니다.';
+}
 function renderVisibleEyeClassExperiment(record, result, previous) {
   const node = $('eye-class-experiment');
   const eye = result?.eyeClassCandidate;
@@ -1244,6 +1276,7 @@ function render() {
   renderEyelidUpperMarginComparison(record, result, previous);
   renderVisibleLipClassExperiment(record, result, previous);
   renderLipHumanWidthComparison(record, result, previous);
+  renderLipHumanVerticalComparison(record, result, previous);
   renderEyeFoldReview(record);
   browReview.render();
   noseDetailReview.render();

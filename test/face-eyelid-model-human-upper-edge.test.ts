@@ -16,14 +16,16 @@ function model() {
 const unused = () => ({ status: 'unknown' as const, segments: [] });
 const drawn = (points: number[][]) => ({ status: 'marked' as const, segments: [points] });
 const left = [
-  [0.2, 0.3],
-  [0.3, 0.26],
-  [0.35, 0.28],
+  [0.15, 0.3],
+  [0.25, 0.26],
+  [0.32, 0.28],
+  [0.39, 0.3],
 ];
 const right = [
-  [0.67, 0.28],
-  [0.72, 0.3],
-  [0.8, 0.31],
+  [0.61, 0.3],
+  [0.72, 0.28],
+  [0.81, 0.31],
+  [0.89, 0.32],
 ];
 function human() {
   return createEyelidContourReviewRecord(
@@ -101,6 +103,25 @@ describe('same-original eye-class upper envelope vs marked upper-lid margin', ()
       status: 'unavailable',
       reason: 'NO_SHARED_HORIZONTAL_COVERAGE',
     });
+    expect(r.status).toBe('partial');
+  });
+  it('withholds a partially covered model envelope instead of comparing unrelated maxima', () => {
+    const h = human();
+    const r = compare(model(), {
+      ...h,
+      imageLeft: {
+        ...h.imageLeft,
+        upperLidMargin: drawn([
+          [0.2, 0.3],
+          [0.32, 0.29],
+        ]),
+      },
+    });
+    expect(r.imageLeft).toMatchObject({
+      status: 'unavailable',
+      reason: 'FULL_MODEL_X_COVERAGE_REQUIRED',
+    });
+    expect(r.imageRight.status).toBe('available');
     expect(r.status).toBe('partial');
   });
   it('withholds partial, multi-stroke and nonmonotonic markings', () => {
