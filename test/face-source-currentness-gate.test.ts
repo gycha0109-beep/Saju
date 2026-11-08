@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   SOURCE_CURRENTNESS_GATE_VERSION,
   createSourceCurrentnessGate,
+  type SourceCurrentnessStatus,
 } from '../tools/face-reading/two-view/source-currentness-gate.mjs';
 
 describe('open local face review source currentness', () => {
@@ -52,8 +53,8 @@ describe('open local face review source currentness', () => {
   });
 
   it('deduplicates overlapping probes, including late completion', async () => {
-    let finish!: (status: string) => void;
-    const delayed = new Promise<string>((resolve) => {
+    let finish!: (status: SourceCurrentnessStatus) => void;
+    const delayed = new Promise<SourceCurrentnessStatus>((resolve) => {
       finish = resolve;
     });
     const probe = vi.fn(() => delayed);

@@ -513,3 +513,12 @@ Watchtower-Track: face-observation-engine
 - **블로커:** 독립 사람 정답·반복 촬영·상업 이용 권한 미확보. 추가 승인 없음. 1~3단계 진행 중, 4~7 미완료. `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — 열린 화면 원본 현재성 검사 CI TypeScript 오류 수정
+
+- **오류 확인:** 기존 관상 PR #2453 커밋 `1cad536ac4b1f1821d19b3322fca23ab3a138b7a`의 GitHub Actions 6개 중 기본 `CI` 한 개 실패(실행 42482222759), 나머지 5개 SUCCESS. 실패한 것은 `test/face-source-currentness-gate.test.ts:61`의 `Promise<string>`과 허용된 확인 상태의 TypeScript 불일치(`TS2322`)다. 분석 엔진·사진 품질 검증 실패로 오인하지 않음.
+- **수정:** 기존 원본 현재성 테스트가 이미 선언된 `SourceCurrentnessStatus`를 재사용하도록 지연 검사 반환 타입만 정정. 원본 사진·분할·사람 검토 저장/의미 권한 및 Production 경로 변경 없음.
+- **검증/CI:** 이전 HEAD CI는 RED; 수정 HEAD는 푸시 뒤 새 실행으로 재검증하며 성공 확인 전까지 완료 판정하지 않음. 이 수정에서 실사진 18장·외부 원본 교체 브라우저 검증을 재실행하지 않음.
+- **남은 과제:** 새 HEAD CI, 실제 페이지 원본 변경 Chrome 검증, 독립 사람 정답·반복 촬영·상업 이용권 미확보, 상대 3D/귀 방향·전통/종합 판독 미완료. 7단계 중 1~3 진행 중, 4~7 미완료. `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine
