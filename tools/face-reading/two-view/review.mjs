@@ -1786,13 +1786,17 @@ try {
     probe: probePinnedSource,
     onBlocked: blockOutdatedSource,
   });
-  const checkPinnedSource = () => { if (!document.hidden) void sourceGate.check(); };
+  const checkPinnedSource = () => {
+    if (!document.hidden) void sourceGate.check();
+  };
   // This reuses the existing SHA-verified local endpoint and never sends
   // the original photo or private review notes to an external service.
   const sourceCheckTimer = window.setInterval(checkPinnedSource, 30_000);
   window.addEventListener('focus', checkPinnedSource);
   document.addEventListener('visibilitychange', checkPinnedSource);
-  window.addEventListener('pagehide', () => window.clearInterval(sourceCheckTimer), { once: true });
+  window.addEventListener('pagehide', () => window.clearInterval(sourceCheckTimer), {
+    once: true,
+  });
   if (location.search.includes('run=existing')) await start(state.records, true);
 } catch (error) {
   if (error?.message === 'SOURCE_CHANGED_RESTART_REQUIRED') {

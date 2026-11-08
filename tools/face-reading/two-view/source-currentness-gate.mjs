@@ -31,5 +31,10 @@ export function createSourceCurrentnessGate({ probe, onBlocked }) {
       pending = null;
     }
   }
-  return Object.freeze({ check, get blocked() { return blocked; } });
+  return Object.freeze({
+    check,
+    get blocked() {
+      return blocked;
+    },
+  });
 }

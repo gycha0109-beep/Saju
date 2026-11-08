@@ -19,7 +19,8 @@ describe('open local face review source currentness', () => {
 
   it('permanently blocks a replaced source instead of reviving cached observations', async () => {
     const blocked = vi.fn();
-    const probe = vi.fn()
+    const probe = vi
+      .fn()
       .mockResolvedValueOnce('current')
       .mockResolvedValueOnce('source_changed')
       .mockResolvedValueOnce('current');
@@ -39,7 +40,11 @@ describe('open local face review source currentness', () => {
       async () => null,
     ]) {
       const blocked = vi.fn();
-      const gate = createSourceCurrentnessGate({ probe, onBlocked: blocked });
+      // Intentionally invalid runtime responses: the guard must reject untrusted data.
+      const gate = createSourceCurrentnessGate({
+        probe: probe as () => Promise<'current' | 'source_changed' | 'check_failed'>,
+        onBlocked: blocked,
+      });
       expect(await gate.check()).toBe(false);
       expect(gate.blocked).toBe(true);
       expect(blocked).toHaveBeenCalledExactlyOnceWith('check_failed');
@@ -48,11 +53,14 @@ describe('open local face review source currentness', () => {
 
   it('deduplicates overlapping probes, including late completion', async () => {
     let finish!: (status: string) => void;
-    const delayed = new Promise<string>((resolve) => { finish = resolve; });
+    const delayed = new Promise<string>((resolve) => {
+      finish = resolve;
+    });
     const probe = vi.fn(() => delayed);
     const blocked = vi.fn();
     const gate = createSourceCurrentnessGate({ probe, onBlocked: blocked });
-    const a = gate.check(), b = gate.check();
+    const a = gate.check(),
+      b = gate.check();
     expect(probe).toHaveBeenCalledTimes(1);
     finish('source_changed');
     expect(await Promise.all([a, b])).toEqual([false, false]);
