@@ -522,3 +522,14 @@ Watchtower-Track: face-observation-engine
 - **남은 과제:** 새 HEAD CI, 실제 페이지 원본 변경 Chrome 검증, 독립 사람 정답·반복 촬영·상업 이용권 미확보, 상대 3D/귀 방향·전통/종합 판독 미완료. 7단계 중 1~3 진행 중, 4~7 미완료. `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — 실제 로컬 사진 18장·브라우저 열린 상태 원본 교체 검증 및 누락된 정적 모듈 복구
+
+- **기준:** 기존 관상 PR #2453, `codex/face-two-view-local-preview-2452`, 시작 HEAD `394e634546e835a3b6a60a854453f86e04831598`의 GitHub Actions 6/6 SUCCESS 확인. 로드맵 2~3단계의 이전 구현을 복제하지 않고 브라우저 실구동 검증으로 진입.
+- **실제 검증에서 발견한 결함:** `review.mjs`가 새 `source-currentness-gate.mjs`를 import하지만 `server.mjs`의 브라우저 정적 파일 허용 목록에 누락. CI의 합성 함수 테스트는 9개 모듈 연결 오류를 발견하지 못했으며 로컬 Edge 페이지가 준비 상태에 도달하지 못함. 해당 모듈을 기존 로컬 제공 목록에 추가. 브라우저의 직접 import 집합이 모두 허용된 모듈인지 확인하는 테스트를 추가하여 재발 방지.
+- **검증 증거:** 집 PC의 존재하는 비공개 기본 사진 18장 inventory를 그대로 읽되, 누락된 임시 추가 사진 6장은 테스트용 intake에 포함하지 않음. 공개되지 않는 임시 원본 사진 1장 사본에 바이트 변경(파일 크기 유지, 수정 시각 복원) 후 기존 서버 재검증: 변경 전 `GET /two-view/state` HTTP 200, 변경 후 HTTP 409 `SOURCE_CHANGED_RESTART_REQUIRED`, `GET /image/:captureRef`도 HTTP 409. 로컬 Edge `/two-view`에서 처음 `ready=true` 확인 후 외부 원본 사본 교체를 수행해 window focus 현재성 검사로 `ready=source_changed`, 화면 이미지 0개·사진별 결과 목록 0개 확인 PASS. 실제 원본·원래 inventory·기존 사람 검토·원래 결과 파일 불변; 일회용 디렉터리는 제거.
+- **추가 파일:** `tools/face-reading/two-view/source-currentness-live-smoke.mjs`·`source-currentness-browser-probe.mjs`는 비공개 원본이 존재하는 집 PC에서만 재실행하는 선택적 검증기. 사용자 원본을 복제본으로만 변조하고 원본/경로/해시를 로그와 코드로 반출하지 않는다. `test/face-local-review-module-serving.test.ts`는 사진 없는 CI에서 직접 import 정적 허용을 검사한다.
+- **테스트:** 새 정적 모듈 테스트 포함 기존 관련 Vitest 3개 파일 9/9 PASS. 로컬 브라우저 원본 교체 18장 통합 재현 PASS. 기존 모델 정확도·독립 사람 정답·전향적 반복 촬영을 시험한 결과가 아니며 정규 관측/F0/F1·전통 관상 판독·제품 권한을 확대하지 않는다.
+- **남은 작업:** 최신 커밋 GitHub Actions 최종 판정(새 HEAD 기준 별도 확인), 실제 사람 검토 정답·독립 촬영/라이선스 근거, FR294의 상대 3D·귀 방향·관상 형태 연결과 전체 7단계 통합 검증. 단계 1~3 진행 중, 4~7 미완료. `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine

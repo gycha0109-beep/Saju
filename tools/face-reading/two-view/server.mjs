@@ -473,6 +473,7 @@ export async function createLocalReviewServer({
       'visible-nose-mask-profile.mjs',
       'nose-model-human-alar-span.mjs',
       'nose-preview-epoch.mjs',
+      'source-currentness-gate.mjs',
       'visible-lip-class-profile.mjs',
       'lip-model-human-width-comparison.mjs',
       'visible-eye-class-profile.mjs',
