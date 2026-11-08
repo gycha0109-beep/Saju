@@ -15,6 +15,8 @@ import {
 } from './product-host.js';
 import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './production-calculation-http-contract.js';
 import { buildCompatibilityTwoBirthResearchReading } from '../preview/compatibility-two-birth-research-runtime.js';
+import { buildFamilyBirthResearchReading } from '../preview/family-birth-research-runtime.js';
+import { buildLifeStageBirthResearchReading } from '../preview/life-stage-birth-research-runtime.js';
 import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-service-bearer-auth.js';
 import {
   CHARACTER_GROUNDING_ADMISSION_HEADER,
@@ -43,6 +45,10 @@ export const PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH =
   '/api/preview/natal-five-domains' as const;
 export const PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH =
   '/api/preview/compatibility-charts' as const;
+export const PRODUCT_PREVIEW_FAMILY_OBSERVATIONS_HTTP_PATH =
+  '/api/preview/family-observations' as const;
+export const PRODUCT_PREVIEW_LIFE_STAGE_HTTP_PATH =
+  '/api/preview/life-stage' as const;
 export const PRODUCT_READING_PREVIEW_LIFECYCLE = 'preview' as const;
 
 export interface MyeonghwaProductHostServerOptions {
@@ -368,6 +374,88 @@ function createMyeonghwaHttpServer(
           [CHARACTER_GROUNDING_ADMISSION_HEADER]:
             CHARACTER_GROUNDING_ADMISSION_VERSION,
         });
+      } catch (error) {
+        if (!handleKnownError(response, error)) sendReadingOperationalError(response);
+      }
+      return;
+    }
+    // Two already-implemented, internally sourced product menu previews.
+    // Never transport T8/T9 research to the Production reading route.
+    if (path === PRODUCT_PREVIEW_FAMILY_OBSERVATIONS_HTTP_PATH ||
+        path === PRODUCT_PREVIEW_LIFE_STAGE_HTTP_PATH) {
+      const previewEnabled = authorizeReadingRequest !== undefined &&
+        (readingRoute.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE ||
+         secondaryReadingRoute?.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE) &&
+        readingHost !== undefined;
+      if (!previewEnabled) {
+        sendJson(response, 404, {
+          error: { code: 'HOST_ROUTE_NOT_FOUND', message: 'Route not found.' },
+        });
+        return;
+      }
+      if (method !== 'POST') {
+        response.setHeader('allow', 'POST');
+        sendJson(response, 405, {
+          error: { code: 'HOST_METHOD_NOT_ALLOWED', message: 'POST is required.' },
+        });
+        return;
+      }
+      if (!authorizeReadingRequest!(request)) {
+        sendAuthRequired(response);
+        return;
+      }
+      try {
+        const raw = await readJsonBody(request, bodyLimit);
+        if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+          throw new HostHttpError(400, 'HOST_INVALID_PREVIEW_REQUEST', 'Preview request must be an object.');
+        }
+        const data = raw as Record<string, unknown>;
+        const family = path === PRODUCT_PREVIEW_FAMILY_OBSERVATIONS_HTTP_PATH;
+        const expectedKeys = family ? ['birth', 'scope'] : ['birth'];
+        if (Object.keys(data).length !== expectedKeys.length ||
+            Object.keys(data).some(key => !expectedKeys.includes(key)) ||
+            !Object.hasOwn(data, 'birth') ||
+            (family && !Object.hasOwn(data, 'scope'))) {
+          throw new HostHttpError(400, 'HOST_INVALID_PREVIEW_REQUEST', 'Unexpected or missing preview field.');
+        }
+        if (family && data.scope !== 'parents' && data.scope !== 'children') {
+          throw new HostHttpError(400, 'HOST_INVALID_PREVIEW_SCOPE',
+            'Family preview requires an explicit parents or children scope.');
+        }
+        const birth = parseProductHostCalculationRequest({ birth: data.birth });
+        const now = new Date().toISOString();
+        if (family) {
+          const reading = buildFamilyBirthResearchReading(birth, {
+            scope: data.scope as 'parents' | 'children',
+            referenceDateTime: now,
+          });
+          sendJson(response, 200, {
+            lifecycle: 'internal_research_only',
+            scope: reading.scope,
+            availability: reading.availability,
+            researchOnly: true,
+            usefulComplete: false,
+            mayClaimFamilyOutcome: false,
+            mayPublish: false,
+            mayPersist: false,
+            maySell: false,
+            report: reading.report,
+          }, { [PRODUCT_READING_LIFECYCLE_HEADER]: PRODUCT_READING_PREVIEW_LIFECYCLE });
+        } else {
+          const reading = buildLifeStageBirthResearchReading(birth, now);
+          sendJson(response, 200, {
+            lifecycle: 'internal_research_only',
+            interpretationStatus: 'source_authority_not_established',
+            researchOnly: true,
+            usefulComplete: false,
+            mayGrantOfficialAuthority: false,
+            mayPublish: false,
+            mayPersist: false,
+            maySell: false,
+            report: reading.report,
+            natalContext: reading.natalContext,
+          }, { [PRODUCT_READING_LIFECYCLE_HEADER]: PRODUCT_READING_PREVIEW_LIFECYCLE });
+        }
       } catch (error) {
         if (!handleKnownError(response, error)) sendReadingOperationalError(response);
       }
