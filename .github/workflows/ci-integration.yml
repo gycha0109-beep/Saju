@@ -20,13 +20,14 @@ on:
         type: string
 
 permissions:
+  actions: read
   contents: read
   pull-requests: read
 
-# Serialize repeated submissions for the same PR, but do not make unrelated
-# PRs wait behind one repository-wide integration queue.
+# One repository-wide integration lease. The queue remains held through the
+# post-merge main CI so another PR cannot integrate against a transient main.
 concurrency:
-  group: ci-integration-admission-${{ inputs.pr || github.event.pull_request.number }}
+  group: ci-integration-global
   cancel-in-progress: false
   queue: max
 
@@ -109,3 +110,86 @@ jobs:
           CANDIDATE_HEAD: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
           CANDIDATE_BASE: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
         run: node scripts/ci/integration-candidate.mjs guard
+
+
+  queue-release:
+    name: CI Integration Queue Release
+    needs: [verify]
+    if: ${{ always() && needs.verify.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Hold queue through merge and exact main CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_PR: ${{ inputs.pr || github.event.pull_request.number }}
+          CANDIDATE_HEAD: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deadline=$((SECONDS + 1500))
+          while (( SECONDS < deadline )); do
+            pr_json="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${CANDIDATE_PR}")"
+            state="$(jq -r '.state' <<<"$pr_json")"
+            merged="$(jq -r '.merged' <<<"$pr_json")"
+            head_sha="$(jq -r '.head.sha' <<<"$pr_json")"
+
+            if [[ "$head_sha" != "$CANDIDATE_HEAD" ]]; then
+              echo "PR head changed after Integration Verify; releasing with failure."
+              exit 1
+            fi
+
+            if [[ "$merged" == "true" ]]; then
+              merge_sha="$(jq -r '.merge_commit_sha // empty' <<<"$pr_json")"
+              [[ "$merge_sha" =~ ^[a-f0-9]{40}$ ]] || {
+                echo "Merged PR has no stable merge SHA yet; retrying."
+                sleep 10
+                continue
+              }
+
+              runs_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?event=push&per_page=50")"
+              ci_json="$(
+                jq -c --arg sha "$merge_sha" '
+                  [.workflow_runs[] | select(.head_sha == $sha and .event == "push")]
+                  | sort_by(.created_at)
+                  | last // empty
+                ' <<<"$runs_json"
+              )"
+
+              if [[ -z "$ci_json" ]]; then
+                echo "Waiting for main CI on $merge_sha."
+                sleep 10
+                continue
+              fi
+
+              ci_status="$(jq -r '.status' <<<"$ci_json")"
+              ci_conclusion="$(jq -r '.conclusion // empty' <<<"$ci_json")"
+              ci_number="$(jq -r '.run_number' <<<"$ci_json")"
+
+              if [[ "$ci_status" != "completed" ]]; then
+                echo "Waiting for main CI #$ci_number on $merge_sha."
+                sleep 10
+                continue
+              fi
+
+              if [[ "$ci_conclusion" == "success" ]]; then
+                echo "Main CI #$ci_number passed; integration queue may advance."
+                exit 0
+              fi
+
+              echo "Main CI #$ci_number completed with $ci_conclusion; refusing clean queue release."
+              exit 1
+            fi
+
+            if [[ "$state" == "closed" ]]; then
+              echo "PR closed without merge; no main CI is required."
+              exit 0
+            fi
+
+            echo "Integration verified; waiting for PR merge before releasing queue."
+            sleep 10
+          done
+
+          echo "Timed out waiting for merge and post-merge main CI."
+          exit 1
