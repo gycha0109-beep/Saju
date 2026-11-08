@@ -17,6 +17,7 @@ import { compareEarMaskToHumanOuterRim } from './ear-model-human-rim-span.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
 import { compareLipClassWidthsToHumanBorders } from './lip-model-human-width-comparison.mjs';
 import { attachEyelidContourHumanReview } from './eyelid-contour-human-review-ui.mjs';
+import { createSourceCurrentnessGate } from './source-currentness-gate.mjs';
 import {
   earBinaryFromOverlayRGBA,
   measureVisibleEarMaskSilhouette,
@@ -138,6 +139,40 @@ function stop() {
   $('cancel').hidden = true;
   $('batch').disabled = false;
   $('analyze').disabled = files.size === 0;
+}
+// Fail closed for an already-open local page when the pinned original changes.
+// Clearing both live result objects and DOM prevents a downloaded mask or
+ // previously rendered human/model comparison being mistaken for current data.
+let sourceGate;
+function blockOutdatedSource(reason) {
+  stop();
+  for (const result of results.values()) invalidateNosePreview(result);
+  results.clear();
+  for (const url of blobUrls) URL.revokeObjectURL(url);
+  blobUrls.clear();
+  files.clear();
+  eyeFoldDrafts.clear();
+  records = [];
+  state = null;
+  const heading = document.createElement('h2');
+  heading.textContent =
+    reason === 'source_changed' ? '원본 사진 변경 · 관측 결과 폐기' : '원본 사진 현재성 확인 실패';
+  const explanation = document.createElement('p');
+  explanation.textContent =
+    reason === 'source_changed'
+      ? '서버 시작 당시의 사진과 현재 사진이 다릅니다. 이전 결과를 다시 사용하지 않습니다. 원본을 확인하고 로컬 검토 서버를 재시작한 후 페이지를 다시 여세요.'
+      : '로컬 서버에서 사진의 현재성을 확인할 수 없습니다. 이전 결과 표시를 중단했습니다. 로컬 연결을 확인하고 페이지를 다시 여세요.';
+  document.querySelector('main')?.replaceChildren(heading, explanation);
+  document.body.dataset.ready = 'source_changed';
+}
+async function probePinnedSource() {
+  const response = await fetch('/two-view/state', { cache: 'no-store' });
+  if (response.ok) return 'current';
+  if (response.status === 409) {
+    const body = await response.json().catch(() => null);
+    if (body?.error === 'SOURCE_CHANGED_RESTART_REQUIRED') return 'source_changed';
+  }
+  return 'check_failed';
 }
 // A separate local experiment: do not extend the eight traditional-source cards
 // or write a new parser summary/receipt. The overlay is already in this browser.
@@ -1747,10 +1782,25 @@ try {
   if (state.comparisonRestoreFailed)
     $('status').textContent += ' 수정 전 비교 결과를 읽지 못했습니다.';
   document.body.dataset.ready = 'true';
+  sourceGate = createSourceCurrentnessGate({
+    probe: probePinnedSource,
+    onBlocked: blockOutdatedSource,
+  });
+  const checkPinnedSource = () => { if (!document.hidden) void sourceGate.check(); };
+  // This reuses the existing SHA-verified local endpoint and never sends
+  // the original photo or private review notes to an external service.
+  const sourceCheckTimer = window.setInterval(checkPinnedSource, 30_000);
+  window.addEventListener('focus', checkPinnedSource);
+  document.addEventListener('visibilitychange', checkPinnedSource);
+  window.addEventListener('pagehide', () => window.clearInterval(sourceCheckTimer), { once: true });
   if (location.search.includes('run=existing')) await start(state.records, true);
-} catch {
-  $('status').textContent = '사진 목록을 불러오지 못했습니다. 로컬 연결을 확인하세요.';
-  $('status').className = 'error';
+} catch (error) {
+  if (error?.message === 'SOURCE_CHANGED_RESTART_REQUIRED') {
+    blockOutdatedSource('source_changed');
+  } else {
+    $('status').textContent = '사진 목록을 불러오지 못했습니다. 로컬 연결을 확인하세요.';
+    $('status').className = 'error';
+  }
 }
 // Runtime state contains only local candidate values; raw landmarks stay in the worker.
 window.twoViewSnapshot = () => ({
