@@ -1,0 +1,51 @@
+name: N27 Korean 1906 public PDF acquisition
+on:
+  push:
+    branches: [research/saju/natal-19-pair-semantic-return-20261017]
+    paths: ['.github/workflows/n27-korean-1906-public-pdf.yml']
+permissions:
+  contents: read
+jobs:
+  public-pdf-once:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Save only a verified PDF from public registered source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-korean-1906
+          python3 - <<'PY'
+          import hashlib,json,pathlib,urllib.request,urllib.error
+          p=pathlib.Path('n27-korean-1906')
+          url='https://gongu.copyright.or.kr/gongu/wrt/cmmn/wrtFileDownload.do?wrtSn=9086005&fileSn=1&wrtFileTy=01'
+          out={'source_catalogue':'https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005','url':url,'claimed_creation_year':1906,'status':'NOT_RETRIEVED','printed_locus_read':False}
+          try:
+              req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
+              with urllib.request.urlopen(req,timeout=50) as r:
+                  out['status_code']=r.status
+                  out['content_type']=r.headers.get('Content-Type')
+                  b=bytearray()
+                  while 1:
+                      chunk=r.read(1048576)
+                      if not chunk:break
+                      if len(b)+len(chunk)>85*1048576:raise ValueError('CAP_85_MIB')
+                      b.extend(chunk)
+              data=bytes(b)
+              out['response_bytes']=len(data)
+              if b'%PDF-' in data[:1024]:
+                  (p/'public-1906-candidate.pdf').write_bytes(data)
+                  out.update(status='PDF_RETRIEVED',sha256=hashlib.sha256(data).hexdigest())
+              else:out.update(status='NON_PDF_RESPONSE',prefix=repr(data[:100]))
+          except urllib.error.HTTPError as e:out.update(status='HTTP_ERROR',http_status=e.code)
+          except Exception as e:out.update(status='ERROR',error=repr(e)[:180])
+          (p/'outcome.json').write_text(json.dumps(out,ensure_ascii=False,indent=2))
+          print('N27_1906_RESULT',out['status'],out.get('response_bytes'),flush=True)
+          PY
+      - name: Retain public source bytes and attempt record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-korean-1906-public-source
+          path: n27-korean-1906
+          retention-days: 14

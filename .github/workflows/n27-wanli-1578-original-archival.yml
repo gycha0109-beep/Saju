@@ -1,0 +1,37 @@
+name: "[WT:saju] N27 Wanli 1578 Original PDF for Pagewise Visual Review"
+on:
+  push:
+    branches:
+      - research/saju/natal-19-pair-semantic-return-20261017
+    paths:
+      - .github/workflows/n27-wanli-1578-original-archival.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  download-original-1578:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Acquire explicitly cataloged 1578 source (no OCR)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/n27-1578-original"
+          curl --fail --location --silent --show-error --retry 3 --retry-delay 2 \
+            --connect-timeout 25 --max-time 260 \
+            --user-agent "MyeongHaAcademicSourceAudit/1.0 (noncommercial research)" \
+            "https://upload.wikimedia.org/wikipedia/commons/f/f4/NCL-06589_1_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83.pdf" \
+            --output "$RUNNER_TEMP/n27-1578-original/original.pdf"
+          head -c 5 "$RUNNER_TEMP/n27-1578-original/original.pdf" | grep -q '%PDF-'
+          sha256sum "$RUNNER_TEMP/n27-1578-original/original.pdf" | tee "$RUNNER_TEMP/n27-1578-original/original.sha256"
+          printf 'SOURCE=TAIWAN_NCL_06589_1578\nSTATUS=UNREVIEWED\nNO_SOURCE_CLAIM_ADMISSION\n' \
+            > "$RUNNER_TEMP/n27-1578-original/SOURCE.txt"
+      - name: Store original public-domain PDF for exact-page manual inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-wanli-1578-original-pdf-unreviewed
+          path: ${{ runner.temp }}/n27-1578-original/
+          compression-level: 0
+          retention-days: 3
+          if-no-files-found: error

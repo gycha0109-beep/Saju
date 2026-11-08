@@ -1,0 +1,70 @@
+name: N27 1936 NLC public original facsimile acquisition
+on:
+  push:
+    branches: [research/saju/natal-19-pair-semantic-return-20261017]
+    paths: ['.github/workflows/n27-1936-nlc-public-facsimile.yml']
+permissions:
+  contents: read
+jobs:
+  fetch-public-1936-nlc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Preserve only the official Wikimedia Commons original PDF and provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-1936-public-nlc
+          python3 - <<'PY'
+          import urllib.request,urllib.error,urllib.parse,hashlib,json,pathlib
+          root=pathlib.Path('n27-1936-public-nlc')
+          title='File:NLC511-027032013013877-17378_銅版精印神峰通考命理正宗.pdf'
+          page='https://commons.wikimedia.org/wiki/'+urllib.parse.quote(title,safe=':')
+          api='https://commons.wikimedia.org/w/api.php?'+urllib.parse.urlencode({'action':'query','titles':title,'prop':'imageinfo','iiprop':'url|size|mime','format':'json'})
+          record={'catalogue':page,'description':'1936-03 Star Destiny Society collated copperplate print in NLC Wikimedia Commons public file','status':'NO_PDF_BYTES'}
+          def load(url,max_bytes):
+           req=urllib.request.Request(url,headers={'User-Agent':'MyeongHa-N27-OpenHistoricalResearch/1.0 (public-domain bibliography audit; no auth)','Accept':'application/pdf,application/json;q=0.9,*/*;q=0.8'})
+           with urllib.request.urlopen(req,timeout=70) as r:
+            b=r.read(max_bytes+1)
+            if len(b)>max_bytes:raise ValueError('SAFE_MAX_BYTES')
+            return b,r.url,r.status,r.headers.get('content-type','')
+          urls=[]
+          try:
+           data,final,status,mime=load(api,1024*1024)
+           metadata=json.loads(data)
+           for item in metadata['query']['pages'].values():
+            for info in item.get('imageinfo',[]):
+             record['commonsFileMetadata']={k:info.get(k) for k in ['size','mime','url','descriptionurl']}
+             if info.get('url'):urls.append(info['url'])
+          except Exception as e:record['mediaWikiApiError']=repr(e)[:280]
+          urls.append('https://commons.wikimedia.org/wiki/Special:Redirect/file/'+urllib.parse.quote(title[5:]))
+          for url in urls[:2]:
+           attempt={'url':url}
+           try:
+            b,final,status,mime=load(url,30*1024*1024)
+            attempt.update(http=status,mime=mime,bytes=len(b),finalUrl=final)
+            if b.startswith(b'%PDF-'):
+             (root/'NLC-1936-copperplate-original-220pages.pdf').write_bytes(b)
+             attempt['result']='ORIGINAL_PDF_ACQUIRED'
+             record.update(status='ORIGINAL_PDF_ACQUIRED',sha256=hashlib.sha256(b).hexdigest(),originalBytes=len(b),sourceUrl=final,originalPdfDownloaded=True)
+             record['attempts']=record.get('attempts',[])+[attempt];break
+            else:attempt.update(result='NON_PDF',prefix=repr(b[:60]))
+           except urllib.error.HTTPError as e:attempt.update(result='HTTP_ERROR',http=e.code)
+           except Exception as e:attempt.update(result='ERROR',error=repr(e)[:250])
+           record['attempts']=record.get('attempts',[])+[attempt]
+          (root/'retrieval-provenance.json').write_text(json.dumps(record,ensure_ascii=False,indent=2))
+          print('N27_NLC_1936',record['status'],record.get('originalBytes'),flush=True)
+          PY
+      - name: Print document page-count metadata without claiming folio read
+        shell: bash
+        run: |
+          if [ -f n27-1936-public-nlc/NLC-1936-copperplate-original-220pages.pdf ]; then
+            pdfinfo n27-1936-public-nlc/NLC-1936-copperplate-original-220pages.pdf | head -25 > n27-1936-public-nlc/pdfinfo.txt || true
+          fi
+      - name: Preserve source PDF, hashes and attempt outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-1936-nlc-original-public-pdf
+          path: n27-1936-public-nlc
+          retention-days: 14

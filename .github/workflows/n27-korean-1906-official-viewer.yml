@@ -1,0 +1,115 @@
+name: N27 Korean 1906 official document viewer public acquisition
+on:
+  push:
+    branches: [research/saju/natal-19-pair-semantic-return-20261017]
+    paths: ['.github/workflows/n27-korean-1906-official-viewer.yml']
+permissions:
+  contents: read
+jobs:
+  official-public-viewer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Inspect same-site official viewer and preserve genuine public PDFs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-1906-official-viewer/pages
+          python3 - <<'PY'
+          import pathlib,urllib.request,urllib.error,urllib.parse,http.cookiejar,hashlib,json,re,html,traceback
+          from html.parser import HTMLParser
+          root=pathlib.Path('n27-1906-official-viewer')
+          source='https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005'
+          official_viewer='https://gongu.copyright.or.kr/gongu/cmmn/docViewer/viewerIframe.do?fileSn=1&wrtSn=9086005'
+          other_public_viewer_route='https://gongu.copyright.or.kr/gongu/cmmn/docViewer/viewer.do?fileSn=1&wrtSn=9086005'
+          jar=http.cookiejar.CookieJar()
+          opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+          headers={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36','Accept-Language':'ko-KR,ko;q=0.9,en;q=0.8'}
+          report={'workId':'G905-9086005','sourceUrl':source,'exactOfficialViewerUrl':official_viewer,'assumedSameSiteGenericViewerRoute':other_public_viewer_route,'requests':[],'downloadedOriginalPdf':False,'supplementPrintedPageDirectlyRead':False}
+          class Links(HTMLParser):
+           def __init__(self):super().__init__();self.links=[]
+           def handle_starttag(self,tag,attrs):
+            for k,v in attrs:
+             if k in ('src','href','data','action','data-src','data-url') and v:self.links.append({'tag':tag,'attr':k,'url':html.unescape(v)})
+          def retrieve(label,url,referer):
+           record={'label':label,'url':url}
+           try:
+            req=urllib.request.Request(url,headers=dict(headers,Referer=referer))
+            with opener.open(req,timeout=35) as resp:
+             record['http']=resp.status;record['finalUrl']=resp.url
+             record['mime']=resp.headers.get('Content-Type','')
+             record['contentLengthHeader']=resp.headers.get('Content-Length')
+             chunk_limit=165*1024*1024
+             chunks=bytearray()
+             while True:
+              chunk=resp.read(1024*1024)
+              if not chunk:break
+              if len(chunks)+len(chunk)>chunk_limit:raise ValueError('SAFE_SIZE_CAP_165MB')
+              chunks.extend(chunk)
+             data=bytes(chunks)
+            record['bytes']=len(data)
+            record['sha256']=hashlib.sha256(data).hexdigest()
+            if b'%PDF-' in data[:1024]:
+             record['result']='PDF_BYTES_RETRIEVED'
+             (root/'official-viewer-original.pdf').write_bytes(data)
+             report['downloadedOriginalPdf']=True
+            elif data[:10].startswith((b'<!DOCTYPE',b'<!doctype',b'<html',b'<?xml',b'<!HTM')):
+             record['result']='HTML'
+             text=data.decode('utf-8','replace')
+             (root/'pages'/(label+'.html')).write_bytes(data[:3*1024*1024])
+             parsed=Links();parsed.feed(text)
+             # Retain only same-host public path links; scripts can contain paths not expressed as hrefs.
+             record['inDocumentLinks']=parsed.links[:130]
+             record['matchingTextFragments']=[]
+             for pattern in ['viewerIframe','viewer.do','fileDownload','wrtFile','pdf','iframe','download','fileSn','wrtSn','docViewer','document.location','location.href','fileUrl','filePath']:
+              hits=list(re.finditer(re.escape(pattern),text,re.I))
+              record['matchingTextFragments'].extend({'match':pattern,'text':text[max(0,m.start()-125):m.end()+180].replace('\n',' ')[:320]} for m in hits[:6])
+             record['matchingTextFragments']=record['matchingTextFragments'][:65]
+             record['sameSitePdfCandidates']=[]
+             for m in re.finditer(r'''["']([^"']{4,360}(?:\.pdf|\.PDF|download|viewer|fileSn)[^"']{0,120})["']''',text,re.I):
+              val=m.group(1).replace('&amp;','&').strip()
+              candidate=urllib.parse.urljoin(url,val)
+              parsedurl=urllib.parse.urlparse(candidate)
+              if parsedurl.hostname=='gongu.copyright.or.kr' and parsedurl.path.startswith('/gongu/') and candidate not in record['sameSitePdfCandidates']:
+               record['sameSitePdfCandidates'].append(candidate)
+             record['sameSitePdfCandidates']=record['sameSitePdfCandidates'][:35]
+            else:
+             record['result']='OTHER_BYTES';record['prefix']=repr(data[:150])
+             (root/'pages'/(label+'.bin')).write_bytes(data[:2*1024*1024])
+           except urllib.error.HTTPError as e:
+            record.update(result='HTTP_ERROR',http=e.code,reason=str(e.reason)[:150])
+            try:record['errorBodyPrefix']=e.read(1024).decode('utf-8','replace')
+            except Exception:pass
+           except Exception as e:
+            record.update(result='REQUEST_ERROR',error=repr(e)[:240])
+           report['requests'].append(record)
+           print('N27_PUBLIC_1906_VIEWER',label,record['result'],record.get('http'),record.get('bytes'),flush=True)
+           return record
+          first=retrieve('catalogue',source,source)
+          second=retrieve('explicit_viewer_iframe',official_viewer,source)
+          third=retrieve('other_public_viewer_route',other_public_viewer_route,source)
+          # Only follow at most three explicitly linked, public same-site PDF/standalone viewer resources.
+          candidates=[]
+          for row in (first,second,third):
+           for item in row.get('sameSitePdfCandidates',[]):
+            if item not in (source,official_viewer,other_public_viewer_route) and item not in candidates:
+             candidates.append(item)
+           for item in row.get('inDocumentLinks',[]):
+            candidate=urllib.parse.urljoin(row['url'],item['url'])
+            q=urllib.parse.urlparse(candidate)
+            if q.hostname=='gongu.copyright.or.kr' and q.path.startswith('/gongu/') and any(z in candidate.lower() for z in ['pdf','docviewer','filedownload']):
+             if candidate not in (source,official_viewer,other_public_viewer_route) and candidate not in candidates:candidates.append(candidate)
+          report['discoveredSameSiteCandidates']=candidates[:30]
+          for i,url in enumerate(candidates[:3]):
+           if report['downloadedOriginalPdf']:break
+           retrieve('linked_public_resource_'+str(i+1),url,official_viewer)
+          (root/'audit.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+          print('N27_PUBLIC_1906_VERDICT', 'PDF_RETRIEVED' if report['downloadedOriginalPdf'] else 'NO_PDF_BYTES',flush=True)
+          PY
+      - name: Preserve access evidence without unverified text claims
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-korean-1906-public-official-viewer-audit
+          path: n27-1906-official-viewer
+          retention-days: 14
