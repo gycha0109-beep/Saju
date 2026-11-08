@@ -6,6 +6,7 @@ import { PROFILE_DEFINITIONS } from './profile-metrics.mjs';
 import { assessMorphology } from './morphology-assessment.mjs';
 import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
 import { attachNoseDetailReview } from './nose-detail-review-ui.mjs';
+import { compareNoseMaskToHumanAlarSpans } from './nose-model-human-alar-span.mjs';
 import { attachEarDetailReview } from './ear-detail-review-ui.mjs';
 import { compareEarMaskToHumanOuterRim } from './ear-model-human-rim-span.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
@@ -477,10 +478,44 @@ async function inspectVisibleNoseMask(record, result) {
   context.drawImage(maskImage, 0, 0);
   const rgba = context.getImageData(0, 0, canvas.width, canvas.height).data;
   const binary = noseBinaryFromOverlayRGBA(rgba, canvas.width, canvas.height);
-  return measureVisibleNoseMaskProfile(binary, canvas.width, canvas.height, {
+  const profile = measureVisibleNoseMaskProfile(binary, canvas.width, canvas.height, {
     imageWidth: sourceImage.naturalWidth,
     imageHeight: sourceImage.naturalHeight,
   });
+  // Compute once using the original image's transient binary mask; do not
+  // store or serialize mask pixels or reviewed coordinates in the result.
+  result.noseHumanComparison = compareNoseMaskToHumanAlarSpans(
+    profile,
+    binary,
+    canvas.width,
+    canvas.height,
+    state.noseReviews?.[record.captureRef],
+  );
+  return profile;
+}
+function renderNoseHumanAlarComparison(record, result, previous) {
+  if (previous || record.viewRole !== 'frontal') return;
+  if (!state.noseReviews?.[record.captureRef]) return;
+  const node = $('nose-mask-experiment');
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    result.parsing.regionScreening?.regions?.nose?.status !== 'screened'
+  ) {
+    node.textContent += ' · 사람 콧볼 표시가 있어도 코 분할 위치 품질이 미확인되어 비교 보류';
+    return;
+  }
+  const compared = result.noseHumanComparison;
+  if (compared?.status === 'available') {
+    node.textContent +=
+      ` · 사람 양쪽 콧볼 표시선 바깥 가로범위/사진폭 ${compared.drawnOuterAlarXSpanToImageWidth.toFixed(3)}` +
+      ` · 모델 코 전체 영역 가로폭/사진폭 ${compared.modelWholeNoseClassXSpanToImageWidth.toFixed(3)}` +
+      ` · 표시선-모델 차이 ${compared.signedDrawnMinusModelXSpan.toFixed(3)}` +
+      ' — 같은 사진의 두 2D 연구 후보이며, 코끝·콧구멍·실제 콧볼 경계나 관상형의 정확도 검증이 아닙니다.';
+  } else {
+    node.textContent +=
+      ' · 코 모델-사람 표시선 비교 보류(' + (compared?.reason || '모델 영역 검사 대기') + ')';
+  }
 }
 function renderEarHumanSpanComparison(record, result, previous) {
   if (previous || record.viewRole !== 'frontal') return;
@@ -802,6 +837,14 @@ const noseDetailReview = attachNoseDetailReview({
   getState: () => state,
   getRecord: () => records[selected],
   canAnnotate: () => original && activeAnnotationTool === 'nose',
+  onSaved: (captureRef) => {
+    const result = results.get(captureRef);
+    if (result) {
+      result.noseMaskCandidate = null;
+      result.noseHumanComparison = undefined;
+    }
+    render();
+  },
 });
 const earDetailReview = attachEarDetailReview({
   getState: () => state,
@@ -1122,6 +1165,7 @@ function render() {
   renderVisibleEarMaskExperiment(record, result, previous);
   renderEarHumanSpanComparison(record, result, previous);
   renderVisibleNoseMaskExperiment(record, result, previous);
+  renderNoseHumanAlarComparison(record, result, previous);
   renderVisibleEyeClassExperiment(record, result, previous);
   renderVisibleLipClassExperiment(record, result, previous);
   renderLipHumanWidthComparison(record, result, previous);

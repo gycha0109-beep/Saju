@@ -454,6 +454,7 @@ export async function createLocalReviewServer({
       'morphology-assessment.mjs',
       'visible-brow-mask-envelope.mjs',
       'visible-nose-mask-profile.mjs',
+      'nose-model-human-alar-span.mjs',
       'visible-lip-class-profile.mjs',
       'lip-model-human-width-comparison.mjs',
       'visible-eye-class-profile.mjs',

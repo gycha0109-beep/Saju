@@ -28,7 +28,7 @@ const clone = (record) => ({
 });
 const isVisible = (p) => p.status === 'marked' || p.status === 'partial';
 
-export function attachNoseDetailReview({ getRecord, getState, canAnnotate }) {
+export function attachNoseDetailReview({ getRecord, getState, canAnnotate, onSaved = () => {} }) {
   const panel = document.getElementById('nose-review');
   const overlay = document.getElementById('nose-review-canvas');
   const image = document.getElementById('image');
@@ -292,6 +292,7 @@ export function attachNoseDetailReview({ getRecord, getState, canAnnotate }) {
       const data = await response.json();
       if (!response.ok || !data.saved || !data.review) throw Error(data.error || 'SAVE_FAILED');
       getState().noseReviews = { ...(getState().noseReviews || {}), [captureRef]: data.review };
+      onSaved(captureRef);
       draft.dirty = false;
       error = '';
     } catch (e) {

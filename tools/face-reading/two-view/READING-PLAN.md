@@ -651,3 +651,38 @@ FR311 지역별 카탈로그와 `whole-face-feature-mapping-20261105.md`를
 실제 화면 동작만 검증했다. 기존 관상 FR294의 귀 가시성
 모델 신규 근거 미확보 상태나 4개의 상대 3D 미해결 항목은
 이번 작업으로 변경되지 않는다.
+
+## 2026-11-08 — 코 전체 모델 마스크와 사람 콧볼 외곽선의 화면상 2D 범위 대조
+
+기존 `visible-nose-mask-profile.mjs`의 **코 전체 클래스 마스크**와
+`nose-detail-review.mjs`의 같은 원본 사진 사람 표시 중
+화면 왼쪽/오른쪽 **콧볼 윤곽선**만 기술적으로 연결했다.
+`nose-model-human-alar-span.mjs`는 모델 코 전체 마스크 가로폭/사진 가로폭과
+사람 양측 콧볼 표시선의 바깥쪽 x 범위/사진 가로폭을 대조하고
+부호 있는 차이를 연구용으로 표시한다.
+
+사람 양측 표시가 모두 `marked`, 단일 윤곽선, 화면 범위 내부,
+왼쪽·오른쪽 윤곽 x 범위의 분리 조건을 충족하고, 같은 사진의
+현재 `PARSING_VERSION` 코 영역 `screened`와 실제 코 마스크
+연결성·프레임·단면 검사가 유효한 경우에만 비교한다.
+부분 표시/여러 선/경계 잘림/화면상 좌우 중첩/이전 분석/변조된
+모델·사람 권한 상태는 `unavailable`로 보류한다.
+사람 검토 저장 직후에는 이전 모델 후보 캐시를 무효화해 재계산한다.
+
+**모델 코 전체 클래스는 해부학적 콧볼 전용 모델이 아니다.**
+사람 표시선의 끝이 실제 콧볼 최외곽이라는 사실도 독립 검증되지
+않았다. 사람 코끝 점과 양쪽 콧구멍 윤곽의 검토 기록 존재 여부는
+별도 boolean으로만 남기며 그 위치를 모델 코끝/콧구멍의 정답으로
+다루지 않는다. 원본 좌표·마스크·사진 경로/SHA는 비교 결과에 넣지
+않는다. `candidateOnly=true`, `singleReviewerUnverified=true`,
+`anatomicalAlarBoundaryValidated=false`,
+`anatomicalNoseSubregionsObserved=false`,
+`modelHumanAgreementValidated=false`,
+`independentAccuracyValidated=false`, `canonicalF0Admitted=false`,
+전통·제품 권한 false를 유지한다.
+
+현재 비공개 사진 **18장**에서 코 사람 검토 기록 **0건**을 확인했다.
+실사진 사람-모델 정확도 검증은 0건이고, 합성 경계 테스트와
+Chrome 로컬 화면 실행만 완료했다. 29개 정규/18개 확장/FR294 11개
+권한을 바꾸지 않으며 상대 3D·코끝/비공/콧볼 실제 형태와 전통
+관상 판독은 미완료로 둔다.

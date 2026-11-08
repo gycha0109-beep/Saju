@@ -464,3 +464,16 @@ Watchtower-Track: face-observation-engine
 - **블로커·승인사항:** 추가 승인 없이 기존 연구용 로컬 코드 범위에서 진행. 독립 사람 정답·전향적 반복 촬영 자료·상업 사용 권리 미확보로 정확도/전통 F1/제품 F0 승격 불가. 외부 문의·모델 재학습·생체원본 업로드·운영 트랙 변경 없음. 로드맵 1~3 진행 중, 4~7 미완료. `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-08 — 코 전체 모델 분할과 사람 콧볼 표시선의 보수적 2D 가로폭 대조
+
+- **작업 목표·로드맵:** 관상 엔진 7단계 중 2~3단계에 남아 있던 **코 전체 모델 영역과 콧볼·콧구멍·코끝 사람 검토 간 같은 원본 근거의 2D 연결**을 점검하고, 정규 관측을 새로 발행하지 않는 화면상 가로폭 대조를 구현. 코 모델이 콧볼/콧구멍/코끝 전용 검출기가 아님을 유지하고 코끝/콧구멍 리뷰의 존재 상태를 실제 형태 정답과 분리.
+- **저장소·브랜치·PR·CI 기준:** 실제 관상 전용 WORKLOG/ROADMAP 및 열려 있는 PR #2453은 `gycha0109-beep/Saju`, `codex/face-two-view-local-preview-2452`, 시작 HEAD `6212ee8176a9e2b97da89def46de7402b23102f0`. 해당 HEAD GitHub Actions **6/6 SUCCESS**. 감시 문자열 `gycha0109-beep/MyeongHa/main`과 실제 관상 PR 저장소/HEAD 브랜치가 **다름**을 확인하고 그 CI 복구·운영 변경은 하지 않음. `MyeongHa/main`에는 이 관상 WORKLOG 경로가 없음(읽기 전용 조회 404). 기존 `whole-face-observation-reading-roadmap-20261105.md`·본 WORKLOG와 코 모델·사람 검토 소스 확인, 초기 로컬 작업 트리 clean.
+- **변경 파일:** `tools/face-reading/two-view/nose-model-human-alar-span.mjs`·`.d.mts`(실제 코 전체 바이너리 마스크의 이미지 x 폭과 양쪽 단일 사람 콧볼 표시선 x 폭 비교·보류 및 해부학/정규 승격 차단), `review.mjs`(동일 정면 사진 최신 파싱 코 위치검사 품질에서만 연구 후보 표시), `nose-detail-review-ui.mjs`(원본 리뷰 저장 성공 후 이전 후보 폐기·재분석), `server.mjs`(로컬 화면 모듈 정적 제공 허용), `test/face-nose-model-human-alar-span.test.ts`(합성 마스크·사람 기록·부분 선·연결성·변조/승격 차단 7개), `READING-PLAN.md`, 기존 `whole-face-feature-mapping-20261105.md`, 본 기존 WORKLOG.
+- **완료·실증 경계:** 양쪽 콧볼선 `marked` 단일선·분리·프레임 안 조건과 코 모델 전체 마스크의 현 버전·연결성·단면 검증이 동시에 유효할 때만 **화면 x폭/원본 이미지 폭의 기술적 차이** 계산. 코끝 점/콧구멍 선의 존재 여부만 별도 표기하고 실제 콧볼 해부학·코끝/비공 세부 구조를 검증했다고 주장하지 않음. 모델 원시 마스크/표시 좌표/경로/SHA는 출력하지 않으며 F0/F1·전통·제품·독립 정확도 false 고정. 기존 비공개 실사진 **18장**, 사람 코 검토 **0건**, 실제 코 모델-사람 정확도 비교 **0건**. 원본 분석 상태 변경·사진 반출·외부 접촉 없음.
+- **테스트·CI 근거:** 신규 합성 코 비교 **7/7 PASS**, 관련 코/귀/입술/눈썹/FR294·29+18 출처 대조 **24개 테스트 파일 총 172/172 PASS**. Node v24.14.0, TypeScript v6.0.2 `npm run typecheck`, ESLint, Prettier, diff 검사 PASS. 비공개 실사진 18장 Chrome 검증에서 page ready/두 번째 사진/nose panel/FR294/원본 경로·SHA 비노출/브라우저 오류 없음 PASS. 신규 HEAD GitHub CI는 푸시 후 결과가 확인될 때까지 미판정.
+- **브랜치·커밋·PR:** 기존 PR #2453·관상 브랜치만 갱신. 구현·테스트·기존 문서와 WORKLOG의 공동 커밋 제목 `feat(face): compare model nose span with human alar annotations`; 구현 SHA는 같은 WORKLOG 후속 커밋에 확정 기록.
+- **미완료·다음 작업:** 독립 사람 코 경계 정답·반복 촬영 참조·상대 3D/귀 방향·전통 형태 predicate/종합 관상 판독·상업 이용 권리 미확보. 다음은 **코 연구 후보 등 기존 모델·사람 리뷰의 현재성/동일 원본 검증과 인식 불가능한 하드갭**을 기존 FR294·FR159/160 정의와 비교해 실제 자료가 있는 범위만 보강하며 근거 없는 단계 완료/정규 승격은 금지.
+- **블로커 및 승인사항:** 기존 로컬 관상 연구 구현에 추가 사용자 승인 필요 없음. 정확도/전통/제품 적용에는 독립 참조·권한이 필요하며 미확보. 다른 트랙·운영·`MyeongHa/main` 변경 없음. 로드맵 1~3 진행 중, 4~7 미완료; `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine
