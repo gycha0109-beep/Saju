@@ -171,10 +171,6 @@ function finitePoint(point: MediaPipeMetricGeometryPointFR76V1, path: string): v
   }
 }
 
-function clonePoint(point: MediaPipeMetricGeometryPointFR76V1): MediaPipeMetricGeometryPointFR76V1 {
-  return { x: point.x, y: point.y, z: point.z };
-}
-
 function identity3(): Matrix3 {
   return [1, 0, 0, 0, 1, 0, 0, 0, 1];
 }
