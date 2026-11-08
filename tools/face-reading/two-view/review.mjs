@@ -17,6 +17,7 @@ import { compareEarMaskToHumanOuterRim } from './ear-model-human-rim-span.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
 import { compareLipClassWidthsToHumanBorders } from './lip-model-human-width-comparison.mjs';
 import { attachEyelidContourHumanReview } from './eyelid-contour-human-review-ui.mjs';
+import { compareEyeClassEnvelopeToHumanUpperMargin } from './eyelid-model-human-upper-edge.mjs';
 import { createSourceCurrentnessGate } from './source-currentness-gate.mjs';
 import {
   earBinaryFromOverlayRGBA,
@@ -142,7 +143,7 @@ function stop() {
 }
 // Fail closed for an already-open local page when the pinned original changes.
 // Clearing both live result objects and DOM prevents a downloaded mask or
- // previously rendered human/model comparison being mistaken for current data.
+// previously rendered human/model comparison being mistaken for current data.
 let sourceGate;
 function blockOutdatedSource(reason) {
   stop();
@@ -735,6 +736,35 @@ function renderVisibleEyeClassExperiment(record, result, previous) {
       ' — 모델의 2D 영역 후보이며 실제 눈꺼풀·쌍꺼풀·전통 형태 판정은 아닙니다.';
   else node.textContent = '현재 사진의 눈 클래스 후보가 없습니다.';
 }
+function renderEyelidUpperMarginComparison(record, result, previous) {
+  if (mode !== 'existing' || previous || record.viewRole !== 'frontal') return;
+  const human = state.eyelidContourReviews?.[record.captureRef];
+  if (!human) return;
+  const node = $('eye-class-experiment');
+  if (
+    result?.parsing?.methodVersion !== PARSING_VERSION ||
+    result.parsing.eyeDirection?.status !== 'available' ||
+    !result.eyeClassCandidate
+  ) {
+    node.textContent +=
+      ' · 사람 눈꺼풀 표시 기록은 있으나 현재 사진 모델 눈 클래스가 없어 비교 보류';
+    return;
+  }
+  const compared = compareEyeClassEnvelopeToHumanUpperMargin(result.eyeClassCandidate, human);
+  for (const [side, label] of [
+    ['imageLeft', '화면 왼쪽'],
+    ['imageRight', '화면 오른쪽'],
+  ]) {
+    const item = compared[side];
+    if (item.status === 'available')
+      node.textContent +=
+        ` · ${label} 표시 윗경계 상단/모델 눈 클래스 상단 ${item.drawnUpperMarginTopToImageHeight.toFixed(3)}/${item.modelEyeClassTopToImageHeight.toFixed(3)}` +
+        ` · 표시-모델 세로 차이 ${item.signedDrawnMinusModelTopToImageHeight.toFixed(3)} (사진 높이 대비)`;
+    else node.textContent += ` · ${label} 윗경계 대조 보류(${item.reason})`;
+  }
+  node.textContent +=
+    ' — 같은 정면 원본에서 표시한 선과 눈 클래스 영역의 2D 상단 위치만 비교합니다. 실제 눈꺼풀 윗경계·주름·덮임, 독립 정확도나 전통 관상 판정이 아닙니다.';
+}
 const eyeFoldStatusLabels = Object.freeze({
   visible: '쌍꺼풀 선 보임',
   hooded: '쌍꺼풀 선이 덮여 보임',
@@ -903,7 +933,10 @@ const eyelidContourHumanReview = attachEyelidContourHumanReview({
   getState: () => state,
   getRecord: () => records[selected],
   canAnnotate: () => original && activeAnnotationTool === 'eyelid',
-  onSaved: invalidateFr294HumanSummaryAfterSave,
+  onSaved: () => {
+    invalidateFr294HumanSummaryAfterSave();
+    render();
+  },
 });
 $('brow-review-activate').onclick = () => {
   activeAnnotationTool = 'brow';
@@ -1208,6 +1241,7 @@ function render() {
   renderVisibleNoseMaskExperiment(record, result, previous);
   renderNoseHumanAlarComparison(record, result, previous);
   renderVisibleEyeClassExperiment(record, result, previous);
+  renderEyelidUpperMarginComparison(record, result, previous);
   renderVisibleLipClassExperiment(record, result, previous);
   renderLipHumanWidthComparison(record, result, previous);
   renderEyeFoldReview(record);

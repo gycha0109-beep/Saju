@@ -58,7 +58,7 @@ function region(mask, size, label) {
   const width = right - left + 1,
     height = bottom - top + 1;
   if (width < 2 || height < 2) return { reason: 'EYE_CLASS_DEGENERATE' };
-  return { count, left, right, width, height, cx: sx / count, cy: sy / count };
+  return { count, left, right, top, bottom, width, height, cx: sx / count, cy: sy / count };
 }
 // Pinned parser image-plane class shapes, not eyelid contours or named forms.
 export function measureVisibleEyeClassProfile(
@@ -91,6 +91,13 @@ export function measureVisibleEyeClassProfile(
     methodVersion: EYE_CLASS_PROFILE_VERSION,
     status: 'available',
     source: 'pinned_parser_classes_4_5',
+    // Full-image projected model-class bounding envelopes, not eyelid lines.
+    imageLeftXMinToImageWidth: left.left / size,
+    imageLeftXMaxToImageWidth: (left.right + 1) / size,
+    imageLeftTopToImageHeight: left.top / size,
+    imageRightXMinToImageWidth: right.left / size,
+    imageRightXMaxToImageWidth: (right.right + 1) / size,
+    imageRightTopToImageHeight: right.top / size,
     imageLeftHeightToWidth: (left.height / left.width) * aspectCorrection,
     imageRightHeightToWidth: (right.height / right.width) * aspectCorrection,
     imageLeftToRightWidthRatio: left.width / right.width,
