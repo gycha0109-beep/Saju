@@ -1,4 +1,8 @@
 import type { CanonicalSajuSnapshot, PillarSlot, TenGod } from '../contracts/calculation.js';
+import {
+  NATAL_APPROVED_THEME_READING_INTRO,
+  selectDistinctNatalApprovedThemes,
+} from './natal-distinct-approved-theme-selection.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { ProductReadingResponse } from '../reading/product-reading-response.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
@@ -6,7 +10,7 @@ import { GENERAL_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from
   '../reading/official-reading-detailed-presentation-general.js';
 
 export const NATAL_N27B_RECEIPT_AUDIT_VERSION =
-  'saju-natal-n27b-autonomous-claim-receipt-integrity-v1' as const;
+  'saju-natal-n27b-autonomous-claim-receipt-integrity-v2' as const;
 const TITLE = '명식별 십신 주제 연결 · 자동 실험 풀이';
 const ORDER = ['hour', 'month', 'year', 'day'] as const satisfies readonly PillarSlot[];
 const SLOT_LABEL: Record<PillarSlot,string> = {
@@ -93,13 +97,12 @@ export function auditNatalN27bClaimReceipts(input: NatalN27bClaimReceiptInput) {
     requireValid(typeof sourceText==='string'&&sourceText.length>0&&
       typeof sourceTitle==='string'&&sourceTitle.length>0,'source prose missing');
     const position=placements.map(x=>x.label).join(' · ');
-    const text=`이 명식에서 확인된 십신 위치는 ${position}입니다. 전통적 주제는 ‘${sourceTitle}’입니다. ${sourceText} 각 십신 위치와 이 주제의 연결은 참고용이며, 이것만으로 개인의 성격이나 사건의 결과를 단정하지 않습니다.`;
+    const text=`이 명식에서 확인된 십신 위치는 ${position}입니다. 전통적 주제는 ‘${sourceTitle}’입니다. ${sourceText}`;
     all.push({claimType:claim.claimType,text,position,order:placements[0]!.index,
       sourceIds:[...new Set(claim.sourceRefs)].sort(),
       ruleIds:[...new Set(claim.ruleRefs.map(x=>x.ruleId))].sort()});
   }
-  all.sort((a,b)=>a.order-b.order||a.claimType.localeCompare(b.claimType));
-  const bounded=all.slice(0,5);
+  const bounded=selectDistinctNatalApprovedThemes(all);
   if(bounded.length===0){
     requireValid(section.length===0&&JSON.stringify(after)===JSON.stringify(before),
       'empty source claims fabricated reading');
@@ -108,7 +111,9 @@ export function auditNatalN27bClaimReceipts(input: NatalN27bClaimReceiptInput) {
     const actual=section[0]!;
     requireValid(actual.sectionType==='structure'&&actual.state==='complete' &&
       actual.blocks.length===1+bounded.length &&
-      actual.blocks.every(x=>x.type==='paragraph'),
+      actual.blocks.every(x=>x.type==='paragraph') &&
+      actual.blocks[0]?.type === 'paragraph' &&
+      actual.blocks[0].text === NATAL_APPROVED_THEME_READING_INTRO,
       'unexpected section shape');
     requireValid(actual.blocks.slice(1).every((b,i)=>
       b.type==='paragraph'&&b.text===bounded[i]?.text),

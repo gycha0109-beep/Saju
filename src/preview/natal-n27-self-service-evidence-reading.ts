@@ -1,11 +1,15 @@
 import type { CanonicalSajuSnapshot, PillarSlot, TenGod } from '../contracts/calculation.js';
+import {
+  NATAL_APPROVED_THEME_READING_INTRO,
+  selectDistinctNatalApprovedThemes,
+} from './natal-distinct-approved-theme-selection.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { ProductReadingResponse } from '../reading/product-reading-response.js';
 import { GENERAL_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from
   '../reading/official-reading-detailed-presentation-general.js';
 
 export const NATAL_N27_SELF_SERVICE_EVIDENCE_READING_VERSION =
-  'saju-natal-n27-self-service-chart-theme-preview-v1' as const;
+  'saju-natal-n27-self-service-chart-theme-preview-v2' as const;
 
 const SLOTS = ['hour', 'month', 'year', 'day'] as const satisfies readonly PillarSlot[];
 const NAMES: Readonly<Record<PillarSlot,string>> = Object.freeze({
@@ -54,7 +58,7 @@ export function attachNatalN27SelfServiceEvidenceReading(
   const profiles = new Map(GENERAL_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1
     .filter(profile => THEME.test(profile.claimType))
     .map(profile => [profile.claimType, profile]));
-  const units: { key:string; order:number; text:string }[] = [];
+  const units: { claimType:string; order:number; text:string }[] = [];
   const seen = new Set<string>();
   for (const claim of interpretation.claims) {
     if (claim.state !== 'active' || claim.taxonomy.tier !== 'T8' ||
@@ -79,15 +83,14 @@ export function attachNatalN27SelfServiceEvidenceReading(
     // The only semantic copy is the existing detailed source profile. "Where"
     // is a calculation receipt, not a new character/fortune statement.
     units.push({
-      key: claim.claimType,
+      claimType: claim.claimType,
       order: highest.order,
-      text: `이 명식에서 확인된 십신 위치는 ${where}입니다. 전통적 주제는 ‘${profile.standardText.headline}’입니다. ${profile.standardText.summary} 각 십신 위치와 이 주제의 연결은 참고용이며, 이것만으로 개인의 성격이나 사건의 결과를 단정하지 않습니다.`,
+      text: `이 명식에서 확인된 십신 위치는 ${where}입니다. 전통적 주제는 ‘${profile.standardText.headline}’입니다. ${profile.standardText.summary}`,
     });
     seen.add(claim.claimType);
   }
   if (units.length === 0) return response;
-  units.sort((a,b) => a.order-b.order || a.key.localeCompare(b.key));
-  const selected = units.slice(0, 5);
+  const selected = selectDistinctNatalApprovedThemes(units);
   return {
     ...response,
     reading: {
@@ -99,8 +102,7 @@ export function attachNatalN27SelfServiceEvidenceReading(
           title: TITLE,
           state: 'complete',
           blocks: [
-            { type:'paragraph', text:
-              '같은 명식에서 실제 발행된 십신 주제와 계산된 위치를 연결한 자동 실험 풀이입니다. 검증되지 않은 새 인과관계나 겁재→재성의 금전 결과를 추정하지 않습니다.' },
+            { type:'paragraph', text: NATAL_APPROVED_THEME_READING_INTRO },
             ...selected.map(unit => ({type:'paragraph' as const,text:unit.text})),
           ],
         },
