@@ -71,6 +71,8 @@ const fr104MakeHumanRotationCompensationPagePath = resolve(repoRoot, 'tools/face
 const fr104MakeHumanRotationCompensationClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.mjs');
 const fr104ProspectiveComposedOrientationPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.html');
 const fr104ProspectiveComposedOrientationClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.mjs');
+const fr104CalibrationPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-fr21b-calibration.html');
+const fr104CalibrationClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-fr21b-calibration.mjs');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -554,6 +556,7 @@ async function main() {
   const fr104ProspectiveComposedOrientationPageTemplate = readFileSync(fr104ProspectiveComposedOrientationPagePath, 'utf8');
   if (!fr104ProspectiveComposedOrientationPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 U3.3 prospective composed-orientation page import-map placeholder is missing.');
   const fr104ProspectiveComposedOrientationPageHtml = fr104ProspectiveComposedOrientationPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104CalibrationPageHtml = readFileSync(fr104CalibrationPagePath, 'utf8');
 
   const florenceLiveBridge = FR104_FLORENCE_LIVE_ENABLED
     ? new Fr104FlorenceLiveWorkerBridge()
@@ -901,6 +904,27 @@ async function main() {
       return;
     }
 
+    if (
+      url.pathname === '/fr104-calibration'
+      || url.pathname === '/fr104-calibration/'
+      || url.pathname === '/fr104-calibration/index.html'
+    ) {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy':
+          "default-src 'self'; script-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self' 'unsafe-inline';",
+        'permissions-policy': 'camera=(self)',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104CalibrationPageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-calibration/operator.mjs') {
+      sendFile(response, fr104CalibrationClientPath);
+      return;
+    }
+
     if (url.pathname === '/runtime/config.json') {
       response.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
@@ -1018,6 +1042,8 @@ async function main() {
         '/fr104-makehuman-provider-rotation-compensation/fixture.png',
         '/fr104-provider-composed-orientation-validation/',
         '/fr104-provider-composed-orientation-validation/operator.mjs',
+        '/fr104-calibration/',
+        '/fr104-calibration/operator.mjs',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
         '/runtime/fr76-parity-input.prototxt',
@@ -1033,6 +1059,7 @@ async function main() {
         '/face/neutral-ear-makehuman-provider-rotation-compensation-fr104.js',
         '/face/neutral-ear-makehuman-provider-rotation-empirical-evidence-fr104.js',
         '/face/neutral-ear-prospective-composed-orientation-validation-fr104.js',
+        '/face/neutral-ear-controlled-capture-calibration-tooling-fr104.js',
         '/face/mesh6h-browser-camera-frame-source.js',
         '/face/mesh6i-manual-browser-capture-controller.js',
         '/face/observable-morphology-longitudinal-repeatability-observation-fr255.js',
@@ -1104,6 +1131,7 @@ async function main() {
         process.stdout.write('FR279 eye-chord decomposition: ' + url + 'fr279/\n');
         process.stdout.write('FR281 metric eye-chord decomposition: ' + url + 'fr281/\n');
         process.stdout.write('FR283 FR76 eye-chord propagation: ' + url + 'fr283/\n');
+        process.stdout.write('FR104 FR21b calibration mode: ' + url + 'fr104-calibration/\n');
       }
     }
     process.stdout.write('The phone must trust the certificate/issuing local CA before browser camera access will work.\n');
@@ -1121,6 +1149,7 @@ async function main() {
     process.stdout.write('FR104 MakeHuman transform diagnostics: ' + base + '/fr104-makehuman-transform-diagnostics/\n');
     process.stdout.write('FR104 MakeHuman provider rotation dependence: ' + base + '/fr104-makehuman-provider-rotation-dependence/\n');
     process.stdout.write('FR104 U3.3 prospective composed orientation validation: ' + base + '/fr104-provider-composed-orientation-validation/\n');
+    process.stdout.write('FR104 FR21b calibration mode: ' + base + '/fr104-calibration/\n');
   }
   if (FR104_FLORENCE_LIVE_ENABLED) {
     process.stdout.write('FR104 Florence live transport enabled: POST ' + base + '/runtime/fr104/florence\n');

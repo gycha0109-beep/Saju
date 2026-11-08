@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>FR104 FR21b Calibration</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, Pretendard, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:#f4f5f7;
+      color:#17191c;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f4f5f7; }
+    button, input, select { font:inherit; }
+    button { cursor:pointer; }
+    button:disabled { cursor:not-allowed; opacity:.45; }
+    main {
+      width:min(920px, calc(100% - 24px));
+      margin:0 auto;
+      padding:24px 0 48px;
+      display:grid;
+      gap:16px;
+    }
+    .card {
+      background:#fff;
+      border:1px solid #e0e4e8;
+      border-radius:16px;
+      padding:18px;
+      box-shadow:0 5px 20px rgba(0,0,0,.04);
+    }
+    h1 { margin:0 0 8px; font-size:26px; }
+    h2 { margin:0 0 12px; font-size:18px; }
+    p { line-height:1.55; }
+    .muted { color:#626a73; }
+    .warning {
+      border-left:4px solid #6b7280;
+      padding:10px 12px;
+      background:#f6f7f8;
+      line-height:1.5;
+      font-size:14px;
+    }
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:12px;
+    }
+    label.field {
+      display:grid;
+      gap:6px;
+      font-size:13px;
+      font-weight:700;
+    }
+    input, select {
+      width:100%;
+      border:1px solid #cdd3d9;
+      border-radius:10px;
+      padding:10px 11px;
+      background:#fff;
+    }
+    .inline {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .inline input[type="checkbox"] { width:auto; }
+    .actions {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .actions button {
+      border:0;
+      border-radius:11px;
+      padding:11px 15px;
+      font-weight:800;
+    }
+    .primary { background:#181a1d; color:#fff; }
+    .secondary { background:#e8ecf0; color:#24282d; }
+    .camera-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    .visual {
+      min-height:260px;
+      background:#0c0d0f;
+      border-radius:12px;
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      position:relative;
+    }
+    .visual video, .visual canvas {
+      width:100%;
+      height:auto;
+      max-height:420px;
+      object-fit:contain;
+      background:#08090a;
+    }
+    .visual .caption {
+      position:absolute;
+      left:8px;
+      top:8px;
+      padding:5px 8px;
+      border-radius:999px;
+      background:rgba(0,0,0,.62);
+      color:#fff;
+      font-size:12px;
+      z-index:2;
+    }
+    .stage-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .stage {
+      border:1px solid #e3e6ea;
+      border-radius:12px;
+      padding:12px;
+      display:grid;
+      gap:10px;
+    }
+    .stage strong { font-size:14px; }
+    .status {
+      border-radius:10px;
+      padding:11px 12px;
+      background:#eef2f7;
+      font-size:13px;
+      line-height:1.5;
+    }
+    pre {
+      margin:0;
+      max-height:440px;
+      overflow:auto;
+      background:#101317;
+      color:#e8edf2;
+      padding:14px;
+      border-radius:12px;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-size:11px;
+    }
+    @media (max-width:720px) {
+      .grid, .camera-grid, .stage-grid { grid-template-columns:1fr; }
+      main { width:min(100% - 16px, 920px); padding-top:12px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>FR104 · FR21b Calibration Mode</h1>
+      <p class="muted">실제 front/rear controlled capture에서 비대칭 marker의 해부학적 쪽과 각 픽셀 단계의 image-space 쪽을 분리해 기록합니다.</p>
+      <div class="warning">
+        이 화면은 <strong>research candidate tooling</strong>입니다.
+        preview는 saved/source pixel 권위가 아니며, 이 화면 자체는 FR19 canonicalization을 실행하지 않습니다.
+        raw/encoded 이미지는 메모리에서만 표시하고 JSON에는 이미지·바이트·digest를 넣지 않습니다.
+        verified profile, anatomical laterality, traditional binding, Production 권한은 발행하지 않습니다.
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>1. 실행 정보</h2>
+      <div class="grid">
+        <label class="field">Camera facing
+          <select id="camera-facing">
+            <option value="front">front</option>
+            <option value="rear">rear</option>
+          </select>
+        </label>
+        <label class="field">Known marker anatomical side
+          <select id="marker-anatomical-side">
+            <option value="left">left</option>
+            <option value="right">right</option>
+          </select>
+        </label>
+        <label class="field">Run ordinal
+          <input id="run-ordinal" type="number" min="1" step="1" value="1">
+        </label>
+        <label class="field">Encoded EXIF Orientation
+          <select id="encoded-exif">
+            <option value="">null / 별도 확인 전</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+          </select>
+        </label>
+        <label class="field">Evidence ref
+          <input id="evidence-ref" type="text" value="fr104.calibration.front.run1">
+        </label>
+        <label class="field">Profile candidate ref
+          <input id="profile-ref" type="text" value="fr21b.profile.front.candidate">
+        </label>
+        <label class="field">Target ref
+          <input id="target-ref" type="text" value="fr104.calibration.marker.left.001">
+        </label>
+        <label class="field">Device context ref
+          <input id="device-context-ref" type="text" value="device.context.manual.001">
+        </label>
+        <label class="field">Browser context ref
+          <input id="browser-context-ref" type="text" value="browser.context.manual.001">
+        </label>
+      </div>
+      <div class="inline" style="margin-top:12px">
+        <input id="preview-mirror" type="checkbox">
+        <label for="preview-mirror">미리보기 presentation에 수평 반전을 명시적으로 적용</label>
+      </div>
+      <div class="actions" style="margin-top:14px">
+        <button id="open-camera" class="primary">카메라 열기</button>
+        <button id="close-camera" class="secondary" disabled>카메라 닫기</button>
+        <button id="capture-frame" class="secondary" disabled>raw / encoded 프레임 갱신</button>
+      </div>
+      <div id="camera-status" class="status" style="margin-top:12px">카메라를 열기 전입니다.</div>
+    </section>
+
+    <section class="card">
+      <h2>2. 실제 표시 확인</h2>
+      <div class="camera-grid">
+        <div class="visual">
+          <span class="caption">preview presentation</span>
+          <video id="camera" autoplay muted playsinline></video>
+        </div>
+        <div class="visual">
+          <span class="caption">raw_pixels · exact Mesh6H frame</span>
+          <canvas id="raw-canvas"></canvas>
+        </div>
+        <div class="visual">
+          <span class="caption">encoded_pixels · in-memory PNG decode</span>
+          <canvas id="encoded-canvas"></canvas>
+        </div>
+        <div class="visual">
+          <div style="padding:20px;color:#e7ebef;line-height:1.6;font-size:13px">
+            <strong>canonical_pixels</strong><br>
+            C1은 별도 canonicalizer를 만들지 않습니다.
+            기존 FR19 Sharp auto-orient 경로를 통과한 실제 artifact를 별도로 확인한 뒤 아래 단계 기록에 image-space side와 evidence ref를 입력하십시오.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3. 단계별 marker 관찰 기록</h2>
+      <p class="muted">각 값은 <strong>image left/right</strong>입니다. known anatomical side와 합치지 마십시오.</p>
+      <div class="stage-grid">
+        <div class="stage">
+          <strong>preview</strong>
+          <label class="field">Marker image side
+            <select id="preview-side">
+              <option value="">선택</option>
+              <option value="left">left</option>
+              <option value="right">right</option>
+            </select>
+          </label>
+          <label class="field">Artifact evidence ref
+            <input id="preview-ref" type="text" value="fr104:calibration:preview:run1">
+          </label>
+        </div>
+        <div class="stage">
+          <strong>raw_pixels</strong>
+          <label class="field">Marker image side
+            <select id="raw-side">
+              <option value="">선택</option>
+              <option value="left">left</option>
+              <option value="right">right</option>
+            </select>
+          </label>
+          <label class="field">Artifact evidence ref
+            <input id="raw-ref" type="text" value="fr104:calibration:raw:run1">
+          </label>
+        </div>
+        <div class="stage">
+          <strong>encoded_pixels</strong>
+          <label class="field">Marker image side
+            <select id="encoded-side">
+              <option value="">선택</option>
+              <option value="left">left</option>
+              <option value="right">right</option>
+            </select>
+          </label>
+          <label class="field">Artifact evidence ref
+            <input id="encoded-ref" type="text" value="fr104:calibration:encoded:run1">
+          </label>
+        </div>
+        <div class="stage">
+          <strong>canonical_pixels</strong>
+          <label class="field">Marker image side
+            <select id="canonical-side">
+              <option value="">선택</option>
+              <option value="left">left</option>
+              <option value="right">right</option>
+            </select>
+          </label>
+          <label class="field">Artifact evidence ref
+            <input id="canonical-ref" type="text" value="fr104:calibration:canonical:run1">
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>4. Sanitized evidence export</h2>
+      <div class="actions">
+        <button id="build-evidence" class="primary">Research candidate 생성</button>
+        <button id="download-evidence" class="secondary" disabled>JSON 다운로드</button>
+      </div>
+      <div id="evidence-status" class="status" style="margin-top:12px">아직 생성되지 않았습니다.</div>
+      <pre id="evidence-output">{}</pre>
+    </section>
+  </main>
+
+  <script type="module" src="/fr104-calibration/operator.mjs"></script>
+</body>
+</html>
