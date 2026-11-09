@@ -139,11 +139,18 @@ describe('8C-2B-2B process lifecycle and HTTP transport', () => {
     expect(payload).toMatchObject({
       lifecycle: 'preview', state: 'held', canPublish: false, canSell: false,
       proof: { payload: { lifecycle: 'preview', canSell: false } },
-      response: { state: 'delivered_with_fallback' },
+      response: {
+        state: 'delivered_with_fallback',
+        reading: {
+          sections: expect.arrayContaining([expect.objectContaining({
+            blocks: expect.arrayContaining([expect.objectContaining({
+              text: expect.stringMatching(/[가-힣]{2}.*[.!?]/u),
+            })]),
+          })]),
+        },
+      },
     });
-    const sections = JSON.stringify(payload.response.reading.sections);
-    expect(sections).toMatch(/[가-힣]{2}/u);
-    expect(sections).not.toMatch(/semanticKey|activationKind|forbiddenInferences/u);
+    expect(JSON.stringify(payload)).not.toMatch(/semanticKey|activationKind|forbiddenInferences/u);
   });
 
   it('uses the approved real Preview E2E dependency assembly, not a runtime fixture', async () => {
