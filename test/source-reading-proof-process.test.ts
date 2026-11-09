@@ -122,6 +122,30 @@ describe('8C-2B-2B dedicated source proof configuration', () => {
 });
 
 describe('8C-2B-2B process lifecycle and HTTP transport', () => {
+  it.each(['올해', '이번 달'])('returns held, source-bound Korean research for %s', async (text) => {
+    const runtime = createSourceReadingProofProcessV1(env());
+    open.push(runtime.server);
+    await new Promise<void>(resolve => runtime.server.listen(0, '127.0.0.1', resolve));
+    const port = (runtime.server.address() as AddressInfo).port;
+    const response = await post(port, 'Bearer ' + bearer, {
+      nonce,
+      request: {
+        ...birthRequest,
+        reading: { text, periodReferenceDateTime: '2026-11-09T03:00:00.000Z' },
+      },
+    });
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload).toMatchObject({
+      lifecycle: 'preview', state: 'held', canPublish: false, canSell: false,
+      proof: { payload: { lifecycle: 'preview', canSell: false } },
+      response: { state: 'delivered_with_fallback' },
+    });
+    const sections = JSON.stringify(payload.response.reading.sections);
+    expect(sections).toMatch(/[가-힣]{2}/u);
+    expect(sections).not.toMatch(/semanticKey|activationKind|forbiddenInferences/u);
+  });
+
   it('uses the approved real Preview E2E dependency assembly, not a runtime fixture', async () => {
     const approved = createApprovedSourceProofPreviewDependenciesV1();
     expect(typeof approved.calculate).toBe('function');
