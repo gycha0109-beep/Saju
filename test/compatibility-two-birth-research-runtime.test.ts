@@ -165,6 +165,48 @@ describe('real two-birth compatibility intake remains facts only', () => {
     expect(unknownHour.maySell).toBe(false);
   });
 
+  it('applies the source only to the two day branches in explicit marital research', () => {
+    const scoped = (a: BirthInput, b: BirthInput) => buildCompatibilityTwoBirthResearchReading(
+      a, b, { ...QUERY, candidateScope: 'traditional_marital_palace_comparison' },
+    );
+    const combination: BirthInput = { ...FIRST, date: { year: 1990, month: 5, day: 8 } };
+    const clash: BirthInput = { ...FIRST, date: { year: 1990, month: 5, day: 9 } };
+    const unknownHour: BirthInput = { ...clash, time: { known: false } };
+    const ordinary = read(FIRST, combination);
+    const supportive = scoped(FIRST, combination);
+    expect(ordinary.maritalDayBranchCandidate).toBeUndefined();
+    expect(supportive.maritalDayBranchCandidate).toMatchObject({
+      state: 'candidate_factor',
+      sourceInterpretation: 'supportive_factor',
+      review: 'unreviewed',
+      pairwiseT10Admitted: false,
+      source: { doi: '10.22143/HSS21.9.2.9' },
+      evidence: {
+        kind: 'branch_six_combination',
+        subject: { factPath: 'subject.pillars.day.value.branch', value: '진' },
+        target: { factPath: 'target.pillars.day.value.branch', value: '유' },
+      },
+    });
+    const challenging = scoped(FIRST, unknownHour).maritalDayBranchCandidate;
+    expect(challenging).toMatchObject({
+      state: 'candidate_factor',
+      sourceInterpretation: 'challenging_factor',
+      target: { birthTimeKnown: false },
+      evidence: { kind: 'branch_clash', subject: { value: '진' }, target: { value: '술' } },
+    });
+    expect(scoped(clash, FIRST).maritalDayBranchCandidate).toMatchObject({
+      state: 'candidate_factor',
+      sourceInterpretation: 'challenging_factor',
+      evidence: { kind: 'branch_clash', subject: { value: '술' }, target: { value: '진' } },
+    });
+    const otherSlots = scoped(FIRST, FIRST);
+    expect(otherSlots.sourceScopeHandoff.crossChartStructuralMatches.length).toBeGreaterThan(0);
+    expect(otherSlots.maritalDayBranchCandidate?.state).toBe('no_covered_factor');
+    expect(supportive.html).toBe(ordinary.html);
+    expect(supportive.mayClaimInterpersonalMeaning).toBe(false);
+    expect(supportive.maySell).toBe(false);
+  });
+
   it('includes existing chart-specific T8 Korean narratives separately for each person', () => {
     const first: BirthInput = {
       ...FIRST, date: { year: 2024, month: 3, day: 10 },
