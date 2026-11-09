@@ -74,6 +74,8 @@ export interface ProductHostReadingOutputPreferences {
 export interface ProductHostReadingRequest {
   text: string;
   targetPersonRef?: string;
+  /** UTC instant selected by the calling service for a purchased annual or monthly reading. */
+  periodReferenceDateTime?: string;
   outputPreferences?: ProductHostReadingOutputPreferences;
 }
 
@@ -269,7 +271,7 @@ function parseReading(value: unknown): ProductHostReadingRequest {
   }
   assertOnlyKeys(
     value,
-    ['text', 'targetPersonRef', 'outputPreferences'],
+    ['text', 'targetPersonRef', 'periodReferenceDateTime', 'outputPreferences'],
     'INVALID_READING_REQUEST',
   );
   if (typeof value.text !== 'string') {
@@ -299,12 +301,25 @@ function parseReading(value: unknown): ProductHostReadingRequest {
   const outputPreferences = parseReadingOutputPreferences(
     value.outputPreferences,
   );
+  const periodReferenceDateTime = value.periodReferenceDateTime;
+  if (periodReferenceDateTime !== undefined) {
+    if (typeof periodReferenceDateTime !== 'string'
+      || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(periodReferenceDateTime)
+      || !Number.isFinite(Date.parse(periodReferenceDateTime))
+      || new Date(periodReferenceDateTime).toISOString() !== periodReferenceDateTime) {
+      throw new ProductHostRequestError(
+        'INVALID_READING_REQUEST',
+        'reading.periodReferenceDateTime must be a canonical UTC timestamp.',
+      );
+    }
+  }
   return {
     text,
     ...(targetPersonRef === undefined || targetPersonRef.length === 0
       ? {}
       : { targetPersonRef }),
     ...(outputPreferences === undefined ? {} : { outputPreferences }),
+    ...(typeof periodReferenceDateTime === 'string' ? { periodReferenceDateTime } : {}),
   };
 }
 
@@ -391,7 +406,7 @@ function consumerInput(
   return {
     requestId: context.requestId,
     text: parsed.reading.text,
-    referenceDateTime: context.requestedAt,
+    referenceDateTime: parsed.reading.periodReferenceDateTime ?? context.requestedAt,
     ...(parsed.reading.targetPersonRef === undefined
       ? {}
       : { targetPersonRef: parsed.reading.targetPersonRef }),
@@ -458,6 +473,13 @@ async function runProductHostReadingInternals(
   const normalization = normalizeConsumerReadingRequest(input);
   const resolvedReadingRequest =
     normalization.state === 'resolved' ? normalization.request : undefined;
+  if (parsed.reading.periodReferenceDateTime !== undefined
+    && resolvedReadingRequest?.targetPeriod === undefined) {
+    throw new ProductHostRequestError(
+      'INVALID_READING_REQUEST',
+      'reading.periodReferenceDateTime requires an annual or monthly reading.',
+    );
+  }
   const snapshot = await dependencies.calculate(toBirthInput(parsed.birth), context);
   const requestContext = temporalInterpretationContext(resolvedReadingRequest, snapshot);
   // Give governed interpretation the same resolved intent used for temporal facts.
