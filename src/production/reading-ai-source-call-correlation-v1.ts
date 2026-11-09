@@ -27,10 +27,27 @@ export interface SajuSourceAttemptContextV1 {
   readonly executionAttemptId: string;
 }
 
-type Scope = Readonly<{
-  executionAttemptId: string;
-  externalRequestRef: string;
-}>;
+export interface SajuProviderCallObserverCoverageV1 {
+  readonly version: 'saju-provider-call-observer-coverage-v1';
+  readonly executionAttemptId: string;
+  readonly externalRequestRef: string;
+  readonly observedCallbacks: number;
+  readonly acknowledgedReceipts: number;
+  readonly failedCallbacks: number;
+  readonly pendingCallbacks: number;
+  readonly execution: 'returned' | 'threw';
+  /** These process-local counters cannot prove total provider-call coverage. */
+  readonly completeCostCoverage: false;
+}
+type Scope = {
+  readonly executionAttemptId: string;
+  readonly externalRequestRef: string;
+  observedCallbacks: number;
+  acknowledgedReceipts: number;
+  failedCallbacks: number;
+  pendingCallbacks: number;
+  active: boolean;
+};
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const OUTCOMES = new Set([
@@ -92,39 +109,118 @@ export function createSajuSourceProviderCallCorrelationV1(
   if (typeof input.emit !== 'function') throw new TypeError('Saju source cost emitter required');
   const scopes = new AsyncLocalStorage<Scope>();
   const sourceRefFactory = input.sourceRefFactory ?? randomUUID;
+  function enterScope(
+    attempt: SajuSourceAttemptContextV1,
+    execute: (sourceRef: string) => Promise<unknown>,
+  ): Scope {
+    if (!attempt || !UUID.test(attempt.executionAttemptId) || typeof execute !== 'function')
+      throw new TypeError('Invalid DB attempt context');
+    if (scopes.getStore()) throw new Error('Nested Saju source attribution is forbidden');
+    const minted = sourceRefFactory();
+    if (!UUID.test(minted)) throw new TypeError('Saju source ref factory returned invalid UUID');
+    return {
+      executionAttemptId: attempt.executionAttemptId.toLowerCase(),
+      externalRequestRef: 'saju_source_' + minted.toLowerCase(),
+      observedCallbacks: 0,
+      acknowledgedReceipts: 0,
+      failedCallbacks: 0,
+      pendingCallbacks: 0,
+      active: true,
+    };
+  }
+  function coverage(
+    scope: Scope,
+    execution: 'returned' | 'threw',
+  ): SajuProviderCallObserverCoverageV1 {
+    return Object.freeze({
+      version: 'saju-provider-call-observer-coverage-v1' as const,
+      executionAttemptId: scope.executionAttemptId,
+      externalRequestRef: scope.externalRequestRef,
+      observedCallbacks: scope.observedCallbacks,
+      acknowledgedReceipts: scope.acknowledgedReceipts,
+      failedCallbacks: scope.failedCallbacks,
+      pendingCallbacks: scope.pendingCallbacks,
+      execution,
+      completeCostCoverage: false as const,
+    });
+  }
   return Object.freeze({
     async withAuthorizedReadingAttempt<T>(
       attempt: SajuSourceAttemptContextV1,
       execute: (sourceRef: string) => Promise<T>,
     ): Promise<T> {
-      if (!attempt || !UUID.test(attempt.executionAttemptId) || typeof execute !== 'function')
-        throw new TypeError('Invalid DB attempt context');
-      if (scopes.getStore()) throw new Error('Nested Saju source attribution is forbidden');
-      const minted = sourceRefFactory();
-      if (!UUID.test(minted)) throw new TypeError('Saju source ref factory returned invalid UUID');
-      const scope = Object.freeze({
-        executionAttemptId: attempt.executionAttemptId.toLowerCase(),
-        externalRequestRef: 'saju_source_' + minted.toLowerCase(),
-      });
-      return scopes.run(scope, () => execute(scope.externalRequestRef));
+      const scope = enterScope(attempt, execute);
+      try {
+        return await scopes.run(scope, () => execute(scope.externalRequestRef));
+      } finally {
+        scope.active = false;
+      }
+    },
+    /**
+     * Report even when the reading throws. This count is per-process and can
+     * never demonstrate full provider coverage. Source must persist the report
+     * durably; failure to preserve it cannot be silently accepted.
+     */
+    async withAuthorizedReadingAttemptAndCoverage<T>(
+      attempt: SajuSourceAttemptContextV1,
+      execute: (sourceRef: string) => Promise<T>,
+      reportCoverage: (report: SajuProviderCallObserverCoverageV1) => void | Promise<void>,
+    ): Promise<T> {
+      if (typeof reportCoverage !== 'function')
+        throw new TypeError('Durable source coverage reporter required');
+      const scope = enterScope(attempt, execute);
+      let returned = false;
+      let value!: T;
+      let executionError: unknown;
+      try {
+        value = await scopes.run(scope, () => execute(scope.externalRequestRef));
+        returned = true;
+      } catch (error) {
+        executionError = error;
+      } finally {
+        scope.active = false;
+      }
+      try {
+        await reportCoverage(coverage(scope, returned ? 'returned' : 'threw'));
+      } catch (reportError) {
+        if (!returned)
+          throw new AggregateError(
+            [executionError, reportError],
+            'Saju reading failed and source coverage could not be preserved',
+            { cause: reportError },
+          );
+        throw reportError;
+      }
+      if (!returned) throw executionError;
+      return value;
     },
     /** Pass directly as the real OpenAI adapter's server-private onProviderCall. */
     async onProviderCall(observation: OpenAIProviderCallObservationV1): Promise<void> {
       const scope = scopes.getStore();
       // A call outside a pre-admitted Production attempt is NOT attributed.
-      if (!scope) return;
-      if (!validObservation(observation)) throw new Error('Untrusted provider usage observation');
-      await input.emit(
-        Object.freeze({
-          version: 'saju-source-provider-call-link-v1' as const,
-          externalRequestRef: scope.externalRequestRef,
-          executionAttemptId: scope.executionAttemptId,
-          observation: Object.freeze({
-            ...observation,
-            usage: Object.freeze({ ...observation.usage }),
+      if (!scope || !scope.active) return;
+      scope.observedCallbacks++;
+      scope.pendingCallbacks++;
+      try {
+        if (!validObservation(observation)) throw new Error('Untrusted provider usage observation');
+        await input.emit(
+          Object.freeze({
+            version: 'saju-source-provider-call-link-v1' as const,
+            externalRequestRef: scope.externalRequestRef,
+            executionAttemptId: scope.executionAttemptId,
+            observation: Object.freeze({
+              ...observation,
+              usage: Object.freeze({ ...observation.usage }),
+            }),
           }),
-        }),
-      );
+        );
+        scope.acknowledgedReceipts++;
+      } catch (error) {
+        scope.failedCallbacks++;
+        throw error;
+      } finally {
+        scope.pendingCallbacks--;
+      }
     },
   });
 }
