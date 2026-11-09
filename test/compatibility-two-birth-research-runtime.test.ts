@@ -141,6 +141,30 @@ describe('real two-birth compatibility intake remains facts only', () => {
     }
   });
 
+  it('records the actual cross-chart year branch match with independent fact paths', () => {
+    const second: BirthInput = { ...SECOND, date: { year: 1996, month: 6, day: 9 } };
+    const forward = read(FIRST, second).sourceScopeHandoff;
+    const reverse = read(second, FIRST).sourceScopeHandoff;
+    expect(forward.crossChartStructuralMatches).toContainEqual(expect.objectContaining({
+      kind: 'branch_clash',
+      subject: { factPath: 'subject.pillars.year.value.branch', value: '오' },
+      target: { factPath: 'target.pillars.year.value.branch', value: '자' },
+      definitionContentHash: expect.stringMatching(/^[a-f0-9]{64}$/u),
+      pairwiseMeaningAuthorized: false,
+    }));
+    expect(reverse.crossChartStructuralMatches).toContainEqual(expect.objectContaining({
+      kind: 'branch_clash',
+      subject: { factPath: 'subject.pillars.year.value.branch', value: '자' },
+      target: { factPath: 'target.pillars.year.value.branch', value: '오' },
+    }));
+    const unknownHour = read(FIRST, { ...second, time: { known: false } }).sourceScopeHandoff;
+    expect(unknownHour.crossChartStructuralMatches.every(
+      match => !match.target.factPath.startsWith('target.pillars.hour.'),
+    )).toBe(true);
+    expect(unknownHour.pairwiseT10Admitted).toBe(false);
+    expect(unknownHour.maySell).toBe(false);
+  });
+
   it('includes existing chart-specific T8 Korean narratives separately for each person', () => {
     const first: BirthInput = {
       ...FIRST, date: { year: 2024, month: 3, day: 10 },

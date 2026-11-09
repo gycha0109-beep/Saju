@@ -3,6 +3,11 @@ import type {
   StructuralRelationCandidate, TenGod,
 } from '../contracts/calculation.js';
 import {
+  matchStructuralPillarPair,
+  STRUCTURAL_RELATION_DEFINITION_CONTENT_HASH,
+  type StructuralPillarPairMatch,
+} from '../calculation/structural-relations.js';
+import {
   R068_AUTHORITY, R068_DIRECT_CLAIMS, R068_EXECUTION_GAPS,
   R068_RELATIONSHIP_CLAIM_CORPUS_VERSION, R068_REJECTED_ROMANCE_MAPPINGS,
 } from './general-natal-relationship-claim-corpus.js';
@@ -2273,6 +2278,45 @@ export interface PairwiseCanonicalObservation {
 
 const PILLAR_SLOTS: readonly PillarSlot[] = ['year', 'month', 'day', 'hour'];
 
+export interface CrossChartStructuralMatch extends StructuralPillarPairMatch {
+  readonly subject: Readonly<{ factPath: string; value: HeavenlyStem | EarthlyBranch }>;
+  readonly target: Readonly<{ factPath: string; value: HeavenlyStem | EarthlyBranch }>;
+  readonly definitionContentHash: string;
+  readonly pairwiseMeaningAuthorized: false;
+}
+
+function observeCrossChartStructuralMatches(
+  subject: CanonicalSajuSnapshot,
+  target: CanonicalSajuSnapshot,
+): readonly CrossChartStructuralMatch[] {
+  const matches: CrossChartStructuralMatch[] = [];
+  for (const subjectSlot of PILLAR_SLOTS) {
+    const left = subject.pillars[subjectSlot];
+    if (left.status !== 'resolved') continue;
+    for (const targetSlot of PILLAR_SLOTS) {
+      const right = target.pillars[targetSlot];
+      if (right.status !== 'resolved') continue;
+      for (const match of matchStructuralPillarPair(left.value, right.value)) {
+        const { component } = match;
+        matches.push({
+          ...match,
+          subject: {
+            factPath: ['subject', 'pillars', subjectSlot, 'value', component].join('.'),
+            value: left.value[component].value,
+          },
+          target: {
+            factPath: ['target', 'pillars', targetSlot, 'value', component].join('.'),
+            value: right.value[component].value,
+          },
+          definitionContentHash: STRUCTURAL_RELATION_DEFINITION_CONTENT_HASH,
+          pairwiseMeaningAuthorized: false,
+        });
+      }
+    }
+  }
+  return matches;
+}
+
 function observePair(
   subject: CanonicalSajuSnapshot,
   target: CanonicalSajuSnapshot,
@@ -2323,6 +2367,8 @@ export interface PairwiseSourceScopeHandoff {
     unavailableFactPaths: readonly string[];
   };
   factualPairObservations: readonly PairwiseCanonicalObservation[];
+  /** Exact cross-chart table matches, with one independently calculated input on each side. */
+  crossChartStructuralMatches: readonly CrossChartStructuralMatch[];
   comparedSourceSurfaces: readonly {
     corpusId: 'R068' | 'R069';
     originalClaimId: string;
@@ -2455,6 +2501,7 @@ export function evaluatePairwiseSourceScopeV1(
       unavailableFactPaths: target.snapshot.completeness.unavailablePaths,
     },
     factualPairObservations: observePair(subject.snapshot, target.snapshot),
+    crossChartStructuralMatches: observeCrossChartStructuralMatches(subject.snapshot, target.snapshot),
     comparedSourceSurfaces,
     missingPrerequisites: [
       ...R068_EXECUTION_GAPS, ...R069_EXECUTION_GAPS,

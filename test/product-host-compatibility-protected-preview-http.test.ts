@@ -97,6 +97,7 @@ describe('existing compatibility browser route stays protected and research-only
         'limitations', 'mayPersist', 'mayPublish', 'maySell', 'subjects',
       ]);
       expect(serialized).not.toContain('sourceScopeHandoff');
+      expect(serialized).not.toContain('crossChartStructuralMatches');
       expect(serialized).not.toContain('comparedSourceSurfaces');
       expect(serialized).not.toContain('eligiblePairwiseClaim');
       expect(serialized).not.toContain('pairwiseT10Admitted');
