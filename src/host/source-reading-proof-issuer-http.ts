@@ -93,13 +93,15 @@ async function readJson(request: IncomingMessage, maxBytes: number): Promise<unk
   }
 }
 
-function parseProofRequest(body: unknown): { nonce: string; request: unknown } {
-  if (!isRecord(body) || !onlyKeys(body, ['nonce', 'request'])
+function parseProofRequest(body: unknown): { nonce: string; request: unknown; includeTemporalEvidence: boolean } {
+  if (!isRecord(body)
+    || !(onlyKeys(body, ['nonce', 'request'])
+      || (onlyKeys(body, ['nonce', 'request', 'includeTemporalEvidence']) && body.includeTemporalEvidence === true))
     || typeof body.nonce !== 'string' || !NONCE.test(body.nonce)
     || !isRecord(body.request)) {
     throw new SourceProofHttpError(400, 'SOURCE_PROOF_INVALID_REQUEST');
   }
-  return { nonce: body.nonce, request: body.request };
+  return { nonce: body.nonce, request: body.request, includeTemporalEvidence: body.includeTemporalEvidence === true };
 }
 
 /**
@@ -151,9 +153,10 @@ export function createMyeonghwaSourceReadingProofIssuerHttpServerV1(
 
     try {
       const incoming = parseProofRequest(await readJson(request, maxBytes));
-      const { response: readingResponse, readiness, executedRequestBody } =
+      const { response: readingResponse, readiness, executedRequestBody, temporalReaderEvidence } =
         await source.requestReadingWithProofReadiness(incoming.request);
-      if (readiness.state !== 'held') {
+      const temporalEvidence = incoming.includeTemporalEvidence ? temporalReaderEvidence : undefined;
+      if (readiness.state !== 'held' || (incoming.includeTemporalEvidence && temporalEvidence === undefined)) {
         failure(response, 409, 'SOURCE_PROOF_NOT_READY');
         return;
       }
@@ -172,6 +175,7 @@ export function createMyeonghwaSourceReadingProofIssuerHttpServerV1(
         readiness,
         issuedAtMs,
         ttlMs,
+        ...(temporalEvidence === undefined ? {} : { temporalEvidence }),
       });
       if (proof === null) {
         failure(response, 409, 'SOURCE_PROOF_NOT_READY');
@@ -183,6 +187,7 @@ export function createMyeonghwaSourceReadingProofIssuerHttpServerV1(
         state: 'held',
         response: readingResponse,
         proof,
+        ...(temporalEvidence === undefined ? {} : { temporalEvidence }),
         productionInterpretationAuthority: 'NOT_EVALUATED',
         releaseAuthorization: 'NOT_EVALUATED',
         canExecute: false,

@@ -15,6 +15,8 @@ import {
 } from '../src/source-reading-proof-runtime-config.js';
 import { createApprovedSourceProofPreviewDependenciesV1 } from '../src/preview/preview-product-host.js';
 import { SOURCE_READING_PROOF_HTTP_PATH_V1 } from '../src/host/source-reading-proof-issuer-http.js';
+import { verifyHeldSourceReadingTransportProofV1 } from '../src/reading/source-reading-transport-proof.js';
+import type { ProductReadingResponse } from '../src/reading/product-reading-response.js';
 
 const bearer = 'isolated-source-proof-credential';
 const secret = Buffer.alloc(48, 83).toString('base64');
@@ -125,6 +127,46 @@ describe('8C-2B-2B dedicated source proof configuration', () => {
 });
 
 describe('8C-2B-2B process lifecycle and HTTP transport', () => {
+  it.each([
+    ['올해', '2026-02-03T20:02:00.000Z', '입춘'],
+    ['이번 달', '2026-11-07T09:52:00.000Z', '입동'],
+  ])('signs calculated %s evidence through the protected HTTP route only on request', async (text, reference, term) => {
+    const port = await availablePort();
+    const runtime = await startSourceReadingProofProcessV1(env({ [fields.port]: String(port) }));
+    open.push(runtime.server);
+    const request = { ...birthRequest, reading: { text, periodReferenceDateTime: reference } };
+    const response = await post(port, 'Bearer ' + bearer, { nonce, request, includeTemporalEvidence: true });
+    expect(response.status).toBe(200);
+    const envelope = await response.json() as {
+      response: ProductReadingResponse;
+      proof: unknown;
+      temporalEvidence: Record<string, unknown>;
+    };
+    expect(envelope).toMatchObject({
+      state: 'held', canSell: false, temporalEvidence: {
+        referenceDateTime: reference, boundary: { name: term, at: reference },
+      },
+    });
+    const claimNonceOnce = vi.fn(async () => true);
+    const options = {
+      trustedIssuer: 'saju-preview-service', expectedAudience: 'myeongha-api-service',
+      trustedKeyId: 'preview-key-v1', keyBytes: Buffer.from(secret, 'base64'),
+      expectedNonce: nonce, expectedRequestBody: request,
+      response: envelope.response, nowMs: Date.now(), claimNonceOnce,
+    };
+    expect(await verifyHeldSourceReadingTransportProofV1(envelope.proof, options))
+      .toMatchObject({ state: 'blocked' });
+    expect(await verifyHeldSourceReadingTransportProofV1(envelope.proof, {
+      ...options, temporalEvidence: { ...envelope.temporalEvidence, targetYear: 2027 },
+    })).toMatchObject({ state: 'blocked' });
+    expect(claimNonceOnce).not.toHaveBeenCalled();
+    expect(await verifyHeldSourceReadingTransportProofV1(envelope.proof, {
+      ...options, temporalEvidence: envelope.temporalEvidence,
+    })).toMatchObject({ state: 'held', canSell: false });
+    const ordinary = await post(port, 'Bearer ' + bearer, { nonce, request });
+    expect(ordinary.status).toBe(200);
+    expect(await ordinary.json()).not.toHaveProperty('temporalEvidence');
+  });
   it.each([
     ['올해', '2026-02-03T20:02:00.000Z', '입춘', 'after_ipchun'],
     ['이번 달', '2026-11-07T09:52:00.000Z', '입동', 'after_jeol'],
