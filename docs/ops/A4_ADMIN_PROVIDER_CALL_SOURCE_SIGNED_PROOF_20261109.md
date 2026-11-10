@@ -30,3 +30,11 @@
 - `test/reading-ai-provider-receipt-postgres-v1.test.ts`: 정상 저장·조회, 재시도/영수증 충돌, 잘못된 역할 거부, 형식 오류, 저장/커밋 장애, 사전 승인 범위 밖 무기록, 조회 실패의 7건. 관련 기존 10건 포함 총 17건 및 TypeScript·ESLint·Prettier 통과.
 - 임시 Docker PostgreSQL **17.11**에 해당 SQL 설치·권한 검증: Writer INSERT/중복 멱등, Reader SELECT, Writer 미허용 열·UPDATE 거부, Reader INSERT 거부, 소유자 변경 금지 트리거, 계정 비밀번호 NULL 총 8개 검사 성공. 임시 DB만 사용. 실제 운영 연결·데이터·키·고객 정보 변경 없음.
 - **운영 HOLD:** 설치 파일은 Production 미적용. 실제 출처 소유 저장소의 운영 승인된 설치 위치, 전용 로그인/암호화 연결, OpenAI 콜백 설치, 승인된 사전 DB attempt admission, Saju 원본 ref 최종화, MyeongHa 서버 전용 검증·Writer 및 실호출 완전성 확인이 필요하다. 임시 DB 성공이나 로컬 테스트는 비용 수집 활성화·정산 완전성 증거가 아니다. `ROADMAP_COMPLETE` 아님.
+
+## 2026-11-10 — A4 요청별 관측 누락 증거 영구 기록 (오프라인)
+
+- 신규 `src/production/reading-ai-provider-coverage-postgres-v1.ts`: 기존 `withAuthorizedReadingAttemptAndCoverage()`가 전달하는 호출 횟수·기록 성공·기록 실패·미완료 수치 및 실행 성공/실패 상태를 사주 출처 전용 Writer로 `INSERT ... ON CONFLICT DO NOTHING`한 후, 정확히 같은 원본이 재조회되고 COMMIT된 경우에만 기록 완료로 수용합니다. 중복 실행에서 숫자·상태가 달라지면 충돌로 거절하고, Writer 역할이 아니거나 저장·조회·COMMIT 실패 시 요청 완료를 인정하지 않습니다.
+- 신규 `docs/ops/A4_ADMIN_PROVIDER_CALLBACK_COVERAGE_OFFLINE_V1.sql`: 기존 오프라인 출처 영수증 스키마 다음에 설치하는 별도 후보. 사전 조건, 실행 시도별 기본키·출처 ref 유일 제약, 필드/카운터·`completeCostCoverage=false` 검증, RLS, 전용 Writer INSERT/SELECT 한정, Reader 접근 거부, 변경 금지 트리거. 사용자/결제/크레딧/운영 DB는 변경하지 않습니다.
+- 신규 테스트 7건, 기존 관련 테스트 포함 총 18건, TypeScript/ESLint/Prettier 통과. 폐기형 PostgreSQL 17.11에서 원본 SQL + 추가 SQL 순차 설치 성공, 기록·재실행·Reader 거부·변경 금지·추가 열 거부·거짓 완전성 주장의 8개 검사 성공. 임시 DB는 폐기했습니다.
+- `observedCallbacks`는 **관측된 콜백만의 분모**입니다. Provider 전체 호출과 청구 완전성은 불명확하므로 저장한 수치가 모두 성공이어도 `completeCostCoverage=false`만 허용합니다. 추후 실제 공급사 청구 대조/소스 누락 감지·재처리는 별도 잔여 작업입니다.
+- **HOLD:** 이 코드는 기존 역할의 실제 운영 접근·비밀번호·연결, Production HTTP 및 Provider Adapter 자동 설치, Source/DB attempt 발급·승인/완료 참조 연결, 명하 Cost Writer 수집을 수행하지 않습니다. 독립 소스 DB를 설치하거나 운영 비용 수집을 켠 것으로 해석하지 않습니다. `ROADMAP_COMPLETE` 아님.
