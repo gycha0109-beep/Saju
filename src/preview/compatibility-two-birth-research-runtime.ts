@@ -228,7 +228,7 @@ export function buildCompatibilityTwoBirthResearchReading(
     report,
     personalRelationship,
     sourceScopeHandoff,
-    ...(methodCoverage ? {
+    ...(methodCoverage && maritalDayBranchCandidate && maritalPalaceIntraChartResearch ? {
       maritalDayBranchCandidate,
       maritalPalaceIntraChartResearch,
       methodCoverage,
