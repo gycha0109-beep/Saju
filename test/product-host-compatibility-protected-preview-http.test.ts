@@ -58,6 +58,38 @@ async function withHost(
 }
 
 describe('existing compatibility browser route stays protected and research-only', () => {
+  it.each([
+    ['1990-05-08', 'candidate_factor', 'supportive_factor', 'branch_six_combination'],
+    ['1990-05-09', 'candidate_factor', 'challenging_factor', 'branch_clash'],
+    ['1990-05-15', 'no_covered_factor', undefined, undefined],
+  ])('returns only the explicit marital day-branch candidate for %s', async (date, state, factor, kind) => {
+    await withHost('preview', async (url, bearer) => {
+      const pair = { birth: ownBirth, partnerBirth: { ...ownBirth, date, time: null } };
+      const post = (body: unknown, path = url) => fetch(path, {
+        method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + bearer },
+        body: JSON.stringify(body),
+      });
+      const preview = await post(pair);
+      expect(preview.status).toBe(200);
+      expect((await preview.json()).evidence).not.toHaveProperty('maritalDayBranchCandidate');
+      const request = { ...pair, candidateScope: 'traditional_marital_palace_comparison' };
+      const result = await post(request);
+      expect(result.status).toBe(200);
+      expect(await result.json()).toMatchObject({
+        mayPublish: false, maySell: false, generatedInterpretationClaims: false,
+        evidence: {
+          maritalDayBranchCandidate: {
+            state, scope: request.candidateScope, review: 'unreviewed', pairwiseT10Admitted: false,
+            ...(factor === undefined ? {} : { sourceInterpretation: factor, kind }),
+          },
+        },
+      });
+      expect((await post({ ...request, candidateScope: 'other_relationship' })).status).toBe(400);
+      const chartsUrl = url.replace(PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH, PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH);
+      expect((await post(request, chartsUrl)).status).toBe(400);
+    }, true);
+  });
+
   it('projects source matches between actual calculated charts on the dedicated opt-in endpoint', async () => {
     await withHost('preview', async (url, bearer) => {
       const body = JSON.stringify({

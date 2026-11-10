@@ -411,7 +411,9 @@ function createMyeonghwaHttpServer(
           throw new HostHttpError(400, 'HOST_INVALID_PREVIEW_REQUEST', 'Two birth inputs are required.');
         }
         const body = data as Record<string, unknown>;
-        if (Object.keys(body).length !== 2 ||
+        const candidateScope = withEvidence && body.candidateScope === 'traditional_marital_palace_comparison'
+          ? body.candidateScope : undefined;
+        if (Object.keys(body).length !== (candidateScope === undefined ? 2 : 3) ||
             !Object.hasOwn(body, 'birth') || !Object.hasOwn(body, 'partnerBirth')) {
           throw new HostHttpError(400, 'HOST_INVALID_PREVIEW_REQUEST', 'Two birth inputs are required.');
         }
@@ -424,6 +426,7 @@ function createMyeonghwaHttpServer(
             subjectPersonRef: 'self',
             targetPersonRef: 'partner',
             referenceDateTime: new Date().toISOString(),
+            ...(candidateScope === undefined ? {} : { candidateScope }),
           },
         );
         const pillars = (person: typeof result.report.subject) =>
@@ -433,6 +436,7 @@ function createMyeonghwaHttpServer(
               ? {}
               : { value: pillar.stemHanja! + pillar.branchHanja! }),
           }]));
+        const candidate = result.maritalDayBranchCandidate;
         const evidence = withEvidence ? {
           version: 'myeonghwa-cross-chart-structural-evidence-v1',
           matches: result.sourceScopeHandoff.crossChartStructuralMatches.map(match => {
@@ -448,6 +452,15 @@ function createMyeonghwaHttpServer(
               return { factPath, value };
             };
             return { ...match, subject: projectFact('subject'), target: projectFact('target') };
+          }),
+          ...(candidate === undefined ? {} : {
+            maritalDayBranchCandidate: {
+              scope: candidate.scope, state: candidate.state, source: candidate.source,
+              review: candidate.review, pairwiseT10Admitted: candidate.pairwiseT10Admitted,
+              ...(candidate.state === 'candidate_factor' ? {
+                kind: candidate.evidence.kind, sourceInterpretation: candidate.sourceInterpretation,
+              } : {}),
+            },
           }),
         } : undefined;
         sendJson(response, 200, {
