@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { BirthInput, CanonicalSajuSnapshot } from '../src/contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/production/production-calculation-runtime.js';
 import { buildMaritalPalaceIntraChartResearchV1 } from '../src/research/compatibility-marital-palace-intra-chart-research.js';
+import { buildCompatibilityT10MethodCoverageV1 } from '../src/research/compatibility-t10-method-coverage.js';
 import { buildCompatibilityTwoBirthResearchReading } from '../src/preview/compatibility-two-birth-research-runtime.js';
 
 const CLOCK = new Date('2026-11-11T00:00:00.000Z');
@@ -111,5 +112,87 @@ describe('source-bounded single-chart marital palace research', () => {
       { personRef: 'same', snapshot: a },
       { personRef: 'same', snapshot: a },
     )).toThrow('distinct nonblank persons');
+  });
+});
+
+describe('three-method source coverage is evidence, not a T10 claim', () => {
+  const request = {
+    requestId: 'three-method-research',
+    subjectPersonRef: 'self',
+    targetPersonRef: 'other',
+    referenceDateTime: CLOCK.toISOString(),
+    candidateScope: 'traditional_marital_palace_comparison' as const,
+  };
+
+  it('retains palace facts and historical R069 spouse-star sources, but holds useful-god inference', () => {
+    const ordinary = buildCompatibilityTwoBirthResearchReading(FIRST, SECOND, {
+      ...request, candidateScope: undefined,
+    });
+    const scoped = buildCompatibilityTwoBirthResearchReading(FIRST, SECOND, request);
+    const coverage = scoped.methodCoverage;
+    expect(ordinary.methodCoverage).toBeUndefined();
+    expect(coverage).toBeDefined();
+    expect(coverage?.palace.status).toBe('bounded_factual_observations');
+    expect(coverage?.palace.crossChartDayBranch).toEqual(scoped.maritalDayBranchCandidate);
+    expect(coverage?.palace.personalDayPalace).toEqual(scoped.maritalPalaceIntraChartResearch);
+    expect(coverage?.sixSpirits.status).toBe('historical_single_chart_only');
+    expect(coverage?.sixSpirits.sourceCorpus).toBe('R069');
+    expect(coverage?.sixSpirits.originalSourceSurfaces.length).toBeGreaterThan(0);
+    expect(coverage?.sixSpirits.originalSourceSurfaces.every(
+      source => source.eligiblePairwiseClaim === false && source.missingPrerequisites.length > 0,
+    )).toBe(true);
+    expect(coverage?.sixSpirits.crossChartMethodEstablished).toBe(false);
+    expect(coverage?.usefulGod.status).toBe('pairwise_rule_not_established_in_reviewed_sources');
+    expect(coverage?.usefulGod.researchMethodSource.originalTextLayer).toBe('RISS_ABSTRACT');
+    expect(coverage?.unresolvedMethodConflicts).toContain('NO_VERIFIED_THREE_METHOD_PRECEDENCE');
+    expect(coverage?.pairwiseT10Admitted).toBe(false);
+    expect(coverage?.mayClaimRelationshipOutcome).toBe(false);
+    expect(coverage?.mayGrantOfficialAuthority).toBe(false);
+    expect(coverage?.mayPublish).toBe(false);
+    expect(coverage?.maySell).toBe(false);
+    expect(scoped.html).toBe(ordinary.html);
+  });
+
+  it('binds the audit to the exact two person/chart identities under role reversal', () => {
+    const forward = buildCompatibilityTwoBirthResearchReading(FIRST, SECOND, request);
+    const reverse = buildCompatibilityTwoBirthResearchReading(SECOND, FIRST, request);
+    const f = forward.methodCoverage;
+    const b = reverse.methodCoverage;
+    expect(f?.palace.personalDayPalace.subject.snapshotId)
+      .toBe(forward.report.subject.snapshotId);
+    expect(f?.palace.personalDayPalace.target.snapshotId)
+      .toBe(forward.report.target.snapshotId);
+    expect(b?.palace.personalDayPalace.subject.snapshotId)
+      .toBe(reverse.report.subject.snapshotId);
+    expect(b?.palace.personalDayPalace.target.snapshotId)
+      .toBe(reverse.report.target.snapshotId);
+    expect(b?.palace.personalDayPalace.subject.calculationHash)
+      .toBe(f?.palace.personalDayPalace.target.calculationHash);
+    expect(reverse.methodCoverage?.pairwiseT10Admitted).toBe(false);
+  });
+
+  it('rejects altered chart identity before classifying any source coverage', () => {
+    const scoped = buildCompatibilityTwoBirthResearchReading(FIRST, SECOND, request);
+    const candidate = scoped.maritalDayBranchCandidate;
+    const palace = scoped.maritalPalaceIntraChartResearch;
+    if (!candidate || !palace) throw new TypeError('Expected opt-in research');
+    const inconsistent = {
+      ...palace,
+      target: { ...palace.target, calculationHash: 'altered' },
+    };
+    expect(() => buildCompatibilityT10MethodCoverageV1(
+      scoped.sourceScopeHandoff, candidate, inconsistent,
+    )).toThrow('exact people and HOLD authority');
+  });
+
+  it('keeps unknown birth hour unresolved without making a pairwise conclusion', () => {
+    const unknown = { ...SECOND, time: { known: false } } as BirthInput;
+    const out = buildCompatibilityTwoBirthResearchReading(FIRST, unknown, request);
+    expect(out.methodCoverage?.palace.personalDayPalace.target.calculationHash)
+      .toBe(out.report.target.calculationHash);
+    expect(out.methodCoverage?.pairwiseT10Admitted).toBe(false);
+    expect(out.methodCoverage?.usefulGod.status)
+      .toBe('pairwise_rule_not_established_in_reviewed_sources');
+    expect(out.maySell).toBe(false);
   });
 });
