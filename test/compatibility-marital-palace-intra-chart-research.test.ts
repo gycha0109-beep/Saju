@@ -126,7 +126,10 @@ describe('three-method source coverage is evidence, not a T10 claim', () => {
 
   it('retains palace facts and historical R069 spouse-star sources, but holds useful-god inference', () => {
     const ordinary = buildCompatibilityTwoBirthResearchReading(FIRST, SECOND, {
-      ...request, candidateScope: undefined,
+      requestId: request.requestId,
+      subjectPersonRef: request.subjectPersonRef,
+      targetPersonRef: request.targetPersonRef,
+      referenceDateTime: request.referenceDateTime,
     });
     const scoped = buildCompatibilityTwoBirthResearchReading(FIRST, SECOND, request);
     const coverage = scoped.methodCoverage;
