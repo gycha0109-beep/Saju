@@ -45,3 +45,11 @@
 - `test/reading-ai-a4-private-provider-capture-v1.test.ts`는 **실제 OpenAIResponsesNarrativeAdapter 클래스**와 모의 HTTPS fetch를 결합하여 반환 토큰, 서버 원본 요청 ID, 실행 시도 UUID/발급 ref, HMAC signed receipt, 실행 성공/실패 coverage를 검증했다. 공급사 네트워크 실패는 토큰 `null`로 저장하고, 영수증 저장 실패를 adapter가 격리해도 `failedCallbacks`가 영구 기록되며, coverage 기록 실패 시 성공한 결과도 완료로 수용하지 않는 조건 확인. 승인 거부·Scope 밖 호출·DB Reader 오용도 검사.
 - 신규 7건 및 관련 기존 합계 21건, TypeScript/ESLint/Prettier 통과. OpenAI 실제 API 통신/유료 호출은 수행하지 않았다.
 - **운영 미연결/HOLD:** 이 조합 자체는 현재 Product Host, Production HTTP, 명하 요청 라우팅에 설치하지 않았다. `admitAndConsumePreparedAttempt`는 진짜 서버 간 인증과 DB 권한 검증에 의해 한 번만 승인되는 외부 Source Authority 구현이 필요하며, 단순 `true` 스텁을 운영에 넣는 것은 금지된다. 권위 있는 Saju 요청 ↔ DB 실행·종료 ref 동등성을 가정하지 않음. Source DB 설치 및 전용 접속 비밀, 실제 모델 결속, 실패 재처리, 청구·환율 대조 전 비용 원장 수집은 OFF. `ROADMAP_COMPLETE` 아님.
+
+## 2026-11-10 — A4 인증된 Production HTTP 요청의 준비된 실행 시도 범위 연결 (오프라인)
+
+- 기존 Saju [PR #2770](https://github.com/gycha0109-beep/Saju/pull/2770)의 실제 OpenAI 관측·서명 영수증·누락 기록 서버 내부 capture port를 기존 `/api/readings`의 Bearer 인증 완료 후 명시적으로 설치할 수 있는 `a4SourceCapture` 서버 옵션을 추가했다. **Production 설정에서 해당 옵션을 주지 않으면 종전 비A4 요청 동작 그대로이며, A4 ID 헤더가 있으면 409로 거부한다.**
+- `x-myeongha-reading-execution-attempt-id`는 MyeongHa에서 실제 DB 단건 준비가 성공한 뒤 전달하는 UUID **식별 좌표**일 뿐 권한이 아니다. 이 헤더가 있거나 capture가 설치됐으면 정확한 UUID·Production 경로·capture 존재를 요구하고, capture 내부 `withPreparedAttempt()`에서 서버 전용 일회성 DB admission을 받기 전에는 `readingHost.requestReading()`을 실행하지 않는다.
+- 승인된 scope가 완료되고 기존 ProductReadingResponse admission까지 통과한 경우에만 Saju 자체 발급 `saju_source_UUID`를 `x-myeongha-saju-external-request-ref` 응답 헤더로 반환한다. 헤더 자체는 HMAC 증명이 아니며, 실제 명하 DB 최종화에서는 Source 서명 영수증·종료 시도·ref 일치의 독립 검증이 필요하다.
+- 별도 Preview host에 capture 설치 금지, 통합 Preview의 A4 헤더 거부, 외부 미인증 요청 차단, 누락·변조 UUID/영수증 ref/Source admission 실패 시 차단. `test/a4-prepared-reading-host-transport.test.ts` 신규 8건과 기존 실제 OpenAI capture 7건 및 인증 테스트 15건 포함 **30건 PASS**, TypeScript·ESLint PASS. 실제 OpenAI API나 운영 비용 수집 실행 없음.
+- `a4SourceCapture`의 실제 운영 주입, 동일 OpenAI 어댑터 callback과의 결합, 신뢰 가능한 single-use Source admission 구현/인증, Saju Source 전용 영구 DB·Secret/TLS 설치, MyeongHa의 authenticated 외부 ref 조회·정본 DB finalize·비용 수집은 **HOLD**. 현재 미설치 hook이 존재한다는 사실만으로 실제 비용 수집 성공을 선언할 수 없다. `ROADMAP_COMPLETE` 아님.
