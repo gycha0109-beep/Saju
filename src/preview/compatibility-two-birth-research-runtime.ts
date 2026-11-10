@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  auditT10DirectDayComparisonV1,
+  type T10DirectDayComparisonResearchV1,
+} from '../research/compatibility-t10-direct-day-comparison.js';
+import {
   reviewCompatibilityT10CoexistingEvidenceV1,
   type CompatibilityT10CoexistingEvidenceReviewV1,
 } from '../research/compatibility-t10-coexisting-evidence-review.js';
@@ -70,6 +74,8 @@ export interface CompatibilityTwoBirthResearchReading {
   methodCoverage?: CompatibilityT10MethodCoverageV1;
   /** Source-limited co-presence inventory; never a T10 verdict. */
   coexistingEvidenceReview?: CompatibilityT10CoexistingEvidenceReviewV1;
+  /** 2016 direct day-stem/day-branch method audit, protected research opt-in only. */
+  directDayComparisonResearch?: T10DirectDayComparisonResearchV1;
   html: string;
 }
 
@@ -223,6 +229,8 @@ export function buildCompatibilityTwoBirthResearchReading(
   const coexistingEvidenceReview = methodCoverage
     ? reviewCompatibilityT10CoexistingEvidenceV1(sourceScopeHandoff, methodCoverage)
     : undefined;
+  const directDayComparisonResearch = methodCoverage
+    ? auditT10DirectDayComparisonV1(sourceScopeHandoff) : undefined;
   return {
     version: COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
@@ -243,6 +251,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       maritalPalaceIntraChartResearch,
       methodCoverage,
       coexistingEvidenceReview,
+      ...(directDayComparisonResearch ? { directDayComparisonResearch } : {}),
     } : {}),
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
