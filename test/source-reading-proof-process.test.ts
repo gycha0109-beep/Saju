@@ -3,8 +3,11 @@ import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createSourceReadingProofProcessV1,
+  createSourceReadingProofStagingDependencies,
   startSourceReadingProofProcessV1,
 } from '../src/source-reading-proof-process.js';
+import { createMyeonghwaSourceReadingProofHost } from '../src/host/product-host.js';
+import { deterministicContentHash } from '../src/interpretation/rule-registry.js';
 import {
   readSourceProofProcessConfigV1,
   SOURCE_PROOF_PROCESS_ENV_V1 as fields,
@@ -122,6 +125,51 @@ describe('8C-2B-2B dedicated source proof configuration', () => {
 });
 
 describe('8C-2B-2B process lifecycle and HTTP transport', () => {
+  it.each([
+    ['올해', '2026-02-03T20:02:00.000Z', '입춘', 'after_ipchun'],
+    ['이번 달', '2026-11-07T09:52:00.000Z', '입동', 'after_jeol'],
+  ])('binds calculated %s evidence to the same stored response', async (text, reference, term, segment) => {
+    const source = createMyeonghwaSourceReadingProofHost(createSourceReadingProofStagingDependencies());
+    const result = await source.requestReadingWithProofReadiness({
+      birth: { calendarType: 'solar', date: '1992-07-07', time: '15:20', sex: 'male' },
+      reading: { text, periodReferenceDateTime: reference },
+    });
+    expect(result.readiness).toMatchObject({ state: 'held', canSell: false });
+    const evidence = result.temporalReaderEvidence!;
+    expect(evidence).toMatchObject({
+      responseBodyHash: deterministicContentHash(result.response),
+      boundary: { name: term, at: reference }, referenceSegmentId: segment,
+      interpretationStatus: 'insufficient_authorized_semantics',
+      dayunOverlap: { status: 'resolved', segments: expect.arrayContaining([expect.objectContaining({
+        startsAt: evidence.segments[0]?.startsAt,
+      })]) },
+    });
+    expect(evidence.segments[0]?.endsAt).toBe(evidence.segments[1]?.startsAt);
+    expect(evidence.segments[0]?.pillar).not.toEqual(evidence.segments[1]?.pillar);
+    const { evidenceHash, ...material } = evidence;
+    expect(evidenceHash).toBe(deterministicContentHash(material));
+  });
+
+  it.each([
+    [2028, '편재', 'natal_day_stem_controls_annual_stem'],
+    [2030, '편관', 'annual_stem_controls_natal_day_stem'],
+  ])('attaches the exact original witness in %i without inferring a theme or an event', async (year, relation, direction) => {
+    const source = createMyeonghwaSourceReadingProofHost(createSourceReadingProofStagingDependencies());
+    const { temporalReaderEvidence: evidence } = await source.requestReadingWithProofReadiness({
+      birth: { calendarType: 'solar', date: '1992-07-07', time: null, sex: 'male' },
+      reading: { text: '올해', periodReferenceDateTime: `${year}-11-10T03:00:00.000Z` },
+    });
+    expect(evidence?.scope).toBe('annual');
+    if (evidence?.scope !== 'annual') throw new Error('Expected annual evidence');
+    expect(evidence.segments[0]?.directlyWitnessedIdentity).toBeNull();
+    expect(evidence.segments[1]?.directlyWitnessedIdentity).toMatchObject({
+      scope: 'relation_identity_only', relation, direction,
+      source: { page: 25, fileSha256: expect.stringMatching(/^[0-9a-f]{64}$/u) },
+    });
+    expect(evidence.segments[1]?.natalBranchRelations.hour.status).toBe('unavailable');
+    expect(evidence.dayunOverlap).toMatchObject({ status: 'unavailable' });
+  });
+
   it.each(['올해', '이번 달'])('returns held, source-bound Korean research for %s', async (text) => {
     const runtime = createSourceReadingProofProcessV1(env());
     open.push(runtime.server);
@@ -151,6 +199,7 @@ describe('8C-2B-2B process lifecycle and HTTP transport', () => {
       },
     });
     expect(JSON.stringify(payload)).not.toMatch(/semanticKey|activationKind|forbiddenInferences/u);
+    expect(payload).not.toHaveProperty('temporalReaderEvidence');
   });
 
   it('uses the approved real Preview E2E dependency assembly, not a runtime fixture', async () => {

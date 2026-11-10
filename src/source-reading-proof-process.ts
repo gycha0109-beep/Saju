@@ -26,7 +26,7 @@ export class SourceReadingProofStartupErrorV1 extends Error {
 }
 
 /** The isolated issuer can inspect temporal research through the same Product Reading pipeline. */
-function createSourceReadingProofStagingDependencies(): MyeonghwaProductHostDependencies {
+export function createSourceReadingProofStagingDependencies(): MyeonghwaProductHostDependencies {
   const preview = createApprovedSourceProofPreviewDependenciesV1();
   const claimNarrativeProfiles = [
     ...(preview.readingOptions.claimNarrativeProfiles ?? []),

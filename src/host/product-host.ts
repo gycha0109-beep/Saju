@@ -18,8 +18,9 @@ import {
   normalizeConsumerReadingRequest,
   type ConsumerReadingRequestInput,
 } from '../reading/consumer-reading-request-adapter.js';
-import { buildAnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
-import { buildMonthlyInterpretationFacts } from '../reading/monthly-interpretation-facts.js';
+import { buildAnnualInterpretationFacts, type AnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
+import { buildMonthlyInterpretationFacts, type MonthlyInterpretationFacts } from '../reading/monthly-interpretation-facts.js';
+import { buildTemporalReaderEvidence, type TemporalReaderEvidence } from '../reading/temporal-reader-evidence.js';
 import {
   buildTemporalReadingContext,
   type TemporalReadingContext,
@@ -92,7 +93,7 @@ export interface ProductHostExecutionContext {
 export interface ProductHostInterpretationRequestContext {
   readingRequest: ReadingRequest;
   temporalContext: TemporalReadingContext;
-  temporalFacts: Readonly<Record<string, unknown>>;
+  temporalFacts: Readonly<(AnnualInterpretationFacts | MonthlyInterpretationFacts) & Record<string, unknown>>;
 }
 
 export interface ProductHostInterpretationBundle {
@@ -456,6 +457,7 @@ export interface MyeonghwaSourceReadingProofHost {
     readonly readiness: SourceReadingProofReadinessV1;
     /** Parsed and normalized by the Saju host for this same execution. */
     readonly executedRequestBody: ProductHostReadingRequestBody;
+    readonly temporalReaderEvidence?: TemporalReaderEvidence;
   }>;
 }
 
@@ -495,7 +497,7 @@ async function runProductHostReadingInternals(
     dependencies.readingOptionsForRequest?.(context) ?? dependencies.readingOptions,
     dependencies.legacyNarrativeRuntime,
   );
-  return { executedRequestBody: parsed, snapshot, interpretation, registry, ...reading };
+  return { executedRequestBody: parsed, snapshot, interpretation, registry, requestContext, ...reading };
 }
 
 export function createMyeonghwaProductHost(
@@ -570,7 +572,14 @@ export function createMyeonghwaSourceReadingProofHost(
     async requestReadingWithProofReadiness(body: unknown) {
       const run = await runProductHostReadingInternals(dependencies, body);
       const readiness = inspectSourceReadingProofReadinessV1(run);
-      return { response: run.response, readiness, executedRequestBody: run.executedRequestBody };
+      const temporalReaderEvidence = readiness.material !== undefined &&
+        run.requestContext?.readingRequest.intent.domain === 'general'
+        ? buildTemporalReaderEvidence(run.snapshot, run.requestContext.temporalFacts, readiness.material.responseBodyHash)
+        : undefined;
+      return {
+        response: run.response, readiness, executedRequestBody: run.executedRequestBody,
+        ...(temporalReaderEvidence === undefined ? {} : { temporalReaderEvidence }),
+      };
     },
   };
 }
