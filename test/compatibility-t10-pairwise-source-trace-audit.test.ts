@@ -120,6 +120,37 @@ describe('T10 source-trace quality review on fixed synthetic chart pairs', () =>
     expect(output.coexistingEvidenceReview?.synthesis.inferredOutcome).toBeNull();
   });
 
+  it('never transfers historical gender-specific spouse stars into universal modern pairwise claims', () => {
+    const birthA = INPUTS[0];
+    const birthB = INPUTS[3];
+    if (!birthA || !birthB) throw new TypeError('Missing fixtures');
+    const historicalMale = { ...birthA, sexForTraditionalCalculation: 'male' } as BirthInput;
+    const historicalFemale = { ...birthB, sexForTraditionalCalculation: 'female' } as BirthInput;
+    const historicallyDifferent = run(historicalMale, historicalFemale);
+    const rolesReversed = run(historicalFemale, historicalMale);
+
+    for (const result of [historicallyDifferent, rolesReversed]) {
+      const coverage = result.methodCoverage;
+      if (!coverage) throw new TypeError('Private method coverage missing');
+      const spouseClaims = coverage.sixSpirits.originalSourceSurfaces;
+      expect(spouseClaims.length).toBeGreaterThan(0);
+      expect(spouseClaims.some(claim => claim.historicalSexScope === 'MALE_CHART')).toBe(true);
+      expect(spouseClaims.some(claim => claim.historicalSexScope === 'FEMALE_CHART')).toBe(true);
+      expect(spouseClaims.every(claim =>
+        claim.eligiblePairwiseClaim === false &&
+        claim.missingPrerequisites.includes('MODERN_PARTNER_TRANSLATION')
+      )).toBe(true);
+      expect(coverage.sixSpirits.crossChartMethodEstablished).toBe(false);
+      expect(result.coexistingEvidenceReview?.synthesis.state)
+        .toBe('unresolved_no_source_qualified_pairwise_precedence');
+      expect(result.coexistingEvidenceReview?.synthesis.compatibilityScore).toBeNull();
+      expect(result.mayClaimInterpersonalMeaning).toBe(false);
+      expect(result.mayGrantOfficialAuthority).toBe(false);
+      expect(result.mayMarkMenuAvailable).toBe(false);
+      expect(result.maySell).toBe(false);
+    }
+  });
+
   it('rejects a fabricated result even when both individuals share one calculated chart', () => {
     const first = INPUTS[0];
     if (!first) throw new TypeError('Missing chart');
