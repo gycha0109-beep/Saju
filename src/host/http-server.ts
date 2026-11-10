@@ -43,11 +43,15 @@ export const PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH =
   '/api/preview/natal-five-domains' as const;
 export const PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH =
   '/api/preview/compatibility-charts' as const;
+export const PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH =
+  '/api/preview/compatibility-evidence' as const;
 export const PRODUCT_READING_PREVIEW_LIFECYCLE = 'preview' as const;
 
 export interface MyeonghwaProductHostServerOptions {
   maxRequestBytes?: number;
   characterGroundingMaxRequestBytes?: number;
+  /** Internal Preview host option for structured cross-chart facts. */
+  compatibilityEvidencePreviewEnabled?: boolean;
 }
 
 export interface MyeonghwaProductionCalculationHostServerOptions
@@ -376,12 +380,15 @@ function createMyeonghwaHttpServer(
     // Existing 12-menu browser path, served only by an authenticated Preview host.
     // The body is deliberately limited to birth facts. It does NOT accept
     // or infer any interpersonal T10 interpretation or client-supplied score.
-    if (path === PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH) {
+    if (path === PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH ||
+        path === PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH) {
+      const withEvidence = path === PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH;
       const previewAvailable =
         readingRoute.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE ||
         secondaryReadingRoute?.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE;
       if (!previewAvailable || readingHost === undefined ||
-          authorizeReadingRequest === undefined) {
+          authorizeReadingRequest === undefined ||
+          (withEvidence && options.compatibilityEvidencePreviewEnabled !== true)) {
         sendJson(response, 404, {
           error: { code: 'HOST_ROUTE_NOT_FOUND', message: 'Route not found.' },
         });
@@ -426,6 +433,23 @@ function createMyeonghwaHttpServer(
               ? {}
               : { value: pillar.stemHanja! + pillar.branchHanja! }),
           }]));
+        const evidence = withEvidence ? {
+          version: 'myeonghwa-cross-chart-structural-evidence-v1',
+          matches: result.sourceScopeHandoff.crossChartStructuralMatches.map(match => {
+            const projectFact = (role: 'subject' | 'target') => {
+              const { factPath } = match[role];
+              const pillar = result.report[role].pillars.find(
+                item => factPath === `${role}.pillars.${item.slot}.value.${match.component}`,
+              );
+              const value = match.component === 'stem' ? pillar?.stemHanja : pillar?.branchHanja;
+              if (pillar?.status !== 'resolved' || value === undefined) {
+                throw new TypeError('Cross-chart match is outside the calculated chart.');
+              }
+              return { factPath, value };
+            };
+            return { ...match, subject: projectFact('subject'), target: projectFact('target') };
+          }),
+        } : undefined;
         sendJson(response, 200, {
           lifecycle: 'internal_preview_only',
           coverage: 'calculation_facts_only',
@@ -437,6 +461,7 @@ function createMyeonghwaHttpServer(
             { role: 'self', pillars: pillars(result.report.subject) },
             { role: 'partner', pillars: pillars(result.report.target) },
           ],
+          ...(evidence === undefined ? {} : { evidence }),
           explanation: '두 명식은 각각 실제 출생정보로 계산했습니다. ' +
             '두 사람 사이의 T10 궁합 해석과 결혼·갈등·점수 판단은 승인되지 않았습니다.',
           limitations: result.report.limitations,

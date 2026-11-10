@@ -5,6 +5,7 @@ import {
   createMyeonghwaProductionPreviewHostServer,
   createMyeonghwaProductionProductHostServer,
   PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH,
+  PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH,
 } from '../src/host/http-server.js';
 
 const host: MyeonghwaProductHost = {
@@ -37,14 +38,17 @@ type Result = {
 async function withHost(
   kind: 'preview' | 'production',
   test: (url: string, bearer: string) => Promise<void>,
+  evidence?: boolean,
 ) {
   const bearer = 'test-preview-only-secret';
+  const options = { serviceBearer: bearer, compatibilityEvidencePreviewEnabled: evidence === true };
   const server = kind === 'preview'
-    ? createMyeonghwaProductionPreviewHostServer(host, { serviceBearer: bearer })
-    : createMyeonghwaProductionProductHostServer(host, { serviceBearer: bearer });
+    ? createMyeonghwaProductionPreviewHostServer(host, options)
+    : createMyeonghwaProductionProductHostServer(host, options);
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = 'http://127.0.0.1:' + (server.address() as AddressInfo).port +
-    PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH;
+    (evidence === undefined ? PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH :
+      PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH);
   try {
     await test(url, bearer);
   } finally {
@@ -54,6 +58,51 @@ async function withHost(
 }
 
 describe('existing compatibility browser route stays protected and research-only', () => {
+  it('projects source matches between actual calculated charts on the dedicated opt-in endpoint', async () => {
+    await withHost('preview', async (url, bearer) => {
+      const body = JSON.stringify({
+        birth: { ...ownBirth, date: '1992-07-14', time: '15:20' },
+        partnerBirth: { ...partnerBirth, date: '1996-06-22', time: null },
+      });
+      const options = { method: 'POST', headers: { 'content-type': 'application/json' }, body };
+      expect((await fetch(url, options)).status).toBe(401);
+      const response = await fetch(url, {
+        ...options, headers: { ...options.headers, authorization: 'Bearer ' + bearer },
+      });
+      expect(response.status).toBe(200);
+      const result = await response.json() as Result & { evidence: { version: string; matches: Array<{
+        subject: { factPath: string; value: string };
+        target: { factPath: string; value: string };
+        component: 'stem' | 'branch';
+        sourceIds: string[];
+        definitionContentHash: string;
+        pairwiseMeaningAuthorized: boolean;
+      }> } };
+      expect(result.evidence.version).toBe('myeonghwa-cross-chart-structural-evidence-v1');
+      expect(result.evidence.matches.length).toBeGreaterThan(0);
+      for (const match of result.evidence.matches) {
+        const slot = (path: string) => path.split('.')[2] as keyof Person['pillars'];
+        const index = match.component === 'stem' ? 0 : 1;
+        expect(match.subject.value).toBe(result.subjects[0]?.pillars[slot(match.subject.factPath)].value?.[index]);
+        expect(match.target.value).toBe(result.subjects[1]?.pillars[slot(match.target.factPath)].value?.[index]);
+        expect(match.target.factPath).not.toContain('.hour.');
+        expect(match.sourceIds.length).toBeGreaterThan(0);
+        expect(match.definitionContentHash).toMatch(/^[a-f0-9]{64}$/);
+        expect(match.pairwiseMeaningAuthorized).toBe(false);
+      }
+      expect(result.mayPersist).toBe(false);
+      expect(result.generatedInterpretationClaims).toBe(false);
+    }, true);
+  });
+
+  it.each([['preview', false], ['production', true]] as const)(
+    'does not expose evidence on a %s host with option %s', async (kind, option) => {
+      await withHost(kind, async (url, bearer) => {
+        expect((await fetch(url, { headers: { authorization: 'Bearer ' + bearer } })).status).toBe(404);
+      }, option);
+    },
+  );
+
   it('returns two real separate calculated charts but never a T10 interpretation', async () => {
     await withHost('preview', async (url, bearer) => {
       const unauthed = await fetch(url, {
