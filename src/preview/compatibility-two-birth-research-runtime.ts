@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  reviewCompatibilityT10CoexistingEvidenceV1,
+  type CompatibilityT10CoexistingEvidenceReviewV1,
+} from '../research/compatibility-t10-coexisting-evidence-review.js';
+import {
   buildCompatibilityT10MethodCoverageV1,
   type CompatibilityT10MethodCoverageV1,
 } from '../research/compatibility-t10-method-coverage.js';
@@ -64,6 +68,8 @@ export interface CompatibilityTwoBirthResearchReading {
   maritalPalaceIntraChartResearch?: MaritalPalaceIntraChartResearchV1;
   /** Private method applicability audit; never two-person T10 meaning. */
   methodCoverage?: CompatibilityT10MethodCoverageV1;
+  /** Source-limited co-presence inventory; never a T10 verdict. */
+  coexistingEvidenceReview?: CompatibilityT10CoexistingEvidenceReviewV1;
   html: string;
 }
 
@@ -214,6 +220,9 @@ export function buildCompatibilityTwoBirthResearchReading(
     ? buildCompatibilityT10MethodCoverageV1(
       sourceScopeHandoff, maritalDayBranchCandidate, maritalPalaceIntraChartResearch,
     ) : undefined;
+  const coexistingEvidenceReview = methodCoverage
+    ? reviewCompatibilityT10CoexistingEvidenceV1(sourceScopeHandoff, methodCoverage)
+    : undefined;
   return {
     version: COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
@@ -228,10 +237,12 @@ export function buildCompatibilityTwoBirthResearchReading(
     report,
     personalRelationship,
     sourceScopeHandoff,
-    ...(methodCoverage && maritalDayBranchCandidate && maritalPalaceIntraChartResearch ? {
+    ...(methodCoverage && maritalDayBranchCandidate && maritalPalaceIntraChartResearch &&
+        coexistingEvidenceReview ? {
       maritalDayBranchCandidate,
       maritalPalaceIntraChartResearch,
       methodCoverage,
+      coexistingEvidenceReview,
     } : {}),
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
