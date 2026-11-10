@@ -78,7 +78,7 @@ function isDayToDayBranch(
 
 function sameIdentity(
   a: PairwiseSourceScopeHandoff['subject'],
-  b: PairwiseSourceScopeHandoff['subject'],
+  b: Pick<PairwiseSourceScopeHandoff['subject'], 'personRef' | 'snapshotId' | 'calculationHash'>,
 ): boolean {
   return a.personRef === b.personRef &&
     a.snapshotId === b.snapshotId &&
