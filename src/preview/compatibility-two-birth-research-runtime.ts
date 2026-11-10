@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  buildMaritalPalaceIntraChartResearchV1,
+  type MaritalPalaceIntraChartResearchV1,
+} from '../research/compatibility-marital-palace-intra-chart-research.js';
+import {
   buildMaritalDayBranchCandidateV1,
   type MaritalDayBranchCandidateV1,
 } from '../research/compatibility-marital-day-branch-candidate.js';
@@ -53,6 +57,7 @@ export interface CompatibilityTwoBirthResearchReading {
   /** R068/R069 original source applicability only, never pairwise T10 meaning. */
   sourceScopeHandoff: PairwiseSourceScopeHandoff;
   maritalDayBranchCandidate?: MaritalDayBranchCandidateV1;
+  maritalPalaceIntraChartResearch?: MaritalPalaceIntraChartResearchV1;
   html: string;
 }
 
@@ -207,7 +212,13 @@ export function buildCompatibilityTwoBirthResearchReading(
     personalRelationship,
     sourceScopeHandoff,
     ...(input.candidateScope === 'traditional_marital_palace_comparison'
-      ? { maritalDayBranchCandidate: buildMaritalDayBranchCandidateV1(sourceScopeHandoff) }
+      ? {
+          maritalDayBranchCandidate: buildMaritalDayBranchCandidateV1(sourceScopeHandoff),
+          maritalPalaceIntraChartResearch: buildMaritalPalaceIntraChartResearchV1(
+            { personRef: subjectRef, snapshot: subject },
+            { personRef: targetRef, snapshot: target },
+          ),
+        }
       : {}),
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
