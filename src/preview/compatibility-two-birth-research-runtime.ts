@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  buildCompatibilityT10MethodCoverageV1,
+  type CompatibilityT10MethodCoverageV1,
+} from '../research/compatibility-t10-method-coverage.js';
+import {
   buildMaritalPalaceIntraChartResearchV1,
   type MaritalPalaceIntraChartResearchV1,
 } from '../research/compatibility-marital-palace-intra-chart-research.js';
@@ -58,6 +62,8 @@ export interface CompatibilityTwoBirthResearchReading {
   sourceScopeHandoff: PairwiseSourceScopeHandoff;
   maritalDayBranchCandidate?: MaritalDayBranchCandidateV1;
   maritalPalaceIntraChartResearch?: MaritalPalaceIntraChartResearchV1;
+  /** Private method applicability audit; never two-person T10 meaning. */
+  methodCoverage?: CompatibilityT10MethodCoverageV1;
   html: string;
 }
 
@@ -197,6 +203,17 @@ export function buildCompatibilityTwoBirthResearchReading(
   };
   const bothHaveFacts = [report.subject, report.target].every(person =>
     person.pillars.some(pillar => pillar.status === 'resolved'));
+  const maritalDayBranchCandidate = input.candidateScope === 'traditional_marital_palace_comparison'
+    ? buildMaritalDayBranchCandidateV1(sourceScopeHandoff) : undefined;
+  const maritalPalaceIntraChartResearch = maritalDayBranchCandidate === undefined
+    ? undefined : buildMaritalPalaceIntraChartResearchV1(
+      { personRef: subjectRef, snapshot: subject },
+      { personRef: targetRef, snapshot: target },
+    );
+  const methodCoverage = maritalDayBranchCandidate && maritalPalaceIntraChartResearch
+    ? buildCompatibilityT10MethodCoverageV1(
+      sourceScopeHandoff, maritalDayBranchCandidate, maritalPalaceIntraChartResearch,
+    ) : undefined;
   return {
     version: COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
@@ -211,15 +228,11 @@ export function buildCompatibilityTwoBirthResearchReading(
     report,
     personalRelationship,
     sourceScopeHandoff,
-    ...(input.candidateScope === 'traditional_marital_palace_comparison'
-      ? {
-          maritalDayBranchCandidate: buildMaritalDayBranchCandidateV1(sourceScopeHandoff),
-          maritalPalaceIntraChartResearch: buildMaritalPalaceIntraChartResearchV1(
-            { personRef: subjectRef, snapshot: subject },
-            { personRef: targetRef, snapshot: target },
-          ),
-        }
-      : {}),
+    ...(methodCoverage ? {
+      maritalDayBranchCandidate,
+      maritalPalaceIntraChartResearch,
+      methodCoverage,
+    } : {}),
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
 }
