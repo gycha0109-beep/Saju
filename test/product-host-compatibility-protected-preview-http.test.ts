@@ -71,7 +71,7 @@ describe('existing compatibility browser route stays protected and research-only
       });
       const preview = await post(pair);
       expect(preview.status).toBe(200);
-      expect((await preview.json()).evidence).not.toHaveProperty('maritalDayBranchCandidate');
+      expect(await preview.json()).not.toHaveProperty('evidence.maritalDayBranchCandidate');
       const request = { ...pair, candidateScope: 'traditional_marital_palace_comparison' };
       const result = await post(request);
       expect(result.status).toBe(200);
