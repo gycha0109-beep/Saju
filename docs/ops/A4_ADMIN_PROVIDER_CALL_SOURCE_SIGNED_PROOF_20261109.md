@@ -38,3 +38,10 @@
 - 신규 테스트 7건, 기존 관련 테스트 포함 총 18건, TypeScript/ESLint/Prettier 통과. 폐기형 PostgreSQL 17.11에서 원본 SQL + 추가 SQL 순차 설치 성공, 기록·재실행·Reader 거부·변경 금지·추가 열 거부·거짓 완전성 주장의 8개 검사 성공. 임시 DB는 폐기했습니다.
 - `observedCallbacks`는 **관측된 콜백만의 분모**입니다. Provider 전체 호출과 청구 완전성은 불명확하므로 저장한 수치가 모두 성공이어도 `completeCostCoverage=false`만 허용합니다. 추후 실제 공급사 청구 대조/소스 누락 감지·재처리는 별도 잔여 작업입니다.
 - **HOLD:** 이 코드는 기존 역할의 실제 운영 접근·비밀번호·연결, Production HTTP 및 Provider Adapter 자동 설치, Source/DB attempt 발급·승인/완료 참조 연결, 명하 Cost Writer 수집을 수행하지 않습니다. 독립 소스 DB를 설치하거나 운영 비용 수집을 켠 것으로 해석하지 않습니다. `ROADMAP_COMPLETE` 아님.
+
+## 2026-11-10 — 명하 사전 준비 실행 시도 서명·일회성 승인 (오프라인)
+
+- `src/production/reading-ai-a4-prepared-attempt-admission-v1.ts`: 명하의 신규 내부 서버 서명 handoff의 정확한 발급자·수신자·keyId·UUID·요청 SHA-256·nonce·발급/만료 시각·HMAC을 상수 시간 비교로 검증한다. 불일치/만료/요청 바이트 변조/기존 영수증과 혼동되는 서명은 거부.
+- 검증 후에도 실제로 준비된 DB 실행 시도를 외부의 **영속적, 원자적, 단 한 번의 consume authority**가 승인해야만 A4 호출 소스 범위에 입장할 수 있도록 `admitAndConsumePreparedAttempt` 포트를 제공한다. 메모리 집합은 단위 테스트 대역일 뿐이며 운영 정본이 될 수 없다.
+- `test/reading-ai-a4-prepared-attempt-admission-v1.test.ts` 신규 6건 PASS. 명하측의 실제 TypeScript signer 출력이 사주 검증기에서 정확히 수락되고 변조된 요청 바이트는 거부됨을 교차 확인함.
+- Production Interpretation Authority, 기존 Saju Bearer 서비스 인증, 실제 HTTP raw body 전달/검증, DB nonce 일회성 소비, 운영 서명 키 및 Secret 연결, Production 발급/영수증 비용 수집은 **전부 HOLD**. 기존 Route·DB·고객·결제·크레딧·유료 호출 변경 없음. `ROADMAP_COMPLETE` 아님.
