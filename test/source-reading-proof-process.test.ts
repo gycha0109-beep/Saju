@@ -188,6 +188,20 @@ describe('8C-2B-2B process lifecycle and HTTP transport', () => {
     });
     expect(evidence.segments[0]?.endsAt).toBe(evidence.segments[1]?.startsAt);
     expect(evidence.segments[0]?.pillar).not.toEqual(evidence.segments[1]?.pillar);
+    const primary = evidence.researchSignals.filter(signal => signal.kind === 'primary');
+    expect(primary.map(signal => signal.segmentId)).toEqual(
+      text === '올해' ? ['after_ipchun'] : ['before_jeol', 'after_jeol'],
+    );
+    for (const signal of evidence.researchSignals) {
+      expect(signal.statement).toContain('특정 사건이나 결과를 확정하지 않습니다');
+      expect(signal.sourceRefs.length).toBeGreaterThan(0);
+      expect(signal.ruleRefs.length).toBeGreaterThan(0);
+      const segment = evidence.segments.find(item => item.id === signal.segmentId);
+      expect(segment).toBeDefined();
+      if (signal.kind === 'primary') expect(signal.stemTenGod).toBe(segment?.stemTenGod);
+      if (signal.kind === 'tension') expect(segment?.natalBranchRelations[signal.natalPillar])
+        .toMatchObject({ status: 'resolved', value: { relation: 'clash' } });
+    }
     const { evidenceHash, ...material } = evidence;
     expect(evidenceHash).toBe(deterministicContentHash(material));
   });

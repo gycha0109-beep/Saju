@@ -1,6 +1,11 @@
 import { getSolarTerm } from 'manseryeok';
-import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { CanonicalSajuSnapshot, PillarSlot, TenGod } from '../contracts/calculation.js';
+import type { InterpretationClaim } from '../contracts/interpretation.js';
+import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import { renderClaimNarrativeProfileSections } from '../narrative/claim-narrative-profile.js';
+import { GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES } from '../research/general-annual-narrative-profiles.js';
+import { GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES } from '../research/general-monthly-narrative-profiles.js';
 import {
   GENERAL_ANNUAL_ATOMIC_STEM_RELATION_PROPOSITION,
   GENERAL_ANNUAL_SOURCE_CANDIDATES,
@@ -14,9 +19,17 @@ import type { MonthlyInterpretationFacts } from './monthly-interpretation-facts.
 import { annualSexagenaryPillar } from './temporal-reading-context.js';
 
 const VERSION = 'myeonghwa-temporal-reader-evidence-v1';
+const PILLAR_SLOTS: readonly PillarSlot[] = ['year', 'month', 'day', 'hour'];
 const annualWitness = GENERAL_ANNUAL_SOURCE_CANDIDATES.find(
   item => item.candidateId === 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_LOWER_SCAN',
 )!;
+
+type TemporalResearchSignal = Pick<InterpretationClaim, 'claimId' | 'factRefs' | 'ruleRefs' | 'sourceRefs'> & {
+  segmentId: string;
+  headline: string;
+  statement: string;
+  epistemicType: 'future_tendency';
+} & ({ kind: 'primary'; stemTenGod: TenGod } | { kind: 'tension'; natalPillar: PillarSlot });
 
 function directlyWitnessedAnnualIdentity(
   snapshot: CanonicalSajuSnapshot,
@@ -41,6 +54,50 @@ function directlyWitnessedAnnualIdentity(
   };
 }
 
+function buildResearchSignals(
+  snapshot: CanonicalSajuSnapshot,
+  scope: 'annual' | 'monthly',
+  segments: readonly {
+    id: string;
+    stemTenGod: TenGod;
+    natalBranchRelations: AnnualInterpretationFacts['annualBranchRelations'] |
+      MonthlyInterpretationFacts['segments'][number]['monthlyBranchRelations'];
+  }[],
+  interpretation?: InterpretationExecutionResult,
+) {
+  if (!interpretation?.integrity.valid || interpretation.run.snapshotId !== snapshot.snapshotId
+    || interpretation.run.snapshotHash !== snapshot.calculationHash) return [];
+  const claims = interpretation.claims.filter(claim => claim.state === 'active'
+    && claim.snapshotId === snapshot.snapshotId && claim.taxonomy.tier === 'T9'
+    && claim.taxonomy.category === 'general' && claim.taxonomy.subcategory === scope);
+  const profiles = scope === 'annual' ? GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES : GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES;
+  const sections = renderClaimNarrativeProfileSections({ claims }, profiles);
+  const byClaimId = new Map(claims.map(claim => [claim.claimId, claim]));
+  return sections.flatMap(section => section.blocks.flatMap<TemporalResearchSignal>(block => {
+    if (block.type !== 'assertion' || block.epistemicType !== 'future_tendency' || block.evidenceRefs.length !== 1) return [];
+    const claim = byClaimId.get(block.evidenceRefs[0]!.ref);
+    if (claim === undefined || claim.value === null || typeof claim.value !== 'object') return [];
+    const value = claim.value as Record<string, unknown>;
+    // The annual registry was executed for the requested Saju year only.
+    const segment = segments.find(item => item.id === (scope === 'annual' ? 'after_ipchun' : value.segmentId));
+    if (segment === undefined) return [];
+    const signal = {
+      claimId: claim.claimId, segmentId: segment.id,
+      headline: section.title, statement: block.text, epistemicType: block.epistemicType as 'future_tendency',
+      factRefs: claim.factRefs, ruleRefs: claim.ruleRefs, sourceRefs: claim.sourceRefs,
+    };
+    if (value.narrativeRole === 'primary') {
+      return value.tenGod === segment.stemTenGod
+        ? [{ ...signal, kind: 'primary' as const, stemTenGod: segment.stemTenGod }] : [];
+    }
+    const slot = PILLAR_SLOTS.find(pillar => pillar === value.natalPillar);
+    const relation = slot === undefined ? undefined : segment.natalBranchRelations[slot];
+    return value.narrativeRole === 'tension' && slot !== undefined && value.relation === 'clash'
+      && relation?.status === 'resolved' && relation.value.relation === 'clash'
+      ? [{ ...signal, kind: 'tension' as const, natalPillar: slot }] : [];
+  }));
+}
+
 /**
  * Calendar, structural facts and exact source witnesses for internal Reader
  * review. The research themes and event conclusions are outside this evidence.
@@ -49,6 +106,7 @@ export function buildTemporalReaderEvidence(
   snapshot: CanonicalSajuSnapshot,
   facts: AnnualInterpretationFacts | MonthlyInterpretationFacts,
   responseBodyHash: string,
+  interpretation?: InterpretationExecutionResult,
 ) {
   const { targetYear, timeZone, referenceDateTime } = facts;
   // The solar-term adapter's supported years. Historical annual policy remains intact.
@@ -122,6 +180,7 @@ export function buildTemporalReaderEvidence(
   const evidence = {
     ...material,
     referenceSegmentId: referenceSegment?.id ?? null,
+    researchSignals: buildResearchSignals(snapshot, material.scope, material.segments, interpretation),
     dayunOverlap: dayunOverlap.status === 'resolved' && dayunOverlap.segments.length === 0
       ? { status: 'unavailable' as const, reasonCode: 'outside_resolved_dayun_period' as const }
       : dayunOverlap,

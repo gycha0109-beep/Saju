@@ -574,7 +574,9 @@ export function createMyeonghwaSourceReadingProofHost(
       const readiness = inspectSourceReadingProofReadinessV1(run);
       const temporalReaderEvidence = readiness.material !== undefined &&
         run.requestContext?.readingRequest.intent.domain === 'general'
-        ? buildTemporalReaderEvidence(run.snapshot, run.requestContext.temporalFacts, readiness.material.responseBodyHash)
+        ? buildTemporalReaderEvidence(
+          run.snapshot, run.requestContext.temporalFacts, readiness.material.responseBodyHash, run.interpretation,
+        )
         : undefined;
       return {
         response: run.response, readiness, executedRequestBody: run.executedRequestBody,
