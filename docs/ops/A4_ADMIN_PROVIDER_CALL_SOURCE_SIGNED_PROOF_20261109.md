@@ -38,3 +38,10 @@
 - 신규 테스트 7건, 기존 관련 테스트 포함 총 18건, TypeScript/ESLint/Prettier 통과. 폐기형 PostgreSQL 17.11에서 원본 SQL + 추가 SQL 순차 설치 성공, 기록·재실행·Reader 거부·변경 금지·추가 열 거부·거짓 완전성 주장의 8개 검사 성공. 임시 DB는 폐기했습니다.
 - `observedCallbacks`는 **관측된 콜백만의 분모**입니다. Provider 전체 호출과 청구 완전성은 불명확하므로 저장한 수치가 모두 성공이어도 `completeCostCoverage=false`만 허용합니다. 추후 실제 공급사 청구 대조/소스 누락 감지·재처리는 별도 잔여 작업입니다.
 - **HOLD:** 이 코드는 기존 역할의 실제 운영 접근·비밀번호·연결, Production HTTP 및 Provider Adapter 자동 설치, Source/DB attempt 발급·승인/완료 참조 연결, 명하 Cost Writer 수집을 수행하지 않습니다. 독립 소스 DB를 설치하거나 운영 비용 수집을 켠 것으로 해석하지 않습니다. `ROADMAP_COMPLETE` 아님.
+
+## 2026-11-10 — 실제 OpenAI 콜백 ↔ 서명·누락 영수증 비공개 실행 조합 (오프라인)
+
+- `src/production/reading-ai-a4-private-provider-capture-v1.ts`: 기존 실제 `OpenAIResponsesNarrativeAdapter.onProviderCall`이 반환하는 서버 전용 이벤트를, 준비된 실행 시도 1회용 사전 승인 포트 통과 후, 요청별 Scope → 서명된 Source 영수증의 출처 소유 PostgreSQL 불변 저장 → 호출 관측·기록 실패/대기 결과의 PostgreSQL 영구 기록으로 묶는 **명시적 내부 설치 후보**를 추가했다. 승인 포트 부재/거부는 유료 호출 이전에 차단한다.
+- `test/reading-ai-a4-private-provider-capture-v1.test.ts`는 **실제 OpenAIResponsesNarrativeAdapter 클래스**와 모의 HTTPS fetch를 결합하여 반환 토큰, 서버 원본 요청 ID, 실행 시도 UUID/발급 ref, HMAC signed receipt, 실행 성공/실패 coverage를 검증했다. 공급사 네트워크 실패는 토큰 `null`로 저장하고, 영수증 저장 실패를 adapter가 격리해도 `failedCallbacks`가 영구 기록되며, coverage 기록 실패 시 성공한 결과도 완료로 수용하지 않는 조건 확인. 승인 거부·Scope 밖 호출·DB Reader 오용도 검사.
+- 신규 7건 및 관련 기존 합계 21건, TypeScript/ESLint/Prettier 통과. OpenAI 실제 API 통신/유료 호출은 수행하지 않았다.
+- **운영 미연결/HOLD:** 이 조합 자체는 현재 Product Host, Production HTTP, 명하 요청 라우팅에 설치하지 않았다. `admitAndConsumePreparedAttempt`는 진짜 서버 간 인증과 DB 권한 검증에 의해 한 번만 승인되는 외부 Source Authority 구현이 필요하며, 단순 `true` 스텁을 운영에 넣는 것은 금지된다. 권위 있는 Saju 요청 ↔ DB 실행·종료 ref 동등성을 가정하지 않음. Source DB 설치 및 전용 접속 비밀, 실제 모델 결속, 실패 재처리, 청구·환율 대조 전 비용 원장 수집은 OFF. `ROADMAP_COMPLETE` 아님.
