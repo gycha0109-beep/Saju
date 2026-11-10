@@ -30,7 +30,7 @@
 ## 4. 검증·출처 링크
 
 - [전체 CI](https://github.com/gycha0109-beep/Saju/actions/runs/42878131171), [계산 컨테이너](https://github.com/gycha0109-beep/Saju/actions/runs/42878130953), [PIE](https://github.com/gycha0109-beep/Saju/actions/runs/42878131483) — 이전 `977e36d`의 3종 Green.
-- [3단계 연구 로드맵](compatibility-t10-three-stage-roadmap-20261111.md); [2단계 문헌 대조](compatibility-t10-conflict-precedence-review-20261111.md); [연구 워크로그](compatibility-t10-research-worklog-20261111.md).
+- [3단계 연구 로드맵](compatibility-t10-product-ready-research-roadmap-20261111.md); [2단계 문헌 대조](compatibility-t10-conflict-precedence-review-20261111.md); [연구 워크로그](compatibility-t10-research-worklog-20261111.md).
 - [Saju PR #2763](https://github.com/gycha0109-beep/Saju/pull/2763) — 내부 연구 opt-in 및 회귀. 
 - [주미강(2014), RISS 공개 초록](https://www.riss.kr/link?id=T13562621) — 3개 방법과 학파별 해석 이견. [남기동·김만태(2018), KCI 공개 초록](https://www.kci.go.kr/kciportal/landing/article.kci?arti_id=ART002338687) — 연구 표본 안에서의 관찰. [『滴天髓闡微』](https://zh.wikisource.org/zh-hant/%E6%BB%B4%E5%A4%A9%E9%AB%93%E9%97%A1%E5%BE%AE) — 원국 합충 문맥. 이 출처들만으로 두 명식 보편적 T10 우선순위를 부여하지 않음.
 
@@ -43,3 +43,8 @@
 
 - 이 최종 판정은 **실제 코드·테스트 HEAD `d33cd969`의 통과 증거**를 기준으로 한다. 본 종료 판정 문서만 저장하는 추가 커밋의 CI가 새로 생성되면 결과를 별도 확인해야 하며, 이전 통과 근거를 그 커밋의 통과로 오인하지 않는다.
 - T10 종합 해석/판매와 원국·재물·연월 품질 별도 로드맵은 **ROADMAP_COMPLETE 대상이 아니다**. 공식 서비스의 재개를 위해 새 과제를 무단 생성하지 않음.
+
+## 후속 활성 연구 계획
+
+- 이 문서의 ROADMAP_COMPLETE는 **과거 3단계 한정 조사에만 해당**한다. 사용자 지시에 따라 완료된 구 로드맵 파일은 활성 계획에서 제거하고, [T10 궁합 상품 해석 완성 연구 로드맵](compatibility-t10-product-ready-research-roadmap-20261111.md)을 새 활성 목표로 지정했다.
+- 직접 두 명식 종합 방법론·개인별 Reading·상품 적격성은 **아직 미완료**. 기존 완료 선언을 새로운 로드맵의 완료로 사용하지 않는다.
