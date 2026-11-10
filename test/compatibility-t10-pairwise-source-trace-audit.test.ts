@@ -100,7 +100,7 @@ describe('T10 source-trace quality review on fixed synthetic chart pairs', () =>
       .toBe('unresolved_no_source_qualified_pairwise_precedence');
     expect(review.synthesis.compatibilityScore).toBeNull();
     expect(review.synthesis.inferredOutcome).toBeNull();
-    expect(result.pairwiseT10Admitted).toBeUndefined();
+    expect(result.sourceScopeHandoff.pairwiseT10Admitted).toBe(false);
     expect(result.mayClaimInterpersonalMeaning).toBe(false);
     expect(result.mayGrantOfficialAuthority).toBe(false);
     expect(result.mayPersist).toBe(false);
@@ -114,7 +114,6 @@ describe('T10 source-trace quality review on fixed synthetic chart pairs', () =>
     if (!subject || !second) throw new TypeError('Missing fixtures');
     const output = run(subject, second);
     expect(output.sourceScopeHandoff.target.birthTimeKnown).toBe(false);
-    expect(output.sourceScopeHandoff.target.unavailableFactPaths.length).toBeGreaterThanOrEqual(0);
     expect(output.sourceScopeHandoff.crossChartStructuralMatches.every(m =>
       !m.target.factPath.startsWith('target.pillars.hour.'),
     )).toBe(true);
