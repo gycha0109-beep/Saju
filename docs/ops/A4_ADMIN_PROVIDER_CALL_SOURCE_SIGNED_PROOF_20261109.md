@@ -13,3 +13,11 @@
 - 결과의 `completeCostCoverage`는 항상 `false`로 고정. 이 수치는 소스에서 관측한 이벤트만 의미하며 전체 공급사 호출 건수·정산 일치를 증명하지 못함. 운영 저장소, 실제 발급 HTTP, DB attempt 외부 ref 연결은 아직 HOLD.
 - 기존 `withAuthorizedReadingAttempt()` 사용법은 유지하고, 실행 종료 후 비동기 콜백이 재사용된 컨텍스트로 잘못 귀속되는 상황도 차단.
 - 기존·신규 테스트 8건, TypeScript, ESLint 검증 통과. 운영 데이터·설정/비밀번호/비용 수집 변경 없음.
+
+## 2026-11-10 — 서명 영수증 불변 저장·재조회 포트 (오프라인 구현)
+
+- `src/production/reading-ai-signed-provider-receipt-emitter-v1.ts`: 실제 서버 전용 `SajuSourceProviderCallLinkV1`을 기존 HMAC signer로 서명하고, 독립 영속 저장 포트 `appendOnceAndRead`가 원자적 callId 최초 삽입 후 이미 확정된 영수증을 반환할 때만 관측 콜백 성공으로 간주한다.
+- 반환된 영수증의 issuer/audience/keyId, 실행 시도 ID, source ref, callId/requestId, 모델·결과·시각·토큰 전체가 입력과 정확히 일치하고 HMAC 서명이 검증되는지 재생성 후 상수 시간 비교한다. 기존 callId 충돌로 내용이 다른 영수증이 반환되면 거부. 저장 실패·미조회·변조도 예외로 전달되어 요청별 관측 누락 경로에 반영 가능.
+- `test/reading-ai-signed-provider-receipt-emitter-v1.test.ts`: 정상 저장·동일 재생 멱등·사용량/시도/참조 충돌·변조·누락·저장 장애·사전 승인 scope 밖 호출 무기록 6건. 기존 출처 범위 4건, 서명 3건과 합계 13건 통과. TypeScript, ESLint, Prettier 검사 통과.
+- **중요:** 이것은 저장소 구현 자체가 아닌 영속 저장 **포트와 서명 저장 어댑터**다. 실제 DB 또는 객체 저장소의 원자적 UNIQUE(callId) 최초 삽입·불변 보존·인증된 재조회 구현, 비밀키 바인딩, Production Interpretation Authority 사전 입장, DB 실행 종료 참조 대조, 명하 비용 Writer 연결은 아직 HOLD. 이 코드만으로 실제 공급사 호출 관측의 완전성 또는 비용 수집 활성화를 주장할 수 없다.
+- 비밀키·고객·Reading/결제/크레딧·운영 DB·Worker 설정 변경 없음. `ROADMAP_COMPLETE` 아님.
