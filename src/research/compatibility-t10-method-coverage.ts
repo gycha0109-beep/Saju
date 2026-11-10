@@ -89,7 +89,6 @@ export function buildCompatibilityT10MethodCoverageV1(
 
   if (dayBranch.state === 'candidate_factor' &&
       !pair.crossChartStructuralMatches.some(match =>
-        match.relationId === dayBranch.evidence.relationId &&
         match.kind === dayBranch.evidence.kind &&
         match.subject.factPath === dayBranch.evidence.subject.factPath &&
         match.target.factPath === dayBranch.evidence.target.factPath &&
