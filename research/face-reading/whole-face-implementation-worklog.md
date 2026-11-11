@@ -574,3 +574,12 @@ Watchtower-Track: face-observation-engine
 - **남은 것:** 원본 실사진 사람 하관 윤곽 정확도, 반복성·독립 사람 참조·상업 이용권, 상대 3D 및 귀 방향, 전통 조건 바인딩·종합 판독·7단계 통합 검증. 전체 1~3단계 진행 중, 4~7단계 미완료. `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-11 — 관상 PR #2453 CI RED 타입 검사 수정
+
+- **연결된 실패:** 관상 PR #2453 HEAD `b0b0cb1222d9ef6099eab99d831f80720cba2774`, CI run `42954751149`, job `130307086542`, **Typecheck** 단계 TypeScript TS2322 3건. 신규 합성 테스트 `test/face-jaw-contour-human-review.test.ts`의 표시 좌표 배열이 일반 `number[]`로 넓게 추론되고 상태 문자열이 일반 `string`으로 추론된 문제. 제품 런타임의 형태 관측·원본 검증 로직 실패로 확인된 것은 아님.
+- **수정:** 테스트의 표시선 반환형을 실제 `JawContourSegment` 타입에 맞추고, 명시된 상태 선택값을 리터럴 타입으로 고정. 의도적으로 잘못된 좌표/복수 선을 전달하는 예외 테스트는 입력 구조형으로 표시하되 런타임 거부 케이스는 변경하지 않음. 해당 테스트 외 관상 코드·권한·사진·저장 계약·검증 정책은 변경하지 않음.
+- **검증:** 신규 턱 윤곽 검증 5건 + 로컬 정적 모듈 제공 1건 **6/6 PASS**, 신규 파일 ESLint PASS, Prettier PASS, `git diff --check` PASS. 전체 프로젝트 타입 검사와 원격 CI의 최종 성공 여부는 **신규 HEAD CI 확인 전까지 보류**. 실제 사람 참조 검증 및 상업 이용/전통 관상 권한 없음.
+- **다음:** 새 커밋에서 기본 CI Typecheck와 나머지 현재 PR 6개 워크플로 완료 결과 확인, 그 후 승인된 얼굴 관측 로드맵 계속 진행. `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine

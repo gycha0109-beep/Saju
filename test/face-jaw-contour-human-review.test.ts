@@ -6,8 +6,9 @@ import {
   validateJawContourReviewStore,
   projectJawContourReviewForUi,
 } from '../tools/face-reading/two-view/jaw-contour-human-review.mjs';
+import type { JawContourSegment } from '../tools/face-reading/two-view/jaw-contour-human-review.mjs';
 
-const outline = () => ({
+const outline = (): JawContourSegment => ({
   status: 'marked' as const,
   segments: [
     [
@@ -68,7 +69,7 @@ describe('private original-photo human lower-face visible outline', () => {
     ).toThrow('JAW_CONTOUR_REVIEW_INVALID');
   });
   it('keeps partial and invisible evidence explicitly without guessing hidden lines', () => {
-    for (const status of ['occluded', 'out_of_frame', 'not_visible', 'unknown']) {
+    for (const status of ['occluded', 'out_of_frame', 'not_visible', 'unknown'] as const) {
       const r = createJawContourReviewRecord(
         { visibleLowerFaceOutline: { status, segments: [] } },
         options,
@@ -118,7 +119,10 @@ describe('private original-photo human lower-face visible outline', () => {
       expect(() =>
         createJawContourReviewRecord(
           {
-            visibleLowerFaceOutline: { status: 'marked', segments },
+            visibleLowerFaceOutline: {
+              status: 'marked',
+              segments: segments as JawContourSegment['segments'],
+            },
           },
           options,
         ),
