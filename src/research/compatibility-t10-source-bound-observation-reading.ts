@@ -192,6 +192,7 @@ export function buildT10SourceBoundObservationReadingV1(
   const branchMatch = direct.dayBranch.verifiedStructuralMatch;
   if (stemMatch) sentences.push(structuralSentence('day_stem_combination', stemMatch));
   if (branchMatch) {
+    verifyMatch(branchMatch);
     if (!coexisting.structural.dayToDayMatches.some(item =>
       item.kind === branchMatch.kind &&
       item.definitionContentHash === branchMatch.definitionContentHash &&
