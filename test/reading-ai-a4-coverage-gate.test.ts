@@ -69,7 +69,25 @@ function setup(
       return {
         async query<Row>(sql: string, args: readonly unknown[] = []) {
           let rows: unknown[] = [];
-          if (sql.includes('current_user::text')) {
+          if (sql.includes('to_regclass(')) {
+            rows = [
+              {
+                currentUser: 'saju_a4_provider_receipt_writer_v1',
+                receiptTable: 'saju_source_ops.a4_provider_call_signed_receipts_v1',
+                coverageTable: 'saju_source_ops.a4_provider_call_coverage_v1',
+                receiptCallInsert: true,
+                receiptProofInsert: true,
+                receiptCallRead: true,
+                receiptProofRead: true,
+                coverageAttemptInsert: true,
+                coverageRefInsert: true,
+                coverageProofInsert: true,
+                coverageAttemptRead: true,
+                coverageRefRead: true,
+                coverageProofRead: true,
+              },
+            ];
+          } else if (sql.includes('current_user::text')) {
             rows = [{ currentUser: 'saju_a4_provider_receipt_writer_v1' }];
           } else if (
             sql.startsWith('INSERT INTO saju_source_ops.a4_provider_call_signed_receipts_v1')
