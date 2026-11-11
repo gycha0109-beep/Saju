@@ -34,6 +34,7 @@ function fixture(
     failCoverage?: boolean;
     providerFails?: boolean;
     principal?: string;
+    sourceReady?: boolean;
   } = {},
 ) {
   const receipts = new Map<string, string>();
@@ -47,7 +48,25 @@ function fixture(
         async query<Row>(sql: string, values: readonly unknown[] = []) {
           statements.push(sql);
           let rows: unknown[] = [];
-          if (sql.includes('current_user::text')) {
+          if (sql.includes('to_regclass(')) {
+            rows = [
+              {
+                currentUser: options.principal ?? 'saju_a4_provider_receipt_writer_v1',
+                receiptTable: 'saju_source_ops.a4_provider_call_signed_receipts_v1',
+                coverageTable: 'saju_source_ops.a4_provider_call_coverage_v1',
+                receiptCallInsert: true,
+                receiptProofInsert: options.sourceReady !== false,
+                receiptCallRead: true,
+                receiptProofRead: true,
+                coverageAttemptInsert: true,
+                coverageRefInsert: true,
+                coverageProofInsert: true,
+                coverageAttemptRead: true,
+                coverageRefRead: true,
+                coverageProofRead: true,
+              },
+            ];
+          } else if (sql.includes('current_user::text')) {
             rows = [{ currentUser: options.principal ?? 'saju_a4_provider_receipt_writer_v1' }];
           } else if (
             sql.startsWith('INSERT INTO saju_source_ops.a4_provider_call_signed_receipts_v1')
@@ -186,6 +205,20 @@ describe('Admin A4 server-private capture using actual OpenAI adapter callback',
     });
   });
 
+  it('blocks missing Source writer privileges before consuming an attempt or sending a provider call', async () => {
+    const x = fixture({ sourceReady: false });
+    await expect(
+      x.capture.withPreparedAttempt({ executionAttemptId: ATTEMPT }, async () =>
+        x.adapter.generateStructured(prompt),
+      ),
+    ).rejects.toThrow('Source receipt writer is not ready');
+    expect(x.providerCalls).toBe(0);
+    expect(x.admissionCalls).toHaveLength(0);
+    expect(x.receipts.size).toBe(0);
+    expect(x.reports.size).toBe(0);
+    expect(x.statements).not.toContainEqual(expect.stringContaining('INSERT INTO'));
+  });
+
   it('rejects missing authoritative preadmission before spending a provider call', async () => {
     const x = fixture({ admit: false });
     await expect(
@@ -196,7 +229,8 @@ describe('Admin A4 server-private capture using actual OpenAI adapter callback',
     expect(x.providerCalls).toBe(0);
     expect(x.receipts.size).toBe(0);
     expect(x.reports.size).toBe(0);
-    expect(x.statements).toHaveLength(0);
+    expect(x.statements).not.toContainEqual(expect.stringContaining('INSERT INTO'));
+    expect(x.statements).toContain('BEGIN READ ONLY');
   });
 
   it('records a receipt callback failure in durable coverage even when the real adapter swallows it', async () => {
