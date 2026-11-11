@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  buildT10SourceBoundObservationReadingV1,
+  type T10SourceBoundObservationReadingV1,
+} from '../research/compatibility-t10-source-bound-observation-reading.js';
+import {
   auditT10MonthlyTransformationScopeV1,
   type T10MonthlyTransformationScopeResearchV1,
 } from '../research/compatibility-t10-monthly-transformation-scope.js';
@@ -104,6 +108,8 @@ export interface CompatibilityTwoBirthResearchReading {
   coexistingEvidenceReview?: CompatibilityT10CoexistingEvidenceReviewV1;
   /** 2016 direct day-stem/day-branch method audit, protected research opt-in only. */
   directDayComparisonResearch?: T10DirectDayComparisonResearchV1;
+  /** Sentence-by-sentence factual Korean reading, internal-only; no T10 verdict. */
+  sourceBoundObservationReading?: T10SourceBoundObservationReadingV1;
   /** 2025 author-posted research excerpt: per-person criteria, no T10 synthesis. */
   spouseCriteria2025Scope?: T102025SpouseScopeReviewV1;
   /** Direct two-chart historical clause, attributed via 2025 author text. */
@@ -275,6 +281,11 @@ export function buildCompatibilityTwoBirthResearchReading(
     ? auditT10DirectDayComparisonV1(
       sourceScopeHandoff, maritalPalaceIntraChartResearch,
     ) : undefined;
+  const sourceBoundObservationReading = directDayComparisonResearch &&
+    coexistingEvidenceReview
+    ? buildT10SourceBoundObservationReadingV1(
+      directDayComparisonResearch, coexistingEvidenceReview,
+    ) : undefined;
   const spouseCriteria2025Scope = methodCoverage && maritalPalaceIntraChartResearch
     ? reviewT102025SpouseCriteriaScopeV1(
       sourceScopeHandoff, maritalPalaceIntraChartResearch, subject, target,
@@ -320,6 +331,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       methodCoverage,
       coexistingEvidenceReview,
       ...(directDayComparisonResearch ? { directDayComparisonResearch } : {}),
+      ...(sourceBoundObservationReading ? { sourceBoundObservationReading } : {}),
       ...(spouseCriteria2025Scope ? { spouseCriteria2025Scope } : {}),
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
       ...(classicalCrossTenGodResearch ? { classicalCrossTenGodResearch } : {}),

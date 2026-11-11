@@ -164,3 +164,10 @@
 - 비공개 연구 출력 `sourceFactorAudit` 추가: 관측된 각 오행·천간오합·지지육합/충, 미평가 천간충·형파해·공망/원진, 2016 질적 부부 표본 불확정, `sourceQualifiedFourCaseCell=null`. 기존 네 셀 부분 관측/상충 기록 보존.
 - 전용 회귀로 관측 가능한 상충·부정 사례를 출처 적격 판단과 분리하고 기존 공개 HTML·T10/판매 HOLD를 확인. [세부 감사](compatibility-t10-direct-pairwise-literature-evidence-20261111.md).
 - 다음: 원문 PDF 방법/반례 확보 가능 범위, 타 학파 해석 충돌의 조건·용신/육신의 실증 범위 추적. 새 5단계의 1단계 진행 중, 2~5 미완료. 새 커밋 CI 결과는 미확정.
+
+## 2026-11-11 — 한국어 문장과 계산 사실의 직접 결속, 상충 두 방향 재현
+
+- 시작 Green: `89298218` 연결 [CI 42970061279](https://github.com/gycha0109-beep/Saju/actions/runs/42970061279), [계산 컨테이너 42970061252](https://github.com/gycha0109-beep/Saju/actions/runs/42970061252), [PIE 42970061788](https://github.com/gycha0109-beep/Saju/actions/runs/42970061788) completed/success.
+- **구현**: 새 비공개 `compatibility-t10-source-bound-observation-reading.ts`에서 일간/일지의 이미 계산된 사실을 한국어 단일 문장·원본 경로·출처/테이블 해시와 결속. 2016 공개 초록만 존재하는 방법을 완성된 4유형 궁합 결론으로 승격하지 않는다.
+- **반례**: 일지 육합+다른 위치 충, 일지 충+다른 위치 육합, 동일 자리 오행 극과 합 병존, 역순, 출생시각 미상, 동일 출생정보 다른 사람, 위조된 계산 해시, 일반 HTML 변동 없음 검증 코드를 추가.
+- **상태**: 새 로드맵 1단계 미완료(2016·2018 본문/반례의 완전 검증 없음), 2~5단계 미완료. 실제 상품용 한국어 T10 종합 Reading, 현대 관계 결과/점수·Official/판매 발급은 계속 HOLD. 이번 새 커밋의 CI는 별도 결과 확인 필요.
