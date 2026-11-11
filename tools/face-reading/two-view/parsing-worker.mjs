@@ -7,6 +7,7 @@ const profileReady = import('./profile-metrics.mjs');
 const eyeDirectionReady = import('./eye-direction.mjs');
 const morphologyReady = import('./morphology-geometry.mjs');
 const lipClassReady = import('./visible-lip-class-profile.mjs');
+const lipPixelColorReady = import('./visible-lip-pixel-color.mjs');
 const eyeClassReady = import('./visible-eye-class-profile.mjs');
 const foreheadSkinReady = import('./visible-forehead-skin-band.mjs');
 let session, localizer, FaceLandmarker, ort;
@@ -418,6 +419,26 @@ self.onmessage = async ({ data }) => {
             imageHeight: bitmap.height,
           })
         : null;
+    // Transient RGB evidence only. Full-frame parsing coordinates and image
+    // pixels receive the same 512x512 resize; no per-pixel data is returned.
+    let lipPixelColorCandidate = null;
+    if (lipClassCandidate?.status === 'available') {
+      try {
+        const { measureVisibleLipPixelColor } = await lipPixelColorReady;
+        ctx.clearRect(0, 0, size, size);
+        ctx.drawImage(bitmap, 0, 0, size, size);
+        const originalRgb = ctx.getImageData(0, 0, size, size);
+        lipPixelColorCandidate = measureVisibleLipPixelColor({
+          mask: display,
+          rgba: originalRgb.data,
+          size,
+          viewRole,
+          lipsScreened: screened.quality.lips?.status === 'screened',
+        });
+      } catch {
+        lipPixelColorCandidate = null;
+      }
+    }
     const { measureVisibleEyeClassProfile } = await eyeClassReady;
     const eyeClassCandidate =
       viewRole === 'frontal' && eyeDirection.status === 'available'
@@ -445,6 +466,7 @@ self.onmessage = async ({ data }) => {
       captureRef,
       layers,
       lipClassCandidate,
+      lipPixelColorCandidate,
       eyeClassCandidate,
       foreheadSkinCandidate,
       parsing: {

@@ -22,6 +22,7 @@ describe('private two-view review browser module routing', () => {
       (match) => match[1],
     );
     expect(parsingImports).toContain('visible-forehead-skin-band.mjs');
+    expect(parsingImports).toContain('visible-lip-pixel-color.mjs');
     const staticAllowlist = server.match(
       /const assets = new Map\(\s*\[([\s\S]*?)\]\.map\(\(name\)/,
     );
@@ -59,6 +60,17 @@ describe('private two-view review browser module routing', () => {
     expect(browser).toContain(
       'state.earReviews?.[record.captureRef]?.revision !== reviewed.revision',
     );
+  });
+  it('shows source-image lip RGB only as a transient candidate in the current review', () => {
+    const html = readFileSync(resolve(root, 'tools/face-reading/two-view/review.html'), 'utf8');
+    const parser = readFileSync(
+      resolve(root, 'tools/face-reading/two-view/parsing-worker.mjs'),
+      'utf8',
+    );
+    expect(html).toContain('id="lip-pixel-color-experiment"');
+    expect(browser).toContain('renderVisibleLipPixelColor(record, result, previous);');
+    expect(parser).toContain('lipPixelColorCandidate = measureVisibleLipPixelColor');
+    expect(parser).toContain('ctx.drawImage(bitmap, 0, 0, size, size)');
   });
   it('serves every directly imported review module from the local static allowlist', () => {
     const imports = [...browser.matchAll(/from '\.\/([^']+\.mjs)'/g)].map((match) => match[1]);

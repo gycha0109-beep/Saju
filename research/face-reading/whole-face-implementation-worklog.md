@@ -640,3 +640,13 @@ Watchtower-Track: face-observation-engine
 - **한계:** 모델 귀 전체 클래스는 실제 귓바퀴·귓불·부착부·귀 방향·귀 두께·3D 돌출을 나누지 못한다. 수동 외곽선은 독립 GT가 아니며, `drawingCoverageCertified=false`, `anatomicalOuterRimValidated=false`, `independentAccuracyValidated=false`, `canonicalF0Admitted=false`, `traditionalBindingAuthorized=false`, `productInterpretationAuthorized=false`, `modelTrainingAuthorized=false`. FR294 `ear.visible_boundary_height_shape` 하드갭은 그대로 미완료.
 - **검증:** 변경 코드·기존 귀 크기 비교·로컬 서버 모듈 제공 관련 합성 테스트 및 TypeScript/ESLint/Prettier 확인. 이 PC의 실제 사람 귀 표시 사진이 없으므로 **`empirical_unverified`** 유지. 새 HEAD CI는 푸시 후 확인.
 - **다음:** 비공개 실사진이 가능한 환경에서 귀 가림/일부 표기/양쪽 불일치 시 데이터 검증, 독립 관찰자 외곽선 반복성 및 부위별 가시성 실제 근거 수집. 독립 참조 전에는 실제 귀의 정확도·전통 형태·정규 관측 승인 불가.
+
+### 2026-11-11 — 위·아래 입술 원본 RGB 가시 색 채널 연구 후보
+
+- **Watchtower-Track:** face-observation-engine. 작업 기준 HEAD `af346049c6c8305a6b81ef3069c86a6a9be28310`; 7단계 로드맵 2~3단계. 이전 HEAD CI 6/6 GREEN.
+- **구현:** `tools/face-reading/two-view/visible-lip-pixel-color.mjs`와 타입 선언·합성 테스트를 추가했다. 기존 고정 파싱 ResNet18(클래스 12 윗입술, 13 아랫입술)과 기존 영역 정합/상하 클래스 분리 기준을 재사용한다. **동일 정면 원본 RGB**를 모델의 512×512 전체 화면 좌표계로 일시 축소하여, 모델이 가리킨 각 입술 클래스의 사방 이웃도 같은 클래스인 내부 픽셀만 대상으로 인코딩된 sRGB R/G/B 채널 평균·사용 화소 수·채널 극값 화소 비율을 계산한다. 마스크 경계, 피부, 치아 및 배경 화소를 입술색으로 취급하지 않는다.
+- **연결·원본 보호:** 기존 `parsing-worker.mjs`의 사진 분석 직후 현재 화면 메모리에만 스칼라 후보를 반환하고 `review.mjs`·`review.html`에 표시한다. 연구 후보가 정규 파서 0.7 저장 스키마/제품 관측/전통 판독으로 유입되지 않으며 원본 RGB·마스크·얼굴 좌표 전체·개인 경로를 공개 저장소나 결과 파일에 쓰지 않는다. 기존 원본 현재성 차단과 배치 실행 경로를 재사용한다.
+- **실제 관측·검증 구분:** 원본 사진의 **화소 통계**만 기술할 수 있다. 광원·촬영 시점·카메라 화이트밸런스·후처리·화장 여부가 통제되지 않으므로 실제 입술 색소/자연색 및 고전 관상 형태 조건을 판정할 수 없다. `colorCalibrated=false`, `whiteBalanceVerified=false`, `illuminationControlled=false`, `makeupExcluded=false`, `trueAnatomicalLipColorValidated=false`, `independentAccuracyValidated=false`, `canonicalF0Admitted=false`, `traditionalBindingAuthorized=false`, `productInterpretationAuthorized=false`, `modelTrainingAuthorized=false`.
+- **로컬 검증:** 신규·근접 기존 입술 비교/모듈 제공/원본 현재성 등 합성 기술 테스트 36/36, 전체 TypeScript 검사·변경 코드 ESLint·diff 검사 PASS. 실사진+독립 사람 색상 라벨에 대한 정확도 검증은 **`empirical_unverified`**. 작업 PC의 예상 비공개 intake 부재 확인; 이전 집 PC 연결은 현재 불가하므로 가상 정답은 생성하지 않았다. 새 커밋의 CI는 푸시 후 별도 확인.
+- **실사진 독립 검증의 미충족 입력:** 권리 확인된 원본 사진/촬영 세션, 입술 실제 가시 영역의 독립 사람 표시, 광원/화이트밸런스·화장 상태와 반복 촬영 기록, 색상 판정자 간 합의 또는 별도 색도학적 참조, 인물·세션 독립 평가. 이러한 자료가 없어 `mouth.visible_lip_color` FR294 하드갭은 계속 미해결.
+- **다음:** 나머지 2D 미해결 항목의 실제 사람 참조·가림 기록을 갖춘 사본으로 검증하고, FR294 11개와 기존 정규 29개/계산기 18개의 권한은 변경하지 않는다.

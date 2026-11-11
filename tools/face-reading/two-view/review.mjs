@@ -940,6 +940,52 @@ function renderVisibleNoseMaskExperiment(record, result, previous) {
 }
 // Transient output from the current screened parser worker, never the 0.7
 // stored summary. Source classes do not prove anatomical upper/lower edges.
+// Transient original-photo RGB samples only; NOT intrinsic lip pigmentation.
+function renderVisibleLipPixelColor(record, result, previous) {
+  const node = $('lip-pixel-color-experiment');
+  if (!node) return;
+  if (previous || record.viewRole !== 'frontal') {
+    node.textContent = '현재 정면 사진에 한해 입술의 사진상 색 채널 후보를 확인합니다.';
+    return;
+  }
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    result.parsing.morphology?.lipBalance?.status !== 'available' ||
+    result.parsing.regionScreening?.regions?.lips?.status !== 'screened'
+  ) {
+    node.textContent = '현재 입술 분할과 위치 근거가 없어 사진상 색상 관측을 보류합니다.';
+    return;
+  }
+  const value = result.lipPixelColorCandidate;
+  if (!value || value.status === 'unavailable') {
+    node.textContent =
+      '입술 원본 화소 색상 후보 보류(' +
+      (value?.reason || '원본 화소 또는 위·아래 입술 내부 영역 없음') +
+      ').';
+    return;
+  }
+  const parts = [
+    ['윗입술', value.upper],
+    ['아랫입술', value.lower],
+  ].map(([label, part]) => {
+    if (part?.status !== 'available' && part?.status !== 'partial')
+      return label + ' 보류(' + (part?.reason || '사용 가능한 내부 픽셀 없음') + ')';
+    return (
+      label +
+      ' 보이는 모델 영역 내부 sRGB 채널 평균(R/G/B 0~1) ' +
+      part.meanEncodedSrgbChannels.map((x) => x.toFixed(3)).join('/') +
+      ' · 화소 ' +
+      part.imagePixelsSampled +
+      '/' +
+      part.interiorClassPixelsConsidered +
+      (part.status === 'partial' ? ' (일부)' : '')
+    );
+  });
+  node.textContent =
+    parts.join(' · ') +
+    ' · 단일 사진의 모델 영역 픽셀 통계입니다. 조명·화이트밸런스·화장·카메라 보정이 통제되지 않아 실제 입술색, 건강 상태, 관상형, 독립 정확도로 해석하지 않습니다.';
+}
 function renderVisibleLipClassExperiment(record, result, previous) {
   const node = $('lip-class-experiment');
   if (previous) {
@@ -1673,6 +1719,7 @@ function render() {
   renderVisibleEyeClassExperiment(record, result, previous);
   renderEyelidUpperMarginComparison(record, result, previous);
   renderVisibleLipClassExperiment(record, result, previous);
+  renderVisibleLipPixelColor(record, result, previous);
   renderLipHumanWidthComparison(record, result, previous);
   renderLipHumanVerticalComparison(record, result, previous);
   renderManualPhiltrumRidgeSpacing(record, previous);
