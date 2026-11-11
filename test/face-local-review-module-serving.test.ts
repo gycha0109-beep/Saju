@@ -51,12 +51,22 @@ describe('private two-view review browser module routing', () => {
     expect(browser).toContain('results.get(record.captureRef) !== result');
     expect(browser).toContain('measureVisibleBrowPixelTexture');
   });
+  it('gates same-photo ear curve comparison by current review revision', () => {
+    const html = readFileSync(resolve(root, 'tools/face-reading/two-view/review.html'), 'utf8');
+    expect(html).toContain('id="ear-rim-curve-comparison"');
+    expect(browser).toContain('renderEarRimCurveComparison(record, result, previous);');
+    expect(browser).toContain('compareEarMaskBoundaryToHumanOuterRim');
+    expect(browser).toContain(
+      'state.earReviews?.[record.captureRef]?.revision !== reviewed.revision',
+    );
+  });
   it('serves every directly imported review module from the local static allowlist', () => {
     const imports = [...browser.matchAll(/from '\.\/([^']+\.mjs)'/g)].map((match) => match[1]);
     expect(imports).toContain('source-currentness-gate.mjs');
     expect(imports).toContain('eyelid-manual-line-offsets.mjs');
     expect(imports).toContain('nostril-border-photometry.mjs');
     expect(imports).toContain('brow-pixel-texture.mjs');
+    expect(imports).toContain('ear-rim-curve-comparison.mjs');
     const staticAllowlist = server.match(
       /const assets = new Map\(\s*\[([\s\S]*?)\]\.map\(\(name\)/,
     );

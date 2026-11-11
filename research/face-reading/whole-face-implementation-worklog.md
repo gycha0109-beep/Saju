@@ -631,3 +631,12 @@ Watchtower-Track: face-observation-engine
 - **필수 구별:** 픽셀 밝기 차이는 이미지 질감의 공학적 기술값만 의미한다. 개별 털의 식별·폭·모근 밀도·실제 털 가시성·해부학적 정확도·전통 관상형 판정은 **전부 미검증**이며 `candidateOnly=true`, `individualHairFibresIdentified=false`, `individualHairWidthMeasured=false`, `hairDensityMeasured=false`, `independentAccuracyValidated=false`, `canonicalF0Admitted=false`, `traditionalBindingAuthorized=false`, `productInterpretationAuthorized=false`, `modelTrainingAuthorized=false`를 유지한다.
 - **로컬 검증:** 기존 눈썹 모델/사람 중심선/원본 현재성/모듈 제공와 신규 질감 모듈의 관련 합성 테스트 **39/39 PASS**, 전체 TypeScript 검사·변경 파일 ESLint·diff 검사 통과. 원본 비공개 실사진에서 모발 가닥 정답 대비 확인은 **미실시(`empirical_unverified`)**. 새 HEAD CI 결과는 푸시 후 별도 확인한다.
 - **다음:** 비공개 독립 사람 라벨과 같은 사진으로 눈썹 피부·털 가닥의 실제 분리 가능성, 촬영 해상도·조명·흔들림별 재현성 확인. 그 전까지 FR294의 `eyebrow.visible_hair_density_texture` 하드갭은 해소되지 않는다. 이어서 귀의 부위별 실제 가시성 근거 준비도를 확인해 다음 미완료 2D 관측을 진행한다.
+
+### 2026-11-11 — 사람 귀 외곽선과 모델 귀 전체 경계의 동일 사진 국소 거리 비교
+
+- **Watchtower-Track:** face-observation-engine. 직전 기준 HEAD `cb0b8d44e2c1a2811e398a4a4a57606634b6cad3`, PR #2453. 로드맵 2~3단계.
+- **추가:** `tools/face-reading/two-view/ear-rim-curve-comparison.mjs` 및 선언·합성 테스트 구현. 기존 귀 전체 ResNet18 분할 마스크와 원본 비공개 사람 `outerRim` 표시를 **같은 정면 이미지 좌표계**에서만 비교한다. 기존 외곽선의 **가로/세로 크기 차이** 계산과 달리, 사람 단일 표시선의 누적 길이 10/30/50/70/90% 위치 다섯 점에서 가장 가까운 모델 **귀 전체 클래스**의 4방향 경계까지의 평균·최대 화면 평면 거리(원본 사진 대각선 기준)를 계산한다. 두 화면 귀를 독립적으로 보류할 수 있다.
+- **보류 및 현재성:** 양쪽 분할이 없거나 일부만 남음, 사진 경계에 걸림, 화면 좌우 혼동, 사람 표시가 부분·가림·복수 획·0 길이·화면 밖, 좌표/권한 이상 시 해당 비교를 보류한다. 현재 모델 분할/사진 스냅샷을 재사용하고, 사람 표시 저장 후 `revision`이 달라지면 진행 중이던 오래된 비교를 표시하지 않는다. 결과는 화면 메모리의 최소 스칼라뿐이며 원시 마스크·원본·사람 생체 표시 좌표를 신규 결과/CI/공개 Git에 넣지 않는다.
+- **한계:** 모델 귀 전체 클래스는 실제 귓바퀴·귓불·부착부·귀 방향·귀 두께·3D 돌출을 나누지 못한다. 수동 외곽선은 독립 GT가 아니며, `drawingCoverageCertified=false`, `anatomicalOuterRimValidated=false`, `independentAccuracyValidated=false`, `canonicalF0Admitted=false`, `traditionalBindingAuthorized=false`, `productInterpretationAuthorized=false`, `modelTrainingAuthorized=false`. FR294 `ear.visible_boundary_height_shape` 하드갭은 그대로 미완료.
+- **검증:** 변경 코드·기존 귀 크기 비교·로컬 서버 모듈 제공 관련 합성 테스트 및 TypeScript/ESLint/Prettier 확인. 이 PC의 실제 사람 귀 표시 사진이 없으므로 **`empirical_unverified`** 유지. 새 HEAD CI는 푸시 후 확인.
+- **다음:** 비공개 실사진이 가능한 환경에서 귀 가림/일부 표기/양쪽 불일치 시 데이터 검증, 독립 관찰자 외곽선 반복성 및 부위별 가시성 실제 근거 수집. 독립 참조 전에는 실제 귀의 정확도·전통 형태·정규 관측 승인 불가.

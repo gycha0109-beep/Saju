@@ -15,6 +15,7 @@ import {
 } from './nose-preview-epoch.mjs';
 import { attachEarDetailReview } from './ear-detail-review-ui.mjs';
 import { compareEarMaskToHumanOuterRim } from './ear-model-human-rim-span.mjs';
+import { compareEarMaskBoundaryToHumanOuterRim } from './ear-rim-curve-comparison.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
 import { attachJawContourHumanReview } from './jaw-contour-human-review-ui.mjs';
 import { compareModelJawEnvelopeWithHumanContour } from './jaw-model-human-contour-comparison.mjs';
@@ -517,7 +518,7 @@ function renderHairSkinInterfaceExperiment(record, result, previous) {
     });
 }
 // Image-plane silhouette of the existing 7/8 ear classes only. No anatomical parts.
-async function inspectVisibleEarMask(record, result) {
+async function readVisibleEarMask(record, result) {
   const maskImage = new Image();
   maskImage.src = result.layerUrls.ears;
   const sourceImage = new Image();
@@ -541,10 +542,21 @@ async function inspectVisibleEarMask(record, result) {
     canvas.width,
     canvas.height,
   );
-  return measureVisibleEarMaskSilhouette(binary, canvas.width, canvas.height, {
+  return {
+    mask: binary,
+    width: canvas.width,
+    height: canvas.height,
     imageWidth: sourceImage.naturalWidth,
     imageHeight: sourceImage.naturalHeight,
-  });
+  };
+}
+async function inspectVisibleEarMask(record, result) {
+  const { mask, width, height, imageWidth, imageHeight } = await readVisibleEarMask(record, result);
+  return measureVisibleEarMaskSilhouette(mask, width, height, { imageWidth, imageHeight });
+}
+async function inspectEarRimCurve(record, result, human) {
+  const input = await readVisibleEarMask(record, result);
+  return compareEarMaskBoundaryToHumanOuterRim({ ...input, human });
 }
 function renderVisibleForeheadSkinBand(record, result, previous) {
   const node = $('forehead-skin-experiment');
@@ -798,6 +810,74 @@ function renderEarHumanSpanComparison(record, result, previous) {
   } else {
     node.textContent += ' · 사람 귀 외곽 표시-모델 비교 보류(' + compared.reason + ')';
   }
+}
+function renderEarRimCurveComparison(record, result, previous) {
+  const node = $('ear-rim-curve-comparison');
+  if (!node) return;
+  if (previous || mode !== 'existing' || record.viewRole !== 'frontal') {
+    node.textContent = '현재 정면 원본의 귀 외곽선에만 적용하는 2D 연구 비교입니다.';
+    return;
+  }
+  const reviewed = state.earReviews?.[record.captureRef];
+  if (!reviewed) {
+    node.textContent = '귀 외곽의 비공개 사람 표시가 없어 국소 경계 비교를 보류합니다.';
+    return;
+  }
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    result.parsing.regionScreening?.regions?.ears?.status !== 'screened' ||
+    result.earMaskCandidate?.status !== 'available' ||
+    !result.layerUrls?.ears
+  ) {
+    node.textContent =
+      '현재 모델 귀 영역의 위치/가림 또는 분할 근거가 부족해 국소 경계 비교를 보류합니다.';
+    return;
+  }
+  const current = result.earRimCurveComparison;
+  if (current?.revision === reviewed.revision && current.status !== 'loading') {
+    if (current.status === 'failed') {
+      node.textContent = '귀 외곽선 비교 보류: 모델 귀 픽셀을 읽지 못했습니다.';
+      return;
+    }
+    const summary = current.value;
+    node.textContent =
+      [
+        ['화면 왼쪽', summary.imageLeft],
+        ['화면 오른쪽', summary.imageRight],
+      ]
+        .map(([name, side]) =>
+          side?.status === 'available'
+            ? name +
+              ' 사람 표시 5점에서 가장 가까운 모델 귀 클래스 경계까지의 평균/최대 차이(사진 대각선 대비) ' +
+              side.meanHumanStrokeToNearestModelClassEdgeOverImageDiagonal.toFixed(4) +
+              '/' +
+              side.maxHumanStrokeToNearestModelClassEdgeOverImageDiagonal.toFixed(4)
+            : name + ' 비교 보류(' + (side?.reason || '표시선·분할 불충분') + ')',
+        )
+        .join(' · ') +
+      ' · 사람 표시선과 전체 귀 클래스 경계의 사진상 거리일 뿐, 실제 귓바퀴·귓불·부착부·돌출·정확도 판정은 아닙니다.';
+    return;
+  }
+  if (current?.revision === reviewed.revision && current.status === 'loading') {
+    node.textContent = '사람이 표시한 귀 외곽과 모델 영역의 화면상 국소 거리를 계산 중입니다.';
+    return;
+  }
+  result.earRimCurveComparison = { revision: reviewed.revision, status: 'loading' };
+  node.textContent = '사람이 표시한 귀 외곽과 모델 영역의 화면상 국소 거리를 계산 중입니다.';
+  void inspectEarRimCurve(record, result, reviewed)
+    .then((value) => {
+      if (results.get(record.captureRef) !== result) return;
+      if (state.earReviews?.[record.captureRef]?.revision !== reviewed.revision) return;
+      result.earRimCurveComparison = { revision: reviewed.revision, status: 'completed', value };
+      if (records[selected]?.captureRef === record.captureRef) render();
+    })
+    .catch(() => {
+      if (results.get(record.captureRef) !== result) return;
+      if (state.earReviews?.[record.captureRef]?.revision !== reviewed.revision) return;
+      result.earRimCurveComparison = { revision: reviewed.revision, status: 'failed' };
+      if (records[selected]?.captureRef === record.captureRef) render();
+    });
 }
 function renderVisibleNoseMaskExperiment(record, result, previous) {
   const node = $('nose-mask-experiment');
@@ -1180,7 +1260,10 @@ const earDetailReview = attachEarDetailReview({
   getState: () => state,
   getRecord: () => records[selected],
   canAnnotate: () => original && activeAnnotationTool === 'ear',
-  onSaved: invalidateFr294HumanSummaryAfterSave,
+  onSaved: () => {
+    invalidateFr294HumanSummaryAfterSave();
+    render();
+  },
 });
 const lipBorderHumanReview = attachLipBorderHumanReview({
   getState: () => state,
@@ -1584,6 +1667,7 @@ function render() {
   renderVisibleForeheadSkinBand(record, result, previous);
   renderVisibleEarMaskExperiment(record, result, previous);
   renderEarHumanSpanComparison(record, result, previous);
+  renderEarRimCurveComparison(record, result, previous);
   renderVisibleNoseMaskExperiment(record, result, previous);
   renderNoseHumanAlarComparison(record, result, previous);
   renderVisibleEyeClassExperiment(record, result, previous);

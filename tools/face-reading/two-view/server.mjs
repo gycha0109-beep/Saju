@@ -512,6 +512,7 @@ export async function createLocalReviewServer({
       'ear-detail-review-ui.mjs',
       'visible-ear-mask-silhouette.mjs',
       'ear-model-human-rim-span.mjs',
+      'ear-rim-curve-comparison.mjs',
       'visible-hair-skin-interface.mjs',
       'visible-forehead-skin-band.mjs',
       'lip-border-human-review.mjs',
