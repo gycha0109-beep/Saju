@@ -98,10 +98,28 @@ describe('T10 original monthly-command yongshen vs conditional element method sc
     expect(sameBirth?.pairwiseT10Admitted).toBe(false);
   });
 
-  it('keeps original month/day observation independent from an unknown birth hour', () => {
-    const review = run(A, birth(1996, 6, 5, false)).yongshenMethodScopeResearch;
-    expect(review?.target.dayStem.value).not.toBeNull();
-    expect(review?.target.monthBranch.value).not.toBeNull();
+  it('preserves canonical day/month ambiguity for an unknown birth hour', () => {
+    const unknownTime = birth(1996, 6, 5, false);
+    const snapshot = calculateAuthorizedMyeonghwaProductionSnapshot(
+      unknownTime, { now: new Date(AT) },
+    ).snapshot;
+    const review = run(A, unknownTime).yongshenMethodScopeResearch;
+    const day = snapshot.pillars.day;
+    const month = snapshot.pillars.month;
+    expect(review?.target.dayStem.value)
+      .toBe(day.status === 'resolved' ? day.value.stem.value : null);
+    expect(review?.target.monthBranch.value)
+      .toBe(month.status === 'resolved' ? month.value.branch.value : null);
+    expect(review?.target.exception.state).toBe(
+      day.status !== 'resolved' || month.status !== 'resolved'
+        ? 'unresolved_day_or_month'
+        : day.value.stem.element === '목' &&
+          (month.value.branch.value === '인' || month.value.branch.value === '묘')
+          ? 'wood_day_master_in_yin_or_mao_month'
+          : 'other_observed_month_context',
+    );
+    expect(review?.target.calculationHash).toBe(snapshot.calculationHash);
+    expect(review?.target.exception.alternateGejuSelected).toBe(false);
     expect(review?.target.individualGejuSelected).toBe(false);
     expect(review?.target.individualUsefulElementSelected).toBe(false);
     expect(review?.unresolvedPrerequisites)
