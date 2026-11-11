@@ -26,6 +26,7 @@ describe('private two-view review browser module routing', () => {
   it('serves every directly imported review module from the local static allowlist', () => {
     const imports = [...browser.matchAll(/from '\.\/([^']+\.mjs)'/g)].map((match) => match[1]);
     expect(imports).toContain('source-currentness-gate.mjs');
+    expect(imports).toContain('eyelid-manual-line-offsets.mjs');
     const staticAllowlist = server.match(
       /const assets = new Map\(\s*\[([\s\S]*?)\]\.map\(\(name\)/,
     );

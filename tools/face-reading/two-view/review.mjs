@@ -22,6 +22,7 @@ import { compareLipClassVerticalEnvelopesToHumanBorders } from './lip-model-huma
 import { measureManualPhiltrumRidgeSpacing } from './philtrum-manual-ridge-spacing.mjs';
 import { attachEyelidContourHumanReview } from './eyelid-contour-human-review-ui.mjs';
 import { compareEyeClassEnvelopeToHumanUpperMargin } from './eyelid-model-human-upper-edge.mjs';
+import { measureManualEyelidLineOffsets } from './eyelid-manual-line-offsets.mjs';
 import { createSourceCurrentnessGate } from './source-currentness-gate.mjs';
 import {
   earBinaryFromOverlayRGBA,
@@ -1233,6 +1234,50 @@ function renderPhotoReadiness(record) {
     target.append(item);
   }
 }
+function renderManualEyelidLineOffsets(record, previous) {
+  const node = $('eyelid-manual-line-offsets');
+  if (!node) return;
+  node.textContent = '';
+  if (mode !== 'existing' || previous || record.viewRole !== 'frontal') return;
+  const comparison = measureManualEyelidLineOffsets(
+    state?.eyelidContourReviews?.[record.captureRef],
+  );
+  if (comparison.status === 'unavailable') {
+    node.textContent =
+      '눈꺼풀 주름·덮임 경계 사이의 2D 사람 표시 간격: 기록 또는 공통 표시 구간이 없어 보류';
+    return;
+  }
+  const parts = [];
+  for (const [side, label] of [
+    ['imageLeft', '화면 왼쪽'],
+    ['imageRight', '화면 오른쪽'],
+  ]) {
+    for (const [key, name] of [
+      ['creaseToUpperMargin', '주름선'],
+      ['hoodingToUpperMargin', '덮임 경계'],
+    ]) {
+      const result = comparison[side]?.[key];
+      if (result?.status === 'available' || result?.status === 'partial') {
+        parts.push(
+          label +
+            ' ' +
+            name +
+            '-눈꺼풀 윗경계 세 지점의 세로 차이 ' +
+            result.signedOtherMinusUpperAtSharedQuartilesToImageHeight
+              .map((value) => value.toFixed(3))
+              .join('/') +
+            (result.status === 'partial' ? ' (겹치는 일부만)' : ''),
+        );
+      } else {
+        parts.push(label + ' ' + name + ' 비교 보류');
+      }
+    }
+  }
+  node.textContent =
+    '같은 원본 사람 표시선의 가로 공통 구간 25·50·75%에서 측정한 화면상 세로 차이(사진 높이 대비): ' +
+    parts.join(' · ') +
+    ' · 실제 쌍꺼풀 분류·피부 두께·모델 정확도·전통 판독은 아닙니다.';
+}
 function renderJawModelHumanComparison(record, result, previous) {
   const node = $('jaw-model-comparison');
   if (!node) return;
@@ -1345,6 +1390,7 @@ function render() {
   jawContourHumanReview.render();
   renderJawModelHumanComparison(record, result, previous);
   eyelidContourHumanReview.render();
+  renderManualEyelidLineOffsets(record, previous);
   if (record.viewRole === 'frontal' && mode === 'existing')
     renderBrowHumanComparison(record, result, previous);
   const quality = parsing?.regionScreening?.regions;
