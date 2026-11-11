@@ -75,3 +75,16 @@
 - `src/production/reading-ai-a4-myeongha-proof-http-loader-v1.ts`: 고정된 HTTPS 오리진 및 전용 서비스 Bearer로 정확한 `GET /api/internal/a4/prepared-attempts/<UUID>/proof`만 읽는다. 임의 경로·브라우저 오리진·Redirect·Cookie·Cache를 허용하지 않고 5초 기본 제한, 4096바이트 응답 제한, JSON 형식/ID 대조를 수행한다. 404는 증명 부재 null, 인증/장애/변조/과대 응답은 오류로 구분하여 **Saju 독립 HMAC·일회성 Claim을 우회하지 않는다**.
 - 신규 HTTPS 로더 테스트 7건, TypeScript/ESLint/Prettier PASS. 실제 네트워크·비밀키 주입·서비스 접속·운영 DB/유료 호출 미실행.
 - 명하 저장·사설 인증 리더는 명하 별도 PR에서 오프라인 구현. 실운영의 TLS/mTLS·네트워크 허용목록·비밀 서비스 인증·DB 계정/정본 발급·Source Claim 바인딩은 HOLD. 기존 Saju #2774와 독립 후속 연결이며 운영 비용 수집 OFF, `ROADMAP_COMPLETE` 아님.
+
+## 2026-11-11 — A4 HTTPS 증명·DB 일회성 승인·실제 호출 영수증 단일 서버 조합 (오프라인)
+
+- `src/production/reading-ai-a4-authenticated-capture-composition-v1.ts`: 기존 #2774 서명·일회성 승인, #2775 Saju HTTPS 증명 조회, #2770 OpenAI provider 콜백·Source 영수증·누락 기록을 **서로 다른 전용 DB 연결과 인증 자격증명**으로 한 번에 구성하는 명시적 내부 팩토리. 같은 claim/receipt DB 풀 또는 재사용된 서명 키는 생성 단계에서 거부한다.
+- 통합 테스트는 명하의 정확한 HMAC 사전 승인 증명을 모의 비공개 HTTPS 서버에서 받고, 서명 검증과 Claim 1회 사용 성공 후 요청 Scope 내부 실행·관측 결과 기록을 확인한다. 두 번째 같은 시도는 Source 호출 전 거부하고, 위조 서명·404·503은 Claim이나 영수증 기록을 시작하지 않는다.
+- 신규 4건 + 이전 실제 OpenAI capture/서명/HTTPS 조회 테스트 포함 **24건 PASS**, TypeScript/ESLint/Prettier 검사. `onProviderCall`은 실제 OpenAI 어댑터와, `withPreparedAttempt`는 Production HTTP host에 동일한 생성 인스턴스로 명시적으로 전달해야 한다. 운영 계정/TLS/Secret/DB 설치가 없어 해당 Runtime wiring은 아직 수행하지 않았다.
+- 이 조합은 서명 증명을 사용하더라도 Saju 원본 Reading의 Production Interpretation Authority를 자동 부여하지 않는다. 명하 사설 proof DB의 개인정보(Subject/Reading UUID) 보존·삭제 정책 확정, 운영 TLS/서명키·서비스 로그/권한 검증, 실제 Provider 비용 청구 대조 전까지 비용 수집 OFF. **HOLD / `ROADMAP_COMPLETE` 아님.**
+
+## 2026-11-11 — A4 AI 어댑터·서버 동일 출처 수집기 조합과 Production Authority 경계
+
+- `src/production/reading-ai-a4-authorized-product-host-composition-v1.ts`: #2776의 동일 private capture 인스턴스를 **실제 OpenAIResponsesNarrativeAdapter의 `onProviderCall`**과 **인가된 Production Reading Host의 `a4SourceCapture`**에 동시에 전달하는 비실행 Server Factory. 기존 `inspectMyeonghwaProductionComposition`을 먼저 호출하여 Production Interpretation Registry/ReadingOptions/계산 정책 등이 미승인 상태이면 생성 자체를 거부한다. 연구/Preview Registry를 공식 Production으로 승격하지 않는다.
+- 외부에서 기존 Narrative Runtime·다른 Provider observer·다른 Host Capture·출처 참조 생성기를 강제 주입하는 경우 즉시 거절한다. 테스트 4건 + #2776의 기존 통합 연결 4건 통과, TypeScript/ESLint/Prettier 통과. 테스트 도중 Socket listen·OpenAI 네트워크·DB 연결은 0건이었다.
+- **아직 운영 설치 아님:** 실제 Production Interpretation Authority, 승인된 실행/모델/보존 정책, 사설 TLS·DB 서비스 로그인·Secret 및 실제 호출/청구 대조가 없으므로 이 팩토리를 Runtime에 등록하거나 운영 서버를 실행하지 않는다. 비용 수집 OFF, `ROADMAP_COMPLETE` 아님.
