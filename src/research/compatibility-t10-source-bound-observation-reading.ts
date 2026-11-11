@@ -1,4 +1,8 @@
 import type { CrossChartStructuralMatch } from './family-pair-source-scope-handoff.js';
+import {
+  STRUCTURAL_RELATION_DEFINITION_CONTENT_HASH,
+  STRUCTURAL_RELATION_SOURCE_CATALOG,
+} from '../calculation/structural-relations.js';
 import type {
   ElementPairKind,
   DayElementComparisonV1,
@@ -64,14 +68,30 @@ function equalPerson(
     a.birthTimeKnown === b.birthTimeKnown;
 }
 
+const ORIGINAL_STRUCTURAL_SOURCES = [
+  STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan,
+  STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue,
+] as const;
+
+/** A structural sentence cites its actual rule table, NOT the 2016 sample study. */
 function verifyMatch(match: CrossChartStructuralMatch): void {
+  const component = match.kind === 'stem_five_combination' ? 'stem' : 'branch';
+  const sourceIdsValid = match.sourceIds.length === ORIGINAL_STRUCTURAL_SOURCES.length &&
+    ORIGINAL_STRUCTURAL_SOURCES.every(source =>
+      match.sourceIds.includes(source.sourceId));
   if (match.pairwiseMeaningAuthorized !== false ||
-      !match.sourceIds.length ||
-      !/^[0-9a-f]{64}$/u.test(match.definitionContentHash) ||
+      match.definitionContentHash !== STRUCTURAL_RELATION_DEFINITION_CONTENT_HASH ||
+      !sourceIdsValid || match.component !== component ||
       !match.subject.factPath.startsWith('subject.pillars.') ||
-      !match.target.factPath.startsWith('target.pillars.')) {
+      !match.target.factPath.startsWith('target.pillars.') ||
+      !match.subject.factPath.endsWith('.value.' + component) ||
+      !match.target.factPath.endsWith('.value.' + component)) {
     throw new TypeError('T10 observation sentence requires exact chart and source evidence.');
   }
+}
+
+function structuralSourceUrls(): string[] {
+  return ORIGINAL_STRUCTURAL_SOURCES.map(source => source.url);
 }
 
 function unique(items: readonly string[]): string[] {
@@ -84,8 +104,12 @@ function elementSentence(
 ): T10SourceBoundObservationSentenceV1 {
   if (element.pairwiseMeaningAuthorized !== false ||
       element.source.sourceId !== T10_FIVE_ELEMENT_CYCLE_SOURCE.sourceId ||
-      !element.subject.factPath.startsWith('subject.pillars.day.') ||
-      !element.target.factPath.startsWith('target.pillars.day.')) {
+      element.source.url !== T10_FIVE_ELEMENT_CYCLE_SOURCE.url ||
+      element.source.scope !== 'ELEMENT_CYCLE_FACTS_ONLY_NOT_INTERPERSONAL_MEANING' ||
+      element.subject.factPath !== 'subject.pillars.day.value.' +
+        (kind === 'day_stem_elements' ? 'stem' : 'branch') + '.element' ||
+      element.target.factPath !== 'target.pillars.day.value.' +
+        (kind === 'day_stem_elements' ? 'stem' : 'branch') + '.element') {
     throw new TypeError('T10 element text requires two original day-pillar facts.');
   }
   const label = kind === 'day_stem_elements' ? '일간' : '일지';
@@ -118,7 +142,7 @@ function structuralSentence(
       ' 사이에 ' + term + ' 구조가 관측됩니다.',
     observedFactPaths: [match.subject.factPath, match.target.factPath],
     sourceIds: unique(match.sourceIds),
-    sourceUrls: [T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl],
+    sourceUrls: structuralSourceUrls(),
     definitionContentHashes: [match.definitionContentHash],
     evidenceScope: 'calculated_structural_fact',
     interpersonalMeaningAuthorized: false,
@@ -198,7 +222,7 @@ export function buildT10SourceBoundObservationReadingV1(
       ]),
       sourceIds: unique([...structural.sourceIds,
         T10_FIVE_ELEMENT_CYCLE_SOURCE.sourceId]),
-      sourceUrls: [T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl,
+      sourceUrls: [...structuralSourceUrls(),
         T10_FIVE_ELEMENT_CYCLE_SOURCE.url],
       definitionContentHashes: [structural.definitionContentHash],
       evidenceScope: 'calculated_structural_fact',
@@ -226,7 +250,7 @@ export function buildT10SourceBoundObservationReadingV1(
           [item.subject.factPath, item.target.factPath])]),
       sourceIds: unique([ ...branchMatch.sourceIds,
         ...opposites.flatMap(item => [...item.sourceIds])]),
-      sourceUrls: [T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl],
+      sourceUrls: structuralSourceUrls(),
       definitionContentHashes: unique([branchMatch.definitionContentHash,
         ...opposites.map(item => item.definitionContentHash)]),
       evidenceScope: 'calculated_structural_fact',

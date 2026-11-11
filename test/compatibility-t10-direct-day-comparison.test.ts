@@ -43,6 +43,10 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
     expect(review?.source.publicContentsResearchPages.fourCaseResults)
       .toEqual([35, 40, 50, 57]);
     expect(review?.source.publicContentsResearchPages.authorLimitations).toBe(68);
+    expect(review?.source.publicContentsOmitsAbstractElementalControlFactor).toBe(true);
+    expect(review?.source.abstractNegativeDayBranchFactors).toContain('elemental_control');
+    expect(review?.source.contentsCaseTwoAndFourNegativeDayBranchFactors)
+      .not.toContain('elemental_control');
     expect(review?.dayStem.group).toBe('mixed_source_factors');
     expect(review?.dayStem.conflictingFactors).toBe(true);
     expect(review?.dayStem.elementalComparison?.relation)

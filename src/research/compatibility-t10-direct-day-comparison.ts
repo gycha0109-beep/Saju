@@ -18,6 +18,14 @@ export const T10_DIRECT_DAY_COMPARISON_SOURCE = Object.freeze({
   subjectPopulation: 'MARRIED_COUPLES_QUALITATIVE_INTERVIEWS',
   // These are locations in the public table of contents, NOT reviewed full text.
   publicContentsTextLayer: 'DBPIA_PUBLIC_TABLE_OF_CONTENTS',
+  // Case 2/4 headings abbreviate the abstract's list; they are not full methods.
+  abstractNegativeDayBranchFactors: [
+    'clash', 'elemental_control', 'punishment', 'break', 'harm',
+  ] as const,
+  contentsCaseTwoAndFourNegativeDayBranchFactors: [
+    'punishment', 'clash', 'break', 'harm',
+  ] as const,
+  publicContentsOmitsAbstractElementalControlFactor: true,
   publicContentsResearchPages: {
     palaceTheory: 9,
     sixSpiritsTheory: 12,

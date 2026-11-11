@@ -51,6 +51,16 @@ describe('T10 protected source-grounded Korean observations', () => {
       expect.arrayContaining([expect.stringMatching(/^[a-f0-9]{64}$/u)]),
     );
     expect(opposite?.sourceIds.length).toBeGreaterThan(0);
+    expect(structural?.sourceUrls).toEqual([
+      'https://zh.wikisource.org/zh-hant/%E4%B9%99%E5%B7%B3%E5%8D%A0/10',
+      'https://zh.wikisource.org/zh-hant/%E9%81%B8%E6%93%87%E8%A6%81%E7%95%A5/%E4%B8%8A',
+    ]);
+    expect(opposite?.sourceUrls).toEqual(structural?.sourceUrls);
+    expect(structural?.sourceUrls).not.toContain(
+      'https://www.dbpia.co.kr/journal/detail?nodeId=T14205410');
+    expect(reading?.sentences.find(item => item.kind === 'source_limit')
+      ?.sourceUrls).toContain(
+      'https://www.dbpia.co.kr/journal/detail?nodeId=T14205410');
     expect(reading?.compatibilityScore).toBeNull();
     expect(reading?.sourceQualifiedFourCase).toBeNull();
     expect(reading?.maySell).toBe(false);
@@ -132,6 +142,26 @@ describe('T10 protected source-grounded Korean observations', () => {
       ...direct,
       subject: { ...direct.subject, calculationHash: 'wrong-calculation' },
     }, coexisting)).toThrow('protected matching research');
+    expect(() => buildT10SourceBoundObservationReadingV1({
+      ...direct,
+      dayBranch: {
+        ...direct.dayBranch,
+        verifiedStructuralMatch: direct.dayBranch.verifiedStructuralMatch && {
+          ...direct.dayBranch.verifiedStructuralMatch,
+          definitionContentHash: '0'.repeat(64),
+        },
+      },
+    }, coexisting)).toThrow('exact chart and source evidence');
+    expect(() => buildT10SourceBoundObservationReadingV1({
+      ...direct,
+      dayBranch: {
+        ...direct.dayBranch,
+        verifiedStructuralMatch: direct.dayBranch.verifiedStructuralMatch && {
+          ...direct.dayBranch.verifiedStructuralMatch,
+          sourceIds: ['SRC-NOT-AN-ORIGINAL-TABLE'],
+        },
+      },
+    }, coexisting)).toThrow('exact chart and source evidence');
     expect(() => buildT10SourceBoundObservationReadingV1({
       ...direct,
       sourceFactorAudit: {
