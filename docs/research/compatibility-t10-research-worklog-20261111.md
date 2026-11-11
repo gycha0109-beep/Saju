@@ -133,3 +133,11 @@
 - **실제 구현:** `compatibility-t10-yongshen-method-scope.ts`와 전용 테스트. 두 Canonical 원국의 월지·일간·월지 십신 *관측값* 및 목/인묘 예외 대상만 원문/인물/해시로 결속. 월지에 관측된 십신만으로 실제 격국용신 또는 상호 필요 오행을 선언하지 않음. 시각 미상·역순·같은 출생정보의 서로 다른 인물·위조 해시·일반 화면 불변 테스트.
 - **출처 및 방법론 차이:** [직접 문헌 감사](compatibility-t10-direct-pairwise-literature-evidence-20261111.md)의 10절 참조. 전사본과 고전 원문/후대 편집자 주석을 구별하며 관계 예측·상품 허가는 수행하지 않음.
 - **새 CI는 이전 Green과 구분**: 다음 커밋 CI 성공 추정 금지. 1단계 여전히 진행 중; 2~5단계 미완료. 남은 것은 실제 격국 성패/신강약/용신 선정/상대 보완의 근거·검증.
+
+## 2026-11-11 — 격국 성패·구응 원전 근거를 기존 원국 연구에서 궁합 연구로 안전하게 연결
+
+- 시작 CI: `aeed2b7e`의 [전체 CI](https://github.com/gycha0109-beep/Saju/actions/runs/42951784198), [계산 컨테이너](https://github.com/gycha0109-beep/Saju/actions/runs/42951784024), [PIE](https://github.com/gycha0109-beep/Saju/actions/runs/42951784554) success.
+- 직접 원전: [『子平真詮·九、論用神成敗救應』](https://www.donglishuzhai.net/chapter/3722.html)의 조건부 원국 구제 두 경우. 이미 존재하던 `general-natal-geju-rescue-precedence-weighting-primitive-authority-review.ts`의 원전 목록/한계를 중복 제작 없이 재사용.
+- 실제 구현: `compatibility-t10-geju-rescue-source-bridge.ts` 추가 및 내부 연구 Runtime 연결. A/B **각자 연·월·시 천간 십신 원본**을 출처·인물·계산 해시와 결속. 미확정 출생시각을 단순 부재로 오인하지 않고, 같은 사람 내 구조 동시관측만 표시. **B의 인성/식신을 A의 격국을 구해주는 것으로 합칠 수 없게** 유지. 모든 구제 성립/우선순위/최종 궁합 결과 불인정.
+- 테스트: 기존 원국 연구 목록과 실제 두 명식 계산 자료 대조, 역순, 미확정 시간, 위조된 원본 해시, Preview/판매 HOLD 회귀 추가. 신규 커밋의 CI 결과는 미확정.
+- 미완료: 원국 격국 성립/실제 구제 효과/경합/강약의 출처 기반 계산, 대인 용신 합성 근거, 실제 한국어 Reading. **1단계 진행 중, 2~5단계 미완료**.

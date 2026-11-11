@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  auditT10GejuRescueSourceBridgeV1,
+  type T10GejuRescueBridgeResearchV1,
+} from '../research/compatibility-t10-geju-rescue-source-bridge.js';
+import {
   auditT10YongshenMethodScopeV1,
   type T10YongshenMethodScopeResearchV1,
 } from '../research/compatibility-t10-yongshen-method-scope.js';
@@ -106,6 +110,8 @@ export interface CompatibilityTwoBirthResearchReading {
   classicalUsefulElementResearch?: T10ClassicalUsefulElementResearchV1;
   /** Monthly-command geju vs conditional useful element: source-method boundary. */
   yongshenMethodScopeResearch?: T10YongshenMethodScopeResearchV1;
+  /** Intra-chart geju rescue observations cannot cross people. */
+  gejuRescueSourceBridge?: T10GejuRescueBridgeResearchV1;
   html: string;
 }
 
@@ -279,6 +285,10 @@ export function buildCompatibilityTwoBirthResearchReading(
   const yongshenMethodScopeResearch = methodCoverage
     ? auditT10YongshenMethodScopeV1(sourceScopeHandoff, subject, target)
     : undefined;
+  const gejuRescueSourceBridge = yongshenMethodScopeResearch
+    ? auditT10GejuRescueSourceBridgeV1(
+      sourceScopeHandoff, yongshenMethodScopeResearch, subject, target,
+    ) : undefined;
   return {
     version: COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
@@ -305,6 +315,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(classicalCrossTenGodResearch ? { classicalCrossTenGodResearch } : {}),
       ...(classicalUsefulElementResearch ? { classicalUsefulElementResearch } : {}),
       ...(yongshenMethodScopeResearch ? { yongshenMethodScopeResearch } : {}),
+      ...(gejuRescueSourceBridge ? { gejuRescueSourceBridge } : {}),
     } : {}),
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
