@@ -39,6 +39,10 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
     expect(review).toBeDefined();
     expect(review?.source.verifiedTextLayer).toBe('DBPIA_PUBLIC_ABSTRACT');
     expect(review?.source.fullTextMethodVerified).toBe(false);
+    expect(review?.source.publicContentsTextLayer).toBe('DBPIA_PUBLIC_TABLE_OF_CONTENTS');
+    expect(review?.source.publicContentsResearchPages.fourCaseResults)
+      .toEqual([35, 40, 50, 57]);
+    expect(review?.source.publicContentsResearchPages.authorLimitations).toBe(68);
     expect(review?.dayStem.group).toBe('mixed_source_factors');
     expect(review?.dayStem.conflictingFactors).toBe(true);
     expect(review?.dayStem.elementalComparison?.relation)

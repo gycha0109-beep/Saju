@@ -16,6 +16,17 @@ export const T10_DIRECT_DAY_COMPARISON_SOURCE = Object.freeze({
   sourceUrl: 'https://www.dbpia.co.kr/journal/detail?nodeId=T14205410',
   verifiedTextLayer: 'DBPIA_PUBLIC_ABSTRACT',
   subjectPopulation: 'MARRIED_COUPLES_QUALITATIVE_INTERVIEWS',
+  // These are locations in the public table of contents, NOT reviewed full text.
+  publicContentsTextLayer: 'DBPIA_PUBLIC_TABLE_OF_CONTENTS',
+  publicContentsResearchPages: {
+    palaceTheory: 9,
+    sixSpiritsTheory: 12,
+    usefulGodTheory: 15,
+    researchMethod: 17,
+    interviewCollection: 23,
+    fourCaseResults: [35, 40, 50, 57] as const,
+    authorLimitations: 68,
+  },
   method: 'DAY_STEM_POSITIVE_OR_NEGATIVE_SET_BY_DAY_BRANCH_POSITIVE_OR_NEGATIVE_SET',
   abstractFourGroups: [
     'STEM_POSITIVE_BRANCH_POSITIVE',
