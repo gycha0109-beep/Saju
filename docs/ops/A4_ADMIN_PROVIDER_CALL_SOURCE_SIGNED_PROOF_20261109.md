@@ -69,3 +69,9 @@
 - 신규 테스트 6건 + 기존 실제 OpenAI A4 capture 테스트 7건 총 **13건 PASS**, TypeScript/ESLint/Prettier PASS. 폐기형 PostgreSQL 17.11에서 기존 출처 스키마와 신규 Claim 스키마 순차 설치 및 정확한 Claim Writer로 최초 INSERT 1건, 동일 ID 재시도 INSERT 0건 확인. 임시 DB는 제거했다.
 - 이 모듈은 **운영 미설치**이며, `loadSignedProof`의 실제 명하 서버 간 인증 조회·명하 측 정본 DB 준비 후 서명 발급·전용 권한/TLS/Secret 바인딩이 필요하다. 단순 호출자 제공 증명이나 무조건 성공 스텁을 실제 Production Authority로 사용하면 안 된다. 이 DB 시도 증명은 그 자체로 Production Interpretation Authority나 실제 공급사 비용·청구 완전성을 증명하지 않는다.
 - 기존 Saju HTTP·OpenAI Runtime·명하 고객/결제/크레딧·운영 DB·비밀번호·유료 API 및 비용 수집 상태를 변경하지 않았다. **HOLD / `ROADMAP_COMPLETE` 아님.**
+
+## 2026-11-11 — A4 명하 사전 승인 증명 HTTPS 전용 조회 클라이언트 (오프라인)
+
+- `src/production/reading-ai-a4-myeongha-proof-http-loader-v1.ts`: 고정된 HTTPS 오리진 및 전용 서비스 Bearer로 정확한 `GET /api/internal/a4/prepared-attempts/<UUID>/proof`만 읽는다. 임의 경로·브라우저 오리진·Redirect·Cookie·Cache를 허용하지 않고 5초 기본 제한, 4096바이트 응답 제한, JSON 형식/ID 대조를 수행한다. 404는 증명 부재 null, 인증/장애/변조/과대 응답은 오류로 구분하여 **Saju 독립 HMAC·일회성 Claim을 우회하지 않는다**.
+- 신규 HTTPS 로더 테스트 7건, TypeScript/ESLint/Prettier PASS. 실제 네트워크·비밀키 주입·서비스 접속·운영 DB/유료 호출 미실행.
+- 명하 저장·사설 인증 리더는 명하 별도 PR에서 오프라인 구현. 실운영의 TLS/mTLS·네트워크 허용목록·비밀 서비스 인증·DB 계정/정본 발급·Source Claim 바인딩은 HOLD. 기존 Saju #2774와 독립 후속 연결이며 운영 비용 수집 OFF, `ROADMAP_COMPLETE` 아님.
