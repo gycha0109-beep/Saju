@@ -53,7 +53,12 @@ describe('T10 natal source transformation examples never become cross-chart geju
   });
 
   it('observes the exact yin-month visible-jia/bing source pattern without selecting month use', () => {
-    const inputs = Array.from({ length: 19 }, (_, i) => birth(1990, 2, i + 9));
+    // 14:30 (未 hour) cannot expose 丙 as the hour stem; use 辰 hour
+    // to exercise the source's 丙透 candidate without altering the natal rule.
+    const inputs = Array.from({ length: 19 }, (_, i): BirthInput => ({
+      ...birth(1990, 2, i + 9),
+      time: { known: true, hour: 8, minute: 30 },
+    }));
     const candidate = inputs.find(input => {
       const chart = snap(input);
       const month = chart.pillars.month;
