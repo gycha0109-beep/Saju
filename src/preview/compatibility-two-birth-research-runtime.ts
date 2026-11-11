@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  buildT10HistoricalDayYearObservation,
+  type T10HistoricalDayYearObservation,
+} from '../research/compatibility-t10-historical-day-year-observation.js';
+import {
   buildT10ThreeMethodApplicabilityReadingV1,
   type T10ThreeMethodApplicabilityReadingV1,
 } from '../research/compatibility-t10-three-method-applicability-reading.js';
@@ -120,6 +124,8 @@ export interface CompatibilityTwoBirthResearchReading {
   spouseCriteria2025Scope?: T102025SpouseScopeReviewV1;
   /** Direct two-chart historical clause, attributed via 2025 author text. */
   directCombination2025Research?: T102025DirectCombinationResearch;
+  /** 2025 historical day-to-other-year matches, source-bound facts only. */
+  historicalDayYearObservation?: T10HistoricalDayYearObservation;
   /** Contradictory traditional two-chart six-spirit methods; no admitted outcome. */
   classicalCrossTenGodResearch?: T10ClassicalCrossTenGodResearch;
   /** Classical useful-element examples: actual symbols only, never selected yongshin. */
@@ -298,6 +304,10 @@ export function buildCompatibilityTwoBirthResearchReading(
     ) : undefined;
   const directCombination2025Research = methodCoverage
     ? observeT102025DirectCombinationCandidates(sourceScopeHandoff) : undefined;
+  const historicalDayYearObservation = directCombination2025Research
+    ? buildT10HistoricalDayYearObservation(
+      sourceScopeHandoff, directCombination2025Research,
+    ) : undefined;
   const classicalCrossTenGodResearch = methodCoverage
     ? auditT10ClassicalCrossTenGodScopeV1(sourceScopeHandoff, subject, target)
     : undefined;
@@ -348,6 +358,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(threeMethodApplicabilityReading ? { threeMethodApplicabilityReading } : {}),
       ...(spouseCriteria2025Scope ? { spouseCriteria2025Scope } : {}),
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
+      ...(historicalDayYearObservation ? { historicalDayYearObservation } : {}),
       ...(classicalCrossTenGodResearch ? { classicalCrossTenGodResearch } : {}),
       ...(classicalUsefulElementResearch ? { classicalUsefulElementResearch } : {}),
       ...(yongshenMethodScopeResearch ? { yongshenMethodScopeResearch } : {}),
