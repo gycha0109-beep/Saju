@@ -229,8 +229,10 @@ export function buildCompatibilityTwoBirthResearchReading(
   const coexistingEvidenceReview = methodCoverage
     ? reviewCompatibilityT10CoexistingEvidenceV1(sourceScopeHandoff, methodCoverage)
     : undefined;
-  const directDayComparisonResearch = methodCoverage
-    ? auditT10DirectDayComparisonV1(sourceScopeHandoff) : undefined;
+  const directDayComparisonResearch = methodCoverage && maritalPalaceIntraChartResearch
+    ? auditT10DirectDayComparisonV1(
+      sourceScopeHandoff, maritalPalaceIntraChartResearch,
+    ) : undefined;
   return {
     version: COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
