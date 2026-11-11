@@ -61,3 +61,11 @@
 - `test/reading-ai-a4-source-coverage-audit-v1.test.ts` 8개 신규 테스트와 기존 PostgreSQL 영수증·누락 기록 관련 테스트 14개 포함 **22건 PASS**, TypeScript/ESLint/Prettier PASS. 폐기형 PostgreSQL 17.11에서 기존 두 Source 오프라인 스키마 설치 후 **전용 Writer 역할로 두 테이블의 실제 SELECT 쿼리 성공**을 확인했으며 임시 DB는 즉시 종료했다.
 - 결과 필드 `completeCostCoverage=false`는 상수다. 저장된 로컬 영수증과 관측 콜백이 맞아도 **실제 공급사 전체 HTTP 호출·청구·월간 완전성**은 검증하지 못한다. 추가 운영 환경의 전용 DB 접속·신뢰 가능한 Prepared Attempt 일회성 승인·Production Interpretation Authority·누락 공급사 호출 감지·실제 청구 대조가 필요하다.
 - 이 기능은 명하 비용 원장·고객·결제·크레딧·운영 DB와 연결하거나 변경하지 않았으며 실제 호출·유료 API·비용 수집도 수행하지 않았다. **HOLD / `ROADMAP_COMPLETE` 아님.**
+
+## 2026-11-11 — 명하의 서명된 DB 사전 승인 증명·Saju 일회성 사용 차단 (오프라인)
+
+- `src/production/reading-ai-a4-signed-attempt-admission-v1.ts`: 명하 DB에서 정상 준비된 정확한 실행 시도 UUID의 **서버 전용 서명 증명**을 검증하는 `SajuA4PreparedAttemptAdmissionPortV1` 구현 후보. HMAC-SHA256 도메인 `myeongha/a4/prepared-attempt-proof/v1`, 발급자·대상·키 ID·정확한 Attempt/Reading/Subject·발급 시각·최대 120초 유효기간과 서명을 확인한다. 증명이 없거나 변조·만료·발급 대상을 잘못 지정하면 DB를 접속하지 않고 거절한다.
+- `docs/ops/A4_ADMIN_SIGNED_PREPARED_ATTEMPT_CLAIMS_OFFLINE_V1.sql`: 기존 Saju Source 출처 스키마에 **별도 최소권한** 일회성 Claim Writer 역할 및 `execution_attempt_id` 기본키 불변 테이블 설치 후보. 최소 INSERT/SELECT만 부여하고, 실제 승인 시 `INSERT ... ON CONFLICT DO NOTHING RETURNING` + COMMIT로 동일 시도의 중복 출처 발급을 차단한다. 키·회원·Reading 개인정보는 Claim DB에 저장하지 않고 해시와 UUID만 기록한다.
+- 신규 테스트 6건 + 기존 실제 OpenAI A4 capture 테스트 7건 총 **13건 PASS**, TypeScript/ESLint/Prettier PASS. 폐기형 PostgreSQL 17.11에서 기존 출처 스키마와 신규 Claim 스키마 순차 설치 및 정확한 Claim Writer로 최초 INSERT 1건, 동일 ID 재시도 INSERT 0건 확인. 임시 DB는 제거했다.
+- 이 모듈은 **운영 미설치**이며, `loadSignedProof`의 실제 명하 서버 간 인증 조회·명하 측 정본 DB 준비 후 서명 발급·전용 권한/TLS/Secret 바인딩이 필요하다. 단순 호출자 제공 증명이나 무조건 성공 스텁을 실제 Production Authority로 사용하면 안 된다. 이 DB 시도 증명은 그 자체로 Production Interpretation Authority나 실제 공급사 비용·청구 완전성을 증명하지 않는다.
+- 기존 Saju HTTP·OpenAI Runtime·명하 고객/결제/크레딧·운영 DB·비밀번호·유료 API 및 비용 수집 상태를 변경하지 않았다. **HOLD / `ROADMAP_COMPLETE` 아님.**
