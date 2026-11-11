@@ -119,19 +119,18 @@ describe('A4 source private HTTPS proof => HMAC => one-use claim => provider cap
   it('admits a single exact signed DB-prepared attempt before creating signed source coverage', async () => {
     const x = fixture();
     const results: string[] = [];
-    const output = await x.composition.withPreparedAttempt(
-      { executionAttemptId: ATTEMPT },
-      async (ref) => {
+    await expect(
+      x.composition.withPreparedAttempt({ executionAttemptId: ATTEMPT }, async (ref) => {
         results.push(ref);
         return 'protected output';
-      },
-    );
-    expect(output).toBe('protected output');
+      }),
+    ).rejects.toThrow('local callback evidence incomplete');
     expect(results).toEqual(['saju_source_' + REF_UUID]);
     expect(x.events).toEqual([
       'authenticated MyeongHa proof fetch',
       'claim db connect',
       'source single-use admitted',
+      'source receipt db connect',
       'source receipt db connect',
     ]);
     expect(JSON.parse(x.coverages.get(ATTEMPT)!)).toMatchObject({
@@ -149,7 +148,9 @@ describe('A4 source private HTTPS proof => HMAC => one-use claim => provider cap
       executions++;
       return 'done';
     };
-    await x.composition.withPreparedAttempt({ executionAttemptId: ATTEMPT }, exec);
+    await expect(
+      x.composition.withPreparedAttempt({ executionAttemptId: ATTEMPT }, exec),
+    ).rejects.toThrow('local callback evidence incomplete');
     await expect(
       x.composition.withPreparedAttempt({ executionAttemptId: ATTEMPT }, exec),
     ).rejects.toThrow('single-use DB attempt admission required');

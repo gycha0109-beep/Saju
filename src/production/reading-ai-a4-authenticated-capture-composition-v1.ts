@@ -1,4 +1,6 @@
 import type { SajuA4ReceiptDatabasePoolV1 } from './reading-ai-provider-receipt-postgres-v1.js';
+import type { SajuSourceAttemptContextV1 } from './reading-ai-source-call-correlation-v1.js';
+import { createPostgresSajuA4SourceCoverageAuditV1 } from './reading-ai-a4-source-coverage-audit-v1.js';
 import { createSajuA4SignedPreparedAttemptAdmissionV1 } from './reading-ai-a4-signed-attempt-admission-v1.js';
 import {
   createSajuA4MyeongHaProofHttpLoaderV1,
@@ -68,7 +70,7 @@ export function createSajuA4AuthenticatedCaptureCompositionV1(
     nowMs: input.nowMs,
     loadSignedProof: proofLoader.loadSignedProof,
   });
-  return createSajuA4PrivateProviderCaptureV1({
+  const capture = createSajuA4PrivateProviderCaptureV1({
     pool: input.sourceReceiptPool,
     admission,
     issuer: input.sourceIssuer,
@@ -81,5 +83,34 @@ export function createSajuA4AuthenticatedCaptureCompositionV1(
       : {
           sourceRefFactory: input.sourceRefFactory,
         }),
+  });
+  const audit = createPostgresSajuA4SourceCoverageAuditV1({
+    pool: input.sourceReceiptPool,
+    issuer: input.sourceIssuer,
+    audience: input.sourceAudience,
+    keyId: input.sourceKeyId,
+    keyBytes: input.sourceSigningKey,
+  });
+  return Object.freeze({
+    onProviderCall: capture.onProviderCall,
+    async withPreparedAttempt<T>(
+      attempt: SajuSourceAttemptContextV1,
+      execute: (externalRequestRef: string) => Promise<T>,
+    ): Promise<T> {
+      const outcome = await capture.withPreparedAttempt(attempt, execute);
+      // Confirm durable, signed local callbacks AFTER the coverage report
+      // committed, BEFORE releasing a successful Production Reading response.
+      // This cannot certify all upstream API calls or invoice costs.
+      const evidence = await audit.inspectAttempt(attempt.executionAttemptId);
+      if (
+        evidence.status !== 'observed_storage_consistent_unverified' ||
+        evidence.acknowledgedReceipts === null ||
+        evidence.acknowledgedReceipts < 1 ||
+        evidence.storedSignedReceipts !== evidence.acknowledgedReceipts
+      ) {
+        throw new Error('Saju A4 local callback evidence incomplete; Reading response held');
+      }
+      return outcome;
+    },
   });
 }

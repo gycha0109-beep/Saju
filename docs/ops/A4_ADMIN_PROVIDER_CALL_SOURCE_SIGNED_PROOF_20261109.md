@@ -88,3 +88,11 @@
 - `src/production/reading-ai-a4-authorized-product-host-composition-v1.ts`: #2776의 동일 private capture 인스턴스를 **실제 OpenAIResponsesNarrativeAdapter의 `onProviderCall`**과 **인가된 Production Reading Host의 `a4SourceCapture`**에 동시에 전달하는 비실행 Server Factory. 기존 `inspectMyeonghwaProductionComposition`을 먼저 호출하여 Production Interpretation Registry/ReadingOptions/계산 정책 등이 미승인 상태이면 생성 자체를 거부한다. 연구/Preview Registry를 공식 Production으로 승격하지 않는다.
 - 외부에서 기존 Narrative Runtime·다른 Provider observer·다른 Host Capture·출처 참조 생성기를 강제 주입하는 경우 즉시 거절한다. 테스트 4건 + #2776의 기존 통합 연결 4건 통과, TypeScript/ESLint/Prettier 통과. 테스트 도중 Socket listen·OpenAI 네트워크·DB 연결은 0건이었다.
 - **아직 운영 설치 아님:** 실제 Production Interpretation Authority, 승인된 실행/모델/보존 정책, 사설 TLS·DB 서비스 로그인·Secret 및 실제 호출/청구 대조가 없으므로 이 팩토리를 Runtime에 등록하거나 운영 서버를 실행하지 않는다. 비용 수집 OFF, `ROADMAP_COMPLETE` 아님.
+
+## 2026-11-11 — A4 Saju 실제 콜백·서명 영수증의 사후 대조를 성공 응답 경계에 연결 (오프라인)
+
+- 명하 [PR #3210](https://github.com/gycha0109-beep/MyeongHa/pull/3210)의 실행 시도별 다중 Source 영수증 재처리는 [Integration #42964445259](https://github.com/gycha0109-beep/MyeongHa/actions/runs/42964445259) **SUCCESS 후 병합**됐다.
+- `src/production/reading-ai-a4-authenticated-capture-composition-v1.ts`: 기존 Saju의 실제 OpenAI callback → 불변 HMAC 영수증 → Source 호출 관측/누락 보고서 보존이 끝난 **후**, 기존 `createPostgresSajuA4SourceCoverageAuditV1`의 독립 출처 증거 대조를 수행하고, **양쪽 기록이 일치하며 검증된 콜백이 1건 이상일 때만** 성공한 Production Reading 응답을 반환한다.
+- 한 Source execution attempt 내에서 **콜백 0건·저장 영수증 누락/초과·서명 변조·커버리지 보고서 누락/위변조·관측 콜백 미완료/실패·감사 DB 접근/권한 실패**는 성공 응답을 차단한다. Saju 정본 Source Writer의 동일 최소 SELECT 권한을 읽기 전용 감사에 사용하며, 새 DB 테이블/역할/로그인/키/가격/청구 경로를 추가하지 않는다. 원 실행의 비정상 종료는 기존 예외 전달 경로를 유지한다.
+- `test/reading-ai-a4-coverage-gate.test.ts` 신규 4건 + 수정된 통합 4건 + 기존 Source 영수증·관측 대조 테스트 8건 = **16건 PASS**, TypeScript/ESLint/Prettier PASS. 실제 유료 AI 호출/운영 DB 접근 없이 서명 증거의 모의 DB 입출력으로 검증한다.
+- 검증 범위는 **Saju에 관측되어 보존된 콜백과 영수증의 정합성**뿐이다. 외부 공급사 전체 API 호출 수·청구·사용량 완전성, 실제 서비스 설치, 명하 비용 Writer의 운영 바인딩 및 Production Interpretation Authority를 입증하지 못한다. **`completeCostCoverage=false`, 비용 수집 OFF, `ROADMAP_COMPLETE` 아님.**
