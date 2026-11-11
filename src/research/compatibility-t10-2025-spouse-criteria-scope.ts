@@ -1,6 +1,5 @@
 import type {
   CanonicalSajuSnapshot, EarthlyBranch, PillarSlot,
-  StructuralRelationCandidate,
 } from '../contracts/calculation.js';
 import type { PairwiseSourceScopeHandoff } from
   './family-pair-source-scope-handoff.js';
