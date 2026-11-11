@@ -146,6 +146,30 @@ export interface T10DirectDayComparisonResearchV1 {
   };
   /** A research grouping from the accessible abstract; not a harmony verdict. */
   readonly observedAbstractCell: FourCaseCell;
+  /** Tracks what was actually measured, not a complete literature-defined cell. */
+  readonly sourceFactorAudit: {
+    readonly dayStem: {
+      readonly observed: readonly (
+        'stem_five_combination' | 'elemental_same' |
+        'elemental_generation' | 'elemental_control'
+      )[];
+      readonly notEvaluated: readonly ['stem_clash'];
+    };
+    readonly dayBranch: {
+      readonly observed: readonly (
+        'branch_six_combination' | 'branch_clash' |
+        'elemental_same' | 'elemental_generation' | 'elemental_control'
+      )[];
+      readonly notEvaluated: readonly ['punishment', 'break', 'harm'];
+    };
+    /** General adverse examples in the abstract, beyond the four enumerated cells. */
+    readonly otherAbstractFactorsNotEvaluated: readonly ['void', 'yuanchen'];
+    readonly classificationBasis: 'computed_factor_subset_only';
+    readonly sourceQualifiedFourCaseCell: null;
+    readonly sourcePopulationMatchEstablished: false;
+    readonly fullMethodAndExceptionsVerified: false;
+    readonly mayInferIndividualOutcome: false;
+  };
   readonly missingPrerequisites: readonly [
     'FULL_ABSTRACT_METHOD_AND_EXCEPTIONS_NOT_VERIFIED',
     'DAY_STEM_AND_BRANCH_RELATION_COVERAGE_INCOMPLETE',
@@ -245,6 +269,27 @@ export function auditT10DirectDayComparisonV1(
     elementalNegative(branchElements);
   const stemGroup = groupFactor(stemPositive, stemNegative, complete);
   const branchGroup = groupFactor(branchPositive, branchNegative, complete);
+  const stemObserved: T10DirectDayComparisonResearchV1[
+    'sourceFactorAudit']['dayStem']['observed'][number][] = [];
+  const branchObserved: T10DirectDayComparisonResearchV1[
+    'sourceFactorAudit']['dayBranch']['observed'][number][] = [];
+  if (stem?.kind === 'stem_five_combination') stemObserved.push('stem_five_combination');
+  if (branch?.kind === 'branch_six_combination') {
+    branchObserved.push('branch_six_combination');
+  }
+  if (branch?.kind === 'branch_clash') branchObserved.push('branch_clash');
+  const observableElementFactor = (value: DayElementComparisonV1 | null):
+    'elemental_same' | 'elemental_generation' | 'elemental_control' | null => {
+    if (!value) return null;
+    if (value.relation === 'same_element') return 'elemental_same';
+    if (value.relation === 'subject_generates_target' ||
+        value.relation === 'target_generates_subject') return 'elemental_generation';
+    return 'elemental_control';
+  };
+  const stemElementFactor = observableElementFactor(stemElements);
+  const branchElementFactor = observableElementFactor(branchElements);
+  if (stemElementFactor) stemObserved.push(stemElementFactor);
+  if (branchElementFactor) branchObserved.push(branchElementFactor);
 
   return {
     version: T10_DIRECT_DAY_COMPARISON_VERSION,
@@ -271,6 +316,22 @@ export function auditT10DirectDayComparisonV1(
       unimplementedSourceFactors: ['punishment', 'break', 'harm'],
     },
     observedAbstractCell: fourCaseCell(stemGroup, branchGroup),
+    sourceFactorAudit: {
+      dayStem: {
+        observed: stemObserved,
+        notEvaluated: ['stem_clash'],
+      },
+      dayBranch: {
+        observed: branchObserved,
+        notEvaluated: ['punishment', 'break', 'harm'],
+      },
+      otherAbstractFactorsNotEvaluated: ['void', 'yuanchen'],
+      classificationBasis: 'computed_factor_subset_only',
+      sourceQualifiedFourCaseCell: null,
+      sourcePopulationMatchEstablished: false,
+      fullMethodAndExceptionsVerified: false,
+      mayInferIndividualOutcome: false,
+    },
     missingPrerequisites: [
       'FULL_ABSTRACT_METHOD_AND_EXCEPTIONS_NOT_VERIFIED',
       'DAY_STEM_AND_BRANCH_RELATION_COVERAGE_INCOMPLETE',

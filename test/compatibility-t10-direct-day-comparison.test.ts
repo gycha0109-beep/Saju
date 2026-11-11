@@ -63,6 +63,12 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
       pairwiseMeaningAuthorized: false,
     });
     expect(review?.observedAbstractCell).toBe('unclassified');
+    expect(review?.sourceFactorAudit.dayStem.observed)
+      .toEqual(['stem_five_combination', 'elemental_control']);
+    expect(review?.sourceFactorAudit.dayBranch.observed)
+      .toEqual(['branch_six_combination', 'elemental_generation']);
+    expect(review?.sourceFactorAudit.sourceQualifiedFourCaseCell).toBeNull();
+    expect(review?.sourceFactorAudit.mayInferIndividualOutcome).toBe(false);
     expect(review?.mayClaimInterpersonalMeaning).toBe(false);
     expect(review?.pairwiseT10Admitted).toBe(false);
     expect(result.mayPublish).toBe(false);
@@ -106,6 +112,14 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
     expect(research?.dayBranch.conflictingFactors).toBe(false);
     expect(research?.dayStem.elementalComparison?.pairwiseMeaningAuthorized).toBe(false);
     expect(research?.dayBranch.elementalComparison?.pairwiseMeaningAuthorized).toBe(false);
+    expect(research?.sourceFactorAudit.classificationBasis)
+      .toBe('computed_factor_subset_only');
+    expect(research?.sourceFactorAudit.sourceQualifiedFourCaseCell).toBeNull();
+    expect(research?.sourceFactorAudit.sourcePopulationMatchEstablished).toBe(false);
+    expect(research?.sourceFactorAudit.dayStem.notEvaluated).toContain('stem_clash');
+    expect(research?.sourceFactorAudit.dayBranch.notEvaluated).toContain('harm');
+    expect(research?.sourceFactorAudit.otherAbstractFactorsNotEvaluated)
+      .toEqual(['void', 'yuanchen']);
     expect(research?.mayClaimInterpersonalMeaning).toBe(false);
     expect(research?.maySell).toBe(false);
   });
@@ -151,5 +165,33 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
       .toBe(reverse.directDayComparisonResearch?.subject.calculationHash);
     expect(forward.directDayComparisonResearch?.observedAbstractCell)
       .toBe(reverse.directDayComparisonResearch?.observedAbstractCell);
+  });
+
+  it('does not treat one observed negative subset as complete source factor coverage', () => {
+    const result = run(STEM_NEG_BRANCH_NEG_SUBJECT, STEM_NEG_BRANCH_NEG_TARGET);
+    const research = result.directDayComparisonResearch;
+    expect(research?.observedAbstractCell).toBe('STEM_NEGATIVE_BRANCH_NEGATIVE');
+    expect(research?.sourceFactorAudit.dayStem.observed)
+      .toContain('elemental_control');
+    expect(research?.sourceFactorAudit.dayBranch.observed)
+      .toContain('elemental_control');
+    expect(research?.sourceFactorAudit.dayStem.notEvaluated).toEqual(['stem_clash']);
+    expect(research?.sourceFactorAudit.dayBranch.notEvaluated)
+      .toEqual(['punishment', 'break', 'harm']);
+    expect(research?.sourceFactorAudit.sourceQualifiedFourCaseCell).toBeNull();
+    expect(research?.sourceFactorAudit.fullMethodAndExceptionsVerified).toBe(false);
+    expect(result.maySell).toBe(false);
+  });
+
+  it('keeps public preview independent of the partial four-cell evidence audit', () => {
+    const protectedPreview = run(FIRST, STEM_POS_BRANCH_POS, false);
+    const researchPreview = run(FIRST, STEM_POS_BRANCH_POS, true);
+    expect(protectedPreview.directDayComparisonResearch).toBeUndefined();
+    expect(researchPreview.directDayComparisonResearch?.sourceFactorAudit)
+      .toBeDefined();
+    expect(researchPreview.directDayComparisonResearch?.sourceFactorAudit
+      .sourceQualifiedFourCaseCell).toBeNull();
+    expect(protectedPreview.html).toBe(researchPreview.html);
+    expect(researchPreview.maySell).toBe(false);
   });
 });
