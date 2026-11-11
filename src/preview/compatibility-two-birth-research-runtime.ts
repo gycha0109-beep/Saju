@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  auditT10MonthlyTransformationScopeV1,
+  type T10MonthlyTransformationScopeResearchV1,
+} from '../research/compatibility-t10-monthly-transformation-scope.js';
+import {
   auditT10GejuRescueSourceBridgeV1,
   type T10GejuRescueBridgeResearchV1,
 } from '../research/compatibility-t10-geju-rescue-source-bridge.js';
@@ -112,6 +116,8 @@ export interface CompatibilityTwoBirthResearchReading {
   yongshenMethodScopeResearch?: T10YongshenMethodScopeResearchV1;
   /** Intra-chart geju rescue observations cannot cross people. */
   gejuRescueSourceBridge?: T10GejuRescueBridgeResearchV1;
+  /** Exact natal month transformation exemplars; no cross-person outcome. */
+  monthlyTransformationScopeResearch?: T10MonthlyTransformationScopeResearchV1;
   html: string;
 }
 
@@ -289,6 +295,10 @@ export function buildCompatibilityTwoBirthResearchReading(
     ? auditT10GejuRescueSourceBridgeV1(
       sourceScopeHandoff, yongshenMethodScopeResearch, subject, target,
     ) : undefined;
+  const monthlyTransformationScopeResearch = yongshenMethodScopeResearch
+    ? auditT10MonthlyTransformationScopeV1(
+      sourceScopeHandoff, yongshenMethodScopeResearch, subject, target,
+    ) : undefined;
   return {
     version: COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
@@ -316,6 +326,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(classicalUsefulElementResearch ? { classicalUsefulElementResearch } : {}),
       ...(yongshenMethodScopeResearch ? { yongshenMethodScopeResearch } : {}),
       ...(gejuRescueSourceBridge ? { gejuRescueSourceBridge } : {}),
+      ...(monthlyTransformationScopeResearch ? { monthlyTransformationScopeResearch } : {}),
     } : {}),
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
