@@ -564,3 +564,13 @@ Watchtower-Track: face-observation-engine
 - **다음 과제:** 신규 HEAD CI, 실제 사람 독립 참조·반복 촬영·상업 이용권 확보가 필요한 정확도 검증, 상대 3D·귀 방향·기존 FR311 전통 형태/조합/독립 검증. 1~3단계 진행 중, 4~7단계 미완료. `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-11 — 하관의 실제 보이는 2D 외곽선 수동 검토 경로 추가
+
+- **기준:** 기존 관상 PR #2453 `codex/face-two-view-local-preview-2452`, HEAD `c8f4f7571651ccaa4704621e9e66b4adc5842b50`의 GitHub Actions 6/6 GREEN 확인. 실제 얼굴 형태를 위한 로드맵 2~3단계의 독립 세부 관측. 기존 FR293의 `chin_lower_face.visible_contour` 계산기와 얼굴 타원 자체가 실제 턱 아래 사람 정답을 보증하지 않는 갭을 그대로 보존.
+- **구현:** 기존 `/two-view` 비공개 원본 검토 화면에 **정면 사진 하관의 눈에 보이는 2D 외곽** 표시 모드 추가. 별도 2차 엔진 없이 하나의 단일선 `marked` 또는 가림·화면 밖·부분 표시·보류를 구분, 화면 좌표 프레임 정규화, 단조 X 단일 획 및 총점수 제한, 삭제·복원 검증. 서버는 기존 로컬 Origin·세션 token·원본 SHA-256/상태 현재성 검증·원자적 로컬 저장 패턴으로 `jaw-contour-human-reviews.json`만 사용한다. 동일 원본 사진 변경 시 이전 검토를 현재 자료로 표시하지 않으며 저장된 기존 사진/사진 분할/좌표계·권한을 변경하지 않는다.
+- **권한:** 하관 윤곽에 사람이 그린 선은 **실제 턱끝/하악골 경계, 3D 돌출·골격, 독립 사람 정답 또는 전통 형태 F1을 판별하지 않는다**. 원본 SHA는 비공개 저장에만 존재하고 웹 전달용 투영은 소스 식별자를 제외한다. `actualJawAnatomyValidated`·`independentAccuracyValidated`·`boneShapeInferred`·`canonicalF0Admitted`·`traditionalBindingAuthorized`·`productInterpretationAuthorized`·`modelTrainingAuthorized` 전부 false. 기존 정규 29/계산 18/하드갭 11 변경 금지.
+- **검증:** 신규 합성 저장·복원·가림 보류·비단조/중복 X·경계 오류·권한 조작 차단 테스트 5개와 원본 현재성/정적 모듈 관련 테스트. 실제 데이터 확보 및 독립 사람 2명 이상의 검증/반복 촬영은 미완료이며 이에 대한 정확도는 0건으로 유지한다. 집 PC가 아닌 별도 Windows PC 작업 폴더에서 안전하게 분리하여 작성; 새 HEAD CI 성공 확인 전 GREEN 선언 금지.
+- **남은 것:** 원본 실사진 사람 하관 윤곽 정확도, 반복성·독립 사람 참조·상업 이용권, 상대 3D 및 귀 방향, 전통 조건 바인딩·종합 판독·7단계 통합 검증. 전체 1~3단계 진행 중, 4~7단계 미완료. `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine

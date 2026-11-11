@@ -43,6 +43,12 @@ import {
   projectEyelidContourReviewForUi,
 } from './eyelid-contour-human-review.mjs';
 import {
+  JAW_CONTOUR_REVIEW_VERSION,
+  createJawContourReviewRecord,
+  validateJawContourReviewStore,
+  projectJawContourReviewForUi,
+} from './jaw-contour-human-review.mjs';
+import {
   LIP_BORDER_REVIEW_SCHEMA_VERSION,
   LIP_BORDER_LINES,
   LIP_BORDER_POINTS,
@@ -327,6 +333,16 @@ export async function createLocalReviewServer({
   } catch (error) {
     if (error.code !== 'ENOENT') lipReviewRestoreFailed = true;
   }
+  const jawContourReviewPath = resolve(intake, 'jaw-contour-human-reviews.json');
+  let jawContourReviews = new Map();
+  let jawContourRestoreFailed = false;
+  let jawContourSaving = false;
+  try {
+    const stored = JSON.parse(await readFile(jawContourReviewPath, 'utf8'));
+    jawContourReviews = new Map(Object.entries(validateJawContourReviewStore(stored, ids).records));
+  } catch (error) {
+    if (error.code !== 'ENOENT') jawContourRestoreFailed = true;
+  }
   const eyelidContourPath = resolve(intake, 'eyelid-contour-human-reviews.json');
   let eyelidContourReviews = new Map();
   let eyelidContourRestoreFailed = false;
@@ -479,6 +495,8 @@ export async function createLocalReviewServer({
       'lip-model-human-width-comparison.mjs',
       'lip-model-human-vertical-envelope.mjs',
       'philtrum-manual-ridge-spacing.mjs',
+      'jaw-contour-human-review.mjs',
+      'jaw-contour-human-review-ui.mjs',
       'visible-eye-class-profile.mjs',
       'eye-fold-review.mjs',
       'brow-centerline-review.mjs',
@@ -712,6 +730,30 @@ export async function createLocalReviewServer({
     }
     return { records, staleCount };
   }
+  async function currentJawContourState() {
+    const records = {};
+    let staleCount = 0;
+    for (const [captureRef, review] of jawContourReviews) {
+      try {
+        const source = inventory.find((item) => item.recordId === captureRef);
+        if (!source) {
+          staleCount++;
+          continue;
+        }
+        const digest = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
+        if (digest !== review.sourceSha256) {
+          staleCount++;
+          continue;
+        }
+        records[captureRef] = projectJawContourReviewForUi(review);
+      } catch {
+        staleCount++;
+      }
+    }
+    return { records, staleCount };
+  }
   async function currentEyelidContourState() {
     const records = {};
     let staleCount = 0;
@@ -820,6 +862,7 @@ export async function createLocalReviewServer({
       const earReviewState = await currentEarReviewState();
       const lipReviewState = await currentLipReviewState();
       const eyelidContourState = await currentEyelidContourState();
+      const jawContourState = await currentJawContourState();
       let perCaptureReadiness = await privatePhotoReadinessState();
       if (perCaptureReadiness.status === 'available') {
         try {
@@ -949,6 +992,9 @@ export async function createLocalReviewServer({
         lipReviews: lipReviewState.records,
         lipReviewStaleCount: lipReviewState.staleCount,
         lipReviewRestoreFailed,
+        jawContourReviews: jawContourState.records,
+        jawContourStaleCount: jawContourState.staleCount,
+        jawContourRestoreFailed,
         eyelidContourReviews: eyelidContourState.records,
         eyelidContourStaleCount: eyelidContourState.staleCount,
         eyelidContourRestoreFailed,
@@ -1269,6 +1315,65 @@ export async function createLocalReviewServer({
         return json(res, 200, { saved: true, review: projectLipBorderHumanReviewForUi(review) });
       } finally {
         lipReviewSaving = false;
+      }
+    }
+    if (req.method === 'POST' && url.pathname === '/two-view/jaw-contour-reviews') {
+      if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
+      const input = await requestJson(req, 160000);
+      const allowed = new Set(['token', 'captureRef', 'visibleLowerFaceOutline']);
+      if (
+        !input ||
+        typeof input !== 'object' ||
+        Array.isArray(input) ||
+        Object.keys(input).length !== allowed.size ||
+        Object.keys(input).some((key) => !allowed.has(key))
+      )
+        throw Error('JAW_CONTOUR_REVIEW_INVALID');
+      if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
+      if (jawContourSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
+      const captureRef = input.captureRef;
+      const source = inventory.find((item) => item.recordId === captureRef);
+      if (!source || roles.get(captureRef) !== 'frontal' || jawContourRestoreFailed)
+        throw Error('JAW_CONTOUR_REVIEW_INVALID');
+      jawContourSaving = true;
+      try {
+        if (!(await allPinnedSourcesCurrent())) return staleSourceResponse(res);
+        const original = sourceFileStates.find((item) => item.recordId === captureRef);
+        const current = await stat(source.sourcePath);
+        if (
+          !original ||
+          current.size !== original.size ||
+          current.mtimeMs !== original.mtimeMs ||
+          current.ino !== original.ino
+        )
+          throw Error('SOURCE_CHANGED');
+        const sourceSha256 = createHash('sha256')
+          .update(await readFile(source.sourcePath))
+          .digest('hex');
+        if (sourceSha256 !== sourceDigestByRecord.get(captureRef)) throw Error('SOURCE_CHANGED');
+        const previous = jawContourReviews.get(captureRef);
+        const review = createJawContourReviewRecord(
+          { visibleLowerFaceOutline: input.visibleLowerFaceOutline },
+          {
+            captureRef,
+            sourceSha256,
+            revision: (previous?.revision || 0) + 1,
+            reviewedAt: new Date().toISOString(),
+          },
+        );
+        const records = Object.fromEntries(jawContourReviews);
+        records[captureRef] = review;
+        const temporary = resolve(intake, 'jaw-contour-human-reviews-' + randomUUID() + '.tmp');
+        await writeFile(
+          temporary,
+          JSON.stringify({ schemaVersion: JAW_CONTOUR_REVIEW_VERSION, records }, null, 2) + '\n',
+          { flag: 'wx' },
+        );
+        await rename(temporary, jawContourReviewPath);
+        jawContourReviews.set(captureRef, review);
+        return json(res, 200, { saved: true, review: projectJawContourReviewForUi(review) });
+      } finally {
+        jawContourSaving = false;
       }
     }
     if (req.method === 'POST' && url.pathname === '/two-view/ear-detail-reviews') {

@@ -114,6 +114,22 @@
         border-color: #a8b7ff;
         background: #30415c;
       }
+      .viewer #jaw-contour-review-canvas {
+        position: absolute;
+        z-index: 7;
+        touch-action: none;
+        pointer-events: none;
+      }
+      #jaw-contour-review #jaw-contour-review-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 8px 0;
+      }
+      #jaw-contour-review #jaw-contour-review-options button.active {
+        border-color: #8ce4b7;
+        background: #304b45;
+      }
       .viewer #lip-border-review-canvas {
         position: absolute;
         z-index: 5;
@@ -369,6 +385,13 @@
         <svg id="brow-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="눈썹 중심선 표시" hidden></svg>
         <svg id="nose-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="코끝과 콧볼·콧구멍 경계 사람 표시" hidden></svg>
         <svg id="ear-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="귀 외곽·귓불·부착부 사람 표시" hidden></svg>
+        <svg
+          id="jaw-contour-review-canvas"
+          viewBox="0 0 1 1"
+          preserveAspectRatio="none"
+          aria-label="턱 하단 가시 윤곽 사람 표시"
+          hidden
+        ></svg>
         <svg id="lip-border-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="입술·인중 경계와 입꼬리 사람 표시" hidden></svg>
         <svg id="eyelid-contour-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="눈꺼풀 윗경계·주름선·덮임 경계 사람 표시" hidden></svg>
       </div>
@@ -446,6 +469,24 @@
           <button type="button" id="eyelid-contour-review-save" disabled>비공개 사람 표시 저장</button>
         </div>
         <p id="eyelid-contour-review-status" class="note" role="status"></p>
+      </section>
+      <section id="jaw-contour-review" aria-labelledby="jaw-contour-review-heading" hidden>
+        <h2 id="jaw-contour-review-heading">턱·하관의 보이는 하단 윤곽 사람 표시</h2>
+        <p class="note">
+          정면 원본에서 사진에 실제로 보이는 턱 아래 얼굴 외곽만 표시합니다. 완전 표시와 부분 가림을
+          구분하며, 골격·턱끝 돌출·실제 안면 해부학·전통 관상형을 판단하지 않습니다. 파일은 비공개
+          로컬에 보관하며 독립 정확도 검증 전에는 연구용 자료입니다.
+        </p>
+        <button type="button" id="jaw-contour-review-activate">턱 하단 윤곽 표시 모드</button>
+        <p id="jaw-contour-review-count" class="note"></p>
+        <div id="jaw-contour-review-options"></div>
+        <div class="toolbar">
+          <button type="button" id="jaw-contour-review-done">표시 완료</button>
+          <button type="button" id="jaw-contour-review-undo">마지막 획 취소</button>
+          <button type="button" id="jaw-contour-review-reset">변경 취소</button>
+          <button type="button" id="jaw-contour-review-save" disabled>비공개 표시 저장</button>
+        </div>
+        <p id="jaw-contour-review-status" class="note" role="status"></p>
       </section>
       <section id="lip-border-review" aria-labelledby="lip-border-review-heading" hidden>
         <h2 id="lip-border-review-heading">입술·인중 경계 — 사람 직접 표시</h2>

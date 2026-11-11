@@ -15,6 +15,7 @@ import {
 import { attachEarDetailReview } from './ear-detail-review-ui.mjs';
 import { compareEarMaskToHumanOuterRim } from './ear-model-human-rim-span.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
+import { attachJawContourHumanReview } from './jaw-contour-human-review-ui.mjs';
 import { compareLipClassWidthsToHumanBorders } from './lip-model-human-width-comparison.mjs';
 import { compareLipClassVerticalEnvelopesToHumanBorders } from './lip-model-human-vertical-envelope.mjs';
 import { measureManualPhiltrumRidgeSpacing } from './philtrum-manual-ridge-spacing.mjs';
@@ -977,6 +978,12 @@ const lipBorderHumanReview = attachLipBorderHumanReview({
   canAnnotate: () => original && activeAnnotationTool === 'lip',
   onSaved: () => render(),
 });
+const jawContourHumanReview = attachJawContourHumanReview({
+  getState: () => state,
+  getRecord: () => records[selected],
+  canAnnotate: () => original && activeAnnotationTool === 'jaw',
+  onSaved: () => render(),
+});
 const eyelidContourHumanReview = attachEyelidContourHumanReview({
   getState: () => state,
   getRecord: () => records[selected],
@@ -1003,6 +1010,11 @@ $('ear-review-activate').onclick = () => {
 };
 $('lip-border-review-activate').onclick = () => {
   activeAnnotationTool = 'lip';
+  original = true;
+  render();
+};
+$('jaw-contour-review-activate').onclick = () => {
+  activeAnnotationTool = 'jaw';
   original = true;
   render();
 };
@@ -1299,6 +1311,7 @@ function render() {
   noseDetailReview.render();
   earDetailReview.render();
   lipBorderHumanReview.render();
+  jawContourHumanReview.render();
   eyelidContourHumanReview.render();
   if (record.viewRole === 'frontal' && mode === 'existing')
     renderBrowHumanComparison(record, result, previous);
