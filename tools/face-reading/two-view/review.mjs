@@ -17,6 +17,7 @@ import { compareEarMaskToHumanOuterRim } from './ear-model-human-rim-span.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
 import { compareLipClassWidthsToHumanBorders } from './lip-model-human-width-comparison.mjs';
 import { compareLipClassVerticalEnvelopesToHumanBorders } from './lip-model-human-vertical-envelope.mjs';
+import { measureManualPhiltrumRidgeSpacing } from './philtrum-manual-ridge-spacing.mjs';
 import { attachEyelidContourHumanReview } from './eyelid-contour-human-review-ui.mjs';
 import { compareEyeClassEnvelopeToHumanUpperMargin } from './eyelid-model-human-upper-edge.mjs';
 import { createSourceCurrentnessGate } from './source-currentness-gate.mjs';
@@ -742,6 +743,21 @@ function renderLipHumanVerticalComparison(record, result, previous) {
   node.textContent +=
     ' — 사람 경계선이 모델 클래스 가로 범위를 전부 덮은 경우만 비교한 2D 위치 후보입니다. 실제 입술 두께·정확도·전통 관상형 판정은 아닙니다.';
 }
+function renderManualPhiltrumRidgeSpacing(record, previous) {
+  if (mode !== 'existing' || previous || record.viewRole !== 'frontal') return;
+  const human = state.lipReviews?.[record.captureRef];
+  if (!human) return;
+  const node = $('lip-class-experiment');
+  const candidate = measureManualPhiltrumRidgeSpacing(human);
+  if (candidate.status !== 'available') {
+    node.textContent += ' · 인중 기둥 표시 간격 검토 보류(' + candidate.reason + ')';
+    return;
+  }
+  node.textContent +=
+    ' · 표시한 인중 기둥선 간격(공통 세로 구간 위·중간·아래, 입꼬리 표시 폭 대비): ' +
+    candidate.drawnRidgeSpacingToMarkedMouthWidth.map((n) => n.toFixed(3)).join(' / ') +
+    ' — 같은 원본에서 한 사람이 그린 두 선 사이 2D 간격입니다. 실제 인중 길이·너비, 모델 인식 정확도, 전통 관상 판정이 아닙니다.';
+}
 function renderVisibleEyeClassExperiment(record, result, previous) {
   const node = $('eye-class-experiment');
   const eye = result?.eyeClassCandidate;
@@ -1277,6 +1293,7 @@ function render() {
   renderVisibleLipClassExperiment(record, result, previous);
   renderLipHumanWidthComparison(record, result, previous);
   renderLipHumanVerticalComparison(record, result, previous);
+  renderManualPhiltrumRidgeSpacing(record, previous);
   renderEyeFoldReview(record);
   browReview.render();
   noseDetailReview.render();

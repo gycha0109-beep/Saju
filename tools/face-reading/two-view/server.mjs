@@ -478,6 +478,7 @@ export async function createLocalReviewServer({
       'visible-lip-class-profile.mjs',
       'lip-model-human-width-comparison.mjs',
       'lip-model-human-vertical-envelope.mjs',
+      'philtrum-manual-ridge-spacing.mjs',
       'visible-eye-class-profile.mjs',
       'eye-fold-review.mjs',
       'brow-centerline-review.mjs',
