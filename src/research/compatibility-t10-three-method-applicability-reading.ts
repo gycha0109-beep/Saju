@@ -70,6 +70,12 @@ export function buildT10ThreeMethodApplicabilityReadingV1(
   yongshen: T10YongshenMethodScopeResearchV1,
 ): T10ThreeMethodApplicabilityReadingV1 {
   const historicalRoles = sixSpirits.historicalScope === 'male_female_role_matched';
+  const matchingRoleEvidence = (
+    person: { personRef: string; snapshotId: string; calculationHash: string;
+      historicalRole: 'male' | 'female' },
+    role: 'male' | 'female',
+  ): boolean => person.historicalRole === role &&
+    [factual.subject, factual.target].some(subject => samePerson(subject, person));
   if (factual.lifecycle !== 'internal_research_only' ||
       factual.mayPublish !== false || factual.maySell !== false ||
       factual.sourceQualifiedFourCase !== null ||
@@ -97,6 +103,16 @@ export function buildT10ThreeMethodApplicabilityReadingV1(
       historicalRoles !== (sixSpirits.male !== null &&
         sixSpirits.female !== null &&
         usefulExamples.male !== null && usefulExamples.female !== null) ||
+      (historicalRoles && (!sixSpirits.male || !sixSpirits.female ||
+        !usefulExamples.male || !usefulExamples.female ||
+        !matchingRoleEvidence(sixSpirits.male, 'male') ||
+        !matchingRoleEvidence(sixSpirits.female, 'female') ||
+        !matchingRoleEvidence(usefulExamples.male, 'male') ||
+        !matchingRoleEvidence(usefulExamples.female, 'female') ||
+        sixSpirits.male.strengthOrHeavyCriterionEstablished !== false ||
+        sixSpirits.female.strengthOrHeavyCriterionEstablished !== false ||
+        usefulExamples.male.actualUsefulGodSelected !== false ||
+        usefulExamples.female.actualUsefulGodSelected !== false)) ||
       sixSpirits.traditionalHeavyPairCondition !==
         'not_established_no_source_qualified_threshold_or_strength' ||
       usefulExamples.hypotheticalExamples.some(item =>

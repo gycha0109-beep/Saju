@@ -110,6 +110,22 @@ describe('T10 three-method eligibility without pretending to have a valid compat
     expect(() => buildT10ThreeMethodApplicabilityReadingV1(
       factual, {
         ...six,
+        male: six.male && {
+          ...six.male, calculationHash: 'incorrect-inner-person-hash',
+        },
+      }, useful, yongshen,
+    )).toThrow('same protected source-bound charts');
+    expect(() => buildT10ThreeMethodApplicabilityReadingV1(
+      factual, six, {
+        ...useful,
+        female: useful.female && {
+          ...useful.female, calculationHash: 'incorrect-inner-person-hash',
+        },
+      }, yongshen,
+    )).toThrow('same protected source-bound charts');
+    expect(() => buildT10ThreeMethodApplicabilityReadingV1(
+      factual, {
+        ...six,
         traditionalHeavyPairCondition: 'admitted' as never,
       }, useful, yongshen,
     )).toThrow('same protected source-bound charts');
