@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  compareT10CrossMethodEvidenceV1,
+  type T10CrossMethodContrastResearchV1,
+} from '../research/compatibility-t10-cross-method-contrast.js';
+import {
   buildT10HistoricalDayYearObservation,
   type T10HistoricalDayYearObservation,
 } from '../research/compatibility-t10-historical-day-year-observation.js';
@@ -120,6 +124,8 @@ export interface CompatibilityTwoBirthResearchReading {
   sourceBoundObservationReading?: T10SourceBoundObservationReadingV1;
   /** Palace / six-spirit / yongshin source prerequisites, not an outcome. */
   threeMethodApplicabilityReading?: T10ThreeMethodApplicabilityReadingV1;
+  /** Source-bounded opposite structural cases and incompatible classical methods. */
+  crossMethodContrastResearch?: T10CrossMethodContrastResearchV1;
   /** 2025 author-posted research excerpt: per-person criteria, no T10 synthesis. */
   spouseCriteria2025Scope?: T102025SpouseScopeReviewV1;
   /** Direct two-chart historical clause, attributed via 2025 author text. */
@@ -325,6 +331,14 @@ export function buildCompatibilityTwoBirthResearchReading(
       sourceBoundObservationReading, classicalCrossTenGodResearch,
       classicalUsefulElementResearch, yongshenMethodScopeResearch,
     ) : undefined;
+  const crossMethodContrastResearch = coexistingEvidenceReview &&
+    classicalCrossTenGodResearch && classicalUsefulElementResearch &&
+    threeMethodApplicabilityReading
+    ? compareT10CrossMethodEvidenceV1(
+      sourceScopeHandoff, coexistingEvidenceReview,
+      classicalCrossTenGodResearch, classicalUsefulElementResearch,
+      threeMethodApplicabilityReading,
+    ) : undefined;
   const gejuRescueSourceBridge = yongshenMethodScopeResearch
     ? auditT10GejuRescueSourceBridgeV1(
       sourceScopeHandoff, yongshenMethodScopeResearch, subject, target,
@@ -356,6 +370,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(directDayComparisonResearch ? { directDayComparisonResearch } : {}),
       ...(sourceBoundObservationReading ? { sourceBoundObservationReading } : {}),
       ...(threeMethodApplicabilityReading ? { threeMethodApplicabilityReading } : {}),
+      ...(crossMethodContrastResearch ? { crossMethodContrastResearch } : {}),
       ...(spouseCriteria2025Scope ? { spouseCriteria2025Scope } : {}),
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
       ...(historicalDayYearObservation ? { historicalDayYearObservation } : {}),
