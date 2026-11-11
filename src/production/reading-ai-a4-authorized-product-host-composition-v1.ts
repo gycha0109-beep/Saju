@@ -1,6 +1,7 @@
 import type { Server } from 'node:http';
 import {
   OpenAIResponsesNarrativeAdapter,
+  OPENAI_RESPONSES_ENDPOINT,
   type OpenAIResponsesAdapterConfig,
 } from '../llm/openai/openai-responses-adapter.js';
 import type { NarrativePolicy } from '../contracts/narrative.js';
@@ -25,7 +26,9 @@ import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../reading/governed-reading-ex
  * One capture instance is bound simultaneously to:
  * - the actual OpenAIResponsesNarrativeAdapter onProviderCall; and
  * - the private authenticated /api/readings host withPreparedAttempt.
- * A separate injected observer/capture or fake source-ref factory is denied.
+ * A separate injected observer/capture, alternate provider transport/endpoint,
+ * or fake source-ref factory is denied. The offline adapter tests may mock
+ * fetch separately, but the official A4 host must use the real HTTPS endpoint.
  *
  * No server.listen, secret provisioning, production DB changes or API calls.
  */
@@ -50,11 +53,13 @@ export function createUnstartedSajuA4CapturedProductionHostV1(
     !input.a4 ||
     'legacyNarrativeRuntime' in input.production ||
     'onProviderCall' in input.openAI ||
+    'fetchImpl' in input.openAI ||
+    (input.openAI.endpoint !== undefined && input.openAI.endpoint !== OPENAI_RESPONSES_ENDPOINT) ||
     'a4SourceCapture' in input.host ||
     input.a4.sourceRefFactory !== undefined
   ) {
     throw new TypeError(
-      'A4 production capture cannot override governed narrative, callback or source ref',
+      'A4 production capture cannot override governed narrative, provider transport, callback or source ref',
     );
   }
 

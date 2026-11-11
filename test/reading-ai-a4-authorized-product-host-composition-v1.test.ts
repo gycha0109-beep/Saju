@@ -16,7 +16,7 @@ function candidate() {
   return {
     production: {},
     narrativePolicy: {} as never,
-    openAI: { apiKey: 'offline-do-not-call', fetchImpl: modelCalls as never },
+    openAI: { apiKey: 'offline-do-not-call' },
     host: { serviceBearer: 'private-production-host-only' },
     a4: {
       claimPool: reader(),
@@ -60,6 +60,11 @@ describe('A4 private capture cannot bypass independent Production interpretation
     for (const request of [
       { ...input, production: { legacyNarrativeRuntime: {} as never } },
       { ...input, openAI: { ...input.openAI, onProviderCall: () => undefined } },
+      { ...input, openAI: { ...input.openAI, fetchImpl: modelCalls as never } },
+      {
+        ...input,
+        openAI: { ...input.openAI, endpoint: 'https://alternate.example.test/v1/responses' },
+      },
       { ...input, host: { ...input.host, a4SourceCapture: {} } },
       { ...input, a4: { ...input.a4, sourceRefFactory: () => 'client-controlled' } },
     ]) {
