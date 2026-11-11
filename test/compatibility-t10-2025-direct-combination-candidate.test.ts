@@ -95,7 +95,7 @@ describe('2025 author-quoted direct day/year marriage candidate', () => {
     expect(researchResult.directCombination2025Research).toBeDefined();
     const copied = { ...researchResult.sourceScopeHandoff, maySell: true as const };
     expect(() => observeT102025DirectCombinationCandidates(
-      copied as typeof researchResult.sourceScopeHandoff,
+      copied as unknown as typeof researchResult.sourceScopeHandoff,
     )).toThrow();
     expect(researchResult.maySell).toBe(false);
   });
