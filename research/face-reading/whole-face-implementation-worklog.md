@@ -622,3 +622,12 @@ Watchtower-Track: face-observation-engine
 - **검증:** 신규·기존 콧볼/코 원본 변경 차단·검토 및 정적 모듈 제공 등 관련 테스트 31/31 통과, 전체 TypeScript 검사·변경 코드 ESLint·Prettier·diff 검사 통과. 새 커밋의 CI는 푸시 후 확인. 실제 사진 사람 표시와의 비교는 환경에서 자료 접근 불가로 **`empirical_unverified`**. 기존 모델 파싱 자체가 콧구멍을 분할·판독하지 않음.
 - **권한:** `candidateOnly=true`; `anatomicalNostrilInteriorIdentified`, `anatomicalNostrilExteriorIdentified`, `anatomicalBoundaryAccuracyValidated`, `independentAccuracyValidated`, `canonicalF0Admitted`, `traditionalBindingAuthorized`, `productInterpretationAuthorized`, `modelTrainingAuthorized` 모두 false. FR282 정규 29/FR293 18/FR294 하드갭 11 유지.
 - **다음:** 접근 가능한 비공개 실제 사진에서 사람이 구분한 완전/부분 콧구멍 경계, 조명 및 그늘에 따른 부호 변화와 재현성을 검증한다. 단순 픽셀 명도는 어두운 조직 또는 실제 비공 내부 정답이 아니다. 이후 나머지 미완료 2D 항목의 라벨·권리·기존 모델 적용 가능성을 우선 검토한다.
+
+### 2026-11-11 — 기존 눈썹 모델 영역 내 원본 RGB 화소 질감 관측 가능성 연구
+
+- **Watchtower-Track:** face-observation-engine. 기준 HEAD `091c5fb0090b0a324032acf7ac0297a46ed7b456`, 직전 CI 6/6 GREEN. 7단계 로드맵 2~3단계.
+- **실제 구현:** `tools/face-reading/two-view/brow-pixel-texture.mjs`와 TypeScript 선언·합성 테스트 추가. 기존 `visible-brow-mask-envelope`의 2개 분리·연속 눈썹 후보 검증, 기존 `parsing`의 눈썹 위치 검사 결과를 재사용한다. 같은 정면 원본의 최대 변 1200px 일시 축소 화소에서 양쪽 눈썹 모델 영역 **안쪽 픽셀과 네 방향 1px 이웃**의 가중 sRGB 밝기 차이를 좌우/상하 별도 평균한다. 영역 외부의 피부·배경은 계산하지 않고 유효 표본 수를 함께 표시한다.
+- **연결·권한:** 기존 `review.mjs`·`review.html`·`server.mjs`의 모듈 제공과 검토 화면에서만 일시 분석한다. 다른 모델·인물 분류·기존 검토 저장 스키마·원본 사진 현재성 정책은 변경하지 않았다. 원본 사진·원시 픽셀·눈썹 분할 마스크·전체 좌표·사진 SHA는 새 공개 커밋/저장 결과에 포함되지 않는다. 과거 모델 결과·정면 외·검증되지 않은 눈썹 분할·사진 해상도 부족은 보류한다.
+- **필수 구별:** 픽셀 밝기 차이는 이미지 질감의 공학적 기술값만 의미한다. 개별 털의 식별·폭·모근 밀도·실제 털 가시성·해부학적 정확도·전통 관상형 판정은 **전부 미검증**이며 `candidateOnly=true`, `individualHairFibresIdentified=false`, `individualHairWidthMeasured=false`, `hairDensityMeasured=false`, `independentAccuracyValidated=false`, `canonicalF0Admitted=false`, `traditionalBindingAuthorized=false`, `productInterpretationAuthorized=false`, `modelTrainingAuthorized=false`를 유지한다.
+- **로컬 검증:** 기존 눈썹 모델/사람 중심선/원본 현재성/모듈 제공와 신규 질감 모듈의 관련 합성 테스트 **39/39 PASS**, 전체 TypeScript 검사·변경 파일 ESLint·diff 검사 통과. 원본 비공개 실사진에서 모발 가닥 정답 대비 확인은 **미실시(`empirical_unverified`)**. 새 HEAD CI 결과는 푸시 후 별도 확인한다.
+- **다음:** 비공개 독립 사람 라벨과 같은 사진으로 눈썹 피부·털 가닥의 실제 분리 가능성, 촬영 해상도·조명·흔들림별 재현성 확인. 그 전까지 FR294의 `eyebrow.visible_hair_density_texture` 하드갭은 해소되지 않는다. 이어서 귀의 부위별 실제 가시성 근거 준비도를 확인해 다음 미완료 2D 관측을 진행한다.

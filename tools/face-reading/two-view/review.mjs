@@ -30,6 +30,7 @@ import {
   measureVisibleEarMaskSilhouette,
 } from './visible-ear-mask-silhouette.mjs';
 import { compareBrowCenterlinesToHumanReview } from './brow-centerline-comparison.mjs';
+import { measureVisibleBrowPixelTexture } from './brow-pixel-texture.mjs';
 import {
   interfaceBinaryFromOverlayRGBA,
   measureVisibleHairSkinInterface,
@@ -222,6 +223,100 @@ async function inspectVisibleBrowMask(record, result) {
 async function inspectBrowHumanComparison(record, result, humanReview) {
   const input = await readVisibleBrowMask(record, result);
   return compareBrowCenterlinesToHumanReview({ ...input, humanReview });
+}
+async function inspectBrowPixelTexture(record, result) {
+  const { mask, width, height } = await readVisibleBrowMask(record, result);
+  const sourceImage = new Image();
+  sourceImage.src = record.image;
+  await sourceImage.decode();
+  if (!sourceImage.naturalWidth || !sourceImage.naturalHeight)
+    throw Error('BROW_SOURCE_IMAGE_INVALID');
+  const scale = Math.min(1, 1200 / Math.max(sourceImage.naturalWidth, sourceImage.naturalHeight));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(sourceImage.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(sourceImage.naturalHeight * scale));
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) throw Error('BROW_SOURCE_CANVAS_UNAVAILABLE');
+  context.drawImage(sourceImage, 0, 0, canvas.width, canvas.height);
+  const texture = measureVisibleBrowPixelTexture({
+    mask,
+    width,
+    height,
+    rgba: context.getImageData(0, 0, canvas.width, canvas.height).data,
+    imageWidth: canvas.width,
+    imageHeight: canvas.height,
+    viewRole: record.viewRole,
+    browsScreened: result.parsing?.regionScreening?.regions?.brows?.status === 'screened',
+  });
+  canvas.width = 0;
+  canvas.height = 0;
+  return texture;
+}
+function renderBrowPixelTexture(record, result, previous) {
+  const node = $('brow-texture-experiment');
+  if (!node) return;
+  if (previous) {
+    node.textContent = '과거 눈썹 분할 결과에 원본 사진 질감 후보를 소급 적용하지 않습니다.';
+    return;
+  }
+  if (record.viewRole !== 'frontal') {
+    node.textContent = '눈썹 질감 관찰은 정면 사진에서만 진행합니다.';
+    return;
+  }
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    result.parsing.regionScreening?.regions?.brows?.status !== 'screened' ||
+    !result.layerUrls?.brows
+  ) {
+    node.textContent =
+      '양쪽 눈썹 모델 영역의 위치·연결 품질을 확인하지 못해 원본 픽셀 질감 분석을 보류합니다.';
+    return;
+  }
+  const candidate = result.browPixelTextureCandidate;
+  if (candidate?.status === 'available' || candidate?.status === 'partial') {
+    node.textContent =
+      [
+        ['화면 왼쪽', candidate.imageLeft],
+        ['화면 오른쪽', candidate.imageRight],
+      ]
+        .map(([name, side]) =>
+          side?.status === 'available' || side?.status === 'partial'
+            ? name +
+              ' 원본 픽셀의 좌우/상하 평균 밝기 차이 ' +
+              side.horizontalMeanAbsoluteSrgbBrightnessChange.toFixed(4) +
+              '/' +
+              side.verticalMeanAbsoluteSrgbBrightnessChange.toFixed(4) +
+              ' · 실제 비교 ' +
+              side.validImagePixelPairs +
+              '/' +
+              side.interiorModelMaskPixelsConsidered +
+              '점'
+            : name + ' 보류(' + (side?.reason || '유효 픽셀 없음') + ')',
+        )
+        .join(' · ') +
+      ' · 보이는 사진의 화소 질감만 기술한 값입니다. 개별 털 감지·털 굵기·밀도·정규 관상형 또는 독립 정확도는 아닙니다.';
+    return;
+  }
+  if (candidate?.status === 'unavailable') {
+    node.textContent =
+      '원본 눈썹 화소 질감 후보 보류(' + candidate.reason + '). 털 굵기·밀도를 추정하지 않습니다.';
+    return;
+  }
+  node.textContent = '기존 눈썹 모델 영역 안쪽의 원본 화소 질감을 확인 중입니다.';
+  if (candidate) return;
+  result.browPixelTextureCandidate = { status: 'loading' };
+  void inspectBrowPixelTexture(record, result)
+    .then((value) => {
+      if (results.get(record.captureRef) !== result) return;
+      result.browPixelTextureCandidate = value;
+      if (records[selected]?.captureRef === record.captureRef) render();
+    })
+    .catch(() => {
+      if (results.get(record.captureRef) !== result) return;
+      result.browPixelTextureCandidate = { status: 'unavailable', reason: 'BROW_RGB_NOT_READABLE' };
+      if (records[selected]?.captureRef === record.captureRef) render();
+    });
 }
 function renderVisibleBrowMaskExperiment(record, result, previous) {
   const node = $('brow-mask-experiment');
@@ -1484,6 +1579,7 @@ function render() {
     $('reading-evidence').append(node);
   }
   renderVisibleBrowMaskExperiment(record, result, previous);
+  renderBrowPixelTexture(record, result, previous);
   renderHairSkinInterfaceExperiment(record, result, previous);
   renderVisibleForeheadSkinBand(record, result, previous);
   renderVisibleEarMaskExperiment(record, result, previous);

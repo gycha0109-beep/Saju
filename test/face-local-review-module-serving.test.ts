@@ -44,11 +44,19 @@ describe('private two-view review browser module routing', () => {
     expect(browser).toContain('isCurrentNosePreview(result, epoch)');
     expect(browser).toContain('measureHumanMarkedNostrilBorderPhotometry');
   });
+  it('renders nonpersistent brow photo texture only in the current review panel', () => {
+    const html = readFileSync(resolve(root, 'tools/face-reading/two-view/review.html'), 'utf8');
+    expect(html).toContain('id="brow-texture-experiment"');
+    expect(browser).toContain('renderBrowPixelTexture(record, result, previous);');
+    expect(browser).toContain('results.get(record.captureRef) !== result');
+    expect(browser).toContain('measureVisibleBrowPixelTexture');
+  });
   it('serves every directly imported review module from the local static allowlist', () => {
     const imports = [...browser.matchAll(/from '\.\/([^']+\.mjs)'/g)].map((match) => match[1]);
     expect(imports).toContain('source-currentness-gate.mjs');
     expect(imports).toContain('eyelid-manual-line-offsets.mjs');
     expect(imports).toContain('nostril-border-photometry.mjs');
+    expect(imports).toContain('brow-pixel-texture.mjs');
     const staticAllowlist = server.match(
       /const assets = new Map\(\s*\[([\s\S]*?)\]\.map\(\(name\)/,
     );
