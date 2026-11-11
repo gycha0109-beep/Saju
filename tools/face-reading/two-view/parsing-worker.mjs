@@ -8,6 +8,7 @@ const eyeDirectionReady = import('./eye-direction.mjs');
 const morphologyReady = import('./morphology-geometry.mjs');
 const lipClassReady = import('./visible-lip-class-profile.mjs');
 const eyeClassReady = import('./visible-eye-class-profile.mjs');
+const foreheadSkinReady = import('./visible-forehead-skin-band.mjs');
 let session, localizer, FaceLandmarker, ort;
 async function localizationModel() {
   if (!localizer) {
@@ -96,6 +97,7 @@ self.onmessage = async ({ data }) => {
     let morphology = unavailableMorphology(
       viewRole === 'profile' ? 'PROFILE_VIEW' : 'NO_SINGLE_FACE',
     );
+    let foreheadSkinCandidate = null;
     const skipped = (reason) => {
       earRefinement = { status: 'unavailable', reason, pixels: 0 };
     };
@@ -249,6 +251,44 @@ self.onmessage = async ({ data }) => {
               });
             } catch {
               morphology = unavailableMorphology('FRAME_UNAVAILABLE');
+            }
+          }
+          // Only the current one-face cropped parser with model brow support
+          // can expose this transient visible-skin candidate. Not an anatomical hairline.
+          if (viewRole === 'frontal') {
+            try {
+              const { measureVisibleForeheadSkinBand } = await foreheadSkinReady;
+              foreheadSkinCandidate = measureVisibleForeheadSkinBand({
+                mask: crop,
+                size,
+                landmarks: points,
+                topology: {
+                  browA: FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW,
+                  browB: FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW,
+                  oval: FaceLandmarker.FACE_LANDMARKS_FACE_OVAL,
+                },
+                frame,
+                imageWidth: bitmap.width,
+                imageHeight: bitmap.height,
+                viewRole,
+                browsAligned: [
+                  FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW,
+                  FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW,
+                ].every((edges) =>
+                  supportedAnchors(
+                    crop,
+                    size,
+                    points,
+                    edges,
+                    [2, 3],
+                    frame,
+                    bitmap.width,
+                    bitmap.height,
+                  ),
+                ),
+              });
+            } catch {
+              foreheadSkinCandidate = null;
             }
           }
           const sourceSets = {
@@ -406,6 +446,7 @@ self.onmessage = async ({ data }) => {
       layers,
       lipClassCandidate,
       eyeClassCandidate,
+      foreheadSkinCandidate,
       parsing: {
         methodVersion: PARSING_VERSION,
         candidateOnly: true,

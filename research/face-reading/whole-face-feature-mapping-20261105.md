@@ -323,3 +323,7 @@ FR294 하드갭은 여전히 색상 기준 미확보로 남는다.
 ## 2026-11-11 연구 후보 갱신 — 눈꺼풀 표시선 2D 위치 비교
 
 `eye.eyelid_crease_or_hooded_category`는 여전히 FR294 이미지 외형 **하드갭**이다. 기존 사람 표시한 `upperLidMargin / creaseLine / hoodingBoundary`의 공통 가로 구간에서 수동 선 간 3지점 상대 위치를 계산하는 로컬 연구 후보를 추가했다(`tools/face-reading/two-view/eyelid-manual-line-offsets.mjs`). 실제 주름선 자동 검출, 덮임 유형 분류, 독립 사람 정답 대비 평가, 정규 관측·전통 판정 근거는 추가되지 않았다. 정규 항목 29개/계산기 18개/하드갭 11개 및 권한 상태는 변경하지 않는다.
+
+## 2026-11-11 — 이마의 가시 피부 영역 모델 후보 추가 (정규 권한 변화 없음)
+
+`forehead.visible_width_shape`와 `forehead.visible_hairline_boundary`는 계속 FR294 이미지 외형 하드갭이다. 기존 ResNet18 피부·모발 분할 클래스와 MediaPipe 얼굴 타원/눈썹 위치를 묶은 `visible-forehead-skin-band.mjs`가, 실제 화면에서 **눈썹 위 얼굴 타원 내부의 제한된 영역**에 한해 세 구역 피부 비율과 피부–모발 픽셀 접경 후보를 산출한다. 앞머리 끝과 모근 시작을 구별할 독립 라벨, 실사진 측정 오류·반복성, 이마 전체 폭/헤어라인 형태 정답은 여전히 없다. 이 연구 후보는 정규 29개 키의 자동 입력으로 연결하지 않으며 계산기 18/29와 하드갭 11개도 변경하지 않는다.

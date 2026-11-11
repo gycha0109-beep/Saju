@@ -450,6 +450,47 @@ async function inspectVisibleEarMask(record, result) {
     imageHeight: sourceImage.naturalHeight,
   });
 }
+function renderVisibleForeheadSkinBand(record, result, previous) {
+  const node = $('forehead-skin-experiment');
+  if (!node) return;
+  if (previous) {
+    node.textContent = '과거 분할 결과에는 현재 이마 피부 후보를 소급 적용하지 않습니다.';
+    return;
+  }
+  if (record.viewRole !== 'frontal') {
+    node.textContent = '이마 피부 후보는 정면 원본에서만 확인합니다.';
+    return;
+  }
+  if (result?.parsing?.status !== 'completed' || result.parsing.methodVersion !== PARSING_VERSION) {
+    node.textContent = '현재 정면 얼굴 분할 결과가 없어 이마의 보이는 피부 영역을 보류합니다.';
+    return;
+  }
+  const candidate = result.foreheadSkinCandidate;
+  if (!candidate || candidate.status === 'unavailable') {
+    node.textContent =
+      '눈썹 위 이마 피부 모델 후보 보류(' +
+      (candidate?.reason || '현재 얼굴·눈썹 좌표 또는 분할 근거 없음') +
+      '). 실제 모근 경계나 가려진 이마는 추정하지 않습니다.';
+    return;
+  }
+  const sectors = candidate.sectors
+    .map((section) => (section.visibleModelSkinFraction * 100).toFixed(1) + '%')
+    .join('/');
+  const contacts = candidate.modelContacts
+    .map((contact) =>
+      contact.status === 'available'
+        ? contact.visibleSkinContactYToOriginalImageHeight.toFixed(3)
+        : '보류',
+    )
+    .join('/');
+  node.textContent =
+    '기존 모델의 얼굴 타원 윗부분과 양쪽 눈썹 윗경계 사이에서만 계산한 보이는 피부 클래스 비중(화면 좌/중/우): ' +
+    sectors +
+    ' · 세 가로 표본에서 피부–모발 분할 접경 Y/원본 사진 높이: ' +
+    contacts +
+    (candidate.status === 'partial' ? ' · 일부 구간 불가' : '') +
+    ' · 사진 평면의 연구 후보이며, 이마 전체 폭·실제 모근선·가림 속 형태·전통 관상형 또는 독립 정확도 판정은 아닙니다.';
+}
 function renderVisibleEarMaskExperiment(record, result, previous) {
   const node = $('ear-mask-experiment');
   if (previous) {
@@ -1372,6 +1413,7 @@ function render() {
   }
   renderVisibleBrowMaskExperiment(record, result, previous);
   renderHairSkinInterfaceExperiment(record, result, previous);
+  renderVisibleForeheadSkinBand(record, result, previous);
   renderVisibleEarMaskExperiment(record, result, previous);
   renderEarHumanSpanComparison(record, result, previous);
   renderVisibleNoseMaskExperiment(record, result, previous);
