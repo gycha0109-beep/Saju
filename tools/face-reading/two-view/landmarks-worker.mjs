@@ -3,6 +3,7 @@
 // dynamically import ESM modules; module workers reject that loader operation.
 const visionReady = import('/local-assets/vision_bundle.mjs');
 const metricsReady = import('./frontal-metrics.mjs');
+const jawReady = import('./jaw-model-human-contour-comparison.mjs');
 let FaceLandmarker;
 let model;
 async function initialize() {
@@ -47,6 +48,14 @@ self.onmessage = async (event) => {
       captureRef,
       viewRole,
     });
+    const { sampleModelLowerOvalEnvelope } = await jawReady;
+    const jawModelEnvelope = sampleModelLowerOvalEnvelope({
+      landmarks,
+      topology,
+      width: bitmap.width,
+      height: bitmap.height,
+      viewRole,
+    });
     if (!unique)
       for (const metric of metrics)
         metric.reason = detected.faceLandmarks.length
@@ -84,6 +93,7 @@ self.onmessage = async (event) => {
       captureRef,
       metrics,
       overlay,
+      jawModelEnvelope,
       providerState: unique
         ? 'single_face_model_candidate'
         : detected.faceLandmarks.length

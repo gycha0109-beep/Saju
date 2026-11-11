@@ -16,6 +16,7 @@ import { attachEarDetailReview } from './ear-detail-review-ui.mjs';
 import { compareEarMaskToHumanOuterRim } from './ear-model-human-rim-span.mjs';
 import { attachLipBorderHumanReview } from './lip-border-human-review-ui.mjs';
 import { attachJawContourHumanReview } from './jaw-contour-human-review-ui.mjs';
+import { compareModelJawEnvelopeWithHumanContour } from './jaw-model-human-contour-comparison.mjs';
 import { compareLipClassWidthsToHumanBorders } from './lip-model-human-width-comparison.mjs';
 import { compareLipClassVerticalEnvelopesToHumanBorders } from './lip-model-human-vertical-envelope.mjs';
 import { measureManualPhiltrumRidgeSpacing } from './philtrum-manual-ridge-spacing.mjs';
@@ -1232,6 +1233,36 @@ function renderPhotoReadiness(record) {
     target.append(item);
   }
 }
+function renderJawModelHumanComparison(record, result, previous) {
+  const node = $('jaw-model-comparison');
+  if (!node) return;
+  node.textContent = '';
+  if (mode !== 'existing' || record.viewRole !== 'frontal' || previous) return;
+  const human = state?.jawContourReviews?.[record.captureRef];
+  if (!human) {
+    node.textContent = '턱 하단 사람 표시 기록 없음 · 비교 보류';
+    return;
+  }
+  const compared = compareModelJawEnvelopeWithHumanContour(result?.jawModelEnvelope, human);
+  if (compared.status === 'unavailable') {
+    node.textContent =
+      '턱 하단 모델/사람 2D 비교 보류(' +
+      compared.reason +
+      ') · 최신 원본 모델 계산이 없다면 기존 사진 분석을 다시 실행하세요.';
+    return;
+  }
+  node.textContent =
+    '같은 사진에서 모델 얼굴 외곽 하단과 사람 턱 표시선의 2D 비교 ' +
+    (compared.status === 'partial' ? '(부분만 비교)' : '(표시 범위 일치)') +
+    ' · 겹치는 표본 ' +
+    compared.comparedSampleCount +
+    '/5' +
+    ' · 평균 절대 차이 ' +
+    compared.meanAbsoluteOffsetToImageHeight.toFixed(3) +
+    ' · 최대 차이 ' +
+    compared.maximumAbsoluteOffsetToImageHeight.toFixed(3) +
+    ' (사진 높이 대비). 실제 턱뼈·돌출·형태 분류·정확도 검증 결과가 아닙니다.';
+}
 function render() {
   const record = records[selected];
   if (!record) return;
@@ -1312,6 +1343,7 @@ function render() {
   earDetailReview.render();
   lipBorderHumanReview.render();
   jawContourHumanReview.render();
+  renderJawModelHumanComparison(record, result, previous);
   eyelidContourHumanReview.render();
   if (record.viewRole === 'frontal' && mode === 'existing')
     renderBrowHumanComparison(record, result, previous);
@@ -1581,6 +1613,7 @@ async function infer(task, context) {
   const reuseNumerics =
     mode === 'existing' &&
     Array.isArray(previous?.metrics) &&
+    !state?.jawContourReviews?.[task.captureRef] &&
     (task.viewRole === 'profile'
       ? previous.metrics.length === 0
       : previous.metrics.length === METRIC_DEFINITIONS.length &&

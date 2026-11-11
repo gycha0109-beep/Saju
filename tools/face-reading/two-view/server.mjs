@@ -497,6 +497,7 @@ export async function createLocalReviewServer({
       'philtrum-manual-ridge-spacing.mjs',
       'jaw-contour-human-review.mjs',
       'jaw-contour-human-review-ui.mjs',
+      'jaw-model-human-contour-comparison.mjs',
       'visible-eye-class-profile.mjs',
       'eye-fold-review.mjs',
       'brow-centerline-review.mjs',
