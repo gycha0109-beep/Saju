@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  auditT10ClassicalCrossTenGodScopeV1,
+  type T10ClassicalCrossTenGodResearch,
+} from '../research/compatibility-t10-classical-cross-ten-god.js';
+import {
   observeT102025DirectCombinationCandidates,
   type T102025DirectCombinationResearch,
 } from '../research/compatibility-t10-2025-direct-combination-candidate.js';
@@ -88,6 +92,8 @@ export interface CompatibilityTwoBirthResearchReading {
   spouseCriteria2025Scope?: T102025SpouseScopeReviewV1;
   /** Direct two-chart historical clause, attributed via 2025 author text. */
   directCombination2025Research?: T102025DirectCombinationResearch;
+  /** Contradictory traditional two-chart six-spirit methods; no admitted outcome. */
+  classicalCrossTenGodResearch?: T10ClassicalCrossTenGodResearch;
   html: string;
 }
 
@@ -251,6 +257,9 @@ export function buildCompatibilityTwoBirthResearchReading(
     ) : undefined;
   const directCombination2025Research = methodCoverage
     ? observeT102025DirectCombinationCandidates(sourceScopeHandoff) : undefined;
+  const classicalCrossTenGodResearch = methodCoverage
+    ? auditT10ClassicalCrossTenGodScopeV1(sourceScopeHandoff, subject, target)
+    : undefined;
   return {
     version: COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
@@ -274,6 +283,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(directDayComparisonResearch ? { directDayComparisonResearch } : {}),
       ...(spouseCriteria2025Scope ? { spouseCriteria2025Scope } : {}),
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
+      ...(classicalCrossTenGodResearch ? { classicalCrossTenGodResearch } : {}),
     } : {}),
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
