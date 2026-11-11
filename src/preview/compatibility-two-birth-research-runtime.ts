@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  auditT10ClassicalUsefulElementExamplesV1,
+  type T10ClassicalUsefulElementResearchV1,
+} from '../research/compatibility-t10-classical-useful-element.js';
+import {
   auditT10ClassicalCrossTenGodScopeV1,
   type T10ClassicalCrossTenGodResearch,
 } from '../research/compatibility-t10-classical-cross-ten-god.js';
@@ -94,6 +98,8 @@ export interface CompatibilityTwoBirthResearchReading {
   directCombination2025Research?: T102025DirectCombinationResearch;
   /** Contradictory traditional two-chart six-spirit methods; no admitted outcome. */
   classicalCrossTenGodResearch?: T10ClassicalCrossTenGodResearch;
+  /** Classical useful-element examples: actual symbols only, never selected yongshin. */
+  classicalUsefulElementResearch?: T10ClassicalUsefulElementResearchV1;
   html: string;
 }
 
@@ -260,6 +266,10 @@ export function buildCompatibilityTwoBirthResearchReading(
   const classicalCrossTenGodResearch = methodCoverage
     ? auditT10ClassicalCrossTenGodScopeV1(sourceScopeHandoff, subject, target)
     : undefined;
+  const classicalUsefulElementResearch = classicalCrossTenGodResearch
+    ? auditT10ClassicalUsefulElementExamplesV1(
+      sourceScopeHandoff, classicalCrossTenGodResearch, subject, target,
+    ) : undefined;
   return {
     version: COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
@@ -284,6 +294,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(spouseCriteria2025Scope ? { spouseCriteria2025Scope } : {}),
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
       ...(classicalCrossTenGodResearch ? { classicalCrossTenGodResearch } : {}),
+      ...(classicalUsefulElementResearch ? { classicalUsefulElementResearch } : {}),
     } : {}),
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
