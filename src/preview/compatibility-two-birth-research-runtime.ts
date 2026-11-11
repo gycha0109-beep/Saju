@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  buildT10PairReadingBoundaryDraftV1,
+  type T10PairReadingBoundaryDraftV1,
+} from '../research/compatibility-t10-pair-reading-boundary-draft.js';
+import {
   compareT10CrossMethodEvidenceV1,
   type T10CrossMethodContrastResearchV1,
 } from '../research/compatibility-t10-cross-method-contrast.js';
@@ -126,6 +130,8 @@ export interface CompatibilityTwoBirthResearchReading {
   threeMethodApplicabilityReading?: T10ThreeMethodApplicabilityReadingV1;
   /** Source-bounded opposite structural cases and incompatible classical methods. */
   crossMethodContrastResearch?: T10CrossMethodContrastResearchV1;
+  /** Cohesive factual Korean research draft and explicit interpretation HOLD. */
+  pairReadingBoundaryDraft?: T10PairReadingBoundaryDraftV1;
   /** 2025 author-posted research excerpt: per-person criteria, no T10 synthesis. */
   spouseCriteria2025Scope?: T102025SpouseScopeReviewV1;
   /** Direct two-chart historical clause, attributed via 2025 author text. */
@@ -339,6 +345,13 @@ export function buildCompatibilityTwoBirthResearchReading(
       classicalCrossTenGodResearch, classicalUsefulElementResearch,
       threeMethodApplicabilityReading,
     ) : undefined;
+  const pairReadingBoundaryDraft = sourceBoundObservationReading &&
+    historicalDayYearObservation && crossMethodContrastResearch &&
+    threeMethodApplicabilityReading
+    ? buildT10PairReadingBoundaryDraftV1(
+      sourceBoundObservationReading, historicalDayYearObservation,
+      crossMethodContrastResearch, threeMethodApplicabilityReading,
+    ) : undefined;
   const gejuRescueSourceBridge = yongshenMethodScopeResearch
     ? auditT10GejuRescueSourceBridgeV1(
       sourceScopeHandoff, yongshenMethodScopeResearch, subject, target,
@@ -371,6 +384,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(sourceBoundObservationReading ? { sourceBoundObservationReading } : {}),
       ...(threeMethodApplicabilityReading ? { threeMethodApplicabilityReading } : {}),
       ...(crossMethodContrastResearch ? { crossMethodContrastResearch } : {}),
+      ...(pairReadingBoundaryDraft ? { pairReadingBoundaryDraft } : {}),
       ...(spouseCriteria2025Scope ? { spouseCriteria2025Scope } : {}),
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
       ...(historicalDayYearObservation ? { historicalDayYearObservation } : {}),

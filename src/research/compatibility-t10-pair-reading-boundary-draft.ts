@@ -1,0 +1,293 @@
+import type { T10SourceBoundObservationReadingV1 } from
+  './compatibility-t10-source-bound-observation-reading.js';
+import type { T10HistoricalDayYearObservation } from
+  './compatibility-t10-historical-day-year-observation.js';
+import type { T10CrossMethodContrastResearchV1 } from
+  './compatibility-t10-cross-method-contrast.js';
+import type { T10ThreeMethodApplicabilityReadingV1 } from
+  './compatibility-t10-three-method-applicability-reading.js';
+
+export const T10_PAIR_READING_BOUNDARY_DRAFT_VERSION =
+  'saju-t10-pair-reading-boundary-draft-v1' as const;
+
+type ChartPerson = T10SourceBoundObservationReadingV1['subject'];
+
+export interface T10PairDraftSentence {
+  readonly paragraph: string;
+  readonly evidenceLayer: 'calculated_structure' | 'traditional_reference' |
+    'method_applicability' | 'unresolved_synthesis' | 'missing_input' |
+    'source_limit';
+  readonly observedFactPaths: readonly string[];
+  readonly consideredButUnverifiedFactPaths: readonly string[];
+  readonly sourceIds: readonly string[];
+  readonly sourceUrls: readonly string[];
+  readonly definitionContentHashes: readonly string[];
+  readonly missingPrerequisites: readonly string[];
+  readonly individualRelationshipOutcomeAuthorized: false;
+}
+
+export interface T10PairDraftSection {
+  readonly id: 'direct_day_facts' | 'day_to_year_facts' | 'mixed_positions' |
+    'historical_method_disagreement' | 'palace_method' |
+    'six_spirits_method' | 'useful_god_method' | 'reading_limits';
+  readonly title: string;
+  readonly sentences: readonly T10PairDraftSentence[];
+}
+
+export interface T10PairReadingBoundaryDraftV1 {
+  readonly version: typeof T10_PAIR_READING_BOUNDARY_DRAFT_VERSION;
+  readonly lifecycle: 'internal_research_only';
+  readonly subject: ChartPerson;
+  readonly target: ChartPerson;
+  readonly mode: 'source_bounded_factual_research_not_compatibility';
+  readonly structuralSituation:
+    'day_six_combination_with_other_clash' |
+    'day_clash_with_other_six_combination' |
+    'no_source_qualified_mixed_day_structure';
+  readonly sections: readonly T10PairDraftSection[];
+  /** A readable joined version of exactly the sourced paragraphs above. */
+  readonly koreanReadingDraft: string;
+  readonly permissionToChooseBestEvidence: false;
+  readonly mayInterpretOverallCompatibility: false;
+  readonly relationshipOutcome: null;
+  readonly compatibilityScore: null;
+  readonly eligibleForFirstComparison: false;
+  readonly eligibleForRepeatComparison: false;
+  readonly eligibleForNatalAndFirstBundle: false;
+  readonly mayPublish: false;
+  readonly mayPersist: false;
+  readonly maySell: false;
+}
+
+function samePerson(
+  a: ChartPerson,
+  b: Pick<ChartPerson, 'personRef' | 'snapshotId' | 'calculationHash'>,
+): boolean {
+  return a.personRef === b.personRef &&
+    a.snapshotId === b.snapshotId &&
+    a.calculationHash === b.calculationHash;
+}
+function unique(items: readonly string[]): string[] {
+  return [...new Set(items)];
+}
+
+function factualSentence(
+  sentence: T10SourceBoundObservationReadingV1['sentences'][number],
+): T10PairDraftSentence {
+  return {
+    paragraph: sentence.paragraph,
+    evidenceLayer: sentence.kind === 'unknown_hour' ? 'missing_input'
+      : sentence.kind === 'source_limit' ? 'source_limit' : 'calculated_structure',
+    observedFactPaths: sentence.kind === 'unknown_hour'
+      ? [] : sentence.observedFactPaths,
+    consideredButUnverifiedFactPaths: sentence.kind === 'unknown_hour'
+      ? sentence.observedFactPaths : [],
+    sourceIds: sentence.sourceIds,
+    sourceUrls: sentence.sourceUrls,
+    definitionContentHashes: sentence.definitionContentHashes,
+    missingPrerequisites: sentence.kind === 'unknown_hour'
+      ? ['UNKNOWN_BIRTH_HOUR_CANNOT_BE_INFERRED']
+      : sentence.kind === 'source_limit'
+        ? ['FULL_2016_CASE_METHOD_AND_EXCEPTION_TEXT'] : [],
+    individualRelationshipOutcomeAuthorized: false,
+  };
+}
+
+/** Composes existing source-limited observations without adding a T10 Rule. */
+export function buildT10PairReadingBoundaryDraftV1(
+  factual: T10SourceBoundObservationReadingV1,
+  historical: T10HistoricalDayYearObservation,
+  contrast: T10CrossMethodContrastResearchV1,
+  methods: T10ThreeMethodApplicabilityReadingV1,
+): T10PairReadingBoundaryDraftV1 {
+  if (factual.lifecycle !== 'internal_research_only' ||
+      factual.mayPublish !== false || factual.maySell !== false ||
+      factual.sourceQualifiedFourCase !== null ||
+      factual.compatibilityScore !== null ||
+      factual.compositeCompatibilityMeaning !== null ||
+      historical.lifecycle !== 'internal_research_only' ||
+      historical.maySell !== false || historical.mayPublish !== false ||
+      historical.primary1983SourceVerified !== false ||
+      historical.relationshipOutcomeAuthorized !== false ||
+      historical.compatibilityVerdict !== null ||
+      contrast.lifecycle !== 'internal_research_only' ||
+      contrast.maySell !== false || contrast.pairwiseT10Admitted !== false ||
+      contrast.interpersonalConclusion !== null ||
+      contrast.state !== 'competing_observations_no_admitted_precedence' ||
+      contrast.historical.oppositeChartOutcomesEstablished !== false ||
+      contrast.historical.relationPriorityEstablished !== false ||
+      methods.lifecycle !== 'internal_research_only' ||
+      methods.maySell !== false || methods.sourceQualifiedT10ReadingComplete !== false ||
+      methods.sourceQualifiedThreeMethodPriority !== null ||
+      methods.relationshipVerdict !== null ||
+      methods.axes.map(axis => axis.method).join('|') !==
+        'palace|six_spirits|useful_god' ||
+      methods.axes.some(axis => axis.sourceQualifiedInterpersonalRule !== false ||
+        axis.relationshipOutcomeAuthorized !== false) ||
+      !samePerson(factual.subject, historical.subject) ||
+      !samePerson(factual.target, historical.target) ||
+      !samePerson(factual.subject, contrast.subject) ||
+      !samePerson(factual.target, contrast.target) ||
+      !samePerson(factual.subject, methods.subject) ||
+      !samePerson(factual.target, methods.target) ||
+      factual.subject.personRef === factual.target.personRef ||
+      contrast.structural.length > 1 ||
+      contrast.structural.some(item => item.netRelationshipMeaning !== null ||
+        item.conditionalPriorityEstablished !== false)) {
+    throw new TypeError('T10 bounded reading requires the same unpromoted chart evidence.');
+  }
+  const mixed = contrast.structural[0];
+  const sourceMixed = factual.sentences.find(item =>
+    item.kind === 'cross_position_opposite');
+  if (Boolean(mixed) !== Boolean(sourceMixed) ||
+      (mixed && sourceMixed && (
+        !mixed.dayFactPaths.every(path => sourceMixed.observedFactPaths.includes(path)) ||
+        !mixed.otherFactPaths.every(item =>
+          sourceMixed.observedFactPaths.includes(item.subject) &&
+          sourceMixed.observedFactPaths.includes(item.target))))) {
+    throw new TypeError('T10 combined reading must preserve the original mixed-position facts.');
+  }
+  if (historical.sentences.some(sentence =>
+    sentence.historicalMeaningVerified !== false ||
+    sentence.interpersonalMeaningAuthorized !== false ||
+    !sentence.observedFactPaths.some(path => path.includes('.pillars.year.')) ||
+    sentence.observedFactPaths.length !== 2 ||
+    !sentence.sourceIds.length || !sentence.calculationSourceUrls.length ||
+    !sentence.historicalClauseUrl ||
+    !sentence.definitionContentHash)) {
+    throw new TypeError('T10 historical year text requires direct unpromoted original sources.');
+  }
+
+  const sections: T10PairDraftSection[] = [];
+  const add = (
+    id: T10PairDraftSection['id'],
+    title: string,
+    sentences: readonly T10PairDraftSentence[],
+  ): void => {
+    if (sentences.length > 0) sections.push({ id, title, sentences });
+  };
+  const dayFacts = factual.sentences.filter(item =>
+    item.evidenceScope === 'calculated_structural_fact' &&
+    item.kind !== 'unknown_hour' && item.kind !== 'cross_position_opposite');
+  add('direct_day_facts', '두 사람의 일간·일지 관측', dayFacts.map(factualSentence));
+  add('day_to_year_facts', '본인의 일주와 상대의 출생연도 비교',
+    historical.sentences.map(item => ({
+      paragraph: item.paragraph,
+      evidenceLayer: 'traditional_reference' as const,
+      observedFactPaths: item.observedFactPaths,
+      consideredButUnverifiedFactPaths: [],
+      sourceIds: item.sourceIds,
+      sourceUrls: [...item.calculationSourceUrls, item.historicalClauseUrl],
+      definitionContentHashes: [item.definitionContentHash],
+      missingPrerequisites: ['BAEK_1983_P189_PRIMARY_TEXT_NOT_VERIFIED'],
+      individualRelationshipOutcomeAuthorized: false as const,
+    })));
+  if (mixed) {
+    add('mixed_positions', '서로 다른 위치의 상충 구조', [{
+      paragraph: mixed.paragraph,
+      evidenceLayer: 'unresolved_synthesis',
+      observedFactPaths: unique([
+        ...mixed.dayFactPaths,
+        ...mixed.otherFactPaths.flatMap(item => [item.subject, item.target]),
+      ]),
+      consideredButUnverifiedFactPaths: [],
+      sourceIds: unique(mixed.otherFactPaths.flatMap(item => [...item.sourceIds])),
+      sourceUrls: [...mixed.sources],
+      definitionContentHashes: unique(mixed.otherFactPaths.map(
+        item => item.definitionContentHash)),
+      missingPrerequisites: ['EXACT_TWO_PERSON_PRIORITIZATION_RULE'],
+      individualRelationshipOutcomeAuthorized: false,
+    }]);
+  }
+  add('historical_method_disagreement', '고전 방법의 적용 한계', [{
+    paragraph: contrast.historical.paragraph,
+    evidenceLayer: 'unresolved_synthesis',
+    observedFactPaths: unique([
+      ...contrast.historical.tenGodVisibleInputs.flatMap(item =>
+        [...item.canonicalFactPaths]),
+      ...contrast.historical.elementExampleInputs.flatMap(item =>
+        [...item.counterpartVisibleFactPaths]),
+    ]),
+    consideredButUnverifiedFactPaths: unique([
+      ...contrast.historical.tenGodVisibleInputs.flatMap(item =>
+        [...item.unresolvedFactPaths]),
+    ]),
+    sourceIds: [],
+    sourceUrls: [...contrast.historical.sourceUrls],
+    definitionContentHashes: [],
+    missingPrerequisites: contrast.unresolvedMethodPrerequisites,
+    individualRelationshipOutcomeAuthorized: false,
+  }]);
+  const ids = ['palace_method', 'six_spirits_method', 'useful_god_method'] as const;
+  const titles = ['궁위론 검증 범위', '육신론 검증 범위', '용신론 검증 범위'] as const;
+  methods.axes.forEach((axis, i) => {
+    const id = ids[i];
+    const title = titles[i];
+    if (!id || !title) throw new TypeError('Unexpected T10 method axis.');
+    add(id, title, [{
+      paragraph: axis.paragraph,
+      evidenceLayer: 'method_applicability',
+      observedFactPaths: [],
+      consideredButUnverifiedFactPaths: axis.consideredInputFactPaths,
+      sourceIds: [],
+      sourceUrls: axis.sourceUrls,
+      definitionContentHashes: [],
+      missingPrerequisites: axis.unresolvedPrerequisites,
+      individualRelationshipOutcomeAuthorized: false,
+    }]);
+  });
+  add('reading_limits', '실제 관계 판단의 보류 이유', [
+    ...factual.sentences.filter(item =>
+      item.kind === 'unknown_hour' || item.kind === 'source_limit').map(factualSentence),
+    {
+      paragraph: '계산된 합·충과 고전의 비교 방법만으로는 두 사람의 ' +
+        '관계 만족도, 결혼 성사, 이혼 여부 또는 상호 적합성을 단정할 수 없습니다. ' +
+        '검증된 종합 규칙이 없어 이 연구 초안은 궁합 판정을 제공하지 않습니다.',
+      evidenceLayer: 'source_limit',
+      observedFactPaths: [],
+      consideredButUnverifiedFactPaths: [],
+      sourceIds: [],
+      sourceUrls: unique([
+        ...contrast.historical.sourceUrls,
+        ...methods.axes.flatMap(axis => [...axis.sourceUrls]),
+      ]),
+      definitionContentHashes: [],
+      missingPrerequisites: unique([
+        ...contrast.unresolvedMethodPrerequisites,
+        'SOURCE_VALIDATED_RELATIONSHIP_OUTCOME_METHOD',
+      ]),
+      individualRelationshipOutcomeAuthorized: false,
+    },
+  ]);
+  if (sections.some(section => !section.sentences.length ||
+      section.sentences.some(item =>
+        !item.paragraph.trim() ||
+        item.individualRelationshipOutcomeAuthorized !== false ||
+        (item.evidenceLayer !== 'missing_input' &&
+          !item.sourceUrls.length)))) {
+    throw new TypeError('A T10 draft sentence must remain evidence-grounded or explicitly missing.');
+  }
+  const koreanReadingDraft = sections.map(section =>
+    section.title + '\n' +
+    section.sentences.map(sentence => sentence.paragraph).join('\n')).join('\n\n');
+  return {
+    version: T10_PAIR_READING_BOUNDARY_DRAFT_VERSION,
+    lifecycle: 'internal_research_only',
+    subject: factual.subject,
+    target: factual.target,
+    mode: 'source_bounded_factual_research_not_compatibility',
+    structuralSituation: mixed?.direction ?? 'no_source_qualified_mixed_day_structure',
+    sections,
+    koreanReadingDraft,
+    permissionToChooseBestEvidence: false,
+    mayInterpretOverallCompatibility: false,
+    relationshipOutcome: null,
+    compatibilityScore: null,
+    eligibleForFirstComparison: false,
+    eligibleForRepeatComparison: false,
+    eligibleForNatalAndFirstBundle: false,
+    mayPublish: false,
+    mayPersist: false,
+    maySell: false,
+  };
+}
