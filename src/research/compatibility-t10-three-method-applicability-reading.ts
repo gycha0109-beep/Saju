@@ -45,7 +45,10 @@ export interface T10ThreeMethodApplicabilityReadingV1 {
 }
 
 type Person = T10SourceBoundObservationReadingV1['subject'];
-function samePerson(a: Person, b: Person): boolean {
+function samePerson(
+  a: Person,
+  b: Pick<Person, 'personRef' | 'snapshotId' | 'calculationHash'>,
+): boolean {
   return a.personRef === b.personRef &&
     a.snapshotId === b.snapshotId &&
     a.calculationHash === b.calculationHash;
