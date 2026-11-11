@@ -114,3 +114,11 @@
 - 기존 테스트와 신규 점검 테스트 총 22건 통과, 타입·코드·서식 검사 통과. 실제 유료 API 호출이나 운영 DB 변경·서비스 설치는 수행하지 않았다.
 - 이 읽기 전용 사전 점검은 향후 INSERT 성공, 실제 공급사 호출 전수, 청구서와 비용의 일치를 보장하지 않는다. completeCostCoverage=false, 비용 수집 OFF.
 - 남은 차단 조건: 독립 Source DB 및 명하 증명 DB의 운영 설치·전용 계정·TLS, Production Interpretation Authority, 개인정보 증명 보존·삭제 정책, 실제 청구·환율 대조.
+
+### 2026-11-11 — 영수증 Writer 사전 점검 도입 후 기존 회귀 테스트 수정
+
+- PR #2779 초기 HEAD c28400da5171bcbf45d30c876a936af58e4e34f9의 CI Tests (13/16)에서 688건 중 4건 실패: 새 호출 전 영수증 Writer DB 준비 점검을 기존 test/reading-ai-a4-coverage-gate.test.ts의 모의 DB가 반환하지 않아 실제 정상 경로까지 사전 차단되었다.
+- 실패 기록: https://github.com/gycha0109-beep/Saju/actions/runs/42977260420/job/130381015760
+- 모의 Source Reader/Writer의 준비 상태에 정본 테이블 식별자, 정확한 역할 및 기존 최소 열 권한을 추가했다. 실제 구현의 차단 조건, Production 해석 승인 및 Source 서명 검증은 변경하지 않았다.
+- 직접 관련된 4개 테스트 파일의 26건을 재실행해 PASS. 실제 운영 API 호출, 유료 토큰 사용, 운영 DB 설치·수정 및 비용 수집은 계속 없음.
+- 새 커밋의 일반 CI·필수 Integration은 별도 성공 근거 확인 전까지 미완료로 취급한다. completeCostCoverage=false, 운영 수집 OFF 유지.
