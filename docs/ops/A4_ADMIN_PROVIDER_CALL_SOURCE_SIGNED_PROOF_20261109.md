@@ -53,3 +53,11 @@
 - 승인된 scope가 완료되고 기존 ProductReadingResponse admission까지 통과한 경우에만 Saju 자체 발급 `saju_source_UUID`를 `x-myeongha-saju-external-request-ref` 응답 헤더로 반환한다. 헤더 자체는 HMAC 증명이 아니며, 실제 명하 DB 최종화에서는 Source 서명 영수증·종료 시도·ref 일치의 독립 검증이 필요하다.
 - 별도 Preview host에 capture 설치 금지, 통합 Preview의 A4 헤더 거부, 외부 미인증 요청 차단, 누락·변조 UUID/영수증 ref/Source admission 실패 시 차단. `test/a4-prepared-reading-host-transport.test.ts` 신규 8건과 기존 실제 OpenAI capture 7건 및 인증 테스트 15건 포함 **30건 PASS**, TypeScript·ESLint PASS. 실제 OpenAI API나 운영 비용 수집 실행 없음.
 - `a4SourceCapture`의 실제 운영 주입, 동일 OpenAI 어댑터 callback과의 결합, 신뢰 가능한 single-use Source admission 구현/인증, Saju Source 전용 영구 DB·Secret/TLS 설치, MyeongHa의 authenticated 외부 ref 조회·정본 DB finalize·비용 수집은 **HOLD**. 현재 미설치 hook이 존재한다는 사실만으로 실제 비용 수집 성공을 선언할 수 없다. `ROADMAP_COMPLETE` 아님.
+
+## 2026-11-11 — A4 출처 영수증·콜백 기록 불일치 대조 (오프라인)
+
+- `src/production/reading-ai-a4-source-coverage-audit-v1.ts`: 사전에 발급된 실행 시도 UUID를 서버에서만 지정해 **기존 Saju 출처 영구 저장소의 두 불변 테이블**을 동일한 `BEGIN READ ONLY` 거래로 조회한다. 전용 Source Writer의 정확한 `current_user` 확인이 없으면 조회 거부. 별도 DB/역할·API·배치 Job·스케줄러·관리자 브라우저 권한은 추가하지 않는다.
+- 요청별 `coverage.acknowledgedReceipts`와 실제 보존된 서명 영수증의 수를 비교한다. 각 영수증은 기존 도메인 HMAC-SHA256, 발급자/대상/키 식별자, DB 실행 시도 UUID, Saju 발급 ref, 호출 ID의 일치 여부를 검사한다. 영수증 누락·추가, 서명 위조·변조, 커버리지 누락·오류, 기록 실패·미완료, 500건 이상 조회 한계는 각각 명시 상태로 분리한다. 확인 불가능한 비용·호출을 0건/0원으로 보정하지 않는다.
+- `test/reading-ai-a4-source-coverage-audit-v1.test.ts` 8개 신규 테스트와 기존 PostgreSQL 영수증·누락 기록 관련 테스트 14개 포함 **22건 PASS**, TypeScript/ESLint/Prettier PASS. 폐기형 PostgreSQL 17.11에서 기존 두 Source 오프라인 스키마 설치 후 **전용 Writer 역할로 두 테이블의 실제 SELECT 쿼리 성공**을 확인했으며 임시 DB는 즉시 종료했다.
+- 결과 필드 `completeCostCoverage=false`는 상수다. 저장된 로컬 영수증과 관측 콜백이 맞아도 **실제 공급사 전체 HTTP 호출·청구·월간 완전성**은 검증하지 못한다. 추가 운영 환경의 전용 DB 접속·신뢰 가능한 Prepared Attempt 일회성 승인·Production Interpretation Authority·누락 공급사 호출 감지·실제 청구 대조가 필요하다.
+- 이 기능은 명하 비용 원장·고객·결제·크레딧·운영 DB와 연결하거나 변경하지 않았으며 실제 호출·유료 API·비용 수집도 수행하지 않았다. **HOLD / `ROADMAP_COMPLETE` 아님.**
