@@ -1,6 +1,10 @@
 import type { Server } from 'node:http';
 import type { CalculationEngineOptions } from '../calculation/calculation-engine.js';
 import {
+  createProductionReadingIssueProof,
+  type ProductionReadingIssueProofOptions,
+} from '../host/production-reading-issue-proof.js';
+import {
   buildInterpretationExecutionPlan,
   ExecutionPlanError,
 } from '../interpretation/execution-plan.js';
@@ -306,6 +310,10 @@ function toDependencies(
 export function createAuthorizedMyeonghwaProductionHost(
   request: ProductionCompositionRequest,
 ): MyeonghwaProductHost {
+  return prepareAuthorizedProductionHost(request).host;
+}
+
+function prepareAuthorizedProductionHost(request: ProductionCompositionRequest) {
   const inspection = inspectMyeonghwaProductionComposition(request);
   if (inspection.status === 'blocked') {
     throw new ProductionCompositionBlockedError(inspection.blockers);
@@ -318,7 +326,10 @@ export function createAuthorizedMyeonghwaProductionHost(
     throw new Error('Production composition authority disappeared after readiness inspection.');
   }
 
-  return createMyeonghwaProductHost(toDependencies(request, registry));
+  return {
+    host: createMyeonghwaProductHost(toDependencies(request, registry)),
+    authority: inspection.authority,
+  };
 }
 
 
@@ -332,10 +343,21 @@ export function createAuthorizedMyeonghwaProductionHost(
  */
 export function createAuthorizedMyeonghwaProductionHostServer(
   request: ProductionCompositionRequest,
-  options: MyeonghwaProductionProductHostServerOptions = {},
+  options: MyeonghwaProductionProductHostServerOptions & {
+    readonly productionIssueProof?: ProductionReadingIssueProofOptions;
+  } = {},
 ): Server {
-  const host = createAuthorizedMyeonghwaProductionHost(request);
-  return createMyeonghwaProductionProductHostServer(host, options);
+  const { host, authority } = prepareAuthorizedProductionHost(request);
+  const { productionIssueProof, ...serverOptions } = options;
+  const proof = productionIssueProof === undefined
+    ? undefined
+    : createProductionReadingIssueProof(authority, productionIssueProof);
+  return createMyeonghwaProductionProductHostServer(
+    host,
+    serverOptions,
+    undefined,
+    proof,
+  );
 }
 
 export type { MyeonghwaProductionProductHostServerOptions };

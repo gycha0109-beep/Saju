@@ -17,6 +17,12 @@ import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './produc
 import { buildCompatibilityTwoBirthResearchReading } from '../preview/compatibility-two-birth-research-runtime.js';
 import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-service-bearer-auth.js';
 import {
+  PRODUCTION_READING_ATTEMPT_HEADER,
+  PRODUCTION_READING_ISSUE_PROOF_HEADER,
+  PRODUCTION_READING_RELEASE_HEADER,
+  type createProductionReadingIssueProof,
+} from './production-reading-issue-proof.js';
+import {
   CHARACTER_GROUNDING_ADMISSION_HEADER,
   CHARACTER_GROUNDING_ADMISSION_VERSION,
   CHARACTER_GROUNDING_HTTP_PATH,
@@ -263,6 +269,7 @@ function createMyeonghwaHttpServer(
   secondaryReadingHost?: MyeonghwaProductHost,
   secondaryReadingRoute?: MyeonghwaReadingHttpRoute,
   faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
+  productionIssueProof?: ReturnType<typeof createProductionReadingIssueProof>,
 ): Server {
   const bodyLimit = maxRequestBytes(options);
   const groundingBodyLimit = characterGroundingMaxRequestBytes(options);
@@ -512,10 +519,21 @@ function createMyeonghwaHttpServer(
       }
       try {
         const body = await readJsonBody(request, bodyLimit);
+        const attempt = request.headers[PRODUCTION_READING_ATTEMPT_HEADER];
+        const release = request.headers[PRODUCTION_READING_RELEASE_HEADER];
+        const signIssue = productionIssueProof?.(attempt, release, body);
+        if ((attempt !== undefined || release !== undefined) && signIssue === undefined) {
+          sendJson(response, 403, {
+            error: { code: 'HOST_PRODUCTION_ISSUE_UNAVAILABLE', message: 'Production issue is unavailable.' },
+          });
+          return;
+        }
         const result = await matchedReading.host.requestReading(body);
         const admitted = admitProductReadingResponse(result);
+        const issueProof = signIssue?.(admitted);
         sendJson(response, 200, admitted, {
           [PRODUCT_READING_RESPONSE_ADMISSION_HEADER]: PRODUCT_READING_RESPONSE_VERSION,
+          ...(issueProof === undefined ? {} : { [PRODUCTION_READING_ISSUE_PROOF_HEADER]: issueProof }),
           ...(matchedReading.route.lifecycle === undefined
             ? {}
             : {
@@ -551,6 +569,7 @@ export function createMyeonghwaProductionProductHostServer(
   readingHost: MyeonghwaProductHost,
   options: MyeonghwaProductionProductHostServerOptions = {},
   faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
+  productionIssueProof?: ReturnType<typeof createProductionReadingIssueProof>,
 ): Server {
   const { serviceBearer, previousServiceBearer, ...serverOptions } = options;
   const authorizeRequest = createMyeonghwaProductionServiceBearerAuthorizer({
@@ -566,6 +585,7 @@ export function createMyeonghwaProductionProductHostServer(
     undefined,
     undefined,
     faceGovernedHandoffHost,
+    productionIssueProof,
   );
 }
 
