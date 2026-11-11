@@ -73,6 +73,8 @@ describe('T10 protected source-grounded Korean observations', () => {
       item.kind === 'same_slot_competing_factors' &&
       item.paragraph.includes('일간에서 서로 다른 계산 요소'))).toBe(true);
     expect(reading?.sentences.find(item => item.kind === 'day_stem_elements')
+      ?.paragraph).toContain('사람의 오행이');
+    expect(reading?.sentences.find(item => item.kind === 'day_stem_elements')
       ?.observedFactPaths).toEqual([
       'subject.pillars.day.value.stem.element',
       'target.pillars.day.value.stem.element',

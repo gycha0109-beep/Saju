@@ -48,10 +48,10 @@ export interface T10SourceBoundObservationReadingV1 {
 
 const ELEMENT_RELATION_KOREAN: Readonly<Record<ElementPairKind, string>> = {
   same_element: '같은 오행',
-  subject_generates_target: '첫 번째 사람이 두 번째 사람을 생하는 오행 방향',
-  target_generates_subject: '두 번째 사람이 첫 번째 사람을 생하는 오행 방향',
-  subject_controls_target: '첫 번째 사람이 두 번째 사람을 극하는 오행 방향',
-  target_controls_subject: '두 번째 사람이 첫 번째 사람을 극하는 오행 방향',
+  subject_generates_target: '첫 번째 사람의 오행이 두 번째 사람의 오행을 생하는 방향',
+  target_generates_subject: '두 번째 사람의 오행이 첫 번째 사람의 오행을 생하는 방향',
+  subject_controls_target: '첫 번째 사람의 오행이 두 번째 사람의 오행을 극하는 방향',
+  target_controls_subject: '두 번째 사람의 오행이 첫 번째 사람의 오행을 극하는 방향',
 };
 
 function equalPerson(
