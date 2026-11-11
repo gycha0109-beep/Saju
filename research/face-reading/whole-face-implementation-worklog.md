@@ -613,3 +613,12 @@ Watchtower-Track: face-observation-engine
 - **로컬 검증:** 신규 후보·화면/작업자 연결·기존 헤어라인·눈꺼풀·하관·원본 현재성 관련 기술 테스트 28/28, TypeScript 전체 타입 검사, 대상 ESLint·Prettier·diff 검사 통과. 브라우저에서 비공개 실사진 + 독립 사람 라벨을 동시 실행한 정확도/재현성 검증은 **미실시(`empirical_unverified`)**. 새 HEAD CI는 커밋 후 따로 확인한다.
 - **불변 권한:** `candidateOnly=true`; `anatomicalHairlineAuthorized`, `independentAccuracyValidated`, `canonicalF0Admitted`, `traditionalBindingAuthorized`, `productInterpretationAuthorized`, `modelTrainingAuthorized` 전부 false. FR282 29개/FR293 계산기 18개/FR294 하드갭 11개 유지.
 - **다음:** 접근 가능한 기존 비공개 사진의 정면·앞머리 가림·촬영 조건별 모델 출력을 실제 사람 모근선 표기와 비교한다. 정답 자료가 없는 부위는 보류하고, 다음 미완료 세부 2D 관측은 기존 대응표와 권리·라벨 준비도를 다시 확인해 구현한다.
+
+### 2026-11-11 — 콧구멍 사람 표시 폐곡선 안팎의 원본 RGB 명도 근거 후보
+
+- **Watchtower-Track:** face-observation-engine. 직전 기준 HEAD `c2b08d5523e3eb07039d3b647c7c1b80b05b1787`, CI 6/6 GREEN. 로드맵 단계 2~3 진행.
+- **구현:** 기존 `nose-detail-review`에 이미 분리된 화면 좌/우 콧볼·콧구멍 표시를 재사용하고, 새 `nostril-border-photometry.mjs`를 기존 `/two-view` 검토 화면에 연결했다. **사람이 완전히 닫아 표시한 콧구멍 윤곽**의 가로 한쪽 경계마다 실제 이미지 RGB 픽셀을 읽어, 4개 윤곽 길이 위치에서 경계선에 수직인 법선 양쪽 2픽셀 떨어진 sRGB 가중 밝기 차이를 계산한다. 표시선 안/밖은 2D 닫힌 표시선의 기하적 안/밖일 뿐 인체 해부학적 내부·외부로 해석하지 않는다. 안쪽이 더 어두운 경우와 반대 경우를 모두 부호 있는 연속값으로 표시하며 임의 전통 관상 기준을 만들지 않는다.
+- **경계/가림:** 사람 표시 누락·부분/가림·여러 획·열린 경계·화면 좌/우 혼동·자기 교차·극소/화면 이탈 및 측정 가능한 픽셀 쌍 부족은 해당 눈금만 보류한다. 사진에서 피부 안쪽/바깥쪽 해부 구조는 자동 분류하지 않는다. 원본 RGB는 브라우저 메모리에서 최대 변 길이 1200px로 축소된 일시 이미지로만 분석하며 좌표·마스크·사진·픽셀은 새 저장 응답과 GitHub에 추가하지 않는다. 기존 서버의 원본 현재성 게이트 및 저장 후 비동기 무효화 경로를 유지했다.
+- **검증:** 신규·기존 콧볼/코 원본 변경 차단·검토 및 정적 모듈 제공 등 관련 테스트 31/31 통과, 전체 TypeScript 검사·변경 코드 ESLint·Prettier·diff 검사 통과. 새 커밋의 CI는 푸시 후 확인. 실제 사진 사람 표시와의 비교는 환경에서 자료 접근 불가로 **`empirical_unverified`**. 기존 모델 파싱 자체가 콧구멍을 분할·판독하지 않음.
+- **권한:** `candidateOnly=true`; `anatomicalNostrilInteriorIdentified`, `anatomicalNostrilExteriorIdentified`, `anatomicalBoundaryAccuracyValidated`, `independentAccuracyValidated`, `canonicalF0Admitted`, `traditionalBindingAuthorized`, `productInterpretationAuthorized`, `modelTrainingAuthorized` 모두 false. FR282 정규 29/FR293 18/FR294 하드갭 11 유지.
+- **다음:** 접근 가능한 비공개 실제 사진에서 사람이 구분한 완전/부분 콧구멍 경계, 조명 및 그늘에 따른 부호 변화와 재현성을 검증한다. 단순 픽셀 명도는 어두운 조직 또는 실제 비공 내부 정답이 아니다. 이후 나머지 미완료 2D 항목의 라벨·권리·기존 모델 적용 가능성을 우선 검토한다.

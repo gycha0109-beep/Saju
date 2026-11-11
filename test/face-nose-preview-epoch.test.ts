@@ -11,6 +11,7 @@ describe('nose preview request freshness after human review saves', () => {
     const result = {
       noseMaskCandidate: { status: 'available', value: 'old-model' },
       noseHumanComparison: { status: 'available', value: 'old-human' },
+      nostrilBorderPhotometry: { status: 'available', value: 'old-pixels' },
     };
     expect(NOSE_PREVIEW_EPOCH_VERSION).toBe('local-nose-preview-epoch@0.1.0');
     const old = startNosePreview(result);
@@ -18,6 +19,7 @@ describe('nose preview request freshness after human review saves', () => {
     invalidateNosePreview(result);
     expect(result.noseMaskCandidate).toBeNull();
     expect(result.noseHumanComparison).toBeUndefined();
+    expect(result.nostrilBorderPhotometry).toBeUndefined();
     expect(isCurrentNosePreview(result, old)).toBe(false);
     const fresh = startNosePreview(result);
     expect(fresh).toBeGreaterThan(old);

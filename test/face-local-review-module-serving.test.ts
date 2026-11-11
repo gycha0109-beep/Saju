@@ -37,10 +37,18 @@ describe('private two-view review browser module routing', () => {
     expect(browser).toContain('renderVisibleForeheadSkinBand(record, result, previous);');
     expect(browser).toContain('result.foreheadSkinCandidate');
   });
+  it('connects nose-boundary pixel comparison only to current local human review', () => {
+    const html = readFileSync(resolve(root, 'tools/face-reading/two-view/review.html'), 'utf8');
+    expect(html).toContain('id="nose-rim-photometry"');
+    expect(browser).toContain('renderNostrilBorderPhotometry(record, result, previous);');
+    expect(browser).toContain('isCurrentNosePreview(result, epoch)');
+    expect(browser).toContain('measureHumanMarkedNostrilBorderPhotometry');
+  });
   it('serves every directly imported review module from the local static allowlist', () => {
     const imports = [...browser.matchAll(/from '\.\/([^']+\.mjs)'/g)].map((match) => match[1]);
     expect(imports).toContain('source-currentness-gate.mjs');
     expect(imports).toContain('eyelid-manual-line-offsets.mjs');
+    expect(imports).toContain('nostril-border-photometry.mjs');
     const staticAllowlist = server.match(
       /const assets = new Map\(\s*\[([\s\S]*?)\]\.map\(\(name\)/,
     );

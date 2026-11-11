@@ -488,6 +488,7 @@ export async function createLocalReviewServer({
       'visible-brow-mask-envelope.mjs',
       'visible-nose-mask-profile.mjs',
       'nose-model-human-alar-span.mjs',
+      'nostril-border-photometry.mjs',
       'nose-preview-epoch.mjs',
       'source-currentness-gate.mjs',
       'eyelid-model-human-upper-edge.mjs',

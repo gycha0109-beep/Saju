@@ -27,6 +27,7 @@ export function invalidateNosePreview(result) {
   advance(result);
   result.noseMaskCandidate = null;
   result.noseHumanComparison = undefined;
+  result.nostrilBorderPhotometry = undefined;
 }
 
 export function isCurrentNosePreview(result, epoch) {

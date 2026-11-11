@@ -7,6 +7,7 @@ import { assessMorphology } from './morphology-assessment.mjs';
 import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
 import { attachNoseDetailReview } from './nose-detail-review-ui.mjs';
 import { compareNoseMaskToHumanAlarSpans } from './nose-model-human-alar-span.mjs';
+import { measureHumanMarkedNostrilBorderPhotometry } from './nostril-border-photometry.mjs';
 import {
   startNosePreview,
   invalidateNosePreview,
@@ -578,7 +579,76 @@ async function inspectVisibleNoseMask(record, result, humanReviewSnapshot) {
     canvas.height,
     humanReviewSnapshot,
   );
-  return { candidate: profile, comparison };
+  let photometry = null;
+  if (humanReviewSnapshot) {
+    // RGB stays in the browser only; bounded downsampling prevents a full-resolution
+    // biometric pixel buffer from being retained by the result or the server.
+    const sourceCanvas = document.createElement('canvas');
+    const scale = Math.min(1, 1200 / Math.max(sourceImage.naturalWidth, sourceImage.naturalHeight));
+    sourceCanvas.width = Math.max(1, Math.round(sourceImage.naturalWidth * scale));
+    sourceCanvas.height = Math.max(1, Math.round(sourceImage.naturalHeight * scale));
+    const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+    if (!sourceContext) throw Error('NOSE_SOURCE_CANVAS_UNAVAILABLE');
+    sourceContext.drawImage(sourceImage, 0, 0, sourceCanvas.width, sourceCanvas.height);
+    photometry = measureHumanMarkedNostrilBorderPhotometry({
+      rgba: sourceContext.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height).data,
+      width: sourceCanvas.width,
+      height: sourceCanvas.height,
+      human: humanReviewSnapshot,
+    });
+    sourceCanvas.width = 0;
+    sourceCanvas.height = 0;
+  }
+  return { candidate: profile, comparison, photometry };
+}
+function renderNostrilBorderPhotometry(record, result, previous) {
+  const node = $('nose-rim-photometry');
+  if (!node) return;
+  node.textContent = '';
+  if (mode !== 'existing' || record.viewRole !== 'frontal' || previous) return;
+  if (!state?.noseReviews?.[record.captureRef]) {
+    node.textContent = '콧구멍의 완전히 보이는 폐곡선 사람 표시가 없어 픽셀 대비를 보류합니다.';
+    return;
+  }
+  if (
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION ||
+    result.parsing.regionScreening?.regions?.nose?.status !== 'screened'
+  ) {
+    node.textContent =
+      '현재 같은 원본의 정면 코 분할·위치 검증 근거가 없어 픽셀 대비를 보류합니다.';
+    return;
+  }
+  const value = result.nostrilBorderPhotometry;
+  if (!value) {
+    node.textContent =
+      '사람 표시 콧구멍 경계의 원본 픽셀 명도 비교를 확인 중입니다. 분석을 다시 실행할 수 있습니다.';
+    return;
+  }
+  const names = [
+    ['imageLeft', '화면 왼쪽'],
+    ['imageRight', '화면 오른쪽'],
+  ];
+  const details = names.map(([side, label]) => {
+    const v = value[side];
+    if (v?.status !== 'available' && v?.status !== 'partial')
+      return (
+        label + ' 보류(' + (v?.reason || value.reason || '원본 픽셀 또는 사람 표시 없음') + ')'
+      );
+    return (
+      label +
+      ' 표시 영역 바깥–안쪽 평균 명도 차이 ' +
+      v.meanOutsideMinusInsideSrgbLuma.toFixed(3) +
+      ' · 유효 픽셀 쌍 ' +
+      v.comparedPairs +
+      '/4' +
+      (v.status === 'partial' ? ' (일부)' : '')
+    );
+  });
+  node.textContent =
+    '사람이 닫아 표시한 콧구멍 외곽의 화면상 안/밖 픽셀만 비교: ' +
+    details.join(' · ') +
+    ' · 조명과 그늘의 영향이 있으며, 밝기 차이는 실제 콧구멍 내부 조직·해부학적 윤곽·전통 관상형·정확도 검증이 아닙니다.';
 }
 function renderNoseHumanAlarComparison(record, result, previous) {
   if (previous || record.viewRole !== 'frontal') return;
@@ -678,16 +748,18 @@ function renderVisibleNoseMaskExperiment(record, result, previous) {
   const humanReviewSnapshot = state.noseReviews?.[record.captureRef];
   result.noseMaskCandidate = { status: 'loading' };
   void inspectVisibleNoseMask(record, result, humanReviewSnapshot)
-    .then(({ candidate, comparison }) => {
+    .then(({ candidate, comparison, photometry }) => {
       if (results.get(record.captureRef) !== result || !isCurrentNosePreview(result, epoch)) return;
       result.noseMaskCandidate = candidate;
       result.noseHumanComparison = comparison;
+      result.nostrilBorderPhotometry = photometry;
       if (records[selected]?.captureRef === record.captureRef) render();
     })
     .catch(() => {
       if (results.get(record.captureRef) !== result || !isCurrentNosePreview(result, epoch)) return;
       result.noseMaskCandidate = { status: 'unavailable', reason: 'NOSE_LAYER_NOT_READABLE' };
       result.noseHumanComparison = undefined;
+      result.nostrilBorderPhotometry = undefined;
       if (records[selected]?.captureRef === record.captureRef) render();
     });
 }
@@ -1427,6 +1499,7 @@ function render() {
   renderEyeFoldReview(record);
   browReview.render();
   noseDetailReview.render();
+  renderNostrilBorderPhotometry(record, result, previous);
   earDetailReview.render();
   lipBorderHumanReview.render();
   jawContourHumanReview.render();
