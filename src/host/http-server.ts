@@ -17,7 +17,6 @@ import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './produc
 import { buildCompatibilityTwoBirthResearchReading } from '../preview/compatibility-two-birth-research-runtime.js';
 import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-service-bearer-auth.js';
 import {
-  PRODUCTION_READING_ATTEMPT_HEADER,
   PRODUCTION_READING_ISSUE_PROOF_HEADER,
   PRODUCTION_READING_RELEASE_HEADER,
   type createProductionReadingIssueProof,
@@ -43,6 +42,21 @@ export const PRODUCT_READING_RESPONSE_ADMISSION_HEADER =
   'x-myeonghwa-product-reading-response-admitted' as const;
 export const PRODUCT_READING_LIFECYCLE_HEADER =
   'x-myeonghwa-reading-lifecycle' as const;
+export const SAJU_A4_PREPARED_ATTEMPT_HEADER_V1 = 'x-myeongha-reading-execution-attempt-id' as const;
+export const SAJU_A4_SOURCE_REF_HEADER_V1 = 'x-myeongha-saju-external-request-ref' as const;
+const SAJU_A4_UUID_V1 = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const SAJU_A4_REF_V1 = /^saju_source_[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
+
+export interface SajuA4ServerOnlyCapturePortV1 {
+  withPreparedAttempt<T>(
+    attempt: Readonly<{ executionAttemptId: string }>,
+    execute: (externalRequestRef: string) => Promise<T>,
+  ): Promise<T>;
+  withPreparedDeterministicAttempt?<T>(
+    attempt: Readonly<{ executionAttemptId: string }>,
+    execute: (externalRequestRef: string) => Promise<T>,
+  ): Promise<T>;
+}
 export const PRODUCT_PREVIEW_READING_HTTP_PATH =
   '/api/preview/readings' as const;
 export const PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH =
@@ -66,6 +80,8 @@ export interface MyeonghwaProductionProductHostServerOptions
   extends MyeonghwaProductHostServerOptions {
   serviceBearer?: string;
   previousServiceBearer?: string;
+  /** Explicit server-only installation, never sourced from an HTTP request. */
+  a4SourceCapture?: SajuA4ServerOnlyCapturePortV1;
 }
 
 interface MyeonghwaReadingHttpRoute {
@@ -269,6 +285,7 @@ function createMyeonghwaHttpServer(
   secondaryReadingHost?: MyeonghwaProductHost,
   secondaryReadingRoute?: MyeonghwaReadingHttpRoute,
   faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
+  a4SourceCapture?: SajuA4ServerOnlyCapturePortV1,
   productionIssueProof?: ReturnType<typeof createProductionReadingIssueProof>,
 ): Server {
   const bodyLimit = maxRequestBytes(options);
@@ -519,21 +536,62 @@ function createMyeonghwaHttpServer(
       }
       try {
         const body = await readJsonBody(request, bodyLimit);
-        const attempt = request.headers[PRODUCTION_READING_ATTEMPT_HEADER];
+        const preparedAttemptId = request.headers[SAJU_A4_PREPARED_ATTEMPT_HEADER_V1];
         const release = request.headers[PRODUCTION_READING_RELEASE_HEADER];
-        const signIssue = productionIssueProof?.(attempt, release, body);
-        if ((attempt !== undefined || release !== undefined) && signIssue === undefined) {
+        const signIssue = productionIssueProof?.(preparedAttemptId, release, body);
+        if (release !== undefined && signIssue === undefined) {
           sendJson(response, 403, {
             error: { code: 'HOST_PRODUCTION_ISSUE_UNAVAILABLE', message: 'Production issue is unavailable.' },
           });
           return;
         }
-        const result = await matchedReading.host.requestReading(body);
+        let sourceRef: string | undefined;
+        const execute = () => matchedReading.host.requestReading(body);
+        let result: Awaited<ReturnType<MyeonghwaProductHost['requestReading']>>;
+
+        if (preparedAttemptId !== undefined ||
+            (a4SourceCapture !== undefined && matchedReading.route.path === '/api/readings')) {
+          if (matchedReading.route.path !== '/api/readings' ||
+              a4SourceCapture === undefined ||
+              typeof preparedAttemptId !== 'string' ||
+              !SAJU_A4_UUID_V1.test(preparedAttemptId)) {
+            throw new HostHttpError(
+              409, 'HOST_A4_SOURCE_ADMISSION_REQUIRED',
+              'A4 official provider capture requires a verified server attempt.',
+            );
+          }
+          const runAttempt = signIssue === undefined
+            ? a4SourceCapture.withPreparedAttempt
+            : a4SourceCapture.withPreparedDeterministicAttempt;
+          if (runAttempt === undefined) {
+            throw new HostHttpError(
+              409, 'HOST_PRODUCTION_ISSUE_UNAVAILABLE', 'Production issue is unavailable.',
+            );
+          }
+          result = await runAttempt(
+            { executionAttemptId: preparedAttemptId },
+            async (issuedRef) => {
+              if (!SAJU_A4_REF_V1.test(issuedRef)) {
+                throw new HostHttpError(
+                  409, 'HOST_A4_SOURCE_REF_INVALID',
+                  'Saju source issued an invalid external request reference.',
+                );
+              }
+              sourceRef = issuedRef;
+              return execute();
+            },
+          );
+        } else {
+          result = await execute();
+        }
         const admitted = admitProductReadingResponse(result);
-        const issueProof = signIssue?.(admitted);
+        const issueProof = sourceRef === undefined ? undefined : signIssue?.(sourceRef, admitted);
         sendJson(response, 200, admitted, {
           [PRODUCT_READING_RESPONSE_ADMISSION_HEADER]: PRODUCT_READING_RESPONSE_VERSION,
           ...(issueProof === undefined ? {} : { [PRODUCTION_READING_ISSUE_PROOF_HEADER]: issueProof }),
+          ...(sourceRef === undefined
+            ? {}
+            : { [SAJU_A4_SOURCE_REF_HEADER_V1]: sourceRef }),
           ...(matchedReading.route.lifecycle === undefined
             ? {}
             : {
@@ -571,7 +629,7 @@ export function createMyeonghwaProductionProductHostServer(
   faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
   productionIssueProof?: ReturnType<typeof createProductionReadingIssueProof>,
 ): Server {
-  const { serviceBearer, previousServiceBearer, ...serverOptions } = options;
+  const { serviceBearer, previousServiceBearer, a4SourceCapture, ...serverOptions } = options;
   const authorizeRequest = createMyeonghwaProductionServiceBearerAuthorizer({
     activeBearer: serviceBearer,
     previousBearer: previousServiceBearer,
@@ -585,6 +643,7 @@ export function createMyeonghwaProductionProductHostServer(
     undefined,
     undefined,
     faceGovernedHandoffHost,
+    a4SourceCapture,
     productionIssueProof,
   );
 }
@@ -594,7 +653,8 @@ export function createMyeonghwaProductionPreviewHostServer(
   options: MyeonghwaProductionProductHostServerOptions = {},
   faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
 ): Server {
-  const { serviceBearer, previousServiceBearer, ...serverOptions } = options;
+  const { serviceBearer, previousServiceBearer, a4SourceCapture, ...serverOptions } = options;
+  if (a4SourceCapture !== undefined) throw new TypeError('A4 source capture cannot be installed on Preview');
   const authorizeRequest = createMyeonghwaProductionServiceBearerAuthorizer({
     activeBearer: serviceBearer,
     previousBearer: previousServiceBearer,
@@ -617,7 +677,7 @@ export function createMyeonghwaProductionReadingHostServer(
   options: MyeonghwaProductionProductHostServerOptions = {},
   faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
 ): Server {
-  const { serviceBearer, previousServiceBearer, ...serverOptions } = options;
+  const { serviceBearer, previousServiceBearer, a4SourceCapture, ...serverOptions } = options;
   const authorizeRequest = createMyeonghwaProductionServiceBearerAuthorizer({
     activeBearer: serviceBearer,
     previousBearer: previousServiceBearer,
@@ -631,6 +691,7 @@ export function createMyeonghwaProductionReadingHostServer(
     previewReadingHost,
     PREVIEW_READING_ROUTE,
     faceGovernedHandoffHost,
+    a4SourceCapture,
   );
 }
 

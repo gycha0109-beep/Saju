@@ -341,14 +341,25 @@ function prepareAuthorizedProductionHost(request: ProductionCompositionRequest) 
  * before any socket is created. When ready, both /api/calculations and /api/readings
  * require the same server-owned service bearer.
  */
+export interface MyeonghwaAuthorizedProductionHostServerOptions
+  extends MyeonghwaProductionProductHostServerOptions {
+  readonly productionIssueProof?: ProductionReadingIssueProofOptions;
+}
+
 export function createAuthorizedMyeonghwaProductionHostServer(
   request: ProductionCompositionRequest,
-  options: MyeonghwaProductionProductHostServerOptions & {
-    readonly productionIssueProof?: ProductionReadingIssueProofOptions;
-  } = {},
+  options: MyeonghwaAuthorizedProductionHostServerOptions = {},
 ): Server {
   const { host, authority } = prepareAuthorizedProductionHost(request);
   const { productionIssueProof, ...serverOptions } = options;
+  if (productionIssueProof !== undefined && (
+    serverOptions.a4SourceCapture?.withPreparedDeterministicAttempt === undefined ||
+    request.legacyNarrativeRuntime !== undefined ||
+    request.readingOptions?.consumerReadingAuthorityResolver === undefined ||
+    request.readingOptions?.officialReadingSemanticProjectionResolver === undefined
+  )) {
+    throw new TypeError('Official Reading issue proof requires a governed deterministic Reading host and attempt capture.');
+  }
   const proof = productionIssueProof === undefined
     ? undefined
     : createProductionReadingIssueProof(authority, productionIssueProof);
