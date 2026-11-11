@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  auditT10ProductReadingQualityV1,
+  type T10ProductReadingQualityReviewV1,
+} from '../research/compatibility-t10-product-reading-quality-review.js';
+import {
   buildT10PairReadingBoundaryDraftV1,
   type T10PairReadingBoundaryDraftV1,
 } from '../research/compatibility-t10-pair-reading-boundary-draft.js';
@@ -132,6 +136,8 @@ export interface CompatibilityTwoBirthResearchReading {
   crossMethodContrastResearch?: T10CrossMethodContrastResearchV1;
   /** Cohesive factual Korean research draft and explicit interpretation HOLD. */
   pairReadingBoundaryDraft?: T10PairReadingBoundaryDraftV1;
+  /** Internal three-composition reading quality and eligibility HOLD review. */
+  productReadingQualityReview?: T10ProductReadingQualityReviewV1;
   /** 2025 author-posted research excerpt: per-person criteria, no T10 synthesis. */
   spouseCriteria2025Scope?: T102025SpouseScopeReviewV1;
   /** Direct two-chart historical clause, attributed via 2025 author text. */
@@ -352,6 +358,8 @@ export function buildCompatibilityTwoBirthResearchReading(
       sourceBoundObservationReading, historicalDayYearObservation,
       crossMethodContrastResearch, threeMethodApplicabilityReading,
     ) : undefined;
+  const productReadingQualityReview = pairReadingBoundaryDraft
+    ? auditT10ProductReadingQualityV1(pairReadingBoundaryDraft) : undefined;
   const gejuRescueSourceBridge = yongshenMethodScopeResearch
     ? auditT10GejuRescueSourceBridgeV1(
       sourceScopeHandoff, yongshenMethodScopeResearch, subject, target,
@@ -385,6 +393,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(threeMethodApplicabilityReading ? { threeMethodApplicabilityReading } : {}),
       ...(crossMethodContrastResearch ? { crossMethodContrastResearch } : {}),
       ...(pairReadingBoundaryDraft ? { pairReadingBoundaryDraft } : {}),
+      ...(productReadingQualityReview ? { productReadingQualityReview } : {}),
       ...(spouseCriteria2025Scope ? { spouseCriteria2025Scope } : {}),
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
       ...(historicalDayYearObservation ? { historicalDayYearObservation } : {}),
