@@ -65,12 +65,15 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
     expect(result.maySell).toBe(false);
   });
 
-  it('preserves day-branch clash as only a structural factor without inferring a missing stem group', () => {
+  it('preserves a day-branch clash alongside same-element evidence without inventing a verdict', () => {
     const review = run(FIRST, DAY_BRANCH_CLASH).directDayComparisonResearch;
-    expect(review?.dayBranch.group).toBe('covered_negative_subset');
     expect(review?.dayBranch.verifiedStructuralMatch?.kind).toBe('branch_clash');
+    expect(review?.dayBranch.elementalComparison?.relation).toBe('same_element');
+    expect(review?.dayBranch.group).toBe('mixed_source_factors');
+    expect(review?.dayBranch.conflictingFactors).toBe(true);
     expect(review?.observedAbstractCell).toBe('unclassified');
     expect(review?.missingPrerequisites).toContain('DAY_STEM_AND_BRANCH_RELATION_COVERAGE_INCOMPLETE');
+    expect(review?.mayClaimInterpersonalMeaning).toBe(false);
     expect(review?.maySell).toBe(false);
   });
 
