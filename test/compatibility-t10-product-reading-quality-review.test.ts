@@ -97,7 +97,7 @@ describe('T10 product quality: factual material never becomes a complete relatio
         }),
     };
     expect(() => auditT10ProductReadingQualityV1(broken))
-      .toThrow('altered or missing reading paragraphs');
+      .toThrow('per-sentence original evidence');
     const malformed = {
       ...draft,
       sections: draft.sections.map(section =>
