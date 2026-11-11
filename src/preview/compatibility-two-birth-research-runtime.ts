@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  auditT10YongshenMethodScopeV1,
+  type T10YongshenMethodScopeResearchV1,
+} from '../research/compatibility-t10-yongshen-method-scope.js';
+import {
   auditT10ClassicalUsefulElementExamplesV1,
   type T10ClassicalUsefulElementResearchV1,
 } from '../research/compatibility-t10-classical-useful-element.js';
@@ -100,6 +104,8 @@ export interface CompatibilityTwoBirthResearchReading {
   classicalCrossTenGodResearch?: T10ClassicalCrossTenGodResearch;
   /** Classical useful-element examples: actual symbols only, never selected yongshin. */
   classicalUsefulElementResearch?: T10ClassicalUsefulElementResearchV1;
+  /** Monthly-command geju vs conditional useful element: source-method boundary. */
+  yongshenMethodScopeResearch?: T10YongshenMethodScopeResearchV1;
   html: string;
 }
 
@@ -270,6 +276,9 @@ export function buildCompatibilityTwoBirthResearchReading(
     ? auditT10ClassicalUsefulElementExamplesV1(
       sourceScopeHandoff, classicalCrossTenGodResearch, subject, target,
     ) : undefined;
+  const yongshenMethodScopeResearch = methodCoverage
+    ? auditT10YongshenMethodScopeV1(sourceScopeHandoff, subject, target)
+    : undefined;
   return {
     version: COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
@@ -295,6 +304,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
       ...(classicalCrossTenGodResearch ? { classicalCrossTenGodResearch } : {}),
       ...(classicalUsefulElementResearch ? { classicalUsefulElementResearch } : {}),
+      ...(yongshenMethodScopeResearch ? { yongshenMethodScopeResearch } : {}),
     } : {}),
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
