@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  observeT102025DirectCombinationCandidates,
+  type T102025DirectCombinationResearch,
+} from '../research/compatibility-t10-2025-direct-combination-candidate.js';
+import {
   reviewT102025SpouseCriteriaScopeV1,
   type T102025SpouseScopeReviewV1,
 } from '../research/compatibility-t10-2025-spouse-criteria-scope.js';
@@ -82,6 +86,8 @@ export interface CompatibilityTwoBirthResearchReading {
   directDayComparisonResearch?: T10DirectDayComparisonResearchV1;
   /** 2025 author-posted research excerpt: per-person criteria, no T10 synthesis. */
   spouseCriteria2025Scope?: T102025SpouseScopeReviewV1;
+  /** Direct two-chart historical clause, attributed via 2025 author text. */
+  directCombination2025Research?: T102025DirectCombinationResearch;
   html: string;
 }
 
@@ -243,6 +249,8 @@ export function buildCompatibilityTwoBirthResearchReading(
     ? reviewT102025SpouseCriteriaScopeV1(
       sourceScopeHandoff, maritalPalaceIntraChartResearch, subject, target,
     ) : undefined;
+  const directCombination2025Research = methodCoverage
+    ? observeT102025DirectCombinationCandidates(sourceScopeHandoff) : undefined;
   return {
     version: COMPATIBILITY_TWO_BIRTH_RESEARCH_RUNTIME_VERSION,
     lifecycle: 'internal_research_only',
@@ -265,6 +273,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       coexistingEvidenceReview,
       ...(directDayComparisonResearch ? { directDayComparisonResearch } : {}),
       ...(spouseCriteria2025Scope ? { spouseCriteria2025Scope } : {}),
+      ...(directCombination2025Research ? { directCombination2025Research } : {}),
     } : {}),
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
