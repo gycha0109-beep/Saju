@@ -152,3 +152,9 @@
 - 전송 전 `a4_provider_dispatch_intents_v1` 영구 저장이 추가됨에 따라 기존 Source Writer 읽기 전용 사전 점검에 해당 테이블의 존재와 실제 사용되는 `call_id`, `execution_attempt_id`, `external_request_ref`, `intent` 4개 열의 INSERT/SELECT 권한을 포함한다. 누락 시 단발성 실행 승인 소비 **이전**에 차단한다.
 - 보존된 영수증·콜백 커버리지 점검과 같은 정확한 Source Writer 역할을 유지한다. 인증 토큰·DB 자격증명·유료 호출·스키마 운영 설치·고객/결제 데이터를 변경하지 않고, 테스트 전용 DB 모의 권한/부재 상황을 검증한다.
 - 사전 점검은 실제 이후 INSERT/COMMIT, 실제 네트워크 송신, 공급사 청구·완전성·개인정보 보존 승인을 입증하지 않는다. **`completeCostCoverage=false`, `invoiceReconciled=false`, 운영 비용 수집 OFF, `ROADMAP_COMPLETE` 아님.**
+
+## 2026-11-12 — A4 미결 전달 의도/영수증 조회 (오프라인)
+
+- `reading-ai-a4-dispatch-receipt-audit-v1.ts`의 서버 전용 `inspectUnmatchedIntents()`는 **기존 전용 Source Writer 역할**만으로 요청 전 불변 의도 중 동일 `callId`의 서명 영수증 행이 없는 항목을 `BEGIN READ ONLY`에서 조회한다. 501건까지만 읽어 500건 초과 시 결과를 불완전으로 표시하며, 정확한 실행 시도 UUID·Saju 출처 ref·준비 시각만 반환한다.
+- 프로세스 중단·송신 직전 종료·영수증 저장 실패는 모두 이 신호를 남길 수 있으므로 **실제 송신 여부·청구·재호출 필요성을 판정하지 않는다.** 영수증 존재하나 서명/귀속 오류는 기존 실행 시도별 HMAC·콜백 대조에서 별도로 검증한다. 자동 공급사 재호출·정본 Reading finalize·관리자 HTTP 공개·운영 DB 설치는 없다.
+- 전용 DB 역할 오류, 손상·중복 기록, 조회 실패는 오류로 닫고, 미결 0건이어도 공급사 전수·청구·비용 완전성을 주장하지 않는다. `completeCostCoverage=false`, `invoiceReconciled=false`, 비용 수집 OFF, 운영 설치·보존 정책·Production Authority는 HOLD.

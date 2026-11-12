@@ -32,6 +32,7 @@ function proof(source: 'provider_response_usage' | 'provider_attempt_without_usa
 function fixture(opts: {
   intentRows?: readonly Record<string, unknown>[];
   receiptRows?: readonly Record<string, unknown>[];
+  unmatchedRows?: readonly Record<string, unknown>[];
   principal?: string;
   readFails?: boolean;
 } = {}) {
@@ -53,7 +54,7 @@ function fixture(opts: {
             rows = [{ currentUser: opts.principal ?? 'saju_a4_provider_receipt_writer_v1' }];
           } else if (sql.includes('FROM saju_source_ops.a4_provider_dispatch_intents_v1')) {
             if (opts.readFails) throw Error('source database unavailable');
-            rows = [...intents];
+            rows = sql.includes('WHERE NOT EXISTS') ? [...(opts.unmatchedRows ?? [])] : [...intents];
           } else if (sql.includes('FROM saju_source_ops.a4_provider_call_signed_receipts_v1')) {
             rows = [...receipts];
           }
@@ -143,6 +144,83 @@ describe('A4 offline persisted dispatch intent versus signed source receipt corr
     expect(wrong.queries.some((sql) => sql.includes('FROM saju_source_ops.'))).toBe(false);
     const outage = fixture({ readFails: true });
     await expect(outage.audit.inspectAttempt(ATTEMPT)).rejects.toThrow('database unavailable');
+    expect(outage.queries.at(-1)).toBe('ROLLBACK');
+  });
+});
+
+const UNMATCHED = {
+  callId: CALL,
+  executionAttemptId: ATTEMPT,
+  externalRequestRef: REF,
+  intentJson: JSON.stringify(intent),
+};
+
+describe('A4 offline unmatched pre-network intent census (no provider replay)', () => {
+  it('reports valid unmatched intents without claiming the provider was contacted', async () => {
+    const x = fixture({ unmatchedRows: [UNMATCHED] });
+    await expect(x.audit.inspectUnmatchedIntents()).resolves.toEqual({
+      version: 'saju-a4-unmatched-dispatch-census-v1',
+      status: 'local_intents_without_receipts_observed',
+      unmatchedIntents: [{
+        callId: CALL,
+        executionAttemptId: ATTEMPT,
+        externalRequestRef: REF,
+        preparedAt: intent.preparedAt,
+      }],
+      unmatchedCount: 1,
+      completeCostCoverage: false,
+    });
+    expect(x.queries[0]).toBe('BEGIN READ ONLY');
+    expect(x.queries.at(-1)).toBe('COMMIT');
+    expect(x.queries.some((sql) =>
+      sql.includes('WHERE NOT EXISTS') &&
+      sql.includes('r.call_id = i.call_id') &&
+      sql.includes('LIMIT 501'),
+    )).toBe(true);
+    expect(x.queries.some((sql) => /^(INSERT|UPDATE|DELETE)\b/u.test(sql))).toBe(false);
+  });
+
+  it('does not turn an empty local unmatched scan into complete provider or invoice coverage', async () => {
+    const x = fixture({ unmatchedRows: [] });
+    await expect(x.audit.inspectUnmatchedIntents()).resolves.toMatchObject({
+      status: 'no_local_intents_missing_receipts',
+      unmatchedCount: 0,
+      unmatchedIntents: [],
+      completeCostCoverage: false,
+    });
+  });
+
+  it('fails closed on a truncated census rather than reporting a sample as a total', async () => {
+    const x = fixture({
+      unmatchedRows: Array.from({ length: 501 }, () => ({ ...UNMATCHED })),
+    });
+    await expect(x.audit.inspectUnmatchedIntents()).resolves.toMatchObject({
+      status: 'census_truncated',
+      unmatchedCount: null,
+      unmatchedIntents: null,
+      completeCostCoverage: false,
+    });
+  });
+
+  it('rejects malformed attempt, source metadata and repeated call evidence', async () => {
+    for (const rows of [
+      [{ ...UNMATCHED, executionAttemptId: 'client-forged' }],
+      [{ ...UNMATCHED, intentJson: '{invalid-json' }],
+      [UNMATCHED, UNMATCHED],
+    ]) {
+      const x = fixture({ unmatchedRows: rows });
+      await expect(x.audit.inspectUnmatchedIntents()).rejects.toThrow();
+      expect(x.queries.at(-1)).toBe('ROLLBACK');
+    }
+  });
+
+  it('does not query Source tables for the wrong DB role and propagates outages', async () => {
+    const wrong = fixture({ principal: 'saju_a4_provider_receipt_reader_v1' });
+    await expect(wrong.audit.inspectUnmatchedIntents()).rejects.toThrow('Writer required');
+    expect(wrong.queries.some((sql) => sql.includes('FROM saju_source_ops.'))).toBe(false);
+    expect(wrong.queries.at(-1)).toBe('ROLLBACK');
+    const outage = fixture({ readFails: true });
+    await expect(outage.audit.inspectUnmatchedIntents()).rejects.toThrow('database unavailable');
     expect(outage.queries.at(-1)).toBe('ROLLBACK');
   });
 });
