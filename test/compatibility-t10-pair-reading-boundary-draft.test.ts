@@ -41,6 +41,45 @@ function sources(o: ReturnType<typeof run>) {
   return [f, h, c, m] as const;
 }
 describe('T10 source-bounded pair reading: no unsupported relationship judgment', () => {
+  it.each([
+    [birth(1990, 5, 15), birth(1990, 5, 16), '일간 상생·상비·합 계열 / 일지 상생·상비·합 계열'],
+    [birth(1990, 5, 15), birth(1990, 5, 13), '일간 상생·상비·합 계열 / 일지 충·극·형·파·해 계열'],
+    [birth(1990, 5, 15), birth(1990, 5, 19), '일간 상극·충 계열 / 일지 상생·상비·합 계열'],
+    [birth(1990, 5, 9), birth(1990, 5, 13), '일간 상극·충 계열 / 일지 충·극·형·파·해 계열'],
+  ] as const)('connects each observed classical factor group to sourced Korean prose', (
+    a, b, expected,
+  ) => {
+    const output = run(a, b);
+    const item = output.pairReadingBoundaryDraft?.sections.find(section =>
+      section.id === 'traditional_day_factor_scope')?.sentences[0];
+    expect(item?.paragraph).toContain(expected);
+    expect(item?.paragraph).toContain('부분적으로 대응합니다');
+    expect(item?.evidenceLayer).toBe('traditional_factor_scope');
+    expect(item?.observedFactPaths).toEqual(expect.arrayContaining([
+      'subject.pillars.day.value.stem.element',
+      'target.pillars.day.value.stem.element',
+      'subject.pillars.day.value.branch.element',
+      'target.pillars.day.value.branch.element',
+    ]));
+    expect(item?.sourceUrls).toContain(
+      'https://www.dbpia.co.kr/journal/detail?nodeId=T14205410');
+    expect(item?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(output.productReadingQualityReview?.actualCompatibilityReadingReady).toBe(false);
+    expect(output.relationshipContextBoundary?.includedSectionIds)
+      .not.toContain('traditional_day_factor_scope');
+  });
+
+  it('does not force a four-cell verdict when opposite factors coexist', () => {
+    const output = run(A, birth(1990, 5, 20));
+    const item = output.pairReadingBoundaryDraft?.sections.find(section =>
+      section.id === 'traditional_day_factor_scope')?.sentences[0];
+    expect(output.sourceBoundObservationReading?.observedFourCaseCandidate)
+      .toBe('unclassified');
+    expect(item?.paragraph).toContain('단독 분류할 수 없습니다');
+    expect(output.pairReadingBoundaryDraft?.relationshipOutcome).toBeNull();
+    expect(output.maySell).toBe(false);
+  });
+
   it('writes different Korean descriptions for opposite actual mixed structures', () => {
     const left = run(A, COMBINATION_AND_CLASH).pairReadingBoundaryDraft;
     const right = run(A, CLASH_AND_COMBINATION).pairReadingBoundaryDraft;

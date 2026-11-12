@@ -1,3 +1,5 @@
+import { T10_DIRECT_DAY_COMPARISON_SOURCE } from
+  './compatibility-t10-direct-day-comparison.js';
 import type { T10SourceBoundObservationReadingV1 } from
   './compatibility-t10-source-bound-observation-reading.js';
 import type { T10HistoricalDayYearObservation } from
@@ -15,6 +17,7 @@ type ChartPerson = T10SourceBoundObservationReadingV1['subject'];
 export interface T10PairDraftSentence {
   readonly paragraph: string;
   readonly evidenceLayer: 'calculated_structure' | 'traditional_reference' |
+    'traditional_factor_scope' |
     'method_applicability' | 'unresolved_synthesis' | 'missing_input' |
     'source_limit';
   readonly observedFactPaths: readonly string[];
@@ -27,7 +30,8 @@ export interface T10PairDraftSentence {
 }
 
 export interface T10PairDraftSection {
-  readonly id: 'direct_day_facts' | 'day_to_year_facts' | 'mixed_positions' |
+  readonly id: 'direct_day_facts' | 'traditional_day_factor_scope' |
+    'day_to_year_facts' | 'mixed_positions' |
     'historical_method_disagreement' | 'palace_method' |
     'six_spirits_method' | 'useful_god_method' | 'reading_limits';
   readonly title: string;
@@ -170,6 +174,52 @@ export function buildT10PairReadingBoundaryDraftV1(
     item.evidenceScope === 'calculated_structural_fact' &&
     item.kind !== 'unknown_hour' && item.kind !== 'cross_position_opposite');
   add('direct_day_facts', '두 사람의 일간·일지 관측', dayFacts.map(factualSentence));
+  // Interpret only the 2016 abstract's historical factor grouping, not outcomes.
+  const factorFacts = factual.sentences.filter(item =>
+    item.kind === 'day_stem_elements' || item.kind === 'day_branch_elements' ||
+    item.kind === 'day_stem_combination' || item.kind === 'day_branch_structure' ||
+    item.kind === 'same_slot_competing_factors');
+  if (factorFacts.filter(item => item.kind === 'day_stem_elements' ||
+        item.kind === 'day_branch_elements').length === 2 &&
+      factual.sourceTextLayer === 'DBPIA_PUBLIC_ABSTRACT') {
+    const labels = {
+      STEM_POSITIVE_BRANCH_POSITIVE:
+        '일간 상생·상비·합 계열 / 일지 상생·상비·합 계열',
+      STEM_POSITIVE_BRANCH_NEGATIVE:
+        '일간 상생·상비·합 계열 / 일지 충·극·형·파·해 계열',
+      STEM_NEGATIVE_BRANCH_POSITIVE:
+        '일간 상극·충 계열 / 일지 상생·상비·합 계열',
+      STEM_NEGATIVE_BRANCH_NEGATIVE:
+        '일간 상극·충 계열 / 일지 충·극·형·파·해 계열',
+    } as const;
+    const cell = factual.observedFourCaseCandidate;
+    const classification = cell === 'unclassified'
+      ? '같은 축에서 상반된 전통 요인이 함께 나타나거나 근거 범위가 부족하여 ' +
+        '공개 초록의 네 유형 중 하나로 단독 분류할 수 없습니다.'
+      : '확인한 일부 요인은 공개 초록의 "' + labels[cell] +
+        '" 비교 유형에 부분적으로 대응합니다.';
+    add('traditional_day_factor_scope', '2016년 전통 부부 궁위론의 비교 요인', [{
+      paragraph: '이창임(2016)의 기혼 부부 연구는 일간·일지에서 ' +
+        '상생·상비·합을 전통적 긍정 요소로, 충·극 등의 관계를 전통적 ' +
+        '부정 요소로 구분하여 네 경우를 비교합니다. ' + classification +
+        ' 이는 전통적 요인 설명이지 두 사람의 실제 소통·관계 만족·' +
+        '결혼 결과를 판정한 것이 아닙니다.',
+      evidenceLayer: 'traditional_factor_scope',
+      observedFactPaths: unique(factorFacts.flatMap(item => [...item.observedFactPaths])),
+      consideredButUnverifiedFactPaths: [],
+      sourceIds: unique(factorFacts.flatMap(item => [...item.sourceIds])),
+      sourceUrls: unique([T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl,
+        ...factorFacts.flatMap(item => [...item.sourceUrls])]),
+      definitionContentHashes: unique(factorFacts.flatMap(item =>
+        [...item.definitionContentHashes])),
+      missingPrerequisites: [
+        'FULL_2016_CASE_METHOD_AND_EXCEPTIONS_NOT_VERIFIED',
+        '2016_MARITAL_FACTOR_TO_INDIVIDUAL_OUTCOME_NOT_VALIDATED',
+      ],
+      individualRelationshipOutcomeAuthorized: false,
+    }]);
+  }
+
   add('day_to_year_facts', '본인의 일주와 상대의 출생연도 비교',
     historical.sentences.map(item => ({
       paragraph: item.paragraph,
