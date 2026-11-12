@@ -72,6 +72,14 @@ describe('private two-view review browser module routing', () => {
     expect(parser).toContain('lipPixelColorCandidate = measureVisibleLipPixelColor');
     expect(parser).toContain('ctx.drawImage(bitmap, 0, 0, size, size)');
   });
+  it('reports current six-gap evidence without persisting model measurements', () => {
+    const html = readFileSync(resolve(root, 'tools/face-reading/two-view/review.html'), 'utf8');
+    expect(html).toContain('id="current-2d-evidence-status"');
+    expect(html).toContain('id="current-2d-evidence-rows"');
+    expect(browser).toContain('summarizeCurrent2dPhotoEvidence({');
+    expect(browser).toContain('renderCurrent2dEvidence(record, result, previous);');
+    expect(browser).toContain('independent');
+  });
   it('serves every directly imported review module from the local static allowlist', () => {
     const imports = [...browser.matchAll(/from '\.\/([^']+\.mjs)'/g)].map((match) => match[1]);
     expect(imports).toContain('source-currentness-gate.mjs');
@@ -79,6 +87,7 @@ describe('private two-view review browser module routing', () => {
     expect(imports).toContain('nostril-border-photometry.mjs');
     expect(imports).toContain('brow-pixel-texture.mjs');
     expect(imports).toContain('ear-rim-curve-comparison.mjs');
+    expect(imports).toContain('current-2d-evidence-readiness.mjs');
     const staticAllowlist = server.match(
       /const assets = new Map\(\s*\[([\s\S]*?)\]\.map\(\(name\)/,
     );
