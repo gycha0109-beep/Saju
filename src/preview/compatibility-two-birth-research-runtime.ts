@@ -1,5 +1,10 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  buildT10RelationshipContextBoundaryV1,
+  type T10DeclaredRelationshipContext,
+  type T10RelationshipContextBoundaryV1,
+} from '../research/compatibility-t10-relationship-context-boundary.js';
+import {
   auditT10ProductReadingQualityV1,
   type T10ProductReadingQualityReviewV1,
 } from '../research/compatibility-t10-product-reading-quality-review.js';
@@ -103,6 +108,8 @@ export interface CompatibilityTwoBirthResearchRequest {
   referenceDateTime: string;
   /** Research opt-in to the scope of the source. Never populated from consumer HTTP. */
   candidateScope?: 'traditional_marital_palace_comparison';
+  /** Optional declared study context; no relationship type is inferred from birth data. */
+  relationshipContext?: T10DeclaredRelationshipContext;
 }
 
 export interface CompatibilityTwoBirthResearchReading {
@@ -138,6 +145,8 @@ export interface CompatibilityTwoBirthResearchReading {
   pairReadingBoundaryDraft?: T10PairReadingBoundaryDraftV1;
   /** Internal three-composition reading quality and eligibility HOLD review. */
   productReadingQualityReview?: T10ProductReadingQualityReviewV1;
+  /** Context-bounded Korean research copy: marital methods never leak to other contexts. */
+  relationshipContextBoundary?: T10RelationshipContextBoundaryV1;
   /** 2025 author-posted research excerpt: per-person criteria, no T10 synthesis. */
   spouseCriteria2025Scope?: T102025SpouseScopeReviewV1;
   /** Direct two-chart historical clause, attributed via 2025 author text. */
@@ -225,6 +234,10 @@ export function buildCompatibilityTwoBirthResearchReading(
   if (typeof input.referenceDateTime !== 'string' ||
       !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(input.referenceDateTime)) {
     throw new TypeError('Two-birth compatibility requires an explicit canonical UTC timestamp.');
+  }
+  if (input.relationshipContext !== undefined &&
+      input.candidateScope !== 'traditional_marital_palace_comparison') {
+    throw new TypeError('Research relationship context requires explicit private source opt-in.');
   }
   const now = new Date(input.referenceDateTime);
   if (!Number.isFinite(now.getTime()) ||
@@ -366,6 +379,12 @@ export function buildCompatibilityTwoBirthResearchReading(
       historicalDayYearObservation, crossMethodContrastResearch,
       threeMethodApplicabilityReading,
     ) : undefined;
+  const relationshipContextBoundary = pairReadingBoundaryDraft &&
+    productReadingQualityReview
+    ? buildT10RelationshipContextBoundaryV1(
+      pairReadingBoundaryDraft, productReadingQualityReview,
+      input.relationshipContext ?? 'unspecified',
+    ) : undefined;
   const gejuRescueSourceBridge = yongshenMethodScopeResearch
     ? auditT10GejuRescueSourceBridgeV1(
       sourceScopeHandoff, yongshenMethodScopeResearch, subject, target,
@@ -400,6 +419,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(crossMethodContrastResearch ? { crossMethodContrastResearch } : {}),
       ...(pairReadingBoundaryDraft ? { pairReadingBoundaryDraft } : {}),
       ...(productReadingQualityReview ? { productReadingQualityReview } : {}),
+      ...(relationshipContextBoundary ? { relationshipContextBoundary } : {}),
       ...(spouseCriteria2025Scope ? { spouseCriteria2025Scope } : {}),
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
       ...(historicalDayYearObservation ? { historicalDayYearObservation } : {}),
