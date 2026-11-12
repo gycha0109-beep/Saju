@@ -130,3 +130,11 @@
 - A4 공식 Production Host는 임의 `onBeforeProviderRequest` 주입을 거부한다. **현재 A4 capture에 이 콜백을 설치하지 않았고**, 지속 저장 Source dispatch intent Writer, 단건 송신 여부 확인, 프로세스 강제 종료 복구, 공급사 청구 전수 대조는 후속 미완료 조건이다. 이 코드를 운영 활성화로 해석하면 안 된다.
 - 테스트는 기록 실패 시 네트워크 요청 0건, 송신 전 의도와 종료 콜백의 동일 식별자, 전송 장애 시 동일 call ID, 공식 A4 Host의 외부 콜백 차단을 검증한다. 외부 유료 API 호출·운영 데이터 변경·기존 회원·결제·크레딧 변경은 수행하지 않았다.
 - **`preparedAt`은 네트워크를 실제 송신했다는 증거가 아니다.** `completeCostCoverage=false`, 운영 비용 수집 OFF. 서버 간 인증·Source DB 출처·개인정보 보존·실제 공급사 요청/청구 대조는 계속 HOLD.
+
+## 2026-11-12 — A4 공급사 전송 직전 불변 Source 증거 저장 후보 (오프라인)
+
+- `docs/ops/A4_ADMIN_PROVIDER_DISPATCH_INTENT_OFFLINE_V1.sql`: 이미 승인된 A4 Source 영수증 Writer 역할의 **오프라인/폐기형** 추가 테이블 후보. `callId`, 정본 `executionAttemptId`, Saju가 발급한 `externalRequestRef` 및 최소 `{callId,requestId,providerKey,modelKey,preparedAt}`만 저장. 기존 불변 서명 영수증·커버리지 저장소와 분리한다.
+- `src/production/reading-ai-provider-dispatch-intent-postgres-v1.ts`: 전용 DB 역할을 확인하고 `synchronous_commit=on`의 읽기/쓰기 거래로 불변 의도 1건을 먼저 기록, 동일 `callId`로 재조회해 정확한 동등성 확인과 COMMIT 후에만 반환한다. 위조된 UUID, 임의 필드·제공사, 다른 실행 시도로 같은 ID 재사용, 영수증 저장 장애는 거부한다. 개인정보 원문·프롬프트·모델 출력·API 인증키는 저장하지 않는다.
+- `test/reading-ai-provider-dispatch-intent-postgres-v1.test.ts`: 원본 최소필드·멱등 재전달·다른 Attempt 재사용·전용 DB 역할·비정형 JSON/날짜 및 저장·COMMIT 실패를 검증한다. 이 후보는 **아직 실제 OpenAI 전송 전 콜백에 연결되거나 운영 DB에 설치되지 않았다.**
+- 요청 직전 영속 기록은 요청이 실제로 송신·도달·과금됐다는 증거가 아니다. 프로세스 강제 종료 시 남은 미결 Intent의 조회/대조, 공급사 청구서 대조 및 실제 호출 전수는 **추가로 미완료**이며 `completeCostCoverage=false`, 비용 수집 OFF를 유지한다.
+- 사용자·결제·크레딧 데이터와 운영 비밀키/DB는 변경하지 않는다. 신규 테이블의 보존·삭제와 생산 설치는 개인정보 및 서비스 승인 근거 없이는 금지한다. 필수 CI 성공 및 병합도 실서비스 승인 근거가 아니다.
