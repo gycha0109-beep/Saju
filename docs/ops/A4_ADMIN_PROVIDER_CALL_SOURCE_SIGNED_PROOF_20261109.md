@@ -138,3 +138,11 @@
 - `test/reading-ai-provider-dispatch-intent-postgres-v1.test.ts`: 원본 최소필드·멱등 재전달·다른 Attempt 재사용·전용 DB 역할·비정형 JSON/날짜 및 저장·COMMIT 실패를 검증한다. 이 후보는 **아직 실제 OpenAI 전송 전 콜백에 연결되거나 운영 DB에 설치되지 않았다.**
 - 요청 직전 영속 기록은 요청이 실제로 송신·도달·과금됐다는 증거가 아니다. 프로세스 강제 종료 시 남은 미결 Intent의 조회/대조, 공급사 청구서 대조 및 실제 호출 전수는 **추가로 미완료**이며 `completeCostCoverage=false`, 비용 수집 OFF를 유지한다.
 - 사용자·결제·크레딧 데이터와 운영 비밀키/DB는 변경하지 않는다. 신규 테이블의 보존·삭제와 생산 설치는 개인정보 및 서비스 승인 근거 없이는 금지한다. 필수 CI 성공 및 병합도 실서비스 승인 근거가 아니다.
+
+## 2026-11-12 — A4 승인 범위에서 요청 전 영구 저장과 영수증 대조 결속 (오프라인)
+
+- 기존 Saju Source의 일회성 Prepared Attempt 승인·서명·영수증·콜백 보존 구조를 유지하고, 같은 서버 내부 `AsyncLocalStorage` 범위의 `executionAttemptId` 및 Saju 발급 `externalRequestRef`만 요청 직전 `callId`와 결속한다. 별도의 외부 주입 콜백·공급사 HTTP 전송 함수를 열지 않는다.
+- 실제 `OpenAIResponsesNarrativeAdapter.onBeforeProviderRequest`는 Source Writer의 불변 Intent 재조회/COMMIT 완료를 기다린 다음에만 HTTP fetch를 수행한다. Source 기록 오류·승인 범위 없음은 네트워크 요청 전에 차단하며, 동일 `callId`를 사후 기존 서명 영수증과 비교한다.
+- 새 읽기 전용 `reading-ai-a4-dispatch-receipt-audit-v1.ts`는 보존된 Intent와 서명 영수증의 호출 ID·시도·출처 ref·공급사·모델·요청 ID를 대조한다. 기존 서명/콜백 감사의 HMAC 및 수치 검증을 대체하지 않는다. 미결 Intent·영수증만 존재·불일치·공급사 사용량 미확인·조회 장애를 무료/0원/완전성 확정으로 변환하지 않는다.
+- 테스트는 정상 다건 귀속, 의도 보존 실패 전송 차단, Scope 외 호출 거부, 의도 없는 영수증 차단, 불일치 차단, DB 권한·조회 실패를 오프라인 모의 계층에서 검증한다. 실제 운영 DB 설치·서비스 결속·유료 API 호출·고객 데이터 수정은 없음.
+- **운영 HOLD 유지:** 실제 공급사 전수·청구·환율, Source 전용 운영 DB 설치와 TLS/서비스 계정, Production Interpretation Authority 및 증명/Intent 보존·삭제 정책은 승인·실증 전 미충족. `completeCostCoverage=false`, `invoiceReconciled=false`, 비용 수집 OFF. `ROADMAP_COMPLETE` 아님.
