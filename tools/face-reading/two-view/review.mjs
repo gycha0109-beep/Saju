@@ -25,6 +25,7 @@ import { measureManualPhiltrumRidgeSpacing } from './philtrum-manual-ridge-spaci
 import { attachEyelidContourHumanReview } from './eyelid-contour-human-review-ui.mjs';
 import { compareEyeClassEnvelopeToHumanUpperMargin } from './eyelid-model-human-upper-edge.mjs';
 import { measureManualEyelidLineOffsets } from './eyelid-manual-line-offsets.mjs';
+import { summarizeCurrent2dPhotoEvidence } from './current-2d-evidence-readiness.mjs';
 import { createSourceCurrentnessGate } from './source-currentness-gate.mjs';
 import {
   earBinaryFromOverlayRGBA,
@@ -1407,6 +1408,51 @@ const fr294GapLaneLabels = {
   ear_visibility_then_image_model: 'FR294 · 귀 가시성 확인 후 모델 검증',
   remain_unavailable: 'FR294 · 현행 RGB 관측 불가 유지',
 };
+function renderCurrent2dEvidence(record, result, previous) {
+  const summary = summarizeCurrent2dPhotoEvidence({
+    viewRole: record.viewRole,
+    parsing: result?.parsing,
+    previous,
+    foreheadSkinCandidate: result?.foreheadSkinCandidate,
+    browPixelTextureCandidate: result?.browPixelTextureCandidate,
+    lipPixelColorCandidate: result?.lipPixelColorCandidate,
+    earMaskCandidate: result?.earMaskCandidate,
+    earRimCurveComparison: result?.earRimCurveComparison,
+    currentEarRevision: state?.earReviews?.[record.captureRef]?.revision,
+    eyelidReview: state?.eyelidContourReviews?.[record.captureRef],
+  });
+  const counts = { candidate_only: 0, partial: 0, unavailable: 0, not_evaluated: 0 };
+  for (const item of summary.features) counts[item.state]++;
+  $('current-2d-evidence-status').textContent =
+    '현재 사진의 연구용 2D 6항목 · 모델/사람 후보 ' +
+    counts.candidate_only +
+    ' · 일부 근거 ' +
+    counts.partial +
+    ' · 관측 불가 ' +
+    counts.unavailable +
+    ' · 미실행 ' +
+    counts.not_evaluated +
+    ' · 독립 정확도 검증 0 · 정규 관측·전통 판독 불가';
+  const target = $('current-2d-evidence-rows');
+  target.replaceChildren();
+  const states = {
+    candidate_only: '연구 후보만 있음',
+    partial: '일부 근거만 있음',
+    unavailable: '관측 보류',
+    not_evaluated: '현재 분석 자료 없음',
+  };
+  for (const item of summary.features) {
+    const row = document.createElement('p');
+    row.className = 'note';
+    const title = document.createElement('strong');
+    title.textContent = item.label + ' — ' + states[item.state];
+    const reason = document.createElement('span');
+    reason.textContent = ' · ' + item.reason + ' · 독립 사람 정답·반복 촬영 검증 필요';
+    reason.title = item.nextEvidence;
+    row.append(title, reason);
+    target.append(row);
+  }
+}
 function renderPhotoReadiness(record) {
   const info = state?.perCaptureReadiness;
   const entry =
@@ -1662,6 +1708,7 @@ function render() {
   const previous = $('previous-parsing').checked && Boolean(result?.previousParsing);
   const parsing = previous ? result?.previousParsing : result?.parsing;
   renderPhotoReadiness(record);
+  renderCurrent2dEvidence(record, result, previous);
   $('reading-evidence').replaceChildren();
   const cards = state.readingCatalogue
     ? assessMorphology({ record, result, catalogue: state.readingCatalogue, previous })
