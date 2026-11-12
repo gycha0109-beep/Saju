@@ -678,3 +678,15 @@ Watchtower-Track: face-observation-engine
 - **실행 환경:** 학원 PC 전역 Python의 OpenCV 5.0.0에는 해당 구식 얼굴 검출기 API가 없어 재현성 실행이 처음에는 실패했다. 비공개 검증 폴더의 격리 venv에 OpenCV 4.14.0.94를 별도 설치하고, 전역 환경을 변경하지 않은 채 같은 기존 사진/스크립트로 정상 통과했다. 검증용 venv·사진·모델 추출물은 GitHub에 올리지 않는다.
 - **기술 검증:** 현 브랜치의 2D 상태·화면 모듈 연결 테스트 16/16 PASS, 전체 타입 검사와 변경 코드 ESLint PASS. 기존 `real-photo-evidence-audit` 합성 검증 6/6 PASS. 새 결과로 F0 정규 관측 29/18/11 상태나 FR294 하드갭 권한을 변경하지 않는다.
 - **실제 남은 작업:** 해당 PC에 최신 23장/18장 관상 프리뷰의 원본+사람 표시 기록은 확인되지 않았으며, 현재 확보된 2,000장 증거는 헤어라인 연구 경로에만 사용 가능하다. 나머지 2D 항목의 실사진 오차율·독립 사람 정답·반복 촬영 근거는 `empirical_unverified` 유지. 신규 사진 취득, 공개 업로드, 잘못된 정확도 승격은 수행하지 않는다.
+
+
+### 2026-11-12 관상 2~3단계 — 기존 2,000장 자료의 최신 관측 입력 준비 브리지
+
+- **기준:** PR #2453 / 기존 face-observation-engine 로드맵. 시작 HEAD `5619b6e4`, 로컬 브랜치/원격 HEAD 일치, 작업 폴더 clean, 해당 HEAD에 연결된 6개 워크플로 성공 확인.
+- **실제 증거:** 학원 PC의 기존 연구용 2,000장 결과 CSV·사진 출처 manifest·168건 사람 검토 대기열 접근. 기존 168건은 헤어라인에 관한 수동 상태 평가이며 해부학적 경계 좌표 정답이 아니다. 최신 `/two-view`는 이 PC에 기존 `.cache/face-reading/fr2337-intake`와 pinned Face Landmarker가 없어 실행 불가. 기존 연구 자료의 2,000장 감사를 불필요하게 반복하지 않음.
+- **구현:** `tools/face-reading/two-view/real-photo-review-intake-bridge.mjs` 추가. 과거 결과·대기열·출처 manifest를 일치 검증하고 선택된 JPEG 바이트를 재해시한 다음, 기존 사람 검토 분류 5종에서 각 2장씩 재현 가능한 총 10장 실사진을 골라 **비공개 폴더에만** 검토 계획을 저장함. 자세/정면 판정은 자동 추정하지 않고 `viewRole: null`, 최신 2D 결과는 `not_evaluated` 유지. 사람의 명시적 자세 검토와 pinned 모델·기존 intake 검증이 끝나기 전에는 기존 `additional-inventory.json`으로 반영하지 않음.
+- **실증:** 2026-11-12 비공개 계획에서 10장 이미지 원본 해시와 출처 manifest 일치. 헤어라인 과거 결과별로 `not_run`, `visible_interface_candidate`, `no_visible_hairline_candidate`, `partially_visible_or_occluded`, `unavailable` 각 2장. 실사진 원본/선택 사진 경로/해시/신원 데이터는 git에 포함하거나 공개 출력하지 않음.
+- **권한:** 이 10장은 정확도·자세·독립정답의 통과 사례가 아니며 6종 2D 후보의 실제 실행 결과도 아님. FR282/293/294 29/18/11, F0/F1·FR311·상용 사용권 및 3D 승인 불변. 원본 사진 사용권/초상 동의의 상용 범위 미확보.
+- **다음:** 기존 pinned 모델·intake가 확보되면 사진별 사람 자세 검토 후 `--admit` 경로로 **기존** `/two-view` 입력에 연결하고 6종 2D 후보의 가능/부분/보류와 사람 표시선 존재 여부를 실사진별 확인. 없는 사람 정답을 생성하지 않고 독립 참조·반복 촬영 증거를 별도 확보. 7단계 로드맵 중 1~3 진행 중, 4~7 미완료. `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine
