@@ -12,6 +12,15 @@ const READ_INTENTS = [
   'FROM saju_source_ops.a4_provider_dispatch_intents_v1',
   'WHERE execution_attempt_id = $1::uuid ORDER BY call_id LIMIT 501',
 ].join('\n');
+const READ_UNMATCHED_INTENTS = [
+  'SELECT i.call_id::text AS "callId", i.execution_attempt_id::text AS "executionAttemptId",',
+  'i.external_request_ref AS "externalRequestRef", i.intent::text AS "intentJson"',
+  'FROM saju_source_ops.a4_provider_dispatch_intents_v1 AS i',
+  'WHERE NOT EXISTS (',
+  '  SELECT 1 FROM saju_source_ops.a4_provider_call_signed_receipts_v1 AS r',
+  '  WHERE r.call_id = i.call_id',
+  ') ORDER BY i.call_id LIMIT 501',
+].join('\n');
 const READ_RECEIPTS = [
   'SELECT call_id::text AS "callId", proof::text AS "proofJson"',
   'FROM saju_source_ops.a4_provider_call_signed_receipts_v1',
@@ -28,6 +37,25 @@ export type SajuA4DispatchReceiptStatusV1 =
   | 'census_truncated'
   | 'matched_with_provider_usage_unverified'
   | 'matched_with_usage_unknown_unverified';
+
+/** Only unmatched Source-local intents. Never implies an HTTP send or charge. */
+export interface SajuA4UnmatchedDispatchIntentV1 {
+  readonly callId: string;
+  readonly executionAttemptId: string;
+  readonly externalRequestRef: string;
+  readonly preparedAt: string;
+}
+export interface SajuA4UnmatchedDispatchCensusV1 {
+  readonly version: 'saju-a4-unmatched-dispatch-census-v1';
+  readonly status:
+    | 'no_local_intents_missing_receipts'
+    | 'local_intents_without_receipts_observed'
+    | 'census_truncated';
+  /** Null when the bounded 500-row sample is incomplete. */
+  readonly unmatchedIntents: readonly SajuA4UnmatchedDispatchIntentV1[] | null;
+  readonly unmatchedCount: number | null;
+  readonly completeCostCoverage: false;
+}
 
 export interface SajuA4DispatchReceiptAuditResultV1 {
   readonly version: 'saju-a4-dispatch-receipt-audit-v1';
@@ -112,7 +140,10 @@ function receipt(
  */
 export function createPostgresSajuA4DispatchReceiptAuditV1(
   pool: SajuA4ReceiptDatabasePoolV1,
-): Readonly<{ inspectAttempt(id: string): Promise<SajuA4DispatchReceiptAuditResultV1> }> {
+): Readonly<{
+  inspectAttempt(id: string): Promise<SajuA4DispatchReceiptAuditResultV1>;
+  inspectUnmatchedIntents(): Promise<SajuA4UnmatchedDispatchCensusV1>;
+}> {
   if (!pool || typeof pool.connect !== 'function')
     throw new TypeError('Dedicated A4 Source audit pool required');
   return Object.freeze({
@@ -211,6 +242,77 @@ export function createPostgresSajuA4DispatchReceiptAuditV1(
             discard = rollbackError;
             throw new AggregateError(
               [error, rollbackError], 'A4 Source dispatch audit and rollback failed',
+              { cause: rollbackError },
+            );
+          }
+        }
+        throw error;
+      } finally {
+        client.release(discard);
+      }
+    },
+    /**
+     * Offline, bounded Source-only visibility into process-crash / receipt-write gaps.
+     * Missing receipts do not establish that a request was actually transmitted,
+     * accepted, billed, or retryable. Never automatically replay these calls.
+     * This MUST NOT be mounted as a public/admin HTTP route without a separately
+     * approved server authority and retention policy.
+     */
+    async inspectUnmatchedIntents(): Promise<SajuA4UnmatchedDispatchCensusV1> {
+      const client = await pool.connect();
+      let active = false;
+      let discard: unknown;
+      try {
+        await client.query('BEGIN READ ONLY');
+        active = true;
+        const role = await client.query<{ currentUser: unknown }>(
+          'SELECT current_user::text AS "currentUser"',
+        );
+        if (role.rows.length !== 1 || role.rows[0]?.currentUser !== SAJU_A4_RECEIPT_WRITER_ROLE_V1)
+          throw new Error('Dedicated Saju Source unmatched dispatch audit Writer required');
+
+        const records = await client.query<Record<string, unknown>>(READ_UNMATCHED_INTENTS);
+        const truncated = records.rows.length > 500;
+        const unmatched: SajuA4UnmatchedDispatchIntentV1[] = [];
+        if (!truncated) {
+          const seen = new Set<string>();
+          for (const row of records.rows) {
+            if (typeof row.executionAttemptId !== 'string' || !UUID.test(row.executionAttemptId))
+              throw new Error('Invalid unmatched Source dispatch attempt evidence');
+            const verified = dispatch(row, row.executionAttemptId);
+            if (!verified || seen.has(verified.callId))
+              throw new Error('Invalid or duplicate unmatched Source dispatch evidence');
+            seen.add(verified.callId);
+            unmatched.push(Object.freeze({
+              callId: verified.callId,
+              executionAttemptId: row.executionAttemptId,
+              externalRequestRef: verified.externalRequestRef,
+              preparedAt: verified.intent.preparedAt as string,
+            }));
+          }
+        }
+        const result: SajuA4UnmatchedDispatchCensusV1 = Object.freeze({
+          version: 'saju-a4-unmatched-dispatch-census-v1',
+          status: truncated
+            ? 'census_truncated'
+            : unmatched.length === 0
+              ? 'no_local_intents_missing_receipts'
+              : 'local_intents_without_receipts_observed',
+          unmatchedIntents: truncated ? null : Object.freeze(unmatched),
+          unmatchedCount: truncated ? null : unmatched.length,
+          completeCostCoverage: false,
+        });
+        await client.query('COMMIT');
+        active = false;
+        return result;
+      } catch (error) {
+        if (active) {
+          try {
+            await client.query('ROLLBACK');
+          } catch (rollbackError) {
+            discard = rollbackError;
+            throw new AggregateError(
+              [error, rollbackError], 'A4 unmatched Source dispatch audit and rollback failed',
               { cause: rollbackError },
             );
           }
