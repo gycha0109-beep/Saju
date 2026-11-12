@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  auditT102018DivorcedCoupleMethodBoundaryV1,
+  type T102018DivorcedCoupleSourceBoundaryV1,
+} from '../research/compatibility-t10-2018-marital-divorce-study-boundary.js';
+import {
   buildT10RelationshipContextBoundaryV1,
   type T10DeclaredRelationshipContext,
   type T10RelationshipContextBoundaryV1,
@@ -147,6 +151,8 @@ export interface CompatibilityTwoBirthResearchReading {
   productReadingQualityReview?: T10ProductReadingQualityReviewV1;
   /** Context-bounded Korean research copy: marital methods never leak to other contexts. */
   relationshipContextBoundary?: T10RelationshipContextBoundaryV1;
+  /** 2018 divorced-couple abstract: personal palace and visible stars, no T10 rule. */
+  divorceStudy2018MethodBoundary?: T102018DivorcedCoupleSourceBoundaryV1;
   /** 2025 author-posted research excerpt: per-person criteria, no T10 synthesis. */
   spouseCriteria2025Scope?: T102025SpouseScopeReviewV1;
   /** Direct two-chart historical clause, attributed via 2025 author text. */
@@ -313,6 +319,10 @@ export function buildCompatibilityTwoBirthResearchReading(
       { personRef: subjectRef, snapshot: subject },
       { personRef: targetRef, snapshot: target },
     );
+  const divorceStudy2018MethodBoundary = maritalPalaceIntraChartResearch
+    ? auditT102018DivorcedCoupleMethodBoundaryV1(
+      sourceScopeHandoff, maritalPalaceIntraChartResearch, subject, target,
+    ) : undefined;
   const methodCoverage = maritalDayBranchCandidate && maritalPalaceIntraChartResearch
     ? buildCompatibilityT10MethodCoverageV1(
       sourceScopeHandoff, maritalDayBranchCandidate, maritalPalaceIntraChartResearch,
@@ -420,6 +430,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(pairReadingBoundaryDraft ? { pairReadingBoundaryDraft } : {}),
       ...(productReadingQualityReview ? { productReadingQualityReview } : {}),
       ...(relationshipContextBoundary ? { relationshipContextBoundary } : {}),
+      ...(divorceStudy2018MethodBoundary ? { divorceStudy2018MethodBoundary } : {}),
       ...(spouseCriteria2025Scope ? { spouseCriteria2025Scope } : {}),
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
       ...(historicalDayYearObservation ? { historicalDayYearObservation } : {}),
