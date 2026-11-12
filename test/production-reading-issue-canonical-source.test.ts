@@ -7,7 +7,7 @@ import {
   SAJU_A4_PREPARED_ATTEMPT_HEADER_V1,
 } from '../src/host/http-server.js';
 import {
-  createMyeonghwaProductHost,
+  createMyeonghwaProductionReadingIssueHost,
   type ProductionReadingReaderSource,
 } from '../src/host/product-host.js';
 import type { ProductReadingResponse } from '../src/reading/product-reading-response.js';
@@ -24,13 +24,13 @@ it('signs the canonical judgments of the same calculated Reading only for the pr
   const { privateKey, publicKey } = generateKeyPairSync('ed25519');
   const bearer = 'isolated-canonical-source-host';
   const release = 'isolated-career-v1';
-  const host = createMyeonghwaProductHost(createApprovedSourceProofPreviewDependenciesV1());
+  const host = createMyeonghwaProductionReadingIssueHost(createApprovedSourceProofPreviewDependenciesV1());
   let suppressReaderSource = false;
   const server = createMyeonghwaProductionProductHostServer(
     {
       requestReading: host.requestReading,
       async requestReadingForIssue(body, engineVersion) {
-        const issued = await host.requestReadingForIssue!(body, engineVersion);
+        const issued = await host.requestReadingForIssue(body, engineVersion);
         return suppressReaderSource ? { response: issued.response } : issued;
       },
     },

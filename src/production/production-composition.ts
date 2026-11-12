@@ -19,6 +19,7 @@ import {
 import type { ReviewerTrustContext } from '../interpretation/reviewer-trust.js';
 import {
   createMyeonghwaProductHost,
+  createMyeonghwaProductionReadingIssueHost,
   type MyeonghwaProductHost,
   type MyeonghwaProductHostDependencies,
   type ProductHostExecutionContext,
@@ -310,7 +311,7 @@ function toDependencies(
 export function createAuthorizedMyeonghwaProductionHost(
   request: ProductionCompositionRequest,
 ): MyeonghwaProductHost {
-  return prepareAuthorizedProductionHost(request).host;
+  return createMyeonghwaProductHost(prepareAuthorizedProductionHost(request).dependencies);
 }
 
 function prepareAuthorizedProductionHost(request: ProductionCompositionRequest) {
@@ -327,7 +328,7 @@ function prepareAuthorizedProductionHost(request: ProductionCompositionRequest) 
   }
 
   return {
-    host: createMyeonghwaProductHost(toDependencies(request, registry)),
+    dependencies: toDependencies(request, registry),
     authority: inspection.authority,
   };
 }
@@ -350,7 +351,7 @@ export function createAuthorizedMyeonghwaProductionHostServer(
   request: ProductionCompositionRequest,
   options: MyeonghwaAuthorizedProductionHostServerOptions = {},
 ): Server {
-  const { host, authority } = prepareAuthorizedProductionHost(request);
+  const { dependencies, authority } = prepareAuthorizedProductionHost(request);
   const { productionIssueProof, ...serverOptions } = options;
   if (productionIssueProof !== undefined && (
     serverOptions.a4SourceCapture?.withPreparedDeterministicAttempt === undefined ||
@@ -364,7 +365,7 @@ export function createAuthorizedMyeonghwaProductionHostServer(
     ? undefined
     : createProductionReadingIssueProof(authority, productionIssueProof);
   return createMyeonghwaProductionProductHostServer(
-    host,
+    proof === undefined ? createMyeonghwaProductHost(dependencies) : createMyeonghwaProductionReadingIssueHost(dependencies),
     serverOptions,
     undefined,
     proof,

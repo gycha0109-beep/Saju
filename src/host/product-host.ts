@@ -127,16 +127,18 @@ export interface MyeonghwaProductHostDependencies {
 
 export interface MyeonghwaProductHost {
   requestReading(body: unknown): Promise<ProductReadingResponse>;
-  /** Internal input to the authenticated issue signer. */
-  requestReadingForIssue?(
-    body: unknown,
-    engineVersion: string,
-  ): Promise<{ response: ProductReadingResponse; readerSource?: ProductionReadingReaderSource }>;
   /**
    * Preview-only batch. The production reading route never admits this method.
    * Optional for external/mocked hosts implementing the older interface.
    */
   requestNatalFiveDomains?(body: unknown): Promise<NatalFiveDomainProductBundle>;
+}
+
+export interface MyeonghwaProductionReadingIssueHost extends MyeonghwaProductHost {
+  requestReadingForIssue(
+    body: unknown,
+    engineVersion: string,
+  ): Promise<{ response: ProductReadingResponse; readerSource?: ProductionReadingReaderSource }>;
 }
 
 export interface ProductionReadingReaderSource {
@@ -521,6 +523,15 @@ export function createMyeonghwaProductHost(
     async requestReading(body: unknown): Promise<ProductReadingResponse> {
       return (await runProductHostReadingInternals(dependencies, body)).response;
     },
+  };
+}
+
+/** Server-only host for the authenticated prepared issue route. */
+export function createMyeonghwaProductionReadingIssueHost(
+  dependencies: MyeonghwaProductHostDependencies,
+): MyeonghwaProductionReadingIssueHost {
+  return {
+    ...createMyeonghwaProductHost(dependencies),
     async requestReadingForIssue(body, engineVersion) {
       const { response, execution, officialSemanticSourceHandoff } =
         await runProductHostReadingInternals(dependencies, body);

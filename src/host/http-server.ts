@@ -12,6 +12,7 @@ import {
   PRODUCT_HOST_VERSION,
   type MyeonghwaProductHost,
   type MyeonghwaProductHostDependencies,
+  type MyeonghwaProductionReadingIssueHost,
   type ProductionReadingReaderSource,
 } from './product-host.js';
 import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './production-calculation-http-contract.js';
@@ -46,6 +47,8 @@ export const PRODUCT_READING_RESPONSE_ADMISSION_HEADER =
 export const PRODUCT_READING_LIFECYCLE_HEADER =
   'x-myeonghwa-reading-lifecycle' as const;
 export const SAJU_A4_PREPARED_ATTEMPT_HEADER_V1 = 'x-myeongha-reading-execution-attempt-id' as const;
+type IssueCapableProductHost = MyeonghwaProductHost &
+  Partial<Pick<MyeonghwaProductionReadingIssueHost, 'requestReadingForIssue'>>;
 export const SAJU_A4_SOURCE_REF_HEADER_V1 = 'x-myeongha-saju-external-request-ref' as const;
 const SAJU_A4_UUID_V1 = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const SAJU_A4_REF_V1 = /^saju_source_[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
@@ -280,12 +283,12 @@ const PAGE_CSP = [
 ].join('; ');
 
 function createMyeonghwaHttpServer(
-  readingHost: MyeonghwaProductHost | undefined,
+  readingHost: IssueCapableProductHost | undefined,
   options: MyeonghwaProductHostServerOptions,
   authorizeCalculationRequest?: (request: IncomingMessage) => boolean,
   authorizeReadingRequest?: (request: IncomingMessage) => boolean,
   readingRoute: MyeonghwaReadingHttpRoute = PRODUCT_READING_ROUTE,
-  secondaryReadingHost?: MyeonghwaProductHost,
+  secondaryReadingHost?: IssueCapableProductHost,
   secondaryReadingRoute?: MyeonghwaReadingHttpRoute,
   faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
   a4SourceCapture?: SajuA4ServerOnlyCapturePortV1,
@@ -667,7 +670,7 @@ export function createMyeonghwaProductionCalculationHostServer(
 
 
 export function createMyeonghwaProductionProductHostServer(
-  readingHost: MyeonghwaProductHost,
+  readingHost: IssueCapableProductHost,
   options: MyeonghwaProductionProductHostServerOptions = {},
   faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
   productionIssueProof?: ReturnType<typeof createProductionReadingIssueProof>,
