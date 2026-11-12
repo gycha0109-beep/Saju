@@ -1,5 +1,5 @@
 import type {
-  CanonicalSajuSnapshot, PillarSlot, TenGod, FiveElement,
+  CanonicalSajuSnapshot, PillarSlot, TenGod,
 } from '../contracts/calculation.js';
 import type { PairwiseSourceScopeHandoff } from './family-pair-source-scope-handoff.js';
 import type {
