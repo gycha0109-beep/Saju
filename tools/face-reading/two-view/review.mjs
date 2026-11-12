@@ -28,6 +28,7 @@ import { measureManualEyelidLineOffsets } from './eyelid-manual-line-offsets.mjs
 import {
   summarizeCurrent2dPhotoEvidence,
   summarizeCurrent2dSessionCoverage,
+  diagnoseCurrent2dSessionEvidence,
 } from './current-2d-evidence-readiness.mjs';
 import { createSourceCurrentnessGate } from './source-currentness-gate.mjs';
 import {
@@ -1459,6 +1460,51 @@ function renderCurrent2dEvidence(record, result, previous) {
     ' · 미실행 ' +
     session.statusCounts.not_evaluated +
     ' · 이는 관측 근거 확보 현황이며 정확도·인물별 반복성 검증 결과가 아닙니다.';
+  const diagnostic = diagnoseCurrent2dSessionEvidence(
+    records
+      .filter((item) => item.viewRole === 'frontal')
+      .map((item) => current2dPhotoSummary(item)),
+  );
+  const reasonsPanel = $('current-2d-session-reasons');
+  reasonsPanel.replaceChildren();
+  const causeLabels = {
+    preview_not_run_or_loading: '해당 미리보기 미실행·갱신 중',
+    stale_or_missing_analysis: '최신 기본 분석 자료 없음',
+    view_requirement: '정면 사진 조건 부족',
+    manual_review_required: '사람의 부위 표시·검토 필요',
+    model_or_visibility_blocked: '모델 검출·가시 영역 부족',
+    candidate_contract_invalid: '관측 결과 형식·권한 불일치',
+    proxy_requires_independent_reference: '모델 후보만 존재·독립 정답 필요',
+  };
+  const evidenceLabels = {
+    VISIBLE_FOREHEAD_SKIN_GT_REQUIRED: '보이는 이마 피부 경계의 독립 정답',
+    INDEPENDENT_FOLLICLE_LINE_GT_REQUIRED: '실제 모근선의 독립 정답',
+    INDEPENDENT_HAIR_FIBRE_GT_REQUIRED: '눈썹 실제 털 경계의 독립 정답',
+    INDEPENDENT_EYELID_TYPE_GT_REQUIRED: '눈꺼풀 표시선·유형의 독립 정답',
+    CONTROLLED_LIP_COLOR_GT_REQUIRED: '조명·색상 조건이 통제된 입술색 정답',
+    INDEPENDENT_VISIBLE_EAR_GT_REQUIRED: '귀 가시성·바깥 윤곽의 독립 정답',
+  };
+  for (const feature of diagnostic.features) {
+    const categoryCounts = new Map();
+    for (const cause of feature.causes) {
+      categoryCounts.set(cause.category, (categoryCounts.get(cause.category) || 0) + cause.count);
+    }
+    const row = document.createElement('p');
+    row.className = 'note';
+    const heading = document.createElement('strong');
+    heading.textContent = feature.label + ' · ';
+    const detail = document.createElement('span');
+    detail.textContent =
+      [...categoryCounts]
+        .map(
+          ([category, count]) => (causeLabels[category] || '결과 구분 필요') + ' ' + count + '건',
+        )
+        .join(' / ') +
+      ' · 필요한 근거: ' +
+      evidenceLabels[feature.nextEvidence];
+    row.append(heading, detail);
+    reasonsPanel.append(row);
+  }
   const target = $('current-2d-evidence-rows');
   target.replaceChildren();
   const states = {
@@ -2408,6 +2454,11 @@ window.twoViewSnapshot = () => ({
   busy,
   mode,
   current2dSessionCoverage: summarizeCurrent2dSessionCoverage(
+    records
+      .filter((item) => item.viewRole === 'frontal')
+      .map((item) => current2dPhotoSummary(item)),
+  ),
+  current2dReasonDiagnostics: diagnoseCurrent2dSessionEvidence(
     records
       .filter((item) => item.viewRole === 'frontal')
       .map((item) => current2dPhotoSummary(item)),

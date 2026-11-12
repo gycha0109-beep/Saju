@@ -9,7 +9,11 @@ const definitions = Object.freeze([
   ['forehead.visible_width_shape', '보이는 이마 피부', 'VISIBLE_FOREHEAD_SKIN_GT_REQUIRED'],
   ['forehead.visible_hairline_boundary', '모발·피부 접경', 'INDEPENDENT_FOLLICLE_LINE_GT_REQUIRED'],
   ['eyebrow.visible_hair_density_texture', '눈썹 화소 질감', 'INDEPENDENT_HAIR_FIBRE_GT_REQUIRED'],
-  ['eye.eyelid_crease_or_hooded_category', '눈꺼풀 사람 표시선', 'INDEPENDENT_EYELID_TYPE_GT_REQUIRED'],
+  [
+    'eye.eyelid_crease_or_hooded_category',
+    '눈꺼풀 사람 표시선',
+    'INDEPENDENT_EYELID_TYPE_GT_REQUIRED',
+  ],
   ['mouth.visible_lip_color', '위·아래 입술 색 채널', 'CONTROLLED_LIP_COLOR_GT_REQUIRED'],
   ['ear.visible_boundary_height_shape', '귀 모델·사람 외곽', 'INDEPENDENT_VISIBLE_EAR_GT_REQUIRED'],
 ]);
@@ -61,7 +65,8 @@ export function summarizeCurrent2dPhotoEvidence({
     for (const [key] of definitions) states.set(key, pending('CURRENT_MODEL_ANALYSIS_MISSING'));
   } else {
     const forehead = checked(
-      foreheadSkinCandidate, 'engineering.visible-forehead-skin-band@0.1.0',
+      foreheadSkinCandidate,
+      'engineering.visible-forehead-skin-band@0.1.0',
       ['anatomicalForeheadBoundaryValidated', 'anatomicalHairlineAuthorized'],
     );
     states.set('forehead.visible_width_shape', forehead);
@@ -70,64 +75,112 @@ export function summarizeCurrent2dPhotoEvidence({
     } else {
       const contacts = foreheadSkinCandidate?.modelContacts;
       const visible = Array.isArray(contacts)
-        ? contacts.filter((point) => point.status === 'available').length : 0;
-      states.set('forehead.visible_hairline_boundary',
-        visible === 0 ? invalid('NO_VISIBLE_MODEL_HAIR_SKIN_CONTACT') :
-        candidate(visible === 3 && forehead.state === 'candidate_only' ? 'available' : 'partial',
-          'MODEL_CONTACT_NOT_FOLLICLE_LINE', 'PARTIAL_MODEL_CONTACT_NOT_FOLLICLE_LINE'));
+        ? contacts.filter((point) => point.status === 'available').length
+        : 0;
+      states.set(
+        'forehead.visible_hairline_boundary',
+        visible === 0
+          ? invalid('NO_VISIBLE_MODEL_HAIR_SKIN_CONTACT')
+          : candidate(
+              visible === 3 && forehead.state === 'candidate_only' ? 'available' : 'partial',
+              'MODEL_CONTACT_NOT_FOLLICLE_LINE',
+              'PARTIAL_MODEL_CONTACT_NOT_FOLLICLE_LINE',
+            ),
+      );
     }
 
-    states.set('eyebrow.visible_hair_density_texture',
-      checked(browPixelTextureCandidate, 'engineering.visible-brow-pixel-texture@0.1.0',
-        ['individualHairFibresIdentified', 'hairDensityMeasured']));
+    states.set(
+      'eyebrow.visible_hair_density_texture',
+      checked(browPixelTextureCandidate, 'engineering.visible-brow-pixel-texture@0.1.0', [
+        'individualHairFibresIdentified',
+        'hairDensityMeasured',
+      ]),
+    );
 
     const eyelid = eyelidReview ? measureManualEyelidLineOffsets(eyelidReview) : null;
-    if (!eyelid) states.set('eye.eyelid_crease_or_hooded_category',
-      invalid('HUMAN_EYELID_LINE_REVIEW_REQUIRED'));
-    else if (eyelid.candidateOnly !== true || eyelid.independentAccuracyValidated !== false ||
-      eyelid.canonicalF0Admitted !== false || eyelid.traditionalBindingAuthorized !== false)
-      states.set('eye.eyelid_crease_or_hooded_category',
-        invalid('HUMAN_EYELID_AUTHORITY_INVALID'));
+    if (!eyelid)
+      states.set(
+        'eye.eyelid_crease_or_hooded_category',
+        invalid('HUMAN_EYELID_LINE_REVIEW_REQUIRED'),
+      );
+    else if (
+      eyelid.candidateOnly !== true ||
+      eyelid.independentAccuracyValidated !== false ||
+      eyelid.canonicalF0Admitted !== false ||
+      eyelid.traditionalBindingAuthorized !== false
+    )
+      states.set('eye.eyelid_crease_or_hooded_category', invalid('HUMAN_EYELID_AUTHORITY_INVALID'));
     else if (eyelid.status === 'unavailable')
-      states.set('eye.eyelid_crease_or_hooded_category',
-        invalid('COMPARABLE_EYELID_LINES_MISSING'));
+      states.set(
+        'eye.eyelid_crease_or_hooded_category',
+        invalid('COMPARABLE_EYELID_LINES_MISSING'),
+      );
     else
-      states.set('eye.eyelid_crease_or_hooded_category',
-        candidate(eyelid.status, 'MANUAL_OFFSETS_NOT_EYELID_TYPE',
-          'PARTIAL_MANUAL_OFFSETS_NOT_EYELID_TYPE'));
+      states.set(
+        'eye.eyelid_crease_or_hooded_category',
+        candidate(
+          eyelid.status,
+          'MANUAL_OFFSETS_NOT_EYELID_TYPE',
+          'PARTIAL_MANUAL_OFFSETS_NOT_EYELID_TYPE',
+        ),
+      );
 
-    states.set('mouth.visible_lip_color',
-      checked(lipPixelColorCandidate, 'engineering.visible-lip-pixel-color@0.1.0',
-        ['colorCalibrated', 'whiteBalanceVerified', 'illuminationControlled',
-          'makeupExcluded', 'trueAnatomicalLipColorValidated']));
+    states.set(
+      'mouth.visible_lip_color',
+      checked(lipPixelColorCandidate, 'engineering.visible-lip-pixel-color@0.1.0', [
+        'colorCalibrated',
+        'whiteBalanceVerified',
+        'illuminationControlled',
+        'makeupExcluded',
+        'trueAnatomicalLipColorValidated',
+      ]),
+    );
 
-    const ear = earRimCurveComparison?.revision === currentEarRevision &&
-      currentEarRevision != null && earRimCurveComparison?.status === 'completed'
-        ? earRimCurveComparison.value : null;
+    const ear =
+      earRimCurveComparison?.revision === currentEarRevision &&
+      currentEarRevision != null &&
+      earRimCurveComparison?.status === 'completed'
+        ? earRimCurveComparison.value
+        : null;
     if (ear) {
-      states.set('ear.visible_boundary_height_shape',
-        checked(ear, 'engineering.ear-rim-class-boundary-curve@0.1.0',
-          ['anatomicalOuterRimValidated', 'drawingCoverageCertified']));
+      states.set(
+        'ear.visible_boundary_height_shape',
+        checked(ear, 'engineering.ear-rim-class-boundary-curve@0.1.0', [
+          'anatomicalOuterRimValidated',
+          'drawingCoverageCertified',
+        ]),
+      );
     } else {
       const modelEar = earMaskCandidate;
       if (modelEar == null || modelEar.status === 'loading')
-        states.set('ear.visible_boundary_height_shape', pending('CURRENT_EAR_REGION_NOT_AVAILABLE'));
-      else if (modelEar.candidateOnly !== true ||
-          modelEar.independentAccuracyValidated !== false ||
-          modelEar.anatomicalLateralityAssigned !== false)
+        states.set(
+          'ear.visible_boundary_height_shape',
+          pending('CURRENT_EAR_REGION_NOT_AVAILABLE'),
+        );
+      else if (
+        modelEar.candidateOnly !== true ||
+        modelEar.independentAccuracyValidated !== false ||
+        modelEar.anatomicalLateralityAssigned !== false
+      )
         states.set('ear.visible_boundary_height_shape', invalid('EAR_MODEL_AUTHORITY_INVALID'));
       else if (!['available', 'partial'].includes(modelEar.status))
         states.set('ear.visible_boundary_height_shape', invalid('EAR_MODEL_REGION_UNAVAILABLE'));
       else
-        states.set('ear.visible_boundary_height_shape',
-          candidate('partial', 'WHOLE_EAR_CLASS_ONLY', 'WHOLE_EAR_CLASS_NO_HUMAN_CURVE'));
+        states.set(
+          'ear.visible_boundary_height_shape',
+          candidate('partial', 'WHOLE_EAR_CLASS_ONLY', 'WHOLE_EAR_CLASS_NO_HUMAN_CURVE'),
+        );
     }
   }
 
   const features = definitions.map(([featureKey, label, nextEvidence]) => {
     const { state, reason } = states.get(featureKey);
     return Object.freeze({
-      featureKey, label, state, reason, nextEvidence,
+      featureKey,
+      label,
+      state,
+      reason,
+      nextEvidence,
       independentAccuracyValidated: false,
       canonicalF0Admitted: false,
       traditionalBindingAuthorized: false,
@@ -145,7 +198,6 @@ export function summarizeCurrent2dPhotoEvidence({
     features: Object.freeze(features),
   });
 }
-
 
 export const CURRENT_2D_BATCH_EVIDENCE_VERSION = 'engineering.current-2d-session-coverage@0.1.0';
 const EVIDENCE_STATES = Object.freeze([
@@ -205,6 +257,109 @@ export function summarizeCurrent2dSessionCoverage(photoSummaries) {
     statusCounts: Object.freeze(overall),
     features: Object.freeze(features.map((row) => Object.freeze({ ...row }))),
     independentAccuracyValidated: false,
+    independentRepeatabilityValidated: false,
+    canonicalF0Admitted: false,
+    traditionalBindingAuthorized: false,
+    productInterpretationAuthorized: false,
+    rawSourcePersistedOrEmitted: false,
+  });
+}
+
+export const CURRENT_2D_REASON_DIAGNOSTIC_VERSION =
+  'engineering.current-2d-reason-diagnostics@0.1.0';
+
+// These reason codes are emitted only by summarizeCurrent2dPhotoEvidence above.
+// They describe evidence availability, never anatomical measurement accuracy.
+const REASON_CLASS = Object.freeze({
+  PREVIOUS_ANALYSIS_NOT_CURRENT: ['not_evaluated', 'stale_or_missing_analysis'],
+  CURRENT_MODEL_ANALYSIS_MISSING: ['not_evaluated', 'stale_or_missing_analysis'],
+  CURRENT_PREVIEW_NOT_AVAILABLE: ['not_evaluated', 'preview_not_run_or_loading'],
+  CURRENT_EAR_REGION_NOT_AVAILABLE: ['not_evaluated', 'preview_not_run_or_loading'],
+  FRONTAL_CAPTURE_REQUIRED: ['unavailable', 'view_requirement'],
+  CANDIDATE_AUTHORITY_OR_VERSION_INVALID: ['unavailable', 'candidate_contract_invalid'],
+  CANDIDATE_STATUS_INVALID: ['unavailable', 'candidate_contract_invalid'],
+  CANDIDATE_MEASUREMENT_WITHHELD: ['unavailable', 'model_or_visibility_blocked'],
+  NO_VISIBLE_MODEL_HAIR_SKIN_CONTACT: ['unavailable', 'model_or_visibility_blocked'],
+  HUMAN_EYELID_LINE_REVIEW_REQUIRED: ['unavailable', 'manual_review_required'],
+  HUMAN_EYELID_AUTHORITY_INVALID: ['unavailable', 'candidate_contract_invalid'],
+  COMPARABLE_EYELID_LINES_MISSING: ['unavailable', 'manual_review_required'],
+  EAR_MODEL_AUTHORITY_INVALID: ['unavailable', 'candidate_contract_invalid'],
+  EAR_MODEL_REGION_UNAVAILABLE: ['unavailable', 'model_or_visibility_blocked'],
+  CURRENT_IMAGE_PROXY_ONLY: ['candidate_only', 'proxy_requires_independent_reference'],
+  PARTIAL_IMAGE_PROXY_ONLY: ['partial', 'proxy_requires_independent_reference'],
+  MODEL_CONTACT_NOT_FOLLICLE_LINE: ['candidate_only', 'proxy_requires_independent_reference'],
+  PARTIAL_MODEL_CONTACT_NOT_FOLLICLE_LINE: ['partial', 'proxy_requires_independent_reference'],
+  MANUAL_OFFSETS_NOT_EYELID_TYPE: ['candidate_only', 'proxy_requires_independent_reference'],
+  PARTIAL_MANUAL_OFFSETS_NOT_EYELID_TYPE: ['partial', 'proxy_requires_independent_reference'],
+  WHOLE_EAR_CLASS_ONLY: ['candidate_only', 'proxy_requires_independent_reference'],
+  WHOLE_EAR_CLASS_NO_HUMAN_CURVE: ['partial', 'proxy_requires_independent_reference'],
+});
+
+export function diagnoseCurrent2dSessionEvidence(photoSummaries) {
+  const base = summarizeCurrent2dSessionCoverage(photoSummaries);
+  const features = definitions.map(([featureKey, label, nextEvidence]) => ({
+    featureKey,
+    label,
+    nextEvidence,
+    statusCounts: counts(),
+    causes: new Map(),
+  }));
+  const categories = new Map();
+  for (const summary of photoSummaries) {
+    for (const [index, row] of summary.features.entries()) {
+      const reasonInfo = REASON_CLASS[row.reason];
+      if (
+        !reasonInfo ||
+        reasonInfo[0] !== row.state ||
+        row.label !== definitions[index][1] ||
+        row.nextEvidence !== definitions[index][2]
+      )
+        throw Error('CURRENT_2D_DIAGNOSTIC_REASON_INVALID');
+      const [state, category] = reasonInfo;
+      const feature = features[index];
+      feature.statusCounts[state]++;
+      const reasonKey = state + ':' + row.reason;
+      if (!feature.causes.has(reasonKey)) {
+        feature.causes.set(reasonKey, {
+          state,
+          reason: row.reason,
+          category,
+          count: 0,
+        });
+      }
+      feature.causes.get(reasonKey).count++;
+      categories.set(category, (categories.get(category) || 0) + 1);
+    }
+  }
+  return Object.freeze({
+    schemaVersion: CURRENT_2D_REASON_DIAGNOSTIC_VERSION,
+    status: 'research_only_unverified_reason_counts',
+    includedPhotoCount: base.includedPhotoCount,
+    totalPhotoFeatureEntries: base.totalPhotoFeatureEntries,
+    statusCounts: base.statusCounts,
+    categories: Object.freeze(
+      [...categories]
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([category, count]) => Object.freeze({ category, count })),
+    ),
+    features: Object.freeze(
+      features.map((f) =>
+        Object.freeze({
+          featureKey: f.featureKey,
+          label: f.label,
+          nextEvidence: f.nextEvidence,
+          statusCounts: Object.freeze({ ...f.statusCounts }),
+          causes: Object.freeze(
+            [...f.causes.values()]
+              .sort((a, b) => a.reason.localeCompare(b.reason))
+              .map((v) => Object.freeze({ ...v })),
+          ),
+        }),
+      ),
+    ),
+    separatePreviewMissingFromModelFailure: true,
+    independentlyReviewedPose: false,
+    independentHumanReferenceValidated: false,
     independentRepeatabilityValidated: false,
     canonicalF0Admitted: false,
     traditionalBindingAuthorized: false,
