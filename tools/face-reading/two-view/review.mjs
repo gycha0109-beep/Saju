@@ -31,6 +31,7 @@ import {
   diagnoseCurrent2dSessionEvidence,
 } from './current-2d-evidence-readiness.mjs';
 import { createSourceCurrentnessGate } from './source-currentness-gate.mjs';
+import { sweepCurrent2dPreviewCandidates } from './current-2d-preview-sweep.mjs';
 import {
   earBinaryFromOverlayRGBA,
   measureVisibleEarMaskSilhouette,
@@ -74,7 +75,8 @@ let state,
   worker,
   parsingWorker,
   runGeneration = 0,
-  busy = false;
+  busy = false,
+  current2dSweepActive = false;
 const results = new Map(),
   blobUrls = new Set(),
   files = new Map(),
@@ -153,6 +155,7 @@ function stop() {
   $('cancel').hidden = true;
   $('batch').disabled = false;
   $('analyze').disabled = files.size === 0;
+  $('current-2d-sweep').disabled = mode !== 'existing' || current2dSweepActive;
 }
 // Fail closed for an already-open local page when the pinned original changes.
 // Clearing both live result objects and DOM prevents a downloaded mask or
@@ -1968,6 +1971,8 @@ function setRecords(next, nextMode) {
   selected = 0;
   original = false;
   $('old-overlay').checked = false;
+  $('current-2d-sweep').disabled =
+    nextMode !== 'existing' || !next.length || busy || current2dSweepActive;
   $('strip').replaceChildren();
   $('tabs').replaceChildren();
   records.forEach((record, i) => {
@@ -2173,6 +2178,7 @@ async function start(tasks, save) {
   $('cancel').hidden = false;
   $('batch').disabled = true;
   $('analyze').disabled = true;
+  $('current-2d-sweep').disabled = true;
   $('status').textContent =
     '전체 사진을 순서대로 계산합니다. 사진 이동과 원본 보기는 계속 사용할 수 있습니다.';
   const run = await jobs.run(tasks, async (task, context) => {
@@ -2200,6 +2206,7 @@ async function start(tasks, save) {
   $('cancel').hidden = true;
   $('batch').disabled = false;
   $('analyze').disabled = files.size === 0;
+  $('current-2d-sweep').disabled = mode !== 'existing' || current2dSweepActive;
   $('status').textContent = '분석이 끝났습니다. 사진별 결과와 원본을 확인하세요.';
   render();
   if (save) {
@@ -2321,6 +2328,70 @@ function updateBatchLabel() {
     ? `추가·미완료 ${pending}장 분석`
     : `기존 ${state.records.length}장 모두 분석`;
 }
+function current2dTransientPreviewsSettled(record) {
+  const result = results.get(record.captureRef);
+  if (
+    record.viewRole !== 'frontal' ||
+    result?.parsing?.status !== 'completed' ||
+    result.parsing.methodVersion !== PARSING_VERSION
+  )
+    return true;
+  const browReady =
+    result.parsing.regionScreening?.regions?.brows?.status === 'screened' &&
+    Boolean(result.layerUrls?.brows);
+  const earReady = Boolean(result.layerUrls?.ears);
+  return (
+    (!browReady ||
+      (result.browPixelTextureCandidate != null &&
+        result.browPixelTextureCandidate.status !== 'loading')) &&
+    (!earReady || (result.earMaskCandidate != null && result.earMaskCandidate.status !== 'loading'))
+  );
+}
+$('current-2d-sweep').onclick = async () => {
+  if (busy || current2dSweepActive || mode !== 'existing' || !records.length) return;
+  const firstSelected = selected;
+  const generation = runGeneration;
+  const button = $('current-2d-sweep');
+  const status = $('current-2d-sweep-status');
+  current2dSweepActive = true;
+  button.disabled = true;
+  status.textContent =
+    '저장된 사진의 눈썹·귀 모델 후보를 확인하는 중입니다. 원본은 업로드하거나 별도 저장하지 않습니다.';
+  document.body.dataset.current2dSweep = 'running';
+  let report;
+  try {
+    report = await sweepCurrent2dPreviewCandidates({
+      count: records.length,
+      current: () => runGeneration === generation && !busy && mode === 'existing',
+      visit: (index) => {
+        selected = index;
+        render();
+      },
+      settled: (index) => current2dTransientPreviewsSettled(records[index]),
+      pause: () => new Promise((resolve) => window.setTimeout(resolve, 125)),
+    });
+  } catch {
+    report = { status: 'partial', visited: 0, timedOut: 0 };
+  } finally {
+    current2dSweepActive = false;
+    button.disabled = busy || mode !== 'existing';
+    if (runGeneration === generation && !busy && mode === 'existing') {
+      selected = firstSelected;
+      render();
+    }
+  }
+  document.body.dataset.current2dSweep = report.status;
+  status.textContent =
+    report.status === 'cancelled'
+      ? '기존 사진 후보 검사가 중단되었습니다. 미완료 항목은 그대로 유지합니다.'
+      : '기존 사진 ' +
+        report.visited +
+        '장의 후보 미리보기 검사 ' +
+        (report.status === 'completed' ? '완료' : '일부 보류') +
+        (report.timedOut ? ' · 시간 초과 ' + report.timedOut + '장' : '') +
+        ' · 이마·입술 등의 일시적인 모델 결과는 기존 전체 분석을 재실행해야 확인할 수 있습니다.' +
+        ' 촬영 자세·부위 정답·전통 관상 해석을 인증하지 않습니다.';
+};
 $('batch').onclick = () => {
   setRecords(state.records, 'existing');
   const pending = pendingRecords();

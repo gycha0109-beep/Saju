@@ -64,11 +64,18 @@ export function summarizeCurrent2dPhotoEvidence({
   } else if (parsing?.status !== 'completed' || parsing.methodVersion !== PARSING_VERSION) {
     for (const [key] of definitions) states.set(key, pending('CURRENT_MODEL_ANALYSIS_MISSING'));
   } else {
-    const forehead = checked(
-      foreheadSkinCandidate,
-      'engineering.visible-forehead-skin-band@0.1.0',
-      ['anatomicalForeheadBoundaryValidated', 'anatomicalHairlineAuthorized'],
-    );
+    let forehead = checked(foreheadSkinCandidate, 'engineering.visible-forehead-skin-band@0.1.0', [
+      'anatomicalForeheadBoundaryValidated',
+      'anatomicalHairlineAuthorized',
+    ]);
+    if (
+      forehead.state === 'not_evaluated' &&
+      parsing.instanceRefinement?.status === 'unavailable' &&
+      parsing.instanceRefinement.reason === 'MODEL_UNAVAILABLE' &&
+      parsing.regionScreening?.regions?.brows?.status === 'unchecked' &&
+      parsing.regionScreening?.regions?.lips?.status === 'unchecked'
+    )
+      forehead = invalid('MODEL_FACE_ANCHOR_UNAVAILABLE');
     states.set('forehead.visible_width_shape', forehead);
     if (!['candidate_only', 'partial'].includes(forehead.state)) {
       states.set('forehead.visible_hairline_boundary', forehead);
@@ -89,13 +96,16 @@ export function summarizeCurrent2dPhotoEvidence({
       );
     }
 
-    states.set(
-      'eyebrow.visible_hair_density_texture',
-      checked(browPixelTextureCandidate, 'engineering.visible-brow-pixel-texture@0.1.0', [
-        'individualHairFibresIdentified',
-        'hairDensityMeasured',
-      ]),
-    );
+    let brow = checked(browPixelTextureCandidate, 'engineering.visible-brow-pixel-texture@0.1.0', [
+      'individualHairFibresIdentified',
+      'hairDensityMeasured',
+    ]);
+    if (
+      brow.state === 'not_evaluated' &&
+      ['suppressed', 'unchecked'].includes(parsing.regionScreening?.regions?.brows?.status)
+    )
+      brow = invalid('BROW_REGION_NOT_SCREENED');
+    states.set('eyebrow.visible_hair_density_texture', brow);
 
     const eyelid = eyelidReview ? measureManualEyelidLineOffsets(eyelidReview) : null;
     if (!eyelid)
@@ -125,16 +135,20 @@ export function summarizeCurrent2dPhotoEvidence({
         ),
       );
 
-    states.set(
-      'mouth.visible_lip_color',
-      checked(lipPixelColorCandidate, 'engineering.visible-lip-pixel-color@0.1.0', [
-        'colorCalibrated',
-        'whiteBalanceVerified',
-        'illuminationControlled',
-        'makeupExcluded',
-        'trueAnatomicalLipColorValidated',
-      ]),
-    );
+    let lip = checked(lipPixelColorCandidate, 'engineering.visible-lip-pixel-color@0.1.0', [
+      'colorCalibrated',
+      'whiteBalanceVerified',
+      'illuminationControlled',
+      'makeupExcluded',
+      'trueAnatomicalLipColorValidated',
+    ]);
+    if (
+      lip.state === 'not_evaluated' &&
+      (['suppressed', 'unchecked'].includes(parsing.regionScreening?.regions?.lips?.status) ||
+        parsing.morphology?.lipBalance?.status === 'unavailable')
+    )
+      lip = invalid('LIP_GEOMETRY_OR_REGION_UNAVAILABLE');
+    states.set('mouth.visible_lip_color', lip);
 
     const ear =
       earRimCurveComparison?.revision === currentEarRevision &&
@@ -280,6 +294,9 @@ const REASON_CLASS = Object.freeze({
   CANDIDATE_STATUS_INVALID: ['unavailable', 'candidate_contract_invalid'],
   CANDIDATE_MEASUREMENT_WITHHELD: ['unavailable', 'model_or_visibility_blocked'],
   NO_VISIBLE_MODEL_HAIR_SKIN_CONTACT: ['unavailable', 'model_or_visibility_blocked'],
+  MODEL_FACE_ANCHOR_UNAVAILABLE: ['unavailable', 'model_or_visibility_blocked'],
+  BROW_REGION_NOT_SCREENED: ['unavailable', 'model_or_visibility_blocked'],
+  LIP_GEOMETRY_OR_REGION_UNAVAILABLE: ['unavailable', 'model_or_visibility_blocked'],
   HUMAN_EYELID_LINE_REVIEW_REQUIRED: ['unavailable', 'manual_review_required'],
   HUMAN_EYELID_AUTHORITY_INVALID: ['unavailable', 'candidate_contract_invalid'],
   COMPARABLE_EYELID_LINES_MISSING: ['unavailable', 'manual_review_required'],

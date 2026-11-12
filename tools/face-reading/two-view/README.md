@@ -40,6 +40,20 @@ folder. The existing `face:coverage -- --intake PRIVATE_INTAKE` runner reads
 the same validated evidence and produces a source-free aggregate of the
 29 FR282/FR293 features; it never changes the 29/18/11 authority.
 
+After the current batch has been saved, click **기존 사진의 2D 후보 전체 검사** in
+`/two-view` to visit each existing photo and allow the current brow/ear image
+preview candidates to settle. The operation reuses local saved layer masks,
+stops when a new run or capture source replaces the previous state, and does
+not copy source photos or certify an anatomical boundary. The current
+forehead-skin and lip-color transient worker candidates are **not included** in
+a saved parser summary; use the existing **full batch analysis** first, then
+the 2D sweep button, to get the most complete current-session candidate
+summary. A fresh page from saved summaries alone may show more
+`not_evaluated` records than that finished session. Explicit parser region
+screening failures are `unavailable`, never fabricated model candidates;
+missing independent pose, visible hairline, actual human eye/ear markings,
+illumination-controlled lip reference and repeat capture are still blockers.
+
 ### Fictional entertainment flow
 
 The experience can run without the private photo inventory or model assets:
