@@ -76,6 +76,7 @@ function setup(
                 currentUser: 'saju_a4_provider_receipt_writer_v1',
                 receiptTable: 'saju_source_ops.a4_provider_call_signed_receipts_v1',
                 coverageTable: 'saju_source_ops.a4_provider_call_coverage_v1',
+                intentTable: 'saju_source_ops.a4_provider_dispatch_intents_v1',
                 receiptCallInsert: true,
                 receiptProofInsert: true,
                 receiptCallRead: true,
@@ -86,6 +87,14 @@ function setup(
                 coverageAttemptRead: true,
                 coverageRefRead: true,
                 coverageProofRead: true,
+                intentCallInsert: true,
+                intentCallRead: true,
+                intentAttemptInsert: true,
+                intentAttemptRead: true,
+                intentRefInsert: true,
+                intentRefRead: true,
+                intentProofInsert: true,
+                intentProofRead: true,
               },
             ];
           } else if (sql.includes('current_user::text')) {
