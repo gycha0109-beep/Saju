@@ -145,3 +145,70 @@ export function summarizeCurrent2dPhotoEvidence({
     features: Object.freeze(features),
   });
 }
+
+
+export const CURRENT_2D_BATCH_EVIDENCE_VERSION = 'engineering.current-2d-session-coverage@0.1.0';
+const EVIDENCE_STATES = Object.freeze([
+  'candidate_only',
+  'partial',
+  'unavailable',
+  'not_evaluated',
+]);
+const counts = () => Object.fromEntries(EVIDENCE_STATES.map((state) => [state, 0]));
+
+// Aggregate the previews already held in browser memory. This is model/reviewer
+// coverage, NOT real-photo measurement accuracy or independent repeatability.
+// No capture identifiers, geometry, source paths or raw feature measurements
+// are copied into the aggregate.
+export function summarizeCurrent2dSessionCoverage(photoSummaries) {
+  if (!Array.isArray(photoSummaries)) throw Error('CURRENT_2D_SESSION_INPUT_INVALID');
+  const features = definitions.map(([featureKey, label]) => ({
+    featureKey,
+    label,
+    ...counts(),
+  }));
+  const overall = counts();
+  for (const summary of photoSummaries) {
+    if (
+      summary?.methodVersion !== CURRENT_2D_EVIDENCE_VERSION ||
+      summary?.status !== 'research_only' ||
+      summary?.featureCount !== definitions.length ||
+      summary?.empiricalValidationCompleted !== false ||
+      summary?.canonicalFeatureCountUnchanged !== 29 ||
+      summary?.unresolvedHardGapsUnchanged !== 11 ||
+      summary?.rawSourcePersistedOrEmitted !== false ||
+      !Array.isArray(summary?.features) ||
+      summary.features.length !== definitions.length
+    )
+      throw Error('CURRENT_2D_SESSION_SOURCE_INVALID');
+    for (let i = 0; i < definitions.length; i++) {
+      const row = summary.features[i];
+      if (
+        row?.featureKey !== definitions[i][0] ||
+        !EVIDENCE_STATES.includes(row.state) ||
+        row.independentAccuracyValidated !== false ||
+        row.canonicalF0Admitted !== false ||
+        row.traditionalBindingAuthorized !== false ||
+        row.productInterpretationAuthorized !== false
+      )
+        throw Error('CURRENT_2D_SESSION_AUTHORITY_INVALID');
+      features[i][row.state]++;
+      overall[row.state]++;
+    }
+  }
+  return Object.freeze({
+    methodVersion: CURRENT_2D_BATCH_EVIDENCE_VERSION,
+    status: 'unverified_local_preview_coverage_only',
+    includedPhotoCount: photoSummaries.length,
+    featureCount: definitions.length,
+    totalPhotoFeatureEntries: photoSummaries.length * definitions.length,
+    statusCounts: Object.freeze(overall),
+    features: Object.freeze(features.map((row) => Object.freeze({ ...row }))),
+    independentAccuracyValidated: false,
+    independentRepeatabilityValidated: false,
+    canonicalF0Admitted: false,
+    traditionalBindingAuthorized: false,
+    productInterpretationAuthorized: false,
+    rawSourcePersistedOrEmitted: false,
+  });
+}
