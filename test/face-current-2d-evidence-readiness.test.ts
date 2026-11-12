@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   CURRENT_2D_EVIDENCE_VERSION,
+  CURRENT_2D_BATCH_EVIDENCE_VERSION,
   summarizeCurrent2dPhotoEvidence,
+  summarizeCurrent2dSessionCoverage,
 } from '../tools/face-reading/two-view/current-2d-evidence-readiness.mjs';
 import { PARSING_VERSION } from '../tools/face-reading/two-view/parsing-contract.mjs';
 
@@ -152,5 +154,84 @@ describe('same-photo current research 2D gap evidence', () => {
     expect(states(report)['eye.eyelid_crease_or_hooded_category']).toBe('unavailable');
     expect(report.features.find((f) => f.featureKey === 'eye.eyelid_crease_or_hooded_category')?.reason)
       .toBe('HUMAN_EYELID_LINE_REVIEW_REQUIRED');
+  });
+});
+
+
+describe('source-free aggregate of already computed current 2D photo statuses', () => {
+  it('counts six status buckets across two photos without treating candidate counts as accuracy', () => {
+    const first = ready();
+    const second = ready({
+      eyelidReview: null,
+      lipPixelColorCandidate: null,
+      browPixelTextureCandidate: { ...texture, status: 'partial' },
+    });
+    const aggregate = summarizeCurrent2dSessionCoverage([first, second]);
+    expect(aggregate).toMatchObject({
+      methodVersion: CURRENT_2D_BATCH_EVIDENCE_VERSION,
+      status: 'unverified_local_preview_coverage_only',
+      includedPhotoCount: 2,
+      featureCount: 6,
+      totalPhotoFeatureEntries: 12,
+      independentAccuracyValidated: false,
+      independentRepeatabilityValidated: false,
+      canonicalF0Admitted: false,
+      traditionalBindingAuthorized: false,
+      productInterpretationAuthorized: false,
+      rawSourcePersistedOrEmitted: false,
+      statusCounts: {
+        candidate_only: 9,
+        partial: 1,
+        unavailable: 1,
+        not_evaluated: 1,
+      },
+    });
+    expect(aggregate.features.find((r) => r.featureKey === 'mouth.visible_lip_color'))
+      .toMatchObject({ candidate_only: 1, not_evaluated: 1 });
+    expect(JSON.stringify(aggregate)).not.toMatch(
+      /captureRef|sourceSha|sourcePath|segments|imageBytes|landmarks|pixel|coordinates|reviewedAt/,
+    );
+  });
+
+  it('keeps missing analysis as not-evaluated, with zero evidence counted as accuracy', () => {
+    const report = summarizeCurrent2dSessionCoverage([
+      ready({ parsing: { status: 'failed' } }),
+      ready({ viewRole: 'profile' }),
+    ]);
+    expect(report.includedPhotoCount).toBe(2);
+    expect(report.statusCounts).toMatchObject({
+      not_evaluated: 6,
+      unavailable: 6,
+      candidate_only: 0,
+      partial: 0,
+    });
+    expect(report.independentAccuracyValidated).toBe(false);
+    const empty = summarizeCurrent2dSessionCoverage([]);
+    expect(empty.includedPhotoCount).toBe(0);
+    expect(empty.totalPhotoFeatureEntries).toBe(0);
+  });
+
+  it('rejects invented authority, unknown states and mismatched feature records', () => {
+    const source = ready();
+    const row = source.features[0];
+    const fabricated = {
+      ...source,
+      features: [
+        { ...row, canonicalF0Admitted: true },
+        ...source.features.slice(1),
+      ],
+    };
+    expect(() => summarizeCurrent2dSessionCoverage([
+      fabricated as unknown as ReturnType<typeof ready>,
+    ])).toThrow('CURRENT_2D_SESSION_AUTHORITY_INVALID');
+    const reordered = { ...source, features: [...source.features].reverse() };
+    expect(() => summarizeCurrent2dSessionCoverage([reordered]))
+      .toThrow('CURRENT_2D_SESSION_AUTHORITY_INVALID');
+    const bad = { ...source, rawSourcePersistedOrEmitted: true };
+    expect(() => summarizeCurrent2dSessionCoverage([
+      bad as unknown as ReturnType<typeof ready>,
+    ])).toThrow('CURRENT_2D_SESSION_SOURCE_INVALID');
+    expect(() => summarizeCurrent2dSessionCoverage(null as never))
+      .toThrow('CURRENT_2D_SESSION_INPUT_INVALID');
   });
 });
