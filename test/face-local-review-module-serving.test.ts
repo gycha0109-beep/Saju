@@ -76,6 +76,10 @@ describe('private two-view review browser module routing', () => {
     const html = readFileSync(resolve(root, 'tools/face-reading/two-view/review.html'), 'utf8');
     expect(html).toContain('id="current-2d-evidence-status"');
     expect(html).toContain('id="current-2d-evidence-rows"');
+    expect(html).toContain('id="current-2d-session-status"');
+    expect(browser).toContain('summarizeCurrent2dSessionCoverage(');
+    expect(browser).toContain("records.filter((item) => item.viewRole === 'frontal')");
+    expect(browser).toContain('session.totalPhotoFeatureEntries');
     expect(browser).toContain('summarizeCurrent2dPhotoEvidence({');
     expect(browser).toContain('renderCurrent2dEvidence(record, result, previous);');
     expect(browser).toContain('independent');
