@@ -206,6 +206,56 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
       sentence.kind === 'day_branch_harm')).toBe(false);
   });
 
+  it.each([
+    [13, 16, '인', '사', 'subject_to_target'],
+    [16, 19, '사', '신', 'subject_to_target'],
+    [19, 13, '신', '인', 'subject_to_target'],
+    [12, 21, '축', '술', 'subject_to_target'],
+    [21, 18, '술', '미', 'subject_to_target'],
+    [18, 12, '미', '축', 'subject_to_target'],
+    [11, 14, '자', '묘', 'both_directions'],
+    [14, 11, '묘', '자', 'both_directions'],
+  ] as const)('observes original three-punishment directional pair fragments without chart outcomes', (
+    firstDay, secondDay, firstBranch, secondBranch, direction,
+  ) => {
+    const result = run(birth(1990, 5, firstDay), birth(1990, 5, secondDay));
+    const observed = result.directDayComparisonResearch
+      ?.dayBranch.classicalDirectedPunishmentObservation;
+    expect(observed?.subject.value).toBe(firstBranch);
+    expect(observed?.target.value).toBe(secondBranch);
+    expect(observed?.literalDirection).toBe(direction);
+    expect(observed?.completeNatalPunishmentVerified).toBe(false);
+    expect(result.directDayComparisonResearch?.sourceFactorAudit.dayBranch.observed)
+      .toContain('branch_punishment_direction');
+    const statement = result.sourceBoundObservationReading?.sentences.find(s =>
+      s.kind === 'day_branch_punishment_direction');
+    expect(statement?.paragraph).toContain('글자 방향');
+    expect(statement?.sourceUrls).toContain(
+      'https://zh.wikisource.org/zh-hant/三命通會/卷二');
+    expect(statement?.interpersonalMeaningAuthorized).toBe(false);
+    expect(result.maySell).toBe(false);
+  });
+
+  it('preserves literary direction on reversing roles, never invents interpersonal action', () => {
+    const forward = run(birth(1990, 5, 13), birth(1990, 5, 16));
+    const reverse = run(birth(1990, 5, 16), birth(1990, 5, 13));
+    expect(forward.directDayComparisonResearch?.dayBranch
+      .classicalDirectedPunishmentObservation?.literalDirection)
+      .toBe('subject_to_target');
+    expect(reverse.directDayComparisonResearch?.dayBranch
+      .classicalDirectedPunishmentObservation?.literalDirection)
+      .toBe('target_to_subject');
+    const reverseSentence = reverse.sourceBoundObservationReading?.sentences.find(s =>
+      s.kind === 'day_branch_punishment_direction');
+    expect(reverseSentence?.paragraph).toContain('인→사');
+    expect(reverseSentence?.paragraph).toContain('실제 갈등을 의미하지 않습니다');
+    const self = run(birth(1990, 5, 15), birth(1990, 5, 15));
+    expect(self.directDayComparisonResearch?.dayBranch
+      .classicalDirectedPunishmentObservation).toBeNull();
+    expect(self.mayPublish).toBe(false);
+    expect(self.maySell).toBe(false);
+  });
+
   it('rejects a mismatched person or chart when reusing canonical element observations', () => {
     const review = run(FIRST, STEM_POS_BRANCH_POS);
     expect(review.directDayComparisonResearch?.subject.snapshotId)

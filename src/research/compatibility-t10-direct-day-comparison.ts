@@ -7,7 +7,7 @@ import type {
 } from './family-pair-source-scope-handoff.js';
 
 export const T10_DIRECT_DAY_COMPARISON_VERSION =
-  'saju-t10-direct-day-comparison-source-audit-v3' as const;
+  'saju-t10-direct-day-comparison-source-audit-v4' as const;
 
 /** Six literal branch pairs from 三命通會, 卷二, 論六害.
  * The original conditions concern natal interpretation, not modern pairs. */
@@ -19,6 +19,55 @@ export const T10_CLASSICAL_SIX_HARM_SOURCE = Object.freeze({
   scope: 'LITERAL_BRANCH_PAIR_ONLY_NOT_INTERPERSONAL_OUTCOME',
   pairwiseMeaningAuthorized: false,
 });
+
+/** Original direction-only pair fragments, not completed 三刑 or interpersonal causation. */
+export const T10_CLASSICAL_THREE_PUNISHMENTS_SOURCE = Object.freeze({
+  sourceId: 'SRC-T10-SANMINGTONGHUI-VOL2-THREE-PUNISHMENTS',
+  title: '三命通會 卷二 論三刑',
+  url: 'https://zh.wikisource.org/zh-hant/三命通會/卷二',
+  verifiedTextLayer: 'PUBLIC_PRIMARY_TEXT_TRANSCRIPTION',
+  scope: 'DIRECTED_BRANCH_PAIR_LITERAL_ONLY_NOT_COMPLETED_NATAL_PUNISHMENT',
+  natalConditionsVerified: false,
+  pairwiseMeaningAuthorized: false,
+});
+
+const DIRECTED_PUNISHMENT_PAIRS: readonly (readonly [EarthlyBranch, EarthlyBranch])[] = [
+  ['인', '사'], ['사', '신'], ['신', '인'],
+  ['축', '술'], ['술', '미'], ['미', '축'],
+  ['자', '묘'], ['묘', '자'],
+];
+
+export type T10DirectedPunishmentDirection =
+  'subject_to_target' | 'target_to_subject' | 'both_directions';
+
+export interface T10ClassicalDirectedPunishmentDayObservation {
+  readonly subject: Readonly<{
+    factPath: 'subject.pillars.day.value.branch';
+    value: EarthlyBranch;
+  }>;
+  readonly target: Readonly<{
+    factPath: 'target.pillars.day.value.branch';
+    value: EarthlyBranch;
+  }>;
+  /** Order of the original branch notation, not a person's action. */
+  readonly literalDirection: T10DirectedPunishmentDirection;
+  readonly source: typeof T10_CLASSICAL_THREE_PUNISHMENTS_SOURCE;
+  readonly directedPairObserved: true;
+  readonly completeNatalPunishmentVerified: false;
+  readonly interpersonalEffectAuthorized: false;
+  readonly pairwiseMeaningAuthorized: false;
+}
+
+export function classicalDirectedPunishmentDirection(
+  a: EarthlyBranch, b: EarthlyBranch,
+): T10DirectedPunishmentDirection | null {
+  if (a === b) return null; // 辰午酉亥自刑 is a natal condition, not pairwise self-punishment.
+  const forward = DIRECTED_PUNISHMENT_PAIRS.some(([x, y]) => x === a && y === b);
+  const backward = DIRECTED_PUNISHMENT_PAIRS.some(([x, y]) => x === b && y === a);
+  return forward && backward ? 'both_directions'
+    : forward ? 'subject_to_target'
+      : backward ? 'target_to_subject' : null;
+}
 
 const SIX_HARM_PAIRS: readonly (readonly [EarthlyBranch, EarthlyBranch])[] = [
   ['자', '미'], ['축', '오'], ['인', '사'], ['묘', '진'],
@@ -77,6 +126,33 @@ function daySixHarmObservation(
     source: T10_CLASSICAL_SIX_HARM_SOURCE,
     branchPairObserved: true,
     reciprocalInterpersonalEffectVerified: false,
+    pairwiseMeaningAuthorized: false,
+  };
+}
+
+function dayDirectedPunishmentObservation(
+  pair: PairwiseSourceScopeHandoff,
+): T10ClassicalDirectedPunishmentDayObservation | null {
+  const day = pair.factualPairObservations.find(item => item.pillarSlot === 'day');
+  if (day?.status !== 'both_resolved') return null;
+  const left = day.subjectPillar?.slice(-1);
+  const right = day.targetPillar?.slice(-1);
+  if (!left || !right || !BRANCHES.includes(left as EarthlyBranch) ||
+      !BRANCHES.includes(right as EarthlyBranch)) {
+    throw new TypeError('Classical punishment pair requires two resolved day branches.');
+  }
+  const first = left as EarthlyBranch;
+  const second = right as EarthlyBranch;
+  const direction = classicalDirectedPunishmentDirection(first, second);
+  if (!direction) return null;
+  return {
+    subject: { factPath: 'subject.pillars.day.value.branch', value: first },
+    target: { factPath: 'target.pillars.day.value.branch', value: second },
+    literalDirection: direction,
+    source: T10_CLASSICAL_THREE_PUNISHMENTS_SOURCE,
+    directedPairObserved: true,
+    completeNatalPunishmentVerified: false,
+    interpersonalEffectAuthorized: false,
     pairwiseMeaningAuthorized: false,
   };
 }
@@ -223,6 +299,9 @@ export interface T10DirectDayComparisonResearchV1 {
     readonly elementalComparison: DayElementComparisonV1 | null;
     readonly conflictingFactors: boolean;
     readonly classicalSixHarmObservation: T10ClassicalSixHarmDayObservation | null;
+    readonly classicalDirectedPunishmentObservation:
+      T10ClassicalDirectedPunishmentDayObservation | null;
+    /** The full natal meaning of 三刑 remains unevaluated. */
     readonly unimplementedSourceFactors: readonly ['punishment', 'break'];
   };
   /** A research grouping from the accessible abstract; not a harmony verdict. */
@@ -239,7 +318,7 @@ export interface T10DirectDayComparisonResearchV1 {
     readonly dayBranch: {
       readonly observed: readonly (
         'branch_six_combination' | 'branch_clash' | 'branch_harm' |
-        'elemental_same' | 'elemental_generation' | 'elemental_control'
+        'branch_punishment_direction' | 'elemental_same' | 'elemental_generation' | 'elemental_control'
       )[];
       readonly notEvaluated: readonly ['punishment', 'break'];
     };
@@ -321,6 +400,7 @@ export function auditT10DirectDayComparisonV1(
   const branch = complete ? dayMatch(pair.crossChartStructuralMatches,
     BRANCH_SUBJECT, BRANCH_TARGET, ['branch_six_combination', 'branch_clash']) : null;
   const classicalHarm = complete ? daySixHarmObservation(pair) : null;
+  const classicalPunishment = complete ? dayDirectedPunishmentObservation(pair) : null;
   const subjectDay = personalPalace.subject.evidence;
   const targetDay = personalPalace.target.evidence;
   if (complete && (!subjectDay || !targetDay ||
@@ -348,7 +428,8 @@ export function auditT10DirectDayComparisonV1(
   const branchPositive = branch?.kind === 'branch_six_combination' ||
     elementalPositive(branchElements);
   const branchNegative = branch?.kind === 'branch_clash' ||
-    classicalHarm !== null || elementalNegative(branchElements);
+    classicalHarm !== null || classicalPunishment !== null ||
+    elementalNegative(branchElements);
   const stemGroup = groupFactor(stemPositive, stemNegative, complete);
   const branchGroup = groupFactor(branchPositive, branchNegative, complete);
   const stemObserved: T10DirectDayComparisonResearchV1[
@@ -361,6 +442,7 @@ export function auditT10DirectDayComparisonV1(
   }
   if (branch?.kind === 'branch_clash') branchObserved.push('branch_clash');
   if (classicalHarm) branchObserved.push('branch_harm');
+  if (classicalPunishment) branchObserved.push('branch_punishment_direction');
   const observableElementFactor = (value: DayElementComparisonV1 | null):
     'elemental_same' | 'elemental_generation' | 'elemental_control' | null => {
     if (!value) return null;
@@ -397,6 +479,7 @@ export function auditT10DirectDayComparisonV1(
       elementalComparison: branchElements,
       conflictingFactors: branchPositive && branchNegative,
       classicalSixHarmObservation: classicalHarm,
+      classicalDirectedPunishmentObservation: classicalPunishment,
       unimplementedSourceFactors: ['punishment', 'break'],
     },
     observedAbstractCell: fourCaseCell(stemGroup, branchGroup),

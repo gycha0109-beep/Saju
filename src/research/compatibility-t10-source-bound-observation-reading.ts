@@ -10,7 +10,9 @@ import type {
 } from './compatibility-t10-direct-day-comparison.js';
 import {
   T10_CLASSICAL_SIX_HARM_SOURCE,
+  T10_CLASSICAL_THREE_PUNISHMENTS_SOURCE,
   isClassicalSixHarmBranchPair,
+  classicalDirectedPunishmentDirection,
   T10_DIRECT_DAY_COMPARISON_SOURCE,
   T10_FIVE_ELEMENT_CYCLE_SOURCE,
 } from './compatibility-t10-direct-day-comparison.js';
@@ -22,7 +24,8 @@ export const T10_SOURCE_BOUND_OBSERVATION_READING_VERSION =
 
 type ObservationKind =
   'day_stem_elements' | 'day_branch_elements' | 'day_stem_combination' |
-  'day_branch_structure' | 'day_branch_harm' | 'same_slot_competing_factors' |
+  'day_branch_structure' | 'day_branch_harm' |
+  'day_branch_punishment_direction' | 'same_slot_competing_factors' |
   'cross_position_opposite' | 'unknown_hour' | 'source_limit';
 
 export interface T10SourceBoundObservationSentenceV1 {
@@ -44,7 +47,7 @@ export interface T10ObservedDayAxisFactorTraceV1 {
   readonly elementRelation: ElementPairKind | null;
   readonly observedFactorIds: readonly (
     'stem_five_combination' | 'branch_six_combination' | 'branch_clash' |
-    'branch_harm' |
+    'branch_harm' | 'branch_punishment_direction' |
     'elemental_same' | 'elemental_generation' | 'elemental_control'
   )[];
   readonly notEvaluatedFactorIds: readonly string[];
@@ -252,13 +255,54 @@ export function buildT10SourceBoundObservationReadingV1(
     throw new TypeError('Six-harm audit cannot claim an absent historical structure.');
   }
 
+  const punishment = direct.dayBranch.classicalDirectedPunishmentObservation;
+  if (punishment) {
+    const direction = classicalDirectedPunishmentDirection(
+      punishment.subject.value, punishment.target.value,
+    );
+    if (punishment.source !== T10_CLASSICAL_THREE_PUNISHMENTS_SOURCE ||
+        punishment.pairwiseMeaningAuthorized !== false ||
+        punishment.interpersonalEffectAuthorized !== false ||
+        punishment.completeNatalPunishmentVerified !== false ||
+        punishment.directedPairObserved !== true ||
+        punishment.subject.factPath !== 'subject.pillars.day.value.branch' ||
+        punishment.target.factPath !== 'target.pillars.day.value.branch' ||
+        punishment.literalDirection !== direction || direction === null ||
+        !direct.sourceFactorAudit.dayBranch.observed.includes(
+          'branch_punishment_direction')) {
+      throw new TypeError('Classical directed punishment candidate must retain original facts.');
+    }
+    const originalOrder = punishment.literalDirection === 'target_to_subject'
+      ? punishment.target.value + '→' + punishment.subject.value
+      : punishment.subject.value + '→' + punishment.target.value;
+    sentences.push({
+      kind: 'day_branch_punishment_direction',
+      paragraph: '첫 번째 사람의 일지 ' + punishment.subject.value +
+        '와 두 번째 사람의 일지 ' + punishment.target.value +
+        '는 『삼명통회』「논삼형」에 적힌 형(刑) 글자 방향 ' +
+        (direction === 'both_directions' ? '양방향' : originalOrder) +
+        '에 해당합니다. 이는 문헌에 열거된 방향의 글자 대응일 뿐 ' +
+        '삼형의 원국 성립·강약·상쇄나 두 사람 사이의 실제 갈등을 ' +
+        '의미하지 않습니다.',
+      observedFactPaths: [punishment.subject.factPath, punishment.target.factPath],
+      sourceIds: [punishment.source.sourceId],
+      sourceUrls: [punishment.source.url, T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl],
+      definitionContentHashes: [],
+      evidenceScope: 'calculated_structural_fact',
+      interpersonalMeaningAuthorized: false,
+    });
+  } else if (direct.sourceFactorAudit.dayBranch.observed.includes(
+    'branch_punishment_direction')) {
+    throw new TypeError('Historical punishment factor cannot outlive its original pair.');
+  }
+
   for (const [label, factor, structural] of [
     ['일간', direct.dayStem, stemMatch],
     ['일지', direct.dayBranch, branchMatch],
   ] as const) {
     if (!factor.conflictingFactors) continue;
-    const historicalBranchHarm = label === '일지' ? harm : null;
-    if ((!structural && !historicalBranchHarm) || !factor.elementalComparison) {
+    const historicalBranch = label === '일지' ? harm ?? punishment : null;
+    if ((!structural && !historicalBranch) || !factor.elementalComparison) {
       throw new TypeError('T10 competing factors require both grounded observations.');
     }
     if (structural) verifyMatch(structural);
@@ -269,16 +313,16 @@ export function buildT10SourceBoundObservationReadingV1(
       observedFactPaths: unique([
         ...(structural
           ? [structural.subject.factPath, structural.target.factPath]
-          : [historicalBranchHarm!.subject.factPath,
-            historicalBranchHarm!.target.factPath]),
+          : [historicalBranch!.subject.factPath,
+            historicalBranch!.target.factPath]),
         factor.elementalComparison.subject.factPath,
         factor.elementalComparison.target.factPath,
       ]),
       sourceIds: unique([...(structural ? structural.sourceIds :
-        [historicalBranchHarm!.source.sourceId]),
+        [historicalBranch!.source.sourceId]),
         T10_FIVE_ELEMENT_CYCLE_SOURCE.sourceId]),
       sourceUrls: [...(structural ? structuralSourceUrls() :
-        [historicalBranchHarm!.source.url]),
+        [historicalBranch!.source.url]),
         T10_FIVE_ELEMENT_CYCLE_SOURCE.url],
       definitionContentHashes: structural
         ? [structural.definitionContentHash] : [],

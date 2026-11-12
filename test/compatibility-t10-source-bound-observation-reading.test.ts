@@ -89,6 +89,23 @@ describe('T10 protected source-grounded Korean observations', () => {
     expect(reading?.maySell).toBe(false);
   });
 
+  it('preserves the original direction and evidence paths of a classical punishment fragment', () => {
+    const result = run(birth(1990, 5, 16), birth(1990, 5, 13));
+    const found = result.sourceBoundObservationReading?.sentences.find(s =>
+      s.kind === 'day_branch_punishment_direction');
+    expect(found?.paragraph).toContain('인→사');
+    expect(found?.observedFactPaths).toEqual([
+      'subject.pillars.day.value.branch',
+      'target.pillars.day.value.branch',
+    ]);
+    expect(found?.sourceIds).toEqual([
+      'SRC-T10-SANMINGTONGHUI-VOL2-THREE-PUNISHMENTS',
+    ]);
+    expect(found?.interpersonalMeaningAuthorized).toBe(false);
+    expect(result.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
+  });
+
   it('records same-position competing factors without claiming they cancel', () => {
     const reading = run(FIRST, HARMONIC_STEM_CONFLICT).sourceBoundObservationReading;
     expect(reading?.sentences.some(item =>

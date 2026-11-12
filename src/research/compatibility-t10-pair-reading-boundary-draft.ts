@@ -77,12 +77,13 @@ function unique(items: readonly string[]): string[] {
   return [...new Set(items)];
 }
 
-/** Maps only observed source factors; no unsupported 형·파 or relationship fate. */
+/** Maps observed source factors; full 형(刑) conditions and interpersonal fate remain unverified. */
 const FACTOR_KOREAN = {
   stem_five_combination: '천간오합',
   branch_six_combination: '지지육합',
   branch_clash: '지지충',
   branch_harm: '지지육해',
+  branch_punishment_direction: '고전 지지형 방향 대응',
   elemental_same: '오행 상비',
   elemental_generation: '오행 상생',
   elemental_control: '오행 상극',
@@ -104,7 +105,8 @@ function axisEvidenceParagraph(
     id === 'branch_six_combination' || id === 'elemental_same' ||
     id === 'elemental_generation');
   const negative = ids.some(id => id === 'branch_clash' ||
-    id === 'branch_harm' || id === 'elemental_control');
+    id === 'branch_harm' || id === 'branch_punishment_direction' ||
+    id === 'elemental_control');
   const inferredGroup = axis.firstElement === null || axis.secondElement === null ||
       axis.elementRelation === null ? 'incomplete_day_pillar'
     : positive && negative ? 'mixed_source_factors'
@@ -229,6 +231,7 @@ export function buildT10PairReadingBoundaryDraftV1(
     item.kind === 'day_stem_elements' || item.kind === 'day_branch_elements' ||
     item.kind === 'day_stem_combination' || item.kind === 'day_branch_structure' ||
     item.kind === 'day_branch_harm' ||
+    item.kind === 'day_branch_punishment_direction' ||
     item.kind === 'same_slot_competing_factors');
   if (factorFacts.filter(item => item.kind === 'day_stem_elements' ||
         item.kind === 'day_branch_elements').length === 2 &&
@@ -274,7 +277,8 @@ export function buildT10PairReadingBoundaryDraftV1(
         '상생·상비·합을 전통적 긍정 요소로, 충·극 등의 관계를 전통적 ' +
         '부정 요소로 구분하여 네 경우를 비교합니다. ' +
         observedAxes + ' ' + classification +
-        ' 천간충 및 지지형·파 등은 이 계산에서 확인하지 않았습니다. ' +
+        ' 천간충과 지지형의 전체 원국 성립 조건 및 지지파는 ' +
+        '이 계산에서 확인하지 않았습니다. ' +
         '이는 전통적 요인 설명이지 두 사람의 실제 소통·관계 만족·' +
         '결혼 결과를 판정한 것이 아닙니다.',
       evidenceLayer: 'traditional_factor_scope',

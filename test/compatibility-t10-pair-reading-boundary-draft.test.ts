@@ -61,7 +61,7 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     expect(item?.paragraph).toContain('일지(첫 번째 사람 ' +
       actual?.branch.firstElement + ', 두 번째 사람 ' +
       actual?.branch.secondElement);
-    expect(item?.paragraph).toContain('천간충 및 지지형·파');
+    expect(item?.paragraph).toContain('천간충과 지지형의 전체 원국 성립 조건');
     expect(item?.evidenceLayer).toBe('traditional_factor_scope');
     expect(item?.observedFactPaths).toEqual(expect.arrayContaining([
       'subject.pillars.day.value.stem.element',
@@ -112,6 +112,26 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     expect(traditional?.individualRelationshipOutcomeAuthorized).toBe(false);
     expect(draft?.relationshipOutcome).toBeNull();
     expect(result.mayPublish).toBe(false);
+  });
+
+  it('includes an exact primary-text punishment direction without granting a relationship judgment', () => {
+    const output = run(birth(1990, 5, 16), birth(1990, 5, 13));
+    const direct = output.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'direct_day_facts');
+    const factor = output.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'traditional_day_factor_scope')?.sentences[0];
+    expect(direct?.sentences.some(s =>
+      s.paragraph.includes('인→사'))).toBe(true);
+    expect(factor?.paragraph).toContain('고전 지지형 방향 대응');
+    expect(factor?.sourceUrls).toContain(
+      'https://zh.wikisource.org/zh-hant/三命通會/卷二');
+    expect(factor?.observedFactPaths).toEqual(expect.arrayContaining([
+      'subject.pillars.day.value.branch',
+      'target.pillars.day.value.branch',
+    ]));
+    expect(factor?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(output.pairReadingBoundaryDraft?.relationshipOutcome).toBeNull();
+    expect(output.mayPublish).toBe(false);
   });
 
   it('grounds the 2016 interview counterexample without projecting it onto these people', () => {
