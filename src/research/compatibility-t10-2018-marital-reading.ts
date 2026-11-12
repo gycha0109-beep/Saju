@@ -82,22 +82,24 @@ function personSentence(
   sourceUrl: string,
   authorIndexUrl: string,
 ): T102018MaritalReadingSentence {
-  const dayText = item.palaceState === 'same_element'
-    ? '일간과 일지의 오행이 같습니다.'
-    : item.palaceState === 'different_element'
-      ? '일간과 일지의 오행이 다릅니다.'
-      : '일간과 일지의 오행을 아직 확정할 수 없습니다.';
+  const dayText = item.palaceElements === null
+    ? '일간과 일지의 오행을 아직 확정할 수 없습니다.'
+    : `일간의 오행은 ${item.palaceElements.stem}, ` +
+      `일지의 오행은 ${item.palaceElements.branch}이며 두 오행이 ` +
+      (item.palaceState === 'same_element' ? '같습니다.' : '다릅니다.');
   const observed = item.visibleSpouseStarPositions.map(star =>
     `${star.value}(${PILLARS[star.pillar]} ${CHANNELS[star.channel]})`);
   const starText = item.visibleSpouseStarKind === null
     ? '원문이 전제한 역사적 남편·부인 분류 조건에 해당하지 않아 재성·관성 비교를 적용하지 않습니다.'
-    : `역사적 ${item.historicalRole === 'husband' ? '남편' : '부인'} 조건의 ` +
-      `${item.visibleSpouseStarKind} 중 확인된 위치는 ` +
-      (observed.length ? observed.join(', ') : '현재 확인된 범위에 없음') + '입니다. ' +
+    : `역사적 ${item.historicalRole === 'husband' ? '남편' : '부인'} 조건에서 ` +
+      (observed.length
+        ? `${item.visibleSpouseStarKind}이 확인된 위치는 ${observed.join(', ')}입니다. `
+        : `현재 확인된 ${item.inspectedStarFacts.length}개 위치에서는 ` +
+          `${item.visibleSpouseStarKind}이 관측되지 않았습니다. `) +
       (item.unobservedStarFactPaths.length > 0
         ? '일부 계산 위치가 미상이라 전체 출현 여부도 확정할 수 없습니다. '
         : '') +
-      '이 관측만으로 배우자성의 세력·강약을 판정할 수 없습니다.';
+      '위치의 유무만으로 배우자성의 세력·강약을 판정할 수 없습니다.';
   return {
     paragraph: `${label}: ${dayText} ${starText}`,
     evidenceLevel: 'calculated_natal_fact',
@@ -105,7 +107,7 @@ function personSentence(
     historicalRole: item.historicalRole,
     observedFactPaths: [
       ...item.palaceObservedFactPaths.map(path => scope + '.' + path),
-      ...item.visibleSpouseStarPositions.map(star => scope + '.' + star.factPath),
+      ...item.inspectedStarFacts.map(star => scope + '.' + star.factPath),
     ],
     unavailableFactPaths: item.unobservedStarFactPaths.map(path => scope + '.' + path),
     sourceUrls: [sourceUrl, authorIndexUrl],

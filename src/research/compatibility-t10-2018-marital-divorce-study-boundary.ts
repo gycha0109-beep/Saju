@@ -1,5 +1,5 @@
 import type {
-  CanonicalSajuSnapshot, PillarSlot, TenGod,
+  CanonicalSajuSnapshot, PillarSlot, TenGod, FiveElement,
 } from '../contracts/calculation.js';
 import type { PairwiseSourceScopeHandoff } from './family-pair-source-scope-handoff.js';
 import type {
@@ -42,6 +42,9 @@ export interface T102018SpouseAxisObservation {
   readonly historicalRole: HistoricalRole;
   readonly palaceState: PalaceState;
   readonly palaceObservedFactPaths: readonly string[];
+  readonly palaceElements: Readonly<{ stem: FiveElement; branch: FiveElement }> | null;
+  /** All resolved positions examined, including those without the sought star. */
+  readonly inspectedStarFacts: readonly Readonly<{ factPath: string; value: string }>[];
   readonly visibleSpouseStarKind: '재성' | '관성' | null;
   readonly visibleSpouseStarPositions: readonly VisibleStar[];
   readonly unobservedStarFactPaths: readonly string[];
@@ -120,6 +123,7 @@ function observe(
   const desired: readonly TenGod[] = role === 'husband' ? HUSBAND_STARS
     : role === 'wife' ? WIFE_STARS : [];
   const observed: VisibleStar[] = [];
+  const inspected: { factPath: string; value: string }[] = [];
   const missing: string[] = [];
   if (starKind !== null) {
     const tenGods = chart.derivedFacts.tenGods;
@@ -131,8 +135,11 @@ function observe(
           ? tenGods.value[pillar][channel] : undefined;
         if (fact?.status !== 'resolved') {
           missing.push(factPath);
-        } else if (desired.includes(fact.value as TenGod)) {
-          observed.push({ factPath, pillar, channel, value: fact.value as TenGod });
+        } else {
+          inspected.push({ factPath, value: fact.value });
+          if (desired.includes(fact.value as TenGod)) {
+            observed.push({ factPath, pillar, channel, value: fact.value as TenGod });
+          }
         }
       }
     }
@@ -147,7 +154,8 @@ function observe(
       ? '일간과 일지의 오행이 다른 구조가 관측됩니다.'
       : '일간·일지의 계산 정보가 부족하여 해당 구조를 관측할 수 없습니다.';
   const starText = starKind
-    ? `역사적 ${role === 'husband' ? '남편' : '부인'} 역할에서 ${starKind}의 보이는 위치는 ${observed.length}곳입니다. ` +
+    ? `역사적 ${role === 'husband' ? '남편' : '부인'} 역할에서 ${starKind}의 가시 관측은 ` +
+      `확인된 ${inspected.length}개 위치 중 ${observed.length}개 위치입니다. ` +
       '이 수치만으로 실제 재성·관성의 강약을 판정할 수 없습니다.'
     : '2018년 이별 부부 연구의 역사적 남편·부인 역할 조건은 두 명식에 적용되지 않습니다.';
   return {
@@ -157,6 +165,11 @@ function observe(
     historicalRole: role,
     palaceState: palace.state,
     palaceObservedFactPaths: facts,
+    palaceElements: palace.evidence ? {
+      stem: palace.evidence.stemElement,
+      branch: palace.evidence.branchElement,
+    } : null,
+    inspectedStarFacts: inspected,
     visibleSpouseStarKind: starKind,
     visibleSpouseStarPositions: observed,
     unobservedStarFactPaths: missing,

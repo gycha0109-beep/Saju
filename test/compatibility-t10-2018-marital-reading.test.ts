@@ -52,6 +52,32 @@ describe('2018 actual-chart Korean research reading with original source bounds'
     );
     expect(reading?.sentences[2]?.missingPrerequisites)
       .toContain('FULL_2018_CASES_AND_METHOD_EXCEPTIONS_UNREAD');
+    if (!reading || !result.divorceStudy2018MethodBoundary) {
+      throw new TypeError('Missing source-bound study evidence.');
+    }
+    const study = result.divorceStudy2018MethodBoundary;
+    for (const [index, item, side] of [
+      [0, study.subject, 'subject'],
+      [1, study.target, 'target'],
+    ] as const) {
+      const sentence = reading.sentences[index];
+      expect(sentence.observedFactPaths).toEqual(expect.arrayContaining(
+        item.inspectedStarFacts.map(fact => side + '.' + fact.factPath),
+      ));
+      expect(sentence.unavailableFactPaths).toEqual(
+        item.unobservedStarFactPaths.map(path => side + '.' + path),
+      );
+      expect(item.inspectedStarFacts.length + item.unobservedStarFactPaths.length)
+        .toBe(7);
+      if (item.palaceElements) {
+        expect(sentence.paragraph).toContain('일간의 오행은 ' + item.palaceElements.stem);
+        expect(sentence.paragraph).toContain('일지의 오행은 ' + item.palaceElements.branch);
+      }
+      if (item.visibleSpouseStarKind && item.visibleSlotCount === 0) {
+        expect(sentence.paragraph).toContain('관측되지 않았습니다');
+        expect(sentence.paragraph).not.toContain('없음입니다');
+      }
+    }
     expect(reading?.contextBoundedKoreanReading)
       .toContain(result.relationshipContextBoundary?.contextBoundedKoreanDraft);
     expect(reading?.contextBoundedKoreanReading)
@@ -71,6 +97,16 @@ describe('2018 actual-chart Korean research reading with original source bounds'
     }
     const defaultResult = compare(male, female, 'married_couple', false);
     expect(defaultResult.maritalResearchReading2018).toBeUndefined();
+  });
+
+  it('distinguishes a new counterpart without fabricating an outcome', () => {
+    const first = compare(male, female).maritalResearchReading2018;
+    const other = compare(male, birth(1996, 8, 5, 'female'))
+      .maritalResearchReading2018;
+    expect(first?.sentences[0]?.paragraph).toBe(other?.sentences[0]?.paragraph);
+    expect(first?.sentences[1]?.paragraph).not.toBe(other?.sentences[1]?.paragraph);
+    expect(first?.relationshipVerdict).toBeNull();
+    expect(other?.relationshipVerdict).toBeNull();
   });
 
   it('keeps historical roles and the two original people separate after reversing', () => {
