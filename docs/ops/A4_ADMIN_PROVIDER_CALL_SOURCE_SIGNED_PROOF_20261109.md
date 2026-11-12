@@ -123,6 +123,14 @@
 - 직접 관련된 4개 테스트 파일의 26건을 재실행해 PASS. 실제 운영 API 호출, 유료 토큰 사용, 운영 DB 설치·수정 및 비용 수집은 계속 없음.
 - 새 커밋의 일반 CI·필수 Integration은 별도 성공 근거 확인 전까지 미완료로 취급한다. completeCostCoverage=false, 운영 수집 OFF 유지.
 
+## 2026-11-12 — A4 실제 공급사 요청 직전 서버 전용 전달 의도 경계 (오프라인)
+
+- `OpenAIResponsesNarrativeAdapter`에 `onBeforeProviderRequest(intent)` 서버 전용 선택적 콜백을 추가했다. 생성된 `callId`, `requestId`, `providerKey`, `modelKey`, `preparedAt`만 공개하며 실제 요청 전송 본문·프롬프트·출생 데이터·API 키·공급사 응답 ID는 포함하지 않는다.
+- 검증/기록용 콜백이 실패하면 HTTP 요청 전에 즉시 중단하는 **fail-closed** 경계다. 콜백 성공 후에만 기존 HTTP fetch가 시작되며, 종료 콜백(`onProviderCall`)은 같은 `callId`를 유지한다. 일반 adapter의 선택적 호출 방식은 그대로 보존한다.
+- A4 공식 Production Host는 임의 `onBeforeProviderRequest` 주입을 거부한다. **현재 A4 capture에 이 콜백을 설치하지 않았고**, 지속 저장 Source dispatch intent Writer, 단건 송신 여부 확인, 프로세스 강제 종료 복구, 공급사 청구 전수 대조는 후속 미완료 조건이다. 이 코드를 운영 활성화로 해석하면 안 된다.
+- 테스트는 기록 실패 시 네트워크 요청 0건, 송신 전 의도와 종료 콜백의 동일 식별자, 전송 장애 시 동일 call ID, 공식 A4 Host의 외부 콜백 차단을 검증한다. 외부 유료 API 호출·운영 데이터 변경·기존 회원·결제·크레딧 변경은 수행하지 않았다.
+- **`preparedAt`은 네트워크를 실제 송신했다는 증거가 아니다.** `completeCostCoverage=false`, 운영 비용 수집 OFF. 서버 간 인증·Source DB 출처·개인정보 보존·실제 공급사 요청/청구 대조는 계속 HOLD.
+
 ## 2026-11-12 — A4 공급사 전송 직전 불변 Source 증거 저장 후보 (오프라인)
 
 - `docs/ops/A4_ADMIN_PROVIDER_DISPATCH_INTENT_OFFLINE_V1.sql`: 이미 승인된 A4 Source 영수증 Writer 역할의 **오프라인/폐기형** 추가 테이블 후보. `callId`, 정본 `executionAttemptId`, Saju가 발급한 `externalRequestRef` 및 최소 `{callId,requestId,providerKey,modelKey,preparedAt}`만 저장. 기존 불변 서명 영수증·커버리지 저장소와 분리한다.

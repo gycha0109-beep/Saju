@@ -60,6 +60,7 @@ describe('A4 private capture cannot bypass independent Production interpretation
     for (const request of [
       { ...input, production: { legacyNarrativeRuntime: {} as never } },
       { ...input, openAI: { ...input.openAI, onProviderCall: () => undefined } },
+      { ...input, openAI: { ...input.openAI, onBeforeProviderRequest: () => undefined } },
       { ...input, openAI: { ...input.openAI, fetchImpl: modelCalls as never } },
       {
         ...input,
