@@ -30,8 +30,8 @@ function proof(source: 'provider_response_usage' | 'provider_attempt_without_usa
   });
 }
 function fixture(opts: {
-  intentRows?: Record<string, unknown>[];
-  receiptRows?: Record<string, unknown>[];
+  intentRows?: readonly Record<string, unknown>[];
+  receiptRows?: readonly Record<string, unknown>[];
   principal?: string;
   readFails?: boolean;
 } = {}) {
@@ -53,9 +53,9 @@ function fixture(opts: {
             rows = [{ currentUser: opts.principal ?? 'saju_a4_provider_receipt_writer_v1' }];
           } else if (sql.includes('FROM saju_source_ops.a4_provider_dispatch_intents_v1')) {
             if (opts.readFails) throw Error('source database unavailable');
-            rows = intents;
+            rows = [...intents];
           } else if (sql.includes('FROM saju_source_ops.a4_provider_call_signed_receipts_v1')) {
-            rows = receipts;
+            rows = [...receipts];
           }
           return { rows: rows as T[] };
         },
