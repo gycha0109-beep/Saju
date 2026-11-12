@@ -33,3 +33,27 @@ export function summarizeCurrent2dPhotoEvidence(input?: {
   currentEarRevision?: number | null;
   eyelidReview?: unknown;
 }): Current2dEvidenceSummary;
+
+
+export const CURRENT_2D_BATCH_EVIDENCE_VERSION: 'engineering.current-2d-session-coverage@0.1.0';
+export type Current2dSessionCoverage = Readonly<{
+  methodVersion: typeof CURRENT_2D_BATCH_EVIDENCE_VERSION;
+  status: 'unverified_local_preview_coverage_only';
+  includedPhotoCount: number;
+  featureCount: 6;
+  totalPhotoFeatureEntries: number;
+  statusCounts: Readonly<Record<Current2dEvidenceState, number>>;
+  features: readonly (Readonly<{
+    featureKey: string;
+    label: string;
+  }> & Readonly<Record<Current2dEvidenceState, number>>)[];
+  independentAccuracyValidated: false;
+  independentRepeatabilityValidated: false;
+  canonicalF0Admitted: false;
+  traditionalBindingAuthorized: false;
+  productInterpretationAuthorized: false;
+  rawSourcePersistedOrEmitted: false;
+}>;
+export function summarizeCurrent2dSessionCoverage(
+  photoSummaries: readonly Current2dEvidenceSummary[]
+): Current2dSessionCoverage;
