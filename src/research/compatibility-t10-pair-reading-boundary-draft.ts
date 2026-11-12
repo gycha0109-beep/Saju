@@ -217,6 +217,27 @@ export function buildT10PairReadingBoundaryDraftV1(
         '2016_MARITAL_FACTOR_TO_INDIVIDUAL_OUTCOME_NOT_VALIDATED',
       ],
       individualRelationshipOutcomeAuthorized: false,
+    }, {
+      // The 2016 qualitative interview finding is a source-level exception
+      // to automatic outcomes, never an observation of these chart holders.
+      paragraph: '같은 2016년 연구의 공개 초록은 겉궁합이 맞지 않는다고 ' +
+        '여겨진 부부라도 서로의 차이를 인정하고 역할에 합의한 경우 ' +
+        '원만한 결혼생활을 유지했다고 보고합니다. 이 질적 사례는 ' +
+        '명식의 전통적 비교 요인만으로 두 사람의 실제 소통이나 ' +
+        '관계 결과를 정할 수 없다는 주의 근거입니다. ' +
+        '현재 비교하는 두 사람이 그러한 행동을 했거나 앞으로 ' +
+        '하게 된다는 뜻은 아닙니다.',
+      evidenceLayer: 'source_limit',
+      observedFactPaths: [],
+      consideredButUnverifiedFactPaths: [],
+      sourceIds: [],
+      sourceUrls: [T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl],
+      definitionContentHashes: [],
+      missingPrerequisites: [
+        'FULL_2016_INTERVIEW_CASE_AND_METHOD_NOT_VERIFIED',
+        'CURRENT_PAIR_TO_2016_INTERVIEW_CASE_NOT_LINKED',
+      ],
+      individualRelationshipOutcomeAuthorized: false,
     }]);
   }
 

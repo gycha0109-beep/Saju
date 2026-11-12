@@ -61,6 +61,8 @@ describe('T10 product quality: factual material never becomes a complete relatio
     expect(a?.traceAudit.verifiedStructuralFactSentenceCount).toBeGreaterThan(0);
     expect(a?.traceAudit.traditionalFactorScopeSentenceCount).toBe(1);
     expect(b?.traceAudit.traditionalFactorScopeSentenceCount).toBe(1);
+    expect(a?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);
+    expect(b?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);
     expect(a?.traceAudit.sectionIds).toContain('mixed_positions');
     expect(a?.actualCompatibilityReadingReady).toBe(false);
     expect(b?.actualCompatibilityReadingReady).toBe(false);

@@ -49,6 +49,7 @@ export interface T10ProductReadingQualityReviewV1 {
     readonly validatedSentenceCount: number;
     readonly verifiedStructuralFactSentenceCount: number;
     readonly traditionalFactorScopeSentenceCount: number;
+    readonly qualitativeMaritalExceptionSentenceCount: number;
     readonly unverifiedPrerequisitePaths: readonly string[];
     readonly sectionIds: readonly T10PairDraftSection['id'][];
   };
@@ -106,6 +107,16 @@ function validateSentence(sentence: T10PairDraftSentence): void {
        !sentence.missingPrerequisites.includes(
          '2016_MARITAL_FACTOR_TO_INDIVIDUAL_OUTCOME_NOT_VALIDATED'))) {
     throw new TypeError('T10 traditional factor scope requires original paths and source limits.');
+  }
+  if (sentence.evidenceLayer === 'source_limit' &&
+      sentence.missingPrerequisites.includes(
+        'CURRENT_PAIR_TO_2016_INTERVIEW_CASE_NOT_LINKED') &&
+      (sentence.observedFactPaths.length !== 0 ||
+       sentence.consideredButUnverifiedFactPaths.length !== 0 ||
+       !sentence.sourceUrls.includes(T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl) ||
+       !sentence.missingPrerequisites.includes(
+         'FULL_2016_INTERVIEW_CASE_AND_METHOD_NOT_VERIFIED'))) {
+    throw new TypeError('T10 qualitative study exceptions are not chart-specific outcomes.');
   }
   if (sentence.evidenceLayer === 'method_applicability' &&
       sentence.observedFactPaths.length !== 0) {
@@ -250,6 +261,10 @@ export function auditT10ProductReadingQualityV1(
         sentence.evidenceLayer === 'calculated_structure').length,
       traditionalFactorScopeSentenceCount: all.filter(sentence =>
         sentence.evidenceLayer === 'traditional_factor_scope').length,
+      qualitativeMaritalExceptionSentenceCount: all.filter(sentence =>
+        sentence.evidenceLayer === 'source_limit' &&
+        sentence.missingPrerequisites.includes(
+          'CURRENT_PAIR_TO_2016_INTERVIEW_CASE_NOT_LINKED')).length,
       unverifiedPrerequisitePaths: unique(all.flatMap(sentence =>
         [...sentence.consideredButUnverifiedFactPaths])),
       sectionIds: draft.sections.map(section => section.id),

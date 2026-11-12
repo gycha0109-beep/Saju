@@ -69,6 +69,24 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
       .not.toContain('traditional_day_factor_scope');
   });
 
+  it('grounds the 2016 interview counterexample without projecting it onto these people', () => {
+    const result = run(A, COMBINATION_AND_CLASH);
+    const section = result.pairReadingBoundaryDraft?.sections.find(item =>
+      item.id === 'traditional_day_factor_scope');
+    const interview = section?.sentences.find(item =>
+      item.missingPrerequisites.includes(
+        'CURRENT_PAIR_TO_2016_INTERVIEW_CASE_NOT_LINKED'));
+    expect(interview?.paragraph).toContain('서로의 차이를 인정하고 역할에 합의');
+    expect(interview?.paragraph).toContain('두 사람이 그러한 행동을 했거나');
+    expect(interview?.evidenceLayer).toBe('source_limit');
+    expect(interview?.observedFactPaths).toEqual([]);
+    expect(interview?.sourceUrls).toEqual([
+      'https://www.dbpia.co.kr/journal/detail?nodeId=T14205410',
+    ]);
+    expect(interview?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(result.pairReadingBoundaryDraft?.relationshipOutcome).toBeNull();
+  });
+
   it('does not force a four-cell verdict when opposite factors coexist', () => {
     const output = run(A, birth(1990, 5, 20));
     const item = output.pairReadingBoundaryDraft?.sections.find(section =>

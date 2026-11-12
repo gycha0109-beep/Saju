@@ -44,6 +44,10 @@ describe('T10 relationship context: research population scope never becomes a ve
       .toBe('marital_population_overlap_not_prediction');
     expect(scope?.withheldMaritalMethodSectionIds).toEqual([]);
     expect(scope?.includedSectionIds).toContain('historical_method_disagreement');
+    expect(scope?.includedSectionIds).toContain('traditional_day_factor_scope');
+    expect(scope?.contextBoundedKoreanDraft).toContain(
+      '서로의 차이를 인정하고 역할에 합의한 경우');
+    expect(scope?.contextBoundedKoreanDraft).toContain('두 사람이 그러한 행동을 했거나');
     expect(scope?.includedSectionIds).toContain('useful_god_method');
     expect(scope?.sourcePopulations).toHaveLength(4);
     expect(scope?.sourcePopulations.every(source =>
@@ -64,6 +68,10 @@ describe('T10 relationship context: research population scope never becomes a ve
       expect(scope?.includedSectionIds).toContain('direct_day_facts');
       expect(scope?.includedSectionIds).toContain('mixed_positions');
       expect(scope?.includedSectionIds).toContain('reading_limits');
+      expect(scope?.withheldMaritalMethodSectionIds)
+        .toContain('traditional_day_factor_scope');
+      expect(scope?.contextBoundedKoreanDraft)
+        .not.toContain('서로의 차이를 인정하고 역할에 합의한 경우');
       expect(scope?.withheldMaritalMethodSectionIds)
         .toEqual(expect.arrayContaining([
           'historical_method_disagreement',
