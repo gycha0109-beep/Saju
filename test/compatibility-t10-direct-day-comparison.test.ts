@@ -256,6 +256,57 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
     expect(self.maySell).toBe(false);
   });
 
+  it.each([
+    [11, 20, '자', '유'],
+    [12, 15, '축', '진'],
+    [13, 22, '인', '해'],
+    [14, 17, '묘', '오'],
+    [16, 19, '사', '신'],
+    [18, 21, '미', '술'],
+  ] as const)('traces six foreign break pairs without admitting a Bazi factor', (
+    leftDay, rightDay, leftBranch, rightBranch,
+  ) => {
+    const output = run(birth(1990, 5, leftDay), birth(1990, 5, rightDay));
+    const direct = output.directDayComparisonResearch;
+    const match = direct?.dayBranch.foreignBreakDayCandidate;
+    expect(match?.subject.value).toBe(leftBranch);
+    expect(match?.target.value).toBe(rightBranch);
+    expect(match?.source.discipline).toBe('LIUREN_DIVINATION_NOT_BAZI');
+    expect(match?.criticalSource.breakRuleAdmitted).toBe(false);
+    expect(match?.admittedBaziBreakFactor).toBe(false);
+    expect(match?.mayContributeToFourCaseGroup).toBe(false);
+    expect(direct?.sourceFactorAudit.dayBranch.notEvaluated).toContain('break');
+    const sentence = output.sourceBoundObservationReading?.sentences.find(s =>
+      s.kind === 'foreign_break_method_dispute');
+    expect(sentence?.sourceUrls).toHaveLength(2);
+    expect(sentence?.interpersonalMeaningAuthorized).toBe(false);
+    expect(output.productReadingQualityReview?.actualCompatibilityReadingReady).toBe(false);
+    expect(output.maySell).toBe(false);
+  });
+
+  it('preserves six-combination and separate foreign-method uncertainty', () => {
+    const a = run(birth(1990, 5, 13), birth(1990, 5, 22));
+    const b = run(birth(1990, 5, 22), birth(1990, 5, 13));
+    expect(a.directDayComparisonResearch?.dayBranch.verifiedStructuralMatch?.kind)
+      .toBe('branch_six_combination');
+    expect(a.directDayComparisonResearch?.dayBranch.foreignBreakDayCandidate
+      ?.subject.value).toBe('인');
+    expect(b.directDayComparisonResearch?.dayBranch.foreignBreakDayCandidate
+      ?.subject.value).toBe('해');
+    expect(a.directDayComparisonResearch?.dayBranch.group)
+      .toBe(b.directDayComparisonResearch?.dayBranch.group);
+    expect(a.directDayComparisonResearch?.dayBranch.unimplementedSourceFactors)
+      .toContain('break');
+    expect(a.mayPublish).toBe(false);
+  });
+
+  it('does not invent a foreign break on an unrelated pair', () => {
+    const o = run(birth(1990, 5, 11), birth(1990, 5, 15));
+    expect(o.directDayComparisonResearch?.dayBranch.foreignBreakDayCandidate).toBeNull();
+    expect(o.sourceBoundObservationReading?.sentences.some(s =>
+      s.kind === 'foreign_break_method_dispute')).toBe(false);
+  });
+
   it('rejects a mismatched person or chart when reusing canonical element observations', () => {
     const review = run(FIRST, STEM_POS_BRANCH_POS);
     expect(review.directDayComparisonResearch?.subject.snapshotId)

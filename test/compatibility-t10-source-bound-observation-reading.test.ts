@@ -106,6 +106,22 @@ describe('T10 protected source-grounded Korean observations', () => {
       .toBe(false);
   });
 
+  it('keeps the break-method dispute within source limits and exact day paths', () => {
+    const output = run(birth(1990, 5, 11), birth(1990, 5, 20));
+    const item = output.sourceBoundObservationReading?.sentences.find(s =>
+      s.kind === 'foreign_break_method_dispute');
+    expect(item?.paragraph).toContain('육임대전');
+    expect(item?.paragraph).toContain('명리약언');
+    expect(item?.evidenceScope).toBe('source_method_limit');
+    expect(item?.observedFactPaths).toEqual([
+      'subject.pillars.day.value.branch',
+      'target.pillars.day.value.branch',
+    ]);
+    expect(item?.sourceIds).toHaveLength(2);
+    expect(item?.interpersonalMeaningAuthorized).toBe(false);
+    expect(output.maySell).toBe(false);
+  });
+
   it('records same-position competing factors without claiming they cancel', () => {
     const reading = run(FIRST, HARMONIC_STEM_CONFLICT).sourceBoundObservationReading;
     expect(reading?.sentences.some(item =>

@@ -133,7 +133,9 @@ function factualSentence(
   return {
     paragraph: sentence.paragraph,
     evidenceLayer: sentence.kind === 'unknown_hour' ? 'missing_input'
-      : sentence.kind === 'source_limit' ? 'source_limit' : 'calculated_structure',
+      : sentence.kind === 'source_limit' ||
+        sentence.kind === 'foreign_break_method_dispute'
+        ? 'source_limit' : 'calculated_structure',
     observedFactPaths: sentence.kind === 'unknown_hour'
       ? [] : sentence.observedFactPaths,
     consideredButUnverifiedFactPaths: sentence.kind === 'unknown_hour'
@@ -144,7 +146,12 @@ function factualSentence(
     missingPrerequisites: sentence.kind === 'unknown_hour'
       ? ['UNKNOWN_BIRTH_HOUR_CANNOT_BE_INFERRED']
       : sentence.kind === 'source_limit'
-        ? ['FULL_2016_CASE_METHOD_AND_EXCEPTION_TEXT'] : [],
+        ? ['FULL_2016_CASE_METHOD_AND_EXCEPTION_TEXT']
+        : sentence.kind === 'foreign_break_method_dispute'
+          ? ['FOREIGN_LIUREN_METHOD_NOT_BAZI_T10_RULE',
+            'BAZI_PRIMARY_TEXT_CONTESTS_BREAK_AS_STANDALONE_FACTOR',
+            '2016_MARITAL_BREAK_METHOD_FULL_TEXT_NOT_VERIFIED']
+          : [],
     individualRelationshipOutcomeAuthorized: false,
   };
 }
@@ -400,7 +407,8 @@ export function buildT10PairReadingBoundaryDraftV1(
   });
   add('reading_limits', '실제 관계 판단의 보류 이유', [
     ...factual.sentences.filter(item =>
-      item.kind === 'unknown_hour' || item.kind === 'source_limit').map(factualSentence),
+      item.kind === 'unknown_hour' || item.kind === 'source_limit' ||
+      item.kind === 'foreign_break_method_dispute').map(factualSentence),
     {
       paragraph: '계산된 합·충과 고전의 비교 방법만으로는 두 사람의 ' +
         '관계 만족도, 결혼 성사, 이혼 여부 또는 상호 적합성을 단정할 수 없습니다. ' +

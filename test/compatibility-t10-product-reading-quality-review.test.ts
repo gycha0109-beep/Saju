@@ -79,6 +79,21 @@ describe('T10 product quality: factual material never becomes a complete relatio
     expect(b?.actualCompatibilityReadingReady).toBe(false);
   });
 
+  it('leaves disputed foreign-method factors out of every sale-eligible result', () => {
+    const output = run(birth(1990, 5, 11), birth(1990, 5, 20));
+    const review = output.productReadingQualityReview;
+    const disputed = output.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'reading_limits')?.sentences.find(s => s.missingPrerequisites.includes(
+        'FOREIGN_LIUREN_METHOD_NOT_BAZI_T10_RULE'));
+    expect(disputed?.evidenceLayer).toBe('source_limit');
+    expect(disputed?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(review?.traceAudit.exactSourceDerivedDraft).toBe(true);
+    expect(review?.actualCompatibilityReadingReady).toBe(false);
+    expect(review?.productEligibility.every(x =>
+      x.eligibleToHandoffForSalesOrIssuance === false)).toBe(true);
+    expect(review?.maySell).toBe(false);
+  });
+
   it('does not invent a multi-factor conflict if only one factor is present', () => {
     const result = run(A, SINGLE).productReadingQualityReview;
     expect(result?.caseDistinction).toBe('no_verified_mixed_day_structure');

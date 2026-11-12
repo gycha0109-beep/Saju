@@ -7,7 +7,7 @@ import type {
 } from './family-pair-source-scope-handoff.js';
 
 export const T10_DIRECT_DAY_COMPARISON_VERSION =
-  'saju-t10-direct-day-comparison-source-audit-v4' as const;
+  'saju-t10-direct-day-comparison-source-audit-v5' as const;
 
 /** Six literal branch pairs from 三命通會, 卷二, 論六害.
  * The original conditions concern natal interpretation, not modern pairs. */
@@ -69,6 +69,45 @@ export function classicalDirectedPunishmentDirection(
       : backward ? 'target_to_subject' : null;
 }
 
+/** These Liu Ren pairs are not proven Bazi relationship factors. */
+export const T10_FOREIGN_BREAK_SOURCE = Object.freeze({
+  sourceId: 'SRC-T10-LIUREN-DAQUAN-BREAK',
+  title: '六壬大全 破',
+  url: 'https://zh.wikisource.org/zh-hans/六壬大全/1',
+  verifiedTextLayer: 'PUBLIC_PRIMARY_TEXT_TRANSCRIPTION',
+  discipline: 'LIUREN_DIVINATION_NOT_BAZI',
+  pairwiseCompatibilityAuthority: false,
+});
+export const T10_BAZI_BREAK_CRITIQUE_SOURCE = Object.freeze({
+  sourceId: 'SRC-T10-MINGLI-YUEYAN-ZHIHAI-BREAK-CRITIQUE',
+  title: '命理約言 支害論',
+  url: 'https://book.taiyi.me/命/命理约言/命理约言-中',
+  verifiedTextLayer: 'PUBLIC_PRIMARY_TEXT_TRANSCRIPTION',
+  discipline: 'BAZI_NATAL_METHODOLOGY_CRITIQUE',
+  breakRuleAdmitted: false,
+});
+const FOREIGN_BREAK_PAIRS: readonly (readonly [EarthlyBranch, EarthlyBranch])[] = [
+  ['자', '유'], ['축', '진'], ['인', '해'], ['묘', '오'],
+  ['사', '신'], ['미', '술'],
+];
+export function isForeignBreakBranchPair(a: EarthlyBranch, b: EarthlyBranch): boolean {
+  return FOREIGN_BREAK_PAIRS.some(([x, y]) =>
+    (a === x && b === y) || (a === y && b === x));
+}
+export interface T10ForeignBreakDayCandidate {
+  readonly subject: Readonly<{
+    factPath: 'subject.pillars.day.value.branch'; value: EarthlyBranch;
+  }>;
+  readonly target: Readonly<{
+    factPath: 'target.pillars.day.value.branch'; value: EarthlyBranch;
+  }>;
+  readonly source: typeof T10_FOREIGN_BREAK_SOURCE;
+  readonly criticalSource: typeof T10_BAZI_BREAK_CRITIQUE_SOURCE;
+  readonly methodDisagreement: 'FOREIGN_DIVINATION_VS_BAZI_CRITIQUE';
+  readonly admittedBaziBreakFactor: false;
+  readonly mayContributeToFourCaseGroup: false;
+  readonly pairwiseMeaningAuthorized: false;
+}
 const SIX_HARM_PAIRS: readonly (readonly [EarthlyBranch, EarthlyBranch])[] = [
   ['자', '미'], ['축', '오'], ['인', '사'], ['묘', '진'],
   ['신', '해'], ['유', '술'],
@@ -157,6 +196,31 @@ function dayDirectedPunishmentObservation(
   };
 }
 
+function dayForeignBreakCandidate(
+  pair: PairwiseSourceScopeHandoff,
+): T10ForeignBreakDayCandidate | null {
+  const day = pair.factualPairObservations.find(item => item.pillarSlot === 'day');
+  if (day?.status !== 'both_resolved') return null;
+  const left = day.subjectPillar?.slice(-1);
+  const right = day.targetPillar?.slice(-1);
+  if (!left || !right || !BRANCHES.includes(left as EarthlyBranch) ||
+      !BRANCHES.includes(right as EarthlyBranch)) {
+    throw new TypeError('Foreign break candidate needs two resolved day branches.');
+  }
+  const subject = left as EarthlyBranch;
+  const target = right as EarthlyBranch;
+  if (!isForeignBreakBranchPair(subject, target)) return null;
+  return {
+    subject: { factPath: 'subject.pillars.day.value.branch', value: subject },
+    target: { factPath: 'target.pillars.day.value.branch', value: target },
+    source: T10_FOREIGN_BREAK_SOURCE,
+    criticalSource: T10_BAZI_BREAK_CRITIQUE_SOURCE,
+    methodDisagreement: 'FOREIGN_DIVINATION_VS_BAZI_CRITIQUE',
+    admittedBaziBreakFactor: false,
+    mayContributeToFourCaseGroup: false,
+    pairwiseMeaningAuthorized: false,
+  };
+}
 export const T10_DIRECT_DAY_COMPARISON_SOURCE = Object.freeze({
   title: '子平四柱를 통한 夫婦宮合 硏究 : 宮位論을 中心으로',
   author: '이창임',
@@ -301,6 +365,7 @@ export interface T10DirectDayComparisonResearchV1 {
     readonly classicalSixHarmObservation: T10ClassicalSixHarmDayObservation | null;
     readonly classicalDirectedPunishmentObservation:
       T10ClassicalDirectedPunishmentDayObservation | null;
+    readonly foreignBreakDayCandidate: T10ForeignBreakDayCandidate | null;
     /** The full natal meaning of 三刑 remains unevaluated. */
     readonly unimplementedSourceFactors: readonly ['punishment', 'break'];
   };
@@ -401,6 +466,7 @@ export function auditT10DirectDayComparisonV1(
     BRANCH_SUBJECT, BRANCH_TARGET, ['branch_six_combination', 'branch_clash']) : null;
   const classicalHarm = complete ? daySixHarmObservation(pair) : null;
   const classicalPunishment = complete ? dayDirectedPunishmentObservation(pair) : null;
+  const foreignBreak = complete ? dayForeignBreakCandidate(pair) : null;
   const subjectDay = personalPalace.subject.evidence;
   const targetDay = personalPalace.target.evidence;
   if (complete && (!subjectDay || !targetDay ||
@@ -480,6 +546,7 @@ export function auditT10DirectDayComparisonV1(
       conflictingFactors: branchPositive && branchNegative,
       classicalSixHarmObservation: classicalHarm,
       classicalDirectedPunishmentObservation: classicalPunishment,
+      foreignBreakDayCandidate: foreignBreak,
       unimplementedSourceFactors: ['punishment', 'break'],
     },
     observedAbstractCell: fourCaseCell(stemGroup, branchGroup),

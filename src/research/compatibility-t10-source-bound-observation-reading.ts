@@ -11,6 +11,9 @@ import type {
 import {
   T10_CLASSICAL_SIX_HARM_SOURCE,
   T10_CLASSICAL_THREE_PUNISHMENTS_SOURCE,
+  T10_FOREIGN_BREAK_SOURCE,
+  T10_BAZI_BREAK_CRITIQUE_SOURCE,
+  isForeignBreakBranchPair,
   isClassicalSixHarmBranchPair,
   classicalDirectedPunishmentDirection,
   T10_DIRECT_DAY_COMPARISON_SOURCE,
@@ -25,7 +28,8 @@ export const T10_SOURCE_BOUND_OBSERVATION_READING_VERSION =
 type ObservationKind =
   'day_stem_elements' | 'day_branch_elements' | 'day_stem_combination' |
   'day_branch_structure' | 'day_branch_harm' |
-  'day_branch_punishment_direction' | 'same_slot_competing_factors' |
+  'day_branch_punishment_direction' | 'foreign_break_method_dispute' |
+  'same_slot_competing_factors' |
   'cross_position_opposite' | 'unknown_hour' | 'source_limit';
 
 export interface T10SourceBoundObservationSentenceV1 {
@@ -294,6 +298,40 @@ export function buildT10SourceBoundObservationReadingV1(
   } else if (direct.sourceFactorAudit.dayBranch.observed.includes(
     'branch_punishment_direction')) {
     throw new TypeError('Historical punishment factor cannot outlive its original pair.');
+  }
+
+  const breakCandidate = direct.dayBranch.foreignBreakDayCandidate;
+  if (breakCandidate) {
+    if (breakCandidate.source !== T10_FOREIGN_BREAK_SOURCE ||
+        breakCandidate.criticalSource !== T10_BAZI_BREAK_CRITIQUE_SOURCE ||
+        breakCandidate.methodDisagreement !== 'FOREIGN_DIVINATION_VS_BAZI_CRITIQUE' ||
+        breakCandidate.admittedBaziBreakFactor !== false ||
+        breakCandidate.mayContributeToFourCaseGroup !== false ||
+        breakCandidate.pairwiseMeaningAuthorized !== false ||
+        breakCandidate.subject.factPath !== 'subject.pillars.day.value.branch' ||
+        breakCandidate.target.factPath !== 'target.pillars.day.value.branch' ||
+        !isForeignBreakBranchPair(
+          breakCandidate.subject.value, breakCandidate.target.value) ||
+        !direct.sourceFactorAudit.dayBranch.notEvaluated.includes('break')) {
+      throw new TypeError('Foreign break evidence cannot become an admitted T10 factor.');
+    }
+    sentences.push({
+      kind: 'foreign_break_method_dispute',
+      paragraph: '첫 번째 사람의 일지 ' + breakCandidate.subject.value +
+        '와 두 번째 사람의 일지 ' + breakCandidate.target.value +
+        '는 육임 점법의 『육임대전』에 적힌 파(破) 글자쌍입니다. ' +
+        '하지만 사주 고전 『명리약언』 「지해론」은 파를 독립 판단 규칙으로 ' +
+        '추가하는 근거를 비판합니다. 분야가 다른 방법의 글자 일치를 ' +
+        '두 사람의 사주 궁합 요인 또는 실제 관계 결과로 채택할 수 없습니다.',
+      observedFactPaths: [breakCandidate.subject.factPath,
+        breakCandidate.target.factPath],
+      sourceIds: [breakCandidate.source.sourceId,
+        breakCandidate.criticalSource.sourceId],
+      sourceUrls: [breakCandidate.source.url, breakCandidate.criticalSource.url],
+      definitionContentHashes: [],
+      evidenceScope: 'source_method_limit',
+      interpersonalMeaningAuthorized: false,
+    });
   }
 
   for (const [label, factor, structural] of [

@@ -134,6 +134,25 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     expect(output.mayPublish).toBe(false);
   });
 
+  it('keeps a disputed foreign break in reading limits, not the admitted factor list', () => {
+    const output = run(birth(1990, 5, 11), birth(1990, 5, 20));
+    const draft = output.pairReadingBoundaryDraft;
+    const disputed = draft?.sections.find(s => s.id === 'reading_limits')
+      ?.sentences.find(s => s.missingPrerequisites.includes(
+        'FOREIGN_LIUREN_METHOD_NOT_BAZI_T10_RULE'));
+    expect(disputed?.paragraph).toContain('분야가 다른 방법');
+    expect(disputed?.evidenceLayer).toBe('source_limit');
+    expect(disputed?.sourceUrls).toHaveLength(2);
+    expect(disputed?.observedFactPaths).toEqual([
+      'subject.pillars.day.value.branch',
+      'target.pillars.day.value.branch',
+    ]);
+    expect(draft?.sections.find(s => s.id === 'direct_day_facts')
+      ?.sentences.some(s => s.paragraph.includes('육임대전'))).toBe(false);
+    expect(draft?.relationshipOutcome).toBeNull();
+    expect(draft?.maySell).toBe(false);
+  });
+
   it('grounds the 2016 interview counterexample without projecting it onto these people', () => {
     const result = run(A, COMBINATION_AND_CLASH);
     const section = result.pairReadingBoundaryDraft?.sections.find(item =>
