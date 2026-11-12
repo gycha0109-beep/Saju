@@ -494,6 +494,7 @@ export async function createLocalReviewServer({
       'source-currentness-gate.mjs',
       'eyelid-model-human-upper-edge.mjs',
       'eyelid-manual-line-offsets.mjs',
+      'current-2d-evidence-readiness.mjs',
       'visible-lip-class-profile.mjs',
       'visible-lip-pixel-color.mjs',
       'lip-model-human-width-comparison.mjs',
