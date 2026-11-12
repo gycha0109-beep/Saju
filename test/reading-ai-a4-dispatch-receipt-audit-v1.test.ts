@@ -148,14 +148,16 @@ describe('A4 offline persisted dispatch intent versus signed source receipt corr
   });
 });
 
-describe('A4 offline unmatched pre-network intent census (no provider replay)', () => {
-  it('reports valid unmatched intents without claiming the provider was contacted', async () => {
-    const x = fixture({ unmatchedRows: [{
+const UNMATCHED = {
   callId: CALL,
   executionAttemptId: ATTEMPT,
   externalRequestRef: REF,
   intentJson: JSON.stringify(intent),
-}] });
+};
+
+describe('A4 offline unmatched pre-network intent census (no provider replay)', () => {
+  it('reports valid unmatched intents without claiming the provider was contacted', async () => {
+    const x = fixture({ unmatchedRows: [UNMATCHED] });
     await expect(x.audit.inspectUnmatchedIntents()).resolves.toEqual({
       version: 'saju-a4-unmatched-dispatch-census-v1',
       status: 'local_intents_without_receipts_observed',
@@ -170,9 +172,12 @@ describe('A4 offline unmatched pre-network intent census (no provider replay)', 
     });
     expect(x.queries[0]).toBe('BEGIN READ ONLY');
     expect(x.queries.at(-1)).toBe('COMMIT');
-    expect(x.queries.some((sql) => sql.includes('WHERE NOT EXISTS') &&
-      sql.includes('r.call_id = i.call_id') && sql.includes('LIMIT 501'))).toBe(true);
-    expect(x.queries.some((sql) => /^(INSERT|UPDATE|DELETE)\\b/u.test(sql))).toBe(false);
+    expect(x.queries.some((sql) =>
+      sql.includes('WHERE NOT EXISTS') &&
+      sql.includes('r.call_id = i.call_id') &&
+      sql.includes('LIMIT 501'),
+    )).toBe(true);
+    expect(x.queries.some((sql) => /^(INSERT|UPDATE|DELETE)\b/u.test(sql))).toBe(false);
   });
 
   it('does not turn an empty local unmatched scan into complete provider or invoice coverage', async () => {
@@ -185,13 +190,10 @@ describe('A4 offline unmatched pre-network intent census (no provider replay)', 
     });
   });
 
-  it('fails closed on a truncated census rather than reporting an incomplete sample as a total', async () => {
-    const x = fixture({ unmatchedRows: Array.from({ length: 501 }, () => ({
-  callId: CALL,
-  executionAttemptId: ATTEMPT,
-  externalRequestRef: REF,
-  intentJson: JSON.stringify(intent),
-})) });
+  it('fails closed on a truncated census rather than reporting a sample as a total', async () => {
+    const x = fixture({
+      unmatchedRows: Array.from({ length: 501 }, () => ({ ...UNMATCHED })),
+    });
     await expect(x.audit.inspectUnmatchedIntents()).resolves.toMatchObject({
       status: 'census_truncated',
       unmatchedCount: null,
@@ -202,29 +204,9 @@ describe('A4 offline unmatched pre-network intent census (no provider replay)', 
 
   it('rejects malformed attempt, source metadata and repeated call evidence', async () => {
     for (const rows of [
-      [{ ...{
-  callId: CALL,
-  executionAttemptId: ATTEMPT,
-  externalRequestRef: REF,
-  intentJson: JSON.stringify(intent),
-}, executionAttemptId: 'client-forged' }],
-      [{ ...{
-  callId: CALL,
-  executionAttemptId: ATTEMPT,
-  externalRequestRef: REF,
-  intentJson: JSON.stringify(intent),
-}, intentJson: '{invalid-json' }],
-      [{
-  callId: CALL,
-  executionAttemptId: ATTEMPT,
-  externalRequestRef: REF,
-  intentJson: JSON.stringify(intent),
-}, {
-  callId: CALL,
-  executionAttemptId: ATTEMPT,
-  externalRequestRef: REF,
-  intentJson: JSON.stringify(intent),
-}],
+      [{ ...UNMATCHED, executionAttemptId: 'client-forged' }],
+      [{ ...UNMATCHED, intentJson: '{invalid-json' }],
+      [UNMATCHED, UNMATCHED],
     ]) {
       const x = fixture({ unmatchedRows: rows });
       await expect(x.audit.inspectUnmatchedIntents()).rejects.toThrow();
@@ -232,7 +214,7 @@ describe('A4 offline unmatched pre-network intent census (no provider replay)', 
     }
   });
 
-  it('does not query any Source table for the wrong DB role and propagates read outages', async () => {
+  it('does not query Source tables for the wrong DB role and propagates outages', async () => {
     const wrong = fixture({ principal: 'saju_a4_provider_receipt_reader_v1' });
     await expect(wrong.audit.inspectUnmatchedIntents()).rejects.toThrow('Writer required');
     expect(wrong.queries.some((sql) => sql.includes('FROM saju_source_ops.'))).toBe(false);
