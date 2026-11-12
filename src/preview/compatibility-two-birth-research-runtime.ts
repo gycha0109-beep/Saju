@@ -1,5 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  buildT102018MaritalResearchReadingV1,
+  type T102018MaritalResearchReadingV1,
+} from '../research/compatibility-t10-2018-marital-reading.js';
+import {
   auditT102018DivorcedCoupleMethodBoundaryV1,
   type T102018DivorcedCoupleSourceBoundaryV1,
 } from '../research/compatibility-t10-2018-marital-divorce-study-boundary.js';
@@ -153,6 +157,8 @@ export interface CompatibilityTwoBirthResearchReading {
   relationshipContextBoundary?: T10RelationshipContextBoundaryV1;
   /** 2018 divorced-couple abstract: personal palace and visible stars, no T10 rule. */
   divorceStudy2018MethodBoundary?: T102018DivorcedCoupleSourceBoundaryV1;
+  /** Joined Korean marital-only fact reading, with 2018 abstract caveats. */
+  maritalResearchReading2018?: T102018MaritalResearchReadingV1;
   /** 2025 author-posted research excerpt: per-person criteria, no T10 synthesis. */
   spouseCriteria2025Scope?: T102025SpouseScopeReviewV1;
   /** Direct two-chart historical clause, attributed via 2025 author text. */
@@ -395,6 +401,15 @@ export function buildCompatibilityTwoBirthResearchReading(
       pairReadingBoundaryDraft, productReadingQualityReview,
       input.relationshipContext ?? 'unspecified',
     ) : undefined;
+  const maritalResearchReading2018 = input.relationshipContext === 'married_couple' &&
+    relationshipContextBoundary && pairReadingBoundaryDraft &&
+    productReadingQualityReview && divorceStudy2018MethodBoundary &&
+    maritalPalaceIntraChartResearch
+    ? buildT102018MaritalResearchReadingV1(
+      relationshipContextBoundary, pairReadingBoundaryDraft,
+      productReadingQualityReview, divorceStudy2018MethodBoundary,
+      sourceScopeHandoff, maritalPalaceIntraChartResearch, subject, target,
+    ) : undefined;
   const gejuRescueSourceBridge = yongshenMethodScopeResearch
     ? auditT10GejuRescueSourceBridgeV1(
       sourceScopeHandoff, yongshenMethodScopeResearch, subject, target,
@@ -431,6 +446,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(productReadingQualityReview ? { productReadingQualityReview } : {}),
       ...(relationshipContextBoundary ? { relationshipContextBoundary } : {}),
       ...(divorceStudy2018MethodBoundary ? { divorceStudy2018MethodBoundary } : {}),
+      ...(maritalResearchReading2018 ? { maritalResearchReading2018 } : {}),
       ...(spouseCriteria2025Scope ? { spouseCriteria2025Scope } : {}),
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
       ...(historicalDayYearObservation ? { historicalDayYearObservation } : {}),
