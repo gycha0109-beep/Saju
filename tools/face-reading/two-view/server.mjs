@@ -5,6 +5,7 @@ import { readFile, writeFile, mkdir, stat, rename } from 'node:fs/promises';
 import { resolve, dirname, extname } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { randomUUID, randomBytes, createHash } from 'node:crypto';
+import { validateFreshResearchIntake } from './fresh-research-intake-contract.mjs';
 import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
 import { readCurrentPinnedPhoto } from './source-snapshot-guard.mjs';
 import {
@@ -220,9 +221,35 @@ export async function createLocalReviewServer({
     )
   )
     throw Error('INVENTORY_INVALID');
-  const render = JSON.parse(await readFile(resolve(intake, 'combined-active.json'), 'utf8'));
-  const manifest = JSON.parse(await readFile(resolve(render.path, 'manifest.json'), 'utf8'));
-  if (manifest.recordIds.some((id) => !baseInventory.some((r) => r.recordId === id)))
+  // Fresh research intakes can use the same /two-view observation engine without
+  // inventing legacy renders. The explicit private marker never admits pose,
+  // anatomical accuracy or a new production observation authority.
+  let freshResearchOnly = false;
+  try {
+    const marker = JSON.parse(
+      await readFile(resolve(intake, 'fresh-research-intake.json'), 'utf8'),
+    );
+    validateFreshResearchIntake(marker, baseInventory, additionalInventory);
+    try {
+      await stat(resolve(intake, 'combined-active.json'));
+      throw Error('FRESH_RESEARCH_INTAKE_INVALID');
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
+    freshResearchOnly = true;
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  const render = freshResearchOnly
+    ? null
+    : JSON.parse(await readFile(resolve(intake, 'combined-active.json'), 'utf8'));
+  const manifest = freshResearchOnly
+    ? { recordIds: [] }
+    : JSON.parse(await readFile(resolve(render.path, 'manifest.json'), 'utf8'));
+  if (
+    !Array.isArray(manifest.recordIds) ||
+    manifest.recordIds.some((id) => !baseInventory.some((r) => r.recordId === id))
+  )
     throw Error('INVENTORY_INVALID');
   const baseIds = [
     ...manifest.recordIds,
@@ -557,6 +584,11 @@ export async function createLocalReviewServer({
     res.end(await readFile(path));
   }
   async function rootPage(res, url) {
+    if (freshResearchOnly) {
+      res.writeHead(302, { ...staticHeaders, Location: '/two-view' });
+      res.end();
+      return;
+    }
     const indexValue = Number(url.searchParams.get('photo') || 1),
       index =
         Number.isInteger(indexValue) && indexValue >= 1 && indexValue <= ids.length
@@ -983,6 +1015,18 @@ export async function createLocalReviewServer({
       return json(res, 200, {
         token,
         records,
+        ...(freshResearchOnly
+          ? {
+              researchIntake: {
+                researchOnly: true,
+                viewRoleRouting: 'provisional_frontal_for_research_only',
+                poseIndependentlyVerified: false,
+                independentAccuracyValidated: false,
+                traditionalBindingAuthorized: false,
+                productInterpretationAuthorized: false,
+              },
+            }
+          : {}),
         savedRecords,
         perCaptureReadiness,
         eyeFoldReviews: eyeFoldReviewState.records,

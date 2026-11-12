@@ -41,8 +41,11 @@ const isInside = (parent, child) => {
   const path = relative(parent, child);
   return !path.startsWith('..' + sep) && path !== '..' && !isAbsolute(path);
 };
-const safePrivateFile = (path) => {
-  if (isInside(REPOSITORY, resolve(path))) fail('PUBLIC_OUTPUT_FORBIDDEN');
+const PRIVATE_INTAKE = resolve(REPOSITORY, '.cache/face-reading/fr2337-intake');
+const safePrivateFile = (path, { intake = false } = {}) => {
+  const resolved = resolve(path);
+  if (intake && resolved === PRIVATE_INTAKE) return;
+  if (isInside(REPOSITORY, resolved) || resolved === REPOSITORY) fail('PUBLIC_OUTPUT_FORBIDDEN');
 };
 const requireHeaders = (table, keys) => {
   if (!keys.every((key) => table.header.includes(key))) fail('CSV_COLUMNS_MISSING');
@@ -195,7 +198,7 @@ export async function admitReviewedPhotos(planFile, rolesFile, intakePath) {
   safePrivateFile(planFile);
   safePrivateFile(rolesFile);
   const intake = resolve(intakePath);
-  safePrivateFile(intake);
+  safePrivateFile(intake, { intake: true });
   const [plan, roles, base] = await Promise.all([
     readJson(planFile),
     readJson(rolesFile),
@@ -269,13 +272,125 @@ export async function admitReviewedPhotos(planFile, rolesFile, intakePath) {
   };
 }
 
+export const FRESH_TWO_VIEW_RESEARCH_VERSION = 'engineering.fresh-two-view-research-intake@0.1.0';
+
+// The existing analysis routes take a viewRole for work scheduling. For this
+// fresh-photo research slice the routing role is a *provisional input hint*;
+// it is not a verified frontal pose label, an anatomical claim, or test data.
+export function projectProvisionalFreshIntake(plan) {
+  if (
+    plan?.schemaVersion !== VERSION ||
+    plan?.researchOnly !== true ||
+    plan?.sources?.poseIndependentlyVerified !== false ||
+    plan?.sources?.currentWholeFace2dExtractorsRun !== false ||
+    !Array.isArray(plan.entries) ||
+    plan.entries.length === 0 ||
+    plan.entries.length !== plan.selectedPhotoCount ||
+    !isAbsolute(plan.dataRoot || '') ||
+    isInside(REPOSITORY, resolve(plan.dataRoot))
+  )
+    fail('FRESH_SOURCE_INVALID');
+  const seen = new Set();
+  const records = plan.entries.map((sample, i) => {
+    if (
+      !sample ||
+      sample.selectionRef !== 'sample-' + String(i + 1).padStart(2, '0') ||
+      !Object.hasOwn(DATASETS, sample.dataset) ||
+      !PHOTO.test(sample.photoId + '.jpg') ||
+      sample.sourceRelativePath !==
+        DATASETS[sample.dataset].images + '/' + sample.photoId + '.jpg' ||
+      !MATCH_SHA.test(sample.originalSha256 || '') ||
+      sample.poseReviewed !== false ||
+      sample.viewRole !== null ||
+      sample.independentAnatomicalBoundaryGroundTruth !== false ||
+      sample.current2dExtractorsExecuted !== false ||
+      sample.current2dState !== 'not_evaluated' ||
+      seen.has(sample.originalSha256)
+    )
+      fail('FRESH_SAMPLE_INVALID');
+    seen.add(sample.originalSha256);
+    const sourcePath = resolve(plan.dataRoot, sample.sourceRelativePath);
+    if (!isInside(plan.dataRoot, sourcePath)) fail('FRESH_SOURCE_PATH_INVALID');
+    return { recordId: 'capture-' + (9000 + i), sourcePath, viewRole: 'frontal' };
+  });
+  return Object.freeze({
+    marker: Object.freeze({
+      schemaVersion: FRESH_TWO_VIEW_RESEARCH_VERSION,
+      researchOnly: true,
+      poseIndependentlyVerified: false,
+      current2dExtractorsExecuted: false,
+      viewRoleRouting: 'provisional_frontal_for_research_only',
+      photoCount: records.length,
+    }),
+    records: Object.freeze(records),
+  });
+}
+
+export async function prepareFreshResearchIntake(planFile, intakePath) {
+  safePrivateFile(planFile);
+  safePrivateFile(intakePath, { intake: true });
+  const intake = resolve(intakePath);
+  const plan = await readJson(planFile);
+  const projected = projectProvisionalFreshIntake(plan);
+  for (const [name, sha] of [
+    ['face_landmarker.task', '64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff'],
+    [
+      'parsing-resnet18-v0.0.2.onnx',
+      '0d9bd318e46987c3bdbfacae9e2c0f461cae1c6ac6ea6d43bbe541a91727e33f',
+    ],
+  ]) {
+    if (digest(await readFile(join(intake, 'assets', name))) !== sha)
+      fail('FRESH_MODEL_PIN_MISMATCH');
+  }
+  for (const record of projected.records) {
+    const index = Number(record.recordId.slice('capture-'.length)) - 9000;
+    const sample = plan.entries[index];
+    if (digest(await readFile(record.sourcePath)) !== sample.originalSha256)
+      fail('FRESH_SOURCE_CHANGED');
+  }
+  for (const filename of [
+    'inventory.json',
+    'additional-inventory.json',
+    'combined-active.json',
+    'fresh-research-intake.json',
+  ]) {
+    try {
+      await stat(join(intake, filename));
+      fail('FRESH_TARGET_NOT_EMPTY');
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
+  }
+  // Deliberately no copied JPEG, private photo coordinate or fake legacy render.
+  await writeFile(join(intake, 'inventory.json'), '[]\n', { flag: 'wx' });
+  await writeFile(
+    join(intake, 'additional-inventory.json'),
+    JSON.stringify(projected.records, null, 2) + '\n',
+    { flag: 'wx' },
+  );
+  await writeFile(
+    join(intake, 'fresh-research-intake.json'),
+    JSON.stringify(projected.marker, null, 2) + '\n',
+    { flag: 'wx' },
+  );
+  return {
+    status: 'fresh_private_two_view_input_ready',
+    researchPhotoCount: projected.records.length,
+    poseIndependentlyVerified: false,
+    current2dExtractorsExecuted: false,
+    originalImagesCopied: false,
+  };
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
     const args = process.argv.slice(2);
     let result;
     if (args[0] === '--admit' && args.length === 4) {
       result = await admitReviewedPhotos(args[1], args[2], args[3]);
-    } else if (args.length === 2 && args[0] !== '--admit') {
+    } else if (args[0] === '--fresh-research' && args.length === 3) {
+      result = await prepareFreshResearchIntake(args[1], args[2]);
+    } else if (args.length === 2 && !args[0].startsWith('--')) {
       result = await writePrivateRealPhotoPlan(await prepareRealPhotoReviewPlan(args[0]), args[1]);
     } else {
       fail('USAGE');

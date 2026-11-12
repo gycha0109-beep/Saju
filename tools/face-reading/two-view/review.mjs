@@ -1441,16 +1441,23 @@ function renderCurrent2dEvidence(record, result, previous) {
     counts.not_evaluated +
     ' · 독립 정확도 검증 0 · 정규 관측·전통 판독 불가';
   const session = summarizeCurrent2dSessionCoverage(
-    records.filter((item) => item.viewRole === 'frontal')
+    records
+      .filter((item) => item.viewRole === 'frontal')
       .map((item) => current2dPhotoSummary(item)),
   );
   $('current-2d-session-status').textContent =
-    '현재 화면에서 검토할 정면 사진 ' + session.includedPhotoCount +
-    '장 · 사진별 6개 항목 총 ' + session.totalPhotoFeatureEntries +
-    '건 중 후보 ' + session.statusCounts.candidate_only +
-    ' · 일부 ' + session.statusCounts.partial +
-    ' · 보류 ' + session.statusCounts.unavailable +
-    ' · 미실행 ' + session.statusCounts.not_evaluated +
+    '현재 화면에서 검토할 정면 사진 ' +
+    session.includedPhotoCount +
+    '장 · 사진별 6개 항목 총 ' +
+    session.totalPhotoFeatureEntries +
+    '건 중 후보 ' +
+    session.statusCounts.candidate_only +
+    ' · 일부 ' +
+    session.statusCounts.partial +
+    ' · 보류 ' +
+    session.statusCounts.unavailable +
+    ' · 미실행 ' +
+    session.statusCounts.not_evaluated +
     ' · 이는 관측 근거 확보 현황이며 정확도·인물별 반복성 검증 결과가 아닙니다.';
   const target = $('current-2d-evidence-rows');
   target.replaceChildren();
@@ -2335,6 +2342,12 @@ try {
   }
   if (!response.ok) throw Error('STATE_UNAVAILABLE');
   state = await response.json();
+  if (state.researchIntake?.researchOnly === true) {
+    const note = $('fresh-research-note');
+    note.hidden = false;
+    note.textContent =
+      '비공개 실사진 연구: 정면 지정은 분석 실행용 임시 경로이며 자세·부위 정확도는 검증되지 않았습니다. 모델 후보 수치를 전통 관상 판정이나 제품 결과로 사용하지 마십시오.';
+  }
   for (const saved of state.savedRecords || []) results.set(saved.captureRef, saved);
   for (const saved of state.parsingSaved || [])
     results.set(saved.captureRef, {
@@ -2394,6 +2407,11 @@ try {
 window.twoViewSnapshot = () => ({
   busy,
   mode,
+  current2dSessionCoverage: summarizeCurrent2dSessionCoverage(
+    records
+      .filter((item) => item.viewRole === 'frontal')
+      .map((item) => current2dPhotoSummary(item)),
+  ),
   jobs: jobs.snapshot(),
   records: records.map((r) => ({
     captureRef: r.captureRef,

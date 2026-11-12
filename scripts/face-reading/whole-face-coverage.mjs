@@ -7,6 +7,7 @@ import {
   assertFR293ProductColumnMap,
 } from '../../.face-reading-dist/rgb-selfie-product-column-map-fr293.js';
 import { validateBatch } from '../../tools/face-reading/two-view/server.mjs';
+import { validateFreshResearchIntake } from '../../tools/face-reading/two-view/fresh-research-intake-contract.mjs';
 import { validateParsingSummary } from '../../tools/face-reading/two-view/parsing-contract.mjs';
 import { validateEyeFoldReviewStore } from '../../tools/face-reading/two-view/eye-fold-review.mjs';
 import {
@@ -32,8 +33,18 @@ async function loadLocal(intake) {
   // Read source bytes only when verifying a saved human-review SHA; never emit or persist them.
   const base = await readJson(join(intake, 'inventory.json'));
   const extra = (await maybeJson(join(intake, 'additional-inventory.json'))) ?? [];
-  const render = await readJson(join(intake, 'combined-active.json'));
-  const manifest = await readJson(resolve(render.path, 'manifest.json'));
+  const fresh = await maybeJson(join(intake, 'fresh-research-intake.json'));
+  if (fresh) {
+    validateFreshResearchIntake(fresh, base, extra);
+    if (await maybeJson(join(intake, 'combined-active.json')))
+      throw Error('FRESH_RESEARCH_INTAKE_INVALID');
+  }
+  const manifest = fresh
+    ? { recordIds: [] }
+    : await (async () => {
+        const render = await readJson(join(intake, 'combined-active.json'));
+        return readJson(resolve(render.path, 'manifest.json'));
+      })();
   if (
     !Array.isArray(base) ||
     !Array.isArray(extra) ||

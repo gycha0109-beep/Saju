@@ -690,3 +690,14 @@ Watchtower-Track: face-observation-engine
 - **다음:** 기존 pinned 모델·intake가 확보되면 사진별 사람 자세 검토 후 `--admit` 경로로 **기존** `/two-view` 입력에 연결하고 6종 2D 후보의 가능/부분/보류와 사람 표시선 존재 여부를 실사진별 확인. 없는 사람 정답을 생성하지 않고 독립 참조·반복 촬영 증거를 별도 확보. 7단계 로드맵 중 1~3 진행 중, 4~7 미완료. `ROADMAP_COMPLETE` 아님.
 
 Watchtower-Track: face-observation-engine
+
+### 2026-11-12 — 기존 /two-view에서 신규 연구용 실사진 10장 분석 재개 (관상 전체 로드맵 2~3단계)
+
+- **시작 기준:** PR #2453 / branch `codex/face-two-view-local-preview-2452`, 전 커밋 `59833c89`의 직접 연결 CI 6개 성공. 기존 7단계 로드맵 그대로 사용하며 새로운 뷰어/해석 엔진 없음.
+- **복구:** 기존 비공개 프리뷰가 의존한 MediaPipe Face Landmarker 모델과 yakhyo/face-parsing ResNet18 ONNX release v0.0.2를 학원 PC의 이미 gitignored된 `.cache/face-reading/fr2337-intake/assets`에 취득·고정 SHA-256 검증. 저장소에 바이너리/사진 업로드 안 함. Node v24.20.0, tasks-vision 0.10.35, onnxruntime-web 1.23.2.
+- **구현:** 기존 `/two-view` 서버에 **fresh-research-intake 명시적 비공개 분기** 연결. 과거 `combined-active`가 없는 학원 PC의 실사진 10장도 기존 분석·저장·원본변경 방지 흐름 재사용; 사진별 원본 SHA 재검증, 과거 렌더 결과 위조/복제 없음. `viewRole=frontal`은 분석 실행용 **잠정 경로**임을 marker, 서버 상태 응답과 검토 화면 문구로 명시, 실제 촬영 자세 확인·독립 정답 인증 아님. 과거 23장 intake 경로와 별도이고 기존 모드 계약 유지.
+- **실행 결과:** 기존 선택 10장, Chrome 157 실제 로컬 브라우저 연구 실행, 분할 모델 실행 완료 10/10, 정면 8종 기초 수치 80개 중 candidate available 64 / unavailable 16. 수치 미출력 16건은 기존 2장의 `face_not_detected`에 대응, 관측값을 억지로 채우지 않음. 눈방향 8/10, 눈썹 후보 7/10, 입술 후보 7/10, 코 후보 8/10 가용; 분할 완료 ≠ 해부학적 경계 검증. 실제 화면의 최신 2D 후보 집계는 사진×6항목 총 60개 중 `candidate_only=5, partial=7, unavailable=20, not_evaluated=28`; 특히 눈썹 질감 10건은 미평가, 눈꺼풀 사람 주름 표시 10건은 보류, 귀는 9건 미평가. 6종 집계는 당시 화면의 지연 실행 상태이며 사진 전체의 최종 모델 성능 점수가 아님.
+- **29개 정규 항목 대응:** 기존 `face:coverage --intake`를 fresh marker로 실행: 정규 29/계산기 18/하드갭 11 유지. 실제 사진에서 engineering candidate가 1건 이상 존재하는 항목 10개(눈·눈썹·코·입·귀·하관), 모두 `canonicalPhotoMeasurementVerified=false`, `traditionalBindingApplied=false`, `productionAuthorized=false`. 원본·사진별 후보 상세·모델 가중치·개인 정보를 비공개 디렉터리에만 보관.
+- **검증·다음:** 해당 사진의 자세·촬영조건·독립 인체 경계 참조는 현재 확인되지 않았으며, 사람 눈/눈썹·귀·입술 정답 측정 오차 0건, 3D 독립 참조 0건. 기존 2~3단계의 사진별 비평가 상태를 실증으로 구분. 1~3단계 진행 중, 4~7 미완료. 기존 출처·정규 F0/F1/FR311 관상형 연결, 제품/상용 권한 미변경. 추가 검증·반복 촬영·실제 사람 정답 확보가 후속 작업이며 `ROADMAP_COMPLETE` 아님.
+
+Watchtower-Track: face-observation-engine

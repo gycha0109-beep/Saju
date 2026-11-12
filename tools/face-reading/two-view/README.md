@@ -9,6 +9,37 @@ managed and parsed, with separate engineering visible-class ratios for profile s
 
 ## Run
 
+### Existing research photographs without a legacy render bundle
+
+The original `/two-view` server can now run a **research-only fresh intake** when
+the historical `combined-active.json` viewer bundle is absent. This is not a
+second viewer or a new morphology authority. First use the existing
+`real-photo-review-intake-bridge.mjs` selection plan, created from the private
+source manifests and hairline review queue, to prepare the ignored input:
+
+```powershell
+node tools/face-reading/two-view/real-photo-review-intake-bridge.mjs --fresh-research PRIVATE_SELECTION_PLAN .cache/face-reading/fr2337-intake
+node tools/face-reading/two-view/server.mjs
+```
+
+Before running, place the original checksum-pinned `face_landmarker.task` and
+`parsing-resnet18-v0.0.2.onnx` in the ignored `assets` directory. The CLI
+rechecks both model hashes and every selected photo hash; it does not download
+models or copy JPEGs. The fresh input has an empty `inventory.json`, a
+validated `additional-inventory.json`, and the explicit
+`fresh-research-intake.json` marker. It refuses old `combined-active.json`.
+Existing historical intakes still use their original validated render bundle.
+
+The fresh `frontal` viewRole is an **unverified scheduling hint only**. The UI
+and state response disclose this. Any image that is not actually frontal must
+be reviewed and excluded before using the resulting geometry as evidence;
+the research run does not certify pose, anatomical accuracy, independent
+human ground truth, physical 3D shape, traditional morphology, or production
+eligibility. Save the detailed result only in the original private evaluation
+folder. The existing `face:coverage -- --intake PRIVATE_INTAKE` runner reads
+the same validated evidence and produces a source-free aggregate of the
+29 FR282/FR293 features; it never changes the 29/18/11 authority.
+
 ### Fictional entertainment flow
 
 The experience can run without the private photo inventory or model assets:
