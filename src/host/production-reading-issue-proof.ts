@@ -64,6 +64,10 @@ export function createProductionReadingIssueProof(
       return undefined;
     const releaseRef = releases.get(reading.text);
     if (releaseRef === undefined || requestedRelease !== releaseRef) return undefined;
+    const temporalScope =
+      reading.text === '올해' ? 'annual' : reading.text === '이번 달' ? 'monthly' : undefined;
+    const referenceDateTime =
+      'periodReferenceDateTime' in reading ? reading.periodReferenceDateTime : undefined;
 
     const requestBodyHash = deterministicContentHash(body);
     const signResponse = (
@@ -76,13 +80,19 @@ export function createProductionReadingIssueProof(
       let readerSourceHash: string | undefined;
       if (readerSource !== undefined) {
         const serialized = JSON.stringify(readerSource);
+        const calendar = readerSource.temporal?.calendar;
         if (
           Buffer.byteLength(serialized) > PRODUCTION_READER_SOURCE_MAX_BYTES ||
           readerSource.grounding.readingRef !== response.reading.readingId ||
           readerSource.grounding.productResponseVersion !== response.responseVersion ||
           readerSource.grounding.sourceResponseHash !== stableSourceResponseHash(response) ||
           readerSource.grounding.engineVersion !== engineVersion ||
-          readerSource.grounding.sourceSemanticHash !== readerSource.semanticSource.semanticHash
+          readerSource.grounding.sourceSemanticHash !== readerSource.semanticSource.semanticHash ||
+          (temporalScope === undefined
+            ? calendar !== undefined
+            : calendar?.scope !== temporalScope ||
+              calendar.referenceDateTime !== referenceDateTime ||
+              calendar.responseBodyHash !== responseBodyHash)
         )
           return undefined;
         readerSourceHash = deterministicContentHash(JSON.parse(serialized));

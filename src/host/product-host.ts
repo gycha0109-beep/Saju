@@ -13,7 +13,7 @@ import type {
 } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
-import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
+import { deterministicContentHash, type ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import {
   normalizeConsumerReadingRequest,
   type ConsumerReadingRequestInput,
@@ -38,6 +38,7 @@ import type { ProductReadingResponse } from '../reading/product-reading-response
 import { buildOfficialReadingCharacterGroundingV1 } from '../reading/official-reading-reader-parity.js';
 import type { CharacterGroundingBundleV2 } from '../reading/character-grounding-v2.js';
 import type { OfficialReadingSemanticSourceHandoff } from '../reading/official-reading-semantic-source-handoff.js';
+import { bindOfficialTemporalReaderSource, type OfficialTemporalReaderSource } from '../reading/official-temporal-reader-source.js';
 
 export const PRODUCT_HOST_VERSION = 'myeonghwa-product-host-v3';
 
@@ -144,6 +145,7 @@ export interface MyeonghwaProductionReadingIssueHost extends MyeonghwaProductHos
 export interface ProductionReadingReaderSource {
   readonly grounding: CharacterGroundingBundleV2;
   readonly semanticSource: OfficialReadingSemanticSourceHandoff;
+  readonly temporal?: OfficialTemporalReaderSource;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -533,7 +535,7 @@ export function createMyeonghwaProductionReadingIssueHost(
   return {
     ...createMyeonghwaProductHost(dependencies),
     async requestReadingForIssue(body, engineVersion) {
-      const { response, execution, officialSemanticSourceHandoff } =
+      const { response, execution, officialSemanticSourceHandoff, snapshot, requestContext } =
         await runProductHostReadingInternals(dependencies, body);
       if (
         response.state !== 'delivered' ||
@@ -549,7 +551,18 @@ export function createMyeonghwaProductionReadingIssueHost(
         officialReadingReport: execution.officialReadingReport,
         engineVersion,
       });
-      return { response, readerSource: { grounding, semanticSource: officialSemanticSourceHandoff } };
+      const facts = requestContext?.temporalFacts;
+      const temporal = facts === undefined ? undefined : bindOfficialTemporalReaderSource(
+        snapshot, facts, deterministicContentHash(JSON.parse(JSON.stringify(response))),
+        officialSemanticSourceHandoff, grounding,
+      );
+      if (facts !== undefined && temporal === undefined) return { response };
+      return {
+        response,
+        readerSource: {
+          grounding, semanticSource: officialSemanticSourceHandoff, ...(temporal === undefined ? {} : { temporal }),
+        },
+      };
     },
   };
 }
