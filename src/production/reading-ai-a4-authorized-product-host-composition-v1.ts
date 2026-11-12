@@ -73,6 +73,7 @@ export function createUnstartedSajuA4CapturedProductionHostV1(
   const capture = createSajuA4AuthenticatedCaptureCompositionV1(input.a4);
   const adapter = new OpenAIResponsesNarrativeAdapter({
     ...input.openAI,
+    onBeforeProviderRequest: capture.onBeforeProviderRequest,
     onProviderCall: capture.onProviderCall,
   });
   const server = createAuthorizedMyeonghwaProductionHostServer(

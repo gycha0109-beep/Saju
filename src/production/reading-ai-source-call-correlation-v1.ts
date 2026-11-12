@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
-import type { OpenAIProviderCallObservationV1 } from '../llm/openai/openai-responses-adapter.js';
+import type { OpenAIProviderCallObservationV1, OpenAIProviderDispatchIntentV1 } from '../llm/openai/openai-responses-adapter.js';
+import type { SajuA4ProviderDispatchLinkV1 } from './reading-ai-provider-dispatch-intent-postgres-v1.js';
 
 /**
  * Source-owned, per-invocation attribution candidate for the A4 cost bridge.
@@ -102,6 +103,8 @@ export function createSajuSourceProviderCallCorrelationV1(
      * an explicit coverage gap; the OpenAI adapter itself isolates observer errors.
      */
     emit: (link: SajuSourceProviderCallLinkV1) => void | Promise<void>;
+    /** Trusted Source Writer: mandatory when the pre-network callback is invoked. */
+    recordBeforeRequest?: (link: SajuA4ProviderDispatchLinkV1) => Promise<void>;
     /** Optional deterministic factory for synthetic tests; do not inject browser input. */
     sourceRefFactory?: () => string;
   }>,
@@ -193,6 +196,21 @@ export function createSajuSourceProviderCallCorrelationV1(
       }
       if (!returned) throw executionError;
       return value;
+    },
+    /** The real adapter MUST await this committed Source intent before starting HTTP. */
+    async onBeforeProviderRequest(intent: OpenAIProviderDispatchIntentV1): Promise<void> {
+      const scope = scopes.getStore();
+      if (!scope || !scope.active)
+        throw new Error('Authorized active Saju A4 attempt required before provider dispatch');
+      if (typeof input.recordBeforeRequest !== 'function')
+        throw new Error('Durable Source pre-network dispatch intent recorder required');
+      await input.recordBeforeRequest(
+        Object.freeze({
+          executionAttemptId: scope.executionAttemptId,
+          externalRequestRef: scope.externalRequestRef,
+          intent,
+        }),
+      );
     },
     /** Pass directly as the real OpenAI adapter's server-private onProviderCall. */
     async onProviderCall(observation: OpenAIProviderCallObservationV1): Promise<void> {

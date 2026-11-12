@@ -92,6 +92,7 @@ export function createSajuA4AuthenticatedCaptureCompositionV1(
     keyBytes: input.sourceSigningKey,
   });
   return Object.freeze({
+    onBeforeProviderRequest: capture.onBeforeProviderRequest,
     onProviderCall: capture.onProviderCall,
     async withPreparedAttempt<T>(
       attempt: SajuSourceAttemptContextV1,
