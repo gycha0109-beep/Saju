@@ -60,6 +60,13 @@ describe('T10 product quality: factual material never becomes a complete relatio
     expect(a?.traceAudit.validatedSentenceCount).toBeGreaterThan(4);
     expect(a?.traceAudit.verifiedStructuralFactSentenceCount).toBeGreaterThan(0);
     expect(a?.traceAudit.traditionalFactorScopeSentenceCount).toBe(1);
+    const pair = run(A, OPPOSITE_A);
+    const detail = pair.pairReadingBoundaryDraft?.sections.find(section =>
+      section.id === 'traditional_day_factor_scope')?.sentences[0];
+    expect(detail?.paragraph).toContain('일간(첫 번째 사람');
+    expect(detail?.paragraph).toContain('일지(첫 번째 사람');
+    expect(detail?.missingPrerequisites).toContain(
+      'DAY_STEM_CLASH_AND_BRANCH_PUNISHMENT_BREAK_HARM_NOT_EVALUATED');
     expect(b?.traceAudit.traditionalFactorScopeSentenceCount).toBe(1);
     expect(a?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);
     expect(b?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);

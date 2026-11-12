@@ -34,6 +34,19 @@ export interface T10SourceBoundObservationSentenceV1 {
   readonly interpersonalMeaningAuthorized: false;
 }
 
+/** Exact computed factors behind the 2016 four-group candidate; not a verdict. */
+export interface T10ObservedDayAxisFactorTraceV1 {
+  readonly group: T10DirectDayComparisonResearchV1['dayStem']['group'];
+  readonly firstElement: DayElementComparisonV1['subject']['value'] | null;
+  readonly secondElement: DayElementComparisonV1['target']['value'] | null;
+  readonly elementRelation: ElementPairKind | null;
+  readonly observedFactorIds: readonly (
+    'stem_five_combination' | 'branch_six_combination' | 'branch_clash' |
+    'elemental_same' | 'elemental_generation' | 'elemental_control'
+  )[];
+  readonly notEvaluatedFactorIds: readonly string[];
+}
+
 export interface T10SourceBoundObservationReadingV1 {
   readonly version: typeof T10_SOURCE_BOUND_OBSERVATION_READING_VERSION;
   readonly lifecycle: 'internal_research_only';
@@ -42,6 +55,10 @@ export interface T10SourceBoundObservationReadingV1 {
   readonly sourceTextLayer: 'DBPIA_PUBLIC_ABSTRACT';
   /** The abstract's four cases remain computational candidates, not approved rules. */
   readonly observedFourCaseCandidate: T10DirectDayComparisonResearchV1['observedAbstractCell'];
+  readonly dayAxisFactorTrace: Readonly<{
+    stem: T10ObservedDayAxisFactorTraceV1;
+    branch: T10ObservedDayAxisFactorTraceV1;
+  }>;
   readonly sourceQualifiedFourCase: null;
   readonly sentences: readonly T10SourceBoundObservationSentenceV1[];
   readonly compositeCompatibilityMeaning: null;
@@ -302,6 +319,24 @@ export function buildT10SourceBoundObservationReadingV1(
     target: direct.target,
     sourceTextLayer: 'DBPIA_PUBLIC_ABSTRACT',
     observedFourCaseCandidate: direct.observedAbstractCell,
+    dayAxisFactorTrace: {
+      stem: {
+        group: direct.dayStem.group,
+        firstElement: direct.dayStem.elementalComparison?.subject.value ?? null,
+        secondElement: direct.dayStem.elementalComparison?.target.value ?? null,
+        elementRelation: direct.dayStem.elementalComparison?.relation ?? null,
+        observedFactorIds: [...direct.sourceFactorAudit.dayStem.observed],
+        notEvaluatedFactorIds: [...direct.sourceFactorAudit.dayStem.notEvaluated],
+      },
+      branch: {
+        group: direct.dayBranch.group,
+        firstElement: direct.dayBranch.elementalComparison?.subject.value ?? null,
+        secondElement: direct.dayBranch.elementalComparison?.target.value ?? null,
+        elementRelation: direct.dayBranch.elementalComparison?.relation ?? null,
+        observedFactorIds: [...direct.sourceFactorAudit.dayBranch.observed],
+        notEvaluatedFactorIds: [...direct.sourceFactorAudit.dayBranch.notEvaluated],
+      },
+    },
     sourceQualifiedFourCase: null,
     sentences,
     compositeCompatibilityMeaning: null,

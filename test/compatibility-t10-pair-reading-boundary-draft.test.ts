@@ -54,6 +54,14 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
       section.id === 'traditional_day_factor_scope')?.sentences[0];
     expect(item?.paragraph).toContain(expected);
     expect(item?.paragraph).toContain('부분적으로 대응합니다');
+    const actual = output.sourceBoundObservationReading?.dayAxisFactorTrace;
+    expect(item?.paragraph).toContain('일간(첫 번째 사람 ' +
+      actual?.stem.firstElement + ', 두 번째 사람 ' +
+      actual?.stem.secondElement);
+    expect(item?.paragraph).toContain('일지(첫 번째 사람 ' +
+      actual?.branch.firstElement + ', 두 번째 사람 ' +
+      actual?.branch.secondElement);
+    expect(item?.paragraph).toContain('천간충 및 지지형·파·해');
     expect(item?.evidenceLayer).toBe('traditional_factor_scope');
     expect(item?.observedFactPaths).toEqual(expect.arrayContaining([
       'subject.pillars.day.value.stem.element',
@@ -67,6 +75,27 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     expect(output.productReadingQualityReview?.actualCompatibilityReadingReady).toBe(false);
     expect(output.relationshipContextBoundary?.includedSectionIds)
       .not.toContain('traditional_day_factor_scope');
+  });
+
+  it('preserves source-calculated direction when chart participants are reversed', () => {
+    const forward = run(birth(1990, 5, 15), birth(1990, 5, 16));
+    const reverse = run(birth(1990, 5, 16), birth(1990, 5, 15));
+    const forwardTrace = forward.sourceBoundObservationReading?.dayAxisFactorTrace.stem;
+    const reverseTrace = reverse.sourceBoundObservationReading?.dayAxisFactorTrace.stem;
+    expect(forwardTrace?.firstElement).toBe(reverseTrace?.secondElement);
+    expect(forwardTrace?.secondElement).toBe(reverseTrace?.firstElement);
+    const forwardSentence = forward.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'traditional_day_factor_scope')?.sentences[0];
+    const reverseSentence = reverse.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'traditional_day_factor_scope')?.sentences[0];
+    expect(forwardSentence?.paragraph).toContain('첫 번째 사람 ' +
+      forwardTrace?.firstElement);
+    expect(reverseSentence?.paragraph).toContain('첫 번째 사람 ' +
+      reverseTrace?.firstElement);
+    expect(forwardSentence?.missingPrerequisites).toContain(
+      'DAY_STEM_CLASH_AND_BRANCH_PUNISHMENT_BREAK_HARM_NOT_EVALUATED');
+    expect(forward.pairReadingBoundaryDraft?.relationshipOutcome).toBeNull();
+    expect(reverse.pairReadingBoundaryDraft?.relationshipOutcome).toBeNull();
   });
 
   it('grounds the 2016 interview counterexample without projecting it onto these people', () => {
@@ -94,6 +123,11 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     expect(output.sourceBoundObservationReading?.observedFourCaseCandidate)
       .toBe('unclassified');
     expect(item?.paragraph).toContain('단독 분류할 수 없습니다');
+    expect(item?.paragraph).toContain('오행');
+    expect(output.sourceBoundObservationReading?.dayAxisFactorTrace.stem.group ===
+      'mixed_source_factors' ||
+      output.sourceBoundObservationReading?.dayAxisFactorTrace.branch.group ===
+      'mixed_source_factors').toBe(true);
     expect(output.pairReadingBoundaryDraft?.relationshipOutcome).toBeNull();
     expect(output.maySell).toBe(false);
   });

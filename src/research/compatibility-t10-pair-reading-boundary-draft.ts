@@ -1,7 +1,9 @@
 import { T10_DIRECT_DAY_COMPARISON_SOURCE } from
   './compatibility-t10-direct-day-comparison.js';
-import type { T10SourceBoundObservationReadingV1 } from
-  './compatibility-t10-source-bound-observation-reading.js';
+import type {
+  T10SourceBoundObservationReadingV1,
+  T10ObservedDayAxisFactorTraceV1,
+} from './compatibility-t10-source-bound-observation-reading.js';
 import type { T10HistoricalDayYearObservation } from
   './compatibility-t10-historical-day-year-observation.js';
 import type { T10CrossMethodContrastResearchV1 } from
@@ -73,6 +75,53 @@ function samePerson(
 }
 function unique(items: readonly string[]): string[] {
   return [...new Set(items)];
+}
+
+/** Maps only observed source factors, never uncomputed 형·파·해 or relationship fate. */
+const FACTOR_KOREAN = {
+  stem_five_combination: '천간오합',
+  branch_six_combination: '지지육합',
+  branch_clash: '지지충',
+  elemental_same: '오행 상비',
+  elemental_generation: '오행 상생',
+  elemental_control: '오행 상극',
+} as const;
+const DIRECTION_KOREAN = {
+  same_element: '같은 오행',
+  subject_generates_target: '첫 번째 사람이 두 번째 사람을 생하는 방향',
+  target_generates_subject: '두 번째 사람이 첫 번째 사람을 생하는 방향',
+  subject_controls_target: '첫 번째 사람이 두 번째 사람을 극하는 방향',
+  target_controls_subject: '두 번째 사람이 첫 번째 사람을 극하는 방향',
+} as const;
+
+function axisEvidenceParagraph(
+  label: '일간' | '일지',
+  axis: T10ObservedDayAxisFactorTraceV1,
+): string {
+  const ids = axis.observedFactorIds;
+  const positive = ids.some(id => id === 'stem_five_combination' ||
+    id === 'branch_six_combination' || id === 'elemental_same' ||
+    id === 'elemental_generation');
+  const negative = ids.some(id => id === 'branch_clash' ||
+    id === 'elemental_control');
+  const inferredGroup = axis.firstElement === null || axis.secondElement === null ||
+      axis.elementRelation === null ? 'incomplete_day_pillar'
+    : positive && negative ? 'mixed_source_factors'
+      : positive ? 'covered_positive_subset'
+        : negative ? 'covered_negative_subset' : 'not_classified';
+  if (axis.group !== inferredGroup || !ids.length ||
+      axis.firstElement === null || axis.secondElement === null ||
+      axis.elementRelation === null ||
+      unique(ids).length !== ids.length ||
+      ids.some(id => label === '일간'
+        ? id === 'branch_six_combination' || id === 'branch_clash'
+        : id === 'stem_five_combination')) {
+    throw new TypeError('T10 2016 day-factor wording must match verified axis factors.');
+  }
+  return label + '(첫 번째 사람 ' + axis.firstElement + ', 두 번째 사람 ' +
+    axis.secondElement + ', ' + DIRECTION_KOREAN[axis.elementRelation] +
+    ')에서는 ' + ids.map(id => FACTOR_KOREAN[id]).join('·') +
+    '이 관측됩니다.';
 }
 
 function factualSentence(
@@ -193,6 +242,26 @@ export function buildT10PairReadingBoundaryDraftV1(
         '일간 상극·충 계열 / 일지 충·극·형·파·해 계열',
     } as const;
     const cell = factual.observedFourCaseCandidate;
+    const axis = factual.dayAxisFactorTrace;
+    const expectedCell = axis.stem.group === 'covered_positive_subset'
+      ? axis.branch.group === 'covered_positive_subset'
+        ? 'STEM_POSITIVE_BRANCH_POSITIVE'
+        : axis.branch.group === 'covered_negative_subset'
+          ? 'STEM_POSITIVE_BRANCH_NEGATIVE' : 'unclassified'
+      : axis.stem.group === 'covered_negative_subset'
+        ? axis.branch.group === 'covered_positive_subset'
+          ? 'STEM_NEGATIVE_BRANCH_POSITIVE'
+          : axis.branch.group === 'covered_negative_subset'
+            ? 'STEM_NEGATIVE_BRANCH_NEGATIVE' : 'unclassified'
+        : 'unclassified';
+    if (expectedCell !== cell ||
+        !axis.stem.notEvaluatedFactorIds.includes('stem_clash') ||
+        !['punishment', 'break', 'harm'].every(id =>
+          axis.branch.notEvaluatedFactorIds.includes(id))) {
+      throw new TypeError('T10 four-case scope must keep uncalculated factors explicit.');
+    }
+    const observedAxes = axisEvidenceParagraph('일간', axis.stem) + ' ' +
+      axisEvidenceParagraph('일지', axis.branch);
     const classification = cell === 'unclassified'
       ? '같은 축에서 상반된 전통 요인이 함께 나타나거나 근거 범위가 부족하여 ' +
         '공개 초록의 네 유형 중 하나로 단독 분류할 수 없습니다.'
@@ -201,8 +270,10 @@ export function buildT10PairReadingBoundaryDraftV1(
     add('traditional_day_factor_scope', '2016년 전통 부부 궁위론의 비교 요인', [{
       paragraph: '이창임(2016)의 기혼 부부 연구는 일간·일지에서 ' +
         '상생·상비·합을 전통적 긍정 요소로, 충·극 등의 관계를 전통적 ' +
-        '부정 요소로 구분하여 네 경우를 비교합니다. ' + classification +
-        ' 이는 전통적 요인 설명이지 두 사람의 실제 소통·관계 만족·' +
+        '부정 요소로 구분하여 네 경우를 비교합니다. ' +
+        observedAxes + ' ' + classification +
+        ' 천간충 및 지지형·파·해 등은 이 계산에서 확인하지 않았습니다. ' +
+        '이는 전통적 요인 설명이지 두 사람의 실제 소통·관계 만족·' +
         '결혼 결과를 판정한 것이 아닙니다.',
       evidenceLayer: 'traditional_factor_scope',
       observedFactPaths: unique(factorFacts.flatMap(item => [...item.observedFactPaths])),
@@ -214,6 +285,7 @@ export function buildT10PairReadingBoundaryDraftV1(
         [...item.definitionContentHashes])),
       missingPrerequisites: [
         'FULL_2016_CASE_METHOD_AND_EXCEPTIONS_NOT_VERIFIED',
+        'DAY_STEM_CLASH_AND_BRANCH_PUNISHMENT_BREAK_HARM_NOT_EVALUATED',
         '2016_MARITAL_FACTOR_TO_INDIVIDUAL_OUTCOME_NOT_VALIDATED',
       ],
       individualRelationshipOutcomeAuthorized: false,
