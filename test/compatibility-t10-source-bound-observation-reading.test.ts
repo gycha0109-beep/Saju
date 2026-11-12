@@ -77,6 +77,18 @@ describe('T10 protected source-grounded Korean observations', () => {
     expect(reading?.compositeCompatibilityMeaning).toBeNull();
   });
 
+  it('keeps a classical six-harm pair source-bound even without a clash/combination', () => {
+    const reading = run(birth(1990, 5, 14),
+      birth(1990, 5, 15)).sourceBoundObservationReading;
+    const harm = reading?.sentences.find(item => item.kind === 'day_branch_harm');
+    expect(harm?.paragraph).toContain('묘와 두 번째 사람의 일지 진');
+    expect(harm?.sourceIds).toEqual(['SRC-T10-SANMINGTONGHUI-VOL2-SIX-HARMS']);
+    expect(harm?.sourceUrls).toContain(
+      'https://zh.wikisource.org/zh-hant/三命通會/卷二');
+    expect(harm?.interpersonalMeaningAuthorized).toBe(false);
+    expect(reading?.maySell).toBe(false);
+  });
+
   it('records same-position competing factors without claiming they cancel', () => {
     const reading = run(FIRST, HARMONIC_STEM_CONFLICT).sourceBoundObservationReading;
     expect(reading?.sentences.some(item =>

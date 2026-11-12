@@ -9,6 +9,8 @@ import type {
   T10DirectDayComparisonResearchV1,
 } from './compatibility-t10-direct-day-comparison.js';
 import {
+  T10_CLASSICAL_SIX_HARM_SOURCE,
+  isClassicalSixHarmBranchPair,
   T10_DIRECT_DAY_COMPARISON_SOURCE,
   T10_FIVE_ELEMENT_CYCLE_SOURCE,
 } from './compatibility-t10-direct-day-comparison.js';
@@ -20,7 +22,7 @@ export const T10_SOURCE_BOUND_OBSERVATION_READING_VERSION =
 
 type ObservationKind =
   'day_stem_elements' | 'day_branch_elements' | 'day_stem_combination' |
-  'day_branch_structure' | 'same_slot_competing_factors' |
+  'day_branch_structure' | 'day_branch_harm' | 'same_slot_competing_factors' |
   'cross_position_opposite' | 'unknown_hour' | 'source_limit';
 
 export interface T10SourceBoundObservationSentenceV1 {
@@ -42,6 +44,7 @@ export interface T10ObservedDayAxisFactorTraceV1 {
   readonly elementRelation: ElementPairKind | null;
   readonly observedFactorIds: readonly (
     'stem_five_combination' | 'branch_six_combination' | 'branch_clash' |
+    'branch_harm' |
     'elemental_same' | 'elemental_generation' | 'elemental_control'
   )[];
   readonly notEvaluatedFactorIds: readonly string[];
@@ -219,30 +222,66 @@ export function buildT10SourceBoundObservationReadingV1(
     }
     sentences.push(structuralSentence('day_branch_structure', branchMatch));
   }
+  const harm = direct.dayBranch.classicalSixHarmObservation;
+  if (harm) {
+    if (harm.source !== T10_CLASSICAL_SIX_HARM_SOURCE ||
+        harm.pairwiseMeaningAuthorized !== false ||
+        harm.reciprocalInterpersonalEffectVerified !== false ||
+        harm.branchPairObserved !== true ||
+        harm.subject.factPath !== 'subject.pillars.day.value.branch' ||
+        harm.target.factPath !== 'target.pillars.day.value.branch' ||
+        !isClassicalSixHarmBranchPair(harm.subject.value, harm.target.value) ||
+        !direct.sourceFactorAudit.dayBranch.observed.includes('branch_harm')) {
+      throw new TypeError('Six-harm source reading needs real source-bound day branches.');
+    }
+    sentences.push({
+      kind: 'day_branch_harm',
+      paragraph: '첫 번째 사람의 일지 ' + harm.subject.value +
+        '와 두 번째 사람의 일지 ' + harm.target.value +
+        '는 『삼명통회』「논육해」에 열거된 지지 육해 조합입니다. ' +
+        '이는 글자 조합의 관측이며, 고전의 원국 조건이나 두 사람의 ' +
+        '실제 관계 결과는 검증되지 않았습니다.',
+      observedFactPaths: [harm.subject.factPath, harm.target.factPath],
+      sourceIds: [harm.source.sourceId],
+      sourceUrls: [harm.source.url, T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl],
+      definitionContentHashes: [],
+      evidenceScope: 'calculated_structural_fact',
+      interpersonalMeaningAuthorized: false,
+    });
+  } else if (direct.sourceFactorAudit.dayBranch.observed.includes('branch_harm')) {
+    throw new TypeError('Six-harm audit cannot claim an absent historical structure.');
+  }
 
   for (const [label, factor, structural] of [
     ['일간', direct.dayStem, stemMatch],
     ['일지', direct.dayBranch, branchMatch],
   ] as const) {
     if (!factor.conflictingFactors) continue;
-    if (!structural || !factor.elementalComparison) {
+    const historicalBranchHarm = label === '일지' ? harm : null;
+    if ((!structural && !historicalBranchHarm) || !factor.elementalComparison) {
       throw new TypeError('T10 competing factors require both grounded observations.');
     }
-    verifyMatch(structural);
+    if (structural) verifyMatch(structural);
     sentences.push({
       kind: 'same_slot_competing_factors',
       paragraph: label + '에서 서로 다른 계산 요소가 동시에 관측되지만 ' +
         '한 요소를 다른 요소보다 우선하여 관계 결과를 단정할 근거는 없습니다.',
       observedFactPaths: unique([
-        structural.subject.factPath, structural.target.factPath,
+        ...(structural
+          ? [structural.subject.factPath, structural.target.factPath]
+          : [historicalBranchHarm!.subject.factPath,
+            historicalBranchHarm!.target.factPath]),
         factor.elementalComparison.subject.factPath,
         factor.elementalComparison.target.factPath,
       ]),
-      sourceIds: unique([...structural.sourceIds,
+      sourceIds: unique([...(structural ? structural.sourceIds :
+        [historicalBranchHarm!.source.sourceId]),
         T10_FIVE_ELEMENT_CYCLE_SOURCE.sourceId]),
-      sourceUrls: [...structuralSourceUrls(),
+      sourceUrls: [...(structural ? structuralSourceUrls() :
+        [historicalBranchHarm!.source.url]),
         T10_FIVE_ELEMENT_CYCLE_SOURCE.url],
-      definitionContentHashes: [structural.definitionContentHash],
+      definitionContentHashes: structural
+        ? [structural.definitionContentHash] : [],
       evidenceScope: 'calculated_structural_fact',
       interpersonalMeaningAuthorized: false,
     });

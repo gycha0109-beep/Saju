@@ -1,4 +1,4 @@
-import type { FiveElement } from '../contracts/calculation.js';
+import type { EarthlyBranch, FiveElement } from '../contracts/calculation.js';
 import type { MaritalPalaceIntraChartResearchV1 } from
   './compatibility-marital-palace-intra-chart-research.js';
 import type {
@@ -7,7 +7,79 @@ import type {
 } from './family-pair-source-scope-handoff.js';
 
 export const T10_DIRECT_DAY_COMPARISON_VERSION =
-  'saju-t10-direct-day-comparison-source-audit-v2' as const;
+  'saju-t10-direct-day-comparison-source-audit-v3' as const;
+
+/** Six literal branch pairs from 三命通會, 卷二, 論六害.
+ * The original conditions concern natal interpretation, not modern pairs. */
+export const T10_CLASSICAL_SIX_HARM_SOURCE = Object.freeze({
+  sourceId: 'SRC-T10-SANMINGTONGHUI-VOL2-SIX-HARMS',
+  title: '三命通會 卷二 論六害',
+  url: 'https://zh.wikisource.org/zh-hant/三命通會/卷二',
+  verifiedTextLayer: 'PUBLIC_PRIMARY_TEXT_TRANSCRIPTION',
+  scope: 'LITERAL_BRANCH_PAIR_ONLY_NOT_INTERPERSONAL_OUTCOME',
+  pairwiseMeaningAuthorized: false,
+});
+
+const SIX_HARM_PAIRS: readonly (readonly [EarthlyBranch, EarthlyBranch])[] = [
+  ['자', '미'], ['축', '오'], ['인', '사'], ['묘', '진'],
+  ['신', '해'], ['유', '술'],
+];
+const BRANCHES: readonly EarthlyBranch[] = [
+  '자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해',
+];
+export interface T10ClassicalSixHarmDayObservation {
+  readonly subject: Readonly<{
+    factPath: 'subject.pillars.day.value.branch';
+    value: EarthlyBranch;
+  }>;
+  readonly target: Readonly<{
+    factPath: 'target.pillars.day.value.branch';
+    value: EarthlyBranch;
+  }>;
+  readonly source: typeof T10_CLASSICAL_SIX_HARM_SOURCE;
+  readonly branchPairObserved: true;
+  readonly reciprocalInterpersonalEffectVerified: false;
+  readonly pairwiseMeaningAuthorized: false;
+}
+
+/** Literal unordered branch membership; the classical text's role
+ * asymmetries and natal context expressly do NOT transfer to T10. */
+export function isClassicalSixHarmBranchPair(
+  a: EarthlyBranch, b: EarthlyBranch,
+): boolean {
+  return SIX_HARM_PAIRS.some(([x, y]) =>
+    (a === x && b === y) || (a === y && b === x));
+}
+
+function daySixHarmObservation(
+  pair: PairwiseSourceScopeHandoff,
+): T10ClassicalSixHarmDayObservation | null {
+  const day = pair.factualPairObservations.find(item => item.pillarSlot === 'day');
+  if (day?.status !== 'both_resolved') return null;
+  const left = day.subjectPillar?.slice(-1);
+  const right = day.targetPillar?.slice(-1);
+  if (!left || !right || !BRANCHES.includes(left as EarthlyBranch) ||
+      !BRANCHES.includes(right as EarthlyBranch)) {
+    throw new TypeError('Six-harm observation requires two resolved day branches.');
+  }
+  const subjectBranch = left as EarthlyBranch;
+  const targetBranch = right as EarthlyBranch;
+  if (!isClassicalSixHarmBranchPair(subjectBranch, targetBranch)) return null;
+  return {
+    subject: {
+      factPath: 'subject.pillars.day.value.branch',
+      value: subjectBranch,
+    },
+    target: {
+      factPath: 'target.pillars.day.value.branch',
+      value: targetBranch,
+    },
+    source: T10_CLASSICAL_SIX_HARM_SOURCE,
+    branchPairObserved: true,
+    reciprocalInterpersonalEffectVerified: false,
+    pairwiseMeaningAuthorized: false,
+  };
+}
 
 export const T10_DIRECT_DAY_COMPARISON_SOURCE = Object.freeze({
   title: '子平四柱를 통한 夫婦宮合 硏究 : 宮位論을 中心으로',
@@ -150,7 +222,8 @@ export interface T10DirectDayComparisonResearchV1 {
     readonly verifiedStructuralMatch: CrossChartStructuralMatch | null;
     readonly elementalComparison: DayElementComparisonV1 | null;
     readonly conflictingFactors: boolean;
-    readonly unimplementedSourceFactors: readonly ['punishment', 'break', 'harm'];
+    readonly classicalSixHarmObservation: T10ClassicalSixHarmDayObservation | null;
+    readonly unimplementedSourceFactors: readonly ['punishment', 'break'];
   };
   /** A research grouping from the accessible abstract; not a harmony verdict. */
   readonly observedAbstractCell: FourCaseCell;
@@ -165,10 +238,10 @@ export interface T10DirectDayComparisonResearchV1 {
     };
     readonly dayBranch: {
       readonly observed: readonly (
-        'branch_six_combination' | 'branch_clash' |
+        'branch_six_combination' | 'branch_clash' | 'branch_harm' |
         'elemental_same' | 'elemental_generation' | 'elemental_control'
       )[];
-      readonly notEvaluated: readonly ['punishment', 'break', 'harm'];
+      readonly notEvaluated: readonly ['punishment', 'break'];
     };
     /** General adverse examples in the abstract, beyond the four enumerated cells. */
     readonly otherAbstractFactorsNotEvaluated: readonly ['void', 'yuanchen'];
@@ -247,6 +320,7 @@ export function auditT10DirectDayComparisonV1(
     STEM_SUBJECT, STEM_TARGET, ['stem_five_combination']) : null;
   const branch = complete ? dayMatch(pair.crossChartStructuralMatches,
     BRANCH_SUBJECT, BRANCH_TARGET, ['branch_six_combination', 'branch_clash']) : null;
+  const classicalHarm = complete ? daySixHarmObservation(pair) : null;
   const subjectDay = personalPalace.subject.evidence;
   const targetDay = personalPalace.target.evidence;
   if (complete && (!subjectDay || !targetDay ||
@@ -274,7 +348,7 @@ export function auditT10DirectDayComparisonV1(
   const branchPositive = branch?.kind === 'branch_six_combination' ||
     elementalPositive(branchElements);
   const branchNegative = branch?.kind === 'branch_clash' ||
-    elementalNegative(branchElements);
+    classicalHarm !== null || elementalNegative(branchElements);
   const stemGroup = groupFactor(stemPositive, stemNegative, complete);
   const branchGroup = groupFactor(branchPositive, branchNegative, complete);
   const stemObserved: T10DirectDayComparisonResearchV1[
@@ -286,6 +360,7 @@ export function auditT10DirectDayComparisonV1(
     branchObserved.push('branch_six_combination');
   }
   if (branch?.kind === 'branch_clash') branchObserved.push('branch_clash');
+  if (classicalHarm) branchObserved.push('branch_harm');
   const observableElementFactor = (value: DayElementComparisonV1 | null):
     'elemental_same' | 'elemental_generation' | 'elemental_control' | null => {
     if (!value) return null;
@@ -321,7 +396,8 @@ export function auditT10DirectDayComparisonV1(
       verifiedStructuralMatch: branch,
       elementalComparison: branchElements,
       conflictingFactors: branchPositive && branchNegative,
-      unimplementedSourceFactors: ['punishment', 'break', 'harm'],
+      classicalSixHarmObservation: classicalHarm,
+      unimplementedSourceFactors: ['punishment', 'break'],
     },
     observedAbstractCell: fourCaseCell(stemGroup, branchGroup),
     sourceFactorAudit: {
@@ -331,7 +407,7 @@ export function auditT10DirectDayComparisonV1(
       },
       dayBranch: {
         observed: branchObserved,
-        notEvaluated: ['punishment', 'break', 'harm'],
+        notEvaluated: ['punishment', 'break'],
       },
       otherAbstractFactorsNotEvaluated: ['void', 'yuanchen'],
       classificationBasis: 'computed_factor_subset_only',

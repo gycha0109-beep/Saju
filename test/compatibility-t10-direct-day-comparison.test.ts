@@ -121,7 +121,8 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
     expect(research?.sourceFactorAudit.sourceQualifiedFourCaseCell).toBeNull();
     expect(research?.sourceFactorAudit.sourcePopulationMatchEstablished).toBe(false);
     expect(research?.sourceFactorAudit.dayStem.notEvaluated).toContain('stem_clash');
-    expect(research?.sourceFactorAudit.dayBranch.notEvaluated).toContain('harm');
+    expect(research?.sourceFactorAudit.dayBranch.notEvaluated)
+      .toEqual(['punishment', 'break']);
     expect(research?.sourceFactorAudit.otherAbstractFactorsNotEvaluated)
       .toEqual(['void', 'yuanchen']);
     expect(research?.mayClaimInterpersonalMeaning).toBe(false);
@@ -138,6 +139,71 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
     expect(research?.dayBranch.conflictingFactors).toBe(true);
     expect(research?.observedAbstractCell).toBe('unclassified');
     expect(research?.mayClaimInterpersonalMeaning).toBe(false);
+  });
+
+  it.each([
+    [11, 18, '자', '미'],
+    [12, 17, '축', '오'],
+    [13, 16, '인', '사'],
+    [14, 15, '묘', '진'],
+    [19, 22, '신', '해'],
+    [20, 21, '유', '술'],
+  ] as const)('observes each classical six-harm pair as a historical day-branch fact', (
+    firstDay, secondDay, firstBranch, secondBranch,
+  ) => {
+    const output = run(birth(1990, 5, firstDay), birth(1990, 5, secondDay));
+    const review = output.directDayComparisonResearch;
+    expect(review?.dayBranch.classicalSixHarmObservation?.subject.value)
+      .toBe(firstBranch);
+    expect(review?.dayBranch.classicalSixHarmObservation?.target.value)
+      .toBe(secondBranch);
+    expect(review?.sourceFactorAudit.dayBranch.observed).toContain('branch_harm');
+    expect(review?.dayBranch.unimplementedSourceFactors).toEqual([
+      'punishment', 'break',
+    ]);
+    const sentence = output.sourceBoundObservationReading?.sentences.find(s =>
+      s.kind === 'day_branch_harm');
+    expect(sentence?.paragraph).toContain('지지 육해 조합');
+    expect(sentence?.observedFactPaths).toEqual([
+      'subject.pillars.day.value.branch',
+      'target.pillars.day.value.branch',
+    ]);
+    expect(sentence?.sourceUrls).toContain(
+      'https://zh.wikisource.org/zh-hant/三命通會/卷二');
+    expect(output.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'traditional_day_factor_scope')?.sentences[0]?.paragraph)
+      .toContain('지지육해');
+    expect(review?.maySell).toBe(false);
+    expect(output.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
+  });
+
+  it('preserves positive elemental and negative classical harm in one unresolved axis', () => {
+    const output = run(birth(1990, 5, 19), birth(1990, 5, 22));
+    const reverse = run(birth(1990, 5, 22), birth(1990, 5, 19));
+    expect(output.directDayComparisonResearch?.dayBranch.group)
+      .toBe('mixed_source_factors');
+    expect(output.directDayComparisonResearch?.dayBranch.conflictingFactors).toBe(true);
+    expect(output.sourceBoundObservationReading?.sentences.some(sentence =>
+      sentence.kind === 'same_slot_competing_factors')).toBe(true);
+    expect(reverse.directDayComparisonResearch?.dayBranch.classicalSixHarmObservation
+      ?.subject.value).toBe('해');
+    expect(reverse.directDayComparisonResearch?.dayBranch.classicalSixHarmObservation
+      ?.target.value).toBe('신');
+    expect(output.directDayComparisonResearch?.observedAbstractCell)
+      .toBe('unclassified');
+    expect(output.mayPublish).toBe(false);
+    expect(output.maySell).toBe(false);
+  });
+
+  it('does not manufacture six harm when the actual day branches are not a listed pair', () => {
+    const output = run(FIRST, STEM_POS_BRANCH_POS);
+    expect(output.directDayComparisonResearch?.dayBranch.classicalSixHarmObservation)
+      .toBeNull();
+    expect(output.directDayComparisonResearch?.sourceFactorAudit.dayBranch.observed)
+      .not.toContain('branch_harm');
+    expect(output.sourceBoundObservationReading?.sentences.some(sentence =>
+      sentence.kind === 'day_branch_harm')).toBe(false);
   });
 
   it('rejects a mismatched person or chart when reusing canonical element observations', () => {
@@ -181,7 +247,7 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
       .toContain('elemental_control');
     expect(research?.sourceFactorAudit.dayStem.notEvaluated).toEqual(['stem_clash']);
     expect(research?.sourceFactorAudit.dayBranch.notEvaluated)
-      .toEqual(['punishment', 'break', 'harm']);
+      .toEqual(['punishment', 'break']);
     expect(research?.sourceFactorAudit.sourceQualifiedFourCaseCell).toBeNull();
     expect(research?.sourceFactorAudit.fullMethodAndExceptionsVerified).toBe(false);
     expect(result.maySell).toBe(false);

@@ -61,7 +61,7 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     expect(item?.paragraph).toContain('일지(첫 번째 사람 ' +
       actual?.branch.firstElement + ', 두 번째 사람 ' +
       actual?.branch.secondElement);
-    expect(item?.paragraph).toContain('천간충 및 지지형·파·해');
+    expect(item?.paragraph).toContain('천간충 및 지지형·파');
     expect(item?.evidenceLayer).toBe('traditional_factor_scope');
     expect(item?.observedFactPaths).toEqual(expect.arrayContaining([
       'subject.pillars.day.value.stem.element',
@@ -93,9 +93,25 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     expect(reverseSentence?.paragraph).toContain('첫 번째 사람 ' +
       reverseTrace?.firstElement);
     expect(forwardSentence?.missingPrerequisites).toContain(
-      'DAY_STEM_CLASH_AND_BRANCH_PUNISHMENT_BREAK_HARM_NOT_EVALUATED');
+      'DAY_STEM_CLASH_AND_BRANCH_PUNISHMENT_BREAK_NOT_EVALUATED');
     expect(forward.pairReadingBoundaryDraft?.relationshipOutcome).toBeNull();
     expect(reverse.pairReadingBoundaryDraft?.relationshipOutcome).toBeNull();
+  });
+
+  it('renders a classical six-harm candidate without claiming actual relationship harm', () => {
+    const result = run(birth(1990, 5, 14), birth(1990, 5, 15));
+    const draft = result.pairReadingBoundaryDraft;
+    const direct = draft?.sections.find(s => s.id === 'direct_day_facts');
+    const traditional = draft?.sections.find(s =>
+      s.id === 'traditional_day_factor_scope')?.sentences[0];
+    expect(direct?.sentences.some(s => s.paragraph.includes('지지 육해 조합')))
+      .toBe(true);
+    expect(traditional?.paragraph).toContain('지지육해');
+    expect(traditional?.sourceUrls).toContain(
+      'https://zh.wikisource.org/zh-hant/三命通會/卷二');
+    expect(traditional?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(draft?.relationshipOutcome).toBeNull();
+    expect(result.mayPublish).toBe(false);
   });
 
   it('grounds the 2016 interview counterexample without projecting it onto these people', () => {
