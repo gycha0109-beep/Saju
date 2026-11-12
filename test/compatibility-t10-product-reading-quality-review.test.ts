@@ -4,6 +4,8 @@ import { buildCompatibilityTwoBirthResearchReading } from
   '../src/preview/compatibility-two-birth-research-runtime.js';
 import { auditT10ProductReadingQualityV1 } from
   '../src/research/compatibility-t10-product-reading-quality-review.js';
+import type { T10PairDraftSentence } from
+  '../src/research/compatibility-t10-pair-reading-boundary-draft.js';
 
 const birth = (
   year: number, month: number, day: number,
@@ -140,8 +142,8 @@ describe('T10 product quality: factual material never becomes a complete relatio
     const draft = output.pairReadingBoundaryDraft;
     if (!draft) throw new TypeError('Missing source-bound draft.');
     const mapFirst = (change: (
-      sentence: typeof draft.sections[number]['sentences'][number],
-    ) => typeof draft.sections[number]['sentences'][number]) => ({
+      sentence: T10PairDraftSentence,
+    ) => T10PairDraftSentence) => ({
       ...draft,
       sections: draft.sections.map(section => section.id !== 'direct_day_facts'
         ? section : {
