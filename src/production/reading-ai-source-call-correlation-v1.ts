@@ -1,6 +1,9 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
-import type { OpenAIProviderCallObservationV1, OpenAIProviderDispatchIntentV1 } from '../llm/openai/openai-responses-adapter.js';
+import type {
+  OpenAIProviderCallObservationV1,
+  OpenAIProviderDispatchIntentV1,
+} from '../llm/openai/openai-responses-adapter.js';
 import type { SajuA4ProviderDispatchLinkV1 } from './reading-ai-provider-dispatch-intent-postgres-v1.js';
 
 /**

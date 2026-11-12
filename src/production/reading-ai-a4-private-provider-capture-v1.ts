@@ -1,4 +1,7 @@
-import type { OpenAIProviderCallObservationV1, OpenAIProviderDispatchIntentV1 } from '../llm/openai/openai-responses-adapter.js';
+import type {
+  OpenAIProviderCallObservationV1,
+  OpenAIProviderDispatchIntentV1,
+} from '../llm/openai/openai-responses-adapter.js';
 import {
   createSajuSourceProviderCallCorrelationV1,
   type SajuSourceAttemptContextV1,
