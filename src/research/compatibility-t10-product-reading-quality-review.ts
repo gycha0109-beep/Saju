@@ -3,6 +3,16 @@ import type {
   T10PairDraftSentence,
   T10PairReadingBoundaryDraftV1,
 } from './compatibility-t10-pair-reading-boundary-draft.js';
+import { buildT10PairReadingBoundaryDraftV1 } from
+  './compatibility-t10-pair-reading-boundary-draft.js';
+import type { T10SourceBoundObservationReadingV1 } from
+  './compatibility-t10-source-bound-observation-reading.js';
+import type { T10HistoricalDayYearObservation } from
+  './compatibility-t10-historical-day-year-observation.js';
+import type { T10CrossMethodContrastResearchV1 } from
+  './compatibility-t10-cross-method-contrast.js';
+import type { T10ThreeMethodApplicabilityReadingV1 } from
+  './compatibility-t10-three-method-applicability-reading.js';
 
 export const T10_PRODUCT_READING_QUALITY_REVIEW_VERSION =
   'saju-t10-product-reading-quality-review-v1' as const;
@@ -30,6 +40,7 @@ export interface T10ProductReadingQualityReviewV1 {
   readonly traceAudit: {
     readonly allSentencesHaveRequiredProvenance: true;
     readonly sectionToTextRoundTrip: true;
+    readonly exactSourceDerivedDraft: true;
     readonly distinctPersonsKept: true;
     readonly unknownTimeUnresolved: true;
     readonly noMethodCandidatePromotedToFact: true;
@@ -100,6 +111,10 @@ function validateSentence(sentence: T10PairDraftSentence): void {
  * this does not exercise, enable, or adjudicate a commerce entitlement. */
 export function auditT10ProductReadingQualityV1(
   draft: T10PairReadingBoundaryDraftV1,
+  factual: T10SourceBoundObservationReadingV1,
+  historical: T10HistoricalDayYearObservation,
+  contrast: T10CrossMethodContrastResearchV1,
+  methods: T10ThreeMethodApplicabilityReadingV1,
 ): T10ProductReadingQualityReviewV1 {
   if (draft.lifecycle !== 'internal_research_only' ||
       draft.mode !== 'source_bounded_factual_research_not_compatibility' ||
@@ -134,6 +149,18 @@ export function auditT10ProductReadingQualityV1(
   }
   const all = draft.sections.flatMap(section => [...section.sentences]);
   all.forEach(validateSentence);
+
+  // A plausible URL, hash or person-prefixed path is not sufficient provenance.
+  // Rebuild from the independent, guarded research source results and require
+  // every paragraph, original fact path, source and limitation to match.
+  const fromSources = buildT10PairReadingBoundaryDraftV1(
+    factual, historical, contrast, methods,
+  );
+  if (JSON.stringify(draft) !== JSON.stringify(fromSources)) {
+    throw new TypeError(
+      'T10 quality review rejects evidence not reproduced from original source-bound charts.',
+    );
+  }
 
   const mixed = draft.sections.find(section => section.id === 'mixed_positions');
   const expectedDirection = draft.structuralSituation;
@@ -201,6 +228,7 @@ export function auditT10ProductReadingQualityV1(
     traceAudit: {
       allSentencesHaveRequiredProvenance: true,
       sectionToTextRoundTrip: true,
+      exactSourceDerivedDraft: true,
       distinctPersonsKept: true,
       unknownTimeUnresolved: true,
       noMethodCandidatePromotedToFact: true,

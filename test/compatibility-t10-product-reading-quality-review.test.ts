@@ -28,6 +28,25 @@ const run = (a: BirthInput, b: BirthInput, research = true) =>
     ...(research ? { candidateScope: 'traditional_marital_palace_comparison' as const } : {}),
   });
 
+function sourceInputs(output: ReturnType<typeof run>) {
+  const factual = output.sourceBoundObservationReading;
+  const historical = output.historicalDayYearObservation;
+  const contrast = output.crossMethodContrastResearch;
+  const methods = output.threeMethodApplicabilityReading;
+  if (!factual || !historical || !contrast || !methods) {
+    throw new TypeError('Missing canonical research inputs.');
+  }
+  return [factual, historical, contrast, methods] as const;
+}
+
+function auditFromSource(
+  draft: NonNullable<ReturnType<typeof run>['pairReadingBoundaryDraft']>,
+) {
+  return auditT10ProductReadingQualityV1(
+    draft, ...sourceInputs(run(A, OPPOSITE_A)),
+  );
+}
+
 describe('T10 product quality: factual material never becomes a complete relationship product', () => {
   it('audits fact provenance and the two opposing structural cases separately', () => {
     const a = run(A, OPPOSITE_A).productReadingQualityReview;
@@ -35,6 +54,7 @@ describe('T10 product quality: factual material never becomes a complete relatio
     expect(a?.caseDistinction).toBe('day_six_combination_and_other_clash');
     expect(b?.caseDistinction).toBe('day_clash_and_other_six_combination');
     expect(a?.traceAudit.sectionToTextRoundTrip).toBe(true);
+    expect(a?.traceAudit.exactSourceDerivedDraft).toBe(true);
     expect(a?.traceAudit.validatedSentenceCount).toBeGreaterThan(4);
     expect(a?.traceAudit.verifiedStructuralFactSentenceCount).toBeGreaterThan(0);
     expect(a?.traceAudit.sectionIds).toContain('mixed_positions');
@@ -96,7 +116,7 @@ describe('T10 product quality: factual material never becomes a complete relatio
             ? sentence : { ...sentence, sourceUrls: [] }),
         }),
     };
-    expect(() => auditT10ProductReadingQualityV1(broken))
+    expect(() => auditFromSource(broken))
       .toThrow('per-sentence original evidence');
     const malformed = {
       ...draft,
@@ -110,17 +130,74 @@ describe('T10 product quality: factual material never becomes a complete relatio
             }),
         }),
     };
-    expect(() => auditT10ProductReadingQualityV1(malformed))
+    expect(() => auditFromSource(malformed))
       .toThrow('per-sentence original evidence');
+  });
+
+
+  it('rejects plausible but forged source URLs, paths, identities and full Korean prose', () => {
+    const output = run(A, OPPOSITE_A);
+    const draft = output.pairReadingBoundaryDraft;
+    if (!draft) throw new TypeError('Missing source-bound draft.');
+    const mapFirst = (change: (
+      sentence: typeof draft.sections[number]['sentences'][number],
+    ) => typeof draft.sections[number]['sentences'][number]) => ({
+      ...draft,
+      sections: draft.sections.map(section => section.id !== 'direct_day_facts'
+        ? section : {
+          ...section,
+          sentences: section.sentences.map((sentence, i) =>
+            i === 0 ? change(sentence) : sentence),
+        }),
+    });
+    const wrongUrl = mapFirst(sentence => ({
+      ...sentence,
+      sourceUrls: ['https://example.com/looks-valid-but-is-not-the-source'],
+    }));
+    expect(() => auditFromSource(wrongUrl))
+      .toThrow('not reproduced from original source-bound charts');
+
+    const wrongPath = mapFirst(sentence => ({
+      ...sentence,
+      observedFactPaths: [
+        'subject.pillars.year.value.stem.element',
+        'target.pillars.day.value.stem.element',
+      ],
+    }));
+    expect(() => auditFromSource(wrongPath))
+      .toThrow('not reproduced from original source-bound charts');
+
+    const changedPerson = {
+      ...draft,
+      subject: { ...draft.subject, personRef: 'foreign-subject' },
+    };
+    expect(() => auditFromSource(changedPerson))
+      .toThrow('not reproduced from original source-bound charts');
+
+    const altered = mapFirst(sentence => ({
+      ...sentence,
+      paragraph: '두 사람은 무조건 잘 맞으므로 결혼을 권장합니다.',
+    }));
+    const alteredWithMatchingText = {
+      ...altered,
+      koreanReadingDraft: altered.sections.map(section => section.title + '\\n' +
+        section.sentences.map(sentence => sentence.paragraph).join('\\n')).join('\\n\\n'),
+    };
+    expect(() => auditFromSource(alteredWithMatchingText))
+      .toThrow('not reproduced from original source-bound charts');
+
+    expect(() => auditT10ProductReadingQualityV1(
+      draft, ...sourceInputs(run(A, OPPOSITE_B)),
+    )).toThrow();
   });
 
   it('blocks an unauthorized interpretation flag and missing required method', () => {
     const draft = run(A, OPPOSITE_A).pairReadingBoundaryDraft;
     if (!draft) throw new TypeError('Missing source-bounded draft.');
-    expect(() => auditT10ProductReadingQualityV1({
+    expect(() => auditFromSource({
       ...draft, eligibleForFirstComparison: true as never,
     })).toThrow('protected full research draft');
-    expect(() => auditT10ProductReadingQualityV1({
+    expect(() => auditFromSource({
       ...draft, sections: draft.sections.filter(section =>
         section.id !== 'useful_god_method'),
     })).toThrow('protected full research draft');

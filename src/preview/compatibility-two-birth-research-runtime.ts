@@ -358,8 +358,14 @@ export function buildCompatibilityTwoBirthResearchReading(
       sourceBoundObservationReading, historicalDayYearObservation,
       crossMethodContrastResearch, threeMethodApplicabilityReading,
     ) : undefined;
-  const productReadingQualityReview = pairReadingBoundaryDraft
-    ? auditT10ProductReadingQualityV1(pairReadingBoundaryDraft) : undefined;
+  const productReadingQualityReview = pairReadingBoundaryDraft &&
+    sourceBoundObservationReading && historicalDayYearObservation &&
+    crossMethodContrastResearch && threeMethodApplicabilityReading
+    ? auditT10ProductReadingQualityV1(
+      pairReadingBoundaryDraft, sourceBoundObservationReading,
+      historicalDayYearObservation, crossMethodContrastResearch,
+      threeMethodApplicabilityReading,
+    ) : undefined;
   const gejuRescueSourceBridge = yongshenMethodScopeResearch
     ? auditT10GejuRescueSourceBridgeV1(
       sourceScopeHandoff, yongshenMethodScopeResearch, subject, target,
