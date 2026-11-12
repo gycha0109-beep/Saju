@@ -66,7 +66,7 @@ describe('T10 product quality: factual material never becomes a complete relatio
     expect(detail?.paragraph).toContain('일간(첫 번째 사람');
     expect(detail?.paragraph).toContain('일지(첫 번째 사람');
     expect(detail?.missingPrerequisites).toContain(
-      'DAY_STEM_CLASH_AND_BRANCH_PUNISHMENT_BREAK_HARM_NOT_EVALUATED');
+      'DAY_STEM_CLASH_AND_BRANCH_PUNISHMENT_BREAK_NOT_EVALUATED');
     expect(b?.traceAudit.traditionalFactorScopeSentenceCount).toBe(1);
     expect(a?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);
     expect(b?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);
