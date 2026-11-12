@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { BirthInput } from '../src/contracts/calculation.js';
 import { buildCompatibilityTwoBirthResearchReading } from
   '../src/preview/compatibility-two-birth-research-runtime.js';
+import { calculateAuthorizedMyeonghwaProductionSnapshot } from
+  '../src/production/production-calculation-runtime.js';
 import { buildT102018MaritalResearchReadingV1 } from
   '../src/research/compatibility-t10-2018-marital-reading.js';
 
@@ -116,13 +118,10 @@ describe('2018 actual-chart Korean research reading with original source bounds'
     }
     // A fresh canonical calculation is also used when rebuilding the source audit.
     // The generated report is compared to the original independently recalculated evidence.
-    const calc = (b: BirthInput) => {
-      const { calculateAuthorizedMyeonghwaProductionSnapshot } =
-        require('../src/production/production-calculation-runtime.js');
-      return calculateAuthorizedMyeonghwaProductionSnapshot(
+    const calc = (b: BirthInput) =>
+      calculateAuthorizedMyeonghwaProductionSnapshot(
         b, { now: new Date('2026-11-11T00:00:00.000Z') },
       ).snapshot;
-    };
     const subject = calc(male);
     const target = calc(female);
     const args = [result.sourceScopeHandoff, palace, subject, target] as const;

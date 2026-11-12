@@ -163,9 +163,9 @@ export function buildT102018MaritalResearchReadingV1(
   const sourceUrls = [study.source.abstractUrl, study.source.authorIndexUrl];
   const sentences: T102018MaritalResearchReadingV1['sentences'] = [
     personSentence('subject', study.subject, '첫 번째 명식',
-      study.missingPrerequisites, ...sourceUrls as [string, string]),
+      study.missingPrerequisites, study.source.abstractUrl, study.source.authorIndexUrl),
     personSentence('target', study.target, '두 번째 명식',
-      study.missingPrerequisites, ...sourceUrls as [string, string]),
+      study.missingPrerequisites, study.source.abstractUrl, study.source.authorIndexUrl),
     {
       paragraph: '2018년 연구는 이별한 부부 사례의 배우자궁과 배우자성을 비교합니다. ' +
         '논문이 보고한 궁위 우선 주장을 이 두 사람의 우선순위·혼인 안정성·이혼 예측에 ' +
