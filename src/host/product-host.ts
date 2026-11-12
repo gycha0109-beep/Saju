@@ -35,6 +35,9 @@ import {
 } from '../reading/source-reading-proof-readiness.js';
 import type { LegacyNarrativeRuntimeV1 } from '../reading/governed-reading-execution.js';
 import type { ProductReadingResponse } from '../reading/product-reading-response.js';
+import { buildOfficialReadingCharacterGroundingV1 } from '../reading/official-reading-reader-parity.js';
+import type { CharacterGroundingBundleV2 } from '../reading/character-grounding-v2.js';
+import type { OfficialReadingSemanticSourceHandoff } from '../reading/official-reading-semantic-source-handoff.js';
 
 export const PRODUCT_HOST_VERSION = 'myeonghwa-product-host-v3';
 
@@ -124,11 +127,21 @@ export interface MyeonghwaProductHostDependencies {
 
 export interface MyeonghwaProductHost {
   requestReading(body: unknown): Promise<ProductReadingResponse>;
+  /** Internal input to the authenticated issue signer. */
+  requestReadingForIssue?(
+    body: unknown,
+    engineVersion: string,
+  ): Promise<{ response: ProductReadingResponse; readerSource?: ProductionReadingReaderSource }>;
   /**
    * Preview-only batch. The production reading route never admits this method.
    * Optional for external/mocked hosts implementing the older interface.
    */
   requestNatalFiveDomains?(body: unknown): Promise<NatalFiveDomainProductBundle>;
+}
+
+export interface ProductionReadingReaderSource {
+  readonly grounding: CharacterGroundingBundleV2;
+  readonly semanticSource: OfficialReadingSemanticSourceHandoff;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -507,6 +520,25 @@ export function createMyeonghwaProductHost(
   return {
     async requestReading(body: unknown): Promise<ProductReadingResponse> {
       return (await runProductHostReadingInternals(dependencies, body)).response;
+    },
+    async requestReadingForIssue(body, engineVersion) {
+      const { response, execution, officialSemanticSourceHandoff } =
+        await runProductHostReadingInternals(dependencies, body);
+      if (
+        response.state !== 'delivered' ||
+        execution.canonicalSemantics === undefined ||
+        execution.officialReadingReport === undefined ||
+        officialSemanticSourceHandoff === undefined
+      ) {
+        return { response };
+      }
+      const { grounding } = buildOfficialReadingCharacterGroundingV1({
+        response,
+        semanticBundle: execution.canonicalSemantics,
+        officialReadingReport: execution.officialReadingReport,
+        engineVersion,
+      });
+      return { response, readerSource: { grounding, semanticSource: officialSemanticSourceHandoff } };
     },
   };
 }

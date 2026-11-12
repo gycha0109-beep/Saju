@@ -12,6 +12,7 @@ import {
   PRODUCT_HOST_VERSION,
   type MyeonghwaProductHost,
   type MyeonghwaProductHostDependencies,
+  type ProductionReadingReaderSource,
 } from './product-host.js';
 import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './production-calculation-http-contract.js';
 import { buildCompatibilityTwoBirthResearchReading } from '../preview/compatibility-two-birth-research-runtime.js';
@@ -19,6 +20,8 @@ import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-s
 import {
   PRODUCTION_READING_ISSUE_PROOF_HEADER,
   PRODUCTION_READING_RELEASE_HEADER,
+  PRODUCTION_READER_SOURCE_HEADER,
+  PRODUCTION_READER_SOURCE_VERSION,
   type createProductionReadingIssueProof,
 } from './production-reading-issue-proof.js';
 import {
@@ -545,8 +548,33 @@ function createMyeonghwaHttpServer(
           });
           return;
         }
+        const sourceMode = request.headers[PRODUCTION_READER_SOURCE_HEADER];
+        if (
+          sourceMode !== undefined &&
+          (sourceMode !== PRODUCTION_READER_SOURCE_VERSION ||
+            matchedReading.route.path !== '/api/readings' ||
+            signIssue === undefined ||
+            matchedReading.host.requestReadingForIssue === undefined)
+        ) {
+          sendJson(response, 403, {
+            error: { code: 'HOST_PRODUCTION_ISSUE_UNAVAILABLE', message: 'Production issue is unavailable.' },
+          });
+          return;
+        }
         let sourceRef: string | undefined;
-        const execute = () => matchedReading.host.requestReading(body);
+        let readerSource: ProductionReadingReaderSource | undefined;
+        const execute = async () => {
+          if (
+            sourceMode === undefined ||
+            signIssue === undefined ||
+            matchedReading.host.requestReadingForIssue === undefined
+          ) {
+            return matchedReading.host.requestReading(body);
+          }
+          const issue = await matchedReading.host.requestReadingForIssue(body, signIssue.engineVersion);
+          readerSource = issue.readerSource;
+          return issue.response;
+        };
         let result: Awaited<ReturnType<MyeonghwaProductHost['requestReading']>>;
 
         if (preparedAttemptId !== undefined ||
@@ -585,8 +613,23 @@ function createMyeonghwaHttpServer(
           result = await execute();
         }
         const admitted = admitProductReadingResponse(result);
-        const issueProof = sourceRef === undefined ? undefined : signIssue?.(sourceRef, admitted);
-        sendJson(response, 200, admitted, {
+        const issueProof =
+          sourceRef === undefined || (sourceMode !== undefined && readerSource === undefined)
+            ? undefined
+            : signIssue?.(sourceRef, admitted, readerSource);
+        if (sourceMode !== undefined && admitted.state === 'delivered' && issueProof === undefined) {
+          sendJson(response, 409, {
+            error: {
+              code: 'HOST_PRODUCTION_READER_SOURCE_UNAVAILABLE',
+              message: 'Canonical Reader source is unavailable.',
+            },
+          });
+          return;
+        }
+        const payload = issueProof !== undefined && readerSource !== undefined
+          ? { ...admitted, readerSource }
+          : admitted;
+        sendJson(response, 200, payload, {
           [PRODUCT_READING_RESPONSE_ADMISSION_HEADER]: PRODUCT_READING_RESPONSE_VERSION,
           ...(issueProof === undefined ? {} : { [PRODUCTION_READING_ISSUE_PROOF_HEADER]: issueProof }),
           ...(sourceRef === undefined

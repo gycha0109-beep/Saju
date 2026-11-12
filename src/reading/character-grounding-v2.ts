@@ -370,7 +370,7 @@ function makeUnit(
   };
 }
 
-function stableSourceResponseHash(response: unknown): string {
+export function stableSourceResponseHash(response: unknown): string {
   const admitted = admitProductReadingResponse(response);
   if (
     (admitted.state !== 'delivered' && admitted.state !== 'delivered_with_fallback') ||

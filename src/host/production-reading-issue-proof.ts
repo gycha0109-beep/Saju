@@ -1,9 +1,14 @@
 import { sign, type KeyObject } from 'node:crypto';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import type { ProductReadingResponse } from '../reading/product-reading-response.js';
+import { stableSourceResponseHash } from '../reading/character-grounding-v2.js';
+import type { ProductionReadingReaderSource } from './product-host.js';
 
 export const PRODUCTION_READING_RELEASE_HEADER = 'x-myeongha-reading-release';
 export const PRODUCTION_READING_ISSUE_PROOF_HEADER = 'x-myeonghwa-production-issue-proof';
+export const PRODUCTION_READER_SOURCE_HEADER = 'x-myeongha-reader-source';
+export const PRODUCTION_READER_SOURCE_VERSION = 'canonical-v1';
+export const PRODUCTION_READER_SOURCE_MAX_BYTES = 128 * 1024;
 const VERSION = 'myeonghwa-production-reading-issue-proof-v1';
 const SIGNATURE_DOMAIN = 'myeongha/saju/production-reading-issue/v1\0';
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/iu;
@@ -61,8 +66,27 @@ export function createProductionReadingIssueProof(
     if (releaseRef === undefined || requestedRelease !== releaseRef) return undefined;
 
     const requestBodyHash = deterministicContentHash(body);
-    return (externalRequestRef: string, response: ProductReadingResponse) => {
+    const signResponse = (
+      externalRequestRef: string,
+      response: ProductReadingResponse,
+      readerSource?: ProductionReadingReaderSource,
+    ) => {
       if (response.state !== 'delivered' || response.reading === undefined) return undefined;
+      const responseBodyHash = deterministicContentHash(JSON.parse(JSON.stringify(response)));
+      let readerSourceHash: string | undefined;
+      if (readerSource !== undefined) {
+        const serialized = JSON.stringify(readerSource);
+        if (
+          Buffer.byteLength(serialized) > PRODUCTION_READER_SOURCE_MAX_BYTES ||
+          readerSource.grounding.readingRef !== response.reading.readingId ||
+          readerSource.grounding.productResponseVersion !== response.responseVersion ||
+          readerSource.grounding.sourceResponseHash !== stableSourceResponseHash(response) ||
+          readerSource.grounding.engineVersion !== engineVersion ||
+          readerSource.grounding.sourceSemanticHash !== readerSource.semanticSource.semanticHash
+        )
+          return undefined;
+        readerSourceHash = deterministicContentHash(JSON.parse(serialized));
+      }
       const payload = {
         version: VERSION,
         issuer,
@@ -73,7 +97,8 @@ export function createProductionReadingIssueProof(
         authorityHash,
         releaseRef,
         requestBodyHash,
-        responseBodyHash: deterministicContentHash(JSON.parse(JSON.stringify(response))),
+        responseBodyHash,
+        ...(readerSourceHash === undefined ? {} : { readerSourceHash }),
         nativeReadingId: response.reading.readingId,
         engineVersion,
         issuedAtMs: Date.now(),
@@ -85,5 +110,6 @@ export function createProductionReadingIssueProof(
       ).toString('base64url');
       return Buffer.from(JSON.stringify({ payload, signature })).toString('base64url');
     };
+    return Object.assign(signResponse, { engineVersion });
   };
 }
