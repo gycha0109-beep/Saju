@@ -104,7 +104,7 @@ function setup(
               callId,
               executionAttemptId: row.executionAttemptId,
               externalRequestRef: row.externalRequestRef,
-              intentJson: opts.conflictingIntent
+              intentJson: opts.conflictingIntent && sql.includes('WHERE execution_attempt_id = $1::uuid')
                 ? JSON.stringify({ ...JSON.parse(row.intentJson), modelKey: 'wrong-model' })
                 : row.intentJson,
             }));
