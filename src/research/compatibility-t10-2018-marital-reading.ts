@@ -1,4 +1,4 @@
-import type { CanonicalSajuSnapshot, PillarSlot, TenGod } from
+import type { CanonicalSajuSnapshot, PillarSlot } from
   '../contracts/calculation.js';
 import type { PairwiseSourceScopeHandoff } from
   './family-pair-source-scope-handoff.js';
