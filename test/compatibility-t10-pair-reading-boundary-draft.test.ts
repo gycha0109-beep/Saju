@@ -155,6 +155,13 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     );
     expect(mixed?.sentences[0]?.missingPrerequisites)
       .toContain('EXACT_TWO_PERSON_PRIORITIZATION_RULE');
+    expect(mixed?.sentences[0]?.paragraph).toContain('실제 일지 비교는');
+    expect(mixed?.sentences[0]?.paragraph).toContain('첫 번째 사람 연지');
+    expect(mixed?.sentences[0]?.paragraph).toContain('두 번째 사람 연지');
+    const opposite = right?.sections.find(section => section.id === 'mixed_positions');
+    expect(opposite?.sentences[0]?.paragraph).toContain('두 번째 사람 월지');
+    expect(opposite?.sentences[0]?.paragraph)
+      .toContain('실제 관계의 소통이나 갈등을 예측하지 않습니다');
     expect(left?.relationshipOutcome).toBeNull();
   });
 

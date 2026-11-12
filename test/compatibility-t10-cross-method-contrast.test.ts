@@ -59,6 +59,16 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
       })]),
     );
     expect(result?.structural[0]?.paragraph).toContain('우선순위를 증명한');
+    const mixed = result?.structural[0];
+    expect(mixed?.dayFactValues.kind).toBe('branch_six_combination');
+    expect(mixed?.paragraph).toContain('실제 일지 비교는 첫 번째 사람 ' +
+      mixed?.dayFactValues.subject + '과 두 번째 사람 ' +
+      mixed?.dayFactValues.target + '의 육합');
+    expect(mixed?.paragraph).toContain('첫 번째 사람 연지');
+    expect(mixed?.paragraph).toContain('두 번째 사람 연지');
+    expect(mixed?.otherFactPaths.every(item =>
+      mixed.paragraph.includes(item.subjectValue) &&
+      mixed.paragraph.includes(item.targetValue))).toBe(true);
     expect(result?.structural[0]?.netRelationshipMeaning).toBeNull();
     expect(result?.interpersonalConclusion).toBeNull();
     expect(result?.maySell).toBe(false);
@@ -76,6 +86,13 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
       })]),
     );
     expect(result?.structural[0]?.conditionalPriorityEstablished).toBe(false);
+    const mixed = result?.structural[0];
+    expect(mixed?.dayFactValues.kind).toBe('branch_clash');
+    expect(mixed?.paragraph).toContain('실제 일지 비교는 첫 번째 사람 ' +
+      mixed?.dayFactValues.subject + '과 두 번째 사람 ' +
+      mixed?.dayFactValues.target + '의 충');
+    expect(mixed?.paragraph).toContain('첫 번째 사람 연지');
+    expect(mixed?.paragraph).toContain('두 번째 사람 월지');
     expect(result?.compatibilityScore).toBeNull();
   });
 

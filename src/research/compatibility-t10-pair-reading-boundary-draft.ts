@@ -326,6 +326,19 @@ export function buildT10PairReadingBoundaryDraftV1(
       individualRelationshipOutcomeAuthorized: false as const,
     })));
   if (mixed) {
+    const dayKind = mixed.direction === 'day_six_combination_with_other_clash'
+      ? 'branch_six_combination' : 'branch_clash';
+    if (mixed.dayFactValues.kind !== dayKind ||
+        !mixed.dayFactValues.subject || !mixed.dayFactValues.target ||
+        !mixed.otherFactPaths.length ||
+        mixed.otherFactPaths.some(item => item.kind === dayKind ||
+          !item.subjectValue || !item.targetValue ||
+          !mixed.paragraph.includes(item.subjectValue) ||
+          !mixed.paragraph.includes(item.targetValue)) ||
+        !mixed.paragraph.includes(mixed.dayFactValues.subject) ||
+        !mixed.paragraph.includes(mixed.dayFactValues.target)) {
+      throw new TypeError('T10 mixed sentence requires observed values from both charts.');
+    }
     add('mixed_positions', '서로 다른 위치의 상충 구조', [{
       paragraph: mixed.paragraph,
       evidenceLayer: 'unresolved_synthesis',

@@ -24,9 +24,16 @@ type ConflictDirection =
 export interface T10StructuralMethodContrast {
   readonly direction: ConflictDirection;
   readonly dayFactPaths: readonly [string, string];
+  readonly dayFactValues: Readonly<{
+    subject: string;
+    target: string;
+    kind: 'branch_clash' | 'branch_six_combination';
+  }>;
   readonly otherFactPaths: readonly Readonly<{
     subject: string;
     target: string;
+    subjectValue: string;
+    targetValue: string;
     kind: 'branch_clash' | 'branch_six_combination';
     sourceIds: readonly string[];
     definitionContentHash: string;
@@ -103,6 +110,19 @@ function prefix(personRef: string, path: string, subject: PairPerson, target: Pa
     throw new TypeError('Historical method input must belong to a canonical person.');
   }
   return role + '.' + path;
+}
+const BRANCH_POSITION: Readonly<Record<string, string>> = {
+  year: '연지', month: '월지', day: '일지', hour: '시지',
+};
+function branchPosition(path: string, role: 'subject' | 'target'): string {
+  const parts = path.split('.');
+  if (parts.length !== 5 || parts[0] !== role ||
+      parts[1] !== 'pillars' || !parts[2] ||
+      !BRANCH_POSITION[parts[2]] ||
+      parts[3] !== 'value' || parts[4] !== 'branch') {
+    throw new TypeError('Mixed positions must reference original branch slots.');
+  }
+  return BRANCH_POSITION[parts[2]]!;
 }
 function verifiedStructure(
   pair: PairwiseSourceScopeHandoff,
@@ -195,18 +215,35 @@ export function compareT10CrossMethodEvidenceV1(
       direction: sixAtDay ? 'day_six_combination_with_other_clash'
         : 'day_clash_with_other_six_combination',
       dayFactPaths: [match.subject.factPath, match.target.factPath],
+      dayFactValues: {
+        subject: match.subject.value,
+        target: match.target.value,
+        kind: match.kind as 'branch_clash' | 'branch_six_combination',
+      },
       otherFactPaths: others.map(other => ({
         subject: other.subject.factPath,
         target: other.target.factPath,
+        subjectValue: other.subject.value,
+        targetValue: other.target.value,
         kind: other.kind as 'branch_clash' | 'branch_six_combination',
         sourceIds: [...other.sourceIds],
         definitionContentHash: other.definitionContentHash,
       })),
-      paragraph: sixAtDay
-        ? '두 명식의 일지 사이에는 육합이 있고 다른 위치에는 충이 있지만, ' +
-          '두 구조의 효과나 우선순위를 증명한 두 사람 궁합 규칙은 없습니다.'
-        : '두 명식의 일지 사이에는 충이 있고 다른 위치에는 육합이 있지만, ' +
-          '두 구조의 효과나 우선순위를 증명한 두 사람 궁합 규칙은 없습니다.',
+      paragraph: (sixAtDay
+        ? '두 명식의 일지 사이에는 육합이 있고 다른 위치에는 충이 있지만, '
+        : '두 명식의 일지 사이에는 충이 있고 다른 위치에는 육합이 있지만, ') +
+        '두 구조의 효과나 우선순위를 증명한 두 사람 궁합 규칙은 없습니다. ' +
+        '실제 일지 비교는 첫 번째 사람 ' + match.subject.value +
+        '과 두 번째 사람 ' + match.target.value + '의 ' +
+        (sixAtDay ? '육합' : '충') + '입니다. ' +
+        others.map(other => '다른 위치에서는 첫 번째 사람 ' +
+          branchPosition(other.subject.factPath, 'subject') + ' ' +
+          other.subject.value + '과 두 번째 사람 ' +
+          branchPosition(other.target.factPath, 'target') + ' ' +
+          other.target.value + ' 사이에 ' +
+          (other.kind === 'branch_clash' ? '충' : '육합') +
+          '이 관측됩니다.').join(' ') +
+        ' 이 구조들만으로 실제 관계의 소통이나 갈등을 예측하지 않습니다.',
       sources: STRUCTURAL_SOURCES.map(source => source.url),
       conditionalPriorityEstablished: false,
       netRelationshipMeaning: null,

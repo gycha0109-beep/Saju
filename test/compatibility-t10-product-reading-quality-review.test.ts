@@ -71,6 +71,10 @@ describe('T10 product quality: factual material never becomes a complete relatio
     expect(a?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);
     expect(b?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);
     expect(a?.traceAudit.sectionIds).toContain('mixed_positions');
+    const mixed = pair.pairReadingBoundaryDraft?.sections.find(section =>
+      section.id === 'mixed_positions')?.sentences[0];
+    expect(mixed?.paragraph).toContain('실제 일지 비교는');
+    expect(mixed?.paragraph).toContain('다른 위치에서는 첫 번째 사람');
     expect(a?.actualCompatibilityReadingReady).toBe(false);
     expect(b?.actualCompatibilityReadingReady).toBe(false);
   });

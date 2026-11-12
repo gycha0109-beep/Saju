@@ -191,6 +191,8 @@ export function auditT10ProductReadingQualityV1(
   if ((expectedDirection === 'no_source_qualified_mixed_day_structure') !==
       (mixed === undefined) ||
       (mixed && (mixed.sentences.length !== 1 ||
+        !mixed.sentences[0]?.paragraph.includes('실제 일지 비교는 첫 번째 사람') ||
+        !mixed.sentences[0]?.paragraph.includes('다른 위치에서는 첫 번째 사람') ||
         mixed.sentences[0]?.evidenceLayer !== 'unresolved_synthesis' ||
         !mixed.sentences[0]?.missingPrerequisites.includes(
           'EXACT_TWO_PERSON_PRIORITIZATION_RULE') ||
