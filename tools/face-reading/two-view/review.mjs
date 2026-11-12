@@ -25,7 +25,10 @@ import { measureManualPhiltrumRidgeSpacing } from './philtrum-manual-ridge-spaci
 import { attachEyelidContourHumanReview } from './eyelid-contour-human-review-ui.mjs';
 import { compareEyeClassEnvelopeToHumanUpperMargin } from './eyelid-model-human-upper-edge.mjs';
 import { measureManualEyelidLineOffsets } from './eyelid-manual-line-offsets.mjs';
-import { summarizeCurrent2dPhotoEvidence } from './current-2d-evidence-readiness.mjs';
+import {
+  summarizeCurrent2dPhotoEvidence,
+  summarizeCurrent2dSessionCoverage,
+} from './current-2d-evidence-readiness.mjs';
 import { createSourceCurrentnessGate } from './source-currentness-gate.mjs';
 import {
   earBinaryFromOverlayRGBA,
@@ -1408,8 +1411,9 @@ const fr294GapLaneLabels = {
   ear_visibility_then_image_model: 'FR294 · 귀 가시성 확인 후 모델 검증',
   remain_unavailable: 'FR294 · 현행 RGB 관측 불가 유지',
 };
-function renderCurrent2dEvidence(record, result, previous) {
-  const summary = summarizeCurrent2dPhotoEvidence({
+function current2dPhotoSummary(record, previous = false) {
+  const result = results.get(record.captureRef);
+  return summarizeCurrent2dPhotoEvidence({
     viewRole: record.viewRole,
     parsing: result?.parsing,
     previous,
@@ -1421,6 +1425,9 @@ function renderCurrent2dEvidence(record, result, previous) {
     currentEarRevision: state?.earReviews?.[record.captureRef]?.revision,
     eyelidReview: state?.eyelidContourReviews?.[record.captureRef],
   });
+}
+function renderCurrent2dEvidence(record, result, previous) {
+  const summary = current2dPhotoSummary(record, previous);
   const counts = { candidate_only: 0, partial: 0, unavailable: 0, not_evaluated: 0 };
   for (const item of summary.features) counts[item.state]++;
   $('current-2d-evidence-status').textContent =
@@ -1433,6 +1440,18 @@ function renderCurrent2dEvidence(record, result, previous) {
     ' · 미실행 ' +
     counts.not_evaluated +
     ' · 독립 정확도 검증 0 · 정규 관측·전통 판독 불가';
+  const session = summarizeCurrent2dSessionCoverage(
+    records.filter((item) => item.viewRole === 'frontal')
+      .map((item) => current2dPhotoSummary(item)),
+  );
+  $('current-2d-session-status').textContent =
+    '현재 화면에서 검토할 정면 사진 ' + session.includedPhotoCount +
+    '장 · 사진별 6개 항목 총 ' + session.totalPhotoFeatureEntries +
+    '건 중 후보 ' + session.statusCounts.candidate_only +
+    ' · 일부 ' + session.statusCounts.partial +
+    ' · 보류 ' + session.statusCounts.unavailable +
+    ' · 미실행 ' + session.statusCounts.not_evaluated +
+    ' · 이는 관측 근거 확보 현황이며 정확도·인물별 반복성 검증 결과가 아닙니다.';
   const target = $('current-2d-evidence-rows');
   target.replaceChildren();
   const states = {
