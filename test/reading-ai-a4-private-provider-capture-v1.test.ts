@@ -35,6 +35,8 @@ function fixture(
     providerFails?: boolean;
     principal?: string;
     sourceReady?: boolean;
+    intentReady?: boolean;
+    missingIntentTable?: boolean;
     failIntent?: boolean;
     missingIntentRead?: boolean;
     failIntentCommit?: boolean;
@@ -59,6 +61,7 @@ function fixture(
                 currentUser: options.principal ?? 'saju_a4_provider_receipt_writer_v1',
                 receiptTable: 'saju_source_ops.a4_provider_call_signed_receipts_v1',
                 coverageTable: 'saju_source_ops.a4_provider_call_coverage_v1',
+                intentTable: options.missingIntentTable ? null : 'saju_source_ops.a4_provider_dispatch_intents_v1',
                 receiptCallInsert: true,
                 receiptProofInsert: options.sourceReady !== false,
                 receiptCallRead: true,
@@ -69,6 +72,14 @@ function fixture(
                 coverageAttemptRead: true,
                 coverageRefRead: true,
                 coverageProofRead: true,
+                intentCallInsert: true,
+                intentCallRead: true,
+                intentAttemptInsert: true,
+                intentAttemptRead: true,
+                intentRefInsert: true,
+                intentRefRead: true,
+                intentProofInsert: options.intentReady !== false,
+                intentProofRead: true,
               },
             ];
           } else if (sql.startsWith('INSERT INTO saju_source_ops.a4_provider_dispatch_intents_v1')) {
@@ -257,6 +268,23 @@ describe('Admin A4 server-private capture using actual OpenAI adapter callback',
     expect(x.receipts.size).toBe(0);
     expect(x.reports.size).toBe(0);
     expect(x.statements).not.toContainEqual(expect.stringContaining('INSERT INTO'));
+  });
+
+  it.each([
+    { missingIntentTable: true },
+    { intentReady: false },
+  ])('blocks missing pre-network intent storage before single-use admission: %j', async (options) => {
+    const x = fixture(options);
+    await expect(
+      x.capture.withPreparedAttempt({ executionAttemptId: ATTEMPT }, async () =>
+        x.adapter.generateStructured(prompt),
+      ),
+    ).rejects.toThrow('Source receipt writer is not ready');
+    expect(x.providerCalls).toBe(0);
+    expect(x.admissionCalls).toHaveLength(0);
+    expect(x.intents.size).toBe(0);
+    expect(x.receipts.size).toBe(0);
+    expect(x.statements.some((sql) => sql.startsWith('INSERT'))).toBe(false);
   });
 
   it('rejects missing authoritative preadmission before spending a provider call', async () => {

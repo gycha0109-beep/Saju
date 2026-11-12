@@ -146,3 +146,9 @@
 - 새 읽기 전용 `reading-ai-a4-dispatch-receipt-audit-v1.ts`는 보존된 Intent와 서명 영수증의 호출 ID·시도·출처 ref·공급사·모델·요청 ID를 대조한다. 기존 서명/콜백 감사의 HMAC 및 수치 검증을 대체하지 않는다. 미결 Intent·영수증만 존재·불일치·공급사 사용량 미확인·조회 장애를 무료/0원/완전성 확정으로 변환하지 않는다.
 - 테스트는 정상 다건 귀속, 의도 보존 실패 전송 차단, Scope 외 호출 거부, 의도 없는 영수증 차단, 불일치 차단, DB 권한·조회 실패를 오프라인 모의 계층에서 검증한다. 실제 운영 DB 설치·서비스 결속·유료 API 호출·고객 데이터 수정은 없음.
 - **운영 HOLD 유지:** 실제 공급사 전수·청구·환율, Source 전용 운영 DB 설치와 TLS/서비스 계정, Production Interpretation Authority 및 증명/Intent 보존·삭제 정책은 승인·실증 전 미충족. `completeCostCoverage=false`, `invoiceReconciled=false`, 비용 수집 OFF. `ROADMAP_COMPLETE` 아님.
+
+## 2026-11-12 — A4 전송 전 Source 의도 저장소 권한 사전 확인 보강 (오프라인)
+
+- 전송 전 `a4_provider_dispatch_intents_v1` 영구 저장이 추가됨에 따라 기존 Source Writer 읽기 전용 사전 점검에 해당 테이블의 존재와 실제 사용되는 `call_id`, `execution_attempt_id`, `external_request_ref`, `intent` 4개 열의 INSERT/SELECT 권한을 포함한다. 누락 시 단발성 실행 승인 소비 **이전**에 차단한다.
+- 보존된 영수증·콜백 커버리지 점검과 같은 정확한 Source Writer 역할을 유지한다. 인증 토큰·DB 자격증명·유료 호출·스키마 운영 설치·고객/결제 데이터를 변경하지 않고, 테스트 전용 DB 모의 권한/부재 상황을 검증한다.
+- 사전 점검은 실제 이후 INSERT/COMMIT, 실제 네트워크 송신, 공급사 청구·완전성·개인정보 보존 승인을 입증하지 않는다. **`completeCostCoverage=false`, `invoiceReconciled=false`, 운영 비용 수집 OFF, `ROADMAP_COMPLETE` 아님.**

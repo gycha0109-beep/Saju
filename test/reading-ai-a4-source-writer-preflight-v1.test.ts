@@ -6,6 +6,7 @@ const READY = {
   currentUser: 'saju_a4_provider_receipt_writer_v1',
   receiptTable: 'saju_source_ops.a4_provider_call_signed_receipts_v1',
   coverageTable: 'saju_source_ops.a4_provider_call_coverage_v1',
+  intentTable: 'saju_source_ops.a4_provider_dispatch_intents_v1',
   receiptCallInsert: true,
   receiptProofInsert: true,
   receiptCallRead: true,
@@ -16,6 +17,14 @@ const READY = {
   coverageAttemptRead: true,
   coverageRefRead: true,
   coverageProofRead: true,
+  intentCallInsert: true,
+  intentCallRead: true,
+  intentAttemptInsert: true,
+  intentAttemptRead: true,
+  intentRefInsert: true,
+  intentRefRead: true,
+  intentProofInsert: true,
+  intentProofRead: true,
 };
 
 function fixture(values: Partial<typeof READY> = {}, failure?: 'connect' | 'query' | 'commit') {
@@ -49,6 +58,7 @@ describe('A4 Source receipt writer read-only dispatch preflight', () => {
     await expect(assertSajuA4SourceWriterReadyV1(x.pool)).resolves.toBeUndefined();
     expect(x.statements[0]).toBe('BEGIN READ ONLY');
     expect(x.statements[1]).toContain('has_column_privilege');
+    expect(x.statements[1]).toContain('saju_source_ops.a4_provider_dispatch_intents_v1');
     expect(x.statements.at(-1)).toBe('COMMIT');
     expect(x.statements.some((sql) => /^(?:INSERT|UPDATE|DELETE)\b/iu.test(sql))).toBe(false);
     expect(x.releases).toEqual([undefined]);
@@ -58,6 +68,15 @@ describe('A4 Source receipt writer read-only dispatch preflight', () => {
     [{ currentUser: 'saju_a4_provider_receipt_reader_v1' }, 'wrong principal'],
     [{ receiptTable: null }, 'missing receipts table'],
     [{ coverageTable: null }, 'missing coverage table'],
+    [{ intentTable: null }, 'missing pre-send intent table'],
+    [{ intentCallInsert: false }, 'intent call INSERT revoked'],
+    [{ intentAttemptInsert: false }, 'intent attempt INSERT revoked'],
+    [{ intentRefInsert: false }, 'intent ref INSERT revoked'],
+    [{ intentProofInsert: false }, 'intent JSON INSERT revoked'],
+    [{ intentCallRead: false }, 'intent call SELECT revoked'],
+    [{ intentAttemptRead: false }, 'intent attempt SELECT revoked'],
+    [{ intentRefRead: false }, 'intent ref SELECT revoked'],
+    [{ intentProofRead: false }, 'intent JSON SELECT revoked'],
     [{ receiptCallInsert: false }, 'receipt INSERT revoked'],
     [{ coverageProofInsert: false }, 'coverage INSERT revoked'],
     [{ receiptProofRead: false }, 'receipt read revoked'],
