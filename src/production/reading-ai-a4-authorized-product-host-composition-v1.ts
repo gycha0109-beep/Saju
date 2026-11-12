@@ -26,7 +26,7 @@ import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../reading/governed-reading-ex
  * One capture instance is bound simultaneously to:
  * - the actual OpenAIResponsesNarrativeAdapter onProviderCall; and
  * - the private authenticated /api/readings host withPreparedAttempt.
- * A separate injected observer/capture, alternate provider transport/endpoint,
+ * An injected dispatch-intent callback or observer/capture, alternate provider transport/endpoint,
  * or fake source-ref factory is denied. The offline adapter tests may mock
  * fetch separately, but the official A4 host must use the real HTTPS endpoint.
  *
@@ -36,7 +36,7 @@ export function createUnstartedSajuA4CapturedProductionHostV1(
   input: Readonly<{
     production: ProductionCompositionRequest;
     narrativePolicy: NarrativePolicy;
-    openAI: Omit<OpenAIResponsesAdapterConfig, 'onProviderCall'>;
+    openAI: Omit<OpenAIResponsesAdapterConfig, 'onProviderCall' | 'onBeforeProviderRequest'>;
     host: Omit<MyeonghwaProductionProductHostServerOptions, 'a4SourceCapture'>;
     a4: SajuA4AuthenticatedCaptureConfigV1;
   }>,
@@ -53,6 +53,7 @@ export function createUnstartedSajuA4CapturedProductionHostV1(
     !input.a4 ||
     'legacyNarrativeRuntime' in input.production ||
     'onProviderCall' in input.openAI ||
+    'onBeforeProviderRequest' in input.openAI ||
     'fetchImpl' in input.openAI ||
     (input.openAI.endpoint !== undefined && input.openAI.endpoint !== OPENAI_RESPONSES_ENDPOINT) ||
     'a4SourceCapture' in input.host ||

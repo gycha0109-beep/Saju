@@ -404,6 +404,83 @@ describe('OpenAI Responses narrative adapter', () => {
     expect(serialized).not.toContain('output_text');
   });
 
+
+  test('fails closed before network when private dispatch evidence preparation fails', async () => {
+    const fetchImpl = vi.fn<OpenAIFetch>(async () => completedResponse());
+    const settled = vi.fn();
+    const preflight = vi.fn(async () => {
+      throw new Error('offline Source dispatch evidence store');
+    });
+    const adapter = new OpenAIResponsesNarrativeAdapter({
+      apiKey: 'do-not-send-secret',
+      fetchImpl,
+      onBeforeProviderRequest: preflight,
+      onProviderCall: settled,
+    });
+    await expect(adapter.generateStructured(prompt)).rejects.toMatchObject({
+      code: 'CONFIGURATION_ERROR',
+      message: 'Provider dispatch evidence preflight failed; request was not sent.',
+    });
+    expect(preflight).toHaveBeenCalledTimes(1);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(settled).not.toHaveBeenCalled();
+  });
+
+  test('links a private pre-network intent to exactly the same settled call ID', async () => {
+    const sequence: string[] = [];
+    const intents: Array<{ callId: string; requestId: string }> = [];
+    const settled: Array<{ callId: string }> = [];
+    const adapter = new OpenAIResponsesNarrativeAdapter({
+      apiKey: 'do-not-send-secret',
+      onBeforeProviderRequest: async (intent) => {
+        sequence.push('intent');
+        intents.push(intent);
+        expect(intent).toMatchObject({
+          providerKey: 'openai',
+          requestId: prompt.requestId,
+          modelKey: 'gpt-5.6-terra',
+          preparedAt: expect.any(String),
+        });
+        expect(JSON.stringify(intent)).not.toContain('do-not-send-secret');
+        expect(JSON.stringify(intent)).not.toContain('birth');
+        expect(JSON.stringify(intent)).not.toContain('output_text');
+      },
+      fetchImpl: async () => {
+        sequence.push('network');
+        return completedResponse();
+      },
+      onProviderCall: (observation) => {
+        sequence.push('settled');
+        settled.push(observation);
+      },
+    });
+    expect(await adapter.generateStructured(prompt)).toEqual(validDraft);
+    expect(sequence).toEqual(['intent', 'network', 'settled']);
+    expect(intents).toHaveLength(1);
+    expect(settled).toHaveLength(1);
+    expect(intents[0]?.callId).toEqual(settled[0]?.callId);
+  });
+
+  test('preserves intent/callback IDs even when the transport fails', async () => {
+    const intents: string[] = [];
+    const outcomes: Array<{ callId: string; outcome: string }> = [];
+    const adapter = new OpenAIResponsesNarrativeAdapter({
+      apiKey: 'do-not-send-secret',
+      onBeforeProviderRequest: async (intent) => { intents.push(intent.callId); },
+      onProviderCall: async (observation) => {
+        outcomes.push({ callId: observation.callId, outcome: observation.outcome });
+      },
+      fetchImpl: async () => {
+        throw new Error('offline network failure');
+      },
+    });
+    await expect(adapter.generateStructured(prompt)).rejects.toMatchObject({
+      code: 'NETWORK_ERROR',
+    });
+    expect(intents).toHaveLength(1);
+    expect(outcomes).toEqual([{ callId: intents[0], outcome: 'network_failure' }]);
+  });
+
   test('records an observed attempt with unknown usage when response omits usage', async () => {
     const events: unknown[] = [];
     const adapter = new OpenAIResponsesNarrativeAdapter({
