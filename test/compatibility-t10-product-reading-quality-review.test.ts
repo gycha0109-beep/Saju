@@ -180,8 +180,8 @@ describe('T10 product quality: factual material never becomes a complete relatio
     }));
     const alteredWithMatchingText = {
       ...altered,
-      koreanReadingDraft: altered.sections.map(section => section.title + '\\n' +
-        section.sentences.map(sentence => sentence.paragraph).join('\\n')).join('\\n\\n'),
+      koreanReadingDraft: altered.sections.map(section => section.title + '\n' +
+        section.sentences.map(sentence => sentence.paragraph).join('\n')).join('\n\n'),
     };
     expect(() => auditFromSource(alteredWithMatchingText))
       .toThrow('not reproduced from original source-bound charts');
