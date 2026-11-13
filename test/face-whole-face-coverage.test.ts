@@ -9,6 +9,8 @@ import {
   traceWholeFaceSourceGaps,
   SOURCE_TRACE_VERSION,
   traceWholeFaceExtensionRequirements,
+  summarizeWholeFacePerFeatureReadiness,
+  WHOLE_FACE_READINESS_ROLLUP_VERSION,
 } from '../tools/face-reading/two-view/feature-coverage.mjs';
 import {
   METHOD_VERSION,
@@ -156,6 +158,47 @@ describe('local canonical whole-face coverage audit', () => {
         { captureRef: 'capture-04', viewRole: 'profile', metrics: [] },
       ]),
     ).toThrow('COVERAGE_CAPTURE_INVALID');
+  });
+
+  it('rolls up existing per-photo failure reasons without exposing private captures', () => {
+    const summary = summarizeWholeFacePerFeatureReadiness(FR293_PRODUCT_COLUMN_MAP, [
+      { captureRef: 'capture-01', viewRole: 'frontal', metrics: metrics('capture-01') },
+      { captureRef: 'capture-02', viewRole: 'frontal', metrics: [] },
+      { captureRef: 'capture-03', viewRole: 'profile', metrics: metrics('capture-03') },
+    ]);
+    expect(summary).toMatchObject({
+      schemaVersion: WHOLE_FACE_READINESS_ROLLUP_VERSION,
+      photoCount: 3,
+      canonicalFeatureCount: 29,
+      canonicalCalculatorCount: 18,
+      canonicalHardGapCount: 11,
+      independentAccuracyValidated: false,
+      traditionalBindingAuthorized: false,
+      sourcePhotoOrCaptureRefsEmitted: false,
+    });
+    expect(summary.features.length).toBe(29);
+    const eye = summary.features.find((row) => row.featureKey === 'eye.width_height_ratio');
+    expect(eye?.statusCounts).toMatchObject({
+      candidate_only: 1,
+      not_evaluated: 1,
+      unavailable: 1,
+    });
+    expect(eye?.reasonCounts).toMatchObject({
+      ENGINEERING_PROXY_NOT_CANONICAL: 1,
+      PHOTO_RUN_EVIDENCE_MISSING: 1,
+      FRONTAL_CAPTURE_REQUIRED: 1,
+    });
+    const ear = summary.features.find(
+      (row) => row.featureKey === 'ear.thickness_attachment_canal_boundary',
+    );
+    expect(ear?.reasonCounts.CURRENT_RGB_AUTHORITY_UNAVAILABLE).toBe(3);
+    expect(
+      Object.values(summary.statusCounts).reduce((total, count) => total + count, 0),
+    ).toBe(87);
+    const json = JSON.stringify(summary);
+    expect(json).not.toContain('capture-01');
+    expect(json).not.toContain('capture-02');
+    expect(json).not.toContain('capture-03');
   });
 
   it('never emits raw private paths, face IDs, landmarks or original saved geometry', () => {

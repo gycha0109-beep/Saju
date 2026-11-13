@@ -19,6 +19,7 @@ import {
   summarizeWholeFaceCoverage,
   traceWholeFaceSourceGaps,
   traceWholeFaceExtensionRequirements,
+  summarizeWholeFacePerFeatureReadiness,
 } from '../../tools/face-reading/two-view/feature-coverage.mjs';
 import { FR282_RGB_SELFIE_FEATURE_ENTRIES } from '../../.face-reading-dist/rgb-selfie-feature-authority-matrix-fr282.js';
 
@@ -223,6 +224,11 @@ async function main() {
     local.records,
     local.humanReviews,
   );
+  const perFeatureReadiness = summarizeWholeFacePerFeatureReadiness(
+    FR293_PRODUCT_COLUMN_MAP,
+    local.records,
+    local.humanReviews,
+  );
   const extensionRequirements = traceWholeFaceExtensionRequirements(
     await readFile(resolve('research/face-reading/whole-face-feature-mapping-20261105.md'), 'utf8'),
     FR293_PRODUCT_COLUMN_MAP.map((column) => column.featureKey),
@@ -233,6 +239,7 @@ async function main() {
       {
         ...report,
         sourceTrace,
+        perFeatureReadiness,
         extensionRequirements,
         evidenceSource: schemaOnly
           ? 'canonical_schema_only'

@@ -482,3 +482,62 @@ export function traceWholeFacePerCaptureReadiness(columns, captures, humanReview
     captures: Object.freeze(rows),
   });
 }
+
+export const WHOLE_FACE_READINESS_ROLLUP_VERSION =
+  'local-whole-face-feature-readiness-rollup@0.1.0';
+
+// Aggregate only the existing per-photo readiness decisions. No raw capture
+// reference, photo data, model contour or human mark leaves this projection.
+export function summarizeWholeFacePerFeatureReadiness(columns, captures, humanReviews = []) {
+  const readiness = traceWholeFacePerCaptureReadiness(columns, captures, humanReviews);
+  const states = Object.keys(readiness.statusCounts);
+  const byFeature = new Map(
+    columns.map((column) => [
+      column.featureKey,
+      {
+        featureKey: column.featureKey,
+        statusCounts: Object.fromEntries(states.map((state) => [state, 0])),
+        reasonCounts: {},
+      },
+    ]),
+  );
+  for (const capture of readiness.captures) {
+    for (const item of capture.features) {
+      const feature = byFeature.get(item.featureKey);
+      if (!feature || !Object.hasOwn(feature.statusCounts, item.state))
+        throw Error('PER_CAPTURE_READINESS_SOURCE_MISMATCH');
+      feature.statusCounts[item.state]++;
+      feature.reasonCounts[item.reason] = (feature.reasonCounts[item.reason] || 0) + 1;
+    }
+  }
+  const features = [...byFeature.values()].map((feature) => {
+    if (Object.values(feature.statusCounts).reduce((sum, n) => sum + n, 0) !== readiness.photoCount)
+      throw Error('PER_CAPTURE_READINESS_SOURCE_MISMATCH');
+    return Object.freeze({
+      featureKey: feature.featureKey,
+      statusCounts: Object.freeze(feature.statusCounts),
+      reasonCounts: Object.freeze(feature.reasonCounts),
+    });
+  });
+  for (const state of states) {
+    if (
+      features.reduce((sum, feature) => sum + feature.statusCounts[state], 0) !==
+      readiness.statusCounts[state]
+    )
+      throw Error('PER_CAPTURE_READINESS_SOURCE_MISMATCH');
+  }
+  return Object.freeze({
+    schemaVersion: WHOLE_FACE_READINESS_ROLLUP_VERSION,
+    lifecycle: 'local_research_only',
+    photoCount: readiness.photoCount,
+    canonicalFeatureCount: readiness.canonicalFeatureCount,
+    canonicalCalculatorCount: readiness.canonicalCalculatorCount,
+    canonicalHardGapCount: readiness.canonicalHardGapCount,
+    statusCounts: readiness.statusCounts,
+    independentAccuracyValidated: false,
+    traditionalBindingAuthorized: false,
+    productionAuthorized: false,
+    sourcePhotoOrCaptureRefsEmitted: false,
+    features: Object.freeze(features),
+  });
+}
