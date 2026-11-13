@@ -31,3 +31,6 @@ export {
 export {
   PRODUCT_READING_RESPONSE_ADMISSION_HEADER,
 } from './host/http-server.js';
+export {
+  createUnstartedSajuA4DeterministicReadingHostV1,
+} from './production/reading-ai-a4-authorized-product-host-composition-v1.js';

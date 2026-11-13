@@ -9,6 +9,7 @@ import {
   createAuthorizedMyeonghwaProductionHostServer,
   inspectMyeonghwaProductionComposition,
   ProductionCompositionBlockedError,
+  type MyeonghwaAuthorizedProductionHostServerOptions,
   type ProductionCompositionRequest,
 } from './production-composition.js';
 import type { MyeonghwaProductionProductHostServerOptions } from '../host/http-server.js';
@@ -17,6 +18,29 @@ import {
   type SajuA4AuthenticatedCaptureConfigV1,
 } from './reading-ai-a4-authenticated-capture-composition-v1.js';
 import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../reading/governed-reading-execution.js';
+
+/** Mounts the paid Reading path on the existing single-use A4 capture. */
+export function createUnstartedSajuA4DeterministicReadingHostV1(input: Readonly<{
+  production: Omit<ProductionCompositionRequest, 'legacyNarrativeRuntime'>;
+  host: Omit<MyeonghwaAuthorizedProductionHostServerOptions, 'a4SourceCapture' | 'productionIssueProof'>;
+  issueProof: NonNullable<MyeonghwaAuthorizedProductionHostServerOptions['productionIssueProof']>;
+  a4: SajuA4AuthenticatedCaptureConfigV1;
+}>): Server {
+  if (!input?.production || !input.host || !input.issueProof || !input.a4 ||
+    'legacyNarrativeRuntime' in input.production || 'a4SourceCapture' in input.host ||
+    'productionIssueProof' in input.host || input.a4.fetchImpl !== undefined ||
+    input.a4.sourceRefFactory !== undefined) {
+    throw new TypeError('Deterministic Saju issue requires the governed host and A4 transport.');
+  }
+  const inspection = inspectMyeonghwaProductionComposition(input.production);
+  if (inspection.status === 'blocked') throw new ProductionCompositionBlockedError(inspection.blockers);
+
+  return createAuthorizedMyeonghwaProductionHostServer(input.production, {
+    ...input.host,
+    productionIssueProof: input.issueProof,
+    a4SourceCapture: createSajuA4AuthenticatedCaptureCompositionV1(input.a4),
+  });
+}
 
 /**
  * Pure unmounted composition. Reuses the already-governed production
