@@ -368,6 +368,83 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
     expect(output.maySell).toBe(false);
   });
 
+  it('binds the author excerpt combination and clash inputs only to original personal-chart relations', () => {
+    const first = birth(1990, 5, 15, 'male');
+    const second = birth(1996, 6, 5, 'female');
+    const now = new Date('2026-11-11T00:00:00.000Z');
+    const originals = [
+      calculateAuthorizedMyeonghwaProductionSnapshot(first, { now }).snapshot,
+      calculateAuthorizedMyeonghwaProductionSnapshot(second, { now }).snapshot,
+    ];
+    const output = run(first, second);
+    const items = output.tenGodCourseResearch?.courses ?? [];
+    expect(items).toHaveLength(6);
+    for (const course of items) {
+      const snapshot = course.historicalRole === 'male' ? originals[0]! : originals[1]!;
+      const upstream = snapshot.derivedFacts.structuralRelations;
+      const rows = upstream?.status === 'resolved' ? upstream.value : [];
+      for (const group of course.methodInputAudit.inspectedGroups) {
+        expect(group.sourceStructuralObservation).toBe(
+          course.methodInputAudit.sourceStep === 3
+            ? 'not_graded_at_strength_stage'
+            : upstream?.status === 'resolved' ? 'available' : 'unresolved',
+        );
+        const observed = course.groups.find(item => item.group === group.group);
+        const sourceMatching = course.methodInputAudit.sourceStep === 3 ? []
+          : (observed?.actualVisiblePositions ?? []).flatMap(position => {
+            const pillar = snapshot.pillars[position.slot];
+            if (pillar.status !== 'resolved') return [];
+            return rows.filter(relation =>
+              (position.channel === 'stem'
+                ? relation.kind === 'stem_five_combination'
+                : relation.kind === 'branch_six_combination' ||
+                  relation.kind === 'branch_clash' ||
+                  relation.kind === 'branch_three_combination') &&
+              relation.participants.some(p =>
+                p.pillar === position.slot && p.component === position.channel &&
+                p.value === pillar.value[position.channel].value));
+          });
+        expect(group.matchingWithinChartStructuralCandidates.map(r => r.relationId))
+          .toEqual(sourceMatching.map(r => r.relationId));
+        for (const match of group.matchingWithinChartStructuralCandidates) {
+          const relation = rows.find(r => r.relationId === match.relationId);
+          expect(relation?.kind).toBe(match.kind);
+          expect(match.upstreamStructuralSourceIds).toEqual(relation?.sourceIds);
+          expect(match.sourceQualifiedAuthorPenalty).toBe(false);
+          const [prefix, slot, value, component] = match.originalParticipantFactPath.split('.');
+          expect(prefix).toBe('pillars');
+          expect(value).toBe('value');
+          const original = snapshot.pillars[slot as PillarSlot];
+          expect(original.status).toBe('resolved');
+          if (original.status !== 'resolved') throw new TypeError('Missing original pillar.');
+          expect(original.value[component as 'stem' | 'branch'].value)
+            .toBe(match.originalParticipantValue);
+          expect(match.observedTenGodFactPath)
+            .toBe('derivedFacts.tenGods.' + slot + '.' + component);
+          expect(match.otherOriginalParticipantFactPaths).toEqual(
+            relation?.participants.filter(p => p.pillar !== slot)
+              .map(p => 'pillars.' + p.pillar + '.value.' + p.component));
+        }
+      }
+      expect(course.methodInputAudit.originalCombinationClashEffectsSettled).toBe(false);
+      expect(course.methodInputAudit.completeAuthorStemClashConditionsAvailable).toBe(false);
+      expect(course.methodInputAudit.sourceGrade).toBeNull();
+      expect(course.grade).toBeNull();
+    }
+    const reversed = run(second, first).tenGodCourseResearch?.courses;
+    expect(reversed?.map(x => [
+      x.courseId, x.calculationHash,
+      x.methodInputAudit.inspectedGroups.map(g => g.matchingWithinChartStructuralCandidates),
+    ])).toEqual(items.map(x => [
+      x.courseId, x.calculationHash,
+      x.methodInputAudit.inspectedGroups.map(g => g.matchingWithinChartStructuralCandidates),
+    ]));
+    expect(output.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
+    expect(run(first, second, false).tenGodCourseResearch).toBeUndefined();
+    expect(output.maySell).toBe(false);
+  });
+
   it('keeps course input ownership after reversal and refuses unknown historical roles', () => {
     const first = birth(1990, 5, 15, 'male', false);
     const second = birth(1996, 6, 5, 'female');
