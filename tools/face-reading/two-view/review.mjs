@@ -32,6 +32,7 @@ import {
 } from './current-2d-evidence-readiness.mjs';
 import { createSourceCurrentnessGate } from './source-currentness-gate.mjs';
 import { sweepCurrent2dPreviewCandidates } from './current-2d-preview-sweep.mjs';
+import { summarizeSamePhotoHumanModelCoverage } from './same-photo-human-model-coverage.mjs';
 import {
   earBinaryFromOverlayRGBA,
   measureVisibleEarMaskSilhouette,
@@ -1430,6 +1431,97 @@ function current2dPhotoSummary(record, previous = false) {
     eyelidReview: state?.eyelidContourReviews?.[record.captureRef],
   });
 }
+// Use only current SHA-checked local reviews. The existing per-photo comparison
+// functions do the calculation; the rollup receives statuses only, never offsets.
+function currentSamePhotoHumanModelCoverage() {
+  const blocked = {
+    eyelid:
+      state?.eyelidContourReviewRestoreFailed === true ||
+      (state?.eyelidContourReviewStaleCount || 0) > 0,
+    lip: state?.lipReviewRestoreFailed === true || (state?.lipReviewStaleCount || 0) > 0,
+    ear: state?.earReviewRestoreFailed === true || (state?.earReviewStaleCount || 0) > 0,
+  };
+  const captures = records.map((record) => {
+    const current = results.get(record.captureRef);
+    const frontal =
+      record.viewRole === 'frontal' &&
+      current?.parsing?.status === 'completed' &&
+      current.parsing.methodVersion === PARSING_VERSION;
+    const eyelid = state?.eyelidContourReviews?.[record.captureRef];
+    const lip = state?.lipReviews?.[record.captureRef];
+    const ear = state?.earReviews?.[record.captureRef];
+    const eyeModel = frontal && current?.eyeClassCandidate?.status === 'available';
+    const lipModel = frontal && current?.lipClassCandidate?.status === 'available';
+    const earModel = frontal && current?.earMaskCandidate?.status === 'available';
+    const comparedEye = eyeModel && eyelid && !blocked.eyelid
+      ? compareEyeClassEnvelopeToHumanUpperMargin(current.eyeClassCandidate, eyelid)
+      : null;
+    const comparedLip = lipModel && lip && !blocked.lip
+      ? compareLipClassWidthsToHumanBorders(current.lipClassCandidate, lip)
+      : null;
+    const cachedEar = current?.earRimCurveComparison;
+    const comparedEar =
+      earModel && ear && !blocked.ear && cachedEar?.revision === ear.revision &&
+      cachedEar.status === 'completed'
+        ? cachedEar.value
+        : null;
+    const comparison = (human, modelAvailable, outcome, storeFailed) => ({
+      humanReviewRecorded: Boolean(human),
+      modelCandidateAvailable: Boolean(modelAvailable),
+      comparisonStatus:
+        record.viewRole === 'frontal' && outcome && !storeFailed &&
+        ['available', 'partial', 'unavailable'].includes(outcome.status)
+          ? outcome.status
+          : 'not_run',
+      reviewStoreUnavailable: storeFailed,
+    });
+    return {
+      viewRole: record.viewRole,
+      poseProvisional: state?.researchIntake?.viewRoleRouting ===
+        'provisional_frontal_for_research_only',
+      comparisons: {
+        eyelid: comparison(eyelid, eyeModel, comparedEye, blocked.eyelid),
+        lip: comparison(lip, lipModel, comparedLip, blocked.lip),
+        ear: comparison(ear, earModel, comparedEar, blocked.ear),
+      },
+    };
+  });
+  return summarizeSamePhotoHumanModelCoverage(captures);
+}
+function renderSamePhotoHumanModelCoverage() {
+  const report = currentSamePhotoHumanModelCoverage();
+  const totals = report.statusCounts;
+  $('human-model-comparison-status').textContent =
+    '기존 사진 ' + report.photoCount + '장 · 눈꺼풀/입술/귀 3개 비교 경로 ' +
+    report.photoFeatureCount + '건 중 동일 사진 연구용 비교 ' +
+    (totals.research_comparison_available + totals.research_comparison_partial) +
+    '건 · 사람 표시 없음 ' + totals.human_review_missing +
+    '건 · 모델 후보 없음 ' + totals.model_candidate_missing +
+    '건 · 비교 미실행 ' + totals.comparison_not_run +
+    '건 · 비교 불가 ' + totals.noncomparable +
+    '건 · 자세 임시 지정 ' + report.provisionalPosePhotos +
+    '장. 독립 사람 정답/정확도 검증은 0건입니다.';
+  const rows = $('human-model-comparison-rows');
+  rows.replaceChildren();
+  for (const feature of report.features) {
+    const p = document.createElement('p');
+    p.className = 'note';
+    const name = document.createElement('strong');
+    name.textContent = feature.label + ' · ';
+    const detail = document.createElement('span');
+    detail.textContent =
+      '사람 표시 없음 ' + feature.human_review_missing +
+      ' / 모델 후보 없음 ' + feature.model_candidate_missing +
+      ' / 비교 미실행 ' + feature.comparison_not_run +
+      ' / 조건 불일치 ' + feature.noncomparable +
+      ' / 연구용 비교 가능·부분 ' +
+      (feature.research_comparison_available + feature.research_comparison_partial) +
+      ' / 검토 기록 오류·변경 ' + feature.review_store_unavailable +
+      ' / 정면 비교 부적합 ' + feature.view_ineligible;
+    p.append(name, detail);
+    rows.append(p);
+  }
+}
 function renderCurrent2dEvidence(record, result, previous) {
   const summary = current2dPhotoSummary(record, previous);
   const counts = { candidate_only: 0, partial: 0, unavailable: 0, not_evaluated: 0 };
@@ -1784,6 +1876,7 @@ function render() {
   const parsing = previous ? result?.previousParsing : result?.parsing;
   renderPhotoReadiness(record);
   renderCurrent2dEvidence(record, result, previous);
+  renderSamePhotoHumanModelCoverage();
   $('reading-evidence').replaceChildren();
   const cards = state.readingCatalogue
     ? assessMorphology({ record, result, catalogue: state.readingCatalogue, previous })
@@ -2529,6 +2622,7 @@ window.twoViewSnapshot = () => ({
       .filter((item) => item.viewRole === 'frontal')
       .map((item) => current2dPhotoSummary(item)),
   ),
+  humanModelComparisonCoverage: currentSamePhotoHumanModelCoverage(),
   current2dReasonDiagnostics: diagnoseCurrent2dSessionEvidence(
     records
       .filter((item) => item.viewRole === 'frontal')
