@@ -98,10 +98,63 @@
 - 검증 범위는 **Saju에 관측되어 보존된 콜백과 영수증의 정합성**뿐이다. 외부 공급사 전체 API 호출 수·청구·사용량 완전성, 실제 서비스 설치, 명하 비용 Writer의 운영 바인딩 및 Production Interpretation Authority를 입증하지 못한다. **`completeCostCoverage=false`, 비용 수집 OFF, `ROADMAP_COMPLETE` 아님.**
 
 
-## 2026-11-11 ? A4 ?? ??? ?? ?? ?? (????)
 
-- Saju PR #2777 (HEAD 78ccaddf1f42d6d2d6a4db8e398967c9e270fb49) ?? ?? CI [#42969724190](https://github.com/gycha0109-beep/Saju/actions/runs/42969724190) SUCCESS, ?? ?? 2095a77c8be599166ac6c378e02dfb892f2ce45e ??.
-- ?? A4 Production Host?? ??? HTTP ?? ?? fetchImpl ??? ?? OpenAI Responses ?? ? ????? ??? ??? ????. ???? Production ?? ??, Source ??, ?? ? DB ?? ??? ????.
-- ???? ???? ?? ?? ??? ?? ??? ?? ?? ??? ????. ?? ?? API ??? ??.
-- ? ??? ?? Host? ?? ?? ?? ??? ????. ???? ?? ?? ?? ??, ???? ?? ? ??, ?? ??? ??? ???? ???. completeCostCoverage=false, ?? ?? ?? OFF ??.
-- ?? Source DB ? ?? ?? DB ??, ?? ??? ??/???/TLS, Production Interpretation Authority, ???? ??/?? ??, ??? ??/?? ??? HOLD. ?? ??? DB ??? ?? ???.
+## 2026-11-11 — A4 공식 공급사 전송 경계 강화 (오프라인)
+
+- Saju PR #2777: HEAD 78ccaddf1f42d6d2d6a4db8e398967c9e270fb49, 필수 통합 검사 https://github.com/gycha0109-beep/Saju/actions/runs/42969724190 성공, 병합 2095a77c8be599166ac6c378e02dfb892f2ce45e.
+- Saju PR #2778: 공식 Production Host에서 다른 HTTP 전송 함수 주입과 정본 OpenAI Responses 이외의 API 주소를 차단한다. 기존 해석 승인·호출 증명·DB 검증을 유지한다.
+- 관련 테스트 4건, 타입·코드·서식 검사 통과. 필수 통합 검사 https://github.com/gycha0109-beep/Saju/actions/runs/42974983168 성공, 병합 7d962c5015b7721f04b2603fe13041255e520fc9.
+- 외부 공급사의 실제 전체 호출 및 청구 비용은 이 검증으로 증명되지 않는다. completeCostCoverage=false, 운영 비용 수집 OFF.
+
+## 2026-11-11 — A4 영수증 전용 저장소 호출 전 점검 (오프라인)
+
+- src/production/reading-ai-a4-source-writer-preflight-v1.ts: Reading의 일회성 실행 승인을 소비하거나 유료 공급사 호출을 시작하기 전에 Source 영수증 Writer의 DB 연결을 읽기 전용 거래로 점검한다.
+- 정확한 DB 역할 saju_a4_provider_receipt_writer_v1, 서명 영수증·콜백 커버리지 테이블의 존재, 필요한 각 열의 SELECT·INSERT 권한을 확인한다. 접속·권한·테이블·거래 종료 오류는 즉시 차단한다.
+- src/production/reading-ai-a4-private-provider-capture-v1.ts: 위 점검을 정본 실행 시도 승인 이전에 수행해 불필요한 승인 소비와 비용 발생 위험을 줄인다.
+- 기존 테스트와 신규 점검 테스트 총 22건 통과, 타입·코드·서식 검사 통과. 실제 유료 API 호출이나 운영 DB 변경·서비스 설치는 수행하지 않았다.
+- 이 읽기 전용 사전 점검은 향후 INSERT 성공, 실제 공급사 호출 전수, 청구서와 비용의 일치를 보장하지 않는다. completeCostCoverage=false, 비용 수집 OFF.
+- 남은 차단 조건: 독립 Source DB 및 명하 증명 DB의 운영 설치·전용 계정·TLS, Production Interpretation Authority, 개인정보 증명 보존·삭제 정책, 실제 청구·환율 대조.
+
+### 2026-11-11 — 영수증 Writer 사전 점검 도입 후 기존 회귀 테스트 수정
+
+- PR #2779 초기 HEAD c28400da5171bcbf45d30c876a936af58e4e34f9의 CI Tests (13/16)에서 688건 중 4건 실패: 새 호출 전 영수증 Writer DB 준비 점검을 기존 test/reading-ai-a4-coverage-gate.test.ts의 모의 DB가 반환하지 않아 실제 정상 경로까지 사전 차단되었다.
+- 실패 기록: https://github.com/gycha0109-beep/Saju/actions/runs/42977260420/job/130381015760
+- 모의 Source Reader/Writer의 준비 상태에 정본 테이블 식별자, 정확한 역할 및 기존 최소 열 권한을 추가했다. 실제 구현의 차단 조건, Production 해석 승인 및 Source 서명 검증은 변경하지 않았다.
+- 직접 관련된 4개 테스트 파일의 26건을 재실행해 PASS. 실제 운영 API 호출, 유료 토큰 사용, 운영 DB 설치·수정 및 비용 수집은 계속 없음.
+- 새 커밋의 일반 CI·필수 Integration은 별도 성공 근거 확인 전까지 미완료로 취급한다. completeCostCoverage=false, 운영 수집 OFF 유지.
+
+## 2026-11-12 — A4 실제 공급사 요청 직전 서버 전용 전달 의도 경계 (오프라인)
+
+- `OpenAIResponsesNarrativeAdapter`에 `onBeforeProviderRequest(intent)` 서버 전용 선택적 콜백을 추가했다. 생성된 `callId`, `requestId`, `providerKey`, `modelKey`, `preparedAt`만 공개하며 실제 요청 전송 본문·프롬프트·출생 데이터·API 키·공급사 응답 ID는 포함하지 않는다.
+- 검증/기록용 콜백이 실패하면 HTTP 요청 전에 즉시 중단하는 **fail-closed** 경계다. 콜백 성공 후에만 기존 HTTP fetch가 시작되며, 종료 콜백(`onProviderCall`)은 같은 `callId`를 유지한다. 일반 adapter의 선택적 호출 방식은 그대로 보존한다.
+- A4 공식 Production Host는 임의 `onBeforeProviderRequest` 주입을 거부한다. **현재 A4 capture에 이 콜백을 설치하지 않았고**, 지속 저장 Source dispatch intent Writer, 단건 송신 여부 확인, 프로세스 강제 종료 복구, 공급사 청구 전수 대조는 후속 미완료 조건이다. 이 코드를 운영 활성화로 해석하면 안 된다.
+- 테스트는 기록 실패 시 네트워크 요청 0건, 송신 전 의도와 종료 콜백의 동일 식별자, 전송 장애 시 동일 call ID, 공식 A4 Host의 외부 콜백 차단을 검증한다. 외부 유료 API 호출·운영 데이터 변경·기존 회원·결제·크레딧 변경은 수행하지 않았다.
+- **`preparedAt`은 네트워크를 실제 송신했다는 증거가 아니다.** `completeCostCoverage=false`, 운영 비용 수집 OFF. 서버 간 인증·Source DB 출처·개인정보 보존·실제 공급사 요청/청구 대조는 계속 HOLD.
+
+## 2026-11-12 — A4 공급사 전송 직전 불변 Source 증거 저장 후보 (오프라인)
+
+- `docs/ops/A4_ADMIN_PROVIDER_DISPATCH_INTENT_OFFLINE_V1.sql`: 이미 승인된 A4 Source 영수증 Writer 역할의 **오프라인/폐기형** 추가 테이블 후보. `callId`, 정본 `executionAttemptId`, Saju가 발급한 `externalRequestRef` 및 최소 `{callId,requestId,providerKey,modelKey,preparedAt}`만 저장. 기존 불변 서명 영수증·커버리지 저장소와 분리한다.
+- `src/production/reading-ai-provider-dispatch-intent-postgres-v1.ts`: 전용 DB 역할을 확인하고 `synchronous_commit=on`의 읽기/쓰기 거래로 불변 의도 1건을 먼저 기록, 동일 `callId`로 재조회해 정확한 동등성 확인과 COMMIT 후에만 반환한다. 위조된 UUID, 임의 필드·제공사, 다른 실행 시도로 같은 ID 재사용, 영수증 저장 장애는 거부한다. 개인정보 원문·프롬프트·모델 출력·API 인증키는 저장하지 않는다.
+- `test/reading-ai-provider-dispatch-intent-postgres-v1.test.ts`: 원본 최소필드·멱등 재전달·다른 Attempt 재사용·전용 DB 역할·비정형 JSON/날짜 및 저장·COMMIT 실패를 검증한다. 이 후보는 **아직 실제 OpenAI 전송 전 콜백에 연결되거나 운영 DB에 설치되지 않았다.**
+- 요청 직전 영속 기록은 요청이 실제로 송신·도달·과금됐다는 증거가 아니다. 프로세스 강제 종료 시 남은 미결 Intent의 조회/대조, 공급사 청구서 대조 및 실제 호출 전수는 **추가로 미완료**이며 `completeCostCoverage=false`, 비용 수집 OFF를 유지한다.
+- 사용자·결제·크레딧 데이터와 운영 비밀키/DB는 변경하지 않는다. 신규 테이블의 보존·삭제와 생산 설치는 개인정보 및 서비스 승인 근거 없이는 금지한다. 필수 CI 성공 및 병합도 실서비스 승인 근거가 아니다.
+
+## 2026-11-12 — A4 승인 범위에서 요청 전 영구 저장과 영수증 대조 결속 (오프라인)
+
+- 기존 Saju Source의 일회성 Prepared Attempt 승인·서명·영수증·콜백 보존 구조를 유지하고, 같은 서버 내부 `AsyncLocalStorage` 범위의 `executionAttemptId` 및 Saju 발급 `externalRequestRef`만 요청 직전 `callId`와 결속한다. 별도의 외부 주입 콜백·공급사 HTTP 전송 함수를 열지 않는다.
+- 실제 `OpenAIResponsesNarrativeAdapter.onBeforeProviderRequest`는 Source Writer의 불변 Intent 재조회/COMMIT 완료를 기다린 다음에만 HTTP fetch를 수행한다. Source 기록 오류·승인 범위 없음은 네트워크 요청 전에 차단하며, 동일 `callId`를 사후 기존 서명 영수증과 비교한다.
+- 새 읽기 전용 `reading-ai-a4-dispatch-receipt-audit-v1.ts`는 보존된 Intent와 서명 영수증의 호출 ID·시도·출처 ref·공급사·모델·요청 ID를 대조한다. 기존 서명/콜백 감사의 HMAC 및 수치 검증을 대체하지 않는다. 미결 Intent·영수증만 존재·불일치·공급사 사용량 미확인·조회 장애를 무료/0원/완전성 확정으로 변환하지 않는다.
+- 테스트는 정상 다건 귀속, 의도 보존 실패 전송 차단, Scope 외 호출 거부, 의도 없는 영수증 차단, 불일치 차단, DB 권한·조회 실패를 오프라인 모의 계층에서 검증한다. 실제 운영 DB 설치·서비스 결속·유료 API 호출·고객 데이터 수정은 없음.
+- **운영 HOLD 유지:** 실제 공급사 전수·청구·환율, Source 전용 운영 DB 설치와 TLS/서비스 계정, Production Interpretation Authority 및 증명/Intent 보존·삭제 정책은 승인·실증 전 미충족. `completeCostCoverage=false`, `invoiceReconciled=false`, 비용 수집 OFF. `ROADMAP_COMPLETE` 아님.
+
+## 2026-11-12 — A4 전송 전 Source 의도 저장소 권한 사전 확인 보강 (오프라인)
+
+- 전송 전 `a4_provider_dispatch_intents_v1` 영구 저장이 추가됨에 따라 기존 Source Writer 읽기 전용 사전 점검에 해당 테이블의 존재와 실제 사용되는 `call_id`, `execution_attempt_id`, `external_request_ref`, `intent` 4개 열의 INSERT/SELECT 권한을 포함한다. 누락 시 단발성 실행 승인 소비 **이전**에 차단한다.
+- 보존된 영수증·콜백 커버리지 점검과 같은 정확한 Source Writer 역할을 유지한다. 인증 토큰·DB 자격증명·유료 호출·스키마 운영 설치·고객/결제 데이터를 변경하지 않고, 테스트 전용 DB 모의 권한/부재 상황을 검증한다.
+- 사전 점검은 실제 이후 INSERT/COMMIT, 실제 네트워크 송신, 공급사 청구·완전성·개인정보 보존 승인을 입증하지 않는다. **`completeCostCoverage=false`, `invoiceReconciled=false`, 운영 비용 수집 OFF, `ROADMAP_COMPLETE` 아님.**
+
+## 2026-11-12 — A4 미결 전달 의도/영수증 조회 (오프라인)
+
+- `reading-ai-a4-dispatch-receipt-audit-v1.ts`의 서버 전용 `inspectUnmatchedIntents()`는 **기존 전용 Source Writer 역할**만으로 요청 전 불변 의도 중 동일 `callId`의 서명 영수증 행이 없는 항목을 `BEGIN READ ONLY`에서 조회한다. 501건까지만 읽어 500건 초과 시 결과를 불완전으로 표시하며, 정확한 실행 시도 UUID·Saju 출처 ref·준비 시각만 반환한다.
+- 프로세스 중단·송신 직전 종료·영수증 저장 실패는 모두 이 신호를 남길 수 있으므로 **실제 송신 여부·청구·재호출 필요성을 판정하지 않는다.** 영수증 존재하나 서명/귀속 오류는 기존 실행 시도별 HMAC·콜백 대조에서 별도로 검증한다. 자동 공급사 재호출·정본 Reading finalize·관리자 HTTP 공개·운영 DB 설치는 없다.
+- 전용 DB 역할 오류, 손상·중복 기록, 조회 실패는 오류로 닫고, 미결 0건이어도 공급사 전수·청구·비용 완전성을 주장하지 않는다. `completeCostCoverage=false`, `invoiceReconciled=false`, 비용 수집 OFF, 운영 설치·보존 정책·Production Authority는 HOLD.

@@ -131,6 +131,19 @@ function sourceUsageEvidence(raw: unknown, expectedModel: string):
   });
 }
 
+/**
+ * Server-private pre-network dispatch intent. Recording it does NOT prove
+ * packets were transmitted, accepted, billed, or that no other requests exist.
+ * No request body, provider credentials, birth data or model output is exposed.
+ */
+export interface OpenAIProviderDispatchIntentV1 {
+  readonly callId: string;
+  readonly requestId: string;
+  readonly providerKey: 'openai';
+  readonly modelKey: string;
+  readonly preparedAt: string;
+}
+
 export interface OpenAIResponsesAdapterConfig {
   apiKey: string;
   model?: string;
@@ -143,7 +156,9 @@ export interface OpenAIResponsesAdapterConfig {
   defaultMaxOutputTokens?: number;
   timeoutMs?: number;
   fetchImpl?: OpenAIFetch;
-  /** Optional PRIVATE observer; never installed in consumer transport. */
+  /** Optional PRIVATE pre-network intent writer; rejection prevents the HTTP call. */
+  onBeforeProviderRequest?: (intent: OpenAIProviderDispatchIntentV1) => void | Promise<void>;
+  /** Optional PRIVATE settled-call observer; never installed in consumer transport. */
   onProviderCall?: (observation: OpenAIProviderCallObservationV1) => void | Promise<void>;
 }
 
@@ -297,6 +312,7 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
   private readonly timeoutMs: number;
   private readonly fetchImpl: OpenAIFetch;
   private readonly onProviderCall: OpenAIResponsesAdapterConfig['onProviderCall'];
+  private readonly onBeforeProviderRequest: OpenAIResponsesAdapterConfig['onBeforeProviderRequest'];
 
   constructor(config: OpenAIResponsesAdapterConfig) {
     assertNonEmpty(config.apiKey, 'apiKey');
@@ -335,6 +351,7 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
     this.timeoutMs = timeoutMs;
     this.fetchImpl = config.fetchImpl ?? fetch;
     this.onProviderCall = config.onProviderCall;
+    this.onBeforeProviderRequest = config.onBeforeProviderRequest;
   }
 
   async generateStructured(
@@ -413,6 +430,28 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
         // The owner of this optional callback must report coverage gaps.
       }
     };
+    // Prepare an independent dispatch intent BEFORE starting the HTTP request.
+    // This fail-closed hook may be connected to a future durable Source writer;
+    // it is deliberately distinct from the post-response usage callback.
+    // Preparation is not proof that the network request was actually sent.
+    if (this.onBeforeProviderRequest !== undefined) {
+      const intent: OpenAIProviderDispatchIntentV1 = Object.freeze({
+        callId: providerCallId,
+        requestId: prompt.requestId,
+        providerKey: 'openai',
+        modelKey: this.metadata.modelId,
+        preparedAt: new Date().toISOString(),
+      });
+      try {
+        await this.onBeforeProviderRequest(intent);
+      } catch (cause) {
+        throw new OpenAIResponsesAdapterError(
+          'CONFIGURATION_ERROR',
+          'Provider dispatch evidence preflight failed; request was not sent.',
+          { cause },
+        );
+      }
+    }
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 

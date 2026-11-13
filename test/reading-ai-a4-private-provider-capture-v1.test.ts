@@ -34,10 +34,18 @@ function fixture(
     failCoverage?: boolean;
     providerFails?: boolean;
     principal?: string;
+    sourceReady?: boolean;
+    intentReady?: boolean;
+    missingIntentTable?: boolean;
+    failIntent?: boolean;
+    missingIntentRead?: boolean;
+    failIntentCommit?: boolean;
   } = {},
 ) {
   const receipts = new Map<string, string>();
   const reports = new Map<string, string>();
+  const intents = new Map<string, { executionAttemptId: string; externalRequestRef: string; intentJson: string }>();
+  let intentTransaction = false;
   const statements: string[] = [];
   const admissionCalls: string[] = [];
   let providerCalls = 0;
@@ -47,7 +55,55 @@ function fixture(
         async query<Row>(sql: string, values: readonly unknown[] = []) {
           statements.push(sql);
           let rows: unknown[] = [];
-          if (sql.includes('current_user::text')) {
+          if (sql.includes('to_regclass(')) {
+            rows = [
+              {
+                currentUser: options.principal ?? 'saju_a4_provider_receipt_writer_v1',
+                receiptTable: 'saju_source_ops.a4_provider_call_signed_receipts_v1',
+                coverageTable: 'saju_source_ops.a4_provider_call_coverage_v1',
+                intentTable: options.missingIntentTable ? null : 'saju_source_ops.a4_provider_dispatch_intents_v1',
+                receiptCallInsert: true,
+                receiptProofInsert: options.sourceReady !== false,
+                receiptCallRead: true,
+                receiptProofRead: true,
+                coverageAttemptInsert: true,
+                coverageRefInsert: true,
+                coverageProofInsert: true,
+                coverageAttemptRead: true,
+                coverageRefRead: true,
+                coverageProofRead: true,
+                intentCallInsert: true,
+                intentCallRead: true,
+                intentAttemptInsert: true,
+                intentAttemptRead: true,
+                intentRefInsert: true,
+                intentRefRead: true,
+                intentProofInsert: options.intentReady !== false,
+                intentProofRead: true,
+              },
+            ];
+          } else if (sql.startsWith('INSERT INTO saju_source_ops.a4_provider_dispatch_intents_v1')) {
+            if (options.failIntent) throw Error('intent insert unavailable');
+            intentTransaction = true;
+            const id = String(values[0]);
+            if (!intents.has(id)) {
+              intents.set(id, {
+                executionAttemptId: String(values[1]),
+                externalRequestRef: String(values[2]),
+                intentJson: String(values[3]),
+              });
+            }
+          } else if (sql.startsWith('SELECT execution_attempt_id::text')) {
+            if (!options.missingIntentRead) {
+              const row = intents.get(String(values[0]));
+              if (row) rows = [row];
+            }
+          } else if (sql === 'COMMIT' && intentTransaction) {
+            intentTransaction = false;
+            if (options.failIntentCommit) throw Error('intent commit unavailable');
+          } else if (sql === 'ROLLBACK') {
+            intentTransaction = false;
+          } else if (sql.includes('current_user::text')) {
             rows = [{ currentUser: options.principal ?? 'saju_a4_provider_receipt_writer_v1' }];
           } else if (
             sql.startsWith('INSERT INTO saju_source_ops.a4_provider_call_signed_receipts_v1')
@@ -89,6 +145,7 @@ function fixture(
   const adapter = new OpenAIResponsesNarrativeAdapter({
     apiKey: 'unit-test-only',
     model: 'gpt-5.6',
+    onBeforeProviderRequest: capture.onBeforeProviderRequest,
     onProviderCall: capture.onProviderCall,
     fetchImpl: async () => {
       providerCalls++;
@@ -116,6 +173,7 @@ function fixture(
     adapter,
     receipts,
     reports,
+    intents,
     statements,
     admissionCalls,
     get providerCalls() {
@@ -138,10 +196,21 @@ describe('Admin A4 server-private capture using actual OpenAI adapter callback',
     expect(x.providerCalls).toBe(1);
     expect(x.admissionCalls).toEqual([ATTEMPT]);
     expect(x.receipts.size).toBe(1);
+    expect(x.intents.size).toBe(1);
+    const storedIntent = [...x.intents.entries()][0]!;
+    expect(storedIntent[1].executionAttemptId).toBe(ATTEMPT);
+    expect(storedIntent[1].externalRequestRef).toBe('saju_source_' + REF);
+    expect(Object.keys(JSON.parse(storedIntent[1].intentJson)).sort()).toEqual([
+      'callId', 'modelKey', 'preparedAt', 'providerKey', 'requestId',
+    ]);
     const signed = JSON.parse([...x.receipts.values()][0]!);
     expect(signed.payload.link.externalRequestRef).toBe('saju_source_' + REF);
     expect(signed.payload.link.executionAttemptId).toBe(ATTEMPT);
     expect(signed.payload.link.observation.requestId).toBe(prompt.requestId);
+    expect(signed.payload.link.observation.callId).toBe(storedIntent[0]);
+    expect(JSON.parse(storedIntent[1].intentJson).modelKey).toBe(
+      signed.payload.link.observation.modelKey,
+    );
     expect(signed.payload.link.observation.usage).toEqual({
       inputTokens: 25,
       outputTokens: 5,
@@ -169,6 +238,7 @@ describe('Admin A4 server-private capture using actual OpenAI adapter callback',
       ),
     ).rejects.toThrow('could not reach');
     expect(x.providerCalls).toBe(1);
+    expect(x.intents.size).toBe(1);
     const receipt = JSON.parse([...x.receipts.values()][0]!);
     expect(receipt.payload.link.observation.source).toBe('provider_attempt_without_usage');
     expect(receipt.payload.link.observation.usage).toEqual({
@@ -186,6 +256,37 @@ describe('Admin A4 server-private capture using actual OpenAI adapter callback',
     });
   });
 
+  it('blocks missing Source writer privileges before consuming an attempt or sending a provider call', async () => {
+    const x = fixture({ sourceReady: false });
+    await expect(
+      x.capture.withPreparedAttempt({ executionAttemptId: ATTEMPT }, async () =>
+        x.adapter.generateStructured(prompt),
+      ),
+    ).rejects.toThrow('Source receipt writer is not ready');
+    expect(x.providerCalls).toBe(0);
+    expect(x.admissionCalls).toHaveLength(0);
+    expect(x.receipts.size).toBe(0);
+    expect(x.reports.size).toBe(0);
+    expect(x.statements).not.toContainEqual(expect.stringContaining('INSERT INTO'));
+  });
+
+  it.each([
+    { missingIntentTable: true },
+    { intentReady: false },
+  ])('blocks missing pre-network intent storage before single-use admission: %j', async (options) => {
+    const x = fixture(options);
+    await expect(
+      x.capture.withPreparedAttempt({ executionAttemptId: ATTEMPT }, async () =>
+        x.adapter.generateStructured(prompt),
+      ),
+    ).rejects.toThrow('Source receipt writer is not ready');
+    expect(x.providerCalls).toBe(0);
+    expect(x.admissionCalls).toHaveLength(0);
+    expect(x.intents.size).toBe(0);
+    expect(x.receipts.size).toBe(0);
+    expect(x.statements.some((sql) => sql.startsWith('INSERT'))).toBe(false);
+  });
+
   it('rejects missing authoritative preadmission before spending a provider call', async () => {
     const x = fixture({ admit: false });
     await expect(
@@ -196,7 +297,8 @@ describe('Admin A4 server-private capture using actual OpenAI adapter callback',
     expect(x.providerCalls).toBe(0);
     expect(x.receipts.size).toBe(0);
     expect(x.reports.size).toBe(0);
-    expect(x.statements).toHaveLength(0);
+    expect(x.statements).not.toContainEqual(expect.stringContaining('INSERT INTO'));
+    expect(x.statements).toContain('BEGIN READ ONLY');
   });
 
   it('records a receipt callback failure in durable coverage even when the real adapter swallows it', async () => {
@@ -226,12 +328,36 @@ describe('Admin A4 server-private capture using actual OpenAI adapter callback',
     expect(x.reports.size).toBe(0);
   });
 
-  it('does not attach asynchronous provider callbacks outside any admitted scope', async () => {
+  it('blocks network dispatch outside any admitted A4 scope', async () => {
     const x = fixture();
-    await x.adapter.generateStructured(prompt);
+    await expect(x.adapter.generateStructured(prompt)).rejects.toThrow('preflight failed');
+    expect(x.providerCalls).toBe(0);
+    expect(x.intents.size).toBe(0);
     expect(x.receipts.size).toBe(0);
     expect(x.reports.size).toBe(0);
     expect(x.admissionCalls).toHaveLength(0);
+  });
+
+  it.each([
+    { failIntent: true },
+    { missingIntentRead: true },
+    { failIntentCommit: true },
+  ])('blocks paid transport if durable pre-send Source evidence fails: %j', async (options) => {
+    const x = fixture(options);
+    await expect(
+      x.capture.withPreparedAttempt({ executionAttemptId: ATTEMPT }, async () =>
+        x.adapter.generateStructured(prompt),
+      ),
+    ).rejects.toThrow('preflight failed');
+    expect(x.providerCalls).toBe(0);
+    expect(x.receipts.size).toBe(0);
+    expect(x.admissionCalls).toEqual([ATTEMPT]);
+    expect(JSON.parse(x.reports.get(ATTEMPT)!)).toMatchObject({
+      observedCallbacks: 0,
+      acknowledgedReceipts: 0,
+      execution: 'threw',
+      completeCostCoverage: false,
+    });
   });
 
   it('denies wrong source database authority before recording the provider receipt', async () => {

@@ -1,6 +1,7 @@
 import type { SajuA4ReceiptDatabasePoolV1 } from './reading-ai-provider-receipt-postgres-v1.js';
 import type { SajuSourceAttemptContextV1 } from './reading-ai-source-call-correlation-v1.js';
 import { createPostgresSajuA4SourceCoverageAuditV1 } from './reading-ai-a4-source-coverage-audit-v1.js';
+import { createPostgresSajuA4DispatchReceiptAuditV1 } from './reading-ai-a4-dispatch-receipt-audit-v1.js';
 import { createSajuA4SignedPreparedAttemptAdmissionV1 } from './reading-ai-a4-signed-attempt-admission-v1.js';
 import {
   createSajuA4MyeongHaProofHttpLoaderV1,
@@ -84,6 +85,7 @@ export function createSajuA4AuthenticatedCaptureCompositionV1(
           sourceRefFactory: input.sourceRefFactory,
         }),
   });
+  const dispatchAudit = createPostgresSajuA4DispatchReceiptAuditV1(input.sourceReceiptPool);
   const audit = createPostgresSajuA4SourceCoverageAuditV1({
     pool: input.sourceReceiptPool,
     issuer: input.sourceIssuer,
@@ -108,20 +110,31 @@ export function createSajuA4AuthenticatedCaptureCompositionV1(
     ) {
       throw new Error('Saju A4 local callback evidence incomplete; Reading response held');
     }
+    const dispatched = await dispatchAudit.inspectAttempt(attempt.executionAttemptId);
+    const dispatchMatches = deterministic
+      ? dispatched.status === 'no_local_evidence' &&
+        dispatched.intentCount === 0 &&
+        dispatched.signedReceiptCount === 0
+      : dispatched.status === 'matched_with_provider_usage_unverified' ||
+        dispatched.status === 'matched_with_usage_unknown_unverified';
+    if (!dispatchMatches) {
+      throw new Error('Saju A4 pre-send intent/receipt evidence incomplete; Reading response held');
+    }
     return outcome;
   }
   return Object.freeze({
+    onBeforeProviderRequest: capture.onBeforeProviderRequest,
     onProviderCall: capture.onProviderCall,
     withPreparedAttempt<T>(
       attempt: SajuSourceAttemptContextV1,
       execute: (externalRequestRef: string) => Promise<T>,
-    ) {
+    ): Promise<T> {
       return runAuditedAttempt(attempt, execute, false);
     },
     withPreparedDeterministicAttempt<T>(
       attempt: SajuSourceAttemptContextV1,
       execute: (externalRequestRef: string) => Promise<T>,
-    ) {
+    ): Promise<T> {
       return runAuditedAttempt(attempt, execute, true);
     },
   });

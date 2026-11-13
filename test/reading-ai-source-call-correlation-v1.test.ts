@@ -3,7 +3,10 @@ import {
   createSajuSourceProviderCallCorrelationV1,
   type SajuSourceProviderCallLinkV1,
 } from '../src/production/reading-ai-source-call-correlation-v1.js';
-import type { OpenAIProviderCallObservationV1 } from '../src/llm/openai/openai-responses-adapter.js';
+import type {
+  OpenAIProviderCallObservationV1,
+  OpenAIProviderDispatchIntentV1,
+} from '../src/llm/openai/openai-responses-adapter.js';
 
 const ATTEMPT_A = '123e4567-e89b-42d3-a456-426614174002';
 const ATTEMPT_B = '123e4567-e89b-42d3-a456-426614174003';
@@ -106,6 +109,55 @@ describe('Saju A4 source provider call correlation (unmounted)', () => {
       ).rejects.toThrow('Untrusted');
     });
     expect(observed).toHaveLength(0);
+  });
+
+  it('binds pre-send evidence to the server-minted ref and denies a stale or missing scope', async () => {
+    const recorded: { attempt: string; ref: string; callId: string }[] = [];
+    const source = createSajuSourceProviderCallCorrelationV1({
+      sourceRefFactory: () => SOURCE_A,
+      emit: () => undefined,
+      recordBeforeRequest: async (link) => {
+        recorded.push({
+          attempt: link.executionAttemptId,
+          ref: link.externalRequestRef,
+          callId: link.intent.callId,
+        });
+      },
+    });
+    const intent: OpenAIProviderDispatchIntentV1 = {
+      callId: SOURCE_B,
+      requestId: 'private-source-only',
+      providerKey: 'openai',
+      modelKey: 'gpt-5.6',
+      preparedAt: '2026-11-12T02:00:00.000Z',
+    };
+    await expect(source.onBeforeProviderRequest(intent)).rejects.toThrow('active');
+    await source.withAuthorizedReadingAttempt({ executionAttemptId: ATTEMPT_A }, async () => {
+      await source.onBeforeProviderRequest(intent);
+    });
+    expect(recorded).toEqual([
+      { attempt: ATTEMPT_A, ref: 'saju_source_' + SOURCE_A, callId: SOURCE_B },
+    ]);
+    await expect(source.onBeforeProviderRequest(intent)).rejects.toThrow('active');
+  });
+
+  it('rejects Source write failures without downgrading to an unrecorded send', async () => {
+    const source = createSajuSourceProviderCallCorrelationV1({
+      sourceRefFactory: () => SOURCE_A,
+      emit: () => undefined,
+      recordBeforeRequest: async () => { throw Error('Source DB unavailable'); },
+    });
+    await expect(
+      source.withAuthorizedReadingAttempt({ executionAttemptId: ATTEMPT_A }, async () =>
+        source.onBeforeProviderRequest({
+          callId: SOURCE_B,
+          requestId: 'private-source-only',
+          providerKey: 'openai',
+          modelKey: 'gpt-5.6',
+          preparedAt: '2026-11-12T02:00:00.000Z',
+        }),
+      ),
+    ).rejects.toThrow('Source DB unavailable');
   });
 
   it('preserves unknown usage for failed provider attempts rather than imputing zero', async () => {

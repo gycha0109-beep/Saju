@@ -39,10 +39,20 @@ const proof = () => ({
 });
 
 function setup(
-  opts: { lostReceipt?: boolean; invalidReceipt?: boolean; missingCoverage?: boolean } = {},
+  opts: {
+    lostReceipt?: boolean;
+    invalidReceipt?: boolean;
+    missingCoverage?: boolean;
+    skipIntent?: boolean;
+    conflictingIntent?: boolean;
+  } = {},
 ) {
   const claims = new Set<string>();
   const receipts = new Map<string, string>();
+  const intents = new Map<
+    string,
+    { executionAttemptId: string; externalRequestRef: string; intentJson: string }
+  >();
   const coverage = new Map<string, string>();
   const events: string[] = [];
   const claimPool: SajuA4ReceiptDatabasePoolV1 = {
@@ -69,8 +79,59 @@ function setup(
       return {
         async query<Row>(sql: string, args: readonly unknown[] = []) {
           let rows: unknown[] = [];
-          if (sql.includes('current_user::text')) {
+          if (sql.includes('to_regclass(')) {
+            rows = [
+              {
+                currentUser: 'saju_a4_provider_receipt_writer_v1',
+                receiptTable: 'saju_source_ops.a4_provider_call_signed_receipts_v1',
+                coverageTable: 'saju_source_ops.a4_provider_call_coverage_v1',
+                intentTable: 'saju_source_ops.a4_provider_dispatch_intents_v1',
+                receiptCallInsert: true,
+                receiptProofInsert: true,
+                receiptCallRead: true,
+                receiptProofRead: true,
+                coverageAttemptInsert: true,
+                coverageRefInsert: true,
+                coverageProofInsert: true,
+                coverageAttemptRead: true,
+                coverageRefRead: true,
+                coverageProofRead: true,
+                intentCallInsert: true,
+                intentCallRead: true,
+                intentAttemptInsert: true,
+                intentAttemptRead: true,
+                intentRefInsert: true,
+                intentRefRead: true,
+                intentProofInsert: true,
+                intentProofRead: true,
+              },
+            ];
+          } else if (sql.includes('current_user::text')) {
             rows = [{ currentUser: 'saju_a4_provider_receipt_writer_v1' }];
+          } else if (
+            sql.startsWith('INSERT INTO saju_source_ops.a4_provider_dispatch_intents_v1')
+          ) {
+            const callId = String(args[0]);
+            if (!intents.has(callId)) {
+              intents.set(callId, {
+                executionAttemptId: String(args[1]),
+                externalRequestRef: String(args[2]),
+                intentJson: String(args[3]),
+              });
+            }
+          } else if (sql.includes('FROM saju_source_ops.a4_provider_dispatch_intents_v1')) {
+            rows = [...intents].map(([callId, row]) => ({
+              callId,
+              executionAttemptId: row.executionAttemptId,
+              externalRequestRef: row.externalRequestRef,
+              intentJson:
+                opts.conflictingIntent && sql.includes('WHERE execution_attempt_id = $1::uuid')
+                  ? JSON.stringify({ ...JSON.parse(row.intentJson), modelKey: 'wrong-model' })
+                  : row.intentJson,
+            }));
+          } else if (sql.startsWith('SELECT execution_attempt_id::text')) {
+            const item = intents.get(String(args[0]));
+            if (item) rows = [item];
           } else if (
             sql.startsWith('INSERT INTO saju_source_ops.a4_provider_call_signed_receipts_v1')
           ) {
@@ -126,13 +187,26 @@ function setup(
     sourceRefFactory: () => SOURCE.slice('saju_source_'.length),
     fetchImpl: async () => Response.json(proof()),
   });
-  async function invoke(callbacks: boolean, deterministic = false): Promise<string> {
+  async function invoke(
+    callbacks: boolean,
+    deterministic = false,
+    intentOnly = false,
+  ): Promise<string> {
     const run = deterministic
       ? capture.withPreparedDeterministicAttempt
       : capture.withPreparedAttempt;
     return run({ executionAttemptId: ATTEMPT }, async (ref) => {
       events.push('execute');
       expect(ref).toBe(SOURCE);
+      if (intentOnly || (callbacks && !opts.skipIntent)) {
+        await capture.onBeforeProviderRequest({
+          callId: CALL,
+          requestId: 'saju_request_test',
+          providerKey: 'openai',
+          modelKey: 'gpt-5.6',
+          preparedAt: new Date(NOW).toISOString(),
+        });
+      }
       if (callbacks) {
         await capture.onProviderCall({
           callId: CALL,
@@ -153,7 +227,7 @@ function setup(
       return 'protected output';
     });
   }
-  return { invoke, events, receipts, coverage, claims };
+  return { invoke, events, receipts, intents, coverage, claims };
 }
 
 describe('A4 Source callback census gate before successful Production Reading response', () => {
@@ -162,6 +236,7 @@ describe('A4 Source callback census gate before successful Production Reading re
     await expect(x.invoke(true)).resolves.toBe('protected output');
     expect(x.claims.size).toBe(1);
     expect(x.receipts.size).toBe(1);
+    expect(x.intents.size).toBe(1);
     expect(JSON.parse(x.coverage.get(ATTEMPT)!)).toMatchObject({
       observedCallbacks: 1,
       acknowledgedReceipts: 1,
@@ -169,6 +244,18 @@ describe('A4 Source callback census gate before successful Production Reading re
       pendingCallbacks: 0,
       completeCostCoverage: false,
     });
+  });
+  it('denies success when the signed callback has no recorded pre-network intent', async () => {
+    const x = setup({ skipIntent: true });
+    await expect(x.invoke(true)).rejects.toThrow('pre-send intent/receipt evidence incomplete');
+    expect(x.receipts.size).toBe(1);
+    expect(x.intents.size).toBe(0);
+  });
+  it('denies a mismatched model within the immutable dispatch intent', async () => {
+    const x = setup({ conflictingIntent: true });
+    await expect(x.invoke(true)).rejects.toThrow('pre-send intent/receipt evidence incomplete');
+    expect(x.receipts.size).toBe(1);
+    expect(x.intents.size).toBe(1);
   });
   it('rejects a successful result with zero observed provider calls', async () => {
     const x = setup();
@@ -191,6 +278,9 @@ describe('A4 Source callback census gate before successful Production Reading re
     await expect(setup().invoke(true, true)).rejects.toThrow('local callback evidence incomplete');
     await expect(setup({ missingCoverage: true }).invoke(false, true)).rejects.toThrow(
       'local callback evidence incomplete',
+    );
+    await expect(setup().invoke(false, true, true)).rejects.toThrow(
+      'pre-send intent/receipt evidence incomplete',
     );
   });
   it('rejects lost or altered signed Source receipts before returning Product Reading', async () => {
