@@ -17,7 +17,15 @@ export function planSamePhotoReviewQueue(sources) {
   let uncheckedPosePhotos = 0;
   let missingReviewSlots = 0;
   let modelPrerequisiteMissingSlots = 0;
+  let captureScreenPendingPhotos = 0;
+  let captureScreenRejectedPhotos = 0;
+  let captureScreenUnavailablePhotos = 0;
+  let captureScreenReadySingleReviewerPhotos = 0;
+  let captureScreenPendingModelReadySlots = 0;
+  let captureScreenRejectedModelReadySlots = 0;
+  let captureScreenUnavailableModelReadySlots = 0;
   for (const [index, source] of sources.entries()) {
+    const hasScreen = isObject(source) && Object.hasOwn(source, 'captureScreenEligibility');
     if (
       !keys(source, [
         'viewRole',
@@ -25,7 +33,12 @@ export function planSamePhotoReviewQueue(sources) {
         'parsingCurrent',
         'modelReady',
         'humanRecorded',
+        ...(hasScreen ? ['captureScreenEligibility'] : []),
       ]) ||
+      (hasScreen &&
+        !['pending', 'frontal_candidate', 'rejected', 'unavailable'].includes(
+          source.captureScreenEligibility,
+        )) ||
       !['frontal', 'profile'].includes(source.viewRole) ||
       typeof source.poseProvisional !== 'boolean' ||
       typeof source.parsingCurrent !== 'boolean' ||
@@ -43,12 +56,29 @@ export function planSamePhotoReviewQueue(sources) {
       continue;
     }
     if (source.poseProvisional) uncheckedPosePhotos++;
+    if (source.captureScreenEligibility === 'pending') captureScreenPendingPhotos++;
+    if (source.captureScreenEligibility === 'rejected') captureScreenRejectedPhotos++;
+    if (source.captureScreenEligibility === 'unavailable') captureScreenUnavailablePhotos++;
+    if (source.captureScreenEligibility === 'frontal_candidate')
+      captureScreenReadySingleReviewerPhotos++;
     const local = [];
     for (const part of PARTS) {
       if (source.humanRecorded[part]) continue;
       missingReviewSlots++;
       if (!source.parsingCurrent || !source.modelReady[part]) {
         modelPrerequisiteMissingSlots++;
+        continue;
+      }
+      if (source.captureScreenEligibility === 'pending') {
+        captureScreenPendingModelReadySlots++;
+        continue;
+      }
+      if (source.captureScreenEligibility === 'rejected') {
+        captureScreenRejectedModelReadySlots++;
+        continue;
+      }
+      if (source.captureScreenEligibility === 'unavailable') {
+        captureScreenUnavailableModelReadySlots++;
         continue;
       }
       local.push(
@@ -69,6 +99,13 @@ export function planSamePhotoReviewQueue(sources) {
     uncheckedPosePhotos,
     missingReviewSlots,
     modelPrerequisiteMissingSlots,
+    captureScreenPendingPhotos,
+    captureScreenRejectedPhotos,
+    captureScreenUnavailablePhotos,
+    captureScreenReadySingleReviewerPhotos,
+    captureScreenPendingModelReadySlots,
+    captureScreenRejectedModelReadySlots,
+    captureScreenUnavailableModelReadySlots,
     reviewTargetsCount: targets.length,
     targets: Object.freeze(targets),
     humanAnnotationsCreated: false,

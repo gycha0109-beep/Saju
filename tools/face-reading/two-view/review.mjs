@@ -1433,6 +1433,20 @@ function current2dPhotoSummary(record, previous = false) {
     eyelidReview: state?.eyelidContourReviews?.[record.captureRef],
   });
 }
+// Single-reviewer source screening is only a prerequisite for *research*
+// comparisons, never independent pose or anatomical ground truth.
+function currentCaptureScreenEligibility(record) {
+  if (state?.researchIntake?.researchOnly !== true) return undefined;
+  if (state.captureScreenRestoreFailed || (state.captureScreenReviewStaleCount || 0) > 0)
+    return 'unavailable';
+  const reviewed = state.captureScreenReviews?.[record.captureRef];
+  if (!reviewed) return 'pending';
+  if (reviewed.humanReviewed !== true || reviewed.independentPoseValidated !== false)
+    return 'unavailable';
+  return reviewed.pose === 'frontal_usable_candidate' && reviewed.visibility !== 'unusable'
+    ? 'frontal_candidate'
+    : 'rejected';
+}
 // Use only current SHA-checked local reviews. The existing per-photo comparison
 // functions do the calculation; the rollup receives statuses only, never offsets.
 function currentSamePhotoHumanModelCoverage() {
@@ -1445,6 +1459,9 @@ function currentSamePhotoHumanModelCoverage() {
   };
   const captures = records.map((record) => {
     const current = results.get(record.captureRef);
+    const captureScreenEligibility = currentCaptureScreenEligibility(record);
+    const eligibleForComparison =
+      !captureScreenEligibility || captureScreenEligibility === 'frontal_candidate';
     const frontal =
       record.viewRole === 'frontal' &&
       current?.parsing?.status === 'completed' &&
@@ -1456,15 +1473,16 @@ function currentSamePhotoHumanModelCoverage() {
     const lipModel = frontal && current?.lipClassCandidate?.status === 'available';
     const earModel = frontal && current?.earMaskCandidate?.status === 'available';
     const comparedEye =
-      eyeModel && eyelid && !blocked.eyelid
+      eligibleForComparison && eyeModel && eyelid && !blocked.eyelid
         ? compareEyeClassEnvelopeToHumanUpperMargin(current.eyeClassCandidate, eyelid)
         : null;
     const comparedLip =
-      lipModel && lip && !blocked.lip
+      eligibleForComparison && lipModel && lip && !blocked.lip
         ? compareLipClassWidthsToHumanBorders(current.lipClassCandidate, lip)
         : null;
     const cachedEar = current?.earRimCurveComparison;
     const comparedEar =
+      eligibleForComparison &&
       earModel &&
       ear &&
       !blocked.ear &&
@@ -1477,6 +1495,7 @@ function currentSamePhotoHumanModelCoverage() {
       modelCandidateAvailable: Boolean(modelAvailable),
       comparisonStatus:
         record.viewRole === 'frontal' &&
+        eligibleForComparison &&
         outcome &&
         !storeFailed &&
         ['available', 'partial', 'unavailable'].includes(outcome.status)
@@ -1488,6 +1507,7 @@ function currentSamePhotoHumanModelCoverage() {
       viewRole: record.viewRole,
       poseProvisional:
         state?.researchIntake?.viewRoleRouting === 'provisional_frontal_for_research_only',
+      ...(captureScreenEligibility ? { captureScreenEligibility } : {}),
       comparisons: {
         eyelid: comparison(eyelid, eyeModel, comparedEye, blocked.eyelid),
         lip: comparison(lip, lipModel, comparedLip, blocked.lip),
@@ -1504,10 +1524,12 @@ function currentSamePhotoReviewQueue() {
     records.map((record) => {
       const parsing = results.get(record.captureRef)?.parsing;
       const current = parsing?.status === 'completed' && parsing.methodVersion === PARSING_VERSION;
+      const captureScreenEligibility = currentCaptureScreenEligibility(record);
       return {
         viewRole: record.viewRole,
         poseProvisional:
           state?.researchIntake?.viewRoleRouting === 'provisional_frontal_for_research_only',
+        ...(captureScreenEligibility ? { captureScreenEligibility } : {}),
         parsingCurrent: Boolean(current),
         modelReady: {
           eyelid: Boolean(current && parsing.eyeDirection?.status === 'available'),
@@ -1534,7 +1556,9 @@ function reviewStoreNeedsRepair() {
     state?.earReviewRestoreFailed ||
     state?.eyelidContourReviewStaleCount ||
     state?.lipReviewStaleCount ||
-    state?.earReviewStaleCount,
+    state?.earReviewStaleCount ||
+    state?.captureScreenRestoreFailed ||
+    state?.captureScreenReviewStaleCount,
   );
 }
 function renderSamePhotoHumanModelCoverage() {
@@ -1565,6 +1589,16 @@ function renderSamePhotoHumanModelCoverage() {
     '건 · 자세 임시 지정 ' +
     report.provisionalPosePhotos +
     '장. 저장된 분할 영역은 실제 비교 경계와 다르며, 화면 재진입 시 눈·입술 후보는 기존 전체 분석으로 다시 생성해야 합니다. 독립 사람 정답/정확도 검증은 0건입니다.';
+  $('human-model-comparison-status').textContent +=
+    ' · 촬영 상태 미검토 ' +
+    report.captureScreenPendingPhotos +
+    '장 / 단독 검토상 정면 후보 ' +
+    report.captureScreenReadySingleReviewerPhotos +
+    '장 / 자세·가림 제외 ' +
+    report.captureScreenRejectedPhotos +
+    '장 / 검토 기록 오류 ' +
+    report.captureScreenUnavailablePhotos +
+    '장. 미검토·제외 사진의 경계 비교는 보류합니다.';
   const rows = $('human-model-comparison-rows');
   rows.replaceChildren();
   for (const feature of report.features) {
@@ -1608,6 +1642,16 @@ function renderSamePhotoHumanModelCoverage() {
     (locked
       ? ' 기존 사람 검토 복원·원본 변경 오류부터 확인해야 합니다.'
       : ' 클릭하면 기존 원본 표시와 사람 표시 도구로 이동합니다. 자동 표시·정답 인증은 하지 않습니다.');
+  $('human-model-review-queue-status').textContent +=
+    ' · 사람 검토 대기 중 모델 선행조건 충족 ' +
+    queue.captureScreenPendingModelReadySlots +
+    '건 · 부적합 사진 제외 ' +
+    queue.captureScreenRejectedModelReadySlots +
+    '건 · 검토 기록 복원 오류 ' +
+    queue.captureScreenUnavailableModelReadySlots +
+    '건 · 단독 사람 검토상 정면 후보 ' +
+    queue.captureScreenReadySingleReviewerPhotos +
+    '장. 검토되지 않은 사진은 비교 도구 이동에서 제외됩니다.';
 }
 function renderCurrent2dEvidence(record, result, previous) {
   const summary = current2dPhotoSummary(record, previous);
@@ -2884,6 +2928,7 @@ window.twoViewSnapshot = () => ({
       .map((item) => current2dPhotoSummary(item)),
   ),
   humanModelComparisonCoverage: currentSamePhotoHumanModelCoverage(),
+  humanModelReviewQueue: currentSamePhotoReviewQueue(),
   current2dReasonDiagnostics: diagnoseCurrent2dSessionEvidence(
     records
       .filter((item) => item.viewRole === 'frontal')

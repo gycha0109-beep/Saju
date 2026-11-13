@@ -11,6 +11,9 @@ const FEATURES = Object.freeze([
 ]);
 const STATUSES = Object.freeze([
   'view_ineligible',
+  'capture_screen_pending',
+  'capture_screen_rejected',
+  'capture_screen_unavailable',
   'review_store_unavailable',
   'human_review_missing',
   'model_candidate_missing',
@@ -49,10 +52,15 @@ function statusFor(capture, key) {
     (!comparison.humanReviewRecorded ||
       !comparison.modelCandidateAvailable ||
       comparison.reviewStoreUnavailable ||
-      capture.viewRole !== 'frontal')
+      capture.viewRole !== 'frontal' ||
+      (capture.captureScreenEligibility !== undefined &&
+        capture.captureScreenEligibility !== 'frontal_candidate'))
   )
     invalid();
   if (capture.viewRole !== 'frontal') return 'view_ineligible';
+  if (capture.captureScreenEligibility === 'pending') return 'capture_screen_pending';
+  if (capture.captureScreenEligibility === 'rejected') return 'capture_screen_rejected';
+  if (capture.captureScreenEligibility === 'unavailable') return 'capture_screen_unavailable';
   if (comparison.reviewStoreUnavailable) return 'review_store_unavailable';
   if (!comparison.humanReviewRecorded) return 'human_review_missing';
   if (!comparison.modelCandidateAvailable) return 'model_candidate_missing';
@@ -84,11 +92,28 @@ export function summarizeSamePhotoHumanModelCoverage(captures) {
     humanAndModelBothPresent: 0,
   };
   let provisionalPosePhotos = 0;
+  let captureScreenReadySingleReviewerPhotos = 0;
+  let captureScreenPendingPhotos = 0;
+  let captureScreenRejectedPhotos = 0;
+  let captureScreenUnavailablePhotos = 0;
   for (const capture of captures) {
     if (
       !isObject(capture) ||
       Object.keys(capture).sort().join('|') !==
-        ['viewRole', 'poseProvisional', 'comparisons'].sort().join('|') ||
+        [
+          'viewRole',
+          'poseProvisional',
+          'comparisons',
+          ...(Object.hasOwn(capture, 'captureScreenEligibility')
+            ? ['captureScreenEligibility']
+            : []),
+        ]
+          .sort()
+          .join('|') ||
+      (Object.hasOwn(capture, 'captureScreenEligibility') &&
+        !['pending', 'frontal_candidate', 'rejected', 'unavailable'].includes(
+          capture.captureScreenEligibility,
+        )) ||
       !['frontal', 'profile'].includes(capture.viewRole) ||
       typeof capture.poseProvisional !== 'boolean' ||
       !isObject(capture.comparisons) ||
@@ -99,6 +124,11 @@ export function summarizeSamePhotoHumanModelCoverage(captures) {
     )
       invalid();
     if (capture.poseProvisional) provisionalPosePhotos++;
+    if (capture.captureScreenEligibility === 'frontal_candidate')
+      captureScreenReadySingleReviewerPhotos++;
+    if (capture.captureScreenEligibility === 'pending') captureScreenPendingPhotos++;
+    if (capture.captureScreenEligibility === 'rejected') captureScreenRejectedPhotos++;
+    if (capture.captureScreenEligibility === 'unavailable') captureScreenUnavailablePhotos++;
     for (let i = 0; i < FEATURES.length; i++) {
       const key = FEATURES[i][0];
       const status = statusFor(capture, key);
@@ -112,7 +142,13 @@ export function summarizeSamePhotoHumanModelCoverage(captures) {
       const humanKey = x.humanReviewRecorded ? 'humanReviewRecorded' : 'humanReviewMissing';
       candidateEvidenceTotals[modelKey]++;
       candidateEvidenceTotals[humanKey]++;
-      if (x.modelCandidateAvailable && x.humanReviewRecorded && !x.reviewStoreUnavailable)
+      if (
+        x.modelCandidateAvailable &&
+        x.humanReviewRecorded &&
+        !x.reviewStoreUnavailable &&
+        (!capture.captureScreenEligibility ||
+          capture.captureScreenEligibility === 'frontal_candidate')
+      )
         candidateEvidenceTotals.humanAndModelBothPresent++;
       summary[i][modelKey] = (summary[i][modelKey] || 0) + 1;
       summary[i][humanKey] = (summary[i][humanKey] || 0) + 1;
@@ -125,6 +161,10 @@ export function summarizeSamePhotoHumanModelCoverage(captures) {
     featureCount: FEATURES.length,
     photoFeatureCount: captures.length * FEATURES.length,
     provisionalPosePhotos,
+    captureScreenReadySingleReviewerPhotos,
+    captureScreenPendingPhotos,
+    captureScreenRejectedPhotos,
+    captureScreenUnavailablePhotos,
     statusCounts: Object.freeze(totals),
     candidateEvidenceCounts: Object.freeze(candidateEvidenceTotals),
     modelCandidateIsTransientBrowserEvidence: true,
