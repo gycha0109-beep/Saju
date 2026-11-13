@@ -259,9 +259,21 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
     const reverse = run(second, first).tenGodCourseResearch;
     expect(forward?.courses).toHaveLength(6);
     expect(reverse?.courses).toHaveLength(6);
-    expect(forward?.courses.map(x => [x.courseId, x.personRef, x.visibleGroupState]))
-      .toEqual(reverse?.courses.map(x =>
-        [x.courseId, x.personRef, x.visibleGroupState]));
+    expect(forward?.courses.map(x => [
+      x.courseId, x.calculationHash, x.visibleGroupState,
+      x.groups.map(g => [g.actualVisiblePositions, g.unresolvedFactPaths]),
+    ])).toEqual(reverse?.courses.map(x => [
+      x.courseId, x.calculationHash, x.visibleGroupState,
+      x.groups.map(g => [g.actualVisiblePositions, g.unresolvedFactPaths]),
+    ]));
+    expect(forward?.courses.map(x => x.personRef)).toEqual([
+      'person-first', 'person-first', 'person-first',
+      'person-second', 'person-second', 'person-second',
+    ]);
+    expect(reverse?.courses.map(x => x.personRef)).toEqual([
+      'person-second', 'person-second', 'person-second',
+      'person-first', 'person-first', 'person-first',
+    ]);
     expect(forward?.courses.slice(0, 3).every(item =>
       item.anyUnresolvedCanonicalSlots &&
       item.groups.every(g => g.unresolvedFactPaths.length === 7))).toBe(true);
