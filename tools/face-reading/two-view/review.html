@@ -397,6 +397,32 @@
         <svg id="eyelid-contour-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="눈꺼풀 윗경계·주름선·덮임 경계 사람 표시" hidden></svg>
       </div>
       <nav id="strip" class="strip" aria-label="전체 사진 목록"></nav>
+      <section id="capture-screen-review" aria-labelledby="capture-screen-review-heading" hidden>
+        <h2 id="capture-screen-review-heading">사진 촬영 자세·가림 상태 사람 검토</h2>
+        <p class="note">원본 사진을 보고 직접 선택합니다. 단독 사람 검토이며 독립 자세 정답·해부학적 정확도·상용 승인으로 사용하지 않습니다.</p>
+        <p id="capture-screen-review-count" class="note" role="status"></p>
+        <div class="toolbar">
+          <label for="capture-screen-pose">사진 자세
+            <select id="capture-screen-pose">
+              <option value="">직접 확인 전</option>
+              <option value="frontal_usable_candidate">정면으로 보임 (임시 검토)</option>
+              <option value="not_frontal">정면 아님</option>
+              <option value="uncertain">판정 어려움</option>
+            </select>
+          </label>
+          <label for="capture-screen-visibility">부위 가림
+            <select id="capture-screen-visibility">
+              <option value="">직접 확인 전</option>
+              <option value="clear_enough_to_review">확인할 수 있음</option>
+              <option value="partially_occluded">일부 가림</option>
+              <option value="unusable">검토 불가능</option>
+            </select>
+          </label>
+          <button id="capture-screen-save" type="button" disabled>현재 사진 사람 검토 기록 저장</button>
+          <button id="capture-screen-next" type="button">다음 미검토 사진 열기</button>
+        </div>
+        <p id="capture-screen-review-status" class="note" role="status"></p>
+      </section>
       <section aria-labelledby="readiness-heading">
         <h2 id="readiness-heading">사진별 정규 29개 관측 상태</h2>
         <p id="readiness-status" class="note" role="status">

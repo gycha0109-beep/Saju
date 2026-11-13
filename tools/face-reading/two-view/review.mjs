@@ -1945,10 +1945,133 @@ function renderJawModelHumanComparison(record, result, previous) {
     compared.maximumAbsoluteOffsetToImageHeight.toFixed(3) +
     ' (사진 높이 대비). 실제 턱뼈·돌출·형태 분류·정확도 검증 결과가 아닙니다.';
 }
+let captureScreenSaveBusy = false;
+let captureScreenSaveError = null;
+function renderCaptureScreenReview(record) {
+  const section = $('capture-screen-review');
+  const enabled = mode === 'existing' && state?.researchIntake?.researchOnly === true;
+  section.hidden = !enabled;
+  if (!enabled) return;
+  const reviews = state.captureScreenReviews || {};
+  const saved = reviews[record.captureRef];
+  const count = Object.keys(reviews).length;
+  const unsafeStore = state.captureScreenRestoreFailed || state.captureScreenReviewStaleCount > 0;
+  $('capture-screen-review-count').textContent =
+    '직접 검토한 사진 ' +
+    count +
+    '/' +
+    records.length +
+    '장 · 미검토 ' +
+    (records.length - count) +
+    '장 · 이 기록은 독립 정확도 검증 자료가 아닙니다.';
+  $('capture-screen-pose').value = saved?.pose || '';
+  $('capture-screen-visibility').value = saved?.visibility || '';
+  $('capture-screen-save').disabled = !original || unsafeStore || captureScreenSaveBusy || busy;
+  $('capture-screen-next').disabled = unsafeStore || captureScreenSaveBusy;
+  $('capture-screen-review-status').textContent =
+    captureScreenSaveError ||
+    (unsafeStore
+      ? '원본 변경 또는 검토 기록 손상 가능성이 있습니다. 저장과 이동을 중지합니다.'
+      : saved
+        ? '이 사진의 단독 사람 검토 기록이 있습니다. 변경하려면 원본을 확인한 뒤 다시 선택해 저장하세요.'
+        : '아직 검토 기록이 없습니다. 원본을 표시하고 사진 자세와 가림 상태를 직접 선택하세요.');
+  captureScreenDraftReady();
+}
+function captureScreenDraftReady() {
+  const validPose = ['frontal_usable_candidate', 'not_frontal', 'uncertain'].includes(
+    $('capture-screen-pose').value,
+  );
+  const validVisibility = ['clear_enough_to_review', 'partially_occluded', 'unusable'].includes(
+    $('capture-screen-visibility').value,
+  );
+  $('capture-screen-save').disabled =
+    !validPose ||
+    !validVisibility ||
+    !original ||
+    busy ||
+    captureScreenSaveBusy ||
+    state?.captureScreenRestoreFailed ||
+    state?.captureScreenReviewStaleCount > 0;
+}
+$('capture-screen-pose').onchange = captureScreenDraftReady;
+$('capture-screen-visibility').onchange = captureScreenDraftReady;
+$('capture-screen-next').onclick = () => {
+  if (
+    !state?.researchIntake?.researchOnly ||
+    captureScreenSaveBusy ||
+    state.captureScreenRestoreFailed ||
+    state.captureScreenReviewStaleCount > 0 ||
+    !records.length
+  )
+    return;
+  const next = Array.from(
+    { length: records.length },
+    (_, n) => (selected + 1 + n) % records.length,
+  ).find((index) => !state.captureScreenReviews?.[records[index].captureRef]);
+  if (next === undefined) {
+    $('capture-screen-review-status').textContent =
+      '모든 사진에 사람 검토 기록이 있습니다. 독립 자세 검증은 여전히 별도입니다.';
+    return;
+  }
+  selected = next;
+  original = true;
+  captureScreenSaveError = null;
+  render();
+  $('capture-screen-review').scrollIntoView({ block: 'start' });
+};
+$('capture-screen-save').onclick = async () => {
+  const record = records[selected];
+  if (
+    !record ||
+    mode !== 'existing' ||
+    !state?.researchIntake?.researchOnly ||
+    !original ||
+    captureScreenSaveBusy ||
+    busy ||
+    state.captureScreenRestoreFailed ||
+    state.captureScreenReviewStaleCount > 0
+  )
+    return;
+  const pose = $('capture-screen-pose').value;
+  const visibility = $('capture-screen-visibility').value;
+  if (
+    !['frontal_usable_candidate', 'not_frontal', 'uncertain'].includes(pose) ||
+    !['clear_enough_to_review', 'partially_occluded', 'unusable'].includes(visibility)
+  )
+    return;
+  captureScreenSaveBusy = true;
+  captureScreenSaveError = null;
+  $('capture-screen-save').disabled = true;
+  try {
+    const response = await fetch('/two-view/capture-screen-reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: state.token, captureRef: record.captureRef, pose, visibility }),
+    });
+    if (!response.ok) throw Error('사람 검토 기록 저장 실패: 원본 상태와 입력을 확인하세요.');
+    const payload = await response.json();
+    if (
+      !payload.saved ||
+      payload.review?.humanReviewed !== true ||
+      payload.review.independentPoseValidated !== false
+    )
+      throw Error('검토 저장 응답이 올바르지 않습니다.');
+    state.captureScreenReviews = {
+      ...(state.captureScreenReviews || {}),
+      [record.captureRef]: payload.review,
+    };
+  } catch (error) {
+    captureScreenSaveError = error.message;
+  } finally {
+    captureScreenSaveBusy = false;
+    render();
+  }
+};
 function render() {
   const record = records[selected];
   if (!record) return;
   const result = results.get(record.captureRef);
+  renderCaptureScreenReview(record);
   $('image').hidden = false;
   $('empty').hidden = true;
   $('original').hidden = false;
@@ -2560,6 +2683,17 @@ $('human-model-next-review').onclick = () => {
     ' · 원본 사진을 표시했습니다. 사람 표시 도구로 검토하세요. ' +
     (target.poseNotIndependentlyVerified ? '촬영 자세는 임시 지정으로 검증 전입니다. ' : '') +
     '표시·저장 여부와 독립 정확도 인증은 별개입니다.';
+  const screened = state?.captureScreenReviews?.[records[selected].captureRef];
+  if (
+    !screened ||
+    screened.pose !== 'frontal_usable_candidate' ||
+    screened.visibility === 'unusable'
+  ) {
+    $('human-model-review-queue-status').textContent +=
+      ' 이 사진은 아직 검토 가능한 정면 후보로 확인되지 않았습니다. 촬영 자세·가림 상태부터 직접 검토하세요.';
+    $('capture-screen-review').scrollIntoView({ block: 'start' });
+    return;
+  }
   const section = {
     eyelid: 'eyelid-contour-review',
     lip: 'lip-border-review',

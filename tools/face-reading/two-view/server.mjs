@@ -6,6 +6,13 @@ import { resolve, dirname, extname } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { validateFreshResearchIntake } from './fresh-research-intake-contract.mjs';
+import {
+  CAPTURE_SCREEN_REVIEW_VERSION,
+  createCaptureScreenReview,
+  validateCaptureScreenReviewStore,
+  projectCaptureScreenReview,
+  summarizeCaptureScreenReviews,
+} from './capture-screen-human-review.mjs';
 import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
 import { readCurrentPinnedPhoto } from './source-snapshot-guard.mjs';
 import {
@@ -309,6 +316,18 @@ export async function createLocalReviewServer({
   }
   const staleSourceResponse = (res) => json(res, 409, { error: 'SOURCE_CHANGED_RESTART_REQUIRED' });
 
+  const captureScreenReviewPath = resolve(intake, 'capture-screen-human-reviews.json');
+  let captureScreenReviews = new Map();
+  let captureScreenRestoreFailed = false;
+  let captureScreenSaving = false;
+  try {
+    const stored = JSON.parse(await readFile(captureScreenReviewPath, 'utf8'));
+    captureScreenReviews = new Map(
+      Object.entries(validateCaptureScreenReviewStore(stored, ids).records),
+    );
+  } catch (error) {
+    if (error.code !== 'ENOENT') captureScreenRestoreFailed = true;
+  }
   const eyeFoldReviewPath = resolve(intake, 'eye-fold-human-reviews.json');
   let eyeFoldReviews = new Map();
   let eyeFoldReviewRestoreFailed = false;
@@ -653,6 +672,18 @@ export async function createLocalReviewServer({
     res.writeHead(200, { ...staticHeaders, 'Content-Type': 'text/html; charset=utf-8' });
     res.end(html);
   }
+  async function currentCaptureScreenReviewState() {
+    const records = {};
+    let staleCount = 0;
+    for (const [ref, review] of captureScreenReviews) {
+      if (!ids.includes(ref) || sourceDigestByRecord.get(ref) !== review.sourceSha256) {
+        staleCount++;
+        continue;
+      }
+      records[ref] = projectCaptureScreenReview(review);
+    }
+    return { records, staleCount };
+  }
   async function currentEyeFoldReviewState() {
     const records = {};
     let staleCount = 0;
@@ -899,6 +930,7 @@ export async function createLocalReviewServer({
       return file(res, resolve(sourceDir, 'review.html'), 'text/html; charset=utf-8');
     if (req.method === 'GET' && url.pathname === '/two-view/state') {
       if (!(await allPinnedSourcesCurrent())) return staleSourceResponse(res);
+      const captureScreenReviewState = await currentCaptureScreenReviewState();
       const eyeFoldReviewState = await currentEyeFoldReviewState();
       const browReviewState = await currentBrowReviewState();
       const noseReviewState = await currentNoseReviewState();
@@ -1032,6 +1064,13 @@ export async function createLocalReviewServer({
           : {}),
         savedRecords,
         perCaptureReadiness,
+        captureScreenReviews: captureScreenReviewState.records,
+        captureScreenReviewStaleCount: captureScreenReviewState.staleCount,
+        captureScreenRestoreFailed,
+        captureScreenReviewSummary: summarizeCaptureScreenReviews(
+          captureScreenReviewState.records,
+          records.length,
+        ),
         eyeFoldReviews: eyeFoldReviewState.records,
         eyeFoldReviewStaleCount: eyeFoldReviewState.staleCount,
         eyeFoldReviewRestoreFailed,
@@ -1235,6 +1274,67 @@ export async function createLocalReviewServer({
         return json(res, 200, { saved: true, count: next.length, formalValidation: false });
       } finally {
         parsingSaving = false;
+      }
+    }
+    if (req.method === 'POST' && url.pathname === '/two-view/capture-screen-reviews') {
+      if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
+      const input = await requestJson(req, 4096);
+      if (
+        !input ||
+        typeof input !== 'object' ||
+        Array.isArray(input) ||
+        Object.keys(input).length !== 4 ||
+        !['token', 'captureRef', 'pose', 'visibility'].every((key) => Object.hasOwn(input, key))
+      )
+        throw Error('CAPTURE_SCREEN_REVIEW_INVALID');
+      if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
+      if (
+        !freshResearchOnly ||
+        captureScreenRestoreFailed ||
+        captureScreenSaving ||
+        !ids.includes(input.captureRef) ||
+        roles.get(input.captureRef) !== 'frontal'
+      )
+        throw Error('CAPTURE_SCREEN_REVIEW_INVALID');
+      const source = await pinnedSource(input.captureRef);
+      if (source.status !== 'current') return staleSourceResponse(res);
+      captureScreenSaving = true;
+      try {
+        const sourceSha256 = sourceDigestByRecord.get(input.captureRef);
+        const previous = captureScreenReviews.get(input.captureRef);
+        const review = createCaptureScreenReview(
+          { pose: input.pose, visibility: input.visibility },
+          {
+            captureRef: input.captureRef,
+            sourceSha256,
+            revision: (previous?.revision || 0) + 1,
+            reviewedAt: new Date().toISOString(),
+          },
+        );
+        const records = Object.fromEntries(captureScreenReviews);
+        records[input.captureRef] = review;
+        validateCaptureScreenReviewStore(
+          { schemaVersion: CAPTURE_SCREEN_REVIEW_VERSION, records },
+          ids,
+        );
+        const tmp = resolve(intake, 'capture-screen-human-reviews-' + randomUUID() + '.tmp');
+        await writeFile(
+          tmp,
+          JSON.stringify(
+            {
+              schemaVersion: CAPTURE_SCREEN_REVIEW_VERSION,
+              records,
+            },
+            null,
+            2,
+          ) + '\n',
+          { flag: 'wx' },
+        );
+        await rename(tmp, captureScreenReviewPath);
+        captureScreenReviews.set(input.captureRef, review);
+        return json(res, 200, { saved: true, review: projectCaptureScreenReview(review) });
+      } finally {
+        captureScreenSaving = false;
       }
     }
     if (req.method === 'POST' && url.pathname === '/two-view/eyelid-contour-reviews') {
@@ -1707,6 +1807,7 @@ export async function createLocalReviewServer({
         'EAR_DETAIL_REVIEW_INVALID',
         'LIP_BORDER_REVIEW_INVALID',
         'EYELID_CONTOUR_REVIEW_INVALID',
+        'CAPTURE_SCREEN_REVIEW_INVALID',
         'REQUEST_TOO_LARGE',
         'SOURCE_CHANGED',
       ].includes(error.message)
