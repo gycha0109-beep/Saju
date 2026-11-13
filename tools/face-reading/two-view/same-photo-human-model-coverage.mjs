@@ -29,19 +29,29 @@ function statusFor(capture, key) {
   const comparison = capture.comparisons[key];
   if (
     !isObject(comparison) ||
-    Object.keys(comparison).sort().join('|') !== [
-      'humanReviewRecorded', 'modelCandidateAvailable', 'comparisonStatus', 'reviewStoreUnavailable',
-    ].sort().join('|') ||
+    Object.keys(comparison).sort().join('|') !==
+      [
+        'humanReviewRecorded',
+        'modelCandidateAvailable',
+        'comparisonStatus',
+        'reviewStoreUnavailable',
+      ]
+        .sort()
+        .join('|') ||
     typeof comparison.humanReviewRecorded !== 'boolean' ||
     typeof comparison.modelCandidateAvailable !== 'boolean' ||
     typeof comparison.reviewStoreUnavailable !== 'boolean' ||
     !['not_run', 'available', 'partial', 'unavailable'].includes(comparison.comparisonStatus)
-  ) invalid();
+  )
+    invalid();
   if (
     comparison.comparisonStatus !== 'not_run' &&
-    (!comparison.humanReviewRecorded || !comparison.modelCandidateAvailable ||
-      comparison.reviewStoreUnavailable || capture.viewRole !== 'frontal')
-  ) invalid();
+    (!comparison.humanReviewRecorded ||
+      !comparison.modelCandidateAvailable ||
+      comparison.reviewStoreUnavailable ||
+      capture.viewRole !== 'frontal')
+  )
+    invalid();
   if (capture.viewRole !== 'frontal') return 'view_ineligible';
   if (comparison.reviewStoreUnavailable) return 'review_store_unavailable';
   if (!comparison.humanReviewRecorded) return 'human_review_missing';
@@ -57,9 +67,22 @@ function statusFor(capture, key) {
 export function summarizeSamePhotoHumanModelCoverage(captures) {
   if (!Array.isArray(captures) || captures.length > 1000) invalid();
   const summary = FEATURES.map(([featureKey, label]) => ({
-    featureKey, label, ...tally(),
+    featureKey,
+    label,
+    ...tally(),
+    modelCandidateInCurrentSession: 0,
+    modelCandidateNotLoadedOrUnavailable: 0,
+    humanReviewRecorded: 0,
+    humanReviewMissing: 0,
   }));
   const totals = tally();
+  const candidateEvidenceTotals = {
+    modelCandidateInCurrentSession: 0,
+    modelCandidateNotLoadedOrUnavailable: 0,
+    humanReviewRecorded: 0,
+    humanReviewMissing: 0,
+    humanAndModelBothPresent: 0,
+  };
   let provisionalPosePhotos = 0;
   for (const capture of captures) {
     if (
@@ -70,13 +93,29 @@ export function summarizeSamePhotoHumanModelCoverage(captures) {
       typeof capture.poseProvisional !== 'boolean' ||
       !isObject(capture.comparisons) ||
       Object.keys(capture.comparisons).sort().join('|') !==
-        FEATURES.map(([key]) => key).sort().join('|')
-    ) invalid();
+        FEATURES.map(([key]) => key)
+          .sort()
+          .join('|')
+    )
+      invalid();
     if (capture.poseProvisional) provisionalPosePhotos++;
     for (let i = 0; i < FEATURES.length; i++) {
-      const status = statusFor(capture, FEATURES[i][0]);
+      const key = FEATURES[i][0];
+      const status = statusFor(capture, key);
       summary[i][status]++;
       totals[status]++;
+      if (capture.viewRole !== 'frontal') continue;
+      const x = capture.comparisons[key];
+      const modelKey = x.modelCandidateAvailable
+        ? 'modelCandidateInCurrentSession'
+        : 'modelCandidateNotLoadedOrUnavailable';
+      const humanKey = x.humanReviewRecorded ? 'humanReviewRecorded' : 'humanReviewMissing';
+      candidateEvidenceTotals[modelKey]++;
+      candidateEvidenceTotals[humanKey]++;
+      if (x.modelCandidateAvailable && x.humanReviewRecorded && !x.reviewStoreUnavailable)
+        candidateEvidenceTotals.humanAndModelBothPresent++;
+      summary[i][modelKey] = (summary[i][modelKey] || 0) + 1;
+      summary[i][humanKey] = (summary[i][humanKey] || 0) + 1;
     }
   }
   return Object.freeze({
@@ -87,6 +126,8 @@ export function summarizeSamePhotoHumanModelCoverage(captures) {
     photoFeatureCount: captures.length * FEATURES.length,
     provisionalPosePhotos,
     statusCounts: Object.freeze(totals),
+    candidateEvidenceCounts: Object.freeze(candidateEvidenceTotals),
+    modelCandidateIsTransientBrowserEvidence: true,
     features: Object.freeze(summary.map((row) => Object.freeze({ ...row }))),
     // A same-photo geometric candidate is not independent anatomical truth.
     independentlyReviewedPose: false,

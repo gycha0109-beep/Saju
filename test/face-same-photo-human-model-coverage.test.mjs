@@ -7,14 +7,17 @@ import {
 const sample = (options = {}) => ({
   viewRole: 'frontal',
   poseProvisional: false,
-  comparisons: Object.fromEntries(['eyelid', 'lip', 'ear'].map((key) => [
-    key, {
-      humanReviewRecorded: false,
-      modelCandidateAvailable: true,
-      comparisonStatus: 'not_run',
-      reviewStoreUnavailable: false,
-    },
-  ])),
+  comparisons: Object.fromEntries(
+    ['eyelid', 'lip', 'ear'].map((key) => [
+      key,
+      {
+        humanReviewRecorded: false,
+        modelCandidateAvailable: true,
+        comparisonStatus: 'not_run',
+        reviewStoreUnavailable: false,
+      },
+    ]),
+  ),
   ...options,
 });
 const comparison = (extra = {}) => ({
@@ -37,8 +40,12 @@ describe('same-photo model/human comparison coverage without biometric output', 
     });
     const third = sample({
       viewRole: 'profile',
-      comparisons: Object.fromEntries(['eyelid', 'lip', 'ear'].map((key) =>
-        [key, comparison({ comparisonStatus: 'not_run', modelCandidateAvailable: false })])),
+      comparisons: Object.fromEntries(
+        ['eyelid', 'lip', 'ear'].map((key) => [
+          key,
+          comparison({ comparisonStatus: 'not_run', modelCandidateAvailable: false }),
+        ]),
+      ),
     });
     const report = summarizeSamePhotoHumanModelCoverage([first, second, third]);
     expect(report).toMatchObject({
@@ -47,6 +54,14 @@ describe('same-photo model/human comparison coverage without biometric output', 
       featureCount: 3,
       photoFeatureCount: 9,
       provisionalPosePhotos: 1,
+      modelCandidateIsTransientBrowserEvidence: true,
+      candidateEvidenceCounts: {
+        modelCandidateInCurrentSession: 6,
+        modelCandidateNotLoadedOrUnavailable: 0,
+        humanReviewRecorded: 3,
+        humanReviewMissing: 3,
+        humanAndModelBothPresent: 3,
+      },
       statusCounts: {
         human_review_missing: 3,
         research_comparison_available: 1,
@@ -88,16 +103,25 @@ describe('same-photo model/human comparison coverage without biometric output', 
   it('rejects fabricated comparisons, unknown fields, and nonfrontal authority', () => {
     const eye = sample().comparisons.eyelid;
     for (const invalid of [
-      sample({ comparisons: { ...sample().comparisons, eyelid: { ...eye, comparisonStatus: 'available' } } }),
-      sample({ comparisons: { ...sample().comparisons, eyelid: { ...eye, personName: 'invented' } } }),
+      sample({
+        comparisons: { ...sample().comparisons, eyelid: { ...eye, comparisonStatus: 'available' } },
+      }),
+      sample({
+        comparisons: { ...sample().comparisons, eyelid: { ...eye, personName: 'invented' } },
+      }),
       sample({ viewRole: 'other' }),
-      sample({ viewRole: 'profile', comparisons: {
-        ...sample().comparisons, eyelid: comparison(),
-      } }),
+      sample({
+        viewRole: 'profile',
+        comparisons: {
+          ...sample().comparisons,
+          eyelid: comparison(),
+        },
+      }),
       sample({ originalPhotoBytes: 'forbidden' }),
     ]) {
-      expect(() => summarizeSamePhotoHumanModelCoverage([invalid]))
-        .toThrow('HUMAN_MODEL_COVERAGE_INPUT_INVALID');
+      expect(() => summarizeSamePhotoHumanModelCoverage([invalid])).toThrow(
+        'HUMAN_MODEL_COVERAGE_INPUT_INVALID',
+      );
     }
   });
 
@@ -106,5 +130,48 @@ describe('same-photo model/human comparison coverage without biometric output', 
     expect(report.photoFeatureCount).toBe(0);
     expect(report.statusCounts.research_comparison_available).toBe(0);
     expect(report.features).toHaveLength(3);
+  });
+});
+
+describe('independent screening versus transient model evidence', () => {
+  it('counts model candidate absence even when every human review is missing', () => {
+    const report = summarizeSamePhotoHumanModelCoverage([
+      sample({
+        comparisons: {
+          eyelid: {
+            humanReviewRecorded: false,
+            modelCandidateAvailable: false,
+            comparisonStatus: 'not_run',
+            reviewStoreUnavailable: false,
+          },
+          lip: {
+            humanReviewRecorded: false,
+            modelCandidateAvailable: false,
+            comparisonStatus: 'not_run',
+            reviewStoreUnavailable: false,
+          },
+          ear: {
+            humanReviewRecorded: false,
+            modelCandidateAvailable: true,
+            comparisonStatus: 'not_run',
+            reviewStoreUnavailable: false,
+          },
+        },
+      }),
+    ]);
+    expect(report.statusCounts.human_review_missing).toBe(3);
+    expect(report.candidateEvidenceCounts).toEqual({
+      modelCandidateInCurrentSession: 1,
+      modelCandidateNotLoadedOrUnavailable: 2,
+      humanReviewRecorded: 0,
+      humanReviewMissing: 3,
+      humanAndModelBothPresent: 0,
+    });
+    expect(report.features.find((feature) => feature.featureKey === 'lip')).toMatchObject({
+      modelCandidateNotLoadedOrUnavailable: 1,
+      humanReviewMissing: 1,
+    });
+    expect(report.independentHumanGroundTruthValidated).toBe(false);
+    expect(report.traditionalBindingAuthorized).toBe(false);
   });
 });

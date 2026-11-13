@@ -1540,6 +1540,7 @@ function reviewStoreNeedsRepair() {
 function renderSamePhotoHumanModelCoverage() {
   const report = currentSamePhotoHumanModelCoverage();
   const totals = report.statusCounts;
+  const evidence = report.candidateEvidenceCounts;
   $('human-model-comparison-status').textContent =
     '기존 사진 ' +
     report.photoCount +
@@ -1549,15 +1550,21 @@ function renderSamePhotoHumanModelCoverage() {
     (totals.research_comparison_available + totals.research_comparison_partial) +
     '건 · 사람 표시 없음 ' +
     totals.human_review_missing +
-    '건 · 모델 후보 없음 ' +
+    '건 · 사람 표시 기록이 있는 경우의 모델 후보 없음 ' +
     totals.model_candidate_missing +
     '건 · 비교 미실행 ' +
     totals.comparison_not_run +
     '건 · 비교 불가 ' +
     totals.noncomparable +
+    '건 · 현재 브라우저의 실제 모델 경계 후보 ' +
+    evidence.modelCandidateInCurrentSession +
+    '건 / 후보 미생성·미복원 ' +
+    evidence.modelCandidateNotLoadedOrUnavailable +
+    '건 · 사람 표시와 모델 후보가 모두 있는 경로 ' +
+    evidence.humanAndModelBothPresent +
     '건 · 자세 임시 지정 ' +
     report.provisionalPosePhotos +
-    '장. 독립 사람 정답/정확도 검증은 0건입니다.';
+    '장. 저장된 분할 영역은 실제 비교 경계와 다르며, 화면 재진입 시 눈·입술 후보는 기존 전체 분석으로 다시 생성해야 합니다. 독립 사람 정답/정확도 검증은 0건입니다.';
   const rows = $('human-model-comparison-rows');
   rows.replaceChildren();
   for (const feature of report.features) {
@@ -1569,7 +1576,7 @@ function renderSamePhotoHumanModelCoverage() {
     detail.textContent =
       '사람 표시 없음 ' +
       feature.human_review_missing +
-      ' / 모델 후보 없음 ' +
+      ' / 사람 표시 후 모델 후보 없음 ' +
       feature.model_candidate_missing +
       ' / 비교 미실행 ' +
       feature.comparison_not_run +
@@ -1591,9 +1598,9 @@ function renderSamePhotoHumanModelCoverage() {
   $('human-model-review-queue-status').textContent =
     '사람 표시가 필요한 정면 경로 ' +
     queue.missingReviewSlots +
-    '건 중 모델 선행조건 확인 ' +
+    '건 중 분할·기준점 선행조건 확인 ' +
     queue.reviewTargetsCount +
-    '건 · 모델 근거 부족 ' +
+    '건(비교 경계 확보와 별개) · 선행조건 부족 ' +
     queue.modelPrerequisiteMissingSlots +
     '건 · 자세 미확인 ' +
     queue.uncheckedPosePhotos +

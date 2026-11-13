@@ -65,6 +65,16 @@ valid local annotation, the existing comparison calculators may produce
 research-only distances, not independent anatomical ground truth. No original
 images, biometric coordinates, or human strokes belong in Git or CI.
 
+**Region screening is not a comparison-ready boundary.** The review queue
+counts current parser/landmark prerequisites, while the same-photo comparison
+panel separately counts actual model boundary candidates in the current
+browser, unavailable/not-restored candidates, recorded human annotations and
+slots with both sources. Eye/lip boundary candidates are transient worker
+results and do not restore from saved parser summaries after page reload.
+Run the existing full analysis before assessing candidate availability.
+Neither candidate presence nor one person's drawing establishes independent
+anatomical ground truth, repeatability or measurement accuracy.
+
 ### Fictional entertainment flow
 
 The experience can run without the private photo inventory or model assets:
