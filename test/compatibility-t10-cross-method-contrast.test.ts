@@ -101,6 +101,38 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
     expect(result?.maySell).toBe(false);
   });
 
+  it('keeps the 2020 joint-factor study as an unqualified source hypothesis', () => {
+    for (const counterpart of [SUPPORT_WITH_CLASH, CLASH_WITH_SUPPORT, NO_OPPOSITION]) {
+      const output = run(A, counterpart);
+      const synthesis = output.crossMethodContrastResearch?.synthesisDecision;
+      const study = synthesis?.conditionalJointFactorStudy;
+      expect(study?.sourceUrl).toBe('https://www.riss.kr/link?id=T15540056');
+      expect(study?.sourceEvidence).toBe('RISS_PUBLIC_ABSTRACT_AND_TOC_ONLY');
+      expect(study?.studyPopulation).toBe('married_couples_only');
+      expect(study?.candidateObservedFactPaths).toEqual(synthesis?.observedFactPaths);
+      expect(study?.candidateObservedFactPaths).toContain('subject.pillars.day');
+      expect(study?.candidateObservedFactPaths).toContain('target.pillars.day');
+      expect(study?.bothChartFactorsOperationalized).toBe(false);
+      expect(study?.adverseFactorAccumulationEstablished).toBe(false);
+      expect(study?.counterpartNeutralizationEstablished).toBe(false);
+      expect(study?.methodAppliesToCurrentPair).toBe(false);
+      expect(study?.individualRelationshipPredictionAuthorized).toBe(false);
+      expect(synthesis?.sourceUrls).toContain(study?.sourceUrl);
+      expect(synthesis?.unresolvedPrerequisites).toContain(
+        'NAM_2020_ADVERSE_AND_NEUTRALIZATION_CRITERIA_NOT_OPERATIONALIZED');
+      expect(synthesis?.paragraph).toContain('남기동(2020) 박사논문의 공개 초록');
+      expect(synthesis?.relationshipConclusion).toBeNull();
+      expect(output.pairReadingBoundaryDraft?.sections.find(section =>
+        section.id === 'synthesis_hold')?.sentences[0]?.sourceUrls)
+        .toContain(study?.sourceUrl);
+      expect(output.productReadingQualityReview?.actualCompatibilityReadingReady).toBe(false);
+      expect(output.maySell).toBe(false);
+    }
+    const ordinary = run(A, SUPPORT_WITH_CLASH, false);
+    expect(ordinary.crossMethodContrastResearch).toBeUndefined();
+    expect(ordinary.html).toBe(run(A, SUPPORT_WITH_CLASH).html);
+  });
+
   it('records the opposite configuration with exact cross-position source paths', () => {
     const result = run(A, CLASH_WITH_SUPPORT).crossMethodContrastResearch;
     expect(result?.structural[0]?.direction)
