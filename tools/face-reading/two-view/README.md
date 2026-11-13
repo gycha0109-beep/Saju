@@ -54,6 +54,17 @@ screening failures are `unavailable`, never fabricated model candidates;
 missing independent pose, visible hairline, actual human eye/ear markings,
 illumination-controlled lip reference and repeat capture are still blockers.
 
+For same-photo comparisons, the existing 2D evidence section also shows a
+**다음 사람 표시 검토 사진 열기** button. It navigates the already-pinned private
+photos to the existing original-image eyelid, lip or ear annotation controls
+when the corresponding current model prerequisites exist. It never invents
+manual strokes, confirms pose or turns parser visibility into accuracy. A
+missing model precursor stays out of the suggested review queue; source/review
+restore errors disable navigation. After a human actually reviews and saves a
+valid local annotation, the existing comparison calculators may produce
+research-only distances, not independent anatomical ground truth. No original
+images, biometric coordinates, or human strokes belong in Git or CI.
+
 ### Fictional entertainment flow
 
 The experience can run without the private photo inventory or model assets:

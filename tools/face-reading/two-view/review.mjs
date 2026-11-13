@@ -33,6 +33,7 @@ import {
 import { createSourceCurrentnessGate } from './source-currentness-gate.mjs';
 import { sweepCurrent2dPreviewCandidates } from './current-2d-preview-sweep.mjs';
 import { summarizeSamePhotoHumanModelCoverage } from './same-photo-human-model-coverage.mjs';
+import { planSamePhotoReviewQueue } from './same-photo-review-queue.mjs';
 import {
   earBinaryFromOverlayRGBA,
   measureVisibleEarMaskSilhouette,
@@ -78,6 +79,7 @@ let state,
   runGeneration = 0,
   busy = false,
   current2dSweepActive = false;
+let lastHumanReviewTarget = null;
 const results = new Map(),
   blobUrls = new Set(),
   files = new Map(),
@@ -1453,15 +1455,20 @@ function currentSamePhotoHumanModelCoverage() {
     const eyeModel = frontal && current?.eyeClassCandidate?.status === 'available';
     const lipModel = frontal && current?.lipClassCandidate?.status === 'available';
     const earModel = frontal && current?.earMaskCandidate?.status === 'available';
-    const comparedEye = eyeModel && eyelid && !blocked.eyelid
-      ? compareEyeClassEnvelopeToHumanUpperMargin(current.eyeClassCandidate, eyelid)
-      : null;
-    const comparedLip = lipModel && lip && !blocked.lip
-      ? compareLipClassWidthsToHumanBorders(current.lipClassCandidate, lip)
-      : null;
+    const comparedEye =
+      eyeModel && eyelid && !blocked.eyelid
+        ? compareEyeClassEnvelopeToHumanUpperMargin(current.eyeClassCandidate, eyelid)
+        : null;
+    const comparedLip =
+      lipModel && lip && !blocked.lip
+        ? compareLipClassWidthsToHumanBorders(current.lipClassCandidate, lip)
+        : null;
     const cachedEar = current?.earRimCurveComparison;
     const comparedEar =
-      earModel && ear && !blocked.ear && cachedEar?.revision === ear.revision &&
+      earModel &&
+      ear &&
+      !blocked.ear &&
+      cachedEar?.revision === ear.revision &&
       cachedEar.status === 'completed'
         ? cachedEar.value
         : null;
@@ -1469,7 +1476,9 @@ function currentSamePhotoHumanModelCoverage() {
       humanReviewRecorded: Boolean(human),
       modelCandidateAvailable: Boolean(modelAvailable),
       comparisonStatus:
-        record.viewRole === 'frontal' && outcome && !storeFailed &&
+        record.viewRole === 'frontal' &&
+        outcome &&
+        !storeFailed &&
         ['available', 'partial', 'unavailable'].includes(outcome.status)
           ? outcome.status
           : 'not_run',
@@ -1477,8 +1486,8 @@ function currentSamePhotoHumanModelCoverage() {
     });
     return {
       viewRole: record.viewRole,
-      poseProvisional: state?.researchIntake?.viewRoleRouting ===
-        'provisional_frontal_for_research_only',
+      poseProvisional:
+        state?.researchIntake?.viewRoleRouting === 'provisional_frontal_for_research_only',
       comparisons: {
         eyelid: comparison(eyelid, eyeModel, comparedEye, blocked.eyelid),
         lip: comparison(lip, lipModel, comparedLip, blocked.lip),
@@ -1488,18 +1497,66 @@ function currentSamePhotoHumanModelCoverage() {
   });
   return summarizeSamePhotoHumanModelCoverage(captures);
 }
+// Prioritize only existing-photo, current-model prerequisites. A provisional
+// frontal route is not a pose determination; this is navigation, not labeling.
+function currentSamePhotoReviewQueue() {
+  return planSamePhotoReviewQueue(
+    records.map((record) => {
+      const parsing = results.get(record.captureRef)?.parsing;
+      const current = parsing?.status === 'completed' && parsing.methodVersion === PARSING_VERSION;
+      return {
+        viewRole: record.viewRole,
+        poseProvisional:
+          state?.researchIntake?.viewRoleRouting === 'provisional_frontal_for_research_only',
+        parsingCurrent: Boolean(current),
+        modelReady: {
+          eyelid: Boolean(current && parsing.eyeDirection?.status === 'available'),
+          lip: Boolean(
+            current &&
+            parsing.morphology?.lipBalance?.status === 'available' &&
+            parsing.regionScreening?.regions?.lips?.status === 'screened',
+          ),
+          ear: Boolean(current && parsing.regionScreening?.regions?.ears?.status === 'screened'),
+        },
+        humanRecorded: {
+          eyelid: Boolean(state?.eyelidContourReviews?.[record.captureRef]),
+          lip: Boolean(state?.lipReviews?.[record.captureRef]),
+          ear: Boolean(state?.earReviews?.[record.captureRef]),
+        },
+      };
+    }),
+  );
+}
+function reviewStoreNeedsRepair() {
+  return Boolean(
+    state?.eyelidContourReviewRestoreFailed ||
+    state?.lipReviewRestoreFailed ||
+    state?.earReviewRestoreFailed ||
+    state?.eyelidContourReviewStaleCount ||
+    state?.lipReviewStaleCount ||
+    state?.earReviewStaleCount,
+  );
+}
 function renderSamePhotoHumanModelCoverage() {
   const report = currentSamePhotoHumanModelCoverage();
   const totals = report.statusCounts;
   $('human-model-comparison-status').textContent =
-    '기존 사진 ' + report.photoCount + '장 · 눈꺼풀/입술/귀 3개 비교 경로 ' +
-    report.photoFeatureCount + '건 중 동일 사진 연구용 비교 ' +
+    '기존 사진 ' +
+    report.photoCount +
+    '장 · 눈꺼풀/입술/귀 3개 비교 경로 ' +
+    report.photoFeatureCount +
+    '건 중 동일 사진 연구용 비교 ' +
     (totals.research_comparison_available + totals.research_comparison_partial) +
-    '건 · 사람 표시 없음 ' + totals.human_review_missing +
-    '건 · 모델 후보 없음 ' + totals.model_candidate_missing +
-    '건 · 비교 미실행 ' + totals.comparison_not_run +
-    '건 · 비교 불가 ' + totals.noncomparable +
-    '건 · 자세 임시 지정 ' + report.provisionalPosePhotos +
+    '건 · 사람 표시 없음 ' +
+    totals.human_review_missing +
+    '건 · 모델 후보 없음 ' +
+    totals.model_candidate_missing +
+    '건 · 비교 미실행 ' +
+    totals.comparison_not_run +
+    '건 · 비교 불가 ' +
+    totals.noncomparable +
+    '건 · 자세 임시 지정 ' +
+    report.provisionalPosePhotos +
     '장. 독립 사람 정답/정확도 검증은 0건입니다.';
   const rows = $('human-model-comparison-rows');
   rows.replaceChildren();
@@ -1510,17 +1567,40 @@ function renderSamePhotoHumanModelCoverage() {
     name.textContent = feature.label + ' · ';
     const detail = document.createElement('span');
     detail.textContent =
-      '사람 표시 없음 ' + feature.human_review_missing +
-      ' / 모델 후보 없음 ' + feature.model_candidate_missing +
-      ' / 비교 미실행 ' + feature.comparison_not_run +
-      ' / 조건 불일치 ' + feature.noncomparable +
+      '사람 표시 없음 ' +
+      feature.human_review_missing +
+      ' / 모델 후보 없음 ' +
+      feature.model_candidate_missing +
+      ' / 비교 미실행 ' +
+      feature.comparison_not_run +
+      ' / 조건 불일치 ' +
+      feature.noncomparable +
       ' / 연구용 비교 가능·부분 ' +
       (feature.research_comparison_available + feature.research_comparison_partial) +
-      ' / 검토 기록 오류·변경 ' + feature.review_store_unavailable +
-      ' / 정면 비교 부적합 ' + feature.view_ineligible;
+      ' / 검토 기록 오류·변경 ' +
+      feature.review_store_unavailable +
+      ' / 정면 비교 부적합 ' +
+      feature.view_ineligible;
     p.append(name, detail);
     rows.append(p);
   }
+  const queue = currentSamePhotoReviewQueue();
+  const locked = reviewStoreNeedsRepair();
+  $('human-model-next-review').disabled =
+    locked || busy || mode !== 'existing' || queue.targets.length === 0;
+  $('human-model-review-queue-status').textContent =
+    '사람 표시가 필요한 정면 경로 ' +
+    queue.missingReviewSlots +
+    '건 중 모델 선행조건 확인 ' +
+    queue.reviewTargetsCount +
+    '건 · 모델 근거 부족 ' +
+    queue.modelPrerequisiteMissingSlots +
+    '건 · 자세 미확인 ' +
+    queue.uncheckedPosePhotos +
+    '장.' +
+    (locked
+      ? ' 기존 사람 검토 복원·원본 변경 오류부터 확인해야 합니다.'
+      : ' 클릭하면 기존 원본 표시와 사람 표시 도구로 이동합니다. 자동 표시·정답 인증은 하지 않습니다.');
 }
 function renderCurrent2dEvidence(record, result, previous) {
   const summary = current2dPhotoSummary(record, previous);
@@ -2059,6 +2139,7 @@ function render() {
   document.body.dataset.selected = record.captureRef;
 }
 function setRecords(next, nextMode) {
+  lastHumanReviewTarget = null;
   records = next;
   mode = nextMode;
   selected = 0;
@@ -2440,6 +2521,45 @@ function current2dTransientPreviewsSettled(record) {
     (!earReady || (result.earMaskCandidate != null && result.earMaskCandidate.status !== 'loading'))
   );
 }
+$('human-model-next-review').onclick = () => {
+  if (
+    busy ||
+    mode !== 'existing' ||
+    !state ||
+    reviewStoreNeedsRepair() ||
+    document.body.dataset.ready !== 'true'
+  )
+    return;
+  const queue = currentSamePhotoReviewQueue();
+  if (!queue.targets.length) return;
+  const previous = queue.targets.findIndex(
+    (item) =>
+      item.photoIndex === lastHumanReviewTarget?.photoIndex &&
+      item.part === lastHumanReviewTarget?.part,
+  );
+  const target = queue.targets[(previous + 1) % queue.targets.length];
+  lastHumanReviewTarget = { photoIndex: target.photoIndex, part: target.part };
+  selected = target.photoIndex;
+  original = true;
+  render();
+  const titles = { eyelid: '눈꺼풀 윗경계', lip: '입술 경계', ear: '귀 바깥선' };
+  $('human-model-review-queue-status').textContent =
+    '사진 ' +
+    (selected + 1) +
+    '/' +
+    records.length +
+    ' · 검토 대상: ' +
+    titles[target.part] +
+    ' · 원본 사진을 표시했습니다. 사람 표시 도구로 검토하세요. ' +
+    (target.poseNotIndependentlyVerified ? '촬영 자세는 임시 지정으로 검증 전입니다. ' : '') +
+    '표시·저장 여부와 독립 정확도 인증은 별개입니다.';
+  const section = {
+    eyelid: 'eyelid-contour-review',
+    lip: 'lip-border-review',
+    ear: 'ear-review',
+  }[target.part];
+  document.getElementById(section)?.scrollIntoView({ block: 'start' });
+};
 $('current-2d-sweep').onclick = async () => {
   if (busy || current2dSweepActive || mode !== 'existing' || !records.length) return;
   const firstSelected = selected;

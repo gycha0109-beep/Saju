@@ -524,6 +524,7 @@ export async function createLocalReviewServer({
       'current-2d-evidence-readiness.mjs',
       'current-2d-preview-sweep.mjs',
       'same-photo-human-model-coverage.mjs',
+      'same-photo-review-queue.mjs',
       'visible-lip-class-profile.mjs',
       'visible-lip-pixel-color.mjs',
       'lip-model-human-width-comparison.mjs',
