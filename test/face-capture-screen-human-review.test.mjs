@@ -5,6 +5,7 @@ import {
   validateCaptureScreenReviewStore,
   projectCaptureScreenReview,
   summarizeCaptureScreenReviews,
+  auditCurrentCaptureScreenReviews,
 } from '../tools/face-reading/two-view/capture-screen-human-review.mjs';
 
 const sha = 'a'.repeat(64);
@@ -124,6 +125,55 @@ describe('source-pinned human pose/occlusion review (research only)', () => {
           ['capture-9001'],
         ),
       ).toThrow();
+  });
+  it('audits stored screening separately from independent truth and excludes changed originals', () => {
+    const second = createCaptureScreenReview(
+      { pose: 'not_frontal', visibility: 'unusable' },
+      { ...context(), captureRef: 'capture-9002' },
+    );
+    const store = {
+      schemaVersion: CAPTURE_SCREEN_REVIEW_VERSION,
+      records: { 'capture-9001': source(), 'capture-9002': second },
+    };
+    const current = auditCurrentCaptureScreenReviews(
+      store,
+      ['capture-9001', 'capture-9002'],
+      new Map([
+        ['capture-9001', sha],
+        ['capture-9002', 'b'.repeat(64)],
+      ]),
+    );
+    expect(current).toMatchObject({
+      totalPhotos: 2,
+      humanScreenedPhotos: 1,
+      unreviewedPhotos: 1,
+      frontalCandidatesSingleReviewer: 1,
+      staleSourceReviews: 1,
+      comparisonScreeningBlocked: true,
+      independentPoseValidated: false,
+      independentAnatomicalAccuracyValidated: false,
+    });
+    const safe = JSON.stringify(current);
+    expect(safe).not.toContain('capture-9001');
+    expect(safe).not.toContain(sha);
+    const restored = auditCurrentCaptureScreenReviews(
+      store,
+      ['capture-9001', 'capture-9002'],
+      new Map([
+        ['capture-9001', sha],
+        ['capture-9002', sha],
+      ]),
+    );
+    expect(restored.humanScreenedPhotos).toBe(2);
+    expect(restored.uncertainOrRejectedPhotos).toBe(1);
+    expect(restored.comparisonScreeningBlocked).toBe(false);
+    expect(() =>
+      auditCurrentCaptureScreenReviews(
+        { ...store, records: { 'capture-9001': { ...source(), canonicalF0Admitted: true } } },
+        ['capture-9001', 'capture-9002'],
+        new Map([['capture-9001', sha]]),
+      ),
+    ).toThrow('CAPTURE_SCREEN_REVIEW_INVALID');
   });
   it('rejects unknown photos and does not fabricate missing reviewers', () => {
     expect(() =>

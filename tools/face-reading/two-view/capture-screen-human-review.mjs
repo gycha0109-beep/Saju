@@ -131,6 +131,29 @@ export function projectCaptureScreenReview(r) {
     reviewedAt: r.reviewedAt,
   });
 }
+// Audit the existing private screening ledger without exposing photo refs,
+// original SHA values or single-reviewer decisions as anatomical ground truth.
+export function auditCurrentCaptureScreenReviews(store, knownRefs, currentSourceDigests) {
+  const validated = validateCaptureScreenReviewStore(store, knownRefs);
+  if (!(currentSourceDigests instanceof Map)) fail();
+  const current = {};
+  let staleSourceReviews = 0;
+  for (const [ref, review] of Object.entries(validated.records)) {
+    if (currentSourceDigests.get(ref) !== review.sourceSha256) {
+      staleSourceReviews++;
+      continue;
+    }
+    current[ref] = projectCaptureScreenReview(review);
+  }
+  return Object.freeze({
+    ...summarizeCaptureScreenReviews(current, knownRefs.length),
+    staleSourceReviews,
+    comparisonScreeningBlocked: staleSourceReviews > 0,
+    independentPoseValidated: false,
+    independentAnatomicalAccuracyValidated: false,
+  });
+}
+
 export function summarizeCaptureScreenReviews(records, totalPhotos) {
   if (
     !records ||

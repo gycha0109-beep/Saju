@@ -11,6 +11,11 @@ import { validateFreshResearchIntake } from '../../tools/face-reading/two-view/f
 import { validateParsingSummary } from '../../tools/face-reading/two-view/parsing-contract.mjs';
 import { validateEyeFoldReviewStore } from '../../tools/face-reading/two-view/eye-fold-review.mjs';
 import {
+  auditCurrentCaptureScreenReviews,
+  summarizeCaptureScreenReviews,
+  validateCaptureScreenReviewStore,
+} from '../../tools/face-reading/two-view/capture-screen-human-review.mjs';
+import {
   summarizeWholeFaceCoverage,
   traceWholeFaceSourceGaps,
   traceWholeFaceExtensionRequirements,
@@ -66,12 +71,12 @@ async function loadLocal(intake) {
     ...baseIds.map((id) => [id, 'frontal']),
     ...extra.map((r) => [r.recordId, r.viewRole]),
   ]);
+  const sourceById = new Map([...base, ...extra].map((record) => [record.recordId, record]));
   const humanReviewStore = await maybeJson(join(intake, 'eye-fold-human-reviews.json'));
   const humanReviews = [];
   let staleHumanReviewCount = 0;
   if (humanReviewStore) {
     const validated = validateEyeFoldReviewStore(humanReviewStore, ids);
-    const sourceById = new Map([...base, ...extra].map((record) => [record.recordId, record]));
     for (const [captureRef, review] of Object.entries(validated.records)) {
       const source = sourceById.get(captureRef);
       if (!source || roles.get(captureRef) !== 'frontal') throw Error('HUMAN_REVIEW_ROLE_INVALID');
@@ -97,6 +102,37 @@ async function loadLocal(intake) {
         modelTrainingAuthorized: review.modelTrainingAuthorized,
       });
     }
+  }
+
+  // Photo screening is a separate single-reviewer prerequisite, not an
+  // eyelid annotation, a canonical measurement or an accuracy result.
+  const captureScreenStore = await maybeJson(join(intake, 'capture-screen-human-reviews.json'));
+  let captureScreenReviewSummary = Object.freeze({
+    ...summarizeCaptureScreenReviews({}, ids.length),
+    staleSourceReviews: 0,
+    comparisonScreeningBlocked: false,
+  });
+  if (captureScreenStore) {
+    const validated = validateCaptureScreenReviewStore(captureScreenStore, ids);
+    const currentDigests = new Map();
+    for (const captureRef of Object.keys(validated.records)) {
+      if (roles.get(captureRef) !== 'frontal') throw Error('CAPTURE_SCREEN_REVIEW_ROLE_INVALID');
+      try {
+        currentDigests.set(
+          captureRef,
+          createHash('sha256')
+            .update(await readFile(sourceById.get(captureRef).sourcePath))
+            .digest('hex'),
+        );
+      } catch {
+        // A missing or unreadable original is stale, never valid screening.
+      }
+    }
+    captureScreenReviewSummary = auditCurrentCaptureScreenReviews(
+      captureScreenStore,
+      ids,
+      currentDigests,
+    );
   }
 
   // The original local preview permits metric and parsing runs independently.
@@ -143,6 +179,8 @@ async function loadLocal(intake) {
     humanReviews,
     humanReviewStoreValidated: Boolean(humanReviewStore),
     staleHumanReviewCount,
+    captureScreenReviewStoreValidated: Boolean(captureScreenStore),
+    captureScreenReviewSummary,
   };
 }
 
@@ -166,6 +204,12 @@ async function main() {
         humanReviews: [],
         humanReviewStoreValidated: false,
         staleHumanReviewCount: 0,
+        captureScreenReviewStoreValidated: false,
+        captureScreenReviewSummary: {
+          ...summarizeCaptureScreenReviews({}, 0),
+          staleSourceReviews: 0,
+          comparisonScreeningBlocked: false,
+        },
       }
     : await loadLocal(resolve(args[1]));
   const report = summarizeWholeFaceCoverage(
@@ -203,6 +247,8 @@ async function main() {
         parsingSavedAndValidated: local.parsingValidated,
         humanReviewStoreValidated: local.humanReviewStoreValidated,
         staleHumanReviewCount: local.staleHumanReviewCount,
+        captureScreenReviewStoreValidated: local.captureScreenReviewStoreValidated,
+        captureScreenReviewSummary: local.captureScreenReviewSummary,
       },
       null,
       2,
