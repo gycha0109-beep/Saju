@@ -1,3 +1,4 @@
+import { getTenGod } from 'manseryeok';
 import type {
   CanonicalSajuSnapshot, HeavenlyStem, PillarSlot, StructuralRelationKind, TenGod,
 } from '../contracts/calculation.js';
@@ -108,6 +109,12 @@ export interface T10TenGodCourseMethodInputAudit {
   /** Canonical primitives do not cover all of the author's stem-clash terms. */
   readonly completeAuthorStemClashConditionsAvailable: false;
   readonly originalStrengthBalanceEstablished: false;
+  /** The source's 0-point clause for 1st/2nd courses only, NOT a score. */
+  readonly textualMissingFamilyZeroInput:
+    'one_or_both_required_families_absent' |
+    'both_required_families_observed' |
+    'incomplete_chart_cannot_decide' |
+    'not_applicable_to_strength_balance_stage';
   readonly sourceGrade: null;
   readonly paragraph: string;
 }
@@ -125,6 +132,17 @@ export interface T10TenGodCourseVisibleObservation {
       path: string; slot: PillarSlot; channel: 'stem' | 'branch'; value: TenGod;
     }>[];
     unresolvedFactPaths: readonly string[];
+    /** Each canonical hidden stem is classified against this person's day master. */
+    observedHiddenStemPositions: readonly Readonly<{
+      path: string;
+      pillar: PillarSlot;
+      hiddenStem: HeavenlyStem;
+      tenGod: TenGod;
+      originalDayStemFactPath: 'pillars.day.value.stem';
+    }>[];
+    unresolvedHiddenStemFactPaths: readonly string[];
+    presenceAcrossVisibleAndHiddenStems:
+      'observed' | 'absent_complete_canonical_facts' | 'unknown_incomplete';
   }>[];
   readonly visibleGroupState:
     'both_seen' | 'only_a_seen' | 'only_b_seen' | 'neither_seen';
@@ -188,17 +206,56 @@ function observeCourse(
       });
     }
   }
+  const day = snapshot.pillars.day;
+  const dayStem = day.status === 'resolved' ? day.value.stem.value : null;
+  const hiddenCoverage = SLOTS.map(pillar => ({
+    pillar, state: snapshot.derivedFacts.hiddenStems?.[pillar],
+  }));
   const groups = (['a', 'b'] as const).map(group => {
     const terms: readonly TenGod[] = def[group];
+    const actualVisiblePositions = slots.filter(item =>
+      item.value !== null && terms.includes(item.value)).map(item => ({
+      path: item.path, slot: item.slot, channel: item.channel,
+      value: item.value!,
+    }));
+    const unresolvedFactPaths = slots.filter(item => item.value === null)
+      .map(item => item.path);
+    const observedHiddenStemPositions: {
+      path: string; pillar: PillarSlot; hiddenStem: HeavenlyStem;
+      tenGod: TenGod; originalDayStemFactPath: 'pillars.day.value.stem';
+    }[] = [];
+    const unresolvedHiddenStemFactPaths: string[] = [];
+    for (const { pillar, state } of hiddenCoverage) {
+      const path = 'derivedFacts.hiddenStems.' + pillar;
+      if (dayStem === null || state?.status !== 'resolved') {
+        unresolvedHiddenStemFactPaths.push(path);
+        continue;
+      }
+      const originalPillar = snapshot.pillars[pillar];
+      if (originalPillar.status !== 'resolved') {
+        throw new TypeError('Resolved hidden stems require a resolved original branch.');
+      }
+      for (const hiddenStem of state.value) {
+        const tenGod = getTenGod(dayStem, hiddenStem);
+        if (!terms.includes(tenGod)) continue;
+        observedHiddenStemPositions.push({
+          path, pillar, hiddenStem, tenGod,
+          originalDayStemFactPath: 'pillars.day.value.stem',
+        });
+      }
+    }
+    const anyObserved = actualVisiblePositions.length > 0 ||
+      observedHiddenStemPositions.length > 0;
+    const presenceAcrossVisibleAndHiddenStems = anyObserved ? 'observed' as const
+      : unresolvedFactPaths.length === 0 &&
+        unresolvedHiddenStemFactPaths.length === 0
+        ? 'absent_complete_canonical_facts' as const
+        : 'unknown_incomplete' as const;
     return {
-      group, terms,
-      actualVisiblePositions: slots.filter(item =>
-        item.value !== null && terms.includes(item.value)).map(item => ({
-        path: item.path, slot: item.slot, channel: item.channel,
-        value: item.value!,
-      })),
-      unresolvedFactPaths: slots.filter(item => item.value === null)
-        .map(item => item.path),
+      group, terms, actualVisiblePositions, unresolvedFactPaths,
+      observedHiddenStemPositions,
+      unresolvedHiddenStemFactPaths,
+      presenceAcrossVisibleAndHiddenStems,
     };
   });
   const groupA = groups[0]!;
@@ -330,6 +387,14 @@ function observeCourse(
       '건(감점 미확정)' +
       (item.sourceStructuralObservation === 'unresolved'
         ? '·구조 계산 미확정' : ''))).join(', ');
+  const textualMissingFamilyZeroInput = step === 3
+    ? 'not_applicable_to_strength_balance_stage' as const
+    : groups.some(g => g.presenceAcrossVisibleAndHiddenStems ===
+      'absent_complete_canonical_facts')
+      ? 'one_or_both_required_families_absent' as const
+      : groups.every(g => g.presenceAcrossVisibleAndHiddenStems === 'observed')
+        ? 'both_required_families_observed' as const
+        : 'incomplete_chart_cannot_decide' as const;
   const methodInputAudit: T10TenGodCourseMethodInputAudit = {
     sourceStep: step,
     sourceCondition,
@@ -340,6 +405,7 @@ function observeCourse(
     completeAuthorStemClashConditionsAvailable: false,
     originalStrengthBalanceEstablished: false,
     sourceGrade: null,
+    textualMissingFamilyZeroInput,
     paragraph: step === 3
       ? '저서 발췌의 세 번째 평가는 두 계열의 힘과 균형을 요구합니다. ' +
         evidenceDescriptions +
@@ -349,7 +415,12 @@ function observeCourse(
         evidenceDescriptions +
         '이 관측됩니다. 같은 글자가 지장간에 있거나 원국 합충 구조가 발견되어도 ' +
         '저자의 통근·투출 성립과 감점 조건을 확정하지 않습니다. ' +
-        '천간 충의 전체 계산 조건도 아직 마련되지 않았습니다.',
+        '천간 충의 전체 계산 조건도 아직 마련되지 않았습니다. ' +
+        (textualMissingFamilyZeroInput === 'one_or_both_required_families_absent'
+          ? '원국 겉자리와 전체 지장간에서 한 필수 계열이 부재해 발췌의 0점 입력 조건에는 해당하지만, 원논문 점수는 확정하지 않았습니다.'
+          : textualMissingFamilyZeroInput === 'incomplete_chart_cannot_decide'
+            ? '일부 원국 입력이 미확정되어 발췌의 필수 계열 부재 여부도 보류합니다.'
+            : '필수 두 계열의 존재는 보이나 실제 코스 성립이나 등급은 미확정입니다.'),
   };
   const describe = (item: typeof groups[number]) =>
     (item.group === 'a' ? '첫째 계열' : '둘째 계열') + ' ' +
@@ -359,7 +430,11 @@ function observeCourse(
         (p.channel === 'stem' ? '간 ' : '지 ') + p.value).join('·')
       : '확정된 가시 위치에서 미관측') +
     (item.unresolvedFactPaths.length
-      ? '(확인 불가 ' + item.unresolvedFactPaths.length + '곳)' : '');
+      ? '(확인 불가 ' + item.unresolvedFactPaths.length + '곳)' : '') +
+    '·지장간 십신 ' + item.observedHiddenStemPositions.length + '곳' +
+    '·전체 원국 상태 ' + (item.presenceAcrossVisibleAndHiddenStems === 'observed'
+      ? '존재 관측' : item.presenceAcrossVisibleAndHiddenStems === 'absent_complete_canonical_facts'
+        ? '전체 근거에서 미관측' : '확인 보류');
   return {
     courseId: def.id, historicalRole: def.role,
     personRef, calculationHash: snapshot.calculationHash,
