@@ -61,7 +61,7 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     expect(item?.paragraph).toContain('일지(첫 번째 사람 ' +
       actual?.branch.firstElement + ', 두 번째 사람 ' +
       actual?.branch.secondElement);
-    expect(item?.paragraph).toContain('천간충과 지지형의 전체 원국 성립 조건');
+    expect(item?.paragraph).toContain('천간충의 원국 강약·지지 지원·화충·제충 조건');
     expect(item?.evidenceLayer).toBe('traditional_factor_scope');
     expect(item?.observedFactPaths).toEqual(expect.arrayContaining([
       'subject.pillars.day.value.stem.element',
@@ -151,6 +151,27 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
       ?.sentences.some(s => s.paragraph.includes('육임대전'))).toBe(false);
     expect(draft?.relationshipOutcome).toBeNull();
     expect(draft?.maySell).toBe(false);
+  });
+
+  it('describes a real classical day-stem clash with source and natal limits, never outcomes', () => {
+    const output = run(birth(1990, 5, 11), birth(1990, 5, 17));
+    const fact = output.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'direct_day_facts')?.sentences.find(s =>
+      s.paragraph.includes('천간충 네 글자쌍'));
+    const scope = output.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'traditional_day_factor_scope')?.sentences[0];
+    expect(fact?.observedFactPaths).toEqual([
+      'subject.pillars.day.value.stem', 'target.pillars.day.value.stem',
+    ]);
+    expect(fact?.sourceUrls).toContain(
+      'https://www.suanzhun.net/dianji/mingliyueyan/946.html');
+    expect(scope?.paragraph).toContain('천간충 글자쌍');
+    expect(scope?.paragraph).toContain('천간충의 원국 강약·지지 지원·화충·제충 조건');
+    expect(scope?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(output.pairReadingBoundaryDraft?.relationshipOutcome).toBeNull();
+    expect(output.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
+    expect(output.maySell).toBe(false);
   });
 
   it('grounds the 2016 interview counterexample without projecting it onto these people', () => {

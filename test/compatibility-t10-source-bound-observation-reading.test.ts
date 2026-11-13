@@ -122,6 +122,24 @@ describe('T10 protected source-grounded Korean observations', () => {
     expect(output.maySell).toBe(false);
   });
 
+  it('traces exact two day stems and the original clash source without forecasting a couple', () => {
+    const forward = run(birth(1990, 5, 11), birth(1990, 5, 17));
+    const reverse = run(birth(1990, 5, 17), birth(1990, 5, 11));
+    const source = forward.sourceBoundObservationReading?.sentences.find(item =>
+      item.kind === 'day_stem_clash_pair');
+    const reversed = reverse.sourceBoundObservationReading?.sentences.find(item =>
+      item.kind === 'day_stem_clash_pair');
+    expect(source?.paragraph).toContain('일간 병과 두 번째 사람의 일간 임');
+    expect(reversed?.paragraph).toContain('일간 임과 두 번째 사람의 일간 병');
+    expect(source?.observedFactPaths).toEqual([
+      'subject.pillars.day.value.stem', 'target.pillars.day.value.stem',
+    ]);
+    expect(source?.sourceIds).toEqual(['SRC-T10-MINGLIYUEYAN-VOL3-STEM-CLASH']);
+    expect(source?.interpersonalMeaningAuthorized).toBe(false);
+    expect(reverse.sourceBoundObservationReading?.compatibilityScore).toBeNull();
+    expect(reverse.maySell).toBe(false);
+  });
+
   it('records same-position competing factors without claiming they cancel', () => {
     const reading = run(FIRST, HARMONIC_STEM_CONFLICT).sourceBoundObservationReading;
     expect(reading?.sentences.some(item =>

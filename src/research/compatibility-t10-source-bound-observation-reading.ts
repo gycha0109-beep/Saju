@@ -9,6 +9,8 @@ import type {
   T10DirectDayComparisonResearchV1,
 } from './compatibility-t10-direct-day-comparison.js';
 import {
+  T10_CLASSICAL_STEM_CLASH_SOURCE,
+  isClassicalStemClashPair,
   T10_CLASSICAL_SIX_HARM_SOURCE,
   T10_CLASSICAL_THREE_PUNISHMENTS_SOURCE,
   T10_FOREIGN_BREAK_SOURCE,
@@ -27,6 +29,7 @@ export const T10_SOURCE_BOUND_OBSERVATION_READING_VERSION =
 
 type ObservationKind =
   'day_stem_elements' | 'day_branch_elements' | 'day_stem_combination' |
+  'day_stem_clash_pair' |
   'day_branch_structure' | 'day_branch_harm' |
   'day_branch_punishment_direction' | 'foreign_break_method_dispute' |
   'same_slot_competing_factors' |
@@ -50,7 +53,8 @@ export interface T10ObservedDayAxisFactorTraceV1 {
   readonly secondElement: DayElementComparisonV1['target']['value'] | null;
   readonly elementRelation: ElementPairKind | null;
   readonly observedFactorIds: readonly (
-    'stem_five_combination' | 'branch_six_combination' | 'branch_clash' |
+    'stem_five_combination' | 'stem_clash_pair' |
+    'branch_six_combination' | 'branch_clash' |
     'branch_harm' | 'branch_punishment_direction' |
     'elemental_same' | 'elemental_generation' | 'elemental_control'
   )[];
@@ -218,6 +222,38 @@ export function buildT10SourceBoundObservationReadingV1(
   const stemMatch = direct.dayStem.verifiedStructuralMatch;
   const branchMatch = direct.dayBranch.verifiedStructuralMatch;
   if (stemMatch) sentences.push(structuralSentence('day_stem_combination', stemMatch));
+  const stemClash = direct.dayStem.classicalStemClashObservation;
+  if (stemClash) {
+    if (stemClash.source !== T10_CLASSICAL_STEM_CLASH_SOURCE ||
+        stemClash.stemPairObserved !== true ||
+        stemClash.seasonalStrengthBranchSupportAndReliefVerified !== false ||
+        stemClash.individualNatalEffectAuthorized !== false ||
+        stemClash.pairwiseMeaningAuthorized !== false ||
+        stemClash.subject.factPath !== 'subject.pillars.day.value.stem' ||
+        stemClash.target.factPath !== 'target.pillars.day.value.stem' ||
+        !isClassicalStemClashPair(stemClash.subject.value, stemClash.target.value) ||
+        !direct.sourceFactorAudit.dayStem.observed.includes('stem_clash_pair') ||
+        !direct.sourceFactorAudit.dayStem.notEvaluated.includes('stem_clash')) {
+      throw new TypeError('Classical stem clash must preserve its actual literal scope.');
+    }
+    sentences.push({
+      kind: 'day_stem_clash_pair',
+      paragraph: '첫 번째 사람의 일간 ' + stemClash.subject.value +
+        '과 두 번째 사람의 일간 ' + stemClash.target.value +
+        '는 『명리약언』「간충론」에 열거된 천간충 네 글자쌍 중 하나입니다. ' +
+        '이것은 글자 조합의 비교일 뿐, 원문이 요구하는 계절·지지의 뒷받침·' +
+        '화충 및 제충 조건과 각자의 원국 작용은 검증되지 않았습니다. ' +
+        '두 사람의 실제 다툼이나 관계 결과를 판정하지 않습니다.',
+      observedFactPaths: [stemClash.subject.factPath, stemClash.target.factPath],
+      sourceIds: [stemClash.source.sourceId],
+      sourceUrls: [stemClash.source.url, T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl],
+      definitionContentHashes: [],
+      evidenceScope: 'calculated_structural_fact',
+      interpersonalMeaningAuthorized: false,
+    });
+  } else if (direct.sourceFactorAudit.dayStem.observed.includes('stem_clash_pair')) {
+    throw new TypeError('T10 stem clash pair audit requires the observed original pair.');
+  }
   if (branchMatch) {
     verifyMatch(branchMatch);
     if (!coexisting.structural.dayToDayMatches.some(item =>

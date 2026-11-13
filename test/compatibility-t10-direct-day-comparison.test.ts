@@ -307,6 +307,53 @@ describe('T10 direct day-stem/day-branch source scope from the 2016 public abstr
       s.kind === 'foreign_break_method_dispute')).toBe(false);
   });
 
+  it.each([
+    [11, 17, '병', '임'],
+    [12, 18, '정', '계'],
+    [19, 25, '갑', '경'],
+    [20, 26, '을', '신'],
+  ] as const)('observes a classical stem-clash pair only as a primary-text letter pairing', (
+    firstDay, secondDay, firstStem, secondStem,
+  ) => {
+    const result = run(birth(1990, 5, firstDay), birth(1990, 5, secondDay));
+    const actual = result.directDayComparisonResearch?.dayStem.classicalStemClashObservation;
+    expect(actual?.subject.value).toBe(firstStem);
+    expect(actual?.target.value).toBe(secondStem);
+    expect(actual?.seasonalStrengthBranchSupportAndReliefVerified).toBe(false);
+    expect(actual?.individualNatalEffectAuthorized).toBe(false);
+    expect(actual?.pairwiseMeaningAuthorized).toBe(false);
+    expect(result.directDayComparisonResearch?.sourceFactorAudit.dayStem.observed)
+      .toContain('stem_clash_pair');
+    expect(result.directDayComparisonResearch?.dayStem.unimplementedSourceFactors)
+      .toContain('stem_clash');
+    const reading = result.sourceBoundObservationReading?.sentences.find(item =>
+      item.kind === 'day_stem_clash_pair');
+    expect(reading?.paragraph).toContain('천간충 네 글자쌍');
+    expect(reading?.sourceUrls).toContain(
+      'https://www.suanzhun.net/dianji/mingliyueyan/946.html');
+    expect(result.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
+    expect(result.mayPublish).toBe(false);
+    expect(result.maySell).toBe(false);
+  });
+
+  it('distinguishes literal stem clash from other elemental-control pairs', () => {
+    const a = run(birth(1990, 5, 15), birth(1990, 5, 19));
+    const b = run(birth(1990, 5, 15), birth(1990, 5, 20));
+    expect(a.directDayComparisonResearch?.dayStem.classicalStemClashObservation
+      ?.subject.value).toBe('경');
+    expect(a.directDayComparisonResearch?.dayStem.classicalStemClashObservation
+      ?.target.value).toBe('갑');
+    expect(b.directDayComparisonResearch?.dayStem.classicalStemClashObservation)
+      .toBeNull();
+    expect(b.directDayComparisonResearch?.dayStem.verifiedStructuralMatch?.kind)
+      .toBe('stem_five_combination');
+    expect(b.directDayComparisonResearch?.sourceFactorAudit.dayStem.observed)
+      .not.toContain('stem_clash_pair');
+    expect(a.pairReadingBoundaryDraft?.relationshipOutcome).toBeNull();
+    expect(a.maySell).toBe(false);
+  });
+
   it('rejects a mismatched person or chart when reusing canonical element observations', () => {
     const review = run(FIRST, STEM_POS_BRANCH_POS);
     expect(review.directDayComparisonResearch?.subject.snapshotId)

@@ -1,4 +1,4 @@
-import type { EarthlyBranch, FiveElement } from '../contracts/calculation.js';
+import type { EarthlyBranch, FiveElement, HeavenlyStem } from '../contracts/calculation.js';
 import type { MaritalPalaceIntraChartResearchV1 } from
   './compatibility-marital-palace-intra-chart-research.js';
 import type {
@@ -7,7 +7,48 @@ import type {
 } from './family-pair-source-scope-handoff.js';
 
 export const T10_DIRECT_DAY_COMPARISON_VERSION =
-  'saju-t10-direct-day-comparison-source-audit-v5' as const;
+  'saju-t10-direct-day-comparison-source-audit-v6' as const;
+
+/** Only four literal stem pairs in 命理約言 卷三 干沖論. The text
+ * requires natal season, supporting branches, harmonization and restraint;
+ * it does not give a dyadic compatibility outcome rule. */
+export const T10_CLASSICAL_STEM_CLASH_SOURCE = Object.freeze({
+  sourceId: 'SRC-T10-MINGLIYUEYAN-VOL3-STEM-CLASH',
+  title: '命理約言 卷三 干沖論',
+  url: 'https://www.suanzhun.net/dianji/mingliyueyan/946.html',
+  verifiedTextLayer: 'PUBLIC_PRIMARY_TEXT_TRANSCRIPTION',
+  scope: 'LITERAL_FOUR_STEM_PAIRS_ONLY_NOT_NATAL_EFFECT_OR_PERSONAL_RELATIONSHIP',
+  fullNatalConditionsVerified: false,
+  pairwiseMeaningAuthorized: false,
+});
+
+const CLASSICAL_STEM_CLASH_PAIRS: readonly (readonly [HeavenlyStem, HeavenlyStem])[] = [
+  ['갑', '경'], ['을', '신'], ['병', '임'], ['정', '계'],
+];
+const STEMS: readonly HeavenlyStem[] = [
+  '갑', '을', '병', '정', '무', '기', '경', '신', '임', '계',
+];
+export function isClassicalStemClashPair(
+  a: HeavenlyStem, b: HeavenlyStem,
+): boolean {
+  return CLASSICAL_STEM_CLASH_PAIRS.some(([x, y]) =>
+    (a === x && b === y) || (a === y && b === x));
+}
+export interface T10ClassicalStemClashDayObservation {
+  readonly subject: Readonly<{
+    factPath: 'subject.pillars.day.value.stem';
+    value: HeavenlyStem;
+  }>;
+  readonly target: Readonly<{
+    factPath: 'target.pillars.day.value.stem';
+    value: HeavenlyStem;
+  }>;
+  readonly source: typeof T10_CLASSICAL_STEM_CLASH_SOURCE;
+  readonly stemPairObserved: true;
+  readonly seasonalStrengthBranchSupportAndReliefVerified: false;
+  readonly individualNatalEffectAuthorized: false;
+  readonly pairwiseMeaningAuthorized: false;
+}
 
 /** Six literal branch pairs from 三命通會, 卷二, 論六害.
  * The original conditions concern natal interpretation, not modern pairs. */
@@ -137,6 +178,31 @@ export function isClassicalSixHarmBranchPair(
 ): boolean {
   return SIX_HARM_PAIRS.some(([x, y]) =>
     (a === x && b === y) || (a === y && b === x));
+}
+
+function dayClassicalStemClashObservation(
+  pair: PairwiseSourceScopeHandoff,
+): T10ClassicalStemClashDayObservation | null {
+  const day = pair.factualPairObservations.find(item => item.pillarSlot === 'day');
+  if (day?.status !== 'both_resolved') return null;
+  const left = day.subjectPillar?.slice(0, 1);
+  const right = day.targetPillar?.slice(0, 1);
+  if (!left || !right || !STEMS.includes(left as HeavenlyStem) ||
+      !STEMS.includes(right as HeavenlyStem)) {
+    throw new TypeError('Classical stem clash requires two resolved day stems.');
+  }
+  const first = left as HeavenlyStem;
+  const second = right as HeavenlyStem;
+  if (!isClassicalStemClashPair(first, second)) return null;
+  return {
+    subject: { factPath: 'subject.pillars.day.value.stem', value: first },
+    target: { factPath: 'target.pillars.day.value.stem', value: second },
+    source: T10_CLASSICAL_STEM_CLASH_SOURCE,
+    stemPairObserved: true,
+    seasonalStrengthBranchSupportAndReliefVerified: false,
+    individualNatalEffectAuthorized: false,
+    pairwiseMeaningAuthorized: false,
+  };
 }
 
 function daySixHarmObservation(
@@ -353,6 +419,8 @@ export interface T10DirectDayComparisonResearchV1 {
     readonly verifiedStructuralMatch: CrossChartStructuralMatch | null;
     readonly elementalComparison: DayElementComparisonV1 | null;
     readonly conflictingFactors: boolean;
+    readonly classicalStemClashObservation: T10ClassicalStemClashDayObservation | null;
+    /** Literal pair observed separately; natal-strength/effect still not evaluated. */
     readonly unimplementedSourceFactors: readonly ['stem_clash'];
   };
   readonly dayBranch: {
@@ -375,7 +443,7 @@ export interface T10DirectDayComparisonResearchV1 {
   readonly sourceFactorAudit: {
     readonly dayStem: {
       readonly observed: readonly (
-        'stem_five_combination' | 'elemental_same' |
+        'stem_five_combination' | 'stem_clash_pair' | 'elemental_same' |
         'elemental_generation' | 'elemental_control'
       )[];
       readonly notEvaluated: readonly ['stem_clash'];
@@ -464,6 +532,7 @@ export function auditT10DirectDayComparisonV1(
     STEM_SUBJECT, STEM_TARGET, ['stem_five_combination']) : null;
   const branch = complete ? dayMatch(pair.crossChartStructuralMatches,
     BRANCH_SUBJECT, BRANCH_TARGET, ['branch_six_combination', 'branch_clash']) : null;
+  const classicalStemClash = complete ? dayClassicalStemClashObservation(pair) : null;
   const classicalHarm = complete ? daySixHarmObservation(pair) : null;
   const classicalPunishment = complete ? dayDirectedPunishmentObservation(pair) : null;
   const foreignBreak = complete ? dayForeignBreakCandidate(pair) : null;
@@ -490,7 +559,7 @@ export function auditT10DirectDayComparisonV1(
     rel !== null && (rel.relation === 'subject_controls_target' ||
       rel.relation === 'target_controls_subject');
   const stemPositive = stem !== null || elementalPositive(stemElements);
-  const stemNegative = elementalNegative(stemElements);
+  const stemNegative = classicalStemClash !== null || elementalNegative(stemElements);
   const branchPositive = branch?.kind === 'branch_six_combination' ||
     elementalPositive(branchElements);
   const branchNegative = branch?.kind === 'branch_clash' ||
@@ -503,6 +572,7 @@ export function auditT10DirectDayComparisonV1(
   const branchObserved: T10DirectDayComparisonResearchV1[
     'sourceFactorAudit']['dayBranch']['observed'][number][] = [];
   if (stem?.kind === 'stem_five_combination') stemObserved.push('stem_five_combination');
+  if (classicalStemClash) stemObserved.push('stem_clash_pair');
   if (branch?.kind === 'branch_six_combination') {
     branchObserved.push('branch_six_combination');
   }
@@ -535,6 +605,7 @@ export function auditT10DirectDayComparisonV1(
       verifiedStructuralMatch: stem,
       elementalComparison: stemElements,
       conflictingFactors: stemPositive && stemNegative,
+      classicalStemClashObservation: classicalStemClash,
       unimplementedSourceFactors: ['stem_clash'],
     },
     dayBranch: {

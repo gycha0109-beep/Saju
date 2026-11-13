@@ -80,6 +80,7 @@ function unique(items: readonly string[]): string[] {
 /** Maps observed source factors; full 형(刑) conditions and interpersonal fate remain unverified. */
 const FACTOR_KOREAN = {
   stem_five_combination: '천간오합',
+  stem_clash_pair: '천간충 글자쌍',
   branch_six_combination: '지지육합',
   branch_clash: '지지충',
   branch_harm: '지지육해',
@@ -104,7 +105,8 @@ function axisEvidenceParagraph(
   const positive = ids.some(id => id === 'stem_five_combination' ||
     id === 'branch_six_combination' || id === 'elemental_same' ||
     id === 'elemental_generation');
-  const negative = ids.some(id => id === 'branch_clash' ||
+  const negative = ids.some(id => id === 'stem_clash_pair' ||
+    id === 'branch_clash' ||
     id === 'branch_harm' || id === 'branch_punishment_direction' ||
     id === 'elemental_control');
   const inferredGroup = axis.firstElement === null || axis.secondElement === null ||
@@ -118,7 +120,7 @@ function axisEvidenceParagraph(
       unique(ids).length !== ids.length ||
       ids.some(id => label === '일간'
         ? id === 'branch_six_combination' || id === 'branch_clash'
-        : id === 'stem_five_combination')) {
+        : id === 'stem_five_combination' || id === 'stem_clash_pair')) {
     throw new TypeError('T10 2016 day-factor wording must match verified axis factors.');
   }
   return label + '(첫 번째 사람 ' + axis.firstElement + ', 두 번째 사람 ' +
@@ -236,7 +238,8 @@ export function buildT10PairReadingBoundaryDraftV1(
   // Interpret only the 2016 abstract's historical factor grouping, not outcomes.
   const factorFacts = factual.sentences.filter(item =>
     item.kind === 'day_stem_elements' || item.kind === 'day_branch_elements' ||
-    item.kind === 'day_stem_combination' || item.kind === 'day_branch_structure' ||
+    item.kind === 'day_stem_combination' ||
+    item.kind === 'day_stem_clash_pair' || item.kind === 'day_branch_structure' ||
     item.kind === 'day_branch_harm' ||
     item.kind === 'day_branch_punishment_direction' ||
     item.kind === 'same_slot_competing_factors');
@@ -284,8 +287,8 @@ export function buildT10PairReadingBoundaryDraftV1(
         '상생·상비·합을 전통적 긍정 요소로, 충·극 등의 관계를 전통적 ' +
         '부정 요소로 구분하여 네 경우를 비교합니다. ' +
         observedAxes + ' ' + classification +
-        ' 천간충과 지지형의 전체 원국 성립 조건 및 지지파는 ' +
-        '이 계산에서 확인하지 않았습니다. ' +
+        ' 천간충의 원국 강약·지지 지원·화충·제충 조건과 ' +
+        '지지형의 전체 성립 조건 및 지지파는 확인하지 않았습니다. ' +
         '이는 전통적 요인 설명이지 두 사람의 실제 소통·관계 만족·' +
         '결혼 결과를 판정한 것이 아닙니다.',
       evidenceLayer: 'traditional_factor_scope',
