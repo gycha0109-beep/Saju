@@ -151,7 +151,8 @@ function observeCourse(
     (item.group === 'a' ? '첫째 계열' : '둘째 계열') + ' ' +
     (item.actualVisiblePositions.length
       ? item.actualVisiblePositions.map(p =>
-        p.slot + '.' + p.channel + '=' + p.value).join('·')
+        ({ year: '연', month: '월', day: '일', hour: '시' }[p.slot]) +
+        (p.channel === 'stem' ? '간 ' : '지 ') + p.value).join('·')
       : '확정된 가시 위치에서 미관측') +
     (item.unresolvedFactPaths.length
       ? '(확인 불가 ' + item.unresolvedFactPaths.length + '곳)' : '');
