@@ -290,3 +290,11 @@
 - **재물운 누락 근본 해결 정책(병합):** https://github.com/gycha0109-beep/Saju/pull/2742
 - **핵심 소스:** src/research/wealth-natal-multifactor-candidate.ts, src/preview/wealth-natal-multifactor-report.ts, src/research/general-annual-reading-candidate.ts, src/preview/general-annual-exploration-report.ts, src/research/general-monthly-reading-candidate.ts, src/preview/general-monthly-exploration-report.ts
 - **기존 사주 해석 설계 근거:** Myeonghwa Personalized Interpretation Architecture v1.3 및 MyeongHa Saju Product Interpretation Architecture v1.2. 이 문서들은 **별도의 실행 로드맵이 아니라 구현·의미·권한을 판단하는 설계 근거**다.
+
+## 2026-11-13 — T9 해석 품질 시안 및 원본 구간 결속 구현 기록
+
+- **구현:** `src/reading/internal-commercial-temporal-draft.ts`에서 기존 실제 T9 계산·Claim·Narrative로 생성된 연운·월운의 한국어 문장을 **새 의미로 재계산하지 않고** 정확한 서울 기간 구간(연운 입춘 전후, 월운 절입 전후)·원본 근거·규칙 참조에 결속한다.
+- **연동 경계:** `src/host/product-host.ts`의 보호된 발급 준비 경로에서만 내부 문장 시안을 함께 제공하며, 정식 서명·HTTP 공개·Reader의 승인 의미로 승격하지 않는다. 기존 Product/Offer/가격·결제·출생 revision/권한은 수정하지 않는다.
+- **검증:** `test/internal-commercial-temporal-draft.test.ts`에서 실제 Canonical 명식·T9 규칙 실행·두 시간 구간·문장 및 원본 연결·핵심 Claim 누락 보류를 검사한다. 신규 CI에서 확인된 규칙 참조 자료형 및 불필요한 테스트 변수 오류를 수정했으며 **새 CI의 완전 통과 전에는 성공으로 판정하지 않는다**.
+- **현재 남은 일:** 내부 해석의 실제 핵심 의미 충족·상충/미확정 경계·원국/대운 결속을 보강하고, 서명된 T9 기간별 Official 발급 및 MyeongHa #3174 Reader·권한 통합 E2E를 증명해야 한다. 외부 논문/전문가 승인 자체는 잔여 차단 조건이 아니다.
+- **전체 판정:** 본 로드맵 3·4·5단계 **부분 구현**, 나머지 해석/개인화/500건 회귀 완료 아님. 출시 여부 별도; `ROADMAP_IN_PROGRESS`.
