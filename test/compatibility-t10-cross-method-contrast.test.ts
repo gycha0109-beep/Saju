@@ -196,9 +196,10 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
         individualPalace: {
           ...coexisting.individualPalace,
           subject: {
-            ...coexisting.individualPalace.subject,
+            personRef: coexisting.individualPalace.subject.personRef,
+            snapshotId: coexisting.individualPalace.subject.snapshotId,
+            calculationHash: coexisting.individualPalace.subject.calculationHash,
             state: 'same_element',
-            evidence: undefined,
           },
         },
       },
