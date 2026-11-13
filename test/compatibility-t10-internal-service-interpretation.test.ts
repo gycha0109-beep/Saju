@@ -14,7 +14,6 @@ function birth(year: number, month: number, day: number,
 const A = birth(1990, 5, 15);
 const SIX_WITH_CLASH = birth(1996, 6, 5);
 const CLASH_WITH_SIX = birth(1996, 8, 5);
-const NO_OPPOSITE = birth(1990, 5, 8);
 
 function run(a: BirthInput, b: BirthInput, active = true) {
   return buildCompatibilityTwoBirthResearchReading(a, b, {
@@ -30,7 +29,9 @@ describe('MyeongHa internal interpretation is separate from external approval an
   it('explains two opposite mixed structures as bounded conversations, not forecasts', () => {
     const six = run(A, SIX_WITH_CLASH);
     const clash = run(A, CLASH_WITH_SIX);
-    const none = run(A, NO_OPPOSITE);
+    // Same chart data is permitted for two different person references; identical
+    // day branches are neither a six-combination nor a clash.
+    const none = run(A, A);
     const first = six.internalServiceInterpretationDraft;
     const second = clash.internalServiceInterpretationDraft;
     const third = none.internalServiceInterpretationDraft;
