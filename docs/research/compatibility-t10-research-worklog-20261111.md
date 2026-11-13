@@ -436,3 +436,11 @@
 - **새 실제 코드:** `src/research/compatibility-t10-internal-service-interpretation.ts`에 일지 육합(연결 접점)·충(조율 지점)·미관측(미판정)·일지와 타주 상반 구조(공존)라는 **명하 자체의 조건부 의미 문장**을 구현하고 각 원본 명식/서술 규칙을 결속. `src/preview/compatibility-two-birth-research-runtime.ts`의 기존 비공개 opt-in 안에서만 노출해, 기존 고전 연구의 `pairwiseT10Admitted=false`를 임의 해제하지 않는다.
 - **고객용 공식 적용 전 실제 미완료:** 명하가 채택한 내부 어휘만으로 전통 강약·용신 결론이나 관계 결과를 꾸며내지 않음. 세 상품의 전용 고객 해석 품질 검증, 정책별 원본/문장 경로, MyeongHa #3174에서 상대 동의·서명·Grant/Reader·환불 검증이 남음. 새 CI 완료 전에는 성공으로 보고하지 않는다.
 - **현재 판정:** 1~4단계 일부 구현, 5단계 미완료. 연구용 시안 구현과 **정식 상용 해석 준비 완료**는 다르다. `ROADMAP_IN_PROGRESS`; 판매·운영 발급 HOLD는 기술/운영 미완료로 유지한다.
+
+## 49. 2026-11-13 — 두 명식 내부 관계 설명의 보호·서명 연구 인계
+
+- **실제 구현:** `src/host/http-server.ts`가 명시적으로 승인된 사내 2명식 검토 요청에서 기존 계산·원본 근거와 함께 `internalServiceInterpretation`을 반환한다. 일지 육합·충/다른 위치의 양면성·미관측 구조는 Saju 내부 채택 문장을 그대로 사용하며 새 의미 판정기를 만들지 않는다.
+- **전송 조건:** 기존 개인 서버 Bearer, 정확한 2명식 입력과 1회성 nonce, 응답 전체의 Ed25519 서명을 재사용한다. 본인과 상대의 계산 해시, 원본 관찰 경로, 규칙 버전·문장과 `readyForOfficialIssue=false`·`maySell=false` 상태를 서명 범위에 포함한다.
+- **명하 인계:** [MyeongHa #3174](https://github.com/gycha0109-beep/MyeongHa/pull/3174)의 `apps/api/src/saju-held-pair-review-v1.ts`가 서명 검증 후 두 사람 해시·원본 경로·지원 규칙·미판매를 확인한다. 잘못된 원본/인물 치환·임의 발급 승격은 거부한다.
+- **테스트:** `test/product-host-compatibility-protected-preview-http.test.ts`와 명하 `apps/api/src/saju-held-pair-review-v1.test.ts`를 확장했다. CI는 신규 커밋별로 별도 확인한다.
+- **정확한 단계 판정:** T10 기존 4단계(실제 두 명식 문장/근거)와 5단계(보호 인계)의 **부분 구현**이다. 아직 **세 구매 구성의 실제 Official 발급·상대 동의/철회·Reader 재열람·결제 및 운영 검증 미완료**이며 상품 판매·공개는 HOLD. 신규 학술 승인 대기 없음.
