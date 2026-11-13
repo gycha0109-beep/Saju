@@ -81,8 +81,26 @@ describe('existing compatibility browser route stays protected and research-only
         requestBodyHash: deterministicContentHash(request), responseBodyHash: deterministicContentHash(body) });
       expect(verify(null, Buffer.from(payload.version + '\0' + deterministicContentHash(payload)),
         publicKey, Buffer.from(signature, 'base64url'))).toBe(true);
+      const sourceMaterial = body.evidence.sourceReadingMaterial;
+      const { materialHash, status, officialIssueAuthorized, mayPublish, maySell, ...unsigned } =
+        sourceMaterial;
+      expect(materialHash).toBe(deterministicContentHash(unsigned));
+      expect(sourceMaterial.charts).toHaveLength(2);
+      expect(sourceMaterial.charts[0].calculationHash)
+        .not.toBe(sourceMaterial.charts[1].calculationHash);
+      expect(sourceMaterial.units.length).toBeGreaterThanOrEqual(3);
+      expect(sourceMaterial.units.every((unit: { unitId: string; paragraph: string }) =>
+        /^t10_unit_[a-f0-9]{24}$/u.test(unit.unitId) && unit.paragraph.length > 0)).toBe(true);
       expect(body).toMatchObject({
         maySell: false, evidence: {
+          sourceReadingMaterial: {
+            version: 'saju-t10-pair-reading-material-v1',
+            policyId: 'myeongha-t10-internal-relational-explanation-v1',
+            sourceScope: 'two_canonical_natal_charts',
+            status: 'source_owned_candidate_unissued',
+            officialIssueAuthorized: false,
+            maySell: false,
+          },
           readingReview: { state: 'held', actualCompatibilityReadingReady: false },
           internalServiceInterpretation: {
             version: 'saju-t10-internal-service-interpretation-v1',
