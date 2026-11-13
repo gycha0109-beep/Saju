@@ -21,6 +21,8 @@ import {
 import { buildAnnualInterpretationFacts, type AnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
 import { buildMonthlyInterpretationFacts, type MonthlyInterpretationFacts } from '../reading/monthly-interpretation-facts.js';
 import { buildTemporalReaderEvidence, type TemporalReaderEvidence } from '../reading/temporal-reader-evidence.js';
+import { buildTemporalInternalCommercialDraftV1, type TemporalInternalCommercialDraftV1 } from
+  '../reading/internal-commercial-temporal-draft.js';
 import {
   buildTemporalReadingContext,
   type TemporalReadingContext,
@@ -475,6 +477,8 @@ export interface MyeonghwaSourceReadingProofHost {
     /** Parsed and normalized by the Saju host for this same execution. */
     readonly executedRequestBody: ProductHostReadingRequestBody;
     readonly temporalReaderEvidence?: TemporalReaderEvidence;
+    /** Internal adoption candidate only; never part of the signed public response. */
+    readonly internalCommercialTemporalDraft?: TemporalInternalCommercialDraftV1;
   }>;
 }
 
@@ -637,6 +641,10 @@ export function createMyeonghwaSourceReadingProofHost(
       return {
         response: run.response, readiness, executedRequestBody: run.executedRequestBody,
         ...(temporalReaderEvidence === undefined ? {} : { temporalReaderEvidence }),
+        ...(temporalReaderEvidence === undefined ? {} : {
+          internalCommercialTemporalDraft:
+            buildTemporalInternalCommercialDraftV1(temporalReaderEvidence),
+        }),
       };
     },
   };
