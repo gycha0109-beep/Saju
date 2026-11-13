@@ -6,6 +6,20 @@ export interface FaceSourceFileState {
 }
 export type FaceSourceSnapshotCheck =
   Readonly<{ status: 'source_changed' }> | Readonly<{ status: 'current'; bytes: Buffer }>;
+export type SavedRunSourceAudit =
+  | Readonly<{ status: 'source_changed' }>
+  | Readonly<{ status: 'legacy_metadata_only' | 'sha256_verified' }>;
+export function auditSavedRunSourceSnapshot(
+  snapshot: {
+    recordIds: readonly string[];
+    sourceFileStates: readonly (FaceSourceFileState & {
+      recordId: string;
+      sourcePath: string;
+    })[];
+    sourceSha256ByRecord?: Readonly<Record<string, string>>;
+  },
+  inventory: readonly { recordId: string; sourcePath: string }[],
+): Promise<SavedRunSourceAudit>;
 export function readCurrentPinnedPhoto(
   sourcePath: string,
   pinned: FaceSourceFileState,

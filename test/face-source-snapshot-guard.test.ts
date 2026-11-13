@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import {
   SOURCE_SNAPSHOT_GUARD_VERSION,
   readCurrentPinnedPhoto,
+  auditSavedRunSourceSnapshot,
 } from '../tools/face-reading/two-view/source-snapshot-guard.mjs';
 
 const directories: string[] = [];
@@ -56,6 +57,41 @@ describe('local pinned-source SHA guard for face photo endpoints', () => {
     expect(await readCurrentPinnedPhoto(source, pinned, sha)).toEqual({
       status: 'source_changed',
     });
+  });
+  it('audits saved research run provenance without claiming legacy metadata is a SHA proof', async () => {
+    const { source, pinned, sha } = await photoFixture();
+    const inventory = [{ recordId: 'capture-99', sourcePath: source }];
+    const legacy = {
+      recordIds: ['capture-99'],
+      sourceFileStates: [{ recordId: 'capture-99', sourcePath: source, ...pinned }],
+    };
+    expect(await auditSavedRunSourceSnapshot(legacy, inventory)).toEqual({
+      status: 'legacy_metadata_only',
+    });
+    const protectedRun = { ...legacy, sourceSha256ByRecord: { 'capture-99': sha } };
+    expect(await auditSavedRunSourceSnapshot(protectedRun, inventory)).toEqual({
+      status: 'sha256_verified',
+    });
+    for (const invalid of [
+      { ...protectedRun, recordIds: ['capture-other'] },
+      {
+        ...protectedRun,
+        sourceFileStates: [{ ...legacy.sourceFileStates[0], sourcePath: source + '.other' }],
+      },
+      { ...protectedRun, sourceSha256ByRecord: { 'capture-99': '0'.repeat(64) } },
+      { ...protectedRun, sourceSha256ByRecord: {} },
+    ])
+      expect(await auditSavedRunSourceSnapshot(invalid as typeof protectedRun, inventory)).toEqual({
+        status: 'source_changed',
+      });
+    await writeFile(source, Buffer.from('not-a-real-face-image-test-b'));
+    await utimes(source, pinned.atime, pinned.mtime);
+    expect(await auditSavedRunSourceSnapshot(protectedRun, inventory)).toEqual({
+      status: 'source_changed',
+    });
+    const serialized = JSON.stringify(await auditSavedRunSourceSnapshot(protectedRun, inventory));
+    expect(serialized).not.toContain(source);
+    expect(serialized).not.toContain(sha);
   });
   it('fails closed for missing metadata or malformed digest without leaking input', async () => {
     const { source, pinned, sha } = await photoFixture();

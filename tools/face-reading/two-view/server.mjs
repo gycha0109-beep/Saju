@@ -15,7 +15,7 @@ import {
   canSaveScreenedBoundaryReview,
 } from './capture-screen-human-review.mjs';
 import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
-import { readCurrentPinnedPhoto } from './source-snapshot-guard.mjs';
+import { readCurrentPinnedPhoto, auditSavedRunSourceSnapshot } from './source-snapshot-guard.mjs';
 import {
   PARSING_VERSION,
   PARSING_LEGACY_VERSION,
@@ -467,7 +467,28 @@ export async function createLocalReviewServer({
       !Array.isArray(saved.records)
     )
       throw Error('PARSING_RUN_INVALID');
-    restoredIds(saved);
+    const savedIds = restoredIds(saved);
+    let snapshot = null;
+    try {
+      snapshot = JSON.parse(
+        await readFile(resolve(parsingRoot, active.runId, 'snapshot.json'), 'utf8'),
+      );
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
+    if (snapshot) {
+      if (
+        snapshot.recordIds?.length !== savedIds.length ||
+        snapshot.recordIds.some((ref) => !savedIds.includes(ref)) ||
+        (
+          await auditSavedRunSourceSnapshot(
+            snapshot,
+            inventory.filter((record) => savedIds.includes(record.recordId)),
+          )
+        ).status === 'source_changed'
+      )
+        throw Error('PARSING_SOURCE_CHANGED');
+    }
     if (saved.records.some((r) => r.parsing?.methodVersion !== saved.methodVersion))
       throw Error('PARSING_RUN_INVALID');
     parsingSaved = saved.records.map((r) => ({
@@ -512,7 +533,22 @@ export async function createLocalReviewServer({
     const saved = JSON.parse(
       await readFile(resolve(runRoot, active.runId, 'metrics.json'), 'utf8'),
     );
-    savedRecords = validateBatch(saved, restoredIds(saved), roles);
+    const savedIds = restoredIds(saved);
+    const snapshot = JSON.parse(
+      await readFile(resolve(runRoot, active.runId, 'snapshot.json'), 'utf8'),
+    );
+    if (
+      snapshot.recordIds?.length !== savedIds.length ||
+      snapshot.recordIds.some((ref) => !savedIds.includes(ref)) ||
+      (
+        await auditSavedRunSourceSnapshot(
+          snapshot,
+          inventory.filter((record) => savedIds.includes(record.recordId)),
+        )
+      ).status === 'source_changed'
+    )
+      throw Error('METRICS_SOURCE_CHANGED');
+    savedRecords = validateBatch(saved, savedIds, roles);
   } catch (error) {
     if (error.code !== 'ENOENT') throw Error('PREVIOUS_METRICS_INVALID', { cause: error });
   }
@@ -1208,6 +1244,7 @@ export async function createLocalReviewServer({
             methodVersion: METHOD_VERSION,
             recordIds: ids,
             sourceFileStates,
+            sourceSha256ByRecord: Object.fromEntries(sourceDigestByRecord),
             purpose: 'engineering_frontal_image_plane_preview',
             formalValidation: false,
             authorityPromoted: false,
@@ -1251,6 +1288,18 @@ export async function createLocalReviewServer({
         }
         const runId = randomUUID();
         await mkdir(resolve(parsingRoot, runId), { recursive: true });
+        await writeFile(
+          resolve(parsingRoot, runId, 'snapshot.json'),
+          JSON.stringify({
+            methodVersion: PARSING_VERSION,
+            recordIds: ids,
+            sourceFileStates,
+            sourceSha256ByRecord: Object.fromEntries(sourceDigestByRecord),
+            formalValidation: false,
+            authorityPromoted: false,
+          }),
+          { flag: 'wx' },
+        );
         for (const r of next) {
           await mkdir(resolve(parsingRoot, runId, r.captureRef));
           for (const [name, png] of Object.entries(r.layers))

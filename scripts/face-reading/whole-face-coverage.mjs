@@ -7,6 +7,7 @@ import {
   assertFR293ProductColumnMap,
 } from '../../.face-reading-dist/rgb-selfie-product-column-map-fr293.js';
 import { validateBatch } from '../../tools/face-reading/two-view/server.mjs';
+import { auditSavedRunSourceSnapshot } from '../../tools/face-reading/two-view/source-snapshot-guard.mjs';
 import { validateFreshResearchIntake } from '../../tools/face-reading/two-view/fresh-research-intake-contract.mjs';
 import { validateParsingSummary } from '../../tools/face-reading/two-view/parsing-contract.mjs';
 import { validateEyeFoldReviewStore } from '../../tools/face-reading/two-view/eye-fold-review.mjs';
@@ -140,8 +141,15 @@ async function loadLocal(intake) {
   // A missing active run is not evidence that a model failed.
   const metrics = new Map();
   const metricActive = await maybeJson(join(intake, 'two-view-runs', 'active.json'));
+  let metricSourceBinding = 'not_run';
   if (metricActive) {
     if (!/^[a-f0-9-]{36}$/.test(metricActive.runId)) throw Error('METRICS_RUN_INVALID');
+    const snapshot = await readJson(
+      join(intake, 'two-view-runs', metricActive.runId, 'snapshot.json'),
+    );
+    const audit = await auditSavedRunSourceSnapshot(snapshot, [...base, ...extra]);
+    if (audit.status === 'source_changed') throw Error('METRICS_SOURCE_CHANGED');
+    metricSourceBinding = audit.status;
     const saved = await readJson(join(intake, 'two-view-runs', metricActive.runId, 'metrics.json'));
     const validated = validateBatch(saved, ids, roles);
     for (const record of validated) metrics.set(record.captureRef, record.metrics);
@@ -149,8 +157,19 @@ async function loadLocal(intake) {
 
   const parserActive = await maybeJson(join(intake, 'parsing-runs', 'active.json'));
   const parsing = new Map();
+  let parserSourceBinding = 'not_run';
   if (parserActive) {
     if (!/^[a-f0-9-]{36}$/.test(parserActive.runId)) throw Error('PARSING_RUN_INVALID');
+    const snapshot = await maybeJson(
+      join(intake, 'parsing-runs', parserActive.runId, 'snapshot.json'),
+    );
+    if (snapshot) {
+      const audit = await auditSavedRunSourceSnapshot(snapshot, [...base, ...extra]);
+      if (audit.status === 'source_changed') throw Error('PARSING_SOURCE_CHANGED');
+      parserSourceBinding = audit.status;
+    } else {
+      parserSourceBinding = 'legacy_unanchored';
+    }
     const saved = await readJson(join(intake, 'parsing-runs', parserActive.runId, 'summary.json'));
     if (
       !Array.isArray(saved.records) ||
@@ -177,6 +196,8 @@ async function loadLocal(intake) {
     })),
     metricsValidated: Boolean(metricActive),
     parsingValidated: Boolean(parserActive),
+    metricSourceBinding,
+    parserSourceBinding,
     humanReviews,
     humanReviewStoreValidated: Boolean(humanReviewStore),
     staleHumanReviewCount,
@@ -202,6 +223,8 @@ async function main() {
         records: [],
         metricsValidated: false,
         parsingValidated: false,
+        metricSourceBinding: 'not_run',
+        parserSourceBinding: 'not_run',
         humanReviews: [],
         humanReviewStoreValidated: false,
         staleHumanReviewCount: 0,
@@ -244,7 +267,9 @@ async function main() {
         evidenceSource: schemaOnly
           ? 'canonical_schema_only'
           : local.metricsValidated || local.parsingValidated
-            ? 'validated_local_saved_runs'
+            ? local.parserSourceBinding === 'legacy_unanchored'
+              ? 'local_saved_runs_with_unanchored_legacy_parser'
+              : 'validated_local_saved_runs'
             : local.humanReviews.length > 0
               ? 'validated_local_human_review_labels'
               : local.humanReviewStoreValidated
@@ -252,6 +277,8 @@ async function main() {
                 : 'local_inventory_only',
         frontalMetricsSavedAndValidated: local.metricsValidated,
         parsingSavedAndValidated: local.parsingValidated,
+        metricsSourceBinding: local.metricSourceBinding,
+        parsingSourceBinding: local.parserSourceBinding,
         humanReviewStoreValidated: local.humanReviewStoreValidated,
         staleHumanReviewCount: local.staleHumanReviewCount,
         captureScreenReviewStoreValidated: local.captureScreenReviewStoreValidated,
