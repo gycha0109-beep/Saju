@@ -159,7 +159,7 @@ describe('existing compatibility browser route stays protected and research-only
         sentence.paragraph.trim().length > 0 &&
         sentence.individualOutcomeClaimed === false &&
         sentence.observedFactPaths.every(path =>
-          /^(subject|target)\\.pillars\\./u.test(path)))).toBe(true);
+          /^(subject|target)\.pillars\./u.test(path)))).toBe(true);
       expect((await post({ ...request, candidateScope: 'other_relationship' })).status).toBe(400);
       const chartsUrl = url.replace(PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH, PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH);
       expect((await post(request, chartsUrl)).status).toBe(400);
