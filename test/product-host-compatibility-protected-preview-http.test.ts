@@ -85,6 +85,10 @@ describe('existing compatibility browser route stays protected and research-only
       const { materialHash, status, officialIssueAuthorized, mayPublish, maySell, ...unsigned } =
         sourceMaterial;
       expect(materialHash).toBe(deterministicContentHash(unsigned));
+      expect(status).toBe('source_owned_candidate_unissued');
+      expect(officialIssueAuthorized).toBe(false);
+      expect(mayPublish).toBe(false);
+      expect(maySell).toBe(false);
       expect(sourceMaterial.charts).toHaveLength(2);
       expect(sourceMaterial.charts[0].calculationHash)
         .not.toBe(sourceMaterial.charts[1].calculationHash);
