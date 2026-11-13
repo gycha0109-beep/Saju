@@ -1,3 +1,4 @@
+import type { FiveElement } from '../contracts/calculation.js';
 import {
   STRUCTURAL_RELATION_DEFINITION_CONTENT_HASH,
   STRUCTURAL_RELATION_SOURCE_CATALOG,
@@ -31,6 +32,9 @@ export const T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE = {
   studiedDivorcedOrBereavedCouples: 20,
   studiedLongMarriedCouples: 20,
   historicalScope: 'married_couples_only',
+  publicAbstractListsGanyeojidongAsAdverseFactor: true,
+  /** The other author-listed factors and compensations need original methods. */
+  wholeJointDecisionTableReproduced: false,
 } as const;
 
 export const T10_CROSS_METHOD_CONTRAST_VERSION =
@@ -120,6 +124,20 @@ export interface T10SynthesisHoldDecisionV1 {
     sourceEvidence: typeof T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.evidenceLevel;
     studyPopulation: typeof T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.historicalScope;
     candidateObservedFactPaths: readonly string[];
+    /** Only the already calculated, per-person day-stem/day-branch equality.
+     * The abstract names this category among the historical sample's adverse
+     * factors; it does NOT establish a forecast or the author's joint table. */
+    singleChartDayPalaceFactorCandidates: readonly Readonly<{
+      personRef: string;
+      calculationHash: string;
+      status: 'author_listed_ganyeojidong_observed' | 'not_observed' | 'unresolved';
+      factPaths: readonly string[];
+      stemElement: FiveElement | null;
+      branchElement: FiveElement | null;
+      matchesAuthorAbstractListedCategory: boolean;
+      riskWeightOrIndividualOutcomeEstablished: false;
+    }>[];
+    /** Not enough to reconstruct multiple adverse factors for both persons. */
     bothChartFactorsOperationalized: false;
     adverseFactorAccumulationEstablished: false;
     counterpartNeutralizationEstablished: false;
@@ -476,6 +494,72 @@ export function compareT10CrossMethodEvidenceV1(
     ...mappedT5.flatMap(item => [...item.canonicalFactPaths]),
     ...examples.flatMap(item => [...item.counterpartVisibleFactPaths]),
   ]);
+  const personalPalace = coexisting.individualPalace;
+  if (personalPalace.version !== 'saju-marital-palace-intra-chart-research-v1' ||
+      personalPalace.source.verifiedTextLayer !== 'KCI_ABSTRACT_ONLY' ||
+      personalPalace.pairwiseT10Admitted !== false ||
+      personalPalace.mayClaimRelationshipOutcome !== false ||
+      !identity(pair.subject, personalPalace.subject) ||
+      !identity(pair.target, personalPalace.target) ||
+      T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.publicAbstractListsGanyeojidongAsAdverseFactor !== true) {
+    throw new TypeError('2020 factor candidates require the same protected personal palace facts.');
+  }
+  const personalFactor = (
+    person: typeof personalPalace.subject, role: 'subject' | 'target',
+  ) => {
+    const evidence = person.evidence;
+    if (person.state === 'unresolved_day_pillar') {
+      if (evidence !== undefined) {
+        throw new TypeError('Unresolved personal day pillar cannot contain invented elements.');
+      }
+      return {
+        personRef: person.personRef, calculationHash: person.calculationHash,
+        status: 'unresolved' as const, factPaths: [] as string[],
+        stemElement: null, branchElement: null,
+        matchesAuthorAbstractListedCategory: false,
+        riskWeightOrIndividualOutcomeEstablished: false as const,
+      };
+    }
+    if (!evidence ||
+        evidence.stemFactPath !== 'pillars.day.value.stem.element' ||
+        evidence.branchFactPath !== 'pillars.day.value.branch.element' ||
+        (person.state === 'same_element') !==
+          (evidence.stemElement === evidence.branchElement) ||
+        !['same_element', 'different_element'].includes(person.state)) {
+      throw new TypeError('2020 palace source marker requires exact canonical element facts.');
+    }
+    const matched = person.state === 'same_element';
+    return {
+      personRef: person.personRef, calculationHash: person.calculationHash,
+      status: matched
+        ? 'author_listed_ganyeojidong_observed' as const
+        : 'not_observed' as const,
+      factPaths: [
+        role + '.' + evidence.stemFactPath,
+        role + '.' + evidence.branchFactPath,
+      ],
+      stemElement: evidence.stemElement,
+      branchElement: evidence.branchElement,
+      matchesAuthorAbstractListedCategory: matched,
+      riskWeightOrIndividualOutcomeEstablished: false as const,
+    };
+  };
+  const singleChartDayPalaceFactorCandidates = [
+    personalFactor(personalPalace.subject, 'subject'),
+    personalFactor(personalPalace.target, 'target'),
+  ];
+  const personalFactorParagraph = singleChartDayPalaceFactorCandidates
+    .map((item, index) => {
+      const who = index === 0 ? '첫 번째 사람' : '두 번째 사람';
+      if (item.status === 'unresolved') {
+        return who + '의 일간·일지 오행은 미확정입니다.';
+      }
+      return who + '의 일간 오행은 ' + item.stemElement +
+        ', 일지 오행은 ' + item.branchElement + '으로 ' +
+        (item.matchesAuthorAbstractListedCategory
+          ? '해당 논문 초록에 열거된 개인 원국의 간여지동 항목과 일치합니다.'
+          : '해당 논문 초록의 간여지동 항목에는 해당하지 않습니다.');
+    }).join(' ');
   const synthesisPrerequisites = unique([
     'FULL_2016_INTERVIEW_CASE_AND_METHOD_NOT_VERIFIED',
     'CURRENT_PAIR_TO_2016_INTERVIEW_CASE_NOT_LINKED',
@@ -508,6 +592,7 @@ export function compareT10CrossMethodEvidenceV1(
       sourceEvidence: T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.evidenceLevel,
       studyPopulation: T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.historicalScope,
       candidateObservedFactPaths: synthesisPaths,
+      singleChartDayPalaceFactorCandidates,
       bothChartFactorsOperationalized: false,
       adverseFactorAccumulationEstablished: false,
       counterpartNeutralizationEstablished: false,
@@ -548,6 +633,9 @@ export function compareT10CrossMethodEvidenceV1(
       '어느 근거가 더 중요하다는 결론과 실제 관계 결과를 모두 보류합니다. ' +
       '남기동(2020) 박사논문의 공개 초록은 부부 각자의 부정적 요인이 ' +
       '누적되거나 상대의 중화 요인과 결부되는 연구자 방법을 설명합니다. ' +
+      personalFactorParagraph + ' ' +
+      '이는 각자의 계산된 하루 기둥에서 해당 전통 분류 항목이 보이는지에 한정되며, ' +
+      '두 사람의 부정 요인 누적이나 실제 혼인 결과를 의미하지 않습니다. ' +
       '그러나 실제 두 명식에서 그 요인이 성립하는 계산 기준과 사례표 ' +
       '원문이 확인되지 않아 이 명식쌍의 상쇄나 관계 결과에 적용하지 않습니다.',
     sourceQualifiedPriorityEstablished: false,
