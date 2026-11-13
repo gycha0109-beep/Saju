@@ -1,0 +1,40 @@
+# Saju A4 Source PostgreSQL 17 — Local Docker
+
+This is an **isolated local installation and verification environment**, NOT a Production cost-ingestion switch.
+
+## Start
+
+Windows PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\ops\a4-source-docker\start.ps1
+```
+
+The start script generates an untracked, random PostgreSQL owner secret. It then creates the external named data volume `saju_a4_source_pg17_data_v1` if missing, validates Compose, and starts PostgreSQL 17.11. Data survives normal container recreation and `docker compose down`; even `down -v` cannot delete the external volume.
+
+The database listens **only on 127.0.0.1:55432**, never on public interfaces. The container uses a dedicated Compose bridge network; only the Windows loopback port is published. Avoid treating loopback-only traffic as proof of the required Production TLS/service identity.
+
+## Schema installation
+
+On the first start of an empty volume, four already-reviewed **offline** SQL candidates are run in dependency order from `docs/ops`:
+
+1. immutable signed provider receipts
+2. immutable provider callback coverage
+3. single-use signed prepared-attempt claims
+4. immutable pre-network provider dispatch intents
+
+The SQL scripts create passwordless, least-privilege service roles. Those roles have no passwords, so they cannot authenticate remotely over the password-required TCP host mapping. Local Unix-socket access inside this isolated container can still use the image's local trust policy; do not treat that as Production service authentication. Existing production service/authority is never enabled by this stack.
+
+## Verify and back up
+
+```powershell
+docker compose -f .\ops\a4-source-docker\compose.yaml ps
+docker exec saju-a4-source-pg17 psql -U saju_a4_owner -d saju_a4_source -Atc "select version();"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\ops\a4-source-docker\backup.ps1
+```
+
+Backups are local and ignored by Git. The companion `.globals.sql` records password-free role declarations for future disaster recovery. A backup file is **not** a verified off-site backup or a tested restore; do not treat it as full Production disaster recovery. Protect `secrets/` and `backups/` from disclosure.
+
+## Hard gates not waived
+
+Source record retention/deletion and privacy rules, verified Production TLS, three separate service credentials and cross-service Bearer/HMAC, Production Interpretation Authority, a bounded actual-provider budget and independent invoice comparison are **not** supplied by this local stack. Do not enable billable AI calls or A4 continuous cost collection. Keep `completeCostCoverage=false` and `invoiceReconciled=false`.
