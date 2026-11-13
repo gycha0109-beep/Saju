@@ -227,11 +227,32 @@ export function auditT10ProductReadingQualityV1(
     : 'no_listed_opposite_positions';
   if (!synthesis ||
       sourceDecision.caseId !== currentSynthesisCase ||
+      sourceDecision.qualitativeCounterexample.sourceUrl !==
+        T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl ||
+      sourceDecision.qualitativeCounterexample.sourcePopulation !==
+        T10_DIRECT_DAY_COMPARISON_SOURCE.subjectPopulation ||
+      sourceDecision.qualitativeCounterexample.publicAbstractOnly !== true ||
+      sourceDecision.qualitativeCounterexample.currentPairInterviewed !== false ||
+      sourceDecision.qualitativeCounterexample.currentPairBehaviorObserved !== false ||
+      sourceDecision.qualitativeCounterexample.currentPairOutcomeInferred !== false ||
+      sourceDecision.qualitativeCounterexample
+        .conflictingTraditionalFactorCanHaveDifferentObservedOutcomes !== true ||
+      !synthesis.sourceUrls.includes(T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl) ||
+      !synthesis.missingPrerequisites.includes(
+        'CURRENT_PAIR_TO_2016_INTERVIEW_CASE_NOT_LINKED') ||
+      (sourceDecision.dayPillarFacts.sourceStatus === 'both_resolved' &&
+        (!sourceDecision.dayPillarFacts.subject ||
+         !sourceDecision.dayPillarFacts.target ||
+         !synthesis.paragraph.includes(
+           '첫 번째 사람의 일주는 ' + sourceDecision.dayPillarFacts.subject) ||
+         !synthesis.paragraph.includes(
+           '두 번째 사람의 일주는 ' + sourceDecision.dayPillarFacts.target))) ||
       sourceDecision.relationshipConclusion !== null ||
       sourceDecision.compatibilityScore !== null ||
       sourceDecision.noObservedOppositionProvesHarmony !== false ||
       sourceDecision.sourceQualifiedPriorityEstablished !== false ||
       synthesis.evidenceLayer !== 'unresolved_synthesis' ||
+      !synthesis.paragraph.includes('지금 두 사람의 행동이나 미래를 관측한 결과가 아닙니다') ||
       synthesis.individualRelationshipOutcomeAuthorized !== false ||
       !synthesis.missingPrerequisites.includes(
         'SOURCE_VALIDATED_RELATIONSHIP_OUTCOME_METHOD') ||

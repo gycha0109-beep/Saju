@@ -372,7 +372,20 @@ export function buildT10PairReadingBoundaryDraftV1(
     }]);
   }
   const decision = contrast.synthesisDecision;
-  if (decision.sourceQualifiedPriorityEstablished !== false ||
+  if (decision.qualitativeCounterexample.sourceUrl !==
+        T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl ||
+      decision.qualitativeCounterexample.sourcePopulation !==
+        T10_DIRECT_DAY_COMPARISON_SOURCE.subjectPopulation ||
+      decision.qualitativeCounterexample.publicAbstractOnly !== true ||
+      decision.qualitativeCounterexample
+        .conflictingTraditionalFactorCanHaveDifferentObservedOutcomes !== true ||
+      decision.qualitativeCounterexample.currentPairInterviewed !== false ||
+      decision.qualitativeCounterexample.currentPairBehaviorObserved !== false ||
+      decision.qualitativeCounterexample.currentPairOutcomeInferred !== false ||
+      !decision.sourceUrls.includes(T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl) ||
+      !decision.unresolvedPrerequisites.includes(
+        'CURRENT_PAIR_TO_2016_INTERVIEW_CASE_NOT_LINKED') ||
+      decision.sourceQualifiedPriorityEstablished !== false ||
       decision.relationshipConclusion !== null ||
       decision.compatibilityScore !== null ||
       decision.noObservedOppositionProvesHarmony !== false ||

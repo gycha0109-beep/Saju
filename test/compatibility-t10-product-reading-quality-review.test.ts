@@ -121,6 +121,28 @@ describe('T10 product quality: factual material never becomes a complete relatio
     }
   });
 
+  it('checks qualitative source counterexample remains a population observation', () => {
+    const out = run(A, OPPOSITE_B);
+    const source = out.crossMethodContrastResearch?.synthesisDecision;
+    const sentence = out.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'synthesis_hold')?.sentences[0];
+    expect(source?.qualitativeCounterexample.currentPairInterviewed).toBe(false);
+    expect(source?.qualitativeCounterexample.currentPairBehaviorObserved).toBe(false);
+    expect(source?.qualitativeCounterexample.currentPairOutcomeInferred).toBe(false);
+    expect(sentence?.observedFactPaths).toEqual(source?.observedFactPaths);
+    expect(sentence?.paragraph).toContain('두 번째 사람의 일주는');
+    expect(sentence?.sourceUrls).toContain(
+      'https://www.dbpia.co.kr/journal/detail?nodeId=T14205410');
+    expect(sentence?.missingPrerequisites).toContain(
+      'CURRENT_PAIR_TO_2016_INTERVIEW_CASE_NOT_LINKED');
+    expect(sentence?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(out.productReadingQualityReview?.traceAudit.exactSourceDerivedDraft)
+      .toBe(true);
+    expect(out.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
+    expect(out.maySell).toBe(false);
+  });
+
   it('keeps the absence of listed opposition separate from evidence of harmony', () => {
     const output = run(A, SINGLE);
     const draft = output.pairReadingBoundaryDraft;

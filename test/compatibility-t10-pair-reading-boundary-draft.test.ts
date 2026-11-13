@@ -272,6 +272,29 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     expect(result.maySell).toBe(false);
   });
 
+  it('keeps the qualitative counterexample separate from actual day pillars when people reverse', () => {
+    const first = run(A, COMBINATION_AND_CLASH);
+    const reverse = run(COMBINATION_AND_CLASH, A);
+    const a = first.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'synthesis_hold')?.sentences[0];
+    const b = reverse.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'synthesis_hold')?.sentences[0];
+    const f = first.crossMethodContrastResearch?.synthesisDecision.dayPillarFacts;
+    const r = reverse.crossMethodContrastResearch?.synthesisDecision.dayPillarFacts;
+    expect(f?.subject).toBe(r?.target);
+    expect(f?.target).toBe(r?.subject);
+    expect(a?.paragraph).toContain('첫 번째 사람의 일주는 ' + f?.subject);
+    expect(b?.paragraph).toContain('첫 번째 사람의 일주는 ' + r?.subject);
+    expect(a?.paragraph).not.toBe(b?.paragraph);
+    expect(a?.sourceUrls).toContain(
+      'https://www.dbpia.co.kr/journal/detail?nodeId=T14205410');
+    expect(a?.missingPrerequisites).toContain(
+      'CURRENT_PAIR_TO_2016_INTERVIEW_CASE_NOT_LINKED');
+    expect(a?.paragraph).toContain('지금 두 사람의 행동이나 미래를 관측한 결과가 아닙니다');
+    expect(a?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(first.maySell).toBe(false);
+  });
+
   it('does not manufacture a mixed-position section when that case is absent', () => {
     const draft = run(A, NONMIXED).pairReadingBoundaryDraft;
     expect(draft?.structuralSituation)

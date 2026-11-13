@@ -71,6 +71,19 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
       mixed.paragraph.includes(item.targetValue))).toBe(true);
     expect(result?.synthesisDecision.caseId)
       .toBe('day_six_combination_vs_other_clash');
+    expect(result?.synthesisDecision.dayPillarFacts.sourceStatus)
+      .toBe('both_resolved');
+    expect(result?.synthesisDecision.paragraph)
+      .toContain('첫 번째 사람의 일주는');
+    expect(result?.synthesisDecision.qualitativeCounterexample)
+      .toMatchObject({
+        sourcePopulation: 'MARRIED_COUPLES_QUALITATIVE_INTERVIEWS',
+        currentPairInterviewed: false,
+        currentPairBehaviorObserved: false,
+        currentPairOutcomeInferred: false,
+      });
+    expect(result?.synthesisDecision.sourceUrls)
+      .toContain('https://www.dbpia.co.kr/journal/detail?nodeId=T14205410');
     expect(result?.synthesisDecision.paragraph)
       .toContain('일지 육합과 다른 위치의 충');
     expect(result?.synthesisDecision.observedFactPaths).toEqual(
@@ -184,6 +197,25 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
     expect(result?.historical.tenGodVisibleInputs).toEqual([]);
     expect(result?.historical.elementExampleInputs).toEqual([]);
     expect(result?.historical.oppositeChartOutcomesEstablished).toBe(false);
+  });
+
+  it('retains each original day-pillar value and never assigns an interview case to either person', () => {
+    const forward = run(A, SUPPORT_WITH_CLASH);
+    const reverse = run(SUPPORT_WITH_CLASH, A);
+    const x = forward.crossMethodContrastResearch?.synthesisDecision;
+    const y = reverse.crossMethodContrastResearch?.synthesisDecision;
+    const pair = forward.sourceScopeHandoff.factualPairObservations.find(item =>
+      item.pillarSlot === 'day');
+    expect(x?.dayPillarFacts.subject).toBe(pair?.subjectPillar);
+    expect(x?.dayPillarFacts.target).toBe(pair?.targetPillar);
+    expect(y?.dayPillarFacts.subject).toBe(x?.dayPillarFacts.target);
+    expect(y?.dayPillarFacts.target).toBe(x?.dayPillarFacts.subject);
+    expect(x?.observedFactPaths).toContain('subject.pillars.day');
+    expect(x?.observedFactPaths).toContain('target.pillars.day');
+    expect(x?.paragraph).toContain('2016년 기혼 부부 면접 연구의 공개 초록');
+    expect(y?.paragraph).toContain('지금 두 사람의 행동이나 미래를 관측한 결과가 아닙니다');
+    expect(x?.qualitativeCounterexample.currentPairOutcomeInferred).toBe(false);
+    expect(forward.maySell).toBe(false);
   });
 
   it('preserves each person and an unknown-hour gap when charts are reversed', () => {

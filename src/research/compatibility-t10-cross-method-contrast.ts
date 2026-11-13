@@ -13,6 +13,8 @@ import type { T10ClassicalUsefulElementResearchV1 } from
   './compatibility-t10-classical-useful-element.js';
 import type { T10ThreeMethodApplicabilityReadingV1 } from
   './compatibility-t10-three-method-applicability-reading.js';
+import { T10_DIRECT_DAY_COMPARISON_SOURCE } from
+  './compatibility-t10-direct-day-comparison.js';
 
 export const T10_CROSS_METHOD_CONTRAST_VERSION =
   'saju-t10-cross-method-contrast-factual-research-v1' as const;
@@ -77,6 +79,21 @@ export interface T10SynthesisHoldDecisionV1 {
     'no_listed_opposite_positions';
   readonly historicalMethodScope:
     'historical_male_female_unresolved' | 'historical_roles_not_matched';
+  readonly dayPillarFacts: Readonly<{
+    sourceStatus: 'both_resolved' | 'incomplete';
+    subject: string | null;
+    target: string | null;
+  }>;
+  /** A 2016 population-level qualitative counterexample, never this pair's fate. */
+  readonly qualitativeCounterexample: Readonly<{
+    sourceUrl: typeof T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl;
+    sourcePopulation: typeof T10_DIRECT_DAY_COMPARISON_SOURCE.subjectPopulation;
+    publicAbstractOnly: true;
+    conflictingTraditionalFactorCanHaveDifferentObservedOutcomes: true;
+    currentPairInterviewed: false;
+    currentPairBehaviorObserved: false;
+    currentPairOutcomeInferred: false;
+  }>;
   readonly observedFactPaths: readonly string[];
   readonly unverifiedFactPaths: readonly string[];
   readonly sourceIds: readonly string[];
@@ -394,6 +411,24 @@ export function compareT10CrossMethodEvidenceV1(
     }).join('; ')
     : '';
 
+  const dayFact = pair.factualPairObservations.find(item =>
+    item.pillarSlot === 'day');
+  if (!dayFact || dayFact.pairwiseMeaningAuthorized !== false ||
+      dayFact.subjectFactPath !== 'subject.pillars.day' ||
+      dayFact.targetFactPath !== 'target.pillars.day' ||
+      (dayFact.status === 'both_resolved' &&
+        (!dayFact.subjectPillar || !dayFact.targetPillar)) ||
+      (dayFact.status === 'incomplete' &&
+        (dayFact.subjectPillar !== undefined ||
+         dayFact.targetPillar !== undefined))) {
+    throw new TypeError('T10 synthesis must use protected canonical day-pillar facts.');
+  }
+  const fullDay = dayFact.status === 'both_resolved';
+  const dayPillarFacts: T10SynthesisHoldDecisionV1['dayPillarFacts'] = {
+    sourceStatus: dayFact.status,
+    subject: fullDay ? dayFact.subjectPillar! : null,
+    target: fullDay ? dayFact.targetPillar! : null,
+  };
   const mixed = structural[0];
   const synthesisCase: T10SynthesisHoldDecisionV1['caseId'] = !mixed
     ? 'no_listed_opposite_positions'
@@ -401,6 +436,7 @@ export function compareT10CrossMethodEvidenceV1(
       ? 'day_six_combination_vs_other_clash'
       : 'day_clash_vs_other_six_combination';
   const synthesisPaths = unique([
+    ...(fullDay ? [dayFact.subjectFactPath, dayFact.targetFactPath] : []),
     ...(mixed ? [
       ...mixed.dayFactPaths,
       ...mixed.otherFactPaths.flatMap(item => [item.subject, item.target]),
@@ -409,6 +445,8 @@ export function compareT10CrossMethodEvidenceV1(
     ...examples.flatMap(item => [...item.counterpartVisibleFactPaths]),
   ]);
   const synthesisPrerequisites = unique([
+    'FULL_2016_INTERVIEW_CASE_AND_METHOD_NOT_VERIFIED',
+    'CURRENT_PAIR_TO_2016_INTERVIEW_CASE_NOT_LINKED',
     ...(!mixed ? ['NO_OBSERVED_OPPOSITE_IS_NOT_EVIDENCE_OF_HARMONY']
       : ['EXACT_TWO_PERSON_PRIORITIZATION_RULE']),
     ...coexisting.synthesis.missingPrerequisites,
@@ -421,14 +459,32 @@ export function compareT10CrossMethodEvidenceV1(
     caseId: synthesisCase,
     historicalMethodScope: historicalRoles
       ? 'historical_male_female_unresolved' : 'historical_roles_not_matched',
+    dayPillarFacts,
+    qualitativeCounterexample: {
+      sourceUrl: T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl,
+      sourcePopulation: T10_DIRECT_DAY_COMPARISON_SOURCE.subjectPopulation,
+      publicAbstractOnly: true,
+      conflictingTraditionalFactorCanHaveDifferentObservedOutcomes: true,
+      currentPairInterviewed: false,
+      currentPairBehaviorObserved: false,
+      currentPairOutcomeInferred: false,
+    },
     observedFactPaths: synthesisPaths,
-    unverifiedFactPaths: unique(mappedT5.flatMap(item => [...item.unresolvedFactPaths])),
+    unverifiedFactPaths: unique([
+      ...(!fullDay ? [dayFact.subjectFactPath, dayFact.targetFactPath] : []),
+      ...mappedT5.flatMap(item => [...item.unresolvedFactPaths]),
+    ]),
     sourceIds: unique(mixed?.otherFactPaths.flatMap(item => [...item.sourceIds]) ?? []),
-    sourceUrls: unique([...(mixed?.sources ?? []), ...roleSource]),
+    sourceUrls: unique([...(mixed?.sources ?? []), ...roleSource,
+      T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl]),
     definitionContentHashes: unique(
       mixed?.otherFactPaths.map(item => item.definitionContentHash) ?? []),
     unresolvedPrerequisites: synthesisPrerequisites,
-    paragraph: (synthesisCase === 'day_six_combination_vs_other_clash'
+    paragraph: (fullDay
+      ? '실제 비교하는 첫 번째 사람의 일주는 ' + dayPillarFacts.subject +
+        ', 두 번째 사람의 일주는 ' + dayPillarFacts.target + '입니다. '
+      : '두 명식의 일주 중 적어도 하나가 미확정이므로 일주 비교도 보류합니다. ') +
+      (synthesisCase === 'day_six_combination_vs_other_clash'
       ? '현재 두 명식에서 일지 육합과 다른 위치의 충이 함께 관측됩니다. '
       : synthesisCase === 'day_clash_vs_other_six_combination'
         ? '현재 두 명식에서 일지 충과 다른 위치의 육합이 함께 관측됩니다. '
@@ -439,6 +495,9 @@ export function compareT10CrossMethodEvidenceV1(
           '십신의 중(重)·강약과 실제 용신 선정은 확인되지 않았습니다. '
         : '고전 십신 짝짓기의 역사적 남녀 역할 조건과는 맞지 않아 해당 방법을 ' +
           '현재 두 사람에게 적용할 수 없습니다. ') +
+      '2016년 기혼 부부 면접 연구의 공개 초록은 전통적 겉궁합이 맞지 않는다고 ' +
+      '여겨져도 차이를 인정하고 역할에 합의하여 원만한 결혼생활을 유지한 사례를 ' +
+      '보고하지만, 이 사례는 지금 두 사람의 행동이나 미래를 관측한 결과가 아닙니다. ' +
       '합·충의 상쇄나 두 고전 방법의 우선순위에 관한 검증된 두 명식 종합법이 없으므로 ' +
       '어느 근거가 더 중요하다는 결론과 실제 관계 결과를 모두 보류합니다.',
     sourceQualifiedPriorityEstablished: false,
