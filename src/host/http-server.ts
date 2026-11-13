@@ -456,6 +456,7 @@ function createMyeonghwaHttpServer(
         const candidate = result.maritalDayBranchCandidate;
         const draft = result.pairReadingBoundaryDraft;
         const review = result.productReadingQualityReview;
+        const internalDraft = result.internalServiceInterpretationDraft;
         const evidence = withEvidence ? {
           version: 'myeonghwa-cross-chart-structural-evidence-v1',
           matches: result.sourceScopeHandoff.crossChartStructuralMatches.map(match => {
@@ -479,6 +480,24 @@ function createMyeonghwaHttpServer(
               ...(candidate.state === 'candidate_factor' ? {
                 kind: candidate.evidence.kind, sourceInterpretation: candidate.sourceInterpretation,
               } : {}),
+            },
+          }),
+          ...(internalDraft === undefined || draft === undefined || review === undefined ? {} : {
+            internalServiceInterpretation: {
+              version: internalDraft.version,
+              lifecycle: internalDraft.lifecycle,
+              policyId: internalDraft.policy.policyId,
+              policyVersion: internalDraft.policy.policyVersion,
+              adoption: internalDraft.policy.adoption,
+              academicThirdPartyApprovalRequired: internalDraft.policy.academicThirdPartyApprovalRequired,
+              ruleCoverage: internalDraft.ruleCoverage,
+              charts: [internalDraft.subject, internalDraft.target].map(chart => ({
+                role: chart.personRef, calculationHash: chart.calculationHash,
+              })),
+              sentences: internalDraft.sentences,
+              readyForOfficialIssue: internalDraft.readyForOfficialIssue,
+              mayPublish: internalDraft.mayPublish,
+              maySell: internalDraft.maySell,
             },
           }),
           ...(draft === undefined || review === undefined ? {} : {
