@@ -81,7 +81,18 @@ describe('existing compatibility browser route stays protected and research-only
         requestBodyHash: deterministicContentHash(request), responseBodyHash: deterministicContentHash(body) });
       expect(verify(null, Buffer.from(payload.version + '\0' + deterministicContentHash(payload)),
         publicKey, Buffer.from(signature, 'base64url'))).toBe(true);
-      expect(body).toMatchObject({ maySell: false, evidence: { readingReview: { state: 'held' } } });
+      expect(body).toMatchObject({
+        maySell: false, evidence: {
+          readingReview: { state: 'held', actualCompatibilityReadingReady: false },
+          internalServiceInterpretation: {
+            version: 'saju-t10-internal-service-interpretation-v1',
+            lifecycle: 'internal_policy_trial',
+            policyId: 'myeongha-t10-internal-relational-explanation-v1',
+            academicThirdPartyApprovalRequired: false,
+            readyForOfficialIssue: false, mayPublish: false, maySell: false,
+          },
+        },
+      });
     }, true, { compatibilityEvidenceProof: { keyId, signingKey: privateKey } });
   });
 
@@ -106,7 +117,13 @@ describe('existing compatibility browser route stays protected and research-only
       expect(result.status).toBe(200);
       const evidenceBody = await result.json() as Result & {
         evidence: {
+          internalServiceInterpretation: {
+            charts: Array<{ role: string; calculationHash: string }>;
+            sentences: Array<{ ruleId: string; paragraph: string;
+              individualOutcomeClaimed: boolean; observedFactPaths: string[] }>;
+          };
           readingReview: {
+            charts: Array<{ role: string; calculationHash: string }>;
             sections: Array<{
               sentences: Array<{ observedFactPaths: string[]; individualRelationshipOutcomeAuthorized: boolean }>;
             }>;
@@ -135,6 +152,14 @@ describe('existing compatibility browser route stays protected and research-only
       expect(sentences.some(sentence => sentence.observedFactPaths.some(path => path.startsWith('subject.'))
         && sentence.observedFactPaths.some(path => path.startsWith('target.')))).toBe(true);
       expect(sentences.every(sentence => sentence.individualRelationshipOutcomeAuthorized === false)).toBe(true);
+      const service = evidenceBody.evidence.internalServiceInterpretation;
+      expect(service.charts).toEqual(evidenceBody.evidence.readingReview.charts);
+      expect(service.sentences.length).toBeGreaterThan(1);
+      expect(service.sentences.every(sentence =>
+        sentence.paragraph.trim().length > 0 &&
+        sentence.individualOutcomeClaimed === false &&
+        sentence.observedFactPaths.every(path =>
+          /^(subject|target)\\.pillars\\./u.test(path)))).toBe(true);
       expect((await post({ ...request, candidateScope: 'other_relationship' })).status).toBe(400);
       const chartsUrl = url.replace(PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH, PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH);
       expect((await post(request, chartsUrl)).status).toBe(400);
