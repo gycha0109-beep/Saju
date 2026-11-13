@@ -94,6 +94,31 @@ describe('T10 product quality: factual material never becomes a complete relatio
     expect(review?.maySell).toBe(false);
   });
 
+  it('accepts a real overlapping day-slot structural contrast with exactly three original paths', () => {
+    const first = run(birth(1990, 5, 13), birth(1990, 5, 22));
+    const reverse = run(birth(1990, 5, 22), birth(1990, 5, 13));
+    for (const result of [first, reverse]) {
+      const original = result.crossMethodContrastResearch?.structural[0];
+      const verified = result.pairReadingBoundaryDraft?.sections.find(section =>
+        section.id === 'mixed_positions')?.sentences[0];
+      expect(original).toBeDefined();
+      expect(verified?.observedFactPaths).toEqual([
+        ...new Set([
+          ...(original?.dayFactPaths ?? []),
+          ...(original?.otherFactPaths.flatMap(item => [item.subject, item.target]) ?? []),
+        ]),
+      ]);
+      expect(verified?.observedFactPaths).toHaveLength(3);
+      expect(verified?.missingPrerequisites)
+        .toContain('EXACT_TWO_PERSON_PRIORITIZATION_RULE');
+      expect(result.productReadingQualityReview?.traceAudit.exactSourceDerivedDraft)
+        .toBe(true);
+      expect(result.productReadingQualityReview?.actualCompatibilityReadingReady)
+        .toBe(false);
+      expect(result.maySell).toBe(false);
+    }
+  });
+
   it('does not invent a multi-factor conflict if only one factor is present', () => {
     const result = run(A, SINGLE).productReadingQualityReview;
     expect(result?.caseDistinction).toBe('no_verified_mixed_day_structure');

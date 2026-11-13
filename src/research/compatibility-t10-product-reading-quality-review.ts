@@ -188,15 +188,27 @@ export function auditT10ProductReadingQualityV1(
 
   const mixed = draft.sections.find(section => section.id === 'mixed_positions');
   const expectedDirection = draft.structuralSituation;
+  const originalMixed = contrast.structural[0];
+  // The opposite relation can reuse one day-branch fact path, so three distinct
+  // paths are sufficient. Match the actual source paths, not an arbitrary count.
+  const expectedMixedFactPaths = originalMixed
+    ? unique([
+      ...originalMixed.dayFactPaths,
+      ...originalMixed.otherFactPaths.flatMap(item => [item.subject, item.target]),
+    ]) : [];
   if ((expectedDirection === 'no_source_qualified_mixed_day_structure') !==
       (mixed === undefined) ||
+      (originalMixed === undefined) !== (mixed === undefined) ||
+      (originalMixed && originalMixed.direction !== expectedDirection) ||
       (mixed && (mixed.sentences.length !== 1 ||
         !mixed.sentences[0]?.paragraph.includes('실제 일지 비교는 첫 번째 사람') ||
         !mixed.sentences[0]?.paragraph.includes('다른 위치에서는 첫 번째 사람') ||
         mixed.sentences[0]?.evidenceLayer !== 'unresolved_synthesis' ||
         !mixed.sentences[0]?.missingPrerequisites.includes(
           'EXACT_TWO_PERSON_PRIORITIZATION_RULE') ||
-        mixed.sentences[0].observedFactPaths.length < 4)) ||
+        expectedMixedFactPaths.length < 3 ||
+        JSON.stringify(mixed.sentences[0].observedFactPaths) !==
+          JSON.stringify(expectedMixedFactPaths))) ||
       (mixed && expectedDirection === 'day_six_combination_with_other_clash' &&
         !mixed.sentences[0]?.paragraph.includes('일지 사이에는 육합이 있고 다른 위치에는 충')) ||
       (mixed && expectedDirection === 'day_clash_with_other_six_combination' &&
