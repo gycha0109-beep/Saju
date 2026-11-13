@@ -75,7 +75,12 @@ export function createProductionReadingIssueProof(
       response: ProductReadingResponse,
       readerSource?: ProductionReadingReaderSource,
     ) => {
-      if (response.state !== 'delivered' || response.reading === undefined) return undefined;
+      if (response.state !== 'delivered' || response.reading === undefined ||
+          (temporalScope !== undefined && readerSource?.temporal === undefined)) {
+        // A purchased civil year/month cannot be signed without the same
+        // execution's canonical two-window Reader evidence.
+        return undefined;
+      }
       const responseBodyHash = deterministicContentHash(JSON.parse(JSON.stringify(response)));
       let readerSourceHash: string | undefined;
       if (readerSource !== undefined) {
