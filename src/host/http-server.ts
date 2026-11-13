@@ -16,6 +16,7 @@ import {
 } from './product-host.js';
 import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './production-calculation-http-contract.js';
 import { buildCompatibilityTwoBirthResearchReading } from '../preview/compatibility-two-birth-research-runtime.js';
+import { buildT10PairSourceReadingMaterialV1 } from '../reading/t10-pair-source-reading-material.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-service-bearer-auth.js';
 import {
@@ -457,6 +458,8 @@ function createMyeonghwaHttpServer(
         const draft = result.pairReadingBoundaryDraft;
         const review = result.productReadingQualityReview;
         const internalDraft = result.internalServiceInterpretationDraft;
+        const pairSourceMaterial = internalDraft === undefined ? undefined :
+          buildT10PairSourceReadingMaterialV1(result.sourceScopeHandoff, internalDraft);
         const evidence = withEvidence ? {
           version: 'myeonghwa-cross-chart-structural-evidence-v1',
           matches: result.sourceScopeHandoff.crossChartStructuralMatches.map(match => {
@@ -481,6 +484,9 @@ function createMyeonghwaHttpServer(
                 kind: candidate.evidence.kind, sourceInterpretation: candidate.sourceInterpretation,
               } : {}),
             },
+          }),
+          ...(pairSourceMaterial === undefined ? {} : {
+            sourceReadingMaterial: pairSourceMaterial,
           }),
           ...(internalDraft === undefined || draft === undefined || review === undefined ? {} : {
             internalServiceInterpretation: {
