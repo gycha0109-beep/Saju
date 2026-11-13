@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BirthInput, PillarSlot } from '../src/contracts/calculation.js';
+import { getTenGod } from 'manseryeok';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from
   '../src/production/production-calculation-runtime.js';
 import { buildCompatibilityTwoBirthResearchReading } from
@@ -443,6 +444,89 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
       .toBe(false);
     expect(run(first, second, false).tenGodCourseResearch).toBeUndefined();
     expect(output.maySell).toBe(false);
+  });
+
+  it('distinguishes absent course families from incomplete charts using every canonical hidden stem', () => {
+    const inputs = [
+      birth(1990, 5, 15, 'male'),
+      birth(1996, 6, 5, 'female'),
+    ] as const;
+    const now = new Date('2026-11-11T00:00:00.000Z');
+    const originals = inputs.map(birthInput =>
+      calculateAuthorizedMyeonghwaProductionSnapshot(birthInput, { now }).snapshot);
+    const output = run(inputs[0], inputs[1]);
+    const courses = output.tenGodCourseResearch?.courses;
+    expect(courses).toHaveLength(6);
+    const SLOTS = ['year', 'month', 'day', 'hour'] as const;
+    for (const course of courses ?? []) {
+      const snapshot = originals[course.historicalRole === 'male' ? 0 : 1]!;
+      const day = snapshot.pillars.day;
+      const dayStem = day.status === 'resolved' ? day.value.stem.value : null;
+      for (const group of course.groups) {
+        const expected = SLOTS.flatMap(pillar => {
+          const source = snapshot.derivedFacts.hiddenStems?.[pillar];
+          if (!dayStem || source?.status !== 'resolved') return [];
+          return source.value.filter(hiddenStem =>
+            group.terms.includes(getTenGod(dayStem, hiddenStem))).map(hiddenStem => ({
+            path: 'derivedFacts.hiddenStems.' + pillar,
+            pillar,
+            hiddenStem,
+            tenGod: getTenGod(dayStem, hiddenStem),
+            originalDayStemFactPath: 'pillars.day.value.stem' as const,
+          }));
+        });
+        const missing = SLOTS.filter(pillar =>
+          !dayStem ||
+          snapshot.derivedFacts.hiddenStems?.[pillar]?.status !== 'resolved')
+          .map(pillar => 'derivedFacts.hiddenStems.' + pillar);
+        expect(group.observedHiddenStemPositions).toEqual(expected);
+        expect(group.unresolvedHiddenStemFactPaths).toEqual(missing);
+        const presence = group.actualVisiblePositions.length > 0 || expected.length > 0
+          ? 'observed'
+          : group.unresolvedFactPaths.length === 0 && missing.length === 0
+            ? 'absent_complete_canonical_facts'
+            : 'unknown_incomplete';
+        expect(group.presenceAcrossVisibleAndHiddenStems).toBe(presence);
+      }
+      const state = course.methodInputAudit.textualMissingFamilyZeroInput;
+      if (course.methodInputAudit.sourceStep === 3) {
+        expect(state).toBe('not_applicable_to_strength_balance_stage');
+      } else {
+        const expectedState = course.groups.some(group =>
+          group.presenceAcrossVisibleAndHiddenStems === 'absent_complete_canonical_facts')
+          ? 'one_or_both_required_families_absent'
+          : course.groups.every(group =>
+            group.presenceAcrossVisibleAndHiddenStems === 'observed')
+            ? 'both_required_families_observed' : 'incomplete_chart_cannot_decide';
+        expect(state).toBe(expectedState);
+      }
+      expect(course.methodInputAudit.sourceGrade).toBeNull();
+      expect(course.grade).toBeNull();
+    }
+    const missing = run(birth(1990, 5, 15, 'male', false), inputs[1])
+      .tenGodCourseResearch?.courses ?? [];
+    expect(missing.slice(0, 3).every(course =>
+      course.groups.every(group =>
+        group.presenceAcrossVisibleAndHiddenStems !== 'absent_complete_canonical_facts')
+      && course.methodInputAudit.textualMissingFamilyZeroInput !==
+        'one_or_both_required_families_absent')).toBe(true);
+    const backward = run(inputs[1], inputs[0]).tenGodCourseResearch?.courses;
+    expect(backward?.map(course => [course.courseId, course.calculationHash,
+      course.groups.map(group => [
+        group.observedHiddenStemPositions,
+        group.presenceAcrossVisibleAndHiddenStems,
+      ]),
+      course.methodInputAudit.textualMissingFamilyZeroInput,
+    ])).toEqual(courses?.map(course => [course.courseId, course.calculationHash,
+      course.groups.map(group => [
+        group.observedHiddenStemPositions,
+        group.presenceAcrossVisibleAndHiddenStems,
+      ]),
+      course.methodInputAudit.textualMissingFamilyZeroInput,
+    ]));
+    expect(output.maySell).toBe(false);
+    expect(output.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
   });
 
   it('keeps course input ownership after reversal and refuses unknown historical roles', () => {
