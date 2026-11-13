@@ -453,3 +453,10 @@
 - **검증 코드:** MyeongHa `apps/api/src/postgres-approved-saju-pair-issuance-scope-v1.test.ts`, `apps/api/src/postgres-approved-saju-pair-offer-handoff-v1.test.ts`, `test/db/commerce_approved_saju_purchase_scope_pg17.sql`에서 세 상품의 독립 구성·상대 동의/명식·변경 거부를 검사한다. 후보 SQL은 운영 DB에 적용하지 않았다.
 - **로드맵 위치:** 기존 T10 5단계 중 **구매·상대·동의 고정 사전조건의 부분 구현**. 실제 Official T10 서명 결과·이중 원본 서명/발급·보관함/Reader·상대 동의 철회·환불 E2E·정식 세 상품 발급 작업자는 미완료. 학술 원문 추가 확보를 출시 조건으로 요구하지 않으며 실제 구매/권한 검증을 면제하지 않는다. 새 CI 완료 확인 전 결과 미판정, `ROADMAP_IN_PROGRESS`.
 
+## 51. 2026-11-13 — 고객 문장 확장 및 두 명식별 원본 Reading 자료 연결
+
+- **작업 시작:** 직전 Saju #2763 `c4307222` 3종 검사, MyeongHa #3174 `ae39c202` 전체 7종 검사 완료/Green 확인. 기존 브랜치와 5단계 로드맵 유지. 외부 감수·추가 문헌 수집은 출시 조건에 포함하지 않음.
+- **기존 해석 보강:** `src/research/compatibility-t10-internal-service-interpretation.ts`가 일지 합·충 외에 *실제 두 일간의 오합*과 *일지 외 위치의 육합/충 사례*를 명하 내부 서비스 문장으로 설명하도록 확장. 원국 강약/미래 사건 예언/점수 생성 없이 계산된 원본 위치·출처 ID를 문장마다 유지한다.
+- **두 명식 전용 발급 입력자료:** `src/reading/t10-pair-source-reading-material.ts`에서 **원본 각 명식 식별자·계산 해시, 정책 버전, 해석 문단, 근거 ID, 문장별/전체 내용 해시**를 한 자료로 결속. Saju 사내 전용 Ed25519 서명 검토 응답에 함께 포함하고 MyeongHa `apps/api/src/saju-held-pair-review-v1.ts`가 별도 검증한다.
+- **변조 및 품질 검사:** Saju 실제 명식 간 순서 반전·원본/문장 바꿔치기·시각 미상 사례, 명하의 두 사람 불일치·해시/문장 변경·원본 누락·발급 상태 변경 거부 테스트를 추가했다. 추가 CI에서 테스트 파일의 미사용 변수·응답 자료형 문제를 확인해 수정했으며 **최신 커밋의 전체 CI 통과는 별도 확인한다**.
+- **로드맵:** 4단계 고객용 한국어 해석 내용 확대, 5단계 상용 발급 **원본 자료 규격/비공개 검증** 일부 구현. `source_owned_candidate_unissued`, `officialIssueAuthorized=false`, `maySell=false` 유지. 실제 Official Source Pair Issue Proof, 두 명식 서명 발급, 3상품 독립 구매·동의 철회·Reader/환불 E2E는 미완료. `ROADMAP_IN_PROGRESS`.
