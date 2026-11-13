@@ -117,9 +117,14 @@ function observeCourse(
     for (const channel of CHANNELS) {
       if (slot === 'day' && channel === 'stem') continue;
       const fact = chart.status === 'resolved' ? chart.value[slot][channel] : undefined;
+      if (fact?.status === 'resolved' && fact.value === '일간') {
+        throw new TypeError('T10 source course cannot classify a Day Master as a ten god.');
+      }
       slots.push({
         path: `derivedFacts.tenGods.${slot}.${channel}`,
-        slot, channel, value: fact?.status === 'resolved' ? fact.value : null,
+        slot, channel,
+        value: fact?.status === 'resolved' && fact.value !== '일간'
+          ? fact.value : null,
       });
     }
   }
@@ -136,8 +141,10 @@ function observeCourse(
         .map(item => item.path),
     };
   });
-  const hasA = groups[0].actualVisiblePositions.length > 0;
-  const hasB = groups[1].actualVisiblePositions.length > 0;
+  const groupA = groups[0]!;
+  const groupB = groups[1]!;
+  const hasA = groupA.actualVisiblePositions.length > 0;
+  const hasB = groupB.actualVisiblePositions.length > 0;
   const visibleGroupState = hasA && hasB ? 'both_seen'
     : hasA ? 'only_a_seen' : hasB ? 'only_b_seen' : 'neither_seen';
   const describe = (item: typeof groups[number]) =>
@@ -152,7 +159,7 @@ function observeCourse(
     courseId: def.id, historicalRole: def.role,
     personRef, calculationHash: snapshot.calculationHash,
     label: def.name, groups, visibleGroupState,
-    anyUnresolvedCanonicalSlots: groups[0].unresolvedFactPaths.length > 0,
+    anyUnresolvedCanonicalSlots: groupA.unresolvedFactPaths.length > 0,
     strengthAndRootingEstablished: false,
     sourceGradingConditionsSatisfied: false,
     grade: null,
