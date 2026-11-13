@@ -548,6 +548,10 @@ export function compareT10CrossMethodEvidenceV1(
     personalFactor(personalPalace.subject, 'subject'),
     personalFactor(personalPalace.target, 'target'),
   ];
+  const synthesisObservedPaths = unique([
+    ...synthesisPaths,
+    ...singleChartDayPalaceFactorCandidates.flatMap(item => [...item.factPaths]),
+  ]);
   const personalFactorParagraph = singleChartDayPalaceFactorCandidates
     .map((item, index) => {
       const who = index === 0 ? '첫 번째 사람' : '두 번째 사람';
@@ -591,7 +595,7 @@ export function compareT10CrossMethodEvidenceV1(
       sourceUrl: T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.url,
       sourceEvidence: T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.evidenceLevel,
       studyPopulation: T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.historicalScope,
-      candidateObservedFactPaths: synthesisPaths,
+      candidateObservedFactPaths: synthesisObservedPaths,
       singleChartDayPalaceFactorCandidates,
       bothChartFactorsOperationalized: false,
       adverseFactorAccumulationEstablished: false,
@@ -599,7 +603,7 @@ export function compareT10CrossMethodEvidenceV1(
       methodAppliesToCurrentPair: false,
       individualRelationshipPredictionAuthorized: false,
     },
-    observedFactPaths: synthesisPaths,
+    observedFactPaths: synthesisObservedPaths,
     unverifiedFactPaths: unique([
       ...(!fullDay ? [dayFact.subjectFactPath, dayFact.targetFactPath] : []),
       ...mappedT5.flatMap(item => [...item.unresolvedFactPaths]),
