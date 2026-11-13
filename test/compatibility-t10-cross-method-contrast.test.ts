@@ -207,6 +207,75 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
     )).toThrow('exact canonical element facts');
   });
 
+  it('binds six author-listed ten-god courses to each canonical historical role', () => {
+    const output = run(
+      birth(1990, 5, 15, 'male'), birth(1996, 6, 5, 'female'));
+    const report = output.tenGodCourseResearch;
+    expect(report?.source.dissertation.url)
+      .toBe('https://www.riss.kr/link?id=T14398372');
+    expect(report?.source.bookExcerpt.evidenceLayer)
+      .toBe('PUBLIC_THIRD_PARTY_BOOK_EXCERPT');
+    expect(report?.courses.map(x => x.courseId)).toEqual([
+      'male_food_to_wealth', 'male_wealth_to_official', 'male_peer_vs_wealth',
+      'female_official_to_resource', 'female_wealth_to_official',
+      'female_food_vs_official',
+    ]);
+    expect(report?.courses.slice(0, 3).every(x =>
+      x.personRef === 'person-first')).toBe(true);
+    expect(report?.courses.slice(3).every(x =>
+      x.personRef === 'person-second')).toBe(true);
+    for (const item of report?.courses ?? []) {
+      expect(item.groups).toHaveLength(2);
+      expect(item.strengthAndRootingEstablished).toBe(false);
+      expect(item.sourceGradingConditionsSatisfied).toBe(false);
+      expect(item.grade).toBeNull();
+      expect(item.paragraph).toContain(item.label);
+      for (const group of item.groups) {
+        for (const position of group.actualVisiblePositions) {
+          expect(position.path).toBe(
+            'derivedFacts.tenGods.' + position.slot + '.' + position.channel);
+          expect(group.terms).toContain(position.value);
+        }
+      }
+    }
+    const prior = output.classicalCrossTenGodResearch;
+    const malePeer = report?.courses.find(x => x.courseId === 'male_peer_vs_wealth');
+    const femaleFood = report?.courses.find(x => x.courseId === 'female_food_vs_official');
+    expect(malePeer?.groups[0]?.actualVisiblePositions.map(x => x.path))
+      .toEqual(prior?.male?.observed.map(x => x.path));
+    expect(femaleFood?.groups[0]?.actualVisiblePositions.map(x => x.path))
+      .toEqual(prior?.female?.observed.map(x => x.path));
+    expect(report?.compatibilityScore).toBeNull();
+    expect(report?.maySell).toBe(false);
+    expect(output.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
+    expect(output.maySell).toBe(false);
+  });
+
+  it('keeps course input ownership after reversal and refuses unknown historical roles', () => {
+    const first = birth(1990, 5, 15, 'male', false);
+    const second = birth(1996, 6, 5, 'female');
+    const forward = run(first, second).tenGodCourseResearch;
+    const reverse = run(second, first).tenGodCourseResearch;
+    expect(forward?.courses).toHaveLength(6);
+    expect(reverse?.courses).toHaveLength(6);
+    expect(forward?.courses.map(x => [x.courseId, x.personRef, x.visibleGroupState]))
+      .toEqual(reverse?.courses.map(x =>
+        [x.courseId, x.personRef, x.visibleGroupState]));
+    expect(forward?.courses.slice(0, 3).every(item =>
+      item.anyUnresolvedCanonicalSlots &&
+      item.groups.every(g => g.unresolvedFactPaths.length === 7))).toBe(true);
+    expect(forward?.courses.every(item =>
+      item.sourceGradingConditionsSatisfied === false)).toBe(true);
+    const unmatched = run(A, SUPPORT_WITH_CLASH).tenGodCourseResearch;
+    expect(unmatched?.historicalScope).toBe('historical_sex_scope_not_matched');
+    expect(unmatched?.courses).toEqual([]);
+    expect(unmatched?.compatibilityScore).toBeNull();
+    const ordinary = run(first, second, false);
+    expect(ordinary.tenGodCourseResearch).toBeUndefined();
+    expect(ordinary.html).toBe(run(first, second).html);
+  });
+
   it('records the opposite configuration with exact cross-position source paths', () => {
     const result = run(A, CLASH_WITH_SUPPORT).crossMethodContrastResearch;
     expect(result?.structural[0]?.direction)
