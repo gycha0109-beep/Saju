@@ -22,7 +22,7 @@ export interface TemporalInternalCommercialDraftSection {
   readonly startsAt: string;
   readonly endsAt: string;
   readonly sourceSignals: readonly Signal[];
-  readonly sourceRuleRefs: readonly string[];
+  readonly sourceRuleRefs: readonly Signal['ruleRefs'][number][];
   readonly sourceFactRefs: readonly string[];
   readonly koreanParagraphs: readonly string[];
   readonly coverage: 'primary_claim_observed' | 'no_primary_claim';
