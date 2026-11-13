@@ -15,7 +15,7 @@ type ReaderCalendar = NonNullable<ReturnType<typeof buildTemporalReaderEvidence>
 type ReaderCalendarFacts = Omit<
   ReaderCalendar,
   'interpretationStatus' | 'researchSignals' | 'evidenceHash'
->;
+> & { readonly dayunDisclosureVersion: 'calculated_overlap_v1' };
 
 export type OfficialTemporalReaderSource = Readonly<{
   calendar: ReaderCalendarFacts;
@@ -77,6 +77,7 @@ export function bindOfficialTemporalReaderSource(
     boundary: evidence.boundary,
     segments: evidence.segments,
     dayunOverlap: evidence.dayunOverlap,
+    dayunDisclosureVersion: 'calculated_overlap_v1',
   } satisfies ReaderCalendarFacts;
   const sourceById = new Map(semanticSource.units.map((unit) => [unit.unitId, unit]));
   const primaryCoverage = new Set<string>();

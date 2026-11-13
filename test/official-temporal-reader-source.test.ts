@@ -134,6 +134,7 @@ describe('canonical Reader temporal coverage', () => {
       referenceDateTime,
       referenceSegmentId: 'after_jeol',
       boundary: facts.jeolBoundary,
+      dayunDisclosureVersion: 'calculated_overlap_v1',
     });
     expect(result?.calendar).not.toHaveProperty('researchSignals');
     expect(result?.unitWindows).toEqual([
