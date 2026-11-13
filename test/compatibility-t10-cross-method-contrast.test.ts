@@ -133,6 +133,79 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
     expect(ordinary.html).toBe(run(A, SUPPORT_WITH_CLASH).html);
   });
 
+  it('reads each real chart day-palace factor against the 2020 author category', () => {
+    for (const counterpart of [SUPPORT_WITH_CLASH, CLASH_WITH_SUPPORT, NO_OPPOSITION]) {
+      const output = run(A, counterpart);
+      const personal = output.coexistingEvidenceReview?.individualPalace;
+      const study = output.crossMethodContrastResearch?.synthesisDecision
+        .conditionalJointFactorStudy;
+      if (!personal || !study) throw new TypeError('Missing original chart evidence.');
+      expect(study.singleChartDayPalaceFactorCandidates).toHaveLength(2);
+      for (const [i, original] of [personal.subject, personal.target].entries()) {
+        const candidate = study.singleChartDayPalaceFactorCandidates[i]!;
+        const role = i === 0 ? 'subject' : 'target';
+        expect(candidate.personRef).toBe(original.personRef);
+        expect(candidate.calculationHash).toBe(original.calculationHash);
+        expect(candidate.riskWeightOrIndividualOutcomeEstablished).toBe(false);
+        if (original.state === 'unresolved_day_pillar') {
+          expect(candidate.status).toBe('unresolved');
+          expect(candidate.factPaths).toEqual([]);
+        } else {
+          const matched = original.state === 'same_element';
+          expect(candidate.status).toBe(matched
+            ? 'author_listed_ganyeojidong_observed' : 'not_observed');
+          expect(candidate.matchesAuthorAbstractListedCategory).toBe(matched);
+          expect(candidate.factPaths).toEqual([
+            role + '.pillars.day.value.stem.element',
+            role + '.pillars.day.value.branch.element',
+          ]);
+          expect(candidate.stemElement).toBe(original.evidence?.stemElement);
+          expect(candidate.branchElement).toBe(original.evidence?.branchElement);
+          expect(output.crossMethodContrastResearch?.synthesisDecision.paragraph)
+            .toContain((i === 0 ? '첫 번째 사람' : '두 번째 사람') +
+              '의 일간 오행은 ' + original.evidence?.stemElement +
+              ', 일지 오행은 ' + original.evidence?.branchElement);
+        }
+      }
+      expect(study.bothChartFactorsOperationalized).toBe(false);
+      expect(study.adverseFactorAccumulationEstablished).toBe(false);
+      expect(study.counterpartNeutralizationEstablished).toBe(false);
+      expect(output.crossMethodContrastResearch?.synthesisDecision.relationshipConclusion)
+        .toBeNull();
+      expect(output.productReadingQualityReview?.actualCompatibilityReadingReady)
+        .toBe(false);
+      expect(output.maySell).toBe(false);
+    }
+    const forward = run(A, SUPPORT_WITH_CLASH);
+    const reverse = run(SUPPORT_WITH_CLASH, A);
+    expect(reverse.crossMethodContrastResearch?.synthesisDecision
+      .conditionalJointFactorStudy.singleChartDayPalaceFactorCandidates.map(x =>
+        x.calculationHash)).toEqual(
+      forward.crossMethodContrastResearch?.synthesisDecision
+        .conditionalJointFactorStudy.singleChartDayPalaceFactorCandidates
+        .map(x => x.calculationHash).reverse());
+    expect(run(A, SUPPORT_WITH_CLASH, false).html).toBe(forward.html);
+  });
+
+  it('rejects fabricated personal day-palace source factors', () => {
+    const output = run(A, SUPPORT_WITH_CLASH);
+    const [pair, coexisting, six, useful, axes] = inputs(output);
+    expect(() => compareT10CrossMethodEvidenceV1(
+      pair, {
+        ...coexisting,
+        individualPalace: {
+          ...coexisting.individualPalace,
+          subject: {
+            ...coexisting.individualPalace.subject,
+            state: 'same_element',
+            evidence: undefined,
+          },
+        },
+      },
+      six, useful, axes,
+    )).toThrow('exact canonical element facts');
+  });
+
   it('records the opposite configuration with exact cross-position source paths', () => {
     const result = run(A, CLASH_WITH_SUPPORT).crossMethodContrastResearch;
     expect(result?.structural[0]?.direction)
