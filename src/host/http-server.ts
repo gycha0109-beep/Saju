@@ -437,6 +437,8 @@ function createMyeonghwaHttpServer(
               : { value: pillar.stemHanja! + pillar.branchHanja! }),
           }]));
         const candidate = result.maritalDayBranchCandidate;
+        const draft = result.pairReadingBoundaryDraft;
+        const review = result.productReadingQualityReview;
         const evidence = withEvidence ? {
           version: 'myeonghwa-cross-chart-structural-evidence-v1',
           matches: result.sourceScopeHandoff.crossChartStructuralMatches.map(match => {
@@ -460,6 +462,22 @@ function createMyeonghwaHttpServer(
               ...(candidate.state === 'candidate_factor' ? {
                 kind: candidate.evidence.kind, sourceInterpretation: candidate.sourceInterpretation,
               } : {}),
+            },
+          }),
+          ...(draft === undefined || review === undefined ? {} : {
+            readingReview: {
+              version: review.version,
+              state: 'held',
+              structuralSituation: draft.structuralSituation,
+              charts: [draft.subject, draft.target].map(chart => ({
+                role: chart.personRef, calculationHash: chart.calculationHash,
+              })),
+              sections: draft.sections.map(section => ({
+                id: section.id, title: section.title, sentences: section.sentences,
+              })),
+              actualCompatibilityReadingReady: review.actualCompatibilityReadingReady,
+              productEligibility: review.productEligibility,
+              mayGrantOfficialAuthority: review.mayGrantOfficialAuthority,
             },
           }),
         } : undefined;

@@ -71,19 +71,38 @@ describe('existing compatibility browser route stays protected and research-only
       });
       const preview = await post(pair);
       expect(preview.status).toBe(200);
-      expect(await preview.json()).not.toHaveProperty('evidence.maritalDayBranchCandidate');
+      const previewBody = await preview.json();
+      expect(previewBody).not.toHaveProperty('evidence.maritalDayBranchCandidate');
+      expect(previewBody).not.toHaveProperty('evidence.readingReview');
       const request = { ...pair, candidateScope: 'traditional_marital_palace_comparison' };
       const result = await post(request);
       expect(result.status).toBe(200);
-      expect(await result.json()).toMatchObject({
+      const evidenceBody = await result.json();
+      expect(evidenceBody).toMatchObject({
         mayPublish: false, maySell: false, generatedInterpretationClaims: false,
         evidence: {
           maritalDayBranchCandidate: {
             state, scope: request.candidateScope, review: 'unreviewed', pairwiseT10Admitted: false,
             ...(factor === undefined ? {} : { sourceInterpretation: factor, kind }),
           },
+          readingReview: {
+            state: 'held',
+            actualCompatibilityReadingReady: false,
+            mayGrantOfficialAuthority: false,
+            charts: [{ role: 'self', calculationHash: expect.any(String) },
+              { role: 'partner', calculationHash: expect.any(String) }],
+            productEligibility: ['first_comparison', 'repeat_comparison', 'natal_and_first_comparison']
+              .map(product => ({ product, eligibleToHandoffForSalesOrIssuance: false })),
+          },
         },
       });
+      const sections = evidenceBody.evidence.readingReview.sections as Array<{
+        sentences: Array<{ observedFactPaths: string[]; individualRelationshipOutcomeAuthorized: boolean }>;
+      }>;
+      const sentences = sections.flatMap(section => section.sentences);
+      expect(sentences.some(sentence => sentence.observedFactPaths.some(path => path.startsWith('subject.'))
+        && sentence.observedFactPaths.some(path => path.startsWith('target.')))).toBe(true);
+      expect(sentences.every(sentence => sentence.individualRelationshipOutcomeAuthorized === false)).toBe(true);
       expect((await post({ ...request, candidateScope: 'other_relationship' })).status).toBe(400);
       const chartsUrl = url.replace(PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH, PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH);
       expect((await post(request, chartsUrl)).status).toBe(400);
