@@ -1,5 +1,5 @@
 import type {
-  CanonicalSajuSnapshot, PillarSlot, TenGod,
+  CanonicalSajuSnapshot, HeavenlyStem, PillarSlot, TenGod,
 } from '../contracts/calculation.js';
 import type { PairwiseSourceScopeHandoff } from
   './family-pair-source-scope-handoff.js';
@@ -53,6 +53,21 @@ type Course = typeof COURSE_DEFINITIONS[number];
 type Role = Course['role'];
 type Group = 'a' | 'b';
 
+/**
+ * An EXACT stem character is visible in one of this same natal chart's
+ * canonical hidden-stem arrays. No root quality, strength, grade or effect
+ * may be inferred from such a literal character match.
+ */
+export interface T10VisibleStemHiddenStemMatch {
+  readonly visibleTenGodFactPath: string;
+  readonly visibleStemFactPath: string;
+  readonly visibleStem: HeavenlyStem;
+  readonly branchFactPath: string;
+  readonly hiddenStemCollectionFactPath: string;
+  readonly sameStemCharacterObserved: true;
+  readonly sourceQualifiedRootingEstablished: false;
+}
+
 export interface T10TenGodCourseMethodInputAudit {
   readonly sourceStep: 1 | 2 | 3;
   readonly sourceCondition:
@@ -67,6 +82,9 @@ export interface T10TenGodCourseMethodInputAudit {
     representativeBranchFactPaths: readonly string[];
     bothDisplayChannelsObserved: boolean;
     groupUnresolvedFactPaths: readonly string[];
+    /** Literal stem-to-hidden-stem cross-reference inside this ONE chart. */
+    sameStemHiddenStemMatches: readonly T10VisibleStemHiddenStemMatch[];
+    unresolvedHiddenStemFactPaths: readonly string[];
   }>[];
   readonly actualRootingEstablished: false;
   readonly originalStemExpressionMethodValidated: false;
@@ -181,10 +199,41 @@ function observeCourse(
       : 'relative_strength_and_balance' as const;
   const relevantGroups = step === 1 ? [groupB] : [groupA, groupB];
   const inspectedGroups = relevantGroups.map(item => {
-    const stemVisibleFactPaths = item.actualVisiblePositions
-      .filter(p => p.channel === 'stem').map(p => p.path);
+    const visibleStems = item.actualVisiblePositions
+      .filter(p => p.channel === 'stem');
+    const stemVisibleFactPaths = visibleStems.map(p => p.path);
     const representativeBranchFactPaths = item.actualVisiblePositions
       .filter(p => p.channel === 'branch').map(p => p.path);
+    const unresolvedHiddenStemFactPaths = SLOTS.filter(slot =>
+      snapshot.derivedFacts.hiddenStems?.[slot]?.status !== 'resolved')
+      .map(slot => 'derivedFacts.hiddenStems.' + slot);
+    const sameStemHiddenStemMatches: T10VisibleStemHiddenStemMatch[] = [];
+    for (const visible of visibleStems) {
+      const stemPillar = snapshot.pillars[visible.slot];
+      if (stemPillar.status !== 'resolved') {
+        throw new TypeError('A resolved course term cannot have an unresolved visible stem.');
+      }
+      const visibleStem = stemPillar.value.stem.value;
+      for (const hiddenSlot of SLOTS) {
+        const hidden = snapshot.derivedFacts.hiddenStems?.[hiddenSlot];
+        const branchPillar = snapshot.pillars[hiddenSlot];
+        if (hidden?.status !== 'resolved') continue;
+        if (branchPillar.status !== 'resolved') {
+          throw new TypeError('Canonical hidden stems need their resolved source branch.');
+        }
+        if (hidden.value.includes(visibleStem)) {
+          sameStemHiddenStemMatches.push({
+            visibleTenGodFactPath: visible.path,
+            visibleStemFactPath: 'pillars.' + visible.slot + '.value.stem',
+            visibleStem,
+            branchFactPath: 'pillars.' + hiddenSlot + '.value.branch',
+            hiddenStemCollectionFactPath: 'derivedFacts.hiddenStems.' + hiddenSlot,
+            sameStemCharacterObserved: true,
+            sourceQualifiedRootingEstablished: false,
+          });
+        }
+      }
+    }
     return {
       group: item.group,
       stemVisibleFactPaths,
@@ -192,13 +241,19 @@ function observeCourse(
       bothDisplayChannelsObserved: stemVisibleFactPaths.length > 0 &&
         representativeBranchFactPaths.length > 0,
       groupUnresolvedFactPaths: [...item.unresolvedFactPaths],
+      sameStemHiddenStemMatches,
+      unresolvedHiddenStemFactPaths,
     };
   });
   const evidenceDescriptions = inspectedGroups.map(item =>
     (item.group === 'a' ? '첫째' : '둘째') +
     ' 계열의 천간 표시 ' + item.stemVisibleFactPaths.length +
     '곳·지지 대표 십신 표시 ' + item.representativeBranchFactPaths.length +
-    '곳').join(', ');
+    '곳·같은 글자 지장간 대조 ' + item.sameStemHiddenStemMatches.length +
+    '건' +
+    (item.unresolvedHiddenStemFactPaths.length
+      ? '·지장간 미확정 ' + item.unresolvedHiddenStemFactPaths.length + '곳'
+      : '')).join(', ');
   const methodInputAudit: T10TenGodCourseMethodInputAudit = {
     sourceStep: step,
     sourceCondition,
@@ -215,7 +270,7 @@ function observeCourse(
       : '저서 발췌의 ' + (step === 1 ? '첫 번째' : '두 번째') +
         ' 평가는 해당 십신 계열의 천간 투출·지지 통근과 합충의 영향을 요구합니다. ' +
         evidenceDescriptions +
-        '이 관측되지만 천간 표시와 지지의 대표 십신 표기는 실제 투출·통근의 성립이나 합충 효과를 확정하지 않습니다.',
+        '이 관측됩니다. 같은 글자가 지장간에 있어도 실제 통근·투출의 성립이나 합충 효과를 확정하지 않습니다.',
   };
   const describe = (item: typeof groups[number]) =>
     (item.group === 'a' ? '첫째 계열' : '둘째 계열') + ' ' +
