@@ -207,3 +207,31 @@ export function traceWholeFacePerCaptureReadiness(
   captures: readonly CoverageCapture[],
   humanReviews?: readonly CoverageHumanReview[],
 ): PerCaptureReadinessReport;
+
+export declare const WHOLE_FACE_READINESS_ROLLUP_VERSION:
+  'local-whole-face-feature-readiness-rollup@0.1.0';
+
+export interface WholeFacePerFeatureReadinessFeature {
+  readonly featureKey: string;
+  readonly statusCounts: Readonly<Record<PerCaptureReadinessFeature['state'], number>>;
+  readonly reasonCounts: Readonly<Record<string, number>>;
+}
+export interface WholeFacePerFeatureReadinessReport {
+  readonly schemaVersion: typeof WHOLE_FACE_READINESS_ROLLUP_VERSION;
+  readonly lifecycle: 'local_research_only';
+  readonly photoCount: number;
+  readonly canonicalFeatureCount: number;
+  readonly canonicalCalculatorCount: number;
+  readonly canonicalHardGapCount: number;
+  readonly statusCounts: Readonly<Record<PerCaptureReadinessFeature['state'], number>>;
+  readonly independentAccuracyValidated: false;
+  readonly traditionalBindingAuthorized: false;
+  readonly productionAuthorized: false;
+  readonly sourcePhotoOrCaptureRefsEmitted: false;
+  readonly features: readonly WholeFacePerFeatureReadinessFeature[];
+}
+export declare function summarizeWholeFacePerFeatureReadiness(
+  columns: readonly CoverageColumn[],
+  captures: readonly CoverageCapture[],
+  humanReviews?: readonly CoverageHumanReview[],
+): WholeFacePerFeatureReadinessReport;
