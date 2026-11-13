@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { BirthInput } from '../src/contracts/calculation.js';
+import type { BirthInput, PillarSlot } from '../src/contracts/calculation.js';
+import { calculateAuthorizedMyeonghwaProductionSnapshot } from
+  '../src/production/production-calculation-runtime.js';
 import { buildCompatibilityTwoBirthResearchReading } from
   '../src/preview/compatibility-two-birth-research-runtime.js';
 import { compareT10CrossMethodEvidenceV1 } from
@@ -313,6 +315,56 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
     expect(run(A, SUPPORT_WITH_CLASH).tenGodCourseResearch?.courses).toEqual([]);
     expect(output.productReadingQualityReview?.actualCompatibilityReadingReady)
       .toBe(false);
+    expect(output.maySell).toBe(false);
+  });
+
+  it('matches real same-person visible stems to actual canonical hidden-stem entries', () => {
+    const first = birth(1990, 5, 15, 'male');
+    const second = birth(1996, 6, 5, 'female');
+    const now = new Date('2026-11-11T00:00:00.000Z');
+    const originals = [
+      calculateAuthorizedMyeonghwaProductionSnapshot(first, { now }).snapshot,
+      calculateAuthorizedMyeonghwaProductionSnapshot(second, { now }).snapshot,
+    ];
+    const output = run(first, second);
+    const courses = output.tenGodCourseResearch?.courses ?? [];
+    expect(courses).toHaveLength(6);
+    for (const course of courses) {
+      const snapshot = course.historicalRole === 'male' ? originals[0]! : originals[1]!;
+      expect(course.calculationHash).toBe(snapshot.calculationHash);
+      for (const group of course.methodInputAudit.inspectedGroups) {
+        const matchingGroup = course.groups.find(item => item.group === group.group);
+        const expectedMissing = (['year', 'month', 'day', 'hour'] as const)
+          .filter(slot => snapshot.derivedFacts.hiddenStems?.[slot]?.status !== 'resolved')
+          .map(slot => 'derivedFacts.hiddenStems.' + slot);
+        expect(group.unresolvedHiddenStemFactPaths).toEqual(expectedMissing);
+        for (const match of group.sameStemHiddenStemMatches) {
+          const stemSlot = match.visibleStemFactPath.split('.')[1] as PillarSlot;
+          const branchSlot = match.hiddenStemCollectionFactPath.split('.')[2] as PillarSlot;
+          const stem = snapshot.pillars[stemSlot];
+          const branch = snapshot.pillars[branchSlot];
+          const hidden = snapshot.derivedFacts.hiddenStems?.[branchSlot];
+          expect(stem.status).toBe('resolved');
+          expect(branch.status).toBe('resolved');
+          expect(hidden?.status).toBe('resolved');
+          if (stem.status !== 'resolved' || hidden?.status !== 'resolved') {
+            throw new TypeError('Expected an existing original stem and hidden-stem fact.');
+          }
+          expect(match.visibleStem).toBe(stem.value.stem.value);
+          expect(hidden.value).toContain(match.visibleStem);
+          expect(match.branchFactPath).toBe('pillars.' + branchSlot + '.value.branch');
+          expect(match.visibleTenGodFactPath)
+            .toBe('derivedFacts.tenGods.' + stemSlot + '.stem');
+          expect(matchingGroup?.actualVisiblePositions.some(item =>
+            item.path === match.visibleTenGodFactPath)).toBe(true);
+          expect(match.sameStemCharacterObserved).toBe(true);
+          expect(match.sourceQualifiedRootingEstablished).toBe(false);
+        }
+      }
+      expect(course.methodInputAudit.actualRootingEstablished).toBe(false);
+      expect(course.methodInputAudit.sourceGrade).toBeNull();
+    }
+    expect(output.tenGodCourseResearch?.compatibilityScore).toBeNull();
     expect(output.maySell).toBe(false);
   });
 
