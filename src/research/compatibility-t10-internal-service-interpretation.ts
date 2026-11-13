@@ -23,7 +23,7 @@ export const T10_INTERNAL_SERVICE_INTERPRETATION_POLICY = Object.freeze({
   ] as const,
 });
 
-type SectionId = 'day_branch_interaction' | 'coexisting_structure' | 'interpretation_boundary';
+type SectionId = 'day_branch_interaction' | 'day_stem_interaction' | 'coexisting_structure' | 'other_positions' | 'interpretation_boundary';
 
 export interface T10InternalServiceInterpretationSentence {
   readonly sectionId: SectionId;
@@ -44,7 +44,7 @@ export interface T10InternalServiceInterpretationV1 {
   readonly target: PairwiseSourceScopeHandoff['target'];
   readonly sentences: readonly T10InternalServiceInterpretationSentence[];
   readonly koreanDraft: string;
-  readonly ruleCoverage: 'day_branch_structures_only';
+  readonly ruleCoverage: 'resolved_day_stem_branch_and_other_positions';
   readonly overallScore: null;
   readonly relationshipForecast: null;
   readonly readyForOfficialIssue: false;
@@ -144,6 +144,27 @@ export function draftT10InternalServiceInterpretationV1(
       '두 사람의 계산된 일지 사이에는 현재 지원하는 육합·충 구조가 확인되지 않습니다. 이것은 서로 잘 맞거나 맞지 않는다는 판정이 아닙니다. 다른 위치와 실제 관계 맥락을 함께 살펴야 합니다.', []));
   }
 
+  const dayStemMatches = matches.filter(x =>
+    x.kind === 'stem_five_combination' &&
+    x.subject.factPath === 'subject.pillars.day.value.stem' &&
+    x.target.factPath === 'target.pillars.day.value.stem');
+  const firstStem = subject.pillars.day;
+  const secondStem = target.pillars.day;
+  if (firstStem.status !== 'resolved' || secondStem.status !== 'resolved') {
+    result.push(sentence('day_stem_interaction', 'T10-SERVICE-DAY-STEM-UNKNOWN',
+      '두 사람의 일간을 확정할 수 없어 일간의 오합 여부는 판단하지 않습니다.', []));
+  } else if (dayStemMatches[0]) {
+    const observed = dayStemMatches[0];
+    result.push(sentence('day_stem_interaction', 'T10-SERVICE-DAY-STEM-FIVE-COMBINATION',
+      '첫 번째 사람의 일간 ' + observed.subject.value +
+      '과 두 번째 사람의 일간 ' + observed.target.value +
+      ' 사이에는 천간 오합 구조가 관찰됩니다. 명하는 이를 두 사람의 관점을 함께 살펴볼 또 하나의 접점으로 설명합니다. 실제 가치관이나 관계의 성패를 단정하지는 않습니다.',
+      [observed]));
+  } else {
+    result.push(sentence('day_stem_interaction', 'T10-SERVICE-DAY-STEM-NO-FIVE-COMBINATION',
+      '두 사람의 일간 사이에서 현재 지원하는 천간 오합은 관찰되지 않습니다. 이것은 성격이 다르거나 관계가 어렵다는 증거가 아닙니다.', []));
+  }
+
   const opposite = daySix
     ? matches.filter(x => x.kind === 'branch_clash' && !day.includes(x))
     : dayClash ? matches.filter(x =>
@@ -158,6 +179,26 @@ export function draftT10InternalServiceInterpretationV1(
       ' 사이에서 다른 위치의 ' + otherTerm +
       '도 관측됩니다. 접점과 조율 지점이 함께 있을 수 있으므로 한쪽 구조만으로 관계 전체를 좋음·나쁨으로 정하지 않습니다.', opposite));
   }
+  // Other locations may coexist. They are illustrative evidence, never a
+  // hidden priority ranking or a statement about relationship outcomes.
+  const remaining = matches.filter(x =>
+    !day.includes(x) && !dayStemMatches.includes(x) && !opposite.includes(x) &&
+    (x.kind === 'branch_six_combination' || x.kind === 'branch_clash'));
+  if (remaining.length > 0) {
+    const examples = remaining.slice(0, 2);
+    const label = (path: string): string => ({
+      year: '연주', month: '월주', day: '일주', hour: '시주',
+    } as Record<string, string>)[path.split('.')[2] ?? ''] ?? '해당 위치';
+    const description = examples.map(x =>
+      '첫 번째 사람의 ' + label(x.subject.factPath) + ' ' + x.subject.value +
+      '과 두 번째 사람의 ' + label(x.target.factPath) + ' ' + x.target.value +
+      ' 사이의 ' + (x.kind === 'branch_clash' ? '충' : '육합')).join(', ');
+    result.push(sentence('other_positions', 'T10-SERVICE-OTHER-STRUCTURES',
+      '일지·일간과 별도로 ' + description + ' 구조도 관찰됩니다. ' +
+      (remaining.length > examples.length ? '다른 위치에서도 추가 구조가 확인되지만, ' : '') +
+      '이 예시는 관련 위치를 함께 살펴보자는 뜻이지 결혼·연애의 유불리나 중요도를 평가한 것은 아닙니다.',
+      examples));
+  }
   result.push(sentence('interpretation_boundary', 'T10-SERVICE-BOUNDED-SCOPE',
     '이 해석은 두 명식의 검증된 구조를 명하가 채택한 설명 규칙으로 읽은 것이며 학술적 예측 검증이나 상대의 실제 성격·감정·결혼 결과를 증명하지 않습니다. 십신 강약·용신 보완·최종 점수는 현재 제공 범위에 포함되지 않습니다.', []));
 
@@ -168,7 +209,7 @@ export function draftT10InternalServiceInterpretationV1(
     subject: pair.subject, target: pair.target,
     sentences: result,
     koreanDraft: result.map(x => x.paragraph).join('\n\n'),
-    ruleCoverage: 'day_branch_structures_only',
+    ruleCoverage: 'resolved_day_stem_branch_and_other_positions',
     overallScore: null, relationshipForecast: null,
     readyForOfficialIssue: false,
     mayPublish: false, maySell: false,
