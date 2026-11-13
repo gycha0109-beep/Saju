@@ -12,6 +12,7 @@ import {
   validateCaptureScreenReviewStore,
   projectCaptureScreenReview,
   summarizeCaptureScreenReviews,
+  canSaveScreenedBoundaryReview,
 } from './capture-screen-human-review.mjs';
 import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
 import { readCurrentPinnedPhoto } from './source-snapshot-guard.mjs';
@@ -684,6 +685,16 @@ export async function createLocalReviewServer({
     }
     return { records, staleCount };
   }
+  async function boundaryReviewMayBeSaved(captureRef) {
+    if (!freshResearchOnly) return true;
+    const screening = await currentCaptureScreenReviewState();
+    return canSaveScreenedBoundaryReview({
+      freshResearchOnly,
+      restoreFailed: captureScreenRestoreFailed,
+      staleCount: screening.staleCount,
+      review: screening.records[captureRef],
+    });
+  }
   async function currentEyeFoldReviewState() {
     const records = {};
     let staleCount = 0;
@@ -1355,6 +1366,8 @@ export async function createLocalReviewServer({
       const source = inventory.find((r) => r.recordId === captureRef);
       if (!source || roles.get(captureRef) !== 'frontal' || eyelidContourRestoreFailed)
         throw Error('EYELID_CONTOUR_REVIEW_INVALID');
+      if (!(await boundaryReviewMayBeSaved(captureRef)))
+        return json(res, 409, { error: 'CAPTURE_SCREEN_REVIEW_REQUIRED' });
       eyelidContourSaving = true;
       try {
         const initial = sourceFileStates.find((r) => r.recordId === captureRef);
@@ -1423,6 +1436,8 @@ export async function createLocalReviewServer({
       const source = inventory.find((item) => item.recordId === captureRef);
       if (!source || roles.get(captureRef) !== 'frontal' || lipReviewRestoreFailed)
         throw Error('LIP_BORDER_REVIEW_INVALID');
+      if (!(await boundaryReviewMayBeSaved(captureRef)))
+        return json(res, 409, { error: 'CAPTURE_SCREEN_REVIEW_REQUIRED' });
       lipReviewSaving = true;
       try {
         const original = sourceFileStates.find((item) => item.recordId === captureRef);
@@ -1549,6 +1564,8 @@ export async function createLocalReviewServer({
       const viewRole = roles.get(input.captureRef);
       if (!source || !['frontal', 'profile'].includes(viewRole) || earReviewRestoreFailed)
         throw Error('EAR_DETAIL_REVIEW_INVALID');
+      if (!(await boundaryReviewMayBeSaved(input.captureRef)))
+        return json(res, 409, { error: 'CAPTURE_SCREEN_REVIEW_REQUIRED' });
       earReviewSaving = true;
       try {
         const start = sourceFileStates.find((r) => r.recordId === input.captureRef);

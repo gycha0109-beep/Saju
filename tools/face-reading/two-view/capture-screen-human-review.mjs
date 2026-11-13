@@ -154,6 +154,27 @@ export function auditCurrentCaptureScreenReviews(store, knownRefs, currentSource
   });
 }
 
+// Fresh research photos need explicit single-reviewer pose/visibility screening
+// before a human contour can be saved. This is not independent accuracy proof.
+export function canSaveScreenedBoundaryReview({
+  freshResearchOnly,
+  restoreFailed,
+  staleCount,
+  review,
+}) {
+  if (freshResearchOnly === false) return true; // Preserve legacy render reviews.
+  return (
+    freshResearchOnly === true &&
+    restoreFailed === false &&
+    staleCount === 0 &&
+    review?.humanReviewed === true &&
+    review.reviewerCount === 1 &&
+    review.independentPoseValidated === false &&
+    review.pose === 'frontal_usable_candidate' &&
+    ['clear_enough_to_review', 'partially_occluded'].includes(review.visibility)
+  );
+}
+
 export function summarizeCaptureScreenReviews(records, totalPhotos) {
   if (
     !records ||

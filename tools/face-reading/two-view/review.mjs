@@ -1316,7 +1316,8 @@ const noseDetailReview = attachNoseDetailReview({
 const earDetailReview = attachEarDetailReview({
   getState: () => state,
   getRecord: () => records[selected],
-  canAnnotate: () => original && activeAnnotationTool === 'ear',
+  canAnnotate: () =>
+    original && activeAnnotationTool === 'ear' && currentBoundaryReviewCaptureAdmitted(),
   onSaved: () => {
     invalidateFr294HumanSummaryAfterSave();
     render();
@@ -1325,7 +1326,8 @@ const earDetailReview = attachEarDetailReview({
 const lipBorderHumanReview = attachLipBorderHumanReview({
   getState: () => state,
   getRecord: () => records[selected],
-  canAnnotate: () => original && activeAnnotationTool === 'lip',
+  canAnnotate: () =>
+    original && activeAnnotationTool === 'lip' && currentBoundaryReviewCaptureAdmitted(),
   onSaved: () => render(),
 });
 const jawContourHumanReview = attachJawContourHumanReview({
@@ -1337,7 +1339,8 @@ const jawContourHumanReview = attachJawContourHumanReview({
 const eyelidContourHumanReview = attachEyelidContourHumanReview({
   getState: () => state,
   getRecord: () => records[selected],
-  canAnnotate: () => original && activeAnnotationTool === 'eyelid',
+  canAnnotate: () =>
+    original && activeAnnotationTool === 'eyelid' && currentBoundaryReviewCaptureAdmitted(),
   onSaved: () => {
     invalidateFr294HumanSummaryAfterSave();
     render();
@@ -1435,6 +1438,12 @@ function current2dPhotoSummary(record, previous = false) {
 }
 // Single-reviewer source screening is only a prerequisite for *research*
 // comparisons, never independent pose or anatomical ground truth.
+function currentBoundaryReviewCaptureAdmitted() {
+  const record = records[selected];
+  if (!record) return false;
+  const eligibility = currentCaptureScreenEligibility(record);
+  return eligibility === undefined || eligibility === 'frontal_candidate';
+}
 function currentCaptureScreenEligibility(record) {
   if (state?.researchIntake?.researchOnly !== true) return undefined;
   if (state.captureScreenRestoreFailed || (state.captureScreenReviewStaleCount || 0) > 0)

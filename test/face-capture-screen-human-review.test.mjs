@@ -6,6 +6,7 @@ import {
   projectCaptureScreenReview,
   summarizeCaptureScreenReviews,
   auditCurrentCaptureScreenReviews,
+  canSaveScreenedBoundaryReview,
 } from '../tools/face-reading/two-view/capture-screen-human-review.mjs';
 
 const sha = 'a'.repeat(64);
@@ -174,6 +175,33 @@ describe('source-pinned human pose/occlusion review (research only)', () => {
         new Map([['capture-9001', sha]]),
       ),
     ).toThrow('CAPTURE_SCREEN_REVIEW_INVALID');
+  });
+  it('requires manual source-current screening before new-photo contour saves', () => {
+    const candidate = projectCaptureScreenReview(source());
+    const eligible = (review, overrides = {}) =>
+      canSaveScreenedBoundaryReview({
+        freshResearchOnly: true,
+        restoreFailed: false,
+        staleCount: 0,
+        review,
+        ...overrides,
+      });
+    expect(eligible(candidate)).toBe(true);
+    expect(eligible({ ...candidate, visibility: 'clear_enough_to_review' })).toBe(true);
+    for (const review of [
+      undefined,
+      { ...candidate, pose: 'not_frontal' },
+      { ...candidate, pose: 'uncertain' },
+      { ...candidate, visibility: 'unusable' },
+      { ...candidate, humanReviewed: false },
+      { ...candidate, independentPoseValidated: true },
+      { ...candidate, reviewerCount: 0 },
+    ])
+      expect(eligible(review)).toBe(false);
+    expect(eligible(candidate, { staleCount: 1 })).toBe(false);
+    expect(eligible(candidate, { restoreFailed: true })).toBe(false);
+    expect(eligible(candidate, { freshResearchOnly: false })).toBe(true);
+    expect(eligible(candidate, { freshResearchOnly: undefined })).toBe(false);
   });
   it('rejects unknown photos and does not fabricate missing reviewers', () => {
     expect(() =>
