@@ -135,6 +135,7 @@ export function buildTemporalReaderEvidence(
         id: segment.segmentId, startsAt: segment.startsAt, endsAt: segment.endsAt,
         pillar: segment.monthlyPillar, stemTenGod: segment.monthlyStemTenGod,
         natalBranchRelations: segment.monthlyBranchRelations,
+        annualContext: segment.annualContext,
       })),
     }
     : (() => {
