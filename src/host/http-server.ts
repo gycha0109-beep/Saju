@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import { sign, type KeyObject } from 'node:crypto';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import type {
   FaceGovernedHandoffRuntimeHostV1,
@@ -15,6 +16,7 @@ import {
 } from './product-host.js';
 import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './production-calculation-http-contract.js';
 import { buildCompatibilityTwoBirthResearchReading } from '../preview/compatibility-two-birth-research-runtime.js';
+import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-service-bearer-auth.js';
 import {
   CHARACTER_GROUNDING_ADMISSION_HEADER,
@@ -45,6 +47,9 @@ export const PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH =
   '/api/preview/compatibility-charts' as const;
 export const PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH =
   '/api/preview/compatibility-evidence' as const;
+const PAIR_REVIEW_PROOF_HEADER = 'x-myeonghwa-pair-review-proof';
+const PAIR_REVIEW_NONCE_HEADER = 'x-myeongha-pair-review-nonce';
+const PAIR_REVIEW_VERSION = 'myeonghwa-held-pair-review-v1';
 export const PRODUCT_READING_PREVIEW_LIFECYCLE = 'preview' as const;
 
 export interface MyeonghwaProductHostServerOptions {
@@ -52,6 +57,7 @@ export interface MyeonghwaProductHostServerOptions {
   characterGroundingMaxRequestBytes?: number;
   /** Internal Preview host option for structured cross-chart facts. */
   compatibilityEvidencePreviewEnabled?: boolean;
+  compatibilityEvidenceProof?: Readonly<{ keyId: string; signingKey: KeyObject }>;
 }
 
 export interface MyeonghwaProductionCalculationHostServerOptions
@@ -270,6 +276,12 @@ function createMyeonghwaHttpServer(
 ): Server {
   const bodyLimit = maxRequestBytes(options);
   const groundingBodyLimit = characterGroundingMaxRequestBytes(options);
+  const pairReviewProof = options.compatibilityEvidenceProof;
+  if (pairReviewProof !== undefined && (
+    options.compatibilityEvidencePreviewEnabled !== true || authorizeReadingRequest === undefined ||
+    !/^[a-zA-Z0-9._:-]{3,128}$/u.test(pairReviewProof.keyId) ||
+    pairReviewProof.signingKey.type !== 'private' || pairReviewProof.signingKey.asymmetricKeyType !== 'ed25519'
+  )) throw new TypeError('Protected comparison review signing requires an explicit preview key.');
 
   return createServer(async (request, response) => {
     const method = request.method ?? 'GET';
@@ -417,6 +429,11 @@ function createMyeonghwaHttpServer(
             !Object.hasOwn(body, 'birth') || !Object.hasOwn(body, 'partnerBirth')) {
           throw new HostHttpError(400, 'HOST_INVALID_PREVIEW_REQUEST', 'Two birth inputs are required.');
         }
+        const nonce = request.headers[PAIR_REVIEW_NONCE_HEADER];
+        if (nonce !== undefined && (!withEvidence || candidateScope === undefined ||
+          pairReviewProof === undefined || typeof nonce !== 'string' || !/^[a-zA-Z0-9_-]{43}$/u.test(nonce))) {
+          throw new HostHttpError(400, 'HOST_INVALID_PAIR_REVIEW_PROOF_REQUEST', 'Comparison review proof is unavailable.');
+        }
         // The existing strict host parser forbids unknown calculation fields.
         const subjectBirth = parseProductHostCalculationRequest({ birth: body.birth });
         const targetBirth = parseProductHostCalculationRequest({ birth: body.partnerBirth });
@@ -481,7 +498,7 @@ function createMyeonghwaHttpServer(
             },
           }),
         } : undefined;
-        sendJson(response, 200, {
+        const reviewBody = {
           lifecycle: 'internal_preview_only',
           coverage: 'calculation_facts_only',
           generatedInterpretationClaims: false,
@@ -496,7 +513,24 @@ function createMyeonghwaHttpServer(
           explanation: '두 명식은 각각 실제 출생정보로 계산했습니다. ' +
             '두 사람 사이의 T10 궁합 해석과 결혼·갈등·점수 판단은 승인되지 않았습니다.',
           limitations: result.report.limitations,
-        }, { [PRODUCT_READING_LIFECYCLE_HEADER]: PRODUCT_READING_PREVIEW_LIFECYCLE });
+        };
+        const extraHeaders: Record<string, string> = {
+          [PRODUCT_READING_LIFECYCLE_HEADER]: PRODUCT_READING_PREVIEW_LIFECYCLE,
+        };
+        if (nonce !== undefined && pairReviewProof !== undefined) {
+          if (draft === undefined || review === undefined) {
+            throw new HostHttpError(409, 'HOST_PAIR_REVIEW_INCOMPLETE', 'Comparison review is incomplete.');
+          }
+          const payload = {
+            version: PAIR_REVIEW_VERSION, keyId: pairReviewProof.keyId, nonce, state: 'held',
+            requestBodyHash: deterministicContentHash(body),
+            responseBodyHash: deterministicContentHash(JSON.parse(JSON.stringify(reviewBody))),
+          };
+          const signature = sign(null, Buffer.from(PAIR_REVIEW_VERSION + '\0' + deterministicContentHash(payload)),
+            pairReviewProof.signingKey).toString('base64url');
+          extraHeaders[PAIR_REVIEW_PROOF_HEADER] = Buffer.from(JSON.stringify({ payload, signature })).toString('base64url');
+        }
+        sendJson(response, 200, reviewBody, extraHeaders);
       } catch (error) {
         if (!handleKnownError(response, error)) sendReadingOperationalError(response);
       }

@@ -1,6 +1,8 @@
 import type { AddressInfo } from 'node:net';
+import { generateKeyPairSync, randomBytes, verify } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import type { MyeonghwaProductHost } from '../src/host/product-host.js';
+import { deterministicContentHash } from '../src/interpretation/rule-registry.js';
 import {
   createMyeonghwaProductionPreviewHostServer,
   createMyeonghwaProductionProductHostServer,
@@ -39,9 +41,10 @@ async function withHost(
   kind: 'preview' | 'production',
   test: (url: string, bearer: string) => Promise<void>,
   evidence?: boolean,
+  proof?: Parameters<typeof createMyeonghwaProductionPreviewHostServer>[1],
 ) {
   const bearer = 'test-preview-only-secret';
-  const options = { serviceBearer: bearer, compatibilityEvidencePreviewEnabled: evidence === true };
+  const options = { ...proof, serviceBearer: bearer, compatibilityEvidencePreviewEnabled: evidence === true };
   const server = kind === 'preview'
     ? createMyeonghwaProductionPreviewHostServer(host, options)
     : createMyeonghwaProductionProductHostServer(host, options);
@@ -58,6 +61,30 @@ async function withHost(
 }
 
 describe('existing compatibility browser route stays protected and research-only', () => {
+  it('signs the exact opted-in pair and complete held response for a fresh challenge', async () => {
+    const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+    const keyId = 'test-held-pair';
+    await withHost('preview', async (url, bearer) => {
+      const request = { birth: ownBirth, partnerBirth, candidateScope: 'traditional_marital_palace_comparison' };
+      const nonce = randomBytes(32).toString('base64url');
+      const reply = await fetch(url, {
+        method: 'POST', headers: { authorization: 'Bearer ' + bearer, 'content-type': 'application/json',
+          'x-myeongha-pair-review-nonce': nonce },
+        body: JSON.stringify(request),
+      });
+      expect(reply.status).toBe(200);
+      const body = await reply.json();
+      const { payload, signature } = JSON.parse(Buffer.from(
+        reply.headers.get('x-myeonghwa-pair-review-proof')!, 'base64url',
+      ).toString('utf8'));
+      expect(payload).toEqual({ version: 'myeonghwa-held-pair-review-v1', keyId, state: 'held', nonce,
+        requestBodyHash: deterministicContentHash(request), responseBodyHash: deterministicContentHash(body) });
+      expect(verify(null, Buffer.from(payload.version + '\0' + deterministicContentHash(payload)),
+        publicKey, Buffer.from(signature, 'base64url'))).toBe(true);
+      expect(body).toMatchObject({ maySell: false, evidence: { readingReview: { state: 'held' } } });
+    }, true, { compatibilityEvidenceProof: { keyId, signingKey: privateKey } });
+  });
+
   it.each([
     ['1990-05-08', 'candidate_factor', 'supportive_factor', 'branch_six_combination'],
     ['1990-05-09', 'candidate_factor', 'challenging_factor', 'branch_clash'],
