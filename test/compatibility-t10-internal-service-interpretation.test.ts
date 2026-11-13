@@ -59,6 +59,23 @@ describe('MyeongHa internal interpretation is separate from external approval an
         expect(line.observedFactPaths.every(p =>
           /^(subject|target)\.pillars\./u.test(p))).toBe(true);
       }
+      const stemLine = draft?.sentences.filter(x => x.sectionId === 'day_stem_interaction');
+      expect(stemLine).toHaveLength(1);
+      const directDayStem = result.sourceScopeHandoff.crossChartStructuralMatches
+        .filter(x => x.kind === 'stem_five_combination' &&
+          x.subject.factPath === 'subject.pillars.day.value.stem' &&
+          x.target.factPath === 'target.pillars.day.value.stem');
+      expect(stemLine?.[0]?.ruleId).toBe(directDayStem.length > 0
+        ? 'T10-SERVICE-DAY-STEM-FIVE-COMBINATION'
+        : 'T10-SERVICE-DAY-STEM-NO-FIVE-COMBINATION');
+      expect(stemLine?.[0]?.observedFactPaths).toEqual(directDayStem.length > 0
+        ? ['subject.pillars.day.value.stem', 'target.pillars.day.value.stem'] : []);
+      expect(draft?.ruleCoverage).toBe('resolved_day_stem_branch_and_other_positions');
+      for (const x of draft?.sentences.filter(x => x.sectionId === 'other_positions') ?? []) {
+        expect(x.ruleId).toBe('T10-SERVICE-OTHER-STRUCTURES');
+        expect(x.observedFactPaths.length).toBeGreaterThan(0);
+        expect(x.paragraph).toMatch(/(?:연주|월주|일주|시주)/u);
+      }
       expect(draft?.overallScore).toBeNull();
       expect(draft?.relationshipForecast).toBeNull();
       expect(draft?.readyForOfficialIssue).toBe(false);
