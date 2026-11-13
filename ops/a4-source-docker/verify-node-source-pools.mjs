@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import process from 'node:process';
+import console from 'node:console';
 import {
   createSajuA4LocalSourcePoolV1,
   SAJU_A4_LOCAL_SOURCE_ROLES,
