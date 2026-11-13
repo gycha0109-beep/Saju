@@ -16,6 +16,23 @@ import type { T10ThreeMethodApplicabilityReadingV1 } from
 import { T10_DIRECT_DAY_COMPARISON_SOURCE } from
   './compatibility-t10-direct-day-comparison.js';
 
+/**
+ * The 2020 dissertation's PUBLIC ABSTRACT describes the author comparing
+ * adverse factors of each spouse and the counterpart's neutralizing factors.
+ * The original criteria and case tables have not been inspected. This source
+ * defines a research question, never an executable pairwise outcome rule.
+ */
+export const T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE = {
+  title: '부부 궁합(宮合)에 관한 명리학적 연구',
+  author: '남기동',
+  year: 2020,
+  url: 'https://www.riss.kr/link?id=T15540056',
+  evidenceLevel: 'RISS_PUBLIC_ABSTRACT_AND_TOC_ONLY',
+  studiedDivorcedOrBereavedCouples: 20,
+  studiedLongMarriedCouples: 20,
+  historicalScope: 'married_couples_only',
+} as const;
+
 export const T10_CROSS_METHOD_CONTRAST_VERSION =
   'saju-t10-cross-method-contrast-factual-research-v1' as const;
 
@@ -93,6 +110,21 @@ export interface T10SynthesisHoldDecisionV1 {
     currentPairInterviewed: false;
     currentPairBehaviorObserved: false;
     currentPairOutcomeInferred: false;
+  }>;
+  /**
+   * Charts can supply input positions for investigating the 2020 author's
+   * two-chart model, but none has been qualified as an adverse/remedy factor.
+   */
+  readonly conditionalJointFactorStudy: Readonly<{
+    sourceUrl: typeof T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.url;
+    sourceEvidence: typeof T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.evidenceLevel;
+    studyPopulation: typeof T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.historicalScope;
+    candidateObservedFactPaths: readonly string[];
+    bothChartFactorsOperationalized: false;
+    adverseFactorAccumulationEstablished: false;
+    counterpartNeutralizationEstablished: false;
+    methodAppliesToCurrentPair: false;
+    individualRelationshipPredictionAuthorized: false;
   }>;
   readonly observedFactPaths: readonly string[];
   readonly unverifiedFactPaths: readonly string[];
@@ -453,6 +485,8 @@ export function compareT10CrossMethodEvidenceV1(
     ...six.missingPrerequisites,
     ...useful.missingPrerequisites,
     ...axes.flatMap(axis => [...axis.unresolvedPrerequisites]),
+    'NAM_2020_FULL_PAIRWISE_METHOD_AND_CASE_TABLE_NOT_VERIFIED',
+    'NAM_2020_ADVERSE_AND_NEUTRALIZATION_CRITERIA_NOT_OPERATIONALIZED',
     'SOURCE_VALIDATED_RELATIONSHIP_OUTCOME_METHOD',
   ]);
   const synthesisDecision: T10SynthesisHoldDecisionV1 = {
@@ -469,6 +503,17 @@ export function compareT10CrossMethodEvidenceV1(
       currentPairBehaviorObserved: false,
       currentPairOutcomeInferred: false,
     },
+    conditionalJointFactorStudy: {
+      sourceUrl: T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.url,
+      sourceEvidence: T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.evidenceLevel,
+      studyPopulation: T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.historicalScope,
+      candidateObservedFactPaths: synthesisPaths,
+      bothChartFactorsOperationalized: false,
+      adverseFactorAccumulationEstablished: false,
+      counterpartNeutralizationEstablished: false,
+      methodAppliesToCurrentPair: false,
+      individualRelationshipPredictionAuthorized: false,
+    },
     observedFactPaths: synthesisPaths,
     unverifiedFactPaths: unique([
       ...(!fullDay ? [dayFact.subjectFactPath, dayFact.targetFactPath] : []),
@@ -476,7 +521,8 @@ export function compareT10CrossMethodEvidenceV1(
     ]),
     sourceIds: unique(mixed?.otherFactPaths.flatMap(item => [...item.sourceIds]) ?? []),
     sourceUrls: unique([...(mixed?.sources ?? []), ...roleSource,
-      T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl]),
+      T10_DIRECT_DAY_COMPARISON_SOURCE.sourceUrl,
+      T10_NAM_2020_PAIRWISE_SYNTHESIS_SOURCE.url]),
     definitionContentHashes: unique(
       mixed?.otherFactPaths.map(item => item.definitionContentHash) ?? []),
     unresolvedPrerequisites: synthesisPrerequisites,
@@ -499,7 +545,11 @@ export function compareT10CrossMethodEvidenceV1(
       '여겨져도 차이를 인정하고 역할에 합의하여 원만한 결혼생활을 유지한 사례를 ' +
       '보고하지만, 이 사례는 지금 두 사람의 행동이나 미래를 관측한 결과가 아닙니다. ' +
       '합·충의 상쇄나 두 고전 방법의 우선순위에 관한 검증된 두 명식 종합법이 없으므로 ' +
-      '어느 근거가 더 중요하다는 결론과 실제 관계 결과를 모두 보류합니다.',
+      '어느 근거가 더 중요하다는 결론과 실제 관계 결과를 모두 보류합니다. ' +
+      '남기동(2020) 박사논문의 공개 초록은 부부 각자의 부정적 요인이 ' +
+      '누적되거나 상대의 중화 요인과 결부되는 연구자 방법을 설명합니다. ' +
+      '그러나 실제 두 명식에서 그 요인이 성립하는 계산 기준과 사례표 ' +
+      '원문이 확인되지 않아 이 명식쌍의 상쇄나 관계 결과에 적용하지 않습니다.',
     sourceQualifiedPriorityEstablished: false,
     noObservedOppositionProvesHarmony: false,
     relationshipConclusion: null,
