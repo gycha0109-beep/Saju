@@ -1,5 +1,5 @@
 import type {
-  CanonicalSajuSnapshot, HeavenlyStem, PillarSlot, TenGod,
+  CanonicalSajuSnapshot, HeavenlyStem, PillarSlot, StructuralRelationKind, TenGod,
 } from '../contracts/calculation.js';
 import type { PairwiseSourceScopeHandoff } from
   './family-pair-source-scope-handoff.js';
@@ -68,6 +68,18 @@ export interface T10VisibleStemHiddenStemMatch {
   readonly sourceQualifiedRootingEstablished: false;
 }
 
+/** Original-chart structure, not an established -1 course deduction. */
+export interface T10TenGodCourseStructuralCandidate {
+  readonly relationId: string;
+  readonly kind: StructuralRelationKind;
+  readonly observedTenGodFactPath: string;
+  readonly originalParticipantFactPath: string;
+  readonly originalParticipantValue: string;
+  readonly otherOriginalParticipantFactPaths: readonly string[];
+  readonly upstreamStructuralSourceIds: readonly string[];
+  readonly sourceQualifiedAuthorPenalty: false;
+}
+
 export interface T10TenGodCourseMethodInputAudit {
   readonly sourceStep: 1 | 2 | 3;
   readonly sourceCondition:
@@ -85,10 +97,16 @@ export interface T10TenGodCourseMethodInputAudit {
     /** Literal stem-to-hidden-stem cross-reference inside this ONE chart. */
     sameStemHiddenStemMatches: readonly T10VisibleStemHiddenStemMatch[];
     unresolvedHiddenStemFactPaths: readonly string[];
+    /** The relevant original-chart match; excludes foreign-person patterns. */
+    matchingWithinChartStructuralCandidates: readonly T10TenGodCourseStructuralCandidate[];
+    sourceStructuralObservation:
+      'available' | 'unresolved' | 'not_graded_at_strength_stage';
   }>[];
   readonly actualRootingEstablished: false;
   readonly originalStemExpressionMethodValidated: false;
   readonly originalCombinationClashEffectsSettled: false;
+  /** Canonical primitives do not cover all of the author's stem-clash terms. */
+  readonly completeAuthorStemClashConditionsAvailable: false;
   readonly originalStrengthBalanceEstablished: false;
   readonly sourceGrade: null;
   readonly paragraph: string;
@@ -198,6 +216,7 @@ function observeCourse(
     : step === 2 ? 'rooted_expressed_wealth_and_official' as const
       : 'relative_strength_and_balance' as const;
   const relevantGroups = step === 1 ? [groupB] : [groupA, groupB];
+  const originalStructure = snapshot.derivedFacts.structuralRelations;
   const inspectedGroups = relevantGroups.map(item => {
     const visibleStems = item.actualVisiblePositions
       .filter(p => p.channel === 'stem');
@@ -234,6 +253,56 @@ function observeCourse(
         }
       }
     }
+    const sourceStructuralObservation = step === 3
+      ? 'not_graded_at_strength_stage' as const
+      : originalStructure?.status === 'resolved' ? 'available' as const
+        : 'unresolved' as const;
+    const matchingWithinChartStructuralCandidates: T10TenGodCourseStructuralCandidate[] = [];
+    if (sourceStructuralObservation === 'available' &&
+        originalStructure?.status === 'resolved') {
+      for (const observed of item.actualVisiblePositions) {
+        const own = snapshot.pillars[observed.slot];
+        if (own.status !== 'resolved') {
+          throw new TypeError('T10 course interaction requires resolved original pillar.');
+        }
+        const expectedValue = own.value[observed.channel].value;
+        for (const relation of originalStructure.value) {
+          const eligibleKind = observed.channel === 'stem'
+            ? relation.kind === 'stem_five_combination'
+            : relation.kind === 'branch_six_combination' ||
+              relation.kind === 'branch_clash' ||
+              relation.kind === 'branch_three_combination';
+          if (!eligibleKind || !relation.participants.some(p =>
+            p.pillar === observed.slot && p.component === observed.channel &&
+            p.value === expectedValue)) continue;
+          if (relation.semantics.structuralMatchOnly !== true ||
+              relation.semantics.transformationEstablished !== false ||
+              relation.sourceIds.length === 0 ||
+              relation.participants.length < 2 ||
+              relation.participants.some(p => {
+                const original = snapshot.pillars[p.pillar];
+                return original.status !== 'resolved' ||
+                  original.value[p.component].value !== p.value ||
+                  p.component !== observed.channel;
+              })) {
+            throw new TypeError('T10 course cannot use forged original-chart structural relations.');
+          }
+          matchingWithinChartStructuralCandidates.push({
+            relationId: relation.relationId,
+            kind: relation.kind,
+            observedTenGodFactPath: observed.path,
+            originalParticipantFactPath:
+              'pillars.' + observed.slot + '.value.' + observed.channel,
+            originalParticipantValue: expectedValue,
+            otherOriginalParticipantFactPaths: relation.participants
+              .filter(p => p.pillar !== observed.slot)
+              .map(p => 'pillars.' + p.pillar + '.value.' + p.component),
+            upstreamStructuralSourceIds: [...relation.sourceIds],
+            sourceQualifiedAuthorPenalty: false,
+          });
+        }
+      }
+    }
     return {
       group: item.group,
       stemVisibleFactPaths,
@@ -243,6 +312,8 @@ function observeCourse(
       groupUnresolvedFactPaths: [...item.unresolvedFactPaths],
       sameStemHiddenStemMatches,
       unresolvedHiddenStemFactPaths,
+      matchingWithinChartStructuralCandidates,
+      sourceStructuralObservation,
     };
   });
   const evidenceDescriptions = inspectedGroups.map(item =>
@@ -253,7 +324,12 @@ function observeCourse(
     '건' +
     (item.unresolvedHiddenStemFactPaths.length
       ? '·지장간 미확정 ' + item.unresolvedHiddenStemFactPaths.length + '곳'
-      : '')).join(', ');
+      : '') +
+    (step === 3 ? '' :
+      '·원국 합충 구조 ' + item.matchingWithinChartStructuralCandidates.length +
+      '건(감점 미확정)' +
+      (item.sourceStructuralObservation === 'unresolved'
+        ? '·구조 계산 미확정' : ''))).join(', ');
   const methodInputAudit: T10TenGodCourseMethodInputAudit = {
     sourceStep: step,
     sourceCondition,
@@ -261,6 +337,7 @@ function observeCourse(
     actualRootingEstablished: false,
     originalStemExpressionMethodValidated: false,
     originalCombinationClashEffectsSettled: false,
+    completeAuthorStemClashConditionsAvailable: false,
     originalStrengthBalanceEstablished: false,
     sourceGrade: null,
     paragraph: step === 3
@@ -270,7 +347,9 @@ function observeCourse(
       : '저서 발췌의 ' + (step === 1 ? '첫 번째' : '두 번째') +
         ' 평가는 해당 십신 계열의 천간 투출·지지 통근과 합충의 영향을 요구합니다. ' +
         evidenceDescriptions +
-        '이 관측됩니다. 같은 글자가 지장간에 있어도 실제 통근·투출의 성립이나 합충 효과를 확정하지 않습니다.',
+        '이 관측됩니다. 같은 글자가 지장간에 있거나 원국 합충 구조가 발견되어도 ' +
+        '저자의 통근·투출 성립과 감점 조건을 확정하지 않습니다. ' +
+        '천간 충의 전체 계산 조건도 아직 마련되지 않았습니다.',
   };
   const describe = (item: typeof groups[number]) =>
     (item.group === 'a' ? '첫째 계열' : '둘째 계열') + ' ' +
