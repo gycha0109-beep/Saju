@@ -160,6 +160,36 @@ describe('local canonical whole-face coverage audit', () => {
     ).toThrow('COVERAGE_CAPTURE_INVALID');
   });
 
+  it('classifies a finished run with no detected face separately from a missing calculator', () => {
+    const ref = 'capture-face-missing';
+    const missingFaceMetrics = METRIC_DEFINITIONS.map(({ id }) => ({
+      metricKey: 'engineering.frontal.' + id,
+      status: 'unavailable',
+      reason: 'face_not_detected',
+      captureRef: ref,
+      viewRole: 'frontal' as const,
+      candidateOnly: true,
+      methodVersion: METHOD_VERSION,
+    }));
+    const summary = summarizeWholeFacePerFeatureReadiness(FR293_PRODUCT_COLUMN_MAP, [
+      { captureRef: ref, viewRole: 'frontal', metrics: missingFaceMetrics, parsing: parsing() },
+    ]);
+    expect(summary.statusCounts).toMatchObject({
+      unavailable: 29,
+      calculation_only: 0,
+      candidate_only: 0,
+      observed: 0,
+      not_evaluated: 0,
+    });
+    const eye = summary.features.find((item) => item.featureKey === 'eye.width_height_ratio');
+    expect(eye?.reasonCounts.FACE_LANDMARK_DETECTION_FAILED).toBe(1);
+    const earUnavailable = summary.features.find(
+      (item) => item.featureKey === 'ear.thickness_attachment_canal_boundary',
+    );
+    expect(earUnavailable?.reasonCounts.CURRENT_RGB_AUTHORITY_UNAVAILABLE).toBe(1);
+    expect(JSON.stringify(summary)).not.toContain(ref);
+  });
+
   it('rolls up existing per-photo failure reasons without exposing private captures', () => {
     const summary = summarizeWholeFacePerFeatureReadiness(FR293_PRODUCT_COLUMN_MAP, [
       { captureRef: 'capture-01', viewRole: 'frontal', metrics: metrics('capture-01') },
@@ -192,9 +222,7 @@ describe('local canonical whole-face coverage audit', () => {
       (row) => row.featureKey === 'ear.thickness_attachment_canal_boundary',
     );
     expect(ear?.reasonCounts.CURRENT_RGB_AUTHORITY_UNAVAILABLE).toBe(3);
-    expect(
-      Object.values(summary.statusCounts).reduce((total, count) => total + count, 0),
-    ).toBe(87);
+    expect(Object.values(summary.statusCounts).reduce((total, count) => total + count, 0)).toBe(87);
     const json = JSON.stringify(summary);
     expect(json).not.toContain('capture-01');
     expect(json).not.toContain('capture-02');

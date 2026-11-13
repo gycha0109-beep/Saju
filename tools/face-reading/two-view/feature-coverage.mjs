@@ -398,6 +398,26 @@ export function traceWholeFacePerCaptureReadiness(columns, captures, humanReview
     const review = reviewByCapture.get(capture.captureRef);
     const local = summarizeWholeFaceCoverage(columns, [capture], review ? [review] : []);
     const hasRunEvidence = capture.metrics.length > 0 || Boolean(capture.parsing);
+    // A completed parser batch is not evidence that the landmark model found
+    // a face. The existing frontal metric contract explicitly distinguishes
+    // face_not_detected from a missing/unverified canonical extractor.
+    const landmarkFaceNotDetected =
+      capture.viewRole === 'frontal' &&
+      capture.metrics.length === METRIC_DEFINITIONS.length &&
+      new Set(capture.metrics.map((metric) => metric.metricKey)).size ===
+        METRIC_DEFINITIONS.length &&
+      capture.metrics.every(
+        (metric) =>
+          metric.captureRef === capture.captureRef &&
+          metric.viewRole === 'frontal' &&
+          metric.methodVersion === METHOD_VERSION &&
+          metric.candidateOnly === true &&
+          typeof metric.metricKey === 'string' &&
+          metric.metricKey.startsWith('engineering.frontal.') &&
+          VALID_METRICS.has(metric.metricKey.slice('engineering.frontal.'.length)) &&
+          metric.status === 'unavailable' &&
+          metric.reason === 'face_not_detected',
+      );
     const features = local.features.map((feature) => {
       const deferred =
         columns.find((col) => col.featureKey === feature.featureKey)?.implementationState ===
@@ -420,6 +440,9 @@ export function traceWholeFacePerCaptureReadiness(columns, captures, humanReview
       } else if (capture.viewRole !== 'frontal') {
         state = 'unavailable';
         reason = 'FRONTAL_CAPTURE_REQUIRED';
+      } else if (landmarkFaceNotDetected) {
+        state = 'unavailable';
+        reason = 'FACE_LANDMARK_DETECTION_FAILED';
       } else if (feature.canonicalCalculatorMaterialized) {
         state = 'calculation_only';
         reason = 'CANONICAL_CALCULATOR_WITHOUT_VERIFIED_PHOTO_INPUT';
