@@ -53,6 +53,29 @@ type Course = typeof COURSE_DEFINITIONS[number];
 type Role = Course['role'];
 type Group = 'a' | 'b';
 
+export interface T10TenGodCourseMethodInputAudit {
+  readonly sourceStep: 1 | 2 | 3;
+  readonly sourceCondition:
+    'rooted_expressed_wealth_or_resource' |
+    'rooted_expressed_wealth_and_official' |
+    'relative_strength_and_balance';
+  /** The 2024 excerpt uses original-chart rooting/strength conditions.
+   * A representative branch ten-god label is NOT a verified root. */
+  readonly inspectedGroups: readonly Readonly<{
+    group: Group;
+    stemVisibleFactPaths: readonly string[];
+    representativeBranchFactPaths: readonly string[];
+    bothDisplayChannelsObserved: boolean;
+    groupUnresolvedFactPaths: readonly string[];
+  }>[];
+  readonly actualRootingEstablished: false;
+  readonly originalStemExpressionMethodValidated: false;
+  readonly originalCombinationClashEffectsSettled: false;
+  readonly originalStrengthBalanceEstablished: false;
+  readonly sourceGrade: null;
+  readonly paragraph: string;
+}
+
 export interface T10TenGodCourseVisibleObservation {
   readonly courseId: Course['id'];
   readonly historicalRole: Role;
@@ -70,6 +93,7 @@ export interface T10TenGodCourseVisibleObservation {
   readonly visibleGroupState:
     'both_seen' | 'only_a_seen' | 'only_b_seen' | 'neither_seen';
   readonly anyUnresolvedCanonicalSlots: boolean;
+  readonly methodInputAudit: T10TenGodCourseMethodInputAudit;
   readonly strengthAndRootingEstablished: false;
   readonly sourceGradingConditionsSatisfied: false;
   readonly grade: null;
@@ -147,6 +171,52 @@ function observeCourse(
   const hasB = groupB.actualVisiblePositions.length > 0;
   const visibleGroupState = hasA && hasB ? 'both_seen'
     : hasA ? 'only_a_seen' : hasB ? 'only_b_seen' : 'neither_seen';
+  const step = def.id === 'male_food_to_wealth' ||
+    def.id === 'female_official_to_resource' ? 1
+    : def.id === 'male_wealth_to_official' ||
+      def.id === 'female_wealth_to_official' ? 2 : 3;
+  const sourceCondition = step === 1
+    ? 'rooted_expressed_wealth_or_resource' as const
+    : step === 2 ? 'rooted_expressed_wealth_and_official' as const
+      : 'relative_strength_and_balance' as const;
+  const relevantGroups = step === 1 ? [groupB] : [groupA, groupB];
+  const inspectedGroups = relevantGroups.map(item => {
+    const stemVisibleFactPaths = item.actualVisiblePositions
+      .filter(p => p.channel === 'stem').map(p => p.path);
+    const representativeBranchFactPaths = item.actualVisiblePositions
+      .filter(p => p.channel === 'branch').map(p => p.path);
+    return {
+      group: item.group,
+      stemVisibleFactPaths,
+      representativeBranchFactPaths,
+      bothDisplayChannelsObserved: stemVisibleFactPaths.length > 0 &&
+        representativeBranchFactPaths.length > 0,
+      groupUnresolvedFactPaths: [...item.unresolvedFactPaths],
+    };
+  });
+  const evidenceDescriptions = inspectedGroups.map(item =>
+    (item.group === 'a' ? '첫째' : '둘째') +
+    ' 계열의 천간 표시 ' + item.stemVisibleFactPaths.length +
+    '곳·지지 대표 십신 표시 ' + item.representativeBranchFactPaths.length +
+    '곳').join(', ');
+  const methodInputAudit: T10TenGodCourseMethodInputAudit = {
+    sourceStep: step,
+    sourceCondition,
+    inspectedGroups,
+    actualRootingEstablished: false,
+    originalStemExpressionMethodValidated: false,
+    originalCombinationClashEffectsSettled: false,
+    originalStrengthBalanceEstablished: false,
+    sourceGrade: null,
+    paragraph: step === 3
+      ? '저서 발췌의 세 번째 평가는 두 계열의 힘과 균형을 요구합니다. ' +
+        evidenceDescriptions +
+        '이 관측되지만 가시 자리의 개수만으로 실제 강약·균형은 판정할 수 없습니다.'
+      : '저서 발췌의 ' + (step === 1 ? '첫 번째' : '두 번째') +
+        ' 평가는 해당 십신 계열의 천간 투출·지지 통근과 합충의 영향을 요구합니다. ' +
+        evidenceDescriptions +
+        '이 관측되지만 천간 표시와 지지의 대표 십신 표기는 실제 투출·통근의 성립이나 합충 효과를 확정하지 않습니다.',
+  };
   const describe = (item: typeof groups[number]) =>
     (item.group === 'a' ? '첫째 계열' : '둘째 계열') + ' ' +
     (item.actualVisiblePositions.length
@@ -161,12 +231,14 @@ function observeCourse(
     personRef, calculationHash: snapshot.calculationHash,
     label: def.name, groups, visibleGroupState,
     anyUnresolvedCanonicalSlots: groupA.unresolvedFactPaths.length > 0,
+    methodInputAudit,
     strengthAndRootingEstablished: false,
     sourceGradingConditionsSatisfied: false,
     grade: null,
     paragraph: def.name + '의 두 십신 계열은 ' + groups.map(describe).join('; ') +
       '입니다. 겉자리 관측은 통근·투출의 원전 조건, 강약과 합충 처리 또는 ' +
-      '실제 상대에 대한 심리·관계 결과를 입증하지 않습니다.',
+      '실제 상대에 대한 심리·관계 결과를 입증하지 않습니다. ' +
+      methodInputAudit.paragraph,
   };
 }
 
