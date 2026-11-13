@@ -24,6 +24,8 @@ try {
   docker compose -f compose.yaml up -d --no-build --pull never
   if ($LASTEXITCODE -ne 0) { throw 'Saju A4 PostgreSQL did not start' }
   docker compose -f compose.yaml ps
+  & (Join-Path $PSScriptRoot 'enable-local-tls.ps1')
+  if (-not $?) { throw 'Local TLS bootstrap failed' }
 } finally {
   Pop-Location
 }

@@ -12,7 +12,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\ops\a4-source-docker\start
 
 The start script generates an untracked, random PostgreSQL owner secret. It then creates the external named data volume `saju_a4_source_pg17_data_v1` if missing, validates Compose, and starts PostgreSQL 17.11. Data survives normal container recreation and `docker compose down`; even `down -v` cannot delete the external volume.
 
-The database listens **only on 127.0.0.1:55432**, never on public interfaces. The container uses a dedicated Compose bridge network; only the Windows loopback port is published. Avoid treating loopback-only traffic as proof of the required Production TLS/service identity.
+The database listens **only on 127.0.0.1:55432**, never on public interfaces. The container uses a dedicated Compose bridge network; only the Windows loopback port is published. Start-up also applies local-test TLS 1.3 with an untracked, automatically generated 180-day self-signed certificate for `localhost` and `127.0.0.1`, and rejects unencrypted TCP. Private keys stay in `secrets/` (Git-ignored) and the external Docker volume. This certificate is **local-test only**, not Production-trusted service TLS. Rotate the certificate before expiry. The container-local Unix socket retains the image's local trust policy; do not treat that as Production service authentication.
 
 ## Schema installation
 
