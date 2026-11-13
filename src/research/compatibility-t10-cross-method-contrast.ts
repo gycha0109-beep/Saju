@@ -114,6 +114,9 @@ function prefix(personRef: string, path: string, subject: PairPerson, target: Pa
 const BRANCH_POSITION: Readonly<Record<string, string>> = {
   year: '연지', month: '월지', day: '일지', hour: '시지',
 };
+const PILLAR_KOREAN: Readonly<Record<string, string>> = {
+  year: '연', month: '월', day: '일', hour: '시',
+};
 function branchPosition(path: string, role: 'subject' | 'target'): string {
   const parts = path.split('.');
   if (parts.length !== 5 || parts[0] !== role ||
@@ -305,6 +308,71 @@ export function compareT10CrossMethodEvidenceV1(
   if (!historicalRoles && useful.hypotheticalExamples.length !== 0) {
     throw new TypeError('Historical element examples cannot apply to unmatched roles.');
   }
+
+  // Express only canonical, visible positions from THESE two birth charts.
+  // No count is a strength threshold, and no visible element proves 用神.
+  const whoseChart = (personRef: string): string => {
+    if (personRef === pair.subject.personRef) return '첫 번째 사람';
+    if (personRef === pair.target.personRef) return '두 번째 사람';
+    throw new TypeError('Historical pair-reading evidence must belong to a real chart.');
+  };
+  const visibleTenGodDescription = historicalRoles
+    ? [six.male, six.female].map(person => {
+      if (!person || person.interpersonalClaimAuthorized !== false ||
+          person.strengthOrHeavyCriterionEstablished !== false ||
+          person.countOfVisibleCanonicalTerms !== person.observed.length ||
+          person.unresolvedPaths.length > 7 ||
+          ![pair.subject, pair.target].some(p => identity(p, person))) {
+        throw new TypeError('Historical source-visible ten gods need original chart roles.');
+      }
+      const role = person.historicalRole === 'male'
+        ? '고전 남성 역할 입력의 비견·겁재' : '고전 여성 역할 입력의 식신·상관';
+      const positions = person.observed.map(item => {
+        const slotName = PILLAR_KOREAN[item.slot];
+        if (!slotName || !['stem', 'branch'].includes(item.channel)) {
+          throw new TypeError('Historical ten-god evidence has an unknown original slot.');
+        }
+        return slotName + (item.channel === 'stem' ? '간' : '지') +
+          ' ' + item.value;
+      });
+      return whoseChart(person.personRef) + '(' + role + ')에서 보이는 항목 ' +
+        positions.length + '곳(' +
+        (positions.length ? positions.join('·') : '현재 보이는 해당 항목 없음') +
+        '), 미확정 위치 ' + person.unresolvedPaths.length + '곳';
+    }).join('; ')
+    : '';
+  const originalExampleDescriptions = historicalRoles
+    ? useful.hypotheticalExamples.map(example => {
+      if (example.prerequisiteEstablished !== false ||
+          example.usefulElementSelectionVerified !== false ||
+          example.otherChartElementStrengthVerified !== false ||
+          example.elementComplementVerdict !== null ||
+          ![pair.subject, pair.target].some(p =>
+            p.personRef === example.anchorPersonRef) ||
+          ![pair.subject, pair.target].some(p =>
+            p.personRef === example.counterpartPersonRef) ||
+          example.anchorPersonRef === example.counterpartPersonRef) {
+        throw new TypeError('Visible element examples cannot be interpreted as suitability.');
+      }
+      const exampleName = example.id === 'male_wood_strong_needs_metal'
+        ? '고전 남성 목왕·금 필요 예시'
+        : '고전 여성 금강·화 선호 예시';
+      const generating = example.id === 'male_wood_strong_needs_metal'
+        ? '토' : '목';
+      const dayStemMatches = example.anchorDayMasterMatchesRequiredElement === null
+        ? '미확정'
+        : example.anchorDayMasterMatchesRequiredElement ? '글자만 일치'
+          : '글자 불일치';
+      return exampleName + ': ' + whoseChart(example.anchorPersonRef) +
+        '의 일간 ' + example.requiresAnchorElement + ' 조건 ' + dayStemMatches +
+        ', ' + whoseChart(example.counterpartPersonRef) + '의 겉글자 ' +
+        example.requiresUsefulElement + ' ' +
+        example.counterpartVisibleRequiredElementPaths.length + '곳·' +
+        generating + ' ' +
+        example.counterpartVisibleGeneratingElementPaths.length + '곳';
+    }).join('; ')
+    : '';
+
   return {
     version: T10_CROSS_METHOD_CONTRAST_VERSION,
     lifecycle: 'internal_research_only',
@@ -319,8 +387,14 @@ export function compareT10CrossMethodEvidenceV1(
       elementExampleInputs: examples,
       sourceUrls: roleSource,
       paragraph: historicalRoles
-        ? '두 사람의 가시적 십신과 오행 위치를 각각 확인했습니다. ' +
-          '그러나 고전의 십신 짝짓기와 오행 필요 조건은 서로 다른 방법이며, ' +
+        ? '두 명식에서 계산된 십신의 겉자리와 오행을 각각 대조했습니다. ' +
+          visibleTenGodDescription + '. ' +
+          '『명리탐원』의 두 조건부 오행 보완 예시를 글자 위치로만 확인하면 ' +
+          originalExampleDescriptions + '입니다. ' +
+          '그러나 십신 항목의 관측 개수는 원전의 중(重)·강약을 증명하지 않으며, ' +
+          '오행 글자의 보임이나 일간 조건 일치 역시 원국의 왕쇠·실제 용신 ' +
+          '선정·상대 오행 세력의 충족을 증명하지 않습니다. ' +
+          '고전의 십신 짝짓기와 오행 필요 조건은 서로 다른 방법이며, ' +
           '원전 자체가 단순 십신 짝짓기의 충분성을 반박합니다. ' +
           '실제 두 사람에게 상반된 궁합 결과가 입증된 것은 아닙니다.'
         : '이 고전의 역사적 남녀 역할 적용 조건에 해당하지 않습니다. ' +

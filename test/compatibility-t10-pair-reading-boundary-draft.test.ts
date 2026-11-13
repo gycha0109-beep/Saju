@@ -274,6 +274,10 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     expect(history?.observedFactPaths.length).toBeGreaterThan(0);
     expect(history?.sourceUrls).toHaveLength(2);
     expect(history?.paragraph).toContain('상반된 궁합 결과가 입증된 것은 아닙니다');
+    expect(history?.paragraph).toContain('보이는 항목');
+    expect(history?.paragraph).toContain('고전 남성 목왕·금 필요 예시');
+    expect(history?.paragraph).toContain('고전 여성 금강·화 선호 예시');
+    expect(history?.paragraph).toContain('실제 용신 선정');
     const methods = draft?.sections.filter(s => s.id.endsWith('_method'));
     expect(methods).toHaveLength(3);
     expect(methods?.every(section =>
@@ -282,6 +286,28 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
       section.sentences[0]?.consideredButUnverifiedFactPaths.length > 0)).toBe(true);
     expect(draft?.compatibilityScore).toBeNull();
     expect(draft?.maySell).toBe(false);
+  });
+
+  it('does not mistake visible ten-god counts or element examples for suitability', () => {
+    const output = run(
+      birth(1990, 5, 15, 'male'), birth(1996, 6, 5, 'female'),
+    );
+    const source = output.crossMethodContrastResearch?.historical;
+    const sentence = output.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'historical_method_disagreement')?.sentences[0];
+    expect(source?.paragraph).toBe(sentence?.paragraph);
+    expect(sentence?.observedFactPaths).toEqual(expect.arrayContaining([
+      ...(source?.tenGodVisibleInputs.flatMap(x => [...x.canonicalFactPaths]) ?? []),
+      ...(source?.elementExampleInputs.flatMap(x =>
+        [...x.counterpartVisibleFactPaths]) ?? []),
+    ]));
+    expect(sentence?.evidenceLayer).toBe('unresolved_synthesis');
+    expect(sentence?.missingPrerequisites).toContain('TEN_GOD_STRENGTH_AND_HIDDEN_STEM_METHOD');
+    expect(sentence?.missingPrerequisites).toContain('USEFUL_ELEMENT_SELECTION_NOT_VERIFIED');
+    expect(sentence?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(output.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
+    expect(output.maySell).toBe(false);
   });
 
   it('does not apply historical male/female star conclusions to unspecified roles', () => {

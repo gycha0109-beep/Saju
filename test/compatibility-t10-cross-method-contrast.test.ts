@@ -125,6 +125,16 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
       ).filter((path, i, all) => all.indexOf(path) === i).map(path =>
         'target.' + path));
     expect(historical?.paragraph).toContain('상반된 궁합 결과가 입증된 것은 아닙니다');
+    expect(historical?.paragraph).toContain('첫 번째 사람(고전 남성 역할 입력의 비견·겁재)');
+    expect(historical?.paragraph).toContain('두 번째 사람(고전 여성 역할 입력의 식신·상관)');
+    expect(historical?.paragraph).toContain(
+      '보이는 항목 ' + six?.male?.countOfVisibleCanonicalTerms + '곳');
+    expect(historical?.paragraph).toContain(
+      '보이는 항목 ' + six?.female?.countOfVisibleCanonicalTerms + '곳');
+    expect(historical?.paragraph).toContain('고전 남성 목왕·금 필요 예시');
+    expect(historical?.paragraph).toContain('고전 여성 금강·화 선호 예시');
+    expect(historical?.paragraph).toContain('십신 항목의 관측 개수는 원전의 중(重)·강약');
+    expect(historical?.paragraph).toContain('실제 용신 선정');
     expect(historical?.sourceUrls).toEqual([
       six?.sources.traditional.url, six?.sources.challenge.url,
     ]);
@@ -156,6 +166,13 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
       item.personRef === 'person-second')?.unresolvedFactPaths)
       .toContain('target.derivedFacts.tenGods.hour.stem');
     expect(reverse?.historical.oppositeChartOutcomesEstablished).toBe(false);
+    expect(forward?.historical.paragraph)
+      .toContain('첫 번째 사람(고전 남성 역할 입력의 비견·겁재)');
+    expect(reverse?.historical.paragraph)
+      .toContain('두 번째 사람(고전 남성 역할 입력의 비견·겁재)');
+    expect(forward?.historical.paragraph).toContain('미확정 위치 2곳');
+    expect(reverse?.historical.paragraph).toContain('미확정 위치 2곳');
+    expect(forward?.historical.paragraph).not.toContain('궁합 점수');
   });
 
   it('rejects foreign research identities and swapped structural paths', () => {
