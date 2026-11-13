@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src blob:; connect-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>관상 체험 · 가상 풀이 프로토타입</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        color: #f4ecdc;
+        background: #171918;
+        font: 16px/1.7 system-ui;
+      }
+      main {
+        max-width: 880px;
+        margin: auto;
+        padding: 32px 22px 70px;
+      }
+      a {
+        color: #d8c398;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .badge {
+        color: #181b17;
+        background: #d5c398;
+        padding: 3px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+      }
+      h1 {
+        font-size: clamp(29px, 6vw, 46px);
+        line-height: 1.25;
+        margin: 25px 0 12px;
+      }
+      h2 {
+        font-size: 23px;
+        margin-top: 0;
+      }
+      h3 {
+        font-size: 17px;
+      }
+      .intro {
+        color: #c6c6b8;
+        max-width: 650px;
+      }
+      .panel {
+        border: 1px solid #454b40;
+        background: #222720;
+        padding: 24px;
+        border-radius: 18px;
+        margin-top: 22px;
+      }
+      .steps {
+        color: #d5c398;
+        font-size: 14px;
+      }
+      fieldset {
+        border: 0;
+        padding: 0;
+        margin: 22px 0;
+        min-width: 0;
+      }
+      legend {
+        font-weight: 650;
+        margin-bottom: 10px;
+      }
+      .choices {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .choices label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px;
+        border: 1px solid #515b49;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .choices label:has(input:checked) {
+        border-color: #ddc68d;
+        background: #38402d;
+      }
+      input[type='radio'] {
+        accent-color: #ddc68d;
+        flex-shrink: 0;
+      }
+      input[type='file'] {
+        display: block;
+        max-width: 100%;
+        margin-top: 10px;
+        color: inherit;
+      }
+      button {
+        font: inherit;
+        border: 1px solid #d5c398;
+        background: #d5c398;
+        color: #1c2118;
+        border-radius: 10px;
+        padding: 12px 20px;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: transparent;
+        color: #e5d3ae;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible {
+        outline: 3px solid #b1d7ca;
+        outline-offset: 4px;
+      }
+      .small {
+        font-size: 13px;
+        color: #c6c6b8;
+      }
+      .error {
+        color: #ffb5a1;
+      }
+      #portrait {
+        width: 100px;
+        height: 120px;
+        object-fit: contain;
+        margin-top: 12px;
+        display: block;
+      }
+      #result {
+        background: linear-gradient(135deg, #30382a, #20271e);
+      }
+      #result-title {
+        font-size: clamp(25px, 5vw, 35px);
+        line-height: 1.4;
+      }
+      #disclosure {
+        border-left: 3px solid #ddc68d;
+        padding-left: 14px;
+      }
+      #sections {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+      #sections article {
+        border-top: 1px solid #55604b;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 600px) {
+        main {
+          padding: 22px 14px 50px;
+        }
+        .panel {
+          padding: 18px;
+        }
+        .choices,
+        #sections {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="badge">가상 풀이 · 오락용 프로토타입</span
+        ><a href="/two-view/experience">처음으로</a>
+      </header>
+      <h1>하나의 주제에서<br />한 편의 풀이까지.</h1>
+      <p class="intro">
+        주제와 이야기 방향을 고르면 완성된 가상 풀이를 보여드립니다. 사진은 선택 사항이며 풀이에
+        사용되지 않습니다.
+      </p>
+      <section class="panel" aria-labelledby="photo-title">
+        <h2 id="photo-title">사진 미리보기 <span class="small">선택 사항</span></h2>
+        <label for="photo"
+          >이 화면에서 함께 볼 사진<input
+            id="photo"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+        /></label>
+        <p class="small">
+          사진은 이 브라우저에서만 표시됩니다. 얼굴 분석·업로드·결과 생성에 사용하지 않습니다.
+        </p>
+        <img id="portrait" alt="사용자가 선택한 사진 미리보기" hidden />
+        <button id="remove-photo" type="button" class="secondary" hidden>사진 지우기</button>
+        <p id="photo-error" class="error" role="status"></p>
+      </section>
+      <form id="choices" class="panel">
+        <p class="steps">01 주제 선택 → 02 이야기 방향 → 03 풀이 보기</p>
+        <h2>어떤 풀이를 보고 싶으세요?</h2>
+        <fieldset>
+          <legend>주제</legend>
+          <div id="topic-choices" class="choices"></div>
+        </fieldset>
+        <fieldset>
+          <legend>이야기 방향</legend>
+          <div id="direction-choices" class="choices"></div>
+        </fieldset>
+        <button id="generate" type="submit">가상 풀이 보기</button>
+        <p id="result-error" class="error" role="status"></p>
+      </form>
+      <section id="result" class="panel" aria-labelledby="result-title" aria-live="polite" hidden>
+        <span class="badge">선택 기반 가상 이야기</span>
+        <p id="result-topic" class="small"></p>
+        <h2 id="result-title" tabindex="-1"></h2>
+        <p id="disclosure" class="small"></p>
+        <p id="narrative"></p>
+        <div id="sections"></div>
+        <p id="provenance" class="small"></p>
+        <button id="again" type="button" class="secondary">다른 이야기 선택</button>
+      </section>
+    </main>
+    <script type="module" src="/two-view/experience-ui.mjs"></script>
+  </body>
+</html>

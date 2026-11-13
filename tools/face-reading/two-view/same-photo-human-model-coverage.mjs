@@ -1,0 +1,182 @@
+// Research-only, source-free rollup of existing same-photo model/human previews.
+// The input is assembled in the current browser from SHA-checked local state;
+// this code never copies human strokes, original images or measured offsets.
+export const HUMAN_MODEL_COMPARISON_COVERAGE_VERSION =
+  'engineering.same-photo-human-model-coverage@0.1.0';
+
+const FEATURES = Object.freeze([
+  ['eyelid', '눈꺼풀 윗경계와 눈 클래스'],
+  ['lip', '입술 표시 가로폭과 모델 클래스'],
+  ['ear', '귀 바깥선과 모델 귀 클래스'],
+]);
+const STATUSES = Object.freeze([
+  'view_ineligible',
+  'capture_screen_pending',
+  'capture_screen_rejected',
+  'capture_screen_unavailable',
+  'review_store_unavailable',
+  'human_review_missing',
+  'model_candidate_missing',
+  'comparison_not_run',
+  'noncomparable',
+  'research_comparison_partial',
+  'research_comparison_available',
+]);
+const isObject = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
+const tally = () => Object.fromEntries(STATUSES.map((key) => [key, 0]));
+const invalid = () => {
+  throw Error('HUMAN_MODEL_COVERAGE_INPUT_INVALID');
+};
+
+function statusFor(capture, key) {
+  const comparison = capture.comparisons[key];
+  if (
+    !isObject(comparison) ||
+    Object.keys(comparison).sort().join('|') !==
+      [
+        'humanReviewRecorded',
+        'modelCandidateAvailable',
+        'comparisonStatus',
+        'reviewStoreUnavailable',
+      ]
+        .sort()
+        .join('|') ||
+    typeof comparison.humanReviewRecorded !== 'boolean' ||
+    typeof comparison.modelCandidateAvailable !== 'boolean' ||
+    typeof comparison.reviewStoreUnavailable !== 'boolean' ||
+    !['not_run', 'available', 'partial', 'unavailable'].includes(comparison.comparisonStatus)
+  )
+    invalid();
+  if (
+    comparison.comparisonStatus !== 'not_run' &&
+    (!comparison.humanReviewRecorded ||
+      !comparison.modelCandidateAvailable ||
+      comparison.reviewStoreUnavailable ||
+      capture.viewRole !== 'frontal' ||
+      (capture.captureScreenEligibility !== undefined &&
+        capture.captureScreenEligibility !== 'frontal_candidate'))
+  )
+    invalid();
+  if (capture.viewRole !== 'frontal') return 'view_ineligible';
+  if (capture.captureScreenEligibility === 'pending') return 'capture_screen_pending';
+  if (capture.captureScreenEligibility === 'rejected') return 'capture_screen_rejected';
+  if (capture.captureScreenEligibility === 'unavailable') return 'capture_screen_unavailable';
+  if (comparison.reviewStoreUnavailable) return 'review_store_unavailable';
+  if (!comparison.humanReviewRecorded) return 'human_review_missing';
+  if (!comparison.modelCandidateAvailable) return 'model_candidate_missing';
+  return {
+    not_run: 'comparison_not_run',
+    unavailable: 'noncomparable',
+    partial: 'research_comparison_partial',
+    available: 'research_comparison_available',
+  }[comparison.comparisonStatus];
+}
+
+export function summarizeSamePhotoHumanModelCoverage(captures) {
+  if (!Array.isArray(captures) || captures.length > 1000) invalid();
+  const summary = FEATURES.map(([featureKey, label]) => ({
+    featureKey,
+    label,
+    ...tally(),
+    modelCandidateInCurrentSession: 0,
+    modelCandidateNotLoadedOrUnavailable: 0,
+    humanReviewRecorded: 0,
+    humanReviewMissing: 0,
+  }));
+  const totals = tally();
+  const candidateEvidenceTotals = {
+    modelCandidateInCurrentSession: 0,
+    modelCandidateNotLoadedOrUnavailable: 0,
+    humanReviewRecorded: 0,
+    humanReviewMissing: 0,
+    humanAndModelBothPresent: 0,
+  };
+  let provisionalPosePhotos = 0;
+  let captureScreenReadySingleReviewerPhotos = 0;
+  let captureScreenPendingPhotos = 0;
+  let captureScreenRejectedPhotos = 0;
+  let captureScreenUnavailablePhotos = 0;
+  for (const capture of captures) {
+    if (
+      !isObject(capture) ||
+      Object.keys(capture).sort().join('|') !==
+        [
+          'viewRole',
+          'poseProvisional',
+          'comparisons',
+          ...(Object.hasOwn(capture, 'captureScreenEligibility')
+            ? ['captureScreenEligibility']
+            : []),
+        ]
+          .sort()
+          .join('|') ||
+      (Object.hasOwn(capture, 'captureScreenEligibility') &&
+        !['pending', 'frontal_candidate', 'rejected', 'unavailable'].includes(
+          capture.captureScreenEligibility,
+        )) ||
+      !['frontal', 'profile'].includes(capture.viewRole) ||
+      typeof capture.poseProvisional !== 'boolean' ||
+      !isObject(capture.comparisons) ||
+      Object.keys(capture.comparisons).sort().join('|') !==
+        FEATURES.map(([key]) => key)
+          .sort()
+          .join('|')
+    )
+      invalid();
+    if (capture.poseProvisional) provisionalPosePhotos++;
+    if (capture.captureScreenEligibility === 'frontal_candidate')
+      captureScreenReadySingleReviewerPhotos++;
+    if (capture.captureScreenEligibility === 'pending') captureScreenPendingPhotos++;
+    if (capture.captureScreenEligibility === 'rejected') captureScreenRejectedPhotos++;
+    if (capture.captureScreenEligibility === 'unavailable') captureScreenUnavailablePhotos++;
+    for (let i = 0; i < FEATURES.length; i++) {
+      const key = FEATURES[i][0];
+      const status = statusFor(capture, key);
+      summary[i][status]++;
+      totals[status]++;
+      if (capture.viewRole !== 'frontal') continue;
+      const x = capture.comparisons[key];
+      const modelKey = x.modelCandidateAvailable
+        ? 'modelCandidateInCurrentSession'
+        : 'modelCandidateNotLoadedOrUnavailable';
+      const humanKey = x.humanReviewRecorded ? 'humanReviewRecorded' : 'humanReviewMissing';
+      candidateEvidenceTotals[modelKey]++;
+      candidateEvidenceTotals[humanKey]++;
+      if (
+        x.modelCandidateAvailable &&
+        x.humanReviewRecorded &&
+        !x.reviewStoreUnavailable &&
+        (!capture.captureScreenEligibility ||
+          capture.captureScreenEligibility === 'frontal_candidate')
+      )
+        candidateEvidenceTotals.humanAndModelBothPresent++;
+      summary[i][modelKey] = (summary[i][modelKey] || 0) + 1;
+      summary[i][humanKey] = (summary[i][humanKey] || 0) + 1;
+    }
+  }
+  return Object.freeze({
+    schemaVersion: HUMAN_MODEL_COMPARISON_COVERAGE_VERSION,
+    status: 'local_research_comparison_coverage_not_accuracy',
+    photoCount: captures.length,
+    featureCount: FEATURES.length,
+    photoFeatureCount: captures.length * FEATURES.length,
+    provisionalPosePhotos,
+    captureScreenReadySingleReviewerPhotos,
+    captureScreenPendingPhotos,
+    captureScreenRejectedPhotos,
+    captureScreenUnavailablePhotos,
+    statusCounts: Object.freeze(totals),
+    candidateEvidenceCounts: Object.freeze(candidateEvidenceTotals),
+    modelCandidateIsTransientBrowserEvidence: true,
+    features: Object.freeze(summary.map((row) => Object.freeze({ ...row }))),
+    // A same-photo geometric candidate is not independent anatomical truth.
+    independentlyReviewedPose: false,
+    independentHumanGroundTruthValidated: false,
+    independentMeasurementAccuracyValidated: false,
+    repeatCaptureAgreementValidated: false,
+    canonicalF0Admitted: false,
+    traditionalBindingAuthorized: false,
+    productInterpretationAuthorized: false,
+    rawSourcePersistedOrEmitted: false,
+  });
+}
