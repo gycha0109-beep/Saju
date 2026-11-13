@@ -81,7 +81,12 @@ describe('existing compatibility browser route stays protected and research-only
         requestBodyHash: deterministicContentHash(request), responseBodyHash: deterministicContentHash(body) });
       expect(verify(null, Buffer.from(payload.version + '\0' + deterministicContentHash(payload)),
         publicKey, Buffer.from(signature, 'base64url'))).toBe(true);
-      const sourceMaterial = body.evidence.sourceReadingMaterial;
+      const sourceMaterial = (body as { evidence: { sourceReadingMaterial: {
+        materialHash: string; status: string; officialIssueAuthorized: boolean;
+        mayPublish: boolean; maySell: boolean;
+        charts: { calculationHash: string }[];
+        units: { unitId: string; paragraph: string }[];
+      } } }).evidence.sourceReadingMaterial;
       const { materialHash, status, officialIssueAuthorized, mayPublish, maySell, ...unsigned } =
         sourceMaterial;
       expect(materialHash).toBe(deterministicContentHash(unsigned));
