@@ -170,8 +170,19 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
       .toContain('첫 번째 사람(고전 남성 역할 입력의 비견·겁재)');
     expect(reverse?.historical.paragraph)
       .toContain('두 번째 사람(고전 남성 역할 입력의 비견·겁재)');
-    expect(forward?.historical.paragraph).toContain('미확정 위치 2곳');
-    expect(reverse?.historical.paragraph).toContain('미확정 위치 2곳');
+    const forwardMissing = forward?.historical.tenGodVisibleInputs.find(item =>
+      item.personRef === 'person-first')?.unresolvedFactPaths;
+    const reverseMissing = reverse?.historical.tenGodVisibleInputs.find(item =>
+      item.personRef === 'person-second')?.unresolvedFactPaths;
+    // With unknown birth hour, canonical T5 makes the entire chart-level
+    // ten-god result unavailable, not only its two hour slots.
+    expect(forwardMissing).toHaveLength(7);
+    expect(reverseMissing).toEqual(forwardMissing?.map(path =>
+      path.replace(/^subject\./u, 'target.')));
+    expect(forward?.historical.paragraph)
+      .toContain('미확정 위치 ' + forwardMissing?.length + '곳');
+    expect(reverse?.historical.paragraph)
+      .toContain('미확정 위치 ' + reverseMissing?.length + '곳');
     expect(forward?.historical.paragraph).not.toContain('궁합 점수');
   });
 
