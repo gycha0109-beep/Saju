@@ -15,12 +15,11 @@ import {
   GENERAL_ANNUAL_SOURCE_CANDIDATES,
 } from '../research/general-annual-atomic-semantic-source-acquisition.js';
 import {
-  buildAnnualInterpretationFacts,
+  buildPrecedingAnnualInterpretationFacts,
   type AnnualInterpretationFacts,
 } from './annual-interpretation-facts.js';
 import { resolveDayunTemporalContext } from './dayun-temporal-context.js';
 import type { MonthlyInterpretationFacts } from './monthly-interpretation-facts.js';
-import { annualSexagenaryPillar } from './temporal-reading-context.js';
 
 const VERSION = 'myeonghwa-temporal-reader-evidence-v1';
 const PILLAR_SLOTS: readonly PillarSlot[] = ['year', 'month', 'day', 'hour'];
@@ -126,10 +125,8 @@ export function buildTemporalReaderEvidence(
     intervalConvention: 'half_open_start_inclusive_end_exclusive' as const,
   } as const;
 
-  const precedingAnnualFacts = facts.scope === 'annual' ? buildAnnualInterpretationFacts(snapshot, {
-    scope: 'annual', targetYear: targetYear - 1, timeZone, referenceDateTime,
-    annualPillar: annualSexagenaryPillar(targetYear - 1),
-  }) : undefined;
+  const precedingAnnualFacts = facts.scope === 'annual'
+    ? buildPrecedingAnnualInterpretationFacts(snapshot, facts) : undefined;
   const material = facts.scope === 'monthly'
     ? {
       ...common, scope: facts.scope, targetMonth: facts.targetMonth,

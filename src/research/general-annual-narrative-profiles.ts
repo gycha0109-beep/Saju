@@ -196,3 +196,11 @@ function tensionProfile(copy: AnnualTensionCopy): ClaimNarrativeProfile {
 
 export const GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES: readonly ClaimNarrativeProfile[] =
   Object.freeze([...THEME_COPY.map(themeProfile), ...TENSION_COPY.map(tensionProfile)]);
+
+export const GENERAL_ANNUAL_CIVIL_YEAR_NARRATIVE_PROFILES: readonly ClaimNarrativeProfile[] =
+  Object.freeze(GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.map(profile => ({
+    ...profile,
+    templates: (profile.templates ?? []).map(template => ({
+      ...template, text: template.text.replaceAll('해당 연도', '이 구간').replaceAll('새 연도', '이 구간'),
+    })),
+  })));
