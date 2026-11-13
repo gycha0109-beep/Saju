@@ -156,6 +156,11 @@ describe('8C-2B-2B process lifecycle and HTTP transport', () => {
     };
     expect(await verifyHeldSourceReadingTransportProofV1(envelope.proof, options))
       .toMatchObject({ state: 'blocked' });
+    const alteredSignals = Array.isArray(envelope.temporalEvidence.researchSignals)
+      ? envelope.temporalEvidence.researchSignals.slice(1) : [];
+    expect(await verifyHeldSourceReadingTransportProofV1(envelope.proof, {
+      ...options, temporalEvidence: { ...envelope.temporalEvidence, researchSignals: alteredSignals },
+    })).toMatchObject({ state: 'blocked' });
     expect(await verifyHeldSourceReadingTransportProofV1(envelope.proof, {
       ...options, temporalEvidence: { ...envelope.temporalEvidence, targetYear: 2027 },
     })).toMatchObject({ state: 'blocked' });
@@ -190,8 +195,9 @@ describe('8C-2B-2B process lifecycle and HTTP transport', () => {
     expect(evidence.segments[0]?.pillar).not.toEqual(evidence.segments[1]?.pillar);
     const primary = evidence.researchSignals.filter(signal => signal.kind === 'primary');
     expect(primary.map(signal => signal.segmentId)).toEqual(
-      text === '올해' ? ['after_ipchun'] : ['before_jeol', 'after_jeol'],
+      text === '올해' ? ['before_ipchun', 'after_ipchun'] : ['before_jeol', 'after_jeol'],
     );
+    expect(new Set(primary.map(signal => signal.claimId)).size).toBe(2);
     for (const signal of evidence.researchSignals) {
       expect(signal.statement).toContain('특정 사건이나 결과를 확정하지 않습니다');
       expect(signal.sourceRefs.length).toBeGreaterThan(0);

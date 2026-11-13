@@ -1,10 +1,14 @@
 import { getSolarTerm } from 'manseryeok';
 import type { CanonicalSajuSnapshot, PillarSlot, TenGod } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
-import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
+import {
+  runInterpretation,
+  type InterpretationExecutionResult,
+} from '../interpretation/interpretation-engine.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { renderClaimNarrativeProfileSections } from '../narrative/claim-narrative-profile.js';
 import { GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES } from '../research/general-annual-narrative-profiles.js';
+import { createGeneralAnnualReadingCandidateRegistry } from '../research/general-annual-reading-candidate.js';
 import { GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES } from '../research/general-monthly-narrative-profiles.js';
 import {
   GENERAL_ANNUAL_ATOMIC_STEM_RELATION_PROPOSITION,
@@ -64,6 +68,7 @@ function buildResearchSignals(
       MonthlyInterpretationFacts['segments'][number]['monthlyBranchRelations'];
   }[],
   interpretation?: InterpretationExecutionResult,
+  annualSegmentId: 'before_ipchun' | 'after_ipchun' = 'after_ipchun',
 ) {
   if (!interpretation?.integrity.valid || interpretation.run.snapshotId !== snapshot.snapshotId
     || interpretation.run.snapshotHash !== snapshot.calculationHash) return [];
@@ -78,8 +83,7 @@ function buildResearchSignals(
     const claim = byClaimId.get(block.evidenceRefs[0]!.ref);
     if (claim === undefined || claim.value === null || typeof claim.value !== 'object') return [];
     const value = claim.value as Record<string, unknown>;
-    // The annual registry was executed for the requested Saju year only.
-    const segment = segments.find(item => item.id === (scope === 'annual' ? 'after_ipchun' : value.segmentId));
+    const segment = segments.find(item => item.id === (scope === 'annual' ? annualSegmentId : value.segmentId));
     if (segment === undefined) return [];
     const signal = {
       claimId: claim.claimId, segmentId: segment.id,
@@ -122,6 +126,10 @@ export function buildTemporalReaderEvidence(
     intervalConvention: 'half_open_start_inclusive_end_exclusive' as const,
   } as const;
 
+  const precedingAnnualFacts = facts.scope === 'annual' ? buildAnnualInterpretationFacts(snapshot, {
+    scope: 'annual', targetYear: targetYear - 1, timeZone, referenceDateTime,
+    annualPillar: annualSexagenaryPillar(targetYear - 1),
+  }) : undefined;
   const material = facts.scope === 'monthly'
     ? {
       ...common, scope: facts.scope, targetMonth: facts.targetMonth,
@@ -139,13 +147,9 @@ export function buildTemporalReaderEvidence(
       const startsAt = new Date(`${targetYear}-01-01T00:00:00+09:00`).toISOString();
       const endsAt = new Date(`${targetYear + 1}-01-01T00:00:00+09:00`).toISOString();
       if (!(startsAt < at && at < endsAt)) throw new RangeError('Ipchun is outside the requested year.');
-      const preceding = buildAnnualInterpretationFacts(snapshot, {
-        scope: 'annual', targetYear: targetYear - 1, timeZone, referenceDateTime,
-        annualPillar: annualSexagenaryPillar(targetYear - 1),
-      });
       return {
         ...common, scope: facts.scope, boundary: { name: term.name, hanja: term.hanja, at },
-        segments: [preceding, facts].map((part, index) => ({
+        segments: [precedingAnnualFacts!, facts].map((part, index) => ({
           id: index === 0 ? 'before_ipchun' : 'after_ipchun',
           startsAt: index === 0 ? startsAt : at,
           endsAt: index === 0 ? at : endsAt,
@@ -177,10 +181,19 @@ export function buildTemporalReaderEvidence(
         }] : [];
       }),
     };
+  const currentSignals = buildResearchSignals(snapshot, material.scope, material.segments, interpretation);
+  // The civil year includes the preceding Saju year. Evaluate its held
+  // research rules against that pillar and the same natal snapshot.
+  const precedingSignals = precedingAnnualFacts === undefined || currentSignals.length === 0 ? [] :
+    buildResearchSignals(snapshot, 'annual', material.segments, runInterpretation(
+      snapshot, createGeneralAnnualReadingCandidateRegistry(referenceDateTime), {
+        now: new Date(referenceDateTime), temporalFacts: { ...precedingAnnualFacts },
+      },
+    ), 'before_ipchun');
   const evidence = {
     ...material,
     referenceSegmentId: referenceSegment?.id ?? null,
-    researchSignals: buildResearchSignals(snapshot, material.scope, material.segments, interpretation),
+    researchSignals: [...precedingSignals, ...currentSignals],
     dayunOverlap: dayunOverlap.status === 'resolved' && dayunOverlap.segments.length === 0
       ? { status: 'unavailable' as const, reasonCode: 'outside_resolved_dayun_period' as const }
       : dayunOverlap,

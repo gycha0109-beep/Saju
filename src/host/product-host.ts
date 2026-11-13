@@ -469,7 +469,7 @@ function assertDependencies(dependencies: MyeonghwaProductHostDependencies): voi
 
 /** Saju-internal only; not exported by the consumer product-host entrypoint. */
 export interface MyeonghwaSourceReadingProofHost {
-  requestReadingWithProofReadiness(body: unknown): Promise<{
+  requestReadingWithProofReadiness(body: unknown, includeTemporalEvidence?: boolean): Promise<{
     readonly response: ProductReadingResponse;
     readonly readiness: SourceReadingProofReadinessV1;
     /** Parsed and normalized by the Saju host for this same execution. */
@@ -625,10 +625,10 @@ export function createMyeonghwaSourceReadingProofHost(
 ): MyeonghwaSourceReadingProofHost {
   assertDependencies(dependencies);
   return {
-    async requestReadingWithProofReadiness(body: unknown) {
+    async requestReadingWithProofReadiness(body: unknown, includeTemporalEvidence = true) {
       const run = await runProductHostReadingInternals(dependencies, body);
       const readiness = inspectSourceReadingProofReadinessV1(run);
-      const temporalReaderEvidence = readiness.material !== undefined &&
+      const temporalReaderEvidence = includeTemporalEvidence && readiness.material !== undefined &&
         run.requestContext?.readingRequest.intent.domain === 'general'
         ? buildTemporalReaderEvidence(
           run.snapshot, run.requestContext.temporalFacts, readiness.material.responseBodyHash, run.interpretation,

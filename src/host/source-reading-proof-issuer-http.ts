@@ -154,7 +154,7 @@ export function createMyeonghwaSourceReadingProofIssuerHttpServerV1(
     try {
       const incoming = parseProofRequest(await readJson(request, maxBytes));
       const { response: readingResponse, readiness, executedRequestBody, temporalReaderEvidence } =
-        await source.requestReadingWithProofReadiness(incoming.request);
+        await source.requestReadingWithProofReadiness(incoming.request, incoming.includeTemporalEvidence);
       const temporalEvidence = incoming.includeTemporalEvidence ? temporalReaderEvidence : undefined;
       if (readiness.state !== 'held' || (incoming.includeTemporalEvidence && temporalEvidence === undefined)) {
         failure(response, 409, 'SOURCE_PROOF_NOT_READY');
