@@ -444,3 +444,12 @@
 - **명하 인계:** [MyeongHa #3174](https://github.com/gycha0109-beep/MyeongHa/pull/3174)의 `apps/api/src/saju-held-pair-review-v1.ts`가 서명 검증 후 두 사람 해시·원본 경로·지원 규칙·미판매를 확인한다. 잘못된 원본/인물 치환·임의 발급 승격은 거부한다.
 - **테스트:** `test/product-host-compatibility-protected-preview-http.test.ts`와 명하 `apps/api/src/saju-held-pair-review-v1.test.ts`를 확장했다. CI는 신규 커밋별로 별도 확인한다.
 - **정확한 단계 판정:** T10 기존 4단계(실제 두 명식 문장/근거)와 5단계(보호 인계)의 **부분 구현**이다. 아직 **세 구매 구성의 실제 Official 발급·상대 동의/철회·Reader 재열람·결제 및 운영 검증 미완료**이며 상품 판매·공개는 HOLD. 신규 학술 승인 대기 없음.
+
+## 50. 2026-11-13 — 관계 비교 세 구매 구성의 정확한 상대·동의 결속을 발급 준비 경로에 반영
+
+- **시작 CI:** Saju #2763 `5ea3d71e`의 CI·PIE Shadow·계산 컨테이너 완료/성공 확인. Saju #2762, MyeongHa #3174의 각 직전 HEAD 검사도 모두 완료/성공. 미병합.
+- **구매/발급 준비 실구현:** MyeongHa #3174의 `public.qry_approved_saju_pair_issue_scope_v1` SQL 후보는 이미 확인한 상대 동의·구매·두 명식 외에 **동일 승인 구매의 정확한 상품명/첫·추가 순서/상대 ID/사용 동의번호**를 추가 조회한다. 서버 `readApprovedSajuPairIssueScopeV1`는 승인 카탈로그의 `first-counterpart`, `additional-counterpart`, `relationship-plus-first` 세 구성과 실제 동일함을 검증한다. 임의 선택 입력을 신뢰하지 않는다.
+- **호출 전후 보호:** `inspectApprovedSajuPairSourceV1`가 출생 revision/명식 해시/구매 증거/Release 외에 위 상품·상대 ID·동의 번호·구성도 해석 요청 전후 재확인한다. 달라졌다면 발급 준비를 보류한다. 정상 결과도 `authorizedForIssue=false`·`canSell=false`다.
+- **검증 코드:** MyeongHa `apps/api/src/postgres-approved-saju-pair-issuance-scope-v1.test.ts`, `apps/api/src/postgres-approved-saju-pair-offer-handoff-v1.test.ts`, `test/db/commerce_approved_saju_purchase_scope_pg17.sql`에서 세 상품의 독립 구성·상대 동의/명식·변경 거부를 검사한다. 후보 SQL은 운영 DB에 적용하지 않았다.
+- **로드맵 위치:** 기존 T10 5단계 중 **구매·상대·동의 고정 사전조건의 부분 구현**. 실제 Official T10 서명 결과·이중 원본 서명/발급·보관함/Reader·상대 동의 철회·환불 E2E·정식 세 상품 발급 작업자는 미완료. 학술 원문 추가 확보를 출시 조건으로 요구하지 않으며 실제 구매/권한 검증을 면제하지 않는다. 새 CI 완료 확인 전 결과 미판정, `ROADMAP_IN_PROGRESS`.
+
