@@ -77,7 +77,15 @@ describe('existing compatibility browser route stays protected and research-only
       const request = { ...pair, candidateScope: 'traditional_marital_palace_comparison' };
       const result = await post(request);
       expect(result.status).toBe(200);
-      const evidenceBody = await result.json();
+      const evidenceBody = await result.json() as Result & {
+        evidence: {
+          readingReview: {
+            sections: Array<{
+              sentences: Array<{ observedFactPaths: string[]; individualRelationshipOutcomeAuthorized: boolean }>;
+            }>;
+          };
+        };
+      };
       expect(evidenceBody).toMatchObject({
         mayPublish: false, maySell: false, generatedInterpretationClaims: false,
         evidence: {
@@ -96,10 +104,7 @@ describe('existing compatibility browser route stays protected and research-only
           },
         },
       });
-      const sections = evidenceBody.evidence.readingReview.sections as Array<{
-        sentences: Array<{ observedFactPaths: string[]; individualRelationshipOutcomeAuthorized: boolean }>;
-      }>;
-      const sentences = sections.flatMap(section => section.sentences);
+      const sentences = evidenceBody.evidence.readingReview.sections.flatMap(section => section.sentences);
       expect(sentences.some(sentence => sentence.observedFactPaths.some(path => path.startsWith('subject.'))
         && sentence.observedFactPaths.some(path => path.startsWith('target.')))).toBe(true);
       expect(sentences.every(sentence => sentence.individualRelationshipOutcomeAuthorized === false)).toBe(true);
