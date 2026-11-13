@@ -241,6 +241,37 @@ describe('T10 source-bounded pair reading: no unsupported relationship judgment'
     expect(left?.relationshipOutcome).toBeNull();
   });
 
+  it.each([
+    [COMBINATION_AND_CLASH, '일지 육합과 다른 위치의 충',
+      'day_six_combination_vs_other_clash'],
+    [CLASH_AND_COMBINATION, '일지 충과 다른 위치의 육합',
+      'day_clash_vs_other_six_combination'],
+    [NONMIXED, '잘 맞는다는 근거가 아닙니다',
+      'no_listed_opposite_positions'],
+  ] as const)('renders each synthesis evidence boundary without giving an outcome', (
+    partner, fragment, id,
+  ) => {
+    const result = run(A, partner);
+    const decision = result.crossMethodContrastResearch?.synthesisDecision;
+    const section = result.pairReadingBoundaryDraft?.sections.find(item =>
+      item.id === 'synthesis_hold');
+    const sentence = section?.sentences[0];
+    expect(decision?.caseId).toBe(id);
+    expect(sentence?.paragraph).toBe(decision?.paragraph);
+    expect(sentence?.paragraph).toContain(fragment);
+    expect(sentence?.observedFactPaths).toEqual(decision?.observedFactPaths);
+    expect(sentence?.consideredButUnverifiedFactPaths)
+      .toEqual(decision?.unverifiedFactPaths);
+    expect(sentence?.sourceUrls).toEqual(decision?.sourceUrls);
+    expect(sentence?.evidenceLayer).toBe('unresolved_synthesis');
+    expect(sentence?.missingPrerequisites)
+      .toContain('SOURCE_VALIDATED_RELATIONSHIP_OUTCOME_METHOD');
+    expect(sentence?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(result.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
+    expect(result.maySell).toBe(false);
+  });
+
   it('does not manufacture a mixed-position section when that case is absent', () => {
     const draft = run(A, NONMIXED).pairReadingBoundaryDraft;
     expect(draft?.structuralSituation)

@@ -71,6 +71,8 @@ describe('T10 product quality: factual material never becomes a complete relatio
     expect(a?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);
     expect(b?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);
     expect(a?.traceAudit.sectionIds).toContain('mixed_positions');
+    expect(a?.traceAudit.sectionIds).toContain('synthesis_hold');
+    expect(b?.traceAudit.sectionIds).toContain('synthesis_hold');
     const mixed = pair.pairReadingBoundaryDraft?.sections.find(section =>
       section.id === 'mixed_positions')?.sentences[0];
     expect(mixed?.paragraph).toContain('실제 일지 비교는');
@@ -117,6 +119,23 @@ describe('T10 product quality: factual material never becomes a complete relatio
         .toBe(false);
       expect(result.maySell).toBe(false);
     }
+  });
+
+  it('keeps the absence of listed opposition separate from evidence of harmony', () => {
+    const output = run(A, SINGLE);
+    const draft = output.pairReadingBoundaryDraft;
+    const synthesis = draft?.sections.find(section =>
+      section.id === 'synthesis_hold')?.sentences[0];
+    expect(synthesis?.paragraph).toContain('잘 맞는다는 근거가 아닙니다');
+    expect(synthesis?.observedFactPaths)
+      .toEqual(output.crossMethodContrastResearch?.synthesisDecision.observedFactPaths);
+    expect(synthesis?.missingPrerequisites).toContain(
+      'NO_OBSERVED_OPPOSITE_IS_NOT_EVIDENCE_OF_HARMONY');
+    expect(output.productReadingQualityReview?.traceAudit.exactSourceDerivedDraft)
+      .toBe(true);
+    expect(output.productReadingQualityReview?.productEligibility.every(item =>
+      item.eligibleToHandoffForSalesOrIssuance === false)).toBe(true);
+    expect(output.maySell).toBe(false);
   });
 
   it('does not invent a multi-factor conflict if only one factor is present', () => {

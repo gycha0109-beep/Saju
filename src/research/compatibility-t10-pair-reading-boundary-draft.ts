@@ -34,7 +34,7 @@ export interface T10PairDraftSentence {
 export interface T10PairDraftSection {
   readonly id: 'direct_day_facts' | 'traditional_day_factor_scope' |
     'day_to_year_facts' | 'mixed_positions' |
-    'historical_method_disagreement' | 'palace_method' |
+    'historical_method_disagreement' | 'synthesis_hold' | 'palace_method' |
     'six_spirits_method' | 'useful_god_method' | 'reading_limits';
   readonly title: string;
   readonly sentences: readonly T10PairDraftSentence[];
@@ -371,6 +371,35 @@ export function buildT10PairReadingBoundaryDraftV1(
       individualRelationshipOutcomeAuthorized: false,
     }]);
   }
+  const decision = contrast.synthesisDecision;
+  if (decision.sourceQualifiedPriorityEstablished !== false ||
+      decision.relationshipConclusion !== null ||
+      decision.compatibilityScore !== null ||
+      decision.noObservedOppositionProvesHarmony !== false ||
+      !decision.unresolvedPrerequisites.includes(
+        'SOURCE_VALIDATED_RELATIONSHIP_OUTCOME_METHOD') ||
+      decision.historicalMethodScope !== (
+        contrast.historical.state ===
+        'historical_male_female_scope_with_unsettled_conditions'
+          ? 'historical_male_female_unresolved' : 'historical_roles_not_matched') ||
+      decision.caseId !== (mixed
+        ? mixed.direction === 'day_six_combination_with_other_clash'
+          ? 'day_six_combination_vs_other_clash'
+          : 'day_clash_vs_other_six_combination'
+        : 'no_listed_opposite_positions')) {
+    throw new TypeError('T10 synthesis HOLD cannot invent a priority or relational meaning.');
+  }
+  add('synthesis_hold', '복수 근거의 종합 보류 판정', [{
+    paragraph: decision.paragraph,
+    evidenceLayer: 'unresolved_synthesis',
+    observedFactPaths: decision.observedFactPaths,
+    consideredButUnverifiedFactPaths: decision.unverifiedFactPaths,
+    sourceIds: decision.sourceIds,
+    sourceUrls: decision.sourceUrls,
+    definitionContentHashes: decision.definitionContentHashes,
+    missingPrerequisites: decision.unresolvedPrerequisites,
+    individualRelationshipOutcomeAuthorized: false,
+  }]);
   add('historical_method_disagreement', '고전 방법의 적용 한계', [{
     paragraph: contrast.historical.paragraph,
     evidenceLayer: 'unresolved_synthesis',

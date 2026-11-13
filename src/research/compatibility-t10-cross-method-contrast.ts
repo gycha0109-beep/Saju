@@ -70,6 +70,26 @@ export interface T10HistoricalMethodContrast {
   readonly relationPriorityEstablished: false;
 }
 
+export interface T10SynthesisHoldDecisionV1 {
+  readonly caseId:
+    'day_six_combination_vs_other_clash' |
+    'day_clash_vs_other_six_combination' |
+    'no_listed_opposite_positions';
+  readonly historicalMethodScope:
+    'historical_male_female_unresolved' | 'historical_roles_not_matched';
+  readonly observedFactPaths: readonly string[];
+  readonly unverifiedFactPaths: readonly string[];
+  readonly sourceIds: readonly string[];
+  readonly sourceUrls: readonly string[];
+  readonly definitionContentHashes: readonly string[];
+  readonly unresolvedPrerequisites: readonly string[];
+  readonly paragraph: string;
+  readonly sourceQualifiedPriorityEstablished: false;
+  readonly noObservedOppositionProvesHarmony: false;
+  readonly relationshipConclusion: null;
+  readonly compatibilityScore: null;
+}
+
 export interface T10CrossMethodContrastResearchV1 {
   readonly version: typeof T10_CROSS_METHOD_CONTRAST_VERSION;
   readonly lifecycle: 'internal_research_only';
@@ -77,6 +97,7 @@ export interface T10CrossMethodContrastResearchV1 {
   readonly target: PairPerson;
   readonly structural: readonly T10StructuralMethodContrast[];
   readonly historical: T10HistoricalMethodContrast;
+  readonly synthesisDecision: T10SynthesisHoldDecisionV1;
   readonly unresolvedMethodPrerequisites: readonly string[];
   readonly state: 'competing_observations_no_admitted_precedence';
   readonly pairwiseT10Admitted: false;
@@ -373,11 +394,64 @@ export function compareT10CrossMethodEvidenceV1(
     }).join('; ')
     : '';
 
+  const mixed = structural[0];
+  const synthesisCase: T10SynthesisHoldDecisionV1['caseId'] = !mixed
+    ? 'no_listed_opposite_positions'
+    : mixed.direction === 'day_six_combination_with_other_clash'
+      ? 'day_six_combination_vs_other_clash'
+      : 'day_clash_vs_other_six_combination';
+  const synthesisPaths = unique([
+    ...(mixed ? [
+      ...mixed.dayFactPaths,
+      ...mixed.otherFactPaths.flatMap(item => [item.subject, item.target]),
+    ] : []),
+    ...mappedT5.flatMap(item => [...item.canonicalFactPaths]),
+    ...examples.flatMap(item => [...item.counterpartVisibleFactPaths]),
+  ]);
+  const synthesisPrerequisites = unique([
+    ...(!mixed ? ['NO_OBSERVED_OPPOSITE_IS_NOT_EVIDENCE_OF_HARMONY']
+      : ['EXACT_TWO_PERSON_PRIORITIZATION_RULE']),
+    ...coexisting.synthesis.missingPrerequisites,
+    ...six.missingPrerequisites,
+    ...useful.missingPrerequisites,
+    ...axes.flatMap(axis => [...axis.unresolvedPrerequisites]),
+    'SOURCE_VALIDATED_RELATIONSHIP_OUTCOME_METHOD',
+  ]);
+  const synthesisDecision: T10SynthesisHoldDecisionV1 = {
+    caseId: synthesisCase,
+    historicalMethodScope: historicalRoles
+      ? 'historical_male_female_unresolved' : 'historical_roles_not_matched',
+    observedFactPaths: synthesisPaths,
+    unverifiedFactPaths: unique(mappedT5.flatMap(item => [...item.unresolvedFactPaths])),
+    sourceIds: unique(mixed?.otherFactPaths.flatMap(item => [...item.sourceIds]) ?? []),
+    sourceUrls: unique([...(mixed?.sources ?? []), ...roleSource]),
+    definitionContentHashes: unique(
+      mixed?.otherFactPaths.map(item => item.definitionContentHash) ?? []),
+    unresolvedPrerequisites: synthesisPrerequisites,
+    paragraph: (synthesisCase === 'day_six_combination_vs_other_clash'
+      ? '현재 두 명식에서 일지 육합과 다른 위치의 충이 함께 관측됩니다. '
+      : synthesisCase === 'day_clash_vs_other_six_combination'
+        ? '현재 두 명식에서 일지 충과 다른 위치의 육합이 함께 관측됩니다. '
+        : '이번에 검증한 일지와 다른 위치 사이의 반대 합·충 구조는 함께 관측되지 않았습니다. ' +
+          '이것은 다른 상충 요소가 없거나 두 사람이 잘 맞는다는 근거가 아닙니다. ') +
+      (historicalRoles
+        ? '고전의 역사적 남녀 역할 입력에 따라 십신 위치와 오행 예시를 조회했지만, ' +
+          '십신의 중(重)·강약과 실제 용신 선정은 확인되지 않았습니다. '
+        : '고전 십신 짝짓기의 역사적 남녀 역할 조건과는 맞지 않아 해당 방법을 ' +
+          '현재 두 사람에게 적용할 수 없습니다. ') +
+      '합·충의 상쇄나 두 고전 방법의 우선순위에 관한 검증된 두 명식 종합법이 없으므로 ' +
+      '어느 근거가 더 중요하다는 결론과 실제 관계 결과를 모두 보류합니다.',
+    sourceQualifiedPriorityEstablished: false,
+    noObservedOppositionProvesHarmony: false,
+    relationshipConclusion: null,
+    compatibilityScore: null,
+  };
   return {
     version: T10_CROSS_METHOD_CONTRAST_VERSION,
     lifecycle: 'internal_research_only',
     subject: pair.subject, target: pair.target,
     structural,
+    synthesisDecision,
     historical: {
       sourceDisagreement: 'CLASSICAL_TEN_GOD_PAIRING_DISPUTED_BY_CLASSICAL_ELEMENT_METHOD',
       state: historicalRoles

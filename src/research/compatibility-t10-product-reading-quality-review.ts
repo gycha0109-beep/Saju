@@ -158,6 +158,7 @@ export function auditT10ProductReadingQualityV1(
       draft.sections.length === 0 ||
       !draft.sections.some(section => section.id === 'direct_day_facts') ||
       !draft.sections.some(section => section.id === 'reading_limits') ||
+      draft.sections.filter(section => section.id === 'synthesis_hold').length !== 1 ||
       !requiredMethodSections.every(id =>
         draft.sections.filter(section => section.id === id).length === 1) ||
       unique(draft.sections.map(section => section.id)).length !== draft.sections.length ||
@@ -214,6 +215,39 @@ export function auditT10ProductReadingQualityV1(
       (mixed && expectedDirection === 'day_clash_with_other_six_combination' &&
         !mixed.sentences[0]?.paragraph.includes('일지 사이에는 충이 있고 다른 위치에는 육합'))) {
     throw new TypeError('T10 quality review requires the actual structural case distinction.');
+  }
+
+  const synthesis = draft.sections.find(section => section.id === 'synthesis_hold')
+    ?.sentences[0];
+  const sourceDecision = contrast.synthesisDecision;
+  const currentSynthesisCase = originalMixed
+    ? originalMixed.direction === 'day_six_combination_with_other_clash'
+      ? 'day_six_combination_vs_other_clash'
+      : 'day_clash_vs_other_six_combination'
+    : 'no_listed_opposite_positions';
+  if (!synthesis ||
+      sourceDecision.caseId !== currentSynthesisCase ||
+      sourceDecision.relationshipConclusion !== null ||
+      sourceDecision.compatibilityScore !== null ||
+      sourceDecision.noObservedOppositionProvesHarmony !== false ||
+      sourceDecision.sourceQualifiedPriorityEstablished !== false ||
+      synthesis.evidenceLayer !== 'unresolved_synthesis' ||
+      synthesis.individualRelationshipOutcomeAuthorized !== false ||
+      !synthesis.missingPrerequisites.includes(
+        'SOURCE_VALIDATED_RELATIONSHIP_OUTCOME_METHOD') ||
+      JSON.stringify(synthesis.observedFactPaths) !==
+        JSON.stringify(sourceDecision.observedFactPaths) ||
+      JSON.stringify(synthesis.consideredButUnverifiedFactPaths) !==
+        JSON.stringify(sourceDecision.unverifiedFactPaths) ||
+      JSON.stringify(synthesis.sourceIds) !== JSON.stringify(sourceDecision.sourceIds) ||
+      JSON.stringify(synthesis.sourceUrls) !== JSON.stringify(sourceDecision.sourceUrls) ||
+      JSON.stringify(synthesis.missingPrerequisites) !==
+        JSON.stringify(sourceDecision.unresolvedPrerequisites) ||
+      (currentSynthesisCase === 'no_listed_opposite_positions' &&
+        (!synthesis.paragraph.includes('잘 맞는다는 근거가 아닙니다') ||
+         !synthesis.missingPrerequisites.includes(
+           'NO_OBSERVED_OPPOSITE_IS_NOT_EVIDENCE_OF_HARMONY')))) {
+    throw new TypeError('T10 quality review requires exact source-qualified synthesis HOLD.');
   }
 
   const sourceLimits = draft.sections.find(section => section.id === 'reading_limits');

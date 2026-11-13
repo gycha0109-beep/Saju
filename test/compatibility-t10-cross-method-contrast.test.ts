@@ -69,6 +69,20 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
     expect(mixed?.otherFactPaths.every(item =>
       mixed.paragraph.includes(item.subjectValue) &&
       mixed.paragraph.includes(item.targetValue))).toBe(true);
+    expect(result?.synthesisDecision.caseId)
+      .toBe('day_six_combination_vs_other_clash');
+    expect(result?.synthesisDecision.paragraph)
+      .toContain('일지 육합과 다른 위치의 충');
+    expect(result?.synthesisDecision.observedFactPaths).toEqual(
+      expect.arrayContaining([
+        'subject.pillars.day.value.branch',
+        'target.pillars.day.value.branch',
+        'subject.pillars.year.value.branch',
+        'target.pillars.year.value.branch',
+      ]),
+    );
+    expect(result?.synthesisDecision.sourceQualifiedPriorityEstablished).toBe(false);
+    expect(result?.synthesisDecision.relationshipConclusion).toBeNull();
     expect(result?.structural[0]?.netRelationshipMeaning).toBeNull();
     expect(result?.interpersonalConclusion).toBeNull();
     expect(result?.maySell).toBe(false);
@@ -86,6 +100,12 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
       })]),
     );
     expect(result?.structural[0]?.conditionalPriorityEstablished).toBe(false);
+    expect(result?.synthesisDecision.caseId)
+      .toBe('day_clash_vs_other_six_combination');
+    expect(result?.synthesisDecision.paragraph)
+      .toContain('일지 충과 다른 위치의 육합');
+    expect(result?.synthesisDecision.unresolvedPrerequisites)
+      .toContain('EXACT_TWO_PERSON_PRIORITIZATION_RULE');
     const mixed = result?.structural[0];
     expect(mixed?.dayFactValues.kind).toBe('branch_clash');
     expect(mixed?.paragraph).toContain('실제 일지 비교는 첫 번째 사람 ' +
@@ -99,6 +119,12 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
   it('does not invent a competing palace factor when there is none', () => {
     const result = run(A, NO_OPPOSITION).crossMethodContrastResearch;
     expect(result?.structural).toEqual([]);
+    expect(result?.synthesisDecision.caseId).toBe('no_listed_opposite_positions');
+    expect(result?.synthesisDecision.paragraph)
+      .toContain('잘 맞는다는 근거가 아닙니다');
+    expect(result?.synthesisDecision.noObservedOppositionProvesHarmony).toBe(false);
+    expect(result?.synthesisDecision.unresolvedPrerequisites)
+      .toContain('NO_OBSERVED_OPPOSITE_IS_NOT_EVIDENCE_OF_HARMONY');
     expect(result?.historical.oppositeChartOutcomesEstablished).toBe(false);
     expect(result?.interpersonalConclusion).toBeNull();
   });
@@ -112,6 +138,10 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
     const six = output.classicalCrossTenGodResearch;
     const useful = output.classicalUsefulElementResearch;
     expect(historical?.state).toBe('historical_male_female_scope_with_unsettled_conditions');
+    expect(result?.synthesisDecision.historicalMethodScope)
+      .toBe('historical_male_female_unresolved');
+    expect(result?.synthesisDecision.paragraph)
+      .toContain('십신의 중(重)·강약과 실제 용신 선정은 확인되지 않았습니다');
     expect(historical?.tenGodVisibleInputs).toHaveLength(2);
     expect(historical?.elementExampleInputs).toHaveLength(2);
     expect(historical?.tenGodVisibleInputs.find(item =>
@@ -147,6 +177,10 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
   it('keeps role-limited method disagreement from becoming a modern relationship inference', () => {
     const result = run(A, SUPPORT_WITH_CLASH).crossMethodContrastResearch;
     expect(result?.historical.state).toBe('historical_role_scope_unmatched');
+    expect(result?.synthesisDecision.historicalMethodScope)
+      .toBe('historical_roles_not_matched');
+    expect(result?.synthesisDecision.paragraph)
+      .toContain('현재 두 사람에게 적용할 수 없습니다');
     expect(result?.historical.tenGodVisibleInputs).toEqual([]);
     expect(result?.historical.elementExampleInputs).toEqual([]);
     expect(result?.historical.oppositeChartOutcomesEstablished).toBe(false);
