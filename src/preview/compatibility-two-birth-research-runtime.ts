@@ -53,6 +53,10 @@ import {
   type T10ClassicalUsefulElementResearchV1,
 } from '../research/compatibility-t10-classical-useful-element.js';
 import {
+  observeT10TenGodCourseInputsV1,
+  type T10TenGodCourseResearchV1,
+} from '../research/compatibility-t10-ten-god-course-observation.js';
+import {
   auditT10ClassicalCrossTenGodScopeV1,
   type T10ClassicalCrossTenGodResearch,
 } from '../research/compatibility-t10-classical-cross-ten-god.js';
@@ -133,6 +137,8 @@ export interface CompatibilityTwoBirthResearchReading {
   maySell: false;
   report: CompatibilityTwoChartIntakePreview;
   personalRelationship: CompatibilityPersonalRelationshipContext;
+  /** Source-attributed six ten-god courses with chart-bound visible T5 inputs. */
+  tenGodCourseResearch?: T10TenGodCourseResearchV1;
   /** R068/R069 original source applicability only, never pairwise T10 meaning. */
   sourceScopeHandoff: PairwiseSourceScopeHandoff;
   maritalDayBranchCandidate?: MaritalDayBranchCandidateV1;
@@ -358,6 +364,10 @@ export function buildCompatibilityTwoBirthResearchReading(
   const classicalCrossTenGodResearch = methodCoverage
     ? auditT10ClassicalCrossTenGodScopeV1(sourceScopeHandoff, subject, target)
     : undefined;
+  const tenGodCourseResearch = classicalCrossTenGodResearch
+    ? observeT10TenGodCourseInputsV1(
+      sourceScopeHandoff, classicalCrossTenGodResearch, subject, target,
+    ) : undefined;
   const classicalUsefulElementResearch = classicalCrossTenGodResearch
     ? auditT10ClassicalUsefulElementExamplesV1(
       sourceScopeHandoff, classicalCrossTenGodResearch, subject, target,
@@ -451,6 +461,7 @@ export function buildCompatibilityTwoBirthResearchReading(
       ...(directCombination2025Research ? { directCombination2025Research } : {}),
       ...(historicalDayYearObservation ? { historicalDayYearObservation } : {}),
       ...(classicalCrossTenGodResearch ? { classicalCrossTenGodResearch } : {}),
+      ...(tenGodCourseResearch ? { tenGodCourseResearch } : {}),
       ...(classicalUsefulElementResearch ? { classicalUsefulElementResearch } : {}),
       ...(yongshenMethodScopeResearch ? { yongshenMethodScopeResearch } : {}),
       ...(gejuRescueSourceBridge ? { gejuRescueSourceBridge } : {}),
