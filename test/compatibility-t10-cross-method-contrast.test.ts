@@ -252,6 +252,70 @@ describe('T10 source-bound multi-method contrasts on two original charts', () =>
     expect(output.maySell).toBe(false);
   });
 
+  it('separates the excerpt three scoring stages from unqualified visible T5 inputs', () => {
+    const output = run(
+      birth(1990, 5, 15, 'male'), birth(1996, 6, 5, 'female'),
+    );
+    const courses = output.tenGodCourseResearch?.courses;
+    expect(courses).toHaveLength(6);
+    expect(courses?.map(x => x.methodInputAudit.sourceStep))
+      .toEqual([1, 2, 3, 1, 2, 3]);
+    expect(courses?.map(x => x.methodInputAudit.sourceCondition)).toEqual([
+      'rooted_expressed_wealth_or_resource',
+      'rooted_expressed_wealth_and_official',
+      'relative_strength_and_balance',
+      'rooted_expressed_wealth_or_resource',
+      'rooted_expressed_wealth_and_official',
+      'relative_strength_and_balance',
+    ]);
+    for (const course of courses ?? []) {
+      const audit = course.methodInputAudit;
+      expect(audit.inspectedGroups.map(x => x.group))
+        .toEqual(audit.sourceStep === 1 ? ['b'] : ['a', 'b']);
+      for (const item of audit.inspectedGroups) {
+        const actual = course.groups.find(g => g.group === item.group);
+        expect(item.stemVisibleFactPaths).toEqual(actual?.actualVisiblePositions
+          .filter(p => p.channel === 'stem').map(p => p.path));
+        expect(item.representativeBranchFactPaths).toEqual(
+          actual?.actualVisiblePositions.filter(p => p.channel === 'branch')
+            .map(p => p.path));
+        expect(item.bothDisplayChannelsObserved).toBe(
+          item.stemVisibleFactPaths.length > 0 &&
+          item.representativeBranchFactPaths.length > 0);
+        expect(item.groupUnresolvedFactPaths).toEqual(actual?.unresolvedFactPaths);
+      }
+      expect(audit.actualRootingEstablished).toBe(false);
+      expect(audit.originalStemExpressionMethodValidated).toBe(false);
+      expect(audit.originalCombinationClashEffectsSettled).toBe(false);
+      expect(audit.originalStrengthBalanceEstablished).toBe(false);
+      expect(audit.sourceGrade).toBeNull();
+      expect(course.grade).toBeNull();
+      expect(course.paragraph).toContain(audit.paragraph);
+    }
+    const first = birth(1990, 5, 15, 'male', false);
+    const second = birth(1996, 6, 5, 'female');
+    const missing = run(first, second).tenGodCourseResearch?.courses;
+    const reverse = run(second, first).tenGodCourseResearch?.courses;
+    for (const item of missing?.slice(0, 3) ?? []) {
+      expect(item.methodInputAudit.inspectedGroups.every(group =>
+        group.stemVisibleFactPaths.length === 0 &&
+        group.representativeBranchFactPaths.length === 0 &&
+        group.groupUnresolvedFactPaths.length === 7)).toBe(true);
+      expect(item.methodInputAudit.sourceGrade).toBeNull();
+    }
+    expect(reverse?.map(item => [
+      item.courseId, item.calculationHash,
+      item.methodInputAudit.inspectedGroups,
+    ])).toEqual(missing?.map(item => [
+      item.courseId, item.calculationHash,
+      item.methodInputAudit.inspectedGroups,
+    ]));
+    expect(run(A, SUPPORT_WITH_CLASH).tenGodCourseResearch?.courses).toEqual([]);
+    expect(output.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
+    expect(output.maySell).toBe(false);
+  });
+
   it('keeps course input ownership after reversal and refuses unknown historical roles', () => {
     const first = birth(1990, 5, 15, 'male', false);
     const second = birth(1996, 6, 5, 'female');
