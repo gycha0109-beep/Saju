@@ -95,8 +95,8 @@ describe('existing compatibility browser route stays protected and research-only
       expect(mayPublish).toBe(false);
       expect(maySell).toBe(false);
       expect(sourceMaterial.charts).toHaveLength(2);
-      expect(sourceMaterial.charts[0].calculationHash)
-        .not.toBe(sourceMaterial.charts[1].calculationHash);
+      expect(sourceMaterial.charts[0]?.calculationHash)
+        .not.toBe(sourceMaterial.charts[1]?.calculationHash);
       expect(sourceMaterial.units.length).toBeGreaterThanOrEqual(3);
       expect(sourceMaterial.units.every((unit: { unitId: string; paragraph: string }) =>
         /^t10_unit_[a-f0-9]{24}$/u.test(unit.unitId) && unit.paragraph.length > 0)).toBe(true);
