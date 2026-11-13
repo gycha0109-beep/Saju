@@ -1,5 +1,10 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import {
+  draftT10InternalServiceInterpretationV1,
+  type T10InternalServiceInterpretationV1,
+} from '../research/compatibility-t10-internal-service-interpretation.js';
+
+import {
   buildT102018MaritalResearchReadingV1,
   type T102018MaritalResearchReadingV1,
 } from '../research/compatibility-t10-2018-marital-reading.js';
@@ -139,6 +144,8 @@ export interface CompatibilityTwoBirthResearchReading {
   personalRelationship: CompatibilityPersonalRelationshipContext;
   /** Source-attributed six ten-god courses with chart-bound visible T5 inputs. */
   tenGodCourseResearch?: T10TenGodCourseResearchV1;
+  /** Adopted bounded internal service copy; NOT an Official Reading or grant. */
+  internalServiceInterpretationDraft?: T10InternalServiceInterpretationV1;
   /** R068/R069 original source applicability only, never pairwise T10 meaning. */
   sourceScopeHandoff: PairwiseSourceScopeHandoff;
   maritalDayBranchCandidate?: MaritalDayBranchCandidateV1;
@@ -324,6 +331,10 @@ export function buildCompatibilityTwoBirthResearchReading(
   };
   const bothHaveFacts = [report.subject, report.target].every(person =>
     person.pillars.some(pillar => pillar.status === 'resolved'));
+  const internalServiceInterpretationDraft =
+    input.candidateScope === 'traditional_marital_palace_comparison'
+      ? draftT10InternalServiceInterpretationV1(sourceScopeHandoff, subject, target)
+      : undefined;
   const maritalDayBranchCandidate = input.candidateScope === 'traditional_marital_palace_comparison'
     ? buildMaritalDayBranchCandidateV1(sourceScopeHandoff) : undefined;
   const maritalPalaceIntraChartResearch = maritalDayBranchCandidate === undefined
@@ -442,6 +453,7 @@ export function buildCompatibilityTwoBirthResearchReading(
     report,
     personalRelationship,
     sourceScopeHandoff,
+    ...(internalServiceInterpretationDraft ? { internalServiceInterpretationDraft } : {}),
     ...(methodCoverage && maritalDayBranchCandidate && maritalPalaceIntraChartResearch &&
         coexistingEvidenceReview ? {
       maritalDayBranchCandidate,
