@@ -1,6 +1,7 @@
 import type { ClaimNarrativeProfile } from '../contracts/narrative.js';
 import {
   GENERAL_MONTHLY_TENSION_CLAIM_TYPE,
+  GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE,
   GENERAL_MONTHLY_THEME_CLAIM_TYPE,
   type GeneralMonthlySegmentId,
 } from './general-monthly-reading-candidate.js';
@@ -196,6 +197,29 @@ function tensionProfile(
   };
 }
 
+function combinationProfile(segmentId: GeneralMonthlySegmentId,
+  slot: (typeof PILLAR_COPY)[number][0], pillarLabel: string,
+  index: number): ClaimNarrativeProfile {
+  const segment = SEGMENT_COPY[segmentId];
+  return {
+    profileId: `PROFILE-GENERAL-MONTHLY-${segment.id}-BRANCH-SIX-COMBINATION-${slot.toUpperCase()}`,
+    version: GENERAL_MONTHLY_NARRATIVE_PROFILE_VERSION,
+    claimType: GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE.claimType,
+    semanticKeys: [`${segment.semanticPrefix}_BRANCH_SIX_COMBINATION_${slot.toUpperCase()}`],
+    allowedEpistemicTypes: ['interpretation'],
+    requiredMethodAttribution: true,
+    prohibitedPhrases: PROHIBITED_FUTURE_PHRASES,
+    renderingHints: ['axis:context', 'source-bound-six-combination',
+      `order:${90 + (segmentId === 'before_jeol' ? 0 : 10) + index}`],
+    templates: [
+      { templateKey: 'headline', language: 'ko',
+        text: `${segment.label}의 월지와 원국 ${pillarLabel} 사이에 육합 연결 구조가 확인됩니다` },
+      { templateKey: 'summary', language: 'ko',
+        text: `${segment.label}의 지지와 원국 ${pillarLabel} 지지는 전통 명리의 육합(六合) 쌍입니다. 이 절입 구간에서는 충과 다른 연결·조응 관계를 보조 맥락으로 구분해 읽습니다. 지지 육합만으로 합화, 좋은 운, 인연 성사나 특정 사건을 추론할 수는 없습니다.` },
+    ],
+  };
+}
+
 export const GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES: readonly ClaimNarrativeProfile[] =
   Object.freeze([
     ...(['before_jeol', 'after_jeol'] as const).flatMap((segmentId) =>
@@ -204,4 +228,6 @@ export const GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES: readonly ClaimNarrativePr
     ...(['before_jeol', 'after_jeol'] as const).flatMap((segmentId) =>
       PILLAR_COPY.map(([slot, label], index) => tensionProfile(segmentId, slot, label, index)),
     ),
+    ...(['before_jeol', 'after_jeol'] as const).flatMap(segmentId =>
+      PILLAR_COPY.map(([slot, label], index) => combinationProfile(segmentId, slot, label, index))),
   ]);

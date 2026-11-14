@@ -87,10 +87,23 @@ describe('five-domain actual-chart semantic differentiation / S6 research matrix
         } else {
           expect(report.missing.length).toBeGreaterThan(0);
         }
-        if((domain === 'general' || domain === 'wealth') && report.sections.length < 3) {
-          const missingSupportingAxes = 2 - Math.max(0, report.sections.length - 1);
-          expect(report.missing).toContain(
-            `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
+        if ((domain === 'general' || domain === 'wealth') && report.sections.length < 3) {
+          // A missing source-bound core cannot lack independent supports.
+          // The General tension-only case stays partial without a core.
+          const generalHasCore = domain === 'general' &&
+            ['core', 'expression', 'response', 'responsibility']
+              .includes(report.sections[0]?.axis ?? '');
+          const wealthHasCore = domain === 'wealth' &&
+            ['core', 'creation', 'management', 'planning']
+              .includes(report.sections[0]?.axis ?? '');
+          if (generalHasCore || wealthHasCore) {
+            const missingSupportingAxes = 2 - Math.max(0, report.sections.length - 1);
+            expect(report.missing).toContain(
+              `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
+          } else {
+            expect(report.missing).toContain('출처 있는 원국 중심 복합 해석 축');
+            expect(report.missing.some(reason => reason.includes('추가 구조 축'))).toBe(false);
+          }
         }
         for(const section of report.sections) {
           expect(section.paragraph.length).toBeGreaterThan(40);

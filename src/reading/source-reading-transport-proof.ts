@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { assertProductReadingResponse } from './product-reading-response-admission.js';
 import type { ProductReadingResponse } from './product-reading-response.js';
+import type { TemporalReaderEvidence } from './temporal-reader-evidence.js';
 import type {
   SourceReadingProofMaterialV1, SourceReadingProofReadinessV1,
 } from './source-reading-proof-readiness.js';
@@ -19,6 +20,7 @@ const PAYLOAD_KEYS = new Set([
   'requestBodyHash','responseBodyHash','material','productionInterpretationAuthority',
   'releaseAuthorization','canExecute','canPublish','canSell',
 ]);
+const TEMPORAL_PAYLOAD_KEYS = new Set([...PAYLOAD_KEYS, 'temporalEvidenceHash']);
 const MATERIAL_KEYS = new Set([
   'snapshotId','interpretationRunId','registrySnapshotId','executionId','preparationId',
   'selectionId','profileRef','evidenceBundleHash','readingId','responseId','responseBodyHash',
@@ -37,6 +39,7 @@ export interface SourceReadingTransportProofPayloadV1 {
   readonly requestBodyHash: string;
   readonly responseBodyHash: string;
   readonly material: SourceReadingProofMaterialV1;
+  readonly temporalEvidenceHash?: string;
   readonly productionInterpretationAuthority: 'NOT_EVALUATED';
   readonly releaseAuthorization: 'NOT_EVALUATED';
   readonly canExecute: false;
@@ -58,6 +61,7 @@ export interface SourceReadingProofIssuerOptionsV1 {
   readonly readiness: SourceReadingProofReadinessV1;
   readonly issuedAtMs: number;
   readonly ttlMs: number;
+  readonly temporalEvidence?: TemporalReaderEvidence;
 }
 export interface SourceReadingProofVerifierOptionsV1 {
   readonly trustedIssuer: string;
@@ -68,6 +72,7 @@ export interface SourceReadingProofVerifierOptionsV1 {
   readonly expectedRequestBody: unknown;
   readonly response: ProductReadingResponse;
   readonly nowMs: number;
+  readonly temporalEvidence?: unknown;
   // Atomically persist a replay key across ALL verifier replicas. Never use
   // process-local memory in distributed production. Fail closed on storage errors.
   readonly claimNonceOnce: (replayKey: string, expiresAtMs: number) => Promise<boolean>;
@@ -102,6 +107,17 @@ function validMaterial(v: unknown): v is SourceReadingProofMaterialV1 {
   ].every((s) => typeof s === 'string' && s.length > 0)
     && [v.profileRef.contentHash,v.evidenceBundleHash,v.responseBodyHash]
       .every((s) => typeof s === 'string' && HASH.test(s));
+}
+function temporalEvidenceHash(
+  evidence: unknown, material: SourceReadingProofMaterialV1,
+): string | undefined {
+  if (!isRecord(evidence) || evidence.version !== 'myeonghwa-temporal-reader-evidence-v1'
+    || evidence.snapshotId !== material.snapshotId || evidence.responseBodyHash !== material.responseBodyHash) {
+    return undefined;
+  }
+  const { evidenceHash, ...content } = evidence;
+  return typeof evidenceHash === 'string' && evidenceHash === deterministicContentHash(content)
+    ? evidenceHash : undefined;
 }
 function mac(payload: SourceReadingTransportProofPayloadV1, bytes: Uint8Array): string {
   return createHmac('sha256', bytes).update(DOMAIN)
@@ -142,12 +158,15 @@ export function issueHeldSourceReadingTransportProofV1(
       || responseBodyHash !== readiness.material.responseBodyHash
       || response.responseId !== readiness.material.responseId
       || response.reading?.readingId !== readiness.material.readingId) return null;
+    const evidenceHash = temporalEvidenceHash(options.temporalEvidence, readiness.material);
+    if (options.temporalEvidence !== undefined && evidenceHash === undefined) return null;
     const payload: SourceReadingTransportProofPayloadV1 = Object.freeze({
       version: SOURCE_READING_TRANSPORT_PROOF_VERSION_V1,
       lifecycle: 'preview', issuer, audience, keyId, nonce, issuedAtMs,
       expiresAtMs: issuedAtMs + ttlMs,
       requestBodyHash: deterministicContentHash(executedRequestBody),
       responseBodyHash, material: structuredClone(readiness.material),
+      ...(evidenceHash === undefined ? {} : { temporalEvidenceHash: evidenceHash }),
       productionInterpretationAuthority: 'NOT_EVALUATED',
       releaseAuthorization: 'NOT_EVALUATED',
       canExecute: false, canPublish: false, canSell: false,
@@ -166,7 +185,7 @@ export async function verifyHeldSourceReadingTransportProofV1(
     const { trustedIssuer, expectedAudience, trustedKeyId, keyBytes,
       expectedNonce, expectedRequestBody, response, nowMs, claimNonceOnce } = options;
     if (!isRecord(proof) || !isRecord(proof.payload)
-      || !exactKeys(proof.payload, PAYLOAD_KEYS)
+      || !exactKeys(proof.payload, options.temporalEvidence === undefined ? PAYLOAD_KEYS : TEMPORAL_PAYLOAD_KEYS)
       || Object.keys(proof).length !== 2 || !Object.hasOwn(proof,'signatureHex')
       || !Object.hasOwn(proof,'payload')
       || !validKey(trustedIssuer, trustedKeyId, keyBytes)
@@ -196,6 +215,10 @@ export async function verifyHeldSourceReadingTransportProofV1(
       || payload.material.responseBodyHash !== payload.responseBodyHash
       || payload.material.responseId !== response.responseId
       || payload.material.readingId !== response.reading?.readingId) return verdict(false);
+    if (options.temporalEvidence !== undefined && (
+      typeof payload.temporalEvidenceHash !== 'string'
+      || payload.temporalEvidenceHash !== temporalEvidenceHash(options.temporalEvidence, payload.material)
+    )) return verdict(false);
     const computed = Buffer.from(mac(payload,keyBytes),'hex');
     const submitted = Buffer.from(proof.signatureHex,'hex');
     if (computed.length !== submitted.length || !timingSafeEqual(computed,submitted)) return verdict(false);

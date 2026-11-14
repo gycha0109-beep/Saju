@@ -1,5 +1,6 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { findSharedNatalFactLinks } from './natal-five-domain-shared-evidence.js';
+import { SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY } from '../research/snapshot-bound-hidden-stem-ten-god-occurrences.js';
 import type { GeneralNatalMultifactorReport, GeneralNatalMultifactorSection } from './general-natal-multifactor-report.js';
 import type { CareerMultifactorReport, CareerMultifactorReportSection } from './career-natal-multifactor-report.js';
 import type { WealthNatalMultifactorReport, WealthNatalMultifactorSection } from './wealth-natal-multifactor-report.js';
@@ -79,22 +80,73 @@ function renderOverview(reports: NatalFiveDomainMultifactorReports): string {
     const report = reports[key];
     const firstSourceHeadline = report.sections[0]?.headline;
     const missingReason = report.missing[0];
-    const visibleSubject = firstSourceHeadline ??
-      missingReason ?? '현재 확인된 해석 문단이 없습니다.';
+    const wealth = key === 'wealth' ? reports.wealth : undefined;
+    // A real T5 partial meaning must not disappear behind a generic
+    // "insufficient" label; conversely a context-only T8 must not be
+    // promoted to a direct Wealth conclusion in the first-screen summary.
+    const noDirectWealthCore = wealth !== undefined &&
+      !wealth.sections.some(section =>
+        ['core', 'creation', 'management', 'planning'].includes(section.axis));
+    const firstT5 = noDirectWealthCore
+      ? wealth.availableThemeContext?.themes[0] : undefined;
+    const generalT5 = key === 'general' &&
+      report.state === 'insufficient' && report.sections.length === 0
+      ? reports.general.availableThemeContext?.themes[0] : undefined;
+    const otherNatalT5 = ['career', 'business', 'relationship'].includes(key) &&
+      report.sections.length === 0 ? report.availableThemeContext?.themes[0] : undefined;
+    const visibleSubject = noDirectWealthCore && firstSourceHeadline
+      ? '재물 종합 결론 보류 · 기존 ' +
+        (wealth!.sections[0]?.axis === 'tension' ? '긴장 관계' : '간접 구조') +
+        ' 부분풀이: ' + firstSourceHeadline
+      : noDirectWealthCore && firstT5
+        ? '재물 종합 결론 보류 · 출처 있는 십신 부분풀이: ' +
+          firstT5.headline + ' — ' + firstT5.summary
+        : generalT5
+          ? '전체 사주 종합풀이 보류 · 출처 있는 원국 십신 부분 관측: ' +
+            generalT5.headline + ' — ' + generalT5.summary
+          : otherNatalT5
+            ? '해당 분야 종합풀이 보류 · 출처 있는 원국 십신 부분 관측: ' +
+              otherNatalT5.headline + ' — ' + otherNatalT5.summary
+            : firstSourceHeadline ?? missingReason ?? '현재 확인된 해석 문단이 없습니다.';
     const gap = report.state === 'partial' && missingReason !== undefined
       ? '<p class="overview-gap"><strong>아직 설명하지 못하는 부분:</strong> ' +
         escapeHtml(missingReason) + '</p>'
       : '';
     return '<li><a href="#domain-' + key + '">' + escapeHtml(label) + '</a>' +
       '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
-      '<p>' + (report.state === 'partial' && firstSourceHeadline !== undefined
-        ? '확인된 부분 해석: ' : '') + escapeHtml(visibleSubject) + '</p>' +
+      '<p>' + (report.state === 'partial' && firstSourceHeadline !== undefined &&
+        !noDirectWealthCore ? '확인된 부분 해석: ' : '') +
+      escapeHtml(visibleSubject) + '</p>' +
       gap + '</li>';
   }).join('');
   return '<nav class="overview" aria-label="다섯 분야의 근거 기반 요약">' +
     '<h2>이 명식에서 먼저 확인할 다섯 관점</h2>' +
     '<p>각 분야에 실제 확인된 첫 해석 제목 또는 아직 부족한 근거를 먼저 표시합니다.</p>' +
     '<ol class="overview">' + items + '</ol></nav>';
+}
+
+/**
+ * The full selected General reading guide is source-owned but its core text
+ * overlaps the T8 sections already rendered first. Keep the explanatory
+ * through-line available in expanded details, not repeated in the intro.
+ */
+function renderGeneralReadingGuide(report: GeneralNatalMultifactorReport): string {
+  const guide = report.readingGuide;
+  if (guide === undefined) return '';
+  const first = report.sections[0];
+  guard(first !== undefined && guide.sourceClaimType === first.claimType &&
+    guide.paragraph.includes(first.headline) &&
+    guide.paragraph.includes(first.paragraph) &&
+    guide.ruleIds.length > 0 &&
+    guide.ruleIds.every(id => report.sections.some(section => section.ruleId === id)) &&
+    guide.sourceIds.length > 0 &&
+    guide.sourceIds.every(id => report.sections.some(section => section.sourceIds.includes(id))),
+    'General guide must retain its exact selected T8 provenance');
+  return '<section class="general-reading-guide" aria-label="총운 근거 연결 설명">' +
+    '<h3>' + escapeHtml(guide.title) + '</h3>' +
+    '<p>' + escapeHtml(guide.paragraph) + '</p>' +
+    '<p>선택 규칙: ' + escapeHtml(guide.ruleIds.join(' · ')) + '</p>' +
+    '<p>출처: ' + escapeHtml(guide.sourceIds.join(' · ')) + '</p></section>';
 }
 
 function renderCareerReadingGuide(report: CareerMultifactorReport): string {
@@ -262,7 +314,7 @@ function renderRelationshipReadingGuide(report: RelationshipNatalMultifactorRepo
 }
 
 /**
- * General, Business and Relationship first-screen reading is the EXACT Korean
+ * General, Wealth, Business and Relationship first-screen reading is the EXACT Korean
  * text of their selected, source-bounded T8 Claims, not a headline-only
  * explanation or a freshly inferred cross-Claim synthesis.
  *
@@ -277,14 +329,30 @@ function renderFirstScreenSelectedInterpretations(
   if (domain === 'general') {
     const scoped = report as GeneralNatalMultifactorReport;
     const guide = scoped.readingGuide;
-    if (guide === undefined || scoped.sections.length === 0) return '';
     const sections = scoped.sections;
-    guard(sections[0]?.claimType === guide.sourceClaimType &&
+    if (sections.length === 0) return '';
+    // Tension-only T8 already has a source-bound partial reading guide.
+    // Keep that exact Claim/Rule/Source, but never promote it to a core.
+    const tensionOnly = sections.length === 1 && sections[0]!.axis === 'tension';
+    guard((tensionOnly
+      ? guide !== undefined && scoped.state === 'partial' &&
+        scoped.missing.includes('출처 있는 원국 중심 복합 해석 축') &&
+        guide.sourceClaimType === sections[0]!.claimType &&
+        guide.supporting.length === 0 &&
+        guide.sourceIds.length === sections[0]!.sourceIds.length &&
+        sections[0]!.sourceIds.every(id => guide.sourceIds.includes(id)) &&
+        guide.ruleIds.length === 1 && guide.ruleIds[0] === sections[0]!.ruleId &&
+        guide.paragraph.includes(sections[0]!.headline) &&
+        guide.paragraph.includes(sections[0]!.paragraph)
+      : guide !== undefined && sections[0]?.claimType === guide.sourceClaimType &&
+        guide.sourceIds.length > 0 &&
+        guide.sourceIds.every(id => id.trim().length > 0)) &&
       sections.every(section => section.sourceIds.length > 0 &&
-        section.upstreamClaimIds.length >= 2 && section.paragraph.trim().length > 0 &&
-        guide.sourceIds.every(id => id.trim().length > 0)),
+        section.upstreamClaimIds.length >= 2 &&
+        section.observedFactPaths.length >= 2 &&
+        section.observedPositions.length === section.observedFactPaths.length &&
+        section.paragraph.trim().length > 0),
       'General first-screen reading requires exact selected T8 evidence');
-    const tensionOnly = sections.every(section => section.axis === 'tension');
     const items = sections.map((section, i) =>
       '<section class="first-claim"><h4>' +
       escapeHtml(tensionOnly ? '확인된 부분 관점 · ' + section.headline :
@@ -297,6 +365,42 @@ function renderFirstScreenSelectedInterpretations(
         : '실제 확인된 부분 해석만 보여줍니다. 부족한 독립 보조 근거는 종합 결론으로 채우지 않습니다.';
     return '<section class="first-meaning" aria-label="총운 명식별 풀이 본문">' +
       '<h3>이 명식에서 먼저 읽을 실제 총운 풀이</h3>' + items +
+      '<p class="bounded-note">' + escapeHtml(scope) + '</p></section>';
+  }
+  if (domain === 'wealth') {
+    const scoped = report as WealthNatalMultifactorReport;
+    const sections = scoped.sections;
+    if (sections.length === 0) return '';
+    const core = sections[0]!;
+    const hasCore = ['core', 'creation', 'management', 'planning'].includes(core.axis);
+    guard(sections.every(section =>
+      section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
+      section.observedFactPaths.length >= 2 &&
+      section.observedPositions.length === section.observedFactPaths.length &&
+      section.paragraph.trim().length > 0) &&
+      (hasCore
+        ? scoped.readingGuide?.coreClaimType === core.claimType &&
+          sections.slice(1).every(section => section.axis !== 'context')
+        : scoped.readingGuide === undefined && scoped.state === 'partial' &&
+          sections.length <= 2 && sections.every(section =>
+            section.axis === 'tension' || section.axis === 'context')),
+      'Wealth first-screen requires only the source-owned selected T8 reading');
+    const items = sections.map((section, i) => {
+      const label = hasCore
+        ? (i === 0 ? '중심 관점 · ' : '독립 보조 관점 · ')
+        : section.axis === 'tension'
+          ? '확인된 긴장 부분 관점 · ' : '재성 중심 결론이 아닌 간접 맥락 · ';
+      return '<section class="first-claim"><h4>' +
+        escapeHtml(label + section.headline) + '</h4><p>' +
+        escapeHtml(section.paragraph) + '</p></section>';
+    }).join('');
+    const scope = !hasCore
+      ? '이 명식에서는 재물운 중심 결론이 확립되지 않았습니다. 긴장 또는 간접 맥락의 기존 부분풀이만 보여주며 소득·투자 결과를 판단하지 않습니다.'
+      : scoped.state === 'complete'
+        ? '중심 하나와 서로 독립적인 보조 두 가지를 확인한 연구용 풀이입니다. 실제 재산이나 미래 수익을 판정하지 않습니다.'
+        : '재물과 관련된 기존 중심 풀이가 있지만 독립적인 추가 근거가 부족하여 종합 판단은 보류합니다.';
+    return '<section class="first-meaning" aria-label="재물운 명식별 풀이 본문">' +
+      '<h3>이 명식에서 먼저 읽을 실제 재물 풀이</h3>' + items +
       '<p class="bounded-note">' + escapeHtml(scope) + '</p></section>';
   }
   if (domain !== 'business' && domain !== 'relationship') return '';
@@ -323,6 +427,238 @@ function renderFirstScreenSelectedInterpretations(
     '<p class="bounded-note">' + escapeHtml(scope) + '</p></section>';
 }
 
+/**
+ * Existing sourced T5 observations can still be read when Wealth T8 is
+ * insufficient. This renders a bounded explanation, never a Wealth claim.
+ */
+function renderWealthAvailableThemeContext(report: WealthNatalMultifactorReport): string {
+  const context = report.availableThemeContext;
+  if (context === undefined) return '';
+  // Only a bounded incomplete report may show unconsumed T5. With an
+  // actual selected core, these are independent T5 notes, NOT new T8 supports.
+  const partialAxes = report.sections.map(section => section.axis);
+  const partialCore = report.state === 'partial' &&
+    report.readingGuide !== undefined && report.sections.length > 0 &&
+    ['core', 'creation', 'management', 'planning'].includes(report.sections[0]!.axis) &&
+    report.readingGuide.coreClaimType === report.sections[0]!.claimType &&
+    report.sections.length < 3;
+  const limitedWithoutCore = report.sections.length === 0
+    ? report.state === 'insufficient'
+    : report.state === 'partial' && report.readingGuide === undefined &&
+      partialAxes.length <= 2 && new Set(partialAxes).size === partialAxes.length &&
+      report.sections.every(section =>
+        section.axis === 'context' && section.pattern.endsWith('_CONTEXT') ||
+        section.axis === 'tension' &&
+          (section.pattern === 'PEER_WEALTH' ||
+           section.pattern === 'PEER_WEALTH_RESOURCE')) &&
+      (report.sections.length !== 2 ||
+        report.sections[1]!.observedFactPaths.some(path =>
+          !report.sections[0]!.observedFactPaths.includes(path)));
+  guard((limitedWithoutCore || partialCore) &&
+    context.wealthConclusionAuthorized === false &&
+    context.themes.length > 0 && context.title.trim().length > 0 &&
+    context.paragraph.trim().length > 0 &&
+    (context.hiddenWealthEvidenceStatus === 'resolved' ||
+      (context.hiddenWealthEvidenceStatus === 'unavailable' &&
+        context.hiddenWealthMembership.length === 0 &&
+        !!context.hiddenWealthUnavailableReason)),
+    'existing theme context must not become a Wealth synthesis');
+  const alreadyInterpreted = new Set(report.sections.flatMap(section =>
+    section.upstreamClaimIds));
+  const alreadyObserved = new Set(report.sections.flatMap(section =>
+    section.observedFactPaths));
+  guard(context.themes.every(theme =>
+    !alreadyInterpreted.has(theme.claimId) &&
+    theme.observedFactPaths.every(path => !alreadyObserved.has(path))),
+    'existing theme context repeats an already interpreted T8 upstream claim');
+  const currentGap = report.missing[0];
+  guard(typeof currentGap === 'string' && currentGap.trim().length > 0,
+    'partial Wealth context requires an exact missing-evidence reason');
+  const hidden = context.hiddenWealthMembership.map(item => {
+    guard(['year', 'month', 'day', 'hour'].includes(item.pillar) &&
+      item.meaningAuthority === 'calculated_membership_only' &&
+      item.wealthConclusionAuthorized === false &&
+      (item.derivedTenGod === '편재' || item.derivedTenGod === '정재') &&
+      item.factPaths.length === 2 &&
+      item.factPaths[0] === 'derivedFacts.dayMaster' &&
+      item.factPaths[1] === 'derivedFacts.hiddenStems.' + item.pillar &&
+      item.sourcePillarRef === 'pillars.' + item.pillar &&
+      item.occurrenceId === item.pillar + ':' + item.hiddenStem &&
+      item.mappingAuthorityDefinitionHash ===
+        SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY.definitionHash &&
+      item.membershipSourceUrl ===
+        SNAPSHOT_BOUND_HIDDEN_STEM_TEN_GOD_OCCURRENCE_AUTHORITY
+          .sourceBindings.hiddenMembershipSource.url,
+      'unverified hidden stem membership cannot be represented as an interpretation');
+    return '<li>' + escapeHtml(item.pillar + ' 지지 ' + item.branch +
+      '의 지장간 ' + item.hiddenStem + ' · ' + item.derivedTenGod) +
+      ' (지장간 구성의 계산 기록 · 별도 해석 아님)' +
+      '<details><summary>계산 경로와 지장간 구성 출처</summary>' +
+      renderList(item.factPaths) + '<p>' +
+      escapeHtml(item.membershipSourceUrl) + '</p></details></li>';
+  }).join('');
+  const inferredBoundary = report.sections.every(section => section.axis === 'context') &&
+    context.themes.every(theme => theme.family !== 'wealth')
+    ? context.hiddenWealthEvidenceStatus === 'unavailable'
+      ? 'membership_unavailable'
+      : context.hiddenWealthMembership.length > 0
+        ? 'membership_only' : 'no_membership_observed'
+    : undefined;
+  guard(context.hiddenWealthT5Boundary === inferredBoundary,
+    'hidden wealth evidence is not an executed direct Wealth T5 theme');
+  const hiddenBoundaryNote = inferredBoundary === undefined ? ''
+    : '<aside class="hidden-wealth-fact-boundary" aria-label="지장간 계산과 재물운 해석의 구분">' +
+      '<strong>지장간 계산과 재물운 풀이의 차이</strong><p>' +
+      (inferredBoundary === 'membership_only'
+        ? '지장간 구성에는 재성 계열로 계산되는 천간이 실제로 포함됩니다. ' +
+          '그러나 이는 지장간의 구성 기록이며, 기존 천간·지지 대표 십신의 재성 해석 근거(T5)가 아닙니다. ' +
+          '따라서 이를 재물 중심 복합 풀이(T8)로 자동 연결하지 않습니다.'
+        : inferredBoundary === 'no_membership_observed'
+          ? '현재 계산된 지장간 구성에서도 재성 계열 항목은 관측되지 않았습니다. ' +
+            '이 사실은 재산이나 돈이 없다는 뜻이 아니며, 직접 재성 해석 근거(T5)의 부족을 대신 설명하지도 않습니다.'
+          : '현재 지장간 구성이 미확정이어서 재성 계열 포함 여부를 판단하지 않습니다. ' +
+            '미확정 구성으로 재물 복합 해석을 보완하지 않습니다.') +
+      '</p><p>위 설명은 계산 사실과 해석 권한의 경계이지 새로운 운세 주장이 아닙니다.</p></aside>';
+  const hiddenSection = hidden.length
+    ? '<details><summary>지장간의 재성 계열 구성 관측</summary><ul>' +
+      hidden + '</ul></details>'
+    : context.hiddenWealthEvidenceStatus === 'unavailable'
+      ? '<p>지장간 십신 관계는 현재 명식에서 확정할 수 없어 구성 관측을 표시하지 않습니다. ' +
+        '구성 미확정은 재성 부재의 증거가 아닙니다.</p>'
+      : '';
+  const themes = context.themes.map(theme => {
+    guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+      .test(theme.claimType) && theme.claimId.trim().length > 0 &&
+      theme.headline.trim().length > 0 && theme.summary.trim().length > 0 &&
+      theme.sourceIds.length > 0 &&
+      theme.ruleIds.length > 0 && theme.ruleIds.every(rule => rule.trim().length > 0) &&
+      theme.methodologyId.trim().length > 0 &&
+      theme.observedPositions.length > 0 &&
+      theme.observedFactPaths.length === theme.observedPositions.length &&
+      theme.observedFactPaths.every(path => FACT_PATH.test(path)) &&
+      context.paragraph.includes(theme.summary) &&
+      theme.observedPositions.every(position => context.paragraph.includes(position)),
+      'existing theme context has no actual sourced calculation evidence');
+    return '<li><strong>' + escapeHtml(theme.headline) + '</strong>' +
+      '<details><summary>확인된 십신 위치와 기존 출처</summary>' +
+      '<p>계산된 위치</p>' + renderList(theme.observedPositions) +
+      '<p>계산 근거 경로</p>' + renderList(theme.observedFactPaths) +
+      '<p>기존 십신 주장: ' + escapeHtml(theme.claimType) + '</p>' +
+      '<p>근거 식별자: ' + escapeHtml(theme.claimId) + '</p>' +
+      '<p>실행된 규칙</p>' + renderList(theme.ruleIds) +
+      '<p>해석 방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
+      '<p>출처</p>' + renderList(theme.sourceIds) +
+      '</details></li>';
+  }).join('');
+  return '<section class="bounded-source-context" aria-label="재물운 근거 있는 부분 설명">' +
+    '<h3>' + escapeHtml(context.title) + '</h3>' +
+    '<p><strong>재물운 종합 해석 아님 · 기존 십신 관측만 설명</strong></p>' +
+    '<p class="source-gap"><strong>현재 종합 풀이가 보류된 이유: </strong>' +
+    escapeHtml(currentGap) + '</p>' +
+    '<p>' + escapeHtml(context.paragraph) + '</p>' +
+    hiddenBoundaryNote +
+    '<details><summary>주제별 계산 근거·출처 보기</summary><ul>' +
+    themes + '</ul></details>' + hiddenSection + '</section>';
+}
+
+/** A source-owned T5 partial reading is not a missing General T8 synthesis. */
+function renderGeneralExistingT5Context(report: GeneralNatalMultifactorReport): string {
+  const context = report.availableThemeContext;
+  if (context === undefined) return '';
+  const noT8 = report.state === 'insufficient' && report.sections.length === 0;
+  const tensionOnly = report.state === 'partial' && report.sections.length === 1 &&
+    report.sections[0]?.axis === 'tension';
+  const partialCore = report.state === 'partial' && report.readingGuide !== undefined &&
+    report.sections.length > 0 && report.sections.length < 3 &&
+    report.sections[0]!.axis !== 'tension' &&
+    report.readingGuide.sourceClaimType === report.sections[0]!.claimType;
+  const consumedT5 = new Set(report.sections.flatMap(section => section.upstreamClaimIds));
+  const usedFactPaths = new Set(report.sections.flatMap(section => section.observedFactPaths));
+  guard((noT8 || tensionOnly || partialCore) &&
+    context.themes.every(theme =>
+      !consumedT5.has(theme.claimId) &&
+      theme.observedFactPaths.every(path => !usedFactPaths.has(path))) &&
+    context.wholeChartSynthesisAuthorized === false && context.themes.length > 0 &&
+    report.researchOnly && !report.mayPublish && !report.maySell &&
+    context.title.length > 0 && context.paragraph.length > 0,
+    'General T5 context cannot substitute for a source-qualified T8 synthesis');
+  // The source-owned context.paragraph already contains each exact T5
+  // summary. Do not repeat that interpretation inside the provenance list;
+  // keep claim identity, chart position, rule, methodology, and source intact.
+  const items = context.themes.map(theme => {
+    guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+      .test(theme.claimType) && theme.claimId.length > 0 &&
+      theme.sourceIds.length > 0 && theme.ruleIds.length > 0 &&
+      theme.methodologyId.length > 0 && theme.observedPositions.length > 0 &&
+      theme.observedPositions.length === theme.observedFactPaths.length &&
+      theme.observedFactPaths.every(path => FACT_PATH.test(path)) &&
+      context.paragraph.includes(theme.summary) &&
+      theme.observedPositions.every(position => context.paragraph.includes(position)),
+      'General T5 partial reading lacks original rule, source, or calculated chart facts');
+    return '<li><strong>' + escapeHtml(theme.headline) + '</strong>' +
+      '<p>확인된 명식 위치: ' + escapeHtml(theme.observedPositions.join(' · ')) + '</p>' +
+      '<details><summary>기존 십신 해석의 실제 근거</summary>' +
+      '<p>Claim: ' + escapeHtml(theme.claimId) + ' · ' + escapeHtml(theme.claimType) + '</p>' +
+      '<p>계산 경로</p>' + renderList(theme.observedFactPaths) +
+      '<p>규칙</p>' + renderList(theme.ruleIds) +
+      '<p>방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
+      '<p>출처</p>' + renderList(theme.sourceIds) + '</details></li>';
+  }).join('');
+  return '<section class="bounded-general-t5" aria-label="전체 원국의 기존 십신 부분 해석">' +
+    '<h3>' + escapeHtml(context.title) + '</h3>' +
+    '<p><strong>원국 종합해석 아님 · 등록된 개별 십신 해석만 확인</strong></p>' +
+    '<p>' + escapeHtml(context.paragraph) + '</p><ul>' + items + '</ul></section>';
+}
+
+/**
+ * Career/Business/Relationship have real source-owned T5 partial observations
+ * even where no registered domain T8 combination can run. Show the original
+ * T5 wording and lineage, without turning it into career/relationship/business
+ * outcomes or changing the domain report's insufficient state.
+ */
+function renderOtherNatalExistingT5Context(
+  report: CareerMultifactorReport | BusinessNatalMultifactorReport |
+    RelationshipNatalMultifactorReport,
+): string {
+  const context = report.availableThemeContext;
+  if (context === undefined) return '';
+  guard(report.state === 'insufficient' && report.sections.length === 0 &&
+    context.wholeChartSynthesisAuthorized === false &&
+    context.title.trim().length > 0 && context.paragraph.trim().length > 0 &&
+    context.themes.length > 0 && report.researchOnly &&
+    !report.usefulComplete && !report.mayPublish && !report.maySell,
+    'Other natal T5 observations cannot replace a missing domain T8 core');
+  // The source-owned context.paragraph already contains each exact T5
+  // summary. Do not repeat that interpretation inside the provenance list;
+  // keep claim identity, chart position, rule, methodology, and source intact.
+  const content = context.themes.map(theme => {
+    guard(/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+      .test(theme.claimType) && theme.claimId.trim().length > 0 &&
+      theme.headline.trim().length > 0 && theme.summary.trim().length > 0 &&
+      theme.sourceIds.length > 0 && theme.ruleIds.length > 0 &&
+      theme.methodologyId.trim().length > 0 &&
+      theme.observedFactPaths.length > 0 &&
+      theme.observedFactPaths.length === theme.observedPositions.length &&
+      theme.observedFactPaths.every(path => FACT_PATH.test(path)) &&
+      theme.observedPositions.every(position => context.paragraph.includes(position)) &&
+      context.paragraph.includes(theme.summary),
+      'Other natal T5 explanation lost its original registered meaning or facts');
+    return '<li><strong>' + escapeHtml(theme.headline) + '</strong>' +
+      '<p>실제 원국 위치: ' + escapeHtml(theme.observedPositions.join(' · ')) + '</p>' +
+      '<details><summary>기존 십신 주장·계산 경로·출처</summary>' +
+      '<p>Claim: ' + escapeHtml(theme.claimId) + ' · ' +
+      escapeHtml(theme.claimType) + '</p>' +
+      '<p>계산 경로</p>' + renderList(theme.observedFactPaths) +
+      '<p>규칙</p>' + renderList(theme.ruleIds) +
+      '<p>방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
+      '<p>출처</p>' + renderList(theme.sourceIds) + '</details></li>';
+  }).join('');
+  return '<section class="bounded-other-natal-t5" aria-label="종합풀이 보류 시 기존 십신 부분 해석">' +
+    '<h3>' + escapeHtml(context.title) + '</h3>' +
+    '<p><strong>해당 분야의 종합 해석 아님 · 기존 원국 십신 관측만 설명</strong></p>' +
+    '<p>' + escapeHtml(context.paragraph) + '</p><ul>' + content + '</ul></section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -338,18 +674,41 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     (birthTimeKnown || report.state === 'insufficient' && report.sections.length === 0),
     'a domain is not a bounded source-qualified research reading');
   const originalText = report.sections.map(renderSection).join('') ||
-    '<p>현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.</p>';
+    (domain === 'wealth' &&
+      (report as WealthNatalMultifactorReport).availableThemeContext !== undefined
+      ? '<p>재물운의 중심 복합 해석 근거는 아직 확인되지 않았습니다. ' +
+        '아래에는 출처 있는 개별 십신 관점만 부분적으로 설명합니다.</p>'
+      : domain === 'general' &&
+          (report as GeneralNatalMultifactorReport).availableThemeContext !== undefined
+        ? '<p>전체 사주의 복합 종합해석 근거는 아직 확인되지 않았습니다. ' +
+          '아래에는 출처 있는 기존 십신 부분풀이를 별도로 보여줍니다.</p>'
+        : ['career', 'business', 'relationship'].includes(domain) &&
+            report.availableThemeContext !== undefined
+          ? '<p>이 분야의 복합 해석 근거는 아직 확인되지 않았습니다. ' +
+            '아래에는 기존 출처에 연결된 원국 십신 주제만 부분적으로 보여줍니다.</p>'
+          : '<p>현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.</p>');
   const missing = report.missing.length > 0
     ? '<section class="missing"><h3>아직 설명하지 못하는 부분</h3>' + renderList(report.missing) + '</section>'
     : '';
-  const readingGuide = domain === 'career'
-    ? renderCareerReadingGuide(report as CareerMultifactorReport)
+  const readingGuide = domain === 'general'
+    ? renderGeneralReadingGuide(report as GeneralNatalMultifactorReport)
+    : domain === 'career'
+      ? renderCareerReadingGuide(report as CareerMultifactorReport)
     : domain === 'wealth'
       ? renderWealthReadingGuide(report as WealthNatalMultifactorReport)
       : domain === 'business'
         ? renderBusinessReadingGuide(report as BusinessNatalMultifactorReport)
         : domain === 'relationship'
           ? renderRelationshipReadingGuide(report as RelationshipNatalMultifactorReport) : '';
+  const existingWealthContext = domain === 'wealth'
+    ? renderWealthAvailableThemeContext(report as WealthNatalMultifactorReport) : '';
+  const existingGeneralContext = domain === 'general' && birthTimeKnown
+    ? renderGeneralExistingT5Context(report as GeneralNatalMultifactorReport) : '';
+  const otherNatalContext = ['career', 'business', 'relationship'].includes(domain)
+    ? renderOtherNatalExistingT5Context(report as
+      CareerMultifactorReport | BusinessNatalMultifactorReport |
+        RelationshipNatalMultifactorReport)
+    : '';
   const firstMeaning = renderFirstScreenSelectedInterpretations(domain, report);
   const details = firstMeaning === '' ? readingGuide + originalText
     : '<details class="full-claim-evidence"><summary>원국 풀이의 상세 설명·명식 근거와 출처</summary>' +
@@ -357,7 +716,8 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
   return '<article aria-labelledby="domain-' + domain + '" class="domain">' +
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
-    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning + details + missing +
+    '<p>' + escapeHtml(report.introduction) + '</p>' + firstMeaning +
+    existingGeneralContext + existingWealthContext + otherNatalContext + details + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }

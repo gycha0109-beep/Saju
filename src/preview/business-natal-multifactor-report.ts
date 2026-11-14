@@ -1,5 +1,9 @@
+import {
+  buildNatalExistingT5SourceContext,
+  type NatalExistingT5SourceContext,
+} from './natal-existing-t5-source-context.js';
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
-import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { selectBestNatalCoreWithinPriorityAxis } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -45,6 +49,8 @@ export interface BusinessNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly BusinessNatalMultifactorSection[];
+  /** Existing source-owned T5 copy only, never a substitute for missing domain T8. */
+  availableThemeContext?: NatalExistingT5SourceContext;
   readingGuide?: BusinessNatalReadingGuide;
   missing: readonly string[];
   limitations: readonly string[];
@@ -198,7 +204,7 @@ function toSection(
     axis: value.axis as Axis,
     channel: value.channel as Channel,
     headline: textFor(claim.claimType,'headline'),
-    paragraph: `이 원국에서 확인된 근거는 ${evidenceByFamily.join(' / ')}입니다. 같은 ${channelName}에서 ${evidenceByFamily.length}개 십신 계열이 함께 확인되므로 ${describeQuotedReadingAxis(headline)} 구조적 관점으로 연결해 읽습니다. ${textFor(claim.claimType,'summary')}`,
+    paragraph: `이 원국에서 확인된 근거는 ${evidenceByFamily.join(' / ')}입니다. ${evidenceByFamily.length}개 십신 계열이 ${channelName} 관측 범위의 서로 다른 명식 위치에서 각각 확인됩니다. 이 계산 근거에 한해 ${describeQuotedReadingAxis(headline)} 구조적 관점으로 연결해 읽습니다. ${textFor(claim.claimType,'summary')}`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
@@ -246,7 +252,7 @@ function buildBusinessNatalReadingGuide(
   const paragraphs = [
     `사업이라는 주제에서 이 명식의 중심 구조적 관점은 ‘${core.headline}’입니다. 이 표현은 ${core.observedPositions.join(' · ')}에서 실제 관측된 기존 십신 근거에 연결된 연구 후보입니다.`,
     ...supports.map((section, index) =>
-      `또 다른 관점인 ‘${section.headline}’은 기존 관찰과 다른 ${supporting[index]!.distinctObservedPositions.join(' · ')}의 계산 사실을 추가해 구별합니다.`),
+      `‘${section.headline}’이라는 별도 관점은 기존 관찰과 다른 ${supporting[index]!.distinctObservedPositions.join(' · ')}의 계산 사실을 추가해 구별합니다.`),
     ...(state === 'complete'
       ? ['서로 다른 구조적 관점 세 가지를 확인했지만, 이것은 창업 적성·매출·사업 성공이나 실패를 판정하지 않습니다.']
       : [`이 명식에서 독립적으로 설명할 수 있는 보조 관점은 ${supporting.length}개뿐이어서, 사업운 전체 종합 설명은 보류합니다.`]),
@@ -295,15 +301,13 @@ export function buildBusinessNatalMultifactorReport(
         .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
           (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
     : [];
-  // Prefer the 3-input core. When not observed, a narrower two-input core can
-  // still be rendered, but completion needs two OTHER independently grounded axes.
-  const core = result.find(s => s.axis === 'core') ??
-    result.find(s => s.axis === 'execution') ??
-    result.find(s => s.axis === 'governance') ??
-    result.find(s => s.axis === 'preparation');
-  // A genuine source-bound coordination-only observation is visible as a PARTIAL
-  // reading, never promoted to a MUR core or a consumer product completion.
-  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
+  // Preserve the registered four-axis core priority. Within the FIRST
+  // available axis, select the original sourced T8 that admits more truly
+  // independent Canonical observations. Coordination alone never becomes a core.
+  const selectedCore = selectBestNatalCoreWithinPriorityAxis(
+    result.filter(section => section.axis !== 'coordination'), result);
+  const core = selectedCore?.core;
+  const supportSelection = selectedCore?.support;
   const chosen: BusinessNatalMultifactorSection[] = core
     ? [core, ...(supportSelection?.supporting ?? [])]
     : result.filter(section => section.axis === 'coordination').slice(0, 1);
@@ -313,9 +317,20 @@ export function buildBusinessNatalMultifactorReport(
   if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
     missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
   }
-  if(chosen.length < 3) {
-    const observed = chosen.map(s => `${AXIS_NAMES[s.axis]}(${s.channel === 'visible_stems' ? '천간' : '지지'})`);
-    missing.push(`이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}. 최소 유효 풀이에는 독립된 근거의 추가 해석 축 ${3 - chosen.length}개가 더 필요합니다.`);
+  if (chosen.length < 3) {
+    const observed = chosen.map(section =>
+      `${AXIS_NAMES[section.axis]}(${section.channel === 'visible_stems' ? '천간' : '지지 대표 십신'})`);
+    const observedSummary = `이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}.`;
+    // Coordination is bounded partial evidence, never an eligible synthesis
+    // core. Counting it toward three axes would misstate what is missing.
+    if (core === undefined) {
+      missing.push(observedSummary +
+        ' 출처 있는 중심 복합 해석 근거가 먼저 필요합니다. ' +
+        '현재 조율 관점은 중심 결론이나 독립 보조 축 수를 대신하지 않습니다.');
+    } else {
+      missing.push(observedSummary +
+        ` 중심 결론과 구별되는 추가 해석 축 ${3 - chosen.length}개가 부족합니다.`);
+    }
   }
   const state: Status = snapshot.completeness.birthTimeKnown &&
     core !== undefined && chosen.length === 3
@@ -324,6 +339,11 @@ export function buildBusinessNatalMultifactorReport(
   const readingGuide = buildBusinessNatalReadingGuide(
     core, core === undefined ? [] : chosen.slice(1), state,
   );
+  // Do not hide actual source-bound T5 observations when no domain T8
+  // combination exists. These are chart-wide facts, NOT domain conclusions.
+  const availableThemeContext = state === 'insufficient'
+    ? buildNatalExistingT5SourceContext(snapshot, execution, registry)
+    : undefined;
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 사업의 다중 근거 T8 해석은 보류합니다.');
   }
@@ -337,6 +357,7 @@ export function buildBusinessNatalMultifactorReport(
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(availableThemeContext === undefined ? {} : { availableThemeContext }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],

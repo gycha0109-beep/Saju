@@ -8,12 +8,15 @@ import type {
   SourceReference,
 } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
+import { GENERAL_ANNUAL_SIX_COMBINATION_SOURCE } from './general-annual-reading-candidate.js';
 
 export const GENERAL_MONTHLY_READING_CANDIDATE_VERSION = '0.1.0-research' as const;
 
 const METHOD_ID = 'M-GENERAL-MONTHLY-T9-MYEONGHA-POLICY-V1';
 const ACTIVATION_RULE_SET = 'general-monthly-t9-segment-activation';
 const TENSION_RULE_SET = 'general-monthly-t9-segment-branch-clash-tension';
+const COMBINATION_RULE_SET = 'general-monthly-t9-segment-six-combination-context';
+const COMBINATION_METHOD_ID = 'M-GENERAL-MONTHLY-T9-SIX-COMBINATION-SOURCE-V1';
 const SEGMENT_IDS = ['before_jeol', 'after_jeol'] as const;
 const PILLAR_SLOTS = ['year', 'month', 'day', 'hour'] as const;
 
@@ -149,6 +152,91 @@ export const GENERAL_MONTHLY_TENSION_CLAIM_TYPE = Object.freeze({
   materialForNarrative: true,
   allowedTaxonomyTiers: ['T9'],
 } satisfies ClaimTypeDefinition);
+
+const combinationSemanticKey = (segmentId: GeneralMonthlySegmentId,
+  slot: (typeof PILLAR_SLOTS)[number]) =>
+  `MONTHLY_${segmentId.toUpperCase()}_BRANCH_SIX_COMBINATION_${slot.toUpperCase()}`;
+
+export const GENERAL_MONTHLY_COMBINATION_SCHEMA = Object.freeze({
+  schemaId: 'SCHEMA-GENERAL-MONTHLY-SEGMENT-SIX-COMBINATION-V1',
+  version: '1.0.0',
+  root: {
+    kind: 'object',
+    required: [
+      'semanticKey', 'segmentId', 'natalPillar', 'relation', 'narrativeRole',
+      'transformationAuthorized', 'forbiddenInferences',
+    ],
+    properties: {
+      semanticKey: { kind: 'string',
+        enum: SEGMENT_IDS.flatMap(segmentId =>
+          PILLAR_SLOTS.map(slot => combinationSemanticKey(segmentId, slot))) },
+      segmentId: { kind: 'string', enum: SEGMENT_IDS },
+      natalPillar: { kind: 'string', enum: PILLAR_SLOTS },
+      relation: { kind: 'literal', value: 'six_combination' },
+      narrativeRole: { kind: 'literal', value: 'context' },
+      transformationAuthorized: { kind: 'literal', value: false },
+      forbiddenInferences: { kind: 'array', items: { kind: 'string' }, minItems: 1 },
+    },
+    additionalProperties: false,
+  },
+} satisfies ClaimValueSchemaDefinition);
+
+export const GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE = Object.freeze({
+  claimType: 'GENERAL_MONTHLY_SEGMENT_BRANCH_SIX_COMBINATION_CONTEXT',
+  version: '1.0.0',
+  valueSchemaRef: {
+    id: GENERAL_MONTHLY_COMBINATION_SCHEMA.schemaId,
+    version: GENERAL_MONTHLY_COMBINATION_SCHEMA.version,
+  },
+  scope: 'period',
+  exclusiveValue: false,
+  scenarioSensitive: true,
+  materialForNarrative: true,
+  allowedTaxonomyTiers: ['T9'],
+} satisfies ClaimTypeDefinition);
+
+export const GENERAL_MONTHLY_COMBINATION_METHODOLOGY: MethodologyDefinition = Object.freeze({
+  methodologyId: COMBINATION_METHOD_ID,
+  version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION,
+  family: 'time_dynamics',
+  name: 'Jeol segment to natal pillar 六合 structural relation (research)',
+  description: 'Uses existing T0 six-combination for the exact solar-term month phase without treating it as a favorable or predictive event.',
+  assumptions: [
+    'Each claim belongs to exactly one resolved Jeol segment, not a whole-month or automatically inherited annual claim.',
+    'Classical 六合 pair membership is not proof of 合化, favorable luck, human cooperation or future events.',
+    'Unknown or ambiguous natal branch relations must not be promoted into a resolved monthly result.',
+    'No Official, production, publishing, storage or commercial rights are granted.',
+  ],
+  requiredFactTypes: ['temporal.targetYear','temporal.targetMonth','temporal.jeolBoundary.at',
+    'temporal.segmentsById.*.segmentId','temporal.segmentsById.*.monthlyPillar'],
+  optionalFactTypes: ['temporal.segmentsById.*.monthlyBranchRelations.*.relation'],
+  inputContract: {
+    factInputs: [
+      { source: 'temporal_fact' as const, pathPattern: 'targetYear', mode: 'required' as const,
+        rationale: 'The monthly six-combination is scoped to the exact requested year.' },
+      { source: 'temporal_fact' as const, pathPattern: 'targetMonth', mode: 'required' as const,
+        rationale: 'The monthly six-combination is scoped to the exact requested month.' },
+      { source: 'temporal_fact' as const, pathPattern: 'jeolBoundary.at', mode: 'required' as const,
+        rationale: 'The two month pillars must be distinguished by the exact Jeol boundary.' },
+      ...SEGMENT_IDS.flatMap(segmentId => [
+        { source: 'temporal_fact' as const,
+          pathPattern: `segmentsById.${segmentId}.segmentId`, mode: 'allowed' as const,
+          rationale: 'Monthly combination belongs to a specific half-open segment.' },
+        { source: 'temporal_fact' as const,
+          pathPattern: `segmentsById.${segmentId}.monthlyPillar`, mode: 'allowed' as const,
+          rationale: 'The monthly branch must be observed in that segment.' },
+        ...PILLAR_SLOTS.map(slot => ({
+          source: 'temporal_fact' as const,
+          pathPattern: `segmentsById.${segmentId}.monthlyBranchRelations.${slot}.relation`,
+          mode: 'allowed' as const,
+          rationale: 'Observed six-combination of the monthly segment and natal pillar.',
+        })),
+      ]),
+    ],
+  },
+  sourceIds: [GENERAL_MONTHLY_POLICY_SOURCE.sourceId, GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId],
+  status: 'research',
+});
 
 export const GENERAL_MONTHLY_READING_METHODOLOGY = Object.freeze({
   methodologyId: METHOD_ID,
@@ -427,12 +515,73 @@ export const GENERAL_MONTHLY_TENSION_RULES: readonly RuleDefinition[] = Object.f
   ),
 );
 
+function branchSixCombinationRule(segmentId: GeneralMonthlySegmentId,
+  slot: (typeof PILLAR_SLOTS)[number]): RuleDefinition {
+  return {
+    ruleId: `RULE-GENERAL-MONTHLY-T9-${segmentId.toUpperCase()}-BRANCH-SIX-COMBINATION-${slot.toUpperCase()}`,
+    version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION,
+    ruleSetId: COMBINATION_RULE_SET,
+    taxonomy: { tier: 'T9', category: 'general', subcategory: 'monthly' },
+    methodologyRef: { id: COMBINATION_METHOD_ID, version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION },
+    title: `Monthly ${segmentId} six-combination context at natal ${slot} pillar`,
+    description: 'Classical source-bound monthly 六合 relation with a real natal pillar, only for the selected Jeol segment.',
+    inputs: [
+      ...corePeriodInputs(segmentId),
+      { key: 'relation', source: 'temporal_fact',
+        pathOrClaimType: segmentPath(segmentId, `monthlyBranchRelations.${slot}.relation`),
+        required: false, ambiguityBehavior: 'requires_resolved' },
+    ],
+    condition: {
+      op: 'and',
+      expressions: [
+        { op: 'exists', value: { kind: 'input', key: 'targetYear' } },
+        { op: 'exists', value: { kind: 'input', key: 'targetMonth' } },
+        { op: 'exists', value: { kind: 'input', key: 'jeolBoundaryAt' } },
+        { op: 'exists', value: { kind: 'input', key: 'monthlyPillar' } },
+        { op: 'eq', left: { kind: 'input', key: 'segmentId' },
+          right: { kind: 'literal', value: segmentId } },
+        { op: 'eq', left: { kind: 'input', key: 'relation' },
+          right: { kind: 'literal', value: 'six_combination' } },
+      ],
+    },
+    output: {
+      claimType: GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE.claimType,
+      subject: 'monthly_period_segment',
+      predicate: 'monthly_segment_branch_six_combination_context',
+      value: {
+        semanticKey: combinationSemanticKey(segmentId, slot),
+        segmentId, natalPillar: slot, relation: 'six_combination',
+        narrativeRole: 'context', transformationAuthorized: false,
+        forbiddenInferences: ['favorable_luck','transformation','specific_event',
+          'relationship_outcome','financial_outcome','career_outcome'],
+      },
+      polarity: 'neutral',
+      emphasis: 'minor',
+      tags: ['research','general','monthly',segmentId,'six-combination','context'],
+    },
+    sourceRefs: [
+      ...sourceRefs(),
+      { sourceId: GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId,
+        supportType: 'interpretive_basis',
+        notes: 'Existing structural source for 六合 pair only, not a conversion or event.' },
+    ],
+    quality: QUALITY,
+    status: 'research',
+  };
+}
+
+export const GENERAL_MONTHLY_COMBINATION_RULES: readonly RuleDefinition[] = Object.freeze(
+  SEGMENT_IDS.flatMap(segmentId => PILLAR_SLOTS.map(slot =>
+    branchSixCombinationRule(segmentId, slot))),
+);
+
 export const GENERAL_MONTHLY_READING_PACK = Object.freeze({
   packId: 'PACK-GENERAL-MONTHLY-READING-CANDIDATE',
   version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION,
   name: 'General Monthly Reading Research Candidate',
-  methodologyRefs: [{ id: METHOD_ID, version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION }],
-  enabledRuleSets: [ACTIVATION_RULE_SET, TENSION_RULE_SET],
+  methodologyRefs: [{ id: METHOD_ID, version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION },
+    { id: COMBINATION_METHOD_ID, version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION }],
+  enabledRuleSets: [ACTIVATION_RULE_SET, TENSION_RULE_SET, COMBINATION_RULE_SET],
   conflictPolicy: 'preserve_all',
   ambiguityPolicy: 'propagate',
   compositionPolicyRef: {
@@ -448,11 +597,15 @@ export function createGeneralMonthlyReadingCandidateRegistry(
 ) {
   return createRuleRegistrySnapshot(
     {
-      rules: [...GENERAL_MONTHLY_ACTIVATION_RULES, ...GENERAL_MONTHLY_TENSION_RULES],
-      methodologies: [GENERAL_MONTHLY_READING_METHODOLOGY],
-      sources: [GENERAL_MONTHLY_POLICY_SOURCE],
-      claimTypeDefinitions: [GENERAL_MONTHLY_THEME_CLAIM_TYPE, GENERAL_MONTHLY_TENSION_CLAIM_TYPE],
-      claimValueSchemas: [GENERAL_MONTHLY_THEME_SCHEMA, GENERAL_MONTHLY_TENSION_SCHEMA],
+      rules: [...GENERAL_MONTHLY_ACTIVATION_RULES, ...GENERAL_MONTHLY_TENSION_RULES,
+        ...GENERAL_MONTHLY_COMBINATION_RULES],
+      methodologies: [GENERAL_MONTHLY_READING_METHODOLOGY,
+        GENERAL_MONTHLY_COMBINATION_METHODOLOGY],
+      sources: [GENERAL_MONTHLY_POLICY_SOURCE, GENERAL_ANNUAL_SIX_COMBINATION_SOURCE],
+      claimTypeDefinitions: [GENERAL_MONTHLY_THEME_CLAIM_TYPE, GENERAL_MONTHLY_TENSION_CLAIM_TYPE,
+        GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE],
+      claimValueSchemas: [GENERAL_MONTHLY_THEME_SCHEMA, GENERAL_MONTHLY_TENSION_SCHEMA,
+        GENERAL_MONTHLY_COMBINATION_SCHEMA],
     },
     GENERAL_MONTHLY_READING_PACK,
     createdAt,

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import process from 'node:process';
 import { writeFileSync } from 'node:fs';
+import { compareFixedSaju500Baseline } from './saju-500-baseline-comparison.mjs';
 import { calculateCanonicalSajuSnapshot } from '../dist/calculation/calculation-engine.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
@@ -10,15 +11,24 @@ import { createWealthNatalMultifactorRegistry } from '../dist/research/wealth-na
 import { createBusinessNatalMultifactorRegistry } from '../dist/research/business-natal-multifactor-candidate.js';
 import { createRelationshipNatalMultifactorRegistry } from '../dist/research/relationship-natal-multifactor-candidate.js';
 import { buildGeneralNatalMultifactorReport } from '../dist/preview/general-natal-multifactor-report.js';
-import { buildCareerMultifactorResearchReport } from '../dist/preview/career-natal-multifactor-report.js';
+import { buildCareerMultifactorResearchReport, renderCareerMultifactorResearchHtml } from '../dist/preview/career-natal-multifactor-report.js';
 import { buildWealthNatalMultifactorReport } from '../dist/preview/wealth-natal-multifactor-report.js';
 import { buildBusinessNatalMultifactorReport } from '../dist/preview/business-natal-multifactor-report.js';
 import { buildRelationshipNatalMultifactorReport } from '../dist/preview/relationship-natal-multifactor-report.js';
 import { buildThreeTemporalMenusBirthReading } from '../dist/preview/three-temporal-menus-birth-reading.js';
+import { buildTemporalResearchMenuReadings } from '../dist/preview/temporal-research-menu-reading.js';
+import { renderNatalFiveDomainMultifactorResearchHtml } from '../dist/preview/natal-five-domain-multifactor-reader.js';
 import {
   diagnoseMissingWealthReading,
+  diagnoseMissingNatalReading,
+  summarizeMissingNatalCauses,
   analyzeTemporalRepetition,
+  analyzeTemporalMeaningRepetition,
+  analyzeTemporalConsumedT9Meaning,
+  analyzeTemporalStructuralEvidenceVariation,
+  analyzeTemporalNatalT5Variation,
   summarizeMissingWealthCauses,
+  summarizeWealthConsumerEvidence,
   ROOT_CAUSE_AUDIT_VERSION,
 } from './saju-500-root-cause.mjs';
 
@@ -57,6 +67,13 @@ function sampleBirth(used) {
   }
 }
 function digest(v) { return createHash('sha256').update(String(v)).digest('hex'); }
+/** The consumer HTML safely escapes the original source-owned Korean prose.
+ * Audit the actual rendered representation, not an unescaped JS string. */
+function escapedHtmlText(value) {
+  return value.replace(/[&<>"']/gu, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char]);
+}
 function entry(text, meaning, state, sectionCount, kind) {
   const str = text.trim();
   return {
@@ -83,7 +100,40 @@ function natalEntry(report) {
     'sourced_natal_research',
   );
 }
-function temporalEntries(result) {
+/**
+ * Existing source-qualified T5 Claims from the SAME natal engine execution.
+ * Do not combine channels, inspect unauthorized hidden stems, or derive new
+ * period interpretations. Store only actually observed qualified positions.
+ */
+function sourceBoundNatalT5(snapshot, execution) {
+  const fact = snapshot.derivedFacts.tenGods;
+  if (fact.status !== 'resolved') return [];
+  const families = {
+    PEER: ['비견', '겁재'], RESOURCE: ['정인', '편인'],
+    OUTPUT: ['식신', '상관'], WEALTH: ['정재', '편재'],
+    OFFICER: ['정관', '편관'],
+  };
+  return execution.claims.filter(c => c.state === 'active' &&
+    c.taxonomy.tier === 'T5' && c.snapshotId === snapshot.snapshotId &&
+    c.scenarioRef === undefined && c.sourceRefs.length > 0 &&
+    /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(c.claimType))
+    .map(claim => {
+      const match = /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.exec(claim.claimType);
+      const family = match[1], channel = match[2];
+      const key = channel === 'VISIBLE_STEMS' ? 'stem' : 'branch';
+      const slots = channel === 'VISIBLE_STEMS' ? ['year', 'month', 'hour'] : ['year', 'month', 'day', 'hour'];
+      const observed = slots.flatMap(slot => {
+        const tenGod = fact.value[slot][key];
+        return tenGod?.status === 'resolved' && families[family].includes(tenGod.value)
+          ? [{factPath: 'derivedFacts.tenGods.value.' + slot + '.' + key + '.value', tenGod:tenGod.value}]
+          : [];
+      });
+      if (!observed.length) throw new Error('T5 source audit has no matching observed natal evidence: ' + claim.claimType);
+      return {claimType:claim.claimType, sourceIds:[...claim.sourceRefs], observed};
+    }).sort((a,b)=>a.claimType.localeCompare(b.claimType));
+}
+
+function temporalEntries(result, natalT5) {
   const report = result.annualMonthly.report;
   const annual = report.annual.sections;
   const monthly = report.monthly.sections;
@@ -94,17 +144,37 @@ function temporalEntries(result) {
     annual.map(s => [s.researchProfileId, s.title]),
     report.annualReference.state, annual.length, 'annual_research',
   );
-  const current = focus.state === 'in_period' && focus.theme
-    ? focus.theme.title + '\n' + focus.theme.text : '';
+  // The reference theme is already one of the source-selected monthly
+  // sections. Count its Korean text once, as the consumer now displays it.
   const m = entry(
-    [current, ...monthly.map(s => s.title + '\n' + s.text)].filter(Boolean).join('\n\n'),
-    [focus.state, focus.theme?.title ?? '', ...monthly.map(s => [s.segmentId, s.title])],
-    focus.state, monthly.length + (current ? 1 : 0), 'monthly_research',
+    monthly.map(s => s.title + '\n' + s.text).join('\n\n'),
+    [focus.state, focus.segmentId ?? '', ...monthly.map(s => [s.segmentId, s.title])],
+    focus.state, monthly.length, 'monthly_research',
   );
   // IMPORTANT: Dayun periods describe calendar/pillar facts, not supported
   // forecasts; report life-stage's structural uniqueness but DO NOT count it
   // as distinct life-stage interpretations.
   a.sourceEvidence = {
+    natalT5,
+    consumedT9:annual.map((section, index) => {
+      const evidence=report.annualExecutedEvidence[index];
+      if (!evidence || evidence.semanticKey !== section.id) {
+        throw new Error('Annual audit cannot guess missing selected T9 semantics');
+      }
+      return {
+        kind:section.kind,
+        claimType:evidence.claimType,
+        semanticKey:evidence.semanticKey,
+        ...(section.kind === 'core' ? {tenGod:report.annual.annualStemTenGod} : {
+          relatedPillar:section.relatedPillar,
+          relation:section.observedClash?.relation ?? section.observedCombination?.relation,
+        }),
+        ruleIds:[...evidence.ruleIds],
+        methodologyId:evidence.methodologyId,
+        sourceIds:[...evidence.sourceIds],
+        factPaths:[...evidence.factPaths],
+      };
+    }),
     annualStemTenGod: report.annual.annualStemTenGod,
     annualCalendarPolicy: report.annual.calendarPolicy,
     sections: annual.map(s => ({
@@ -113,9 +183,26 @@ function temporalEntries(result) {
       candidateClaimType: s.candidateClaimType,
       calculatedFactPaths: [...s.calculationFactPaths],
       relatedPillar: s.relatedPillar ?? null,
+      observedClash: s.observedClash ?? null,
+      observedCombination: s.observedCombination ?? null,
     })),
   };
   m.sourceEvidence = {
+    natalT5,
+    consumedT9:monthly.map(section => ({
+      kind:section.kind,
+      segmentId:section.segmentId,
+      claimType:section.claimType,
+      semanticKey:section.semanticKey,
+      ...(section.kind === 'theme' ? {tenGod:section.tenGod} : {
+        relatedPillar:section.relatedPillar,
+        relation:section.observedClash?.relation ?? section.observedCombination?.relation,
+      }),
+      ruleIds:[...section.ruleIds],
+      methodologyId:section.methodologyId,
+      sourceIds:[...section.sourceIds],
+      factPaths:[...section.factPaths],
+    })),
     referenceState: focus.state,
     referenceSegment: focus.segmentId ?? null,
     sections: monthly.map(s => ({
@@ -127,6 +214,8 @@ function temporalEntries(result) {
       ruleIds: [...s.ruleIds],
       factPaths: [...s.factPaths],
       relatedPillar: s.relatedPillar ?? null,
+      observedClash: s.observedClash ?? null,
+      observedCombination: s.observedCombination ?? null,
     })),
   };
   const l = entry(
@@ -193,7 +282,31 @@ export function runFiveHundredSajuAudit() {
   const chartHashGroups = new Map();
   const failures = [];
   const wealthMissingCases = [];
+  const wealthPerChartCases = [];
+  const otherNatalMissingCases = [];
+  const otherNatalT5PartialCases = {
+    career: [], relationship: [], business: [],
+  };
+  const careerStandaloneT5Cases = [];
+  const wealthConsumerCases = [];
+  const wealthCrossOfficerCases = [];
+  const wealthCrossResourceCases = [];
+  const wealthCrossPeerCases = [];
+  const generalT5ContextCases = [];
+  const natalT5SingleCopyChecks = {general:0,career:0,business:0,relationship:0};
+  const generalTensionFirstScreenCases = [];
+  const wealthIndependentLimitedCases = [];
+  const wealthPartialCoreUnusedT5Cases = [];
   const startedAt = Date.now();
+  let annualMenuProvenanceChecked = 0;
+  let monthlyMenuProvenanceChecked = 0;
+  let annualCurrentFocusChecked = 0;
+  const annualSixCombinationCases = [];
+  let monthlyCurrentFocusChecked = 0;
+  const monthlySixCombinationCases = [];
+  const currentMonthlyEvidencePairs = [];
+  let threeMenuT5Available = 0;
+  let threeMenuT5WithoutT8 = 0;
   for (let i=0; i<COUNT; i++) {
     const {stamp, birth} = sampleBirth(inputs);
     try {
@@ -202,22 +315,489 @@ export function runFiveHundredSajuAudit() {
       const existing = chartHashGroups.get(chartKey) ?? [];
       existing.push(stamp);
       chartHashGroups.set(chartKey,existing);
+      let natalT5 = [];
+      const natalReports = {};
       for (const domain of NATAL) {
         const registry = registries[domain];
         const interpretation = runInterpretation(snapshot,registry,{now});
+        if (domain === 'general') natalT5 = sourceBoundNatalT5(snapshot, interpretation);
         const report = renderers[domain](snapshot, interpretation, registry);
+        natalReports[domain] = report;
+        if (domain === 'wealth') {
+          // Every current case, not only the remaining empty readings, must
+          // be matchable to the unchanged historical engine's source-SHA
+          // reproduction of the original 111 no-T8 cases.
+          wealthPerChartCases.push({
+            birth: stamp,
+            calculationHash: chartKey,
+            state: report.state,
+            noT8: report.sections.length === 0,
+            selectedT8: report.sections.map(section => ({
+              claimType: section.claimType,
+              pattern: section.pattern,
+              axis: section.axis,
+              channel: section.channel,
+              ruleId: section.ruleId,
+              sourceIds: [...section.sourceIds],
+              upstreamClaimIds: [...section.upstreamClaimIds],
+            })),
+            activeT5ClaimTypes: [...new Set(interpretation.claims.filter(claim =>
+              claim.taxonomy.tier === 'T5' && claim.state === 'active' &&
+              /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+                .test(claim.claimType)).map(claim => claim.claimType))].sort(),
+            missing: [...report.missing],
+          });
+        }
+        if (domain !== 'wealth' && report.sections.length === 0) {
+          // Stage 1: preserve exact missing-case input, T5/Rule/T8 evaluation,
+          // EvidenceSelector output and consumer state for all four other
+          // natal menus. No guessed interpretation is introduced.
+          otherNatalMissingCases.push(diagnoseMissingNatalReading(
+            snapshot, interpretation, registry, report, stamp, domain));
+        }
         if (report.snapshotId !== snapshot.snapshotId || report.calculationHash !== chartKey) {
           throw new Error(domain + ' did not use the same exact natal snapshot');
+        }
+        if (domain === 'career') {
+          // Verify the real Korean paragraphs, not only their structural claim
+          // signatures. A quoted headline must not take a fixed '이라는'
+          // particle when it ends with a vowel (e.g. '구조').
+          for (const section of [...report.sections, ...report.additionalVerifiedSections]) {
+            if (!section.paragraph.includes(
+              '기존 출처에 연결된 구조적 해석 후보를 함께 살핍니다.') ||
+              !section.paragraph.includes(`해석 관점은 ‘${section.headline}’입니다.`) ||
+              /[’'](?:이라는|라는) 구조적 해석 후보/u.test(section.paragraph) ||
+              section.sourceIds.length === 0 ||
+              section.upstreamClaimIds.length !== 2) {
+              throw new Error('Career Korean text lost natural headline grammar or source-bound evidence: ' +
+                stamp);
+            }
+          }
         }
         rows[({
           general:'전체 사주', career:'직업·커리어', wealth:'재물',
           relationship:'연애·관계', business:'사업',
         })[domain]].push({...natalEntry(report),birth:stamp,calculationHash:chartKey});
+        if (domain === 'general') {
+          const context = report.availableThemeContext;
+          const noGeneralT8 = report.sections.length === 0 &&
+            report.state === 'insufficient';
+          const tensionOnly = report.state === 'partial' &&
+            report.sections.length === 1 && report.sections[0]?.axis === 'tension';
+          const hasPartialCore = report.state === 'partial' &&
+            report.readingGuide !== undefined && report.sections.length > 0 &&
+            report.sections.length < 3 && report.sections[0]?.axis !== 'tension';
+          const alreadyUsedT5 = new Set(
+            report.sections.flatMap(section => section.upstreamClaimIds));
+          if (context !== undefined && (
+            !(noGeneralT8 || tensionOnly || hasPartialCore) ||
+            context.wholeChartSynthesisAuthorized !== false ||
+            context.themes.length === 0 ||
+            context.themes.some(theme =>
+              !theme.claimId || alreadyUsedT5.has(theme.claimId) ||
+              theme.observedFactPaths.some(path =>
+                report.sections.some(section => section.observedFactPaths.includes(path))) ||
+              !theme.claimType.startsWith('TEN_GOD_') ||
+              theme.sourceIds.length === 0 || theme.ruleIds.length === 0 ||
+              !theme.methodologyId || theme.observedFactPaths.length === 0 ||
+              theme.observedFactPaths.length !== theme.observedPositions.length)
+          )) throw new Error('General bounded T5 context must be sourced and never replace T8');
+          generalT5ContextCases.push({
+            birth: stamp,
+            withoutGeneralT8: report.sections.length === 0,
+            partialTensionWithUnusedT5: tensionOnly && context !== undefined,
+            partialCoreWithUnusedT5: hasPartialCore && context !== undefined,
+            withSourcedT5Context: context !== undefined,
+            sourceThemeCount: context?.themes.length ?? 0,
+            sourceClaimTypes: context?.themes.map(theme => theme.claimType) ?? [],
+            sourceFactPaths: context?.themes.flatMap(theme => theme.observedFactPaths) ?? [],
+          });
+        }
+        if (domain === 'wealth') {
+          wealthConsumerCases.push({
+            ...natalEntry(report), birth:stamp, calculationHash:chartKey,
+            missingReason:report.missing[0] ?? null,
+            ...(report.availableThemeContext === undefined ? {} : {
+              boundedT5Context: {
+                paragraph:report.availableThemeContext.paragraph,
+                wealthConclusionAuthorized:report.availableThemeContext.wealthConclusionAuthorized,
+                hiddenWealthT5Boundary:report.availableThemeContext.hiddenWealthT5Boundary ?? null,
+                themes:report.availableThemeContext.themes.map(theme => ({
+                  claimId:theme.claimId,
+                  claimType:theme.claimType,
+                  sourceIds:[...theme.sourceIds],
+                  ruleIds:[...theme.ruleIds],
+                  methodologyId:theme.methodologyId,
+                  observedFactPaths:[...theme.observedFactPaths],
+                })),
+              },
+            }),
+          });
+        }
+        if (domain === 'wealth') {
+          // Count only actually selected, reader-visible T8 meanings, not
+          // all eligible rules or textual variation in their dates/positions.
+          for (const section of report.sections.filter(item =>
+            item.pattern === 'WEALTH_OFFICER' && item.channel === 'cross_channel')) {
+            const claim = interpretation.claims.find(item =>
+              item.state === 'active' && item.claimType === section.claimType &&
+              item.snapshotId === snapshot.snapshotId);
+            const familyChannels = claim?.value?.familyChannels;
+            const wealthChannel = familyChannels?.wealth;
+            const officerChannel = familyChannels?.officer;
+            const upstreamTypes = section.upstreamClaimIds.map(id =>
+              interpretation.claims.find(item => item.claimId === id)?.claimType);
+            const expectedTypes = [
+              'TEN_GOD_WEALTH_' + String(wealthChannel).toUpperCase() + '_THEME',
+              'TEN_GOD_OFFICER_' + String(officerChannel).toUpperCase() + '_THEME',
+            ];
+            if (!claim || !['visible_stems','branches'].includes(wealthChannel) ||
+                !['visible_stems','branches'].includes(officerChannel) ||
+                wealthChannel === officerChannel ||
+                JSON.stringify([...upstreamTypes].sort()) !==
+                  JSON.stringify(expectedTypes.sort()) ||
+                section.sourceIds.length !== 2 || !section.ruleId ||
+                section.observedFactPaths.length < 2 ||
+                !section.observedFactPaths.some(path => path.endsWith('.stem.value')) ||
+                !section.observedFactPaths.some(path => path.endsWith('.branch.value')) ||
+                !section.paragraph.includes('재성과 관성은 동일 관측 채널이 아니라')) {
+              throw new Error('Cross-channel Wealth-to-Officer T8 lacks its executed T5 and original Korean meaning');
+            }
+            wealthCrossOfficerCases.push({
+              birth:stamp, calculationHash:chartKey,
+              claimType:section.claimType, upstreamClaimTypes:upstreamTypes,
+              ruleId:section.ruleId, sourceIds:section.sourceIds,
+              observedFactPaths:section.observedFactPaths,
+              headline:section.headline, paragraph:section.paragraph,
+            });
+          }
+          for (const section of report.sections.filter(item =>
+            item.pattern === 'WEALTH_RESOURCE' && item.channel === 'cross_channel')) {
+            const claim = interpretation.claims.find(item =>
+              item.state === 'active' && item.claimType === section.claimType &&
+              item.snapshotId === snapshot.snapshotId);
+            const familyChannels = claim?.value?.familyChannels;
+            const wealthChannel = familyChannels?.wealth;
+            const resourceChannel = familyChannels?.resource;
+            const upstreamTypes = section.upstreamClaimIds.map(id =>
+              interpretation.claims.find(item => item.claimId === id)?.claimType);
+            const expectedTypes = [
+              'TEN_GOD_WEALTH_' + String(wealthChannel).toUpperCase() + '_THEME',
+              'TEN_GOD_RESOURCE_' + String(resourceChannel).toUpperCase() + '_THEME',
+            ];
+            if (!claim || !['visible_stems','branches'].includes(wealthChannel) ||
+                !['visible_stems','branches'].includes(resourceChannel) ||
+                wealthChannel === resourceChannel ||
+                JSON.stringify([...upstreamTypes].sort()) !==
+                  JSON.stringify(expectedTypes.sort()) ||
+                section.sourceIds.length !== 2 || !section.ruleId ||
+                section.observedFactPaths.length < 2 ||
+                !section.observedFactPaths.some(path => path.endsWith('.stem.value')) ||
+                !section.observedFactPaths.some(path => path.endsWith('.branch.value')) ||
+                !section.paragraph.includes('재성과 인성은 동일 관측 채널이 아니라')) {
+              throw new Error('Cross-channel Wealth-to-Resource T8 lacks its executed T5 and original Korean meaning');
+            }
+            wealthCrossResourceCases.push({
+              birth:stamp, calculationHash:chartKey,
+              claimType:section.claimType, upstreamClaimTypes:upstreamTypes,
+              ruleId:section.ruleId, sourceIds:section.sourceIds,
+              observedFactPaths:section.observedFactPaths,
+              headline:section.headline, paragraph:section.paragraph,
+            });
+          }
+        }
+
+          for (const section of report.sections.filter(item =>
+            item.pattern === 'PEER_WEALTH' && item.channel === 'cross_channel')) {
+            const claim = interpretation.claims.find(item =>
+              item.state === 'active' && item.claimType === section.claimType &&
+              item.snapshotId === snapshot.snapshotId);
+            const peer = claim?.value?.familyChannels?.peer;
+            const wealth = claim?.value?.familyChannels?.wealth;
+            const upstream = section.upstreamClaimIds.map(id =>
+              interpretation.claims.find(item => item.claimId === id)?.claimType);
+            const expected = [
+              'TEN_GOD_PEER_' + String(peer).toUpperCase() + '_THEME',
+              'TEN_GOD_WEALTH_' + String(wealth).toUpperCase() + '_THEME',
+            ];
+            if (!claim || !['visible_stems','branches'].includes(peer) ||
+                !['visible_stems','branches'].includes(wealth) || peer === wealth ||
+                section.axis !== 'tension' ||
+                JSON.stringify([...upstream].sort()) !== JSON.stringify(expected.sort()) ||
+                section.sourceIds.length !== 2 || !section.ruleId ||
+                section.observedFactPaths.length < 2 ||
+                !section.observedFactPaths.some(path => path.endsWith('.stem.value')) ||
+                !section.observedFactPaths.some(path => path.endsWith('.branch.value')) ||
+                !section.paragraph.includes('비겁과 재성은 동일 관측 채널이 아니라') ||
+                !section.paragraph.includes('실제 자산 손실')) {
+              throw new Error('Selected Peer-to-Wealth cross-channel T8 lost actual T5 or its bounded meaning');
+            }
+            wealthCrossPeerCases.push({
+              birth:stamp, calculationHash:chartKey,
+              claimType:section.claimType, upstreamClaimTypes:upstream,
+              ruleId:section.ruleId, sourceIds:section.sourceIds,
+              observedFactPaths:section.observedFactPaths,
+              headline:section.headline, paragraph:section.paragraph,
+            });
+          }
         if (domain === 'wealth' && report.sections.length === 0) {
+          const context = report.availableThemeContext;
+          const membership = context?.hiddenWealthMembership ?? [];
+          const expected = context?.hiddenWealthEvidenceStatus === 'unavailable'
+            ? 'membership_unavailable'
+            : membership.length > 0 ? 'membership_only' : 'no_membership_observed';
+          if (context?.hiddenWealthT5Boundary !== expected ||
+              context.themes.some(theme => theme.family === 'wealth')) {
+            throw new Error('Missing Wealth T8 must distinguish hidden membership from direct T5');
+          }
           wealthMissingCases.push(
             diagnoseMissingWealthReading(snapshot, interpretation, registry, report, stamp),
           );
         }
+      }
+      // Consumer Korean quality: the original T5 summary is already inside
+      // context.paragraph, so the source/provenance list must not repeat it.
+      // This applies to both no-T8 and partially supported General readings.
+      const sourceCopyDomains = ['general','career','business','relationship'];
+      if (sourceCopyDomains.some(domain =>
+          natalReports[domain].availableThemeContext !== undefined)) {
+        const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+        for (const domain of sourceCopyDomains) {
+          const context = natalReports[domain].availableThemeContext;
+          if (!context) continue;
+          const card = html.split('<h2 id="domain-' + domain + '">')[1]
+            ?.split('</article>')[0];
+          if (!card || !card.includes('<p>' + escapedHtmlText(context.paragraph) + '</p>') ||
+              context.themes.some(theme =>
+                !card.includes(escapedHtmlText(theme.claimId)) ||
+                !card.includes(escapedHtmlText(theme.ruleIds[0])) ||
+                !card.includes(escapedHtmlText(theme.sourceIds[0])) ||
+                !card.includes(escapedHtmlText(theme.observedFactPaths[0])) ||
+                !context.paragraph.includes(theme.summary) ||
+                card.split(escapedHtmlText(theme.summary)).length !== 2)) {
+            throw new Error(domain +
+              ' existing natal T5 meaning duplicated or lost provenance in consumer Korean: ' +
+              stamp);
+          }
+          natalT5SingleCopyChecks[domain]++;
+        }
+      }
+      // All five reports are assembled here, so verify that an actual
+      // registered General T5 is visible on the first screen when T8 is held.
+      // Do not label that T5 observation as a whole-chart synthesis.
+      const heldGeneral = natalReports.general;
+      if (heldGeneral.state === 'insufficient' &&
+          heldGeneral.sections.length === 0 && heldGeneral.availableThemeContext) {
+        const context = heldGeneral.availableThemeContext;
+        const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+        const overview = html.split('</nav>')[0] ?? '';
+        const card = html.split('<h2 id="domain-general">')[1]?.split('</article>')[0];
+        const first = context.themes[0];
+        if (context.wholeChartSynthesisAuthorized !== false || !first ||
+            !overview.includes('전체 사주 종합풀이 보류 · 출처 있는 원국 십신 부분 관측: ') ||
+            !overview.includes(escapedHtmlText(first.headline)) ||
+            !overview.includes(escapedHtmlText(first.summary)) ||
+            !card?.includes('전체 사주의 복합 종합해석 근거는 아직 확인되지 않았습니다') ||
+            !card.includes('aria-label="전체 원국의 기존 십신 부분 해석"') ||
+            context.themes.some(theme =>
+              !card.includes(escapedHtmlText(theme.summary)) ||
+              !card.includes(escapedHtmlText(theme.claimId)) ||
+              !card.includes(escapedHtmlText(theme.ruleIds[0])) ||
+              !card.includes(escapedHtmlText(theme.methodologyId)) ||
+              !card.includes(escapedHtmlText(theme.sourceIds[0])) ||
+              !card.includes(escapedHtmlText(theme.observedPositions[0])) ||
+              !card.includes(escapedHtmlText(theme.observedFactPaths[0])))) {
+          throw new Error('Held General T8 hid existing source-owned T5 on the first screen: ' +
+            stamp);
+        }
+      }
+      // Stage 1/5: when there is no registered domain T8 for a chart, the
+      // original T5 source copy must reach the user-facing panel as a bounded
+      // PARTIAL observation. Never count it as a new domain synthesis.
+      const heldOtherDomains = ['career', 'business', 'relationship'].filter(domain =>
+        natalReports[domain].state === 'insufficient' &&
+        natalReports[domain].sections.length === 0);
+      if (heldOtherDomains.length > 0) {
+        const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+        const overview = html.split('</nav>')[0] ?? '';
+        for (const domain of heldOtherDomains) {
+          const report = natalReports[domain];
+          const context = report.availableThemeContext;
+          const card = html.split('<h2 id="domain-' + domain + '">')[1]
+            ?.split('</article>')[0];
+          if (!context || context.wholeChartSynthesisAuthorized !== false ||
+              context.themes.length === 0 ||
+              !card?.includes('aria-label="종합풀이 보류 시 기존 십신 부분 해석"') ||
+              !card.includes('해당 분야의 종합 해석 아님') ||
+              !overview.includes('출처 있는 원국 십신 부분 관측') ||
+              context.themes.some(theme =>
+                !card.includes(escapedHtmlText(theme.summary)) ||
+                !card.includes(escapedHtmlText(theme.claimId)) ||
+                !card.includes(escapedHtmlText(theme.ruleIds[0])) ||
+                !card.includes(escapedHtmlText(theme.sourceIds[0])) ||
+                !card.includes(escapedHtmlText(theme.observedPositions[0])) ||
+                !card.includes(escapedHtmlText(theme.observedFactPaths[0])))) {
+            throw new Error(domain +
+              ' no-T8 consumer panel lost original research T5 or falsely indicated synthesis');
+          }
+          otherNatalT5PartialCases[domain].push({
+            birth: stamp, calculationHash: chartKey,
+            themeCount: context.themes.length,
+            originalT5ClaimIds: context.themes.map(theme => theme.claimId),
+          });
+          if (domain === 'career') {
+            const standalone = renderCareerMultifactorResearchHtml(report);
+            if (!standalone.includes(
+                  'aria-label="직업운 종합풀이 보류 시 원국 십신 부분 설명"') ||
+                !standalone.includes('직업운 종합풀이 아님') ||
+                !standalone.includes('출처로 뒷받침되는 종합 해석을 구성할 수 없습니다') ||
+                context.themes.some(theme =>
+                  !standalone.includes(escapedHtmlText(theme.summary)) ||
+                  !standalone.includes(escapedHtmlText(theme.claimId)) ||
+                  !standalone.includes(escapedHtmlText(theme.claimType)) ||
+                  !standalone.includes(escapedHtmlText(theme.ruleIds[0])) ||
+                  !standalone.includes(escapedHtmlText(theme.methodologyId)) ||
+                  !standalone.includes(escapedHtmlText(theme.sourceIds[0])) ||
+                  !standalone.includes(escapedHtmlText(theme.observedPositions[0])) ||
+                  !standalone.includes(escapedHtmlText(theme.observedFactPaths[0])))) {
+              throw new Error('Career standalone source-bound T5 partial reading lost its original calculation or rule provenance');
+            }
+            careerStandaloneT5Cases.push({
+              birth: stamp, calculationHash: chartKey,
+              themes: context.themes.length,
+            });
+          }
+        }
+      }
+      // The five-domain HTML can only be checked after all five reports exist.
+      const missingWealthReport = natalReports.wealth;
+      if (missingWealthReport.sections.length === 0) {
+        const hiddenContext = missingWealthReport.availableThemeContext;
+        const expected = hiddenContext?.hiddenWealthT5Boundary;
+        const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+        const overview = html.split('</nav>')[0] ?? '';
+        const firstT5 = hiddenContext?.themes[0];
+        if (firstT5 && (!overview.includes('재물 종합 결론 보류 · 출처 있는 십신 부분풀이: ') ||
+            !overview.includes(firstT5.headline) ||
+            !overview.includes(firstT5.summary))) {
+          throw new Error('Missing Wealth T8 hid its real source-owned T5 Korean meaning from the first screen');
+        }
+        const card = html.split('<h2 id="domain-wealth">')[1]?.split('</article>')[0];
+        if (!card || !card.includes('aria-label="지장간 계산과 재물운 해석의 구분"') ||
+            !card.includes('새로운 운세 주장이 아닙니다') ||
+            (expected === 'membership_only' && !card.includes('재성 해석 근거(T5)가 아닙니다')) ||
+            (expected === 'no_membership_observed' && !card.includes('재산이나 돈이 없다는 뜻이 아니며'))) {
+          throw new Error('Missing Wealth T8 hidden membership boundary was not visible');
+        }
+      }
+      const generalPartial = natalReports.general;
+      if (generalPartial.state === 'partial' &&
+          generalPartial.sections.length === 1 &&
+          generalPartial.sections[0].axis === 'tension') {
+        const guide = generalPartial.readingGuide;
+        const chosen = generalPartial.sections[0];
+        if (guide === undefined || guide.sourceClaimType !== chosen.claimType ||
+            guide.supporting.length !== 0 ||
+            guide.ruleIds.length !== 1 || guide.ruleIds[0] !== chosen.ruleId ||
+            guide.sourceIds.length !== chosen.sourceIds.length ||
+            chosen.sourceIds.some(id => !guide.sourceIds.includes(id)) ||
+            !guide.paragraph.includes(chosen.paragraph)) {
+          throw new Error('General tension-only reading must retain its original limited guide');
+        }
+        if (generalTensionFirstScreenCases.length < 5) {
+          const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+          const generalCard = html.split('<h2 id="domain-general">')[1]?.split('</article>')[0];
+          const firstScreen = generalCard?.split('<details class="full-claim-evidence"')[0];
+          if (!firstScreen ||
+              !firstScreen.includes('총운의 중심 결론은 보류합니다') ||
+              !firstScreen.includes('<p>' + escapedHtmlText(chosen.paragraph) + '</p>') ||
+              !generalCard.includes(chosen.ruleId) ||
+              !generalCard.includes(chosen.sourceIds[0])) {
+            throw new Error('General source-owned tension T8 was lost on the first screen');
+          }
+        }
+        generalTensionFirstScreenCases.push({
+          birth:stamp, calculationHash:chartKey,
+          claimType:generalPartial.sections[0].claimType,
+          sourceIds:generalPartial.sections[0].sourceIds,
+          factPaths:generalPartial.sections[0].observedFactPaths,
+        });
+      }
+      const selectedWealth = natalReports.wealth;
+      const partial = selectedWealth.sections;
+      const hasPartialCore = selectedWealth.state === 'partial' &&
+        selectedWealth.readingGuide !== undefined &&
+        partial.length > 0 && partial.length < 3 &&
+        ['core','creation','management','planning'].includes(partial[0].axis);
+      const unusedT5 = selectedWealth.availableThemeContext;
+      if (hasPartialCore && unusedT5 !== undefined) {
+        const consumed = new Set(partial.flatMap(section => section.upstreamClaimIds));
+        const usedPaths = new Set(partial.flatMap(section => section.observedFactPaths));
+        if (unusedT5.wealthConclusionAuthorized !== false ||
+            !unusedT5.paragraph.includes('부족한 독립 보조 근거를 채우지 않으며') ||
+            unusedT5.themes.length === 0 ||
+            unusedT5.themes.some(theme =>
+              consumed.has(theme.claimId) ||
+              theme.observedFactPaths.some(path => usedPaths.has(path)) ||
+              theme.ruleIds.length === 0 || !theme.methodologyId ||
+              theme.sourceIds.length === 0)) {
+          throw new Error('Wealth partial core reused T8 as a new unsupported T5 support');
+        }
+        if (wealthPartialCoreUnusedT5Cases.length < 5) {
+          const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+          const wealthCard = html.split('<h2 id="domain-wealth">')[1]?.split('</article>')[0];
+          if (!wealthCard || !wealthCard.includes(
+            '<p>' + escapedHtmlText(unusedT5.paragraph) + '</p>')) {
+            throw new Error('Wealth partial-core unconsumed T5 was lost at consumer rendering');
+          }
+        }
+        wealthPartialCoreUnusedT5Cases.push({
+          birth:stamp, calculationHash:chartKey,
+          coreClaimType:partial[0].claimType, selectedT8Count:partial.length,
+          unconsumedT5Count:unusedT5.themes.length,
+          sourceClaimTypes:unusedT5.themes.map(theme=>theme.claimType),
+        });
+      }
+      if (partial[0]?.axis === 'tension' && partial[1]?.axis === 'context') {
+        const firstPaths = new Set(partial[0].observedFactPaths);
+        const genuinelyNew = partial[1].observedFactPaths.filter(path => !firstPaths.has(path));
+        if (selectedWealth.state !== 'partial' || selectedWealth.readingGuide !== undefined ||
+            partial.length !== 2 || genuinelyNew.length === 0 ||
+            partial.some(item => item.sourceIds.length === 0 ||
+              item.upstreamClaimIds.length < 2 || item.observedFactPaths.length < 2)) {
+          throw new Error('Wealth dual partial meaning is not independent source-owned T8');
+        }
+        const html = renderNatalFiveDomainMultifactorResearchHtml(snapshot, natalReports);
+        const wealthCard = html.split('<h2 id="domain-wealth">')[1]?.split('</article>')[0];
+        const wealthFirstScreen = wealthCard?.split('<details class="full-claim-evidence"')[0];
+        if (!wealthCard || !wealthFirstScreen ||
+          !wealthFirstScreen.includes('aria-label="재물운 명식별 풀이 본문"') ||
+          !wealthFirstScreen.includes('재물운 중심 결론이 확립되지 않았습니다') ||
+          partial.some(item =>
+          !wealthFirstScreen.includes('<p>' + escapedHtmlText(item.paragraph) + '</p>')) ||
+          partial.some(item =>
+          !wealthCard.includes('<h3>' + escapedHtmlText(item.headline) + '</h3>') ||
+          !wealthCard.includes('<p>' + escapedHtmlText(item.paragraph) + '</p>')) ||
+          selectedWealth.availableThemeContext !== undefined &&
+          !wealthCard.includes('<p>' +
+            escapedHtmlText(selectedWealth.availableThemeContext.paragraph) + '</p>')) {
+          throw new Error('Selected Wealth partial interpretation was lost at consumer rendering');
+        }
+        wealthIndependentLimitedCases.push({
+          birth: stamp,
+          calculationHash: chartKey,
+          status: selectedWealth.state,
+          tension: {
+            claimType: partial[0].claimType, sourceIds: partial[0].sourceIds,
+            factPaths: partial[0].observedFactPaths,
+          },
+          independentContext: {
+            claimType: partial[1].claimType, sourceIds: partial[1].sourceIds,
+            newFactPaths: genuinelyNew,
+          },
+          unusedSourcedT5Themes: selectedWealth.availableThemeContext?.themes.length ?? 0,
+          renderedBoth: true,
+        });
       }
       const temporal = buildThreeTemporalMenusBirthReading(birth,{
         requestId:'500-sample-audit-' + i,
@@ -228,7 +808,214 @@ export function runFiveHundredSajuAudit() {
       if (temporal.calculationHash !== chartKey) {
         throw new Error('Time menus did not preserve canonical calculation hash');
       }
-      const three = temporalEntries(temporal);
+      const [annualMenu, monthlyMenu] = buildTemporalResearchMenuReadings({
+        annualMonthly: temporal.annualMonthly.report,
+      });
+      const originals = temporal.annualMonthly.report.annualExecutedEvidence;
+      if (annualMenu?.menuId !== 'annual' ||
+          annualMenu.authority.mayCallOfficial ||
+          annualMenu.authority.mayPublish || annualMenu.authority.maySell ||
+          annualMenu.authority.mayMarkMenuAvailable ||
+          annualMenu.sections.length !== originals.length ||
+          annualMenu.sections.some((section, index) => {
+            const original = originals[index];
+            const profile = temporal.annualMonthly.report.annual.sections[index];
+            return section.evidenceKind !== 'annual_research_profile' ||
+              section.claimId !== original?.claimId ||
+              section.researchProfileKey !== original?.semanticKey ||
+              section.methodologyId !== original?.methodologyId ||
+              JSON.stringify(section.ruleIds) !== JSON.stringify(original?.ruleIds) ||
+              JSON.stringify(section.sourceIds) !== JSON.stringify(original?.sourceIds) ||
+              JSON.stringify(section.factPaths) !== JSON.stringify(original?.factPaths) ||
+              !section.sourceIds.includes(profile?.policySourceId);
+          })) {
+        throw new Error('Annual menu lost selected Claim/Rule/Methodology/Source in 500-case audit');
+      }
+      annualMenuProvenanceChecked++;
+      // A future-tendency T9 profile owns its mandatory Korean limitation.
+      // The observation-only six-combination profile deliberately owns none.
+      const annualQualifier =
+        '이는 해당 연도에 두드러질 수 있는 경향을 설명하며, 특정 사건이나 결과를 확정하지 않습니다.';
+      for (const section of temporal.annualMonthly.report.annual.sections) {
+        const shouldQualify = section.kind === 'core' || section.kind === 'tension';
+        if (section.text.includes(annualQualifier) !== shouldQualify) {
+          throw new Error('Annual Korean reading omitted or invented its source-profile qualifier: ' +
+            stamp);
+        }
+      }
+      const originalMonthly = temporal.annualMonthly.report.monthly.sections;
+      if (monthlyMenu?.menuId !== 'monthly' ||
+          monthlyMenu.authority.mayCallOfficial ||
+          monthlyMenu.authority.mayPublish || monthlyMenu.authority.maySell ||
+          monthlyMenu.authority.mayMarkMenuAvailable ||
+          monthlyMenu.sections.length !== originalMonthly.length ||
+          monthlyMenu.sections.some((section, index) => {
+            const original = originalMonthly[index];
+            return section.evidenceKind !== 'monthly_t9_research_claim' ||
+              section.claimId !== original?.claimId ||
+              section.claimType !== original?.claimType ||
+              section.semanticKey !== original?.semanticKey ||
+              section.methodologyId !== original?.methodologyId ||
+              JSON.stringify(section.ruleIds) !== JSON.stringify(original?.ruleIds) ||
+              JSON.stringify(section.sourceIds) !== JSON.stringify(original?.sourceIds) ||
+              JSON.stringify(section.factPaths) !== JSON.stringify(original?.factPaths) ||
+              section.interval?.startsAt !== original?.calculatedInterval.startsAt ||
+              section.interval?.endsAtExclusive !== original?.calculatedInterval.endsAt;
+          })) {
+        throw new Error('Monthly menu lost selected Claim/Rule/Methodology/Source in 500-case audit');
+      }
+      monthlyMenuProvenanceChecked++;
+      // Current focus is a subset of executed T9 claims, not a new result.
+      // A repeated basic theme can still have materially different selected
+      // clash meanings. Compare source-owned selections, never birth/date IDs.
+      const sourceAnnualCurrent = temporal.annualMonthly.report.annualCurrentReading;
+      const annualFocus = annualMenu.annualReferenceFocus;
+      if (sourceAnnualCurrent.state !== 'in_target_civil_year' ||
+          annualFocus?.state !== 'from_ipchun' ||
+          annualFocus.currentTheme?.semanticKey !== sourceAnnualCurrent.theme.id ||
+          annualFocus.currentTheme?.text !== sourceAnnualCurrent.theme.text ||
+          JSON.stringify((annualFocus.currentTensions ?? []).map(s => s.semanticKey)) !==
+            JSON.stringify(sourceAnnualCurrent.sourceBoundTensions.map(s => s.id)) ||
+          JSON.stringify((annualFocus.currentTensions ?? []).map(s => s.text)) !==
+            JSON.stringify(sourceAnnualCurrent.sourceBoundTensions.map(s => s.text)) ||
+          JSON.stringify((annualFocus.currentSupports ?? []).map(s => s.semanticKey)) !==
+            JSON.stringify(sourceAnnualCurrent.sourceBoundSupports.map(s => s.id)) ||
+          JSON.stringify((annualFocus.currentSupports ?? []).map(s => s.text)) !==
+            JSON.stringify(sourceAnnualCurrent.sourceBoundSupports.map(s => s.text)) ||
+          (annualFocus.currentSupports ?? []).some(s =>
+            !s.sourceIds?.includes('SRC-T0-XUANZE-YAOLUE-UPPER') ||
+            s.interpretationRole !== 'support')) {
+        throw new Error('Annual current focus lost actual selected chart-specific T9 meanings');
+      }
+      annualCurrentFocusChecked++;
+      for (const support of sourceAnnualCurrent.sourceBoundSupports) {
+        const index = temporal.annualMonthly.report.annual.sections.indexOf(support);
+        const evidence = temporal.annualMonthly.report.annualExecutedEvidence[index];
+        if (!evidence ||
+            support.kind !== 'support' ||
+            support.observedCombination?.relation !== 'six_combination' ||
+            support.observedCombination.sourceId !== 'SRC-T0-XUANZE-YAOLUE-UPPER' ||
+            !evidence.sourceIds.includes(support.observedCombination.sourceId) ||
+            evidence.methodologyId !== support.methodologyId ||
+            !evidence.factPaths.includes('temporal.annualBranchRelations.' + support.relatedPillar) ||
+            !support.text.includes('육합') || !support.text.includes('합화나 사건 성립의 근거로 사용하지 않습니다')) {
+          throw new Error('Annual selected six-combination lost classical source, calculated pair or bounded Korean meaning');
+        }
+        annualSixCombinationCases.push({
+          birth:stamp, calculationHash:chartKey, claimId:evidence.claimId,
+          claimType:evidence.claimType, semanticKey:evidence.semanticKey,
+          sourceIds:evidence.sourceIds, ruleIds:evidence.ruleIds,
+          methodologyId:evidence.methodologyId, factPaths:evidence.factPaths,
+          observedCombination:support.observedCombination, text:support.text,
+        });
+      }
+      const sourceMonthCurrent = temporal.annualMonthly.report.monthly.referenceReading;
+      const monthFocus = monthlyMenu.referenceFocus;
+      if (sourceMonthCurrent.state !== 'in_period' ||
+          monthFocus?.state !== 'in_period' ||
+          monthFocus.currentSection?.claimId !== sourceMonthCurrent.theme?.claimId ||
+          monthFocus.currentSection?.text !== sourceMonthCurrent.theme?.text ||
+          JSON.stringify((monthFocus.currentTensions ?? []).map(s => s.claimId)) !==
+            JSON.stringify((sourceMonthCurrent.sourceBoundTensions ?? []).map(s => s.claimId)) ||
+          JSON.stringify((monthFocus.currentTensions ?? []).map(s => s.text)) !==
+            JSON.stringify((sourceMonthCurrent.sourceBoundTensions ?? []).map(s => s.text)) ||
+          JSON.stringify((monthFocus.currentSupports ?? []).map(s => s.claimId)) !==
+            JSON.stringify((sourceMonthCurrent.sourceBoundSupports ?? []).map(s => s.claimId)) ||
+          JSON.stringify((monthFocus.currentSupports ?? []).map(s => s.text)) !==
+            JSON.stringify((sourceMonthCurrent.sourceBoundSupports ?? []).map(s => s.text)) ||
+          JSON.stringify(monthFocus.unavailableNatalPillars ?? []) !==
+            JSON.stringify(sourceMonthCurrent.unavailableNatalPillars ?? [])) {
+        throw new Error('Monthly current focus lost source-selected natal-branch T9 meanings');
+      }
+      monthlyCurrentFocusChecked++;
+      for (const support of sourceMonthCurrent.sourceBoundSupports ?? []) {
+        const projected = monthFocus.currentSupports?.find(s => s.claimId === support.claimId);
+        if (!projected ||
+            support.kind !== 'support' ||
+            support.observedCombination?.relation !== 'six_combination' ||
+            support.observedCombination.sourceId !== 'SRC-T0-XUANZE-YAOLUE-UPPER' ||
+            !projected.sourceIds.includes(support.observedCombination.sourceId) ||
+            projected.methodologyId !== 'M-GENERAL-MONTHLY-T9-SIX-COMBINATION-SOURCE-V1' ||
+            projected.interpretationRole !== 'support' ||
+            !support.factPaths.includes('temporal.segmentsById.' + support.segmentId +
+              '.monthlyBranchRelations.' + support.relatedPillar + '.relation') ||
+            !support.text.includes('육합') ||
+            !support.text.includes('합화나 실제 사건의 근거가 아닙니다')) {
+          throw new Error('Current monthly six-combination lost selected Jeol interval evidence or Korean interpretation');
+        }
+        monthlySixCombinationCases.push({
+          birth:stamp, calculationHash:chartKey,
+          claimId:support.claimId, sourceIds:support.sourceIds,
+          ruleIds:support.ruleIds, methodologyId:support.methodologyId,
+          factPaths:support.factPaths, observedCombination:support.observedCombination,
+          segmentId:support.segmentId, text:support.text,
+        });
+      }
+      currentMonthlyEvidencePairs.push({
+        birth:stamp,
+        calculationHash:chartKey,
+        currentThemeKey:JSON.stringify([
+          monthFocus.currentSection.claimType,monthFocus.currentSection.semanticKey,
+          monthFocus.currentSection.methodologyId,
+        ]),
+        currentTensionKey:JSON.stringify((monthFocus.currentTensions ?? [])
+          .map(section=>[section.claimType,section.semanticKey,section.methodologyId,
+            ...section.ruleIds]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)))),
+        selectedKoreanText:[monthFocus.currentSection,
+          ...(monthFocus.currentTensions ?? [])].map(section=>section.text).join(' '),
+        selectedSourceFacts:(monthFocus.currentTensions ?? []).map(section=>({
+          claimId:section.claimId,semanticKey:section.semanticKey,
+          ruleIds:[...section.ruleIds],sourceIds:[...section.sourceIds],
+          factPaths:[...section.factPaths],
+        })),
+      });
+      const sharedNatal = temporal.annualMonthly.report.natalContext;
+      const t5 = sharedNatal.availableThemeContext;
+      if (t5 !== undefined) {
+        const panel = temporal.html.split('<section id="natal-reference"')[1]
+          ?.split('<section id="annual"')[0];
+        if (!panel || !panel.includes('aria-label="원국에서 확인된 기존 십신 부분풀이"') ||
+            !panel.includes('이를 연·월운이나 대운의 새로운 의미로 합치지 않습니다') ||
+            t5.themes.some(theme =>
+              !panel.includes(escapedHtmlText(theme.summary)) ||
+              !panel.includes(escapedHtmlText(theme.claimId)) ||
+              !panel.includes(escapedHtmlText(theme.ruleIds[0])) ||
+              !panel.includes(escapedHtmlText(theme.sourceIds[0])) ||
+              !panel.includes(escapedHtmlText(theme.observedPositions[0])) ||
+              !panel.includes(escapedHtmlText(theme.observedFactPaths[0])))) {
+          throw new Error('Three-menu reader dropped original natal T5 partial meaning and provenance');
+        }
+        threeMenuT5Available++;
+        if (sharedNatal.sections.length === 0) {
+          if (sharedNatal.state !== 'insufficient') {
+            throw new Error('T5-only report cannot be promoted to whole-chart T8');
+          }
+          threeMenuT5WithoutT8++;
+        }
+      }
+      // Step 5+7: actual consumer monthly HTML must never repeat a selected
+      // source-owned T9 theme, clash, or six-combination paragraph.
+      const monthlyPanel = temporal.html.split('<section id="monthly">')[1]
+        ?.split('<section id="life-stage">')[0];
+      if (!monthlyPanel) {
+        throw new Error('Monthly consumer panel missing in 500-case audit: ' + stamp);
+      }
+      for (const section of temporal.annualMonthly.report.monthly.sections) {
+        if (monthlyPanel.split(escapedHtmlText(section.text)).length !== 2 ||
+            !monthlyPanel.includes(escapedHtmlText(section.claimId)) ||
+            !section.ruleIds.every(ruleId =>
+              monthlyPanel.includes(escapedHtmlText(ruleId))) ||
+            !section.sourceIds.every(sourceId =>
+              monthlyPanel.includes(escapedHtmlText(sourceId)))) {
+          throw new Error('Monthly consumer repeated or dropped source-bound T9 Korean copy: ' +
+            stamp);
+        }
+      }
+      if (temporal.annualMonthly.report.monthly.referenceReading.state === 'in_period' &&
+          !monthlyPanel.includes('다른 절입 구간의 풀이')) {
+        throw new Error('Current monthly focus must not repeat in the other phase: ' + stamp);
+      }
+      const three = temporalEntries(temporal, natalT5);
       for (let t=0;t<3;t++) rows[DOMAIN_NAMES[5+t]].push({...three[t],birth:stamp,calculationHash:chartKey});
     } catch(error) {
       failures.push({birth:stamp,error:String(error?.stack ?? error).slice(0,1200)});
@@ -236,6 +1023,30 @@ export function runFiveHundredSajuAudit() {
     if ((i+1)%100===0) process.stdout.write('SAJU500_PROGRESS ' + (i+1) + '/500\n');
   }
   const sameChart = [...chartHashGroups.values()].filter(x=>x.length>1);
+  const themeGroups = new Map();
+  for(const item of currentMonthlyEvidencePairs) {
+    const group=themeGroups.get(item.currentThemeKey)??[];
+    group.push(item);
+    themeGroups.set(item.currentThemeKey,group);
+  }
+  const meaningfulCurrentMonthContrasts=[];
+  for(const [themeKey,group] of themeGroups) {
+    for(let i=0;i<group.length;i++) {
+      const a=group[i];
+      const b=group.find((v,index)=>index>i &&
+        v.currentTensionKey!==a.currentTensionKey &&
+        v.selectedKoreanText!==a.selectedKoreanText);
+      if(b) {
+        meaningfulCurrentMonthContrasts.push({
+          sameTheme:themeKey,
+          distinctSelectedTensions:[a.currentTensionKey,b.currentTensionKey],
+          samples:[a,b],
+        });
+        break;
+      }
+    }
+    if(meaningfulCurrentMonthContrasts.length>=8) break;
+  }
   const result = {
     spec:'500 deterministic pseudorandom real solar birth dates, times and minutes; 8 menu engines; fixed 2026-10 year/month; no partner/family/question',
     seed:'0x5a1a2026',
@@ -248,32 +1059,319 @@ export function runFiveHundredSajuAudit() {
     sameCalculationHashGroups:sameChart.slice(0,10),
     elapsedMs:Date.now()-startedAt,
     menuResults:Object.fromEntries(DOMAIN_NAMES.map(name=>[name,summarize(rows[name])])),
+    wealthPerChart: {
+      count: COUNT,
+      seed: '0x5a1a2026',
+      referenceDateTime: REFERENCE,
+      withWealthT8: wealthPerChartCases.filter(row => !row.noT8).length,
+      withoutWealthT8: wealthPerChartCases.filter(row => row.noT8).length,
+      cases: wealthPerChartCases,
+    },
     rootCauseDiagnostics: {
       version: ROOT_CAUSE_AUDIT_VERSION,
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
+      otherNatalMissingReadings: summarizeMissingNatalCauses(otherNatalMissingCases),
+      careerStandaloneT5Panel: {
+        examined: COUNT,
+        verifiedEmptyT8WithOriginalT5: careerStandaloneT5Cases.length,
+        examples: careerStandaloneT5Cases.slice(0, 4),
+        noCareerT8Promotion: true,
+      },
+      otherNatalSourceBoundT5Panels: {
+        examined: COUNT,
+        counts: Object.fromEntries(Object.entries(otherNatalT5PartialCases)
+          .map(([domain,cases]) => [domain,cases.length])),
+        examples: Object.fromEntries(Object.entries(otherNatalT5PartialCases)
+          .map(([domain,cases]) => [domain,cases.slice(0,4)])),
+        noT8Promotion: true,
+      },
+      wealthConsumerEvidence: summarizeWealthConsumerEvidence(wealthConsumerCases),
+      wealthCrossOfficerSelectedMeaning: {
+        examined: COUNT,
+        selectedCount: wealthCrossOfficerCases.length,
+        examples: wealthCrossOfficerCases.slice(0, 8),
+        distinction: 'Actually selected T8 source-grounded 財→官殺 with exact opposite-channel Wealth/Officer T5; not new outcome predictions',
+      },
+      wealthCrossResourceSelectedMeaning: {
+        examined: COUNT,
+        selectedCount: wealthCrossResourceCases.length,
+        examples: wealthCrossResourceCases.slice(0, 8),
+        distinction: 'Actually selected T8 source-grounded 財剋印 with exact opposite-channel Wealth/Resource T5; not a money or behavior prediction',
+      },
+      wealthCrossPeerSelectedMeaning: {
+        examined: COUNT,
+        selectedCount: wealthCrossPeerCases.length,
+        examples: wealthCrossPeerCases.slice(0, 8),
+        distinction: 'Actually selected classical 比劫↔財 tension from opposite-channel T5 without event or asset-loss prediction',
+      },
+      wealthIndependentLimitedContext: {
+        examined: COUNT,
+        count: wealthIndependentLimitedCases.length,
+        cases: wealthIndependentLimitedCases,
+      },
+      wealthPartialCoreUnusedT5: {
+        examined: COUNT,
+        count: wealthPartialCoreUnusedT5Cases.length,
+        examples: wealthPartialCoreUnusedT5Cases.slice(0, 6),
+      },
+      natalT5SingleCopyConsumer: {
+        examined: COUNT,
+        ...natalT5SingleCopyChecks,
+        total: Object.values(natalT5SingleCopyChecks).reduce((sum,count)=>sum+count,0),
+        noExtraInterpretiveCopy: true,
+      },
+      generalBoundedT5OnNoT8: {
+        examined: generalT5ContextCases.length,
+        withoutGeneralT8: generalT5ContextCases.filter(c => c.withoutGeneralT8).length,
+        withActualSourcedT5Only: generalT5ContextCases.filter(c =>
+          c.withoutGeneralT8 && c.withSourcedT5Context).length,
+        withoutAnySourcedT5: generalT5ContextCases.filter(c =>
+          c.withoutGeneralT8 && !c.withSourcedT5Context).length,
+        examples: generalT5ContextCases.filter(c => c.withoutGeneralT8)
+          .slice(0, 6),
+      },
+      generalTensionFirstScreen: {
+        examined: COUNT,
+        count: generalTensionFirstScreenCases.length,
+        examples: generalTensionFirstScreenCases.slice(0, 6),
+      },
+      generalPartialTensionWithUnusedT5: {
+        examined: generalT5ContextCases.length,
+        count: generalT5ContextCases.filter(c => c.partialTensionWithUnusedT5).length,
+        examples: generalT5ContextCases.filter(c => c.partialTensionWithUnusedT5)
+          .slice(0, 6),
+      },
+      generalPartialCoreWithUnusedT5: {
+        examined: generalT5ContextCases.length,
+        count: generalT5ContextCases.filter(c => c.partialCoreWithUnusedT5).length,
+        examples: generalT5ContextCases.filter(c => c.partialCoreWithUnusedT5)
+          .slice(0, 6),
+      },
+      annualMenuT9Provenance: {
+        examined: COUNT,
+        exactSelectedClaimRuleMethodSource: annualMenuProvenanceChecked,
+        researchOnlyNoPromotion: true,
+      },
+      monthlyMenuT9Provenance: {
+        examined: COUNT,
+        exactSelectedClaimRuleMethodSource: monthlyMenuProvenanceChecked,
+        researchOnlyNoPromotion: true,
+      },
+      currentAnnualT9Focus: {examined:COUNT,exactSourceSelected:annualCurrentFocusChecked},
+      annualSixCombinationSelectedMeaning: {
+        examined: COUNT, selectedCount: annualSixCombinationCases.length,
+        examples: annualSixCombinationCases.slice(0, 8),
+        interpretationBoundary: 'Selected T9 structure-only 六合, no 合化 or outcome claim',
+      },
+      monthlySixCombinationSelectedMeaning: {
+        examined: COUNT, selectedCount: monthlySixCombinationCases.length,
+        examples: monthlySixCombinationCases.slice(0, 8),
+        interpretationBoundary: 'Exact selected Jeol phase T9 六合 with classical source, no annual T9 inheritance',
+      },
+      currentMonthlyT9Focus: {
+        examined:COUNT,exactSourceSelected:monthlyCurrentFocusChecked,
+        sameThemeDifferentActualT9MeaningPairs: meaningfulCurrentMonthContrasts,
+        qualification:'Identical basic monthly theme, different executed T9 clash Claims in the current solar-term interval; never interpreted as new favorable/unfavorable or event outcomes',
+      },
+      threeMenuSourceBoundNatalT5: {
+        examined: COUNT,
+        withDisplayedOriginalT5: threeMenuT5Available,
+        withoutT8ButWithDisplayedT5: threeMenuT5WithoutT8,
+        noTemporalMeaningPromotion: true,
+      },
       annualRepetition: analyzeTemporalRepetition(rows['올해']),
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
+      annualMeaningRepetition: analyzeTemporalMeaningRepetition(rows['올해']),
+      monthlyMeaningRepetition: analyzeTemporalMeaningRepetition(rows['이번 달']),
+      annualConsumedT9Meaning: analyzeTemporalConsumedT9Meaning(rows['올해'],'annual'),
+      monthlyConsumedT9Meaning: analyzeTemporalConsumedT9Meaning(rows['이번 달'],'monthly'),
+      annualStructuralVariation: analyzeTemporalStructuralEvidenceVariation(rows['올해']),
+      monthlyStructuralVariation: analyzeTemporalStructuralEvidenceVariation(rows['이번 달']),
+      annualNatalT5Variation: analyzeTemporalNatalT5Variation(rows['올해']),
+      monthlyNatalT5Variation: analyzeTemporalNatalT5Variation(rows['이번 달']),
     },
-    interpretationCaveat:'Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
+    interpretationCaveat:'Natal withReadableText counts selected source-bound T8 sections, not bounded General/Wealth T5-only partial explanations. General and Wealth T5 are reported separately without upgrading T8 completion. Exact Korean text uniqueness is not semantic uniqueness. Meaning profile counts are a conservative proxy based on actual emitted claim patterns. Structural Dayun intervals are not independently authorized life-stage forecasts. These results are internal research only.',
     permissions:{mayPublish:false,maySell:false,mayCallOfficial:false},
   };
+  // Report the actual failed chart and its first error before attempting the
+  // historical baseline comparison. A per-chart validation failure otherwise
+  // appears misleadingly as an "identical 500-case sample" mismatch.
+  if (failures.length > 0) {
+    process.stderr.write('SAJU500_CASE_FAILURES ' +
+      JSON.stringify({count:failures.length,examples:failures.slice(0,3)}) + '\n');
+    throw new Error('500-case audit found ' + failures.length +
+      ' chart validation failures; see SAJU500_CASE_FAILURES');
+  }
+  result.beforeAfterComparison = compareFixedSaju500Baseline(result);
   const outfile=process.argv[2];
   if(outfile) writeFileSync(outfile,JSON.stringify(result,null,2)+'\n','utf8');
+  process.stdout.write('SAJU500_BASELINE_COMPARISON '+JSON.stringify({
+    baselineRunId:result.beforeAfterComparison.baseline.runId,
+    wealthT8Before:result.beforeAfterComparison.menus['재물'].selectedReadingTextCases.before,
+    wealthT8After:result.beforeAfterComparison.menus['재물'].selectedReadingTextCases.after,
+    wealthRemainingWithoutT8:result.beforeAfterComparison.menus['재물'].withoutSelectedReadingTextCases.after,
+    annualExactTextBefore:result.beforeAfterComparison.menus['올해'].distinctExactKoreanTexts.before,
+    annualExactTextAfter:result.beforeAfterComparison.menus['올해'].distinctExactKoreanTexts.after,
+    monthlyExactTextBefore:result.beforeAfterComparison.menus['이번 달'].distinctExactKoreanTexts.before,
+    monthlyExactTextAfter:result.beforeAfterComparison.menus['이번 달'].distinctExactKoreanTexts.after,
+    researchOnly:true
+  })+'\n');
   process.stdout.write('SAJU500_ROOT_CAUSE_SUMMARY '+JSON.stringify({
+    generalWithoutT8: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8,
+    generalNoT8WithSourcedT5: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only,
+    generalNoT8WithoutSourcedT5: result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutAnySourcedT5,
+    generalPartialTensionWithUnusedT5: result.rootCauseDiagnostics.generalPartialTensionWithUnusedT5.count,
+    generalPartialCoreWithUnusedT5: result.rootCauseDiagnostics.generalPartialCoreWithUnusedT5.count,
+    generalTensionFirstScreen: result.rootCauseDiagnostics.generalTensionFirstScreen.count,
     wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
+    otherNatalT5OnlyVisibleByDomain:
+      result.rootCauseDiagnostics.otherNatalSourceBoundT5Panels.counts,
+    careerStandaloneOriginalT5Visible:
+      result.rootCauseDiagnostics.careerStandaloneT5Panel.verifiedEmptyT8WithOriginalT5,
+    otherNatalEmptyByDomain: Object.fromEntries(
+      Object.entries(result.rootCauseDiagnostics.otherNatalMissingReadings.byDomain)
+        .map(([domain, item]) => [domain, {
+          missingCases: item.missingCaseCount,
+          causes: item.byCause,
+          withActualSourceT5: item.withActiveT5,
+          eligibleT8Rules: item.withInputEligibleT8Rule,
+        }]),
+    ),
+    wealthCrossOfficerSelected: result.rootCauseDiagnostics.wealthCrossOfficerSelectedMeaning.selectedCount,
+    wealthCrossResourceSelected: result.rootCauseDiagnostics.wealthCrossResourceSelectedMeaning.selectedCount,
+    wealthCrossPeerSelected: result.rootCauseDiagnostics.wealthCrossPeerSelectedMeaning.selectedCount,
+    wealthNoT8ButSourcedT5: result.rootCauseDiagnostics.wealthConsumerEvidence.withBoundedT5ContextInstead,
+    wealthNoSourceBoundInterpretiveText: result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText,
+    wealthIndependentLimitedInterpretations: result.rootCauseDiagnostics.wealthIndependentLimitedContext.count,
+    wealthPartialCoreUnusedT5: result.rootCauseDiagnostics.wealthPartialCoreUnusedT5.count,
     missingCauses: result.rootCauseDiagnostics.wealth.byCause,
+    missingWithSourceContext: result.rootCauseDiagnostics.wealth.casesWithExistingSourceContext,
+    missingWithHiddenWealthMembership: result.rootCauseDiagnostics.wealth.casesWithHiddenWealthMembership,
+    observedHiddenWealthStems: result.rootCauseDiagnostics.wealth.hiddenWealthObservationCount,
+    hiddenWealthEvidenceStates: result.rootCauseDiagnostics.wealth.remediation.byHiddenWealthEvidenceState,
+    remediationGroups: result.rootCauseDiagnostics.wealth.remediation.groupCount,
+    remediationTargets: result.rootCauseDiagnostics.wealth.remediation.byRemediationTarget,
+    annualMenuExactT9Provenance: result.rootCauseDiagnostics.annualMenuT9Provenance.exactSelectedClaimRuleMethodSource,
+    monthlyMenuExactT9Provenance: result.rootCauseDiagnostics.monthlyMenuT9Provenance.exactSelectedClaimRuleMethodSource,
+    currentAnnualExactT9:annualCurrentFocusChecked,
+    annualSixCombinationSelected:result.rootCauseDiagnostics.annualSixCombinationSelectedMeaning.selectedCount,
+    monthlySixCombinationSelected:result.rootCauseDiagnostics.monthlySixCombinationSelectedMeaning.selectedCount,
+    currentMonthlyExactT9:monthlyCurrentFocusChecked,
+    sameThemeDifferentCurrentT9Pairs:meaningfulCurrentMonthContrasts.length,
+    threeMenuDisplayedNatalT5: result.rootCauseDiagnostics.threeMenuSourceBoundNatalT5.withDisplayedOriginalT5,
+    threeMenuT5OnlyWithoutT8: result.rootCauseDiagnostics.threeMenuSourceBoundNatalT5.withoutT8ButWithDisplayedT5,
     annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
     monthlyRepeated: result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups,
+    annualExecutedMeaningSignatures: result.rootCauseDiagnostics.annualConsumedT9Meaning.distinctExecutedMeaningSignatures,
+    monthlyExecutedMeaningSignatures: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.distinctExecutedMeaningSignatures,
+    annualDisplayProfilesHidingExecutedMeaning: result.rootCauseDiagnostics.annualConsumedT9Meaning.oldDisplayProfilesHidingDistinctExecutedMeaning,
+    monthlyDisplayProfilesHidingExecutedMeaning: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.oldDisplayProfilesHidingDistinctExecutedMeaning,
+    annualActualUsedEvidencePatterns: result.rootCauseDiagnostics.annualConsumedT9Meaning.actualEvidencePatternCount,
+    monthlyActualUsedEvidencePatterns: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.actualEvidencePatternCount,
+    monthlyExtraDisplayProfilesWithoutNewMeaning: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.excessDisplayProfileVariants,
+    annualSameT9DifferentNatalT5Groups:
+      result.rootCauseDiagnostics.annualConsumedT9Meaning.sameT9DifferentNatalT5.groupCount,
+    monthlySameT9DifferentNatalT5Groups:
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.sameT9DifferentNatalT5.groupCount,
+    annualSameT9DifferentNatalT5Examples:
+      result.rootCauseDiagnostics.annualConsumedT9Meaning.sameT9DifferentNatalT5.examples.length,
+    monthlySameT9DifferentNatalT5Examples:
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.sameT9DifferentNatalT5.examples.length,
+    annualActualMeaningControlledPairs: result.rootCauseDiagnostics.annualConsumedT9Meaning.contrastingMeaningPairs.length,
+    monthlyActualMeaningControlledPairs: result.rootCauseDiagnostics.monthlyConsumedT9Meaning.contrastingMeaningPairs.length,
+    annualProfilesWithDifferentObservedRelations:
+      result.rootCauseDiagnostics.annualStructuralVariation.repeatedMeaningProfilesWithDifferentVerifiedRelations,
+    monthlyProfilesWithDifferentObservedRelations:
+      result.rootCauseDiagnostics.monthlyStructuralVariation.repeatedMeaningProfilesWithDifferentVerifiedRelations,
+    annualProfilesWithDifferentObservedNatalT5:
+      result.rootCauseDiagnostics.annualNatalT5Variation.repeatedMeaningProfilesWithDifferentNatalT5Evidence,
+    monthlyProfilesWithDifferentObservedNatalT5:
+      result.rootCauseDiagnostics.monthlyNatalT5Variation.repeatedMeaningProfilesWithDifferentNatalT5Evidence,
   })+'\n');
   process.stdout.write('SAJU500_RESULT_JSON '+JSON.stringify(result)+'\n');
-  if(inputs.size!==COUNT || failures.length || DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
+  if(inputs.size!==COUNT || failures.length ||
+      annualMenuProvenanceChecked !== COUNT ||
+      monthlyMenuProvenanceChecked !== COUNT ||
+      annualCurrentFocusChecked !== COUNT ||
+      result.rootCauseDiagnostics.annualSixCombinationSelectedMeaning.examined !== COUNT ||
+      result.rootCauseDiagnostics.monthlySixCombinationSelectedMeaning.examined !== COUNT ||
+      monthlyCurrentFocusChecked !== COUNT ||
+      threeMenuT5WithoutT8 !==
+        result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only ||
+      DOMAIN_NAMES.some(name=>rows[name].length!==COUNT) ||
+      natalT5SingleCopyChecks.general !==
+        generalT5ContextCases.filter(c => c.withSourcedT5Context).length ||
+      Object.entries(otherNatalT5PartialCases).some(([domain,cases]) =>
+        natalT5SingleCopyChecks[domain] !== cases.length) ||
+      result.rootCauseDiagnostics.generalBoundedT5OnNoT8.examined !== COUNT ||
+      result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8 !==
+        result.menuResults['전체 사주'].withoutReadableText ||
+      result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withActualSourcedT5Only +
+        result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutAnySourcedT5 !==
+          result.rootCauseDiagnostics.generalBoundedT5OnNoT8.withoutGeneralT8 ||
+      result.rootCauseDiagnostics.generalPartialTensionWithUnusedT5.examined !== COUNT ||
+      result.rootCauseDiagnostics.otherNatalMissingReadings.missingCaseCount !==
+        otherNatalMissingCases.length ||
+      Object.entries(otherNatalT5PartialCases).some(([domain,cases]) =>
+        cases.length !==
+          result.rootCauseDiagnostics.otherNatalMissingReadings.byDomain[domain]
+            .missingCaseCount) ||
+      careerStandaloneT5Cases.length !==
+        result.rootCauseDiagnostics.otherNatalMissingReadings.byDomain.career
+          .missingCaseCount ||
+      Object.entries({
+        general: '전체 사주', career: '직업·커리어',
+        relationship: '연애·관계', business: '사업',
+      }).some(([domain, menu]) =>
+        result.rootCauseDiagnostics.otherNatalMissingReadings.byDomain[domain]
+          .missingCaseCount !== result.menuResults[menu].withoutReadableText) ||
       !result.rootCauseDiagnostics.wealth.allCasesHaveExplicitCause ||
       result.rootCauseDiagnostics.wealth.missingCaseCount !==
         result.menuResults['재물'].withoutReadableText ||
+      result.wealthPerChart.cases.length !== COUNT ||
+      result.wealthPerChart.withoutWealthT8 !==
+        result.menuResults['재물'].withoutReadableText ||
+      result.wealthPerChart.withWealthT8 !==
+        result.menuResults['재물'].withReadableText ||
+      new Set(result.wealthPerChart.cases.map(row => row.birth)).size !== COUNT ||
+      result.wealthPerChart.cases.some(row =>
+        !row.calculationHash || row.noT8 !== (row.selectedT8.length === 0)) ||
+      result.rootCauseDiagnostics.wealthConsumerEvidence.examined !== COUNT ||
+      result.rootCauseDiagnostics.wealthCrossOfficerSelectedMeaning.examined !== COUNT ||
+      result.rootCauseDiagnostics.wealthCrossResourceSelectedMeaning.examined !== COUNT ||
+      result.rootCauseDiagnostics.wealthCrossPeerSelectedMeaning.examined !== COUNT ||
+      result.rootCauseDiagnostics.wealthIndependentLimitedContext.examined !== COUNT ||
+      result.rootCauseDiagnostics.wealthIndependentLimitedContext.cases.length !==
+        result.rootCauseDiagnostics.wealthIndependentLimitedContext.count ||
+      result.rootCauseDiagnostics.wealthConsumerEvidence.withoutWealthT8 !==
+        result.rootCauseDiagnostics.wealth.missingCaseCount ||
+      result.rootCauseDiagnostics.wealthConsumerEvidence.withoutAnySourceBoundInterpretiveText +
+        result.rootCauseDiagnostics.wealthConsumerEvidence.withBoundedT5ContextInstead !==
+          result.rootCauseDiagnostics.wealth.missingCaseCount ||
       result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups !==
         result.menuResults['올해'].exactText.casesInRepeatedGroups ||
       result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups !==
-        result.menuResults['이번 달'].exactText.casesInRepeatedGroups) {
+        result.menuResults['이번 달'].exactText.casesInRepeatedGroups ||
+      result.rootCauseDiagnostics.annualMeaningRepetition.casesInRepeatedGroups !==
+        result.menuResults['올해'].meaningProfile.casesInRepeatedGroups ||
+      result.rootCauseDiagnostics.monthlyMeaningRepetition.casesInRepeatedGroups !==
+        result.menuResults['이번 달'].meaningProfile.casesInRepeatedGroups ||
+      result.rootCauseDiagnostics.annualNatalT5Variation.unassessed !== 0 ||
+      result.rootCauseDiagnostics.monthlyNatalT5Variation.unassessed !== 0 ||
+      result.rootCauseDiagnostics.annualConsumedT9Meaning.unassessed !== 0 ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.unassessed !== 0 ||
+      result.rootCauseDiagnostics.annualConsumedT9Meaning.sameT9DifferentNatalT5
+        .assessedWithValidatedNatalT5 !== COUNT ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.sameT9DifferentNatalT5
+        .assessedWithValidatedNatalT5 !== COUNT ||
+      result.rootCauseDiagnostics.annualConsumedT9Meaning.actualEvidencePatternCount !==
+        result.rootCauseDiagnostics.annualConsumedT9Meaning.distinctExecutedMeaningSignatures ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.actualEvidencePatternCount !==
+        result.rootCauseDiagnostics.monthlyConsumedT9Meaning.distinctExecutedMeaningSignatures ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.actualEvidencePatternCount < 100 ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.sameMeaningPairs.length === 0 ||
+      result.rootCauseDiagnostics.monthlyConsumedT9Meaning.contrastingMeaningPairs.length === 0 ||
+      result.rootCauseDiagnostics.wealth.remediation.caseCount !== wealthMissingCases.length) {
     process.exitCode=1;
   }
   return result;

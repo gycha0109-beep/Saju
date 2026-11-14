@@ -126,7 +126,35 @@ if (!readingMode) {
   for (const [domain, report] of Object.entries(reports)) {
     lines.push('', '━━ ' + labels[domain] + ' ━━');
     if (report.sections.length === 0) {
-      lines.push('현재 이 명식에서 출처가 확인된 풀이 문단이 없습니다.');
+      lines.push('현재 이 명식에서 출처가 확인된 종합 풀이 문단은 없습니다.');
+      if (domain === 'wealth' && report.availableThemeContext !== undefined) {
+        const context = report.availableThemeContext;
+        if (context.wealthConclusionAuthorized !== false || context.themes.length === 0 ||
+            context.themes.some(theme => theme.sourceIds.length === 0 ||
+              theme.observedPositions.length === 0 ||
+              theme.observedFactPaths.length !== theme.observedPositions.length)) {
+          throw new TypeError('Cannot present an ungrounded Wealth context as a reading.');
+        }
+        lines.push('기존 십신 근거만 설명하며 재물운 종합 결론이 아닙니다.',
+          context.title, context.paragraph);
+        for (const theme of context.themes) {
+          lines.push('근거: ' + theme.headline + ' · ' +
+            theme.observedPositions.join(' · ') + ' · 출처: ' +
+            theme.sourceIds.join(' · '));
+        }
+        for (const stem of context.hiddenWealthMembership) {
+          if (stem.meaningAuthority !== 'calculated_membership_only' ||
+              stem.wealthConclusionAuthorized !== false ||
+              !['편재', '정재'].includes(stem.derivedTenGod) ||
+              stem.factPaths[0] !== 'derivedFacts.dayMaster' ||
+              stem.factPaths[1] !== 'derivedFacts.hiddenStems.' + stem.pillar) {
+            throw new TypeError('Hidden stem membership cannot replace source-grounded Wealth meaning.');
+          }
+          lines.push('지장간 관측(재물 종합 해석 아님): ' +
+            stem.pillar + ' 지지 ' + stem.branch + '의 ' + stem.hiddenStem +
+            ' · ' + stem.derivedTenGod + ' · 출처: ' + stem.membershipSourceUrl);
+        }
+      }
     }
     for (const section of report.sections) {
       if (typeof section.headline !== 'string' || !section.headline.trim() ||

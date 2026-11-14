@@ -9,6 +9,7 @@ import {
   createGeneralNatalMultifactorRegistry,
 } from '../src/research/general-natal-multifactor-candidate.js';
 import { buildGeneralNatalMultifactorReport } from '../src/preview/general-natal-multifactor-report.js';
+import { buildNatalExistingT5SourceContext } from '../src/preview/natal-existing-t5-source-context.js';
 
 const registry = createGeneralNatalMultifactorRegistry();
 const NOW = new Date('2026-10-19T00:00:00.000Z');
@@ -67,7 +68,17 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
         expect(s.observedPositions).toHaveLength(s.observedFactPaths.length);
         expect(s.paragraph).toContain('이 원국에서 확인된 근거는');
         expect(s.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
-        expect(s.paragraph).toMatch(/같은 (천간|지지 대표 십신)에서 관측된/u);
+        const observedChannel = s.channel === 'visible_stems'
+          ? '천간' : '지지 대표 십신';
+        expect(s.paragraph).toContain(
+          '서로 다른 원국 위치에서 확인된 십신 계열은 모두 ' +
+          observedChannel + '이라는 동일 관측 범위에 속합니다.');
+        expect(s.paragraph).not.toMatch(/같은 (천간|지지 대표 십신)에서 관측된/u);
+        // The separate calculated positions, not one imaginary shared stem
+        // or branch, must justify the original source-bound T8 synthesis.
+        expect(new Set(s.observedFactPaths).size).toBeGreaterThanOrEqual(2);
+        expect(s.observedFactPaths.every(path => path.includes(
+          observedChannel === '천간' ? '.stem.value' : '.branch.value'))).toBe(true);
         expect(s.paragraph).toContain(s.headline);
         expect(s.observedPositions.every(p=>s.paragraph.includes(p))).toBe(true);
         expect(s.observedFactPaths.every(path =>
@@ -79,6 +90,88 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
       expect(x.report.usefulComplete).toBe(false);
     }
     expect(run(3,10).report).toEqual(run(3,10).report);
+  }, 30000);
+
+  it('preserves actual unconsumed T5 meanings beside a partial General core without inventing supports', () => {
+    let verified = false;
+    outer: for (const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
+      for (const day of [3,7,11,17,23]) {
+        const { snapshot, execution, report } = run(month, day);
+        if (report.state !== 'partial' || !report.readingGuide ||
+            report.sections.length === 0 || report.sections[0]!.axis === 'tension' ||
+            !report.availableThemeContext) continue;
+        const context = report.availableThemeContext;
+        expect(report.sections.length).toBeLessThan(3);
+        expect(report.readingGuide.sourceClaimType).toBe(report.sections[0]!.claimType);
+        expect(context.title).toContain('총운 중심 부분풀이와 구별되는');
+        expect(context.paragraph).toContain('부족한 독립 보조 복합 해석을 대신하지 않습니다');
+        expect(context.wholeChartSynthesisAuthorized).toBe(false);
+        const consumed = new Set(report.sections.flatMap(section => section.upstreamClaimIds));
+        const usedPaths = new Set(report.sections.flatMap(section => section.observedFactPaths));
+        const executedT5 = new Set(execution.claims.filter(claim =>
+          claim.state === 'active' && claim.taxonomy.tier === 'T5' &&
+          claim.snapshotId === snapshot.snapshotId).map(claim => claim.claimId));
+        for (const theme of context.themes) {
+          expect(executedT5.has(theme.claimId)).toBe(true);
+          expect(consumed.has(theme.claimId)).toBe(false);
+          expect(theme.observedFactPaths.every(path => !usedPaths.has(path))).toBe(true);
+          expect(context.paragraph).toContain(theme.summary);
+          expect(theme.ruleIds.length).toBeGreaterThan(0);
+          expect(theme.sourceIds.length).toBeGreaterThan(0);
+          expect(theme.methodologyId.length).toBeGreaterThan(0);
+        }
+        expect(report.mayPublish).toBe(false);
+        expect(report.maySell).toBe(false);
+        expect(report.usefulComplete).toBe(false);
+        expect(report).toEqual(buildGeneralNatalMultifactorReport(snapshot, execution, registry));
+        verified = true;
+        break outer;
+      }
+    }
+    expect(verified).toBe(true);
+  }, 60000);
+
+  it('refuses a fabricated T5 claim, unmatched evaluation or altered Korean copy', () => {
+    const { snapshot, execution } = run(3, 10);
+    const selected = execution.claims.find(claim =>
+      claim.state === 'active' && claim.taxonomy.tier === 'T5' &&
+      claim.predicate === 'ten_god_theme');
+    expect(selected).toBeDefined();
+    if (!selected) return;
+    const original = buildNatalExistingT5SourceContext(snapshot, execution, registry);
+    expect(original?.themes.some(theme => theme.claimId === selected.claimId)).toBe(true);
+    const corruptEvaluation = {
+      ...execution,
+      claims: execution.claims.map(claim =>
+        claim.claimId === selected.claimId ? {
+          ...claim,
+          ruleRefs: claim.ruleRefs.map(ref => ({
+            ...ref, evaluationId: 'forged-unmatched-evaluation',
+          })),
+        } : claim),
+    };
+    expect(() => buildNatalExistingT5SourceContext(snapshot, corruptEvaluation, registry))
+      .toThrow('T5 partial meaning lacks its executed registered rule');
+    const alteredMeaning = {
+      ...execution,
+      claims: execution.claims.map(claim =>
+        claim.claimId === selected.claimId ? {
+          ...claim,
+          value: { ...(claim.value as Record<string, unknown>),
+            summary: '원래 등록되지 않은 개인별 판단입니다.' },
+        } : claim),
+    };
+    expect(() => buildNatalExistingT5SourceContext(snapshot, alteredMeaning, registry))
+      .toThrow('T5 partial meaning lacks its executed registered rule');
+    const foreignSource = {
+      ...execution,
+      claims: execution.claims.map(claim =>
+        claim.claimId === selected.claimId ? {
+          ...claim, sourceRefs: ['UNREGISTERED-SOURCE'],
+        } : claim),
+    };
+    expect(() => buildNatalExistingT5SourceContext(snapshot, foreignSource, registry))
+      .toThrow('T5 partial meaning lacks its executed registered rule');
   }, 30000);
 
   it('requires distinct actual General interpretation axes for MUR complete', () => {
@@ -119,6 +212,13 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
     expect(found.report.sections.every(s => s.axis === 'tension')).toBe(true);
     expect(new Set(found.report.sections.map(s => s.pattern)).size).toBe(found.report.sections.length);
     expect(found.report.missing.join(' ')).toContain('중심 결론을 세울 수 없어');
+    expect(found.report.missing.join(' ')).not.toContain('추가 구조 축');
+    const alreadyUsedT5 = new Set(found.report.sections.flatMap(s => s.upstreamClaimIds));
+    for (const theme of found.report.availableThemeContext?.themes ?? []) {
+      expect(alreadyUsedT5.has(theme.claimId)).toBe(false);
+      expect(theme.sourceIds.length).toBeGreaterThan(0);
+      expect(theme.observedFactPaths.length).toBeGreaterThan(0);
+    }
     for(const section of found.report.sections) {
       expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
       expect(section.observedPositions.every(p => section.paragraph.includes(p))).toBe(true);
@@ -155,6 +255,7 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
     expect(x.report.state).toBe('insufficient');
     expect(x.report.sections).toHaveLength(0);
     expect(x.report.missing.join(' ')).toContain('십신(T5) 전체가 미확정');
+    expect(x.report.missing.join(' ')).not.toContain('추가 구조 축');
     expect(x.report.introduction).toContain('출생시각이 없어도 확인 가능한');
     expect(x.report.introduction).toContain('다중 근거 T8 해석을 뜻하지 않습니다');
     for (const [slot, label] of [

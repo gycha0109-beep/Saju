@@ -2,6 +2,12 @@ import type { Server } from 'node:http';
 import type { MyeonghwaProductHostDependencies } from './host/product-host.js';
 import { createMyeonghwaSourceReadingProofIssuerHttpServerV1 } from './host/source-reading-proof-issuer-http.js';
 import { createApprovedSourceProofPreviewDependenciesV1 } from './preview/preview-product-host.js';
+import { runInterpretation } from './interpretation/interpretation-engine.js';
+import { createGeneralAnnualCivilYearCandidateRegistry } from './research/general-annual-reading-candidate.js';
+import { createGeneralMonthlyReadingCandidateRegistry } from './research/general-monthly-reading-candidate.js';
+import { GENERAL_ANNUAL_CIVIL_YEAR_NARRATIVE_PROFILES } from './research/general-annual-narrative-profiles.js';
+import { GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES } from './research/general-monthly-narrative-profiles.js';
+import { buildPrecedingAnnualInterpretationFacts } from './reading/annual-interpretation-facts.js';
 import { readSourceProofProcessConfigV1, type SourceProofEnvironmentV1 } from './source-reading-proof-runtime-config.js';
 
 export interface SourceReadingProofProcessV1 {
@@ -20,11 +26,48 @@ export class SourceReadingProofStartupErrorV1 extends Error {
   }
 }
 
-/** Dependency injection is only a test seam; production entrypoint uses approved Preview E2E wiring. */
+/** The isolated issuer can inspect temporal research through the same Product Reading pipeline. */
+export function createSourceReadingProofStagingDependencies(): MyeonghwaProductHostDependencies {
+  const preview = createApprovedSourceProofPreviewDependenciesV1();
+  const claimNarrativeProfiles = [
+    ...(preview.readingOptions.claimNarrativeProfiles ?? []),
+    ...GENERAL_ANNUAL_CIVIL_YEAR_NARRATIVE_PROFILES,
+    ...GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES,
+  ];
+  return {
+    ...preview,
+    interpret(snapshot, context, temporal, resolved) {
+      if (resolved?.intent.domain !== 'general' || temporal === undefined) {
+        return preview.interpret(snapshot, context, temporal, resolved);
+      }
+      const facts = temporal.temporalFacts;
+      const createRegistry = facts.scope === 'annual'
+        ? createGeneralAnnualCivilYearCandidateRegistry
+        : createGeneralMonthlyReadingCandidateRegistry;
+      const registry = createRegistry(context.requestedAt);
+      const interpretation = runInterpretation(snapshot, registry, {
+        requestId: context.requestId,
+        now: new Date(context.requestedAt),
+        temporalFacts: facts.scope === 'annual' ? {
+          ...facts,
+          segmentsById: { before_ipchun: buildPrecedingAnnualInterpretationFacts(snapshot, facts) },
+        } : facts,
+      });
+      return { registry, interpretation };
+    },
+    readingOptionsForRequest(context) {
+      return {
+        ...(preview.readingOptionsForRequest?.(context) ?? preview.readingOptions),
+        claimNarrativeProfiles,
+      };
+    },
+  };
+}
+
 export function createSourceReadingProofProcessV1(
   env: SourceProofEnvironmentV1 = process.env,
   dependencyFactory: () => MyeonghwaProductHostDependencies =
-    createApprovedSourceProofPreviewDependenciesV1,
+    createSourceReadingProofStagingDependencies,
 ): SourceReadingProofProcessV1 {
   const config = readSourceProofProcessConfigV1(env);
   const dependencies = dependencyFactory();
@@ -71,7 +114,7 @@ function closeServer(server: Server): Promise<void> {
 export async function startSourceReadingProofProcessV1(
   env: SourceProofEnvironmentV1 = process.env,
   dependencyFactory: () => MyeonghwaProductHostDependencies =
-    createApprovedSourceProofPreviewDependenciesV1,
+    createSourceReadingProofStagingDependencies,
 ): Promise<StartedSourceReadingProofProcessV1> {
   const runtime = createSourceReadingProofProcessV1(env, dependencyFactory);
   try {

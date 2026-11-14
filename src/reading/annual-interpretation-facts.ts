@@ -16,7 +16,7 @@ import type {
   YinYang,
 } from '../contracts/calculation.js';
 import { resolved, unavailable, type FactState } from '../contracts/common.js';
-import type { TemporalReadingContext } from './temporal-reading-context.js';
+import { annualSexagenaryPillar, type TemporalReadingContext } from './temporal-reading-context.js';
 
 export const ANNUAL_INTERPRETATION_FACTS_VERSION =
   'myeongha-annual-interpretation-facts-v1' as const;
@@ -68,7 +68,7 @@ const CONTROLS: Readonly<Record<FiveElement, FiveElement>> = {
 
 const PILLAR_SLOTS = ['year', 'month', 'day', 'hour'] as const satisfies readonly PillarSlot[];
 
-export type AnnualBranchRelationKind = 'clash' | 'none';
+export type AnnualBranchRelationKind = 'clash' | 'six_combination' | 'none';
 
 export interface AnnualBranchRelationValue {
   pillar: PillarSlot;
@@ -136,12 +136,17 @@ function branchRelation(
   natalPillar: PillarFact,
   annualPillar: PillarFact,
 ): AnnualBranchRelationValue {
-  const relation = deriveStructuralRelationCandidates({
+  const candidates = deriveStructuralRelationCandidates({
     year: annualPillar,
     month: natalPillar,
-  }).some((candidate) => candidate.kind === 'branch_clash')
-    ? 'clash'
-    : 'none';
+  });
+  // The canonical T0 rule set already distinguishes 충 and 六合. Keep the
+  // precise observed relation: neither is proof of an actual future event.
+  const relation: AnnualBranchRelationKind = candidates.some(
+    candidate => candidate.kind === 'branch_clash',
+  ) ? 'clash' : candidates.some(
+    candidate => candidate.kind === 'branch_six_combination',
+  ) ? 'six_combination' : 'none';
 
   return {
     pillar: slot,
@@ -213,4 +218,15 @@ export function buildAnnualInterpretationFacts(
     ),
     annualBranchRelations,
   };
+}
+
+export function buildPrecedingAnnualInterpretationFacts(
+  snapshot: CanonicalSajuSnapshot,
+  facts: AnnualInterpretationFacts,
+): AnnualInterpretationFacts {
+  const targetYear = facts.targetYear - 1;
+  return buildAnnualInterpretationFacts(snapshot, {
+    scope: 'annual', targetYear, timeZone: facts.timeZone,
+    referenceDateTime: facts.referenceDateTime, annualPillar: annualSexagenaryPillar(targetYear),
+  });
 }

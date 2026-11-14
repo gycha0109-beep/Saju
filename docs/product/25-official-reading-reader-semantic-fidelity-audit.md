@@ -13,6 +13,13 @@ lifecycle = preview
 production interpretation authority = blocked
 ```
 
+## 2026-11-13 — 최신 내부 상용 해석 품질 기준
+
+> [명하 내부 상용 정책](43-internal-commercial-saju-interpretation-policy-20261113.md)을 적용한다. 본 문서의 기존 `production interpretation authority = blocked`는 과거 감사 지점의 기록으로 보존한다. 추가 논문/외부 전문가 감수 자체가 현재의 발급 선행 조건은 아니다.
+
+- 실질적 **필수 해석 품질**은 계산된 실제 명식·구매 기간·해석 규칙과 공식 Reading의 한국어 문장이 같은 의미로 결속되어 있는지, Reader가 새 뜻을 만들거나 무단으로 결과를 확신·과장하지 않는지의 검증이다.
+- 기존 정식 Saju Source·서명·Release·원본 Claim/Rules·Grant 및 Reader 의미 보존은 외부 학술 권위가 아니라 **기술적 품질·무결성**이므로 우회하지 않는다. 현재 Saju #2762/#2763의 실제 내부 시안은 보호 발급 E2E 이전까지 운영에 자동 승격되지 않는다.
+
 ## Product invariant
 
 The Saju side owns Saju meaning.

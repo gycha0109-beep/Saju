@@ -6,6 +6,7 @@ import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-e
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import {
   buildAnnualInterpretationFacts,
+  buildPrecedingAnnualInterpretationFacts,
   deriveAnnualStemTenGod,
 } from '../src/reading/annual-interpretation-facts.js';
 import { buildReadingCompositionEvidence } from '../src/reading/reading-intent-composition.js';
@@ -19,7 +20,11 @@ import {
   GENERAL_ANNUAL_TENSION_RULES,
   GENERAL_ANNUAL_THEME_CLAIM_TYPE,
   GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
+  GENERAL_ANNUAL_COMBINATION_RULES,
+  GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE,
+  GENERAL_ANNUAL_SIX_COMBINATION_SOURCE,
   createGeneralAnnualReadingCandidateRegistry,
+  createGeneralAnnualCivilYearCandidateRegistry,
 } from '../src/research/general-annual-reading-candidate.js';
 
 const NOW = new Date('2026-09-03T13:00:00.000Z');
@@ -107,8 +112,10 @@ describe('MyeongHa general annual T9 reading candidate', () => {
     expect(GENERAL_ANNUAL_READING_METHODOLOGY.family).toBe('time_dynamics');
     expect(GENERAL_ANNUAL_ACTIVATION_RULES).toHaveLength(10);
     expect(GENERAL_ANNUAL_TENSION_RULES).toHaveLength(4);
+    expect(GENERAL_ANNUAL_COMBINATION_RULES).toHaveLength(4);
     expect(registry.claimTypeDefinitions.map((definition) => definition.claimType).sort()).toEqual(
-      [GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType, GENERAL_ANNUAL_TENSION_CLAIM_TYPE.claimType].sort(),
+      [GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType, GENERAL_ANNUAL_TENSION_CLAIM_TYPE.claimType,
+        GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE.claimType].sort(),
     );
     expect(activations).toHaveLength(1);
     expect(activations[0]?.taxonomy).toEqual({ tier: 'T9', category: 'general', subcategory: 'annual' });
@@ -144,6 +151,48 @@ describe('MyeongHa general annual T9 reading candidate', () => {
         (claim) => claim.taxonomy.tier === 'T9' && claim.taxonomy.subcategory === 'annual',
       ),
     ).toBe(true);
+  });
+
+  it('selects both researched civil-year claims and preserves their distinct fact paths', () => {
+    const natal = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 1967, month: 8, day: 22 },
+      time: { known: true, hour: 10, minute: 28 },
+      sexForTraditionalCalculation: 'male',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const current = temporalFacts(natal, 2026);
+    const preceding = buildPrecedingAnnualInterpretationFacts(natal, current);
+    const registry = createGeneralAnnualCivilYearCandidateRegistry(NOW.toISOString());
+    const execution = runInterpretation(natal, registry, {
+      temporalFacts: { ...current, segmentsById: { before_ipchun: preceding } },
+      now: NOW,
+    });
+    expect(execution.integrity).toEqual({ valid: true, errors: [] });
+    const composition = buildReadingCompositionEvidence(natal, execution, registry, annualRequest(2026));
+    const primary = composition.evidence?.bundle.claims.filter(
+      claim => claim.claimType === GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType,
+    );
+    expect(primary).toHaveLength(2);
+    expect(primary).toEqual(expect.arrayContaining([
+      expect.objectContaining({ subject: 'annual_period', value: expect.objectContaining({ tenGod: current.annualStemTenGod }),
+        factRefs: expect.arrayContaining(['temporal.annualStemTenGod']) }),
+      expect.objectContaining({ subject: 'annual_period_before_ipchun', value: expect.objectContaining({ tenGod: preceding.annualStemTenGod }),
+        factRefs: expect.arrayContaining(['temporal.segmentsById.before_ipchun.annualStemTenGod']) }),
+    ]));
+    expect(new Set(primary?.map(claim => claim.claimId)).size).toBe(2);
+    const expectedCombinations = [
+      { facts: current, subject: 'annual_period', prefix: 'temporal.' },
+      { facts: preceding, subject: 'annual_period_before_ipchun', prefix: 'temporal.segmentsById.before_ipchun.' },
+    ].flatMap(({ facts, subject, prefix }) => Object.entries(facts.annualBranchRelations)
+      .filter(([, relation]) => relation.status === 'resolved' && relation.value.relation === 'six_combination')
+      .map(([slot]) => ({ subject, path: `${prefix}annualBranchRelations.${slot}` })));
+    expect(expectedCombinations).toHaveLength(2);
+    const actualCombinations = execution.claims
+      .filter(claim => claim.state === 'active' && claim.predicate === 'annual_branch_six_combination_context')
+      .map(claim => ({ subject: claim.subject, path: claim.factRefs.find(path => path.includes('.annualBranchRelations.')) }));
+    expect(actualCombinations).toHaveLength(expectedCombinations.length);
+    expect(actualCombinations).toEqual(expect.arrayContaining(expectedCombinations));
+    expect(registry.pack.status).toBe('research');
   });
 
   it('changes deterministic run identity when the target year changes', () => {
@@ -200,6 +249,40 @@ describe('MyeongHa general annual T9 reading candidate', () => {
     expect(tension?.polarity).toBe('challenging');
     expect(tension?.factRefs).toContain('temporal.annualBranchRelations.day');
     expect(JSON.stringify(tension?.value)).not.toContain('accident_prediction":"true');
+  });
+
+  it('emits a distinct source-owned annual 六合 context only for observed opposite branches', () => {
+    const natal = snapshot();
+    if (natal.pillars.day.status !== 'resolved') throw new Error('resolved birth required');
+    const sixCombiningDay: PillarFact = {
+      ...natal.pillars.day.value,
+      branch: { value: '미', hanja: '未', element: '토', yinYang: '음' },
+    };
+    const chart: CanonicalSajuSnapshot = {
+      ...natal, pillars: { ...natal.pillars, day: resolved(sixCombiningDay) },
+    };
+    const facts = temporalFacts(chart, 2026);
+    expect(facts.annualBranchRelations.day).toEqual(resolved({
+      pillar: 'day', natalBranch: '미', annualBranch: '오', relation: 'six_combination',
+    }));
+    const registry = createGeneralAnnualReadingCandidateRegistry();
+    const execution = runInterpretation(chart, registry, { temporalFacts: facts, now: NOW });
+    const support = execution.claims.find(claim =>
+      claim.claimType === GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE.claimType &&
+      (claim.value as { natalPillar?: string }).natalPillar === 'day');
+    expect(support).toBeDefined();
+    expect(support?.polarity).toBe('neutral');
+    expect(support?.factRefs).toContain('temporal.annualBranchRelations.day');
+    expect(support?.methodologyRef.id).toBe('M-GENERAL-ANNUAL-T9-SIX-COMBINATION-SOURCE-V1');
+    expect(support?.sourceRefs).toContain(GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId);
+    expect(support?.value).toMatchObject({
+      relation: 'six_combination', transformationAuthorized: false,
+      narrativeRole: 'context',
+    });
+    expect(execution.claims.some(claim =>
+      claim.claimType === GENERAL_ANNUAL_TENSION_CLAIM_TYPE.claimType &&
+      (claim.value as { natalPillar?: string }).natalPillar === 'day')).toBe(false);
+    expect(execution.integrity.valid).toBe(true);
   });
 
   it('keeps unknown birth-time relation uncertainty from blocking the annual activation rule set', () => {

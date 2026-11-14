@@ -11,6 +11,8 @@ import {
   createGeneralMonthlyReadingCandidateRegistry,
   GENERAL_MONTHLY_TENSION_CLAIM_TYPE,
   GENERAL_MONTHLY_THEME_CLAIM_TYPE,
+  GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE,
+  GENERAL_MONTHLY_COMBINATION_RULES,
 } from '../src/research/general-monthly-reading-candidate.js';
 
 const NOW = new Date('2026-09-03T13:00:00.000Z');
@@ -66,6 +68,45 @@ function activeThemeClaims(execution: ReturnType<typeof runInterpretation>) {
 }
 
 describe('MyeongHa general monthly T9 candidate', () => {
+  it('executes only observed current-Jeol 六合 T9 contexts from the classical source', () => {
+    expect(GENERAL_MONTHLY_COMBINATION_RULES).toHaveLength(8);
+    let example: ReturnType<typeof execute> | undefined;
+    let matched: ReturnType<typeof execute>['execution']['claims'][number] | undefined;
+    for (const month of [2, 4, 6, 8, 10, 12]) {
+      if (matched) break;
+      for (const day of [2, 7, 12, 17, 22]) {
+        const candidate = execute(snapshot(day), month);
+        const claim = candidate.execution.claims.find(c =>
+          c.state === 'active' &&
+          c.claimType === GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE.claimType);
+        if (claim) { example = candidate; matched = claim; break; }
+      }
+    }
+    expect(example).toBeDefined();
+    expect(matched).toBeDefined();
+    if (!example || !matched) return;
+    const value = matched.value as {
+      segmentId:'before_jeol'|'after_jeol'; natalPillar:'year'|'month'|'day'|'hour';
+      relation:string; transformationAuthorized:boolean;
+    };
+    const segment = example.monthlyFacts.segmentsById[value.segmentId];
+    expect(segment.monthlyBranchRelations[value.natalPillar]).toMatchObject({
+      status:'resolved', value:{relation:'six_combination'},
+    });
+    expect(matched.factRefs).toContain('temporal.jeolBoundary.at');
+    expect(matched.factRefs).toContain('temporal.segmentsById.' + value.segmentId +
+      '.monthlyBranchRelations.' + value.natalPillar + '.relation');
+    expect(matched.sourceRefs).toContain('SRC-T0-XUANZE-YAOLUE-UPPER');
+    expect(matched.methodologyRef.id).toBe('M-GENERAL-MONTHLY-T9-SIX-COMBINATION-SOURCE-V1');
+    expect(value.transformationAuthorized).toBe(false);
+    expect(example.execution.claims.some(claim => claim.state === 'active' &&
+      claim.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType &&
+      (claim.value as {segmentId?:string;natalPillar?:string}).segmentId === value.segmentId &&
+      (claim.value as {segmentId?:string;natalPillar?:string}).natalPillar === value.natalPillar))
+      .toBe(false);
+    expect(example.execution.integrity.valid).toBe(true);
+  });
+
   it('emits one bounded activation claim for each before/after jeol segment and completes general monthly coverage', () => {
     const natal = snapshot();
     const result = execute(natal, 9);

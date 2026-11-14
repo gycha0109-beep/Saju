@@ -3,8 +3,11 @@ import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createSourceReadingProofProcessV1,
+  createSourceReadingProofStagingDependencies,
   startSourceReadingProofProcessV1,
 } from '../src/source-reading-proof-process.js';
+import { createMyeonghwaSourceReadingProofHost } from '../src/host/product-host.js';
+import { deterministicContentHash } from '../src/interpretation/rule-registry.js';
 import {
   readSourceProofProcessConfigV1,
   SOURCE_PROOF_PROCESS_ENV_V1 as fields,
@@ -12,6 +15,8 @@ import {
 } from '../src/source-reading-proof-runtime-config.js';
 import { createApprovedSourceProofPreviewDependenciesV1 } from '../src/preview/preview-product-host.js';
 import { SOURCE_READING_PROOF_HTTP_PATH_V1 } from '../src/host/source-reading-proof-issuer-http.js';
+import { verifyHeldSourceReadingTransportProofV1 } from '../src/reading/source-reading-transport-proof.js';
+import type { ProductReadingResponse } from '../src/reading/product-reading-response.js';
 
 const bearer = 'isolated-source-proof-credential';
 const secret = Buffer.alloc(48, 83).toString('base64');
@@ -122,6 +127,143 @@ describe('8C-2B-2B dedicated source proof configuration', () => {
 });
 
 describe('8C-2B-2B process lifecycle and HTTP transport', () => {
+  it.each([
+    ['올해', '2026-02-03T20:02:00.000Z', '입춘'],
+    ['이번 달', '2026-11-07T09:52:00.000Z', '입동'],
+  ])('signs calculated %s evidence through the protected HTTP route only on request', async (text, reference, term) => {
+    const port = await availablePort();
+    const runtime = await startSourceReadingProofProcessV1(env({ [fields.port]: String(port) }));
+    open.push(runtime.server);
+    const request = { ...birthRequest, reading: { text, periodReferenceDateTime: reference } };
+    const response = await post(port, 'Bearer ' + bearer, { nonce, request, includeTemporalEvidence: true });
+    expect(response.status).toBe(200);
+    const envelope = await response.json() as {
+      response: ProductReadingResponse;
+      proof: unknown;
+      temporalEvidence: Record<string, unknown>;
+    };
+    expect(envelope).toMatchObject({
+      state: 'held', canSell: false, temporalEvidence: {
+        referenceDateTime: reference, boundary: { name: term, at: reference },
+      },
+    });
+    const claimNonceOnce = vi.fn(async () => true);
+    const options = {
+      trustedIssuer: 'saju-preview-service', expectedAudience: 'myeongha-api-service',
+      trustedKeyId: 'preview-key-v1', keyBytes: Buffer.from(secret, 'base64'),
+      expectedNonce: nonce, expectedRequestBody: request,
+      response: envelope.response, nowMs: Date.now(), claimNonceOnce,
+    };
+    expect(await verifyHeldSourceReadingTransportProofV1(envelope.proof, options))
+      .toMatchObject({ state: 'blocked' });
+    const alteredSignals = Array.isArray(envelope.temporalEvidence.researchSignals)
+      ? envelope.temporalEvidence.researchSignals.slice(1) : [];
+    expect(await verifyHeldSourceReadingTransportProofV1(envelope.proof, {
+      ...options, temporalEvidence: { ...envelope.temporalEvidence, researchSignals: alteredSignals },
+    })).toMatchObject({ state: 'blocked' });
+    expect(await verifyHeldSourceReadingTransportProofV1(envelope.proof, {
+      ...options, temporalEvidence: { ...envelope.temporalEvidence, targetYear: 2027 },
+    })).toMatchObject({ state: 'blocked' });
+    expect(claimNonceOnce).not.toHaveBeenCalled();
+    expect(await verifyHeldSourceReadingTransportProofV1(envelope.proof, {
+      ...options, temporalEvidence: envelope.temporalEvidence,
+    })).toMatchObject({ state: 'held', canSell: false });
+    const ordinary = await post(port, 'Bearer ' + bearer, { nonce, request });
+    expect(ordinary.status).toBe(200);
+    expect(await ordinary.json()).not.toHaveProperty('temporalEvidence');
+  });
+  it.each([
+    ['올해', '2026-02-03T20:02:00.000Z', '입춘', 'after_ipchun'],
+    ['이번 달', '2026-11-07T09:52:00.000Z', '입동', 'after_jeol'],
+  ])('binds calculated %s evidence to the same stored response', async (text, reference, term, segment) => {
+    const source = createMyeonghwaSourceReadingProofHost(createSourceReadingProofStagingDependencies());
+    const result = await source.requestReadingWithProofReadiness({
+      birth: { calendarType: 'solar', date: '1992-07-07', time: '15:20', sex: 'male' },
+      reading: { text, periodReferenceDateTime: reference },
+    });
+    expect(result.readiness).toMatchObject({ state: 'held', canSell: false });
+    const evidence = result.temporalReaderEvidence!;
+    expect(evidence).toMatchObject({
+      responseBodyHash: deterministicContentHash(result.response),
+      boundary: { name: term, at: reference }, referenceSegmentId: segment,
+      interpretationStatus: 'insufficient_authorized_semantics',
+      dayunOverlap: { status: 'resolved', segments: expect.arrayContaining([expect.objectContaining({
+        startsAt: evidence.segments[0]?.startsAt,
+      })]) },
+    });
+    expect(evidence.segments[0]?.endsAt).toBe(evidence.segments[1]?.startsAt);
+    expect(evidence.segments[0]?.pillar).not.toEqual(evidence.segments[1]?.pillar);
+    const primary = evidence.researchSignals.filter(signal => signal.kind === 'primary');
+    expect(primary.map(signal => signal.segmentId)).toEqual(
+      text === '올해' ? ['before_ipchun', 'after_ipchun'] : ['before_jeol', 'after_jeol'],
+    );
+    expect(new Set(primary.map(signal => signal.claimId)).size).toBe(2);
+    for (const signal of evidence.researchSignals) {
+      expect(signal.statement).toContain('특정 사건이나 결과를 확정하지 않습니다');
+      expect(signal.sourceRefs.length).toBeGreaterThan(0);
+      expect(signal.ruleRefs.length).toBeGreaterThan(0);
+      const segment = evidence.segments.find(item => item.id === signal.segmentId);
+      expect(segment).toBeDefined();
+      if (signal.kind === 'primary') expect(signal.stemTenGod).toBe(segment?.stemTenGod);
+      if (signal.kind === 'tension') expect(segment?.natalBranchRelations[signal.natalPillar])
+        .toMatchObject({ status: 'resolved', value: { relation: 'clash' } });
+    }
+    const { evidenceHash, ...material } = evidence;
+    expect(evidenceHash).toBe(deterministicContentHash(material));
+  });
+
+  it.each([
+    [2028, '편재', 'natal_day_stem_controls_annual_stem'],
+    [2030, '편관', 'annual_stem_controls_natal_day_stem'],
+  ])('attaches the exact original witness in %i without inferring a theme or an event', async (year, relation, direction) => {
+    const source = createMyeonghwaSourceReadingProofHost(createSourceReadingProofStagingDependencies());
+    const { temporalReaderEvidence: evidence } = await source.requestReadingWithProofReadiness({
+      birth: { calendarType: 'solar', date: '1992-07-07', time: null, sex: 'male' },
+      reading: { text: '올해', periodReferenceDateTime: `${year}-11-10T03:00:00.000Z` },
+    });
+    expect(evidence?.scope).toBe('annual');
+    if (evidence?.scope !== 'annual') throw new Error('Expected annual evidence');
+    expect(evidence.segments[0]?.directlyWitnessedIdentity).toBeNull();
+    expect(evidence.segments[1]?.directlyWitnessedIdentity).toMatchObject({
+      scope: 'relation_identity_only', relation, direction,
+      source: { page: 25, fileSha256: expect.stringMatching(/^[0-9a-f]{64}$/u) },
+    });
+    expect(evidence.segments[1]?.natalBranchRelations.hour.status).toBe('unavailable');
+    expect(evidence.dayunOverlap).toMatchObject({ status: 'unavailable' });
+  });
+
+  it.each(['올해', '이번 달'])('returns held, source-bound Korean research for %s', async (text) => {
+    const runtime = createSourceReadingProofProcessV1(env());
+    open.push(runtime.server);
+    await new Promise<void>(resolve => runtime.server.listen(0, '127.0.0.1', resolve));
+    const port = (runtime.server.address() as AddressInfo).port;
+    const response = await post(port, 'Bearer ' + bearer, {
+      nonce,
+      request: {
+        ...birthRequest,
+        reading: { text, periodReferenceDateTime: '2026-11-09T03:00:00.000Z' },
+      },
+    });
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload).toMatchObject({
+      lifecycle: 'preview', state: 'held', canPublish: false, canSell: false,
+      proof: { payload: { lifecycle: 'preview', canSell: false } },
+      response: {
+        state: 'delivered_with_fallback',
+        reading: {
+          sections: expect.arrayContaining([expect.objectContaining({
+            blocks: expect.arrayContaining([expect.objectContaining({
+              text: expect.stringMatching(/[가-힣]{2}.*[.!?]/u),
+            })]),
+          })]),
+        },
+      },
+    });
+    expect(JSON.stringify(payload)).not.toMatch(/semanticKey|activationKind|forbiddenInferences/u);
+    expect(payload).not.toHaveProperty('temporalReaderEvidence');
+  });
+
   it('uses the approved real Preview E2E dependency assembly, not a runtime fixture', async () => {
     const approved = createApprovedSourceProofPreviewDependenciesV1();
     expect(typeof approved.calculate).toBe('function');

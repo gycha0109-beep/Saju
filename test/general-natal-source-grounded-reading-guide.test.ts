@@ -21,7 +21,7 @@ function run(month: number, day: number, known = true) {
 }
 
 describe('General natal source-qualified Korean integrated reading', () => {
-  it('links the actual selected core and genuinely independent supporting positions into a user-readable General introduction', () => {
+  it('links the selected core and independent supporting positions into the dedicated General reading guide', () => {
     const { snapshot, report } = run(3, 10);
     expect(report.snapshotId).toBe(snapshot.snapshotId);
     expect(report.readingGuide).toBeDefined();
@@ -30,7 +30,11 @@ describe('General natal source-qualified Korean integrated reading', () => {
     expect(guide.sourceClaimType).toBe(report.sections[0]?.claimType);
     expect(guide.paragraph).toContain(report.sections[0]!.headline);
     expect(guide.paragraph).toContain(report.sections[0]!.paragraph);
-    expect(report.introduction).toContain(guide.paragraph);
+    // The first-screen report consumes the selected sections; duplicating the
+    // entire guide inside the general intro would show the same T8 twice.
+    expect(report.introduction).not.toContain(guide.paragraph);
+    expect(report.introduction).not.toContain(report.sections[0]!.paragraph);
+    expect(report.introduction).toContain('전통적인 읽기의 연구 후보');
     expect(guide.sourceIds).toEqual([
       ...new Set(report.sections.flatMap(section => section.sourceIds)),
     ]);
@@ -104,8 +108,11 @@ describe('General natal source-qualified Korean integrated reading', () => {
       .not.toBe(first.report.readingGuide?.paragraph);
     expect(different.report.readingGuide?.sourceClaimType)
       .not.toBe(first.report.readingGuide?.sourceClaimType);
-    expect(different.report.introduction)
-      .not.toBe(first.report.introduction);
+    // The introductory scope is intentionally stable; personalization
+    // belongs to the selected source-owned T8 sections and reading guide.
+    expect(different.report.introduction).toBe(first.report.introduction);
+    expect(different.report.sections.map(section => section.paragraph))
+      .not.toEqual(first.report.sections.map(section => section.paragraph));
   });
 
   it('refuses to claim any T8 General meaning when the birth hour is unavailable', () => {

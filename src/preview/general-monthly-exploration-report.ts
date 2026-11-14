@@ -6,8 +6,11 @@ import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-regist
 import { buildReadingCompositionEvidence } from '../reading/reading-intent-composition.js';
 import type { MonthlyInterpretationFacts, MonthlySegmentId } from '../reading/monthly-interpretation-facts.js';
 import { GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES } from '../research/general-monthly-narrative-profiles.js';
+import { GENERAL_ANNUAL_SIX_COMBINATION_SOURCE } from '../research/general-annual-reading-candidate.js';
 import {
   GENERAL_MONTHLY_TENSION_CLAIM_TYPE,
+  GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE,
+  GENERAL_MONTHLY_COMBINATION_METHODOLOGY,
   GENERAL_MONTHLY_THEME_CLAIM_TYPE,
 } from '../research/general-monthly-reading-candidate.js';
 
@@ -22,18 +25,28 @@ const SEGMENT_KO: Readonly<Record<MonthlySegmentId, string>> = {
 };
 
 export interface GeneralMonthlyExplorationSection {
-  kind: 'theme' | 'tension';
+  kind: 'theme' | 'tension' | 'support';
   segmentId: MonthlySegmentId;
   title: string;
   text: string;
   calculatedInterval: { startsAt: string; endsAt: string };
   tenGod: string;
+  /** Exact previously selected T9 Claim meaning, never synthesized by this view. */
+  claimType: string;
+  semanticKey: string;
   claimId: string;
   ruleIds: readonly string[];
   methodologyId: string;
   sourceIds: readonly string[];
   factPaths: readonly string[];
   relatedPillar?: PillarSlot;
+  observedClash?: Readonly<{
+    natalBranch: string;
+    monthlyBranch: string;
+    relation: 'clash';
+  }>;
+  observedCombination?: Readonly<{ natalBranch: string; monthlyBranch: string;
+    relation: 'six_combination'; sourceId: string }>;
 }
 
 export interface GeneralMonthlyExplorationReport {
@@ -61,6 +74,10 @@ export interface GeneralMonthlyExplorationReport {
     state: 'in_period' | 'insufficient_evidence' | 'outside_target_month';
     segmentId?: MonthlySegmentId;
     theme?: GeneralMonthlyExplorationSection;
+    sourceBoundTensions?: readonly GeneralMonthlyExplorationSection[];
+    sourceBoundSupports?: readonly GeneralMonthlyExplorationSection[];
+    /** This segment alone: unresolved natal relations are not absent clashes. */
+    unavailableNatalPillars?: readonly PillarSlot[];
   }>;
 }
 
@@ -91,7 +108,9 @@ function researchCopy(claim: InterpretationClaim): { title: string; text: string
   const summary = profile.templates?.find(x => x.templateKey === 'summary' && x.language === 'ko')?.text;
   requireEvidence(title && summary && profile.requiredMethodAttribution &&
     profile.allowedEpistemicTypes.length === 1 &&
-    profile.allowedEpistemicTypes[0] === 'future_tendency',
+    profile.allowedEpistemicTypes[0] ===
+      (claim.claimType === GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE.claimType
+        ? 'interpretation' : 'future_tendency'),
   'consumer copy must be bounded by the registered research profile');
   return {
     title,
@@ -130,7 +149,8 @@ export function buildGeneralMonthlyExplorationReport(
     claim.taxonomy.tier === 'T9' && claim.taxonomy.category === 'general' &&
     claim.taxonomy.subcategory === 'monthly' &&
     (claim.claimType === GENERAL_MONTHLY_THEME_CLAIM_TYPE.claimType ||
-      claim.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType));
+      claim.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType ||
+      claim.claimType === GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE.claimType));
   const sections: GeneralMonthlyExplorationSection[] = [];
   const missing: string[] = [];
   const themeCount = new Set<MonthlySegmentId>();
@@ -161,6 +181,8 @@ export function buildGeneralMonthlyExplorationReport(
       title: copy.title, text: copy.text,
       calculatedInterval: { startsAt: segment.startsAt, endsAt: segment.endsAt },
       tenGod: segment.monthlyStemTenGod,
+      claimType: theme.claimType,
+      semanticKey: value.semanticKey,
       claimId: theme.claimId,
       ruleIds: theme.ruleRefs.map(x => x.ruleId),
       methodologyId: theme.methodologyRef.id,
@@ -169,7 +191,17 @@ export function buildGeneralMonthlyExplorationReport(
     });
   }
 
-  for (const claim of claims.filter(x => x.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType)) {
+  // Selected tensions can arrive in registry execution order rather than reader order.
+  // Keep research semantics intact while rendering identical selected axes consistently.
+  const orderedTensions = claims
+    .filter(claim => claim.claimType === GENERAL_MONTHLY_TENSION_CLAIM_TYPE.claimType)
+    .sort((left, right) => {
+      const a = claimValue(left);
+      const b = claimValue(right);
+      return SEGMENTS.indexOf(a.segmentId) - SEGMENTS.indexOf(b.segmentId) ||
+        SLOTS.indexOf(a.natalPillar as PillarSlot) - SLOTS.indexOf(b.natalPillar as PillarSlot);
+    });
+  for (const claim of orderedTensions) {
     const value = claimValue(claim);
     const segment = facts.segmentsById[value.segmentId];
     const slot = value.natalPillar;
@@ -177,28 +209,85 @@ export function buildGeneralMonthlyExplorationReport(
       'monthly tension must refer to an actual natal pillar');
     const relation = segment.monthlyBranchRelations[slot];
     requireEvidence(relation.status === 'resolved' &&
+      relation.value.pillar === slot &&
+      relation.value.monthlyBranch === segment.monthlyPillar.branch &&
       relation.value.relation === 'clash' &&
       claim.factRefs.includes(`temporal.segmentsById.${value.segmentId}.monthlyBranchRelations.${slot}.relation`) &&
       claim.sourceRefs.length > 0, 'unresolved or foreign monthly tension');
     const copy = researchCopy(claim);
     sections.push({
       kind: 'tension', segmentId: value.segmentId,
-      title: copy.title, text: copy.text,
+      title: copy.title,
+      text: copy.text +
+        ` 실제 관측된 관계는 ${SLOT_KO[slot]} 지지 ${relation.value.natalBranch}와 ${SEGMENT_KO[value.segmentId]} 월주 지지 ${relation.value.monthlyBranch} 사이의 충입니다. 해당 절입 구간의 계산 관계를 설명하는 것이며, 실제 사건의 발생을 뜻하지 않습니다.`,
       calculatedInterval: { startsAt: segment.startsAt, endsAt: segment.endsAt },
       tenGod: segment.monthlyStemTenGod,
+      claimType: claim.claimType,
+      semanticKey: value.semanticKey,
       claimId: claim.claimId,
       ruleIds: claim.ruleRefs.map(x => x.ruleId),
       methodologyId: claim.methodologyRef.id,
       sourceIds: claim.sourceRefs,
       factPaths: claim.factRefs,
       relatedPillar: slot,
+      observedClash: {
+        natalBranch: relation.value.natalBranch,
+        monthlyBranch: relation.value.monthlyBranch,
+        relation: 'clash',
+      },
+    });
+  }
+
+  const orderedSupports = claims.filter(claim =>
+    claim.claimType === GENERAL_MONTHLY_COMBINATION_CLAIM_TYPE.claimType)
+    .sort((left, right) => {
+      const a = claimValue(left);
+      const b = claimValue(right);
+      return SEGMENTS.indexOf(a.segmentId) - SEGMENTS.indexOf(b.segmentId) ||
+        SLOTS.indexOf(a.natalPillar as PillarSlot) - SLOTS.indexOf(b.natalPillar as PillarSlot);
+    });
+  for (const claim of orderedSupports) {
+    const value = claimValue(claim);
+    const segment = facts.segmentsById[value.segmentId];
+    const slot = value.natalPillar;
+    requireEvidence(slot !== undefined && SLOTS.includes(slot),
+      'monthly six-combination must be grounded in a natal pillar');
+    const observed = segment.monthlyBranchRelations[slot];
+    requireEvidence(observed.status === 'resolved' &&
+      observed.value.pillar === slot &&
+      observed.value.monthlyBranch === segment.monthlyPillar.branch &&
+      observed.value.relation === 'six_combination' &&
+      claim.factRefs.includes(
+        `temporal.segmentsById.${value.segmentId}.monthlyBranchRelations.${slot}.relation`) &&
+      claim.factRefs.includes('temporal.jeolBoundary.at') &&
+      claim.methodologyRef.id === GENERAL_MONTHLY_COMBINATION_METHODOLOGY.methodologyId &&
+      claim.sourceRefs.includes(GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId) &&
+      claim.ruleRefs.length > 0, 'monthly six-combination lacks exact registered evidence');
+    const copy = researchCopy(claim);
+    sections.push({
+      kind: 'support', segmentId: value.segmentId,
+      title: copy.title,
+      text: copy.text +
+        ` 실제 육합 관계는 ${SLOT_KO[slot]} 지지 ${observed.value.natalBranch}와 ${SEGMENT_KO[value.segmentId]} 월주 지지 ${observed.value.monthlyBranch}에서 확인되었습니다. 합화나 실제 사건의 근거가 아닙니다.`,
+      calculatedInterval: { startsAt: segment.startsAt, endsAt: segment.endsAt },
+      tenGod: segment.monthlyStemTenGod,
+      claimType: claim.claimType, semanticKey: value.semanticKey,
+      claimId: claim.claimId, ruleIds: claim.ruleRefs.map(rule => rule.ruleId),
+      methodologyId: claim.methodologyRef.id,
+      sourceIds: claim.sourceRefs, factPaths: claim.factRefs,
+      relatedPillar: slot,
+      observedCombination: {
+        natalBranch: observed.value.natalBranch,
+        monthlyBranch: observed.value.monthlyBranch,
+        relation: 'six_combination', sourceId: GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId,
+      },
     });
   }
 
   const unavailable = SLOTS.filter(slot =>
     SEGMENTS.some(id => facts.segmentsById[id].monthlyBranchRelations[slot].status !== 'resolved'));
   if (unavailable.length > 0) {
-    missing.push(`미확정 원국 기둥(${unavailable.map(slot => SLOT_KO[slot]).join(', ')})의 월운 충 관계는 해석하지 않습니다.`);
+    missing.push(`미확정 원국 기둥(${unavailable.map(slot => SLOT_KO[slot]).join(', ')})의 월운 충·육합 관계는 해석하지 않습니다.`);
   }
   const instant = Date.parse(facts.referenceDateTime);
   const atReference = facts.segments.filter(segment =>
@@ -207,12 +296,28 @@ export function buildGeneralMonthlyExplorationReport(
     instant < Date.parse(segment.endsAt));
   requireEvidence(atReference.length <= 1, 'reference instant overlaps monthly segments');
   const segment = atReference[0];
+  const unavailableAtReference = segment === undefined ? [] : SLOTS.filter(slot =>
+    facts.segmentsById[segment.segmentId].monthlyBranchRelations[slot].status !== 'resolved');
   const applicableThemes = segment === undefined ? [] : sections.filter(section =>
     section.kind === 'theme' && section.segmentId === segment.segmentId &&
     section.calculatedInterval.startsAt === segment.startsAt &&
     section.calculatedInterval.endsAt === segment.endsAt);
   requireEvidence(applicableThemes.length <= 1,
     'only one source-qualified theme can apply at a reference instant');
+  const applicableTensions = segment === undefined ? [] : sections.filter(section =>
+    section.kind === 'tension' && section.segmentId === segment.segmentId &&
+    section.calculatedInterval.startsAt === segment.startsAt &&
+    section.calculatedInterval.endsAt === segment.endsAt &&
+    section.sourceIds.length > 0 && section.ruleIds.length > 0 &&
+    section.relatedPillar !== undefined && section.observedClash?.relation === 'clash');
+  const applicableSupports = segment === undefined ? [] : sections.filter(section =>
+    section.kind === 'support' && section.segmentId === segment.segmentId &&
+    section.calculatedInterval.startsAt === segment.startsAt &&
+    section.calculatedInterval.endsAt === segment.endsAt &&
+    section.sourceIds.includes(GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId) &&
+    section.ruleIds.length > 0 &&
+    section.relatedPillar !== undefined &&
+    section.observedCombination?.relation === 'six_combination');
   const referenceReading: GeneralMonthlyExplorationReport['referenceReading'] =
     segment === undefined
       ? { referenceDateTime: facts.referenceDateTime, state: 'outside_target_month' }
@@ -221,12 +326,18 @@ export function buildGeneralMonthlyExplorationReport(
             referenceDateTime: facts.referenceDateTime,
             state: 'insufficient_evidence',
             segmentId: segment.segmentId,
+            unavailableNatalPillars: unavailableAtReference,
           }
         : {
             referenceDateTime: facts.referenceDateTime,
             state: 'in_period',
             segmentId: segment.segmentId,
+            unavailableNatalPillars: unavailableAtReference,
             theme: applicableThemes[0]!,
+            ...(applicableTensions.length
+              ? { sourceBoundTensions: applicableTensions } : {}),
+            ...(applicableSupports.length
+              ? { sourceBoundSupports: applicableSupports } : {}),
           };
   return {
     version: GENERAL_MONTHLY_EXPLORATION_VERSION,
@@ -263,28 +374,71 @@ function kst(instant: string): string {
 /** Internal-only HTML: every displayed interpretive sentence is original profile copy. */
 export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplorationReport): string {
   const reference = report.referenceReading;
+  const periodLabel = reference.state === 'outside_target_month' ? '선택한 월' : '이번 달';
   const theme = reference.state === 'in_period' ? reference.theme : undefined;
+  const uncertainPositions = reference.state === 'outside_target_month'
+    ? [] : reference.unavailableNatalPillars ?? [];
+  const uncertaintyNote = uncertainPositions.length === 0 ? ''
+    : '<p class="muted" aria-label="현재 절입 구간의 미확정 원국 관계">' +
+      '이 구간에서 ' + escapeHtml(uncertainPositions.map(slot => SLOT_KO[slot]).join('·')) +
+      ' 지지와 월운 사이의 충·육합 관계는 원국 정보가 미확정이라 판단하지 않습니다. ' +
+      '확인된 충·육합 관계가 없다는 결론이 아닙니다.</p>';
   const focus = theme !== undefined
     ? '<p class="muted">실제 적용 구간: ' + escapeHtml(SEGMENT_KO[theme.segmentId]) +
       ' · ' + kst(theme.calculatedInterval.startsAt) + '부터 ' +
       kst(theme.calculatedInterval.endsAt) + ' 전까지</p>' +
       '<h3>' + escapeHtml(theme.title) + '</h3><p>' + escapeHtml(theme.text) + '</p>' +
       '<details><summary>이 구간의 기존 Claim·규칙·출처</summary>' +
-      '<p>Claim: ' + escapeHtml(theme.claimId) + '</p>' +
+      '<p>Claim: ' + escapeHtml(theme.claimId) + ' · 의미: ' +
+       escapeHtml(theme.semanticKey) + '</p>' +
+       '<p>계산: ' + escapeHtml(theme.factPaths.join(' · ')) + '</p>' +
       '<p>규칙: ' + escapeHtml(theme.ruleIds.join(' · ')) +
       ' / 방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
       '<p>출처: ' + escapeHtml(theme.sourceIds.join(' · ')) +
-      '</p></details>'
+      '</p></details>' +
+      (reference.sourceBoundSupports?.length
+        ? '<section class="active-natal-supports" aria-label="조회 시각에 적용되는 원국 육합 관계">' +
+          '<h4>이 절입 구간에 확인된 원국 육합 관계</h4>' +
+          reference.sourceBoundSupports.map(item =>
+            '<p><strong>' + escapeHtml(item.title) + '</strong> · ' +
+              escapeHtml(item.text) + '</p>' +
+              '<details><summary>해당 육합의 T9 Claim·계산 근거·고전 출처</summary>' +
+              '<p>Claim: ' + escapeHtml(item.claimId) +
+              ' · 의미: ' + escapeHtml(item.semanticKey) + '</p>' +
+              '<p>계산: ' + escapeHtml(item.factPaths.join(' · ')) + '</p>' +
+              '<p>규칙: ' + escapeHtml(item.ruleIds.join(' · ')) +
+              ' / 방법론: ' + escapeHtml(item.methodologyId) + '</p>' +
+              '<p>출처: ' + escapeHtml(item.sourceIds.join(' · ')) +
+              '</p></details>').join('') + '</section>' : '') +
+      (reference.sourceBoundTensions?.length
+        ? '<section class="active-natal-relations" aria-label="조회 시각에 적용되는 원국 충 관계">' +
+          '<h4>같은 구간에서 확인된 원국 관계</h4>' +
+          reference.sourceBoundTensions.map(item =>
+            '<p><strong>' + escapeHtml(item.title) + '</strong> · ' +
+              escapeHtml(item.text) + '</p>' +
+              '<details><summary>해당 관계의 기존 Claim·계산 근거·출처</summary>' +
+              '<p>Claim: ' + escapeHtml(item.claimId) + ' · 의미: ' +
+               escapeHtml(item.semanticKey) + '</p>' +
+              '<p>계산: ' + escapeHtml(item.factPaths.join(' · ')) + '</p>' +
+               '<p>규칙: ' + escapeHtml(item.ruleIds.join(' · ')) +
+               ' / 방법론: ' + escapeHtml(item.methodologyId) + '</p>' +
+              '<p>출처: ' + escapeHtml(item.sourceIds.join(' · ')) +
+              '</p></details>').join('') + '</section>'
+        : '') + uncertaintyNote
     : reference.state === 'insufficient_evidence'
       ? '<p>' + escapeHtml(SEGMENT_KO[reference.segmentId!]) +
-        '의 한국어 해석 근거가 아직 충분하지 않습니다.</p>'
+        '의 한국어 해석 근거가 아직 충분하지 않습니다.</p>' + uncertaintyNote
       : '<p>조회 시각이 선택한 달 밖에 있습니다. 실제 적용 중인 월운으로 표시하지 않고, ' +
         '선택한 달의 절입 전·후 구간만 아래에 보여줍니다.</p>';
   const sections = SEGMENTS.map(id => {
     const items = report.sections.filter(section => section.segmentId === id);
-    const cards = items.map(section => `
+    // Already shown in the active focus above, including source-bound
+    // clash and six-combination cards. Do not repeat those Korean meanings.
+    const alreadyShown = theme?.segmentId === id;
+    const cards = (alreadyShown ? [] : items).map(section => `
       <article class="card">
-        <div class="label">${section.kind === 'theme' ? '이 구간의 중심 관점' : '함께 살펴볼 충 관계'}</div>
+        <div class="label">${section.kind === 'theme' ? '이 구간의 중심 관점' :
+          section.kind === 'tension' ? '함께 살펴볼 충 관계' : '출처 확인된 육합 보조 관계'}</div>
         <h3>${escapeHtml(section.title)}</h3>
         <p>${escapeHtml(section.text)}</p>
         <details><summary>계산 근거와 출처</summary>
@@ -297,11 +451,13 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
     const interval = items[0]?.calculatedInterval;
     return `<section><h2>${SEGMENT_KO[id]}</h2>
       ${interval ? `<p class="muted">${kst(interval.startsAt)}부터 ${kst(interval.endsAt)} 전까지</p>` : ''}
-      ${cards || '<p>이 구간에서 보여줄 근거가 충분하지 않습니다.</p>'}</section>`;
+      ${alreadyShown
+        ? '<p>이 구간의 풀이와 근거는 위의 조회 시각 결과에서 한 번만 표시합니다.</p>'
+        : cards || '<p>이 구간에서 보여줄 근거가 충분하지 않습니다.</p>'}</section>`;
   }).join('');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${escapeHtml(report.headline)} · 내부 시제품</title>
+  <title>${escapeHtml(report.headline.replace('이번 달', periodLabel))} · 내부 시제품</title>
   <style>
   body{margin:0;background:#f6f1e9;color:#2b2925;font-family:system-ui,'Malgun Gothic',sans-serif;line-height:1.7}
   main{max-width:820px;margin:auto;padding:36px 20px 70px}
@@ -313,7 +469,7 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
   details{font-size:12px;color:#6b6259;overflow-wrap:anywhere}
   .muted{font-size:13px;color:#71695e}.focus{background:#e9f2ed;padding:20px 24px;border-radius:16px;margin-top:22px}.focus h3{margin:8px 0}.limits{background:#eee6d9;padding:20px;border-radius:14px;margin-top:30px;font-size:13px}
   </style></head><body><main><header><small>MYEONGHA · INTERNAL RESEARCH PREVIEW</small>
-  <h1>${escapeHtml(report.headline)}</h1><p>서울 시간 기준 · ${escapeHtml(report.jeolBoundary.name)} 절입 ${kst(report.jeolBoundary.at)}</p>
+  <h1>${escapeHtml(report.headline.replace('이번 달', periodLabel))}</h1><p>서울 시간 기준 · ${escapeHtml(report.jeolBoundary.name)} 절입 ${kst(report.jeolBoundary.at)}</p>
   </header><section class="focus" id="reference-month-reading"><h2>조회 시각에 해당하는 월별 풀이</h2><p class="muted">기준: ${kst(reference.referenceDateTime)} · 내부 연구 미리보기</p>${focus}</section>${sections}<aside class="limits"><strong>해석 범위와 아직 모르는 부분</strong>
   <ul>${[...report.missing, ...report.caveats].map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>
   </aside></main></body></html>`;

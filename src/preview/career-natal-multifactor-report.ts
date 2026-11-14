@@ -1,3 +1,7 @@
+import {
+  buildNatalExistingT5SourceContext,
+  type NatalExistingT5SourceContext,
+} from './natal-existing-t5-source-context.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -55,6 +59,8 @@ export interface CareerMultifactorReport {
    * These are not counted as independent MUR axes or proof of completeness.
    */
   additionalVerifiedSections: readonly CareerMultifactorReportSection[];
+  /** Existing source-owned T5 copy only, never a substitute for missing domain T8. */
+  availableThemeContext?: NatalExistingT5SourceContext;
   readingGuide?: CareerMultifactorReadingGuide;
   limitations: readonly string[];
   missing: readonly string[];
@@ -188,17 +194,12 @@ function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
       'source-backed Ten-God family is not actually observed');
     return `${EVIDENCE_ROLES[family]}: ${positions.map(x => x.display).join(' · ')}`;
   }).join(' / ');
-  // Name the two exact, source-owned upstream families in their observed
-  // canonical positions, not as a free-floating thematic keyword list.
-  // First observed slot is a deterministic display example, never rank/weight.
-  const pairBasis = (value.families as string[]).map(family => {
-    const first = locations.find(x => x.observedFamily === family);
-    guard(first !== undefined && EVIDENCE_ROLES[family] !== undefined,
-      'source-owned pair is absent from the exact canonical observation channel');
-    return `${first.display}의 ${EVIDENCE_ROLES[family]}`;
-  });
-  guard(pairBasis.length === 2 && pairBasis.every(Boolean),
-    'a Career synthesis must explain exactly two upstream families');
+  // The evidence line above already names EVERY observed position for both
+  // source-owned T5 families. Do not repeat only the first slot with malformed
+  // particles (e.g. "재성(... )와 인성(... )가") or imply rank/weight.
+  const pairFamilies = value.families as string[];
+  guard(pairFamilies.length === 2 && new Set(pairFamilies).size === 2,
+    'a Career synthesis must explain exactly two distinct upstream families');
   const channelName = value.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
   const headline = profileText(claim.claimType, 'headline');
   return {
@@ -207,7 +208,7 @@ function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
     axis: value.axis as Axis,
     channel: value.channel as 'visible_stems' | 'branches',
     headline,
-    paragraph: `실제 명식에서 확인한 근거는 ${locationText}입니다. ${pairBasis[0]}와 ${pairBasis[1]}가 같은 ${channelName} 관찰 범위에서 확인되므로, 기존 출처에 연결된 ‘${headline}’이라는 구조적 해석 후보를 함께 살핍니다. ${profileText(claim.claimType, 'summary')}`,
+    paragraph: `실제 명식에서 확인한 근거는 ${locationText}입니다. 두 십신 계열이 같은 ${channelName} 관찰 범위에서 각각 확인됐습니다. 이 계산 근거에 한해 기존 출처에 연결된 구조적 해석 후보를 함께 살핍니다. 해석 관점은 ‘${headline}’입니다. ${profileText(claim.claimType, 'summary')}`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
@@ -402,6 +403,11 @@ export function buildCareerMultifactorResearchReport(
     missing.push('이 계산 정책에서 십신(T5) 전체가 미확정이므로 직업의 다중 근거 T8 해석을 보류합니다. 확정된 간지만 계산 사실로 표시합니다.');
   }
   const readingGuide = buildCareerMultifactorReadingGuide(primary, supporting, state);
+  // Do not hide actual source-bound T5 observations when no domain T8
+  // combination exists. These are chart-wide facts, NOT domain conclusions.
+  const availableThemeContext = state === 'insufficient'
+    ? buildNatalExistingT5SourceContext(snapshot, execution, registry)
+    : undefined;
   return {
     version: CAREER_MULTIFACTOR_REPORT_VERSION,
     snapshotId: snapshot.snapshotId,
@@ -413,6 +419,7 @@ export function buildCareerMultifactorResearchReport(
     sections: shown,
     additionalVerifiedSections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(availableThemeContext === undefined ? {} : { availableThemeContext }),
     limitations: [
       '사용한 해석은 고전 관계를 제한적으로 참고한 미검토 연구 후보입니다. Production 또는 유료 보고서에 사용할 수 없습니다.',
       '명식에 관측된 관계만 설명하며 직업 적성·연봉·성공·미래 사건·신강신약·용신을 단정하지 않습니다.',
@@ -440,6 +447,47 @@ export function renderCareerMultifactorResearchHtml(report: CareerMultifactorRep
   const readingGuideMarkup = report.readingGuide === undefined
     ? ''
     : `<section aria-label="직업운 읽기 요약"><h2>${e(report.readingGuide.title)}</h2><p>${e(report.readingGuide.paragraph)}</p></section>`;
+  // A missing source-owned Career T8 core does not erase separately executed
+  // T5 source meanings. Display only their original observation text, never a
+  // new Career synthesis or a claim about salary, aptitude or future success.
+  const t5 = report.availableThemeContext;
+  let sourcedPartialMarkup = '';
+  if (t5 !== undefined) {
+    const factPath = /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u;
+    if (report.state !== 'insufficient' || report.sections.length !== 0 ||
+        report.readingGuide !== undefined || t5.wholeChartSynthesisAuthorized !== false ||
+        t5.themes.length === 0 || !t5.paragraph.trim() ||
+        !report.researchOnly || report.usefulComplete || report.mayPublish || report.maySell ||
+        t5.themes.some(theme =>
+          !/^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(theme.claimType) ||
+          !theme.claimId || !theme.summary || !theme.headline ||
+          theme.ruleIds.length === 0 || theme.sourceIds.length === 0 ||
+          !theme.methodologyId || theme.observedFactPaths.length === 0 ||
+          theme.observedFactPaths.length !== theme.observedPositions.length ||
+          theme.observedFactPaths.some(path => !factPath.test(path)) ||
+          !t5.paragraph.includes(theme.summary) ||
+          theme.observedPositions.some(pos => !t5.paragraph.includes(pos)))) {
+      throw new TypeError('Career standalone preview cannot promote unsourced T5 to domain synthesis');
+    }
+    sourcedPartialMarkup =
+      '<section aria-label="직업운 종합풀이 보류 시 원국 십신 부분 설명">' +
+      '<h2>기존 원국 십신 관점만 부분적으로 확인</h2>' +
+      '<p>직업운 종합풀이 아님 · 원국에서 실행된 기존 십신 근거만 설명합니다. ' +
+      '직업 적성이나 성과·연봉을 판단하지 않습니다.</p>' +
+      // The source context paragraph already repeats every theme summary.
+      // The original theme copy is printed once below, with provenance.
+      t5.themes.map(theme =>
+        '<article class="career-t5-source"><h3>' + e(theme.headline) + '</h3>' +
+        '<p>' + e(theme.summary) + '</p><p>실제 원국 위치: ' +
+        e(theme.observedPositions.join(' · ')) + '</p>' +
+        '<details><summary>원래 십신 해석의 규칙·계산 경로·출처</summary>' +
+        '<p>Claim: ' + e(theme.claimId) + ' · ' + e(theme.claimType) + '</p>' +
+        '<p>계산 위치 경로: ' + e(theme.observedFactPaths.join(' · ')) + '</p>' +
+        '<p>규칙: ' + e(theme.ruleIds.join(' · ')) + '</p>' +
+        '<p>방법론: ' + e(theme.methodologyId) + '</p>' +
+        '<p>출처: ' + e(theme.sourceIds.join(' · ')) + '</p></details></article>').join('') +
+      '</section>';
+  }
   // A partial research result must explain the missing MUR evidence in the HTML,
   // not merely in the report object that downstream readers may never inspect.
   const stateLabel: Readonly<Record<Status, string>> = {
@@ -450,5 +498,5 @@ export function renderCareerMultifactorResearchHtml(report: CareerMultifactorRep
   const missingMarkup = report.missing.length > 0
     ? `<section aria-label="아직 설명할 수 없는 부분"><h2>아직 설명할 수 없는 부분</h2><ul>${report.missing.map(reason => `<li>${e(reason)}</li>`).join('')}</ul></section>`
     : '';
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header>${readingGuideMarkup}${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${additionalMarkup}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header>${readingGuideMarkup}${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${sourcedPartialMarkup}${additionalMarkup}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
 }

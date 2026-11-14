@@ -1,5 +1,9 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
-import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
+import { selectBestNatalCoreWithinPriorityAxis } from './natal-independent-supporting-axes.js';
+import {
+  buildNatalExistingT5SourceContext,
+  type NatalExistingT5SourceContext,
+} from './natal-existing-t5-source-context.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -53,6 +57,8 @@ export interface GeneralNatalMultifactorReport {
   introduction: string;
   sections: readonly GeneralNatalMultifactorSection[];
   readingGuide?: GeneralNatalSourceBoundReadingGuide;
+  /** Bounded T5-only material; never substitutes for the missing whole-chart T8. */
+  availableThemeContext?: NatalExistingT5SourceContext;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -198,7 +204,7 @@ function toSection(
     axis: value.axis as Axis,
     channel: value.channel as Channel,
     headline: textFor(claim.claimType,'headline'),
-    paragraph: `이 원국에서 확인된 근거는 ${observedByFamily.join(' / ')}입니다. 같은 ${observedChannel}에서 관측된 서로 다른 십신 계열을 ${describeQuotedReadingAxis(headline)} 구조적 관점에서 함께 읽습니다. ${textFor(claim.claimType,'summary')}`,
+    paragraph: `이 원국에서 확인된 근거는 ${observedByFamily.join(' / ')}입니다. 서로 다른 원국 위치에서 확인된 십신 계열은 모두 ${observedChannel}이라는 동일 관측 범위에 속합니다. 이 근거를 ${describeQuotedReadingAxis(headline)} 구조적 관점에서 함께 읽습니다. ${textFor(claim.claimType,'summary')}`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
@@ -324,13 +330,12 @@ export function buildGeneralNatalMultifactorReport(
         .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
           (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
     : [];
-  // Prefer the 3-input core. When not observed, a narrower two-input core can
-  // still be rendered, but completion needs two OTHER independently grounded axes.
-  const core = result.find(s => s.axis === 'core') ??
-    result.find(s => s.axis === 'expression') ??
-    result.find(s => s.axis === 'response') ??
-    result.find(s => s.axis === 'responsibility');
-  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
+  // Retain core > expression > response > responsibility. A competing core
+  // may replace the first only within its original, source-owned axis priority.
+  const selectedCore = selectBestNatalCoreWithinPriorityAxis(
+    result.filter(s => s.axis !== 'tension'), result);
+  const core = selectedCore?.core;
+  const supportSelection = selectedCore?.support;
   const chosen: GeneralNatalMultifactorSection[] = core
     ? [core, ...(supportSelection?.supporting ?? [])] : [];
   // Tension-only source-qualified T8 is useful partial evidence, but never
@@ -348,12 +353,22 @@ export function buildGeneralNatalMultifactorReport(
     missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
   }
   const missingSupportingAxes = 2 - Math.max(0, chosen.length - 1);
-  if(missingSupportingAxes > 0) missing.push(
+  if(core && missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
   const state: Status = snapshot.completeness.birthTimeKnown && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly GeneralNatalMultifactorSection[] = core ? chosen : partialTension;
   const readingGuide = generalSourceBoundReadingGuide(core, sections);
+  // Preserve unused, source-owned T5 meanings when the selected research
+  // T8 is incomplete: no core, tension-only, or a core lacking two independent
+  // T8 supports. These T5 meanings never count as new T8 supports.
+  const hasSelectedPartialCore = core !== undefined && state === 'partial';
+  const availableThemeContext = core === undefined || hasSelectedPartialCore
+    ? buildNatalExistingT5SourceContext(
+        snapshot, execution, registry,
+        sections.flatMap(section => section.upstreamClaimIds),
+        hasSelectedPartialCore,
+      ) : undefined;
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 원국 전체의 다중 근거 T8 해석은 보류합니다.');
   }
@@ -363,11 +378,15 @@ export function buildGeneralNatalMultifactorReport(
     version: GENERAL_NATAL_MULTIFACTOR_REPORT_VERSION,
     state,
     title: '나의 원국 전체를 읽는 구조적 출발점',
+    // The rendered first-screen T8 sections already carry their source-owned
+    // Korean meaning. Repeating the entire guide (including the same core
+    // paragraph) in the introduction would print it twice before the reader
+    // reaches the actual claims. Keep the original guide separately.
     introduction: '서로 다른 십신 관계가 같은 실제 명식에서 어떤 구조적 주제를 만드는지 연결했습니다. 전통적인 읽기의 연구 후보로, 실제 삶의 특징이나 운세 결과를 판단한 것은 아닙니다.' +
-      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)) +
-      (readingGuide === undefined ? '' : ' ' + readingGuide.paragraph),
+      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(availableThemeContext === undefined ? {} : { availableThemeContext }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],

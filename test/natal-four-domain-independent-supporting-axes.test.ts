@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
-import { selectIndependentNatalSupportingAxes } from '../src/preview/natal-independent-supporting-axes.js';
+import {
+  selectIndependentNatalSupportingAxes,
+  selectBestNatalCoreWithinPriorityAxis,
+} from '../src/preview/natal-independent-supporting-axes.js';
 import { buildGeneralNatalMultifactorReport } from '../src/preview/general-natal-multifactor-report.js';
 import { buildWealthNatalMultifactorReport } from '../src/preview/wealth-natal-multifactor-report.js';
 import { buildBusinessNatalMultifactorReport } from '../src/preview/business-natal-multifactor-report.js';
@@ -32,6 +35,117 @@ describe('four different consumer natal menus require independently observed T0 
     );
     expect(picked.supporting.map(x => x.axis)).toEqual(['planning', 'responsibility']);
     expect(picked.overlapOnlyCount).toBe(2);
+  });
+
+  it('recovers two independent sourced supports hidden by an earlier broad axis', () => {
+    const year = 'derivedFacts.tenGods.value.year.stem.value';
+    const month = 'derivedFacts.tenGods.value.month.stem.value';
+    const hour = 'derivedFacts.tenGods.value.hour.stem.value';
+    const core = { axis: 'core', observedFactPaths: [year] };
+    const broad = { axis: 'management', observedFactPaths: [month, hour] };
+    const narrowFirst = { axis: 'planning', observedFactPaths: [month] };
+    const narrowSecond = { axis: 'tension', observedFactPaths: [hour] };
+    const candidates = [broad, narrowFirst, narrowSecond];
+    const chosen = selectIndependentNatalSupportingAxes(core, candidates);
+    // The existing valid forward pair has priority over the newer reverse
+    // alternative ['planning', 'management'].
+    expect(chosen.supporting.map(section => section.axis))
+      .toEqual(['planning', 'tension']);
+    const used = new Set(core.observedFactPaths);
+    for (const section of chosen.supporting) {
+      expect(section.observedFactPaths.some(path => !used.has(path))).toBe(true);
+      section.observedFactPaths.forEach(path => used.add(path));
+    }
+    // A one-axis request retains the original documented source ordering.
+    expect(selectIndependentNatalSupportingAxes(core, candidates, 1)
+      .supporting.map(section => section.axis)).toEqual(['management']);
+    // No new Claim, source, or calculation fact is created by selection.
+    expect(chosen.supporting.every(section => candidates.includes(section))).toBe(true);
+    expect(chosen.supporting).toEqual([narrowFirst, narrowSecond]);
+  });
+
+  it('rescues existing independent source axes that must be read in reverse order', () => {
+    const core = { axis: 'core', observedFactPaths: ['year'] };
+    const broad = { axis: 'management', observedFactPaths: ['month', 'hour'] };
+    const narrow = { axis: 'planning', observedFactPaths: ['month'] };
+    const selected = selectIndependentNatalSupportingAxes(core, [broad, narrow]);
+    expect(selected.supporting).toEqual([narrow, broad]);
+    const used = new Set(core.observedFactPaths);
+    for (const axis of selected.supporting) {
+      expect(axis.observedFactPaths.some(path => !used.has(path))).toBe(true);
+      axis.observedFactPaths.forEach(path => used.add(path));
+    }
+    expect(selectIndependentNatalSupportingAxes(core, [broad, narrow], 1)
+      .supporting).toEqual([broad]);
+  });
+
+  it('retains an independently observed indirect context alongside tension without promoting a core', () => {
+    const tension = { axis: 'tension', observedFactPaths: ['year.branch', 'month.branch'] };
+    const overlapping = { axis: 'context', observedFactPaths: ['year.branch'] };
+    const independent = { axis: 'context', observedFactPaths: ['hour.stem', 'month.branch'] };
+    const selected = selectIndependentNatalSupportingAxes(
+      tension, [overlapping, independent], 1,
+    );
+    expect(selected.supporting).toEqual([independent]);
+    expect(selected.overlapOnlyCount).toBe(1);
+    expect(selectIndependentNatalSupportingAxes(tension, [overlapping], 1).supporting)
+      .toHaveLength(0);
+    expect(selected.supporting[0]?.observedFactPaths.some(path =>
+      !tension.observedFactPaths.includes(path))).toBe(true);
+  });
+
+  it('does not invent two independent supports from repeated paths or the same axis', () => {
+    const year = 'derivedFacts.tenGods.value.year.stem.value';
+    const month = 'derivedFacts.tenGods.value.month.stem.value';
+    const core = { axis: 'core', observedFactPaths: [year] };
+    const candidates = [
+      { axis: 'management', observedFactPaths: [month] },
+      { axis: 'planning', observedFactPaths: [month] },
+      { axis: 'management', observedFactPaths: [year, month] },
+      { axis: 'tension', observedFactPaths: [year] },
+    ];
+    const chosen = selectIndependentNatalSupportingAxes(core, candidates);
+    expect(chosen.supporting.map(section => section.axis)).toEqual(['management']);
+    expect(chosen.overlapOnlyCount).toBeGreaterThan(0);
+  });
+
+  it('preserves existing successful source priority when greedy already finds two supports', () => {
+    const core = { axis: 'core', observedFactPaths: ['a'] };
+    const broad = { axis: 'management', observedFactPaths: ['b', 'c'] };
+    const other = { axis: 'tension', observedFactPaths: ['d'] };
+    const later = { axis: 'planning', observedFactPaths: ['b'] };
+    const result = selectIndependentNatalSupportingAxes(core, [broad, other, later]);
+    expect(result.supporting).toEqual([broad, other]);
+  });
+
+  it('prefers a more independently supported same-axis Wealth core without lowering core priority', () => {
+    const visible = { axis: 'core', observedFactPaths: ['year', 'month', 'hour'] };
+    const alternate = { axis: 'core', observedFactPaths: ['year'] };
+    const lowerPriority = { axis: 'creation', observedFactPaths: ['month'] };
+    const management = { axis: 'management', observedFactPaths: ['hour'] };
+    const candidates = [visible, alternate, lowerPriority, management];
+    const selected = selectBestNatalCoreWithinPriorityAxis(candidates, candidates);
+    expect(selected?.core).toBe(alternate);
+    expect(selected?.support.supporting).toEqual([lowerPriority, management]);
+    expect(selected?.support.supporting.every(item => candidates.includes(item))).toBe(true);
+    expect(selectBestNatalCoreWithinPriorityAxis([visible, lowerPriority], candidates)?.core)
+      .toBe(visible);
+    expect(selectBestNatalCoreWithinPriorityAxis([alternate, { ...alternate }], candidates)?.core)
+      .toBe(alternate);
+    expect(selectBestNatalCoreWithinPriorityAxis([], candidates)).toBeUndefined();
+  });
+
+  it('keeps source-priority core selection across general, business and relationship axes', () => {
+    for (const coreAxis of ['core', 'expression', 'execution'] as const) {
+      const original = { axis: coreAxis, observedFactPaths: ['year', 'month', 'hour'] };
+      const alternate = { axis: coreAxis, observedFactPaths: ['year'] };
+      const firstSupport = { axis: 'preparation', observedFactPaths: ['month'] };
+      const secondSupport = { axis: 'coordination', observedFactPaths: ['hour'] };
+      const selected = selectBestNatalCoreWithinPriorityAxis(
+        [original, alternate], [original, alternate, firstSupport, secondSupport]);
+      expect(selected?.core).toBe(alternate);
+      expect(selected?.support.supporting).toEqual([firstSupport, secondSupport]);
+    }
   });
 
   it('applies incremental actual chart fact-paths across all four distinct domain reports', () => {

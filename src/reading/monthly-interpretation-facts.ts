@@ -17,7 +17,7 @@ import type {
 } from '../contracts/calculation.js';
 import { resolved, unavailable, type FactState } from '../contracts/common.js';
 import { deriveAnnualStemTenGod } from './annual-interpretation-facts.js';
-import type { TemporalReadingContext } from './temporal-reading-context.js';
+import { annualSexagenaryPillar, type TemporalReadingContext } from './temporal-reading-context.js';
 
 export const MONTHLY_INTERPRETATION_FACTS_VERSION =
   'myeongha-monthly-interpretation-facts-v1' as const;
@@ -57,7 +57,7 @@ const BRANCH_HANJA: Readonly<Record<EarthlyBranch, string>> = {
   해: '亥',
 };
 
-export type MonthlyBranchRelationKind = 'clash' | 'none';
+export type MonthlyBranchRelationKind = 'clash' | 'six_combination' | 'none';
 export type MonthlySegmentId = 'before_jeol' | 'after_jeol';
 
 export interface MonthlyBranchRelationValue {
@@ -77,6 +77,11 @@ export interface MonthlyPillarSegment {
   };
   monthlyStemTenGod: TenGod;
   monthlyBranchRelations: Readonly<Record<PillarSlot, FactState<MonthlyBranchRelationValue>>>;
+  annualContext: Readonly<{
+    sajuYear: number;
+    pillar: MonthlyPillarSegment['monthlyPillar'];
+    stemTenGod: TenGod;
+  }>;
 }
 
 export interface MonthlyInterpretationFacts {
@@ -124,12 +129,15 @@ function branchRelation(
   natalPillar: PillarFact,
   monthlyPillar: PillarFact,
 ): MonthlyBranchRelationValue {
-  const relation = deriveStructuralRelationCandidates({
+  const candidates = deriveStructuralRelationCandidates({
     year: monthlyPillar,
     month: natalPillar,
-  }).some((candidate) => candidate.kind === 'branch_clash')
-    ? 'clash'
-    : 'none';
+  });
+  const relation: MonthlyBranchRelationKind = candidates.some(
+    candidate => candidate.kind === 'branch_clash',
+  ) ? 'clash' : candidates.some(
+    candidate => candidate.kind === 'branch_six_combination',
+  ) ? 'six_combination' : 'none';
 
   return {
     pillar: slot,
@@ -205,6 +213,8 @@ function monthlySegment(
   startsAtMs: number,
   endsAtMs: number,
   snapshot: CanonicalSajuSnapshot,
+  targetYear: number,
+  ipchunMs: number,
 ): MonthlyPillarSegment {
   const pillar = monthPillarAt(startsAtMs);
   const pillarFact = monthlyPillarFact(pillar.stem, pillar.branch);
@@ -219,6 +229,8 @@ function monthlySegment(
       monthlyBranchRelationState(slot, snapshot.pillars[slot], pillarFact),
     ]),
   ) as Readonly<Record<PillarSlot, FactState<MonthlyBranchRelationValue>>>;
+  const sajuYear = startsAtMs < ipchunMs ? targetYear - 1 : targetYear;
+  const { stem, branch } = annualSexagenaryPillar(sajuYear);
 
   return {
     segmentId,
@@ -227,6 +239,7 @@ function monthlySegment(
     monthlyPillar: pillar,
     monthlyStemTenGod: deriveAnnualStemTenGod(dayMaster.value, pillar.stem),
     monthlyBranchRelations,
+    annualContext: { sajuYear, pillar: { stem, branch }, stemTenGod: deriveAnnualStemTenGod(dayMaster.value, stem) },
   };
 }
 
@@ -260,8 +273,9 @@ export function buildMonthlyInterpretationFacts(
     );
   }
 
-  const before = monthlySegment('before_jeol', startsAtMs, boundaryMs, snapshot);
-  const after = monthlySegment('after_jeol', boundaryMs, endsAtMs, snapshot);
+  const ipchunMs = targetMonth === 2 ? boundaryMs : getSolarTerm(targetYear, 2).date.getTime();
+  const before = monthlySegment('before_jeol', startsAtMs, boundaryMs, snapshot, targetYear, ipchunMs);
+  const after = monthlySegment('after_jeol', boundaryMs, endsAtMs, snapshot, targetYear, ipchunMs);
   if (
     before.monthlyPillar.stem === after.monthlyPillar.stem &&
     before.monthlyPillar.branch === after.monthlyPillar.branch

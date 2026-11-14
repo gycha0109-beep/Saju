@@ -27,7 +27,105 @@ function run(month: number, day: number, hour = 12) {
   return { chart, execution, report: buildCareerMultifactorResearchReport(chart, execution, registry) };
 }
 
+describe('Career standalone research page when its source-qualified T8 is missing', () => {
+  const missingCareerBirth = {
+    calendarType: 'solar' as const,
+    date: { year: 1955, month: 10, day: 31 },
+    time: { known: true as const, hour: 19, minute: 35 },
+    sexForTraditionalCalculation: 'unspecified' as const,
+  };
+  const read = () => {
+    const chart = calculateCanonicalSajuSnapshot(
+      missingCareerBirth, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW },
+    );
+    const execution = runInterpretation(chart, registry, { now: NOW });
+    return buildCareerMultifactorResearchReport(chart, execution, registry);
+  };
+  it('shows actual pre-existing T5 Korean text and all original sources without promoting Career', () => {
+    const report = read();
+    expect(report.state).toBe('insufficient');
+    expect(report.sections).toHaveLength(0);
+    expect(report.readingGuide).toBeUndefined();
+    const context = report.availableThemeContext!;
+    expect(context.wholeChartSynthesisAuthorized).toBe(false);
+    expect(context.themes.length).toBeGreaterThan(0);
+    const html = renderCareerMultifactorResearchHtml(report);
+    expect(html).toContain('aria-label="직업운 종합풀이 보류 시 원국 십신 부분 설명"');
+    expect(html).toContain('직업운 종합풀이 아님');
+    expect(html).toContain('출처로 뒷받침되는 종합 해석을 구성할 수 없습니다');
+    const escape = (s: string) => s.replace(/[&<>"']/gu, character => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[character]!);
+    for (const theme of context.themes) {
+      expect(html).toContain(escape(theme.summary));
+      expect(html.split(escape(theme.summary))).toHaveLength(2);
+      expect(html).toContain(escape(theme.headline));
+      expect(html).toContain(escape(theme.claimId));
+      expect(html).toContain(escape(theme.claimType));
+      expect(html).toContain(escape(theme.observedPositions[0]!));
+      expect(html).toContain(escape(theme.observedFactPaths[0]!));
+      expect(html).toContain(escape(theme.ruleIds[0]!));
+      expect(html).toContain(escape(theme.methodologyId));
+      expect(html).toContain(escape(theme.sourceIds[0]!));
+    }
+    expect(renderCareerMultifactorResearchHtml(read())).toBe(html);
+    expect(report.researchOnly).toBe(true);
+    expect(report.usefulComplete).toBe(false);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+  });
+  it('keeps unresolved-hour T5 unavailable and refuses forged standalone source evidence', () => {
+    const unknown = sample(3, 10, null);
+    const execution = runInterpretation(unknown, registry, { now: NOW });
+    const held = buildCareerMultifactorResearchReport(unknown, execution, registry);
+    expect(held.state).toBe('insufficient');
+    expect(held.availableThemeContext).toBeUndefined();
+    expect(renderCareerMultifactorResearchHtml(held)).not.toContain(
+      'aria-label="직업운 종합풀이 보류 시 원국 십신 부분 설명"');
+    const report = read();
+    const context = report.availableThemeContext!;
+    const forged = { ...report, availableThemeContext: {
+      ...context,
+      themes: [{ ...context.themes[0]!, sourceIds: [] }, ...context.themes.slice(1)],
+    } };
+    expect(() => renderCareerMultifactorResearchHtml(forged)).toThrow(
+      'Career standalone preview cannot promote unsourced T5 to domain synthesis');
+  });
+});
+
 describe('source-bounded Career two-T5 → T8 → consumer Korean research vertical', () => {
+  it('renders verified 500-person Career examples with natural Korean particles and identical source authority', () => {
+    for (const [year, month, day, hour, minute] of [
+      [1998, 3, 28, 22, 19],
+      [1971, 2, 24, 21, 59],
+    ] as const) {
+      const chart = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar',
+        date: { year, month, day },
+        time: { known: true, hour, minute },
+        sexForTraditionalCalculation: 'unspecified',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const execution = runInterpretation(chart, registry, { now: NOW });
+      const report = buildCareerMultifactorResearchReport(chart, execution, registry);
+      expect(report.sections.length).toBeGreaterThan(0);
+      for (const section of report.sections) {
+        expect(section.paragraph).toContain(
+          '기존 출처에 연결된 구조적 해석 후보를 함께 살핍니다.');
+        expect(section.paragraph).toContain(`해석 관점은 ‘${section.headline}’입니다.`);
+        expect(section.paragraph).not.toContain(`‘${section.headline}’이라는 구조적`);
+        expect(section.paragraph).not.toContain(`‘${section.headline}’라는 구조적`);
+        expect(section.calculatedPositions.every(position =>
+          section.paragraph.includes(position))).toBe(true);
+        expect(section.sourceIds).toHaveLength(2);
+        expect(section.upstreamClaimIds).toHaveLength(2);
+        expect(section.ruleId).toBeTruthy();
+      }
+      expect(report.researchOnly).toBe(true);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+  });
+
   it('keeps legacy single-Ten-God Career T8 out of the new pack and never enables commerce', () => {
     expect(CAREER_MULTIFACTOR_PACK.status).toBe('research');
     expect(CAREER_MULTIFACTOR_RULES).toHaveLength(10);
@@ -189,13 +287,19 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
         expect(section.sourceIds).toHaveLength(2);
         expect(section.upstreamClaimIds).toHaveLength(2);
         for (const family of families) {
-          const first = section.calculatedPositions.find(position =>
+          const observed = section.calculatedPositions.filter(position =>
             familyGods[family]?.some(god => position.endsWith(' ' + god)));
-          expect(first, family + ' must be observed on the actual chart').toBeDefined();
-          expect(section.paragraph).toContain(`${first}의 ${sourceRoles[family]}`);
+          expect(observed.length, family + ' must be observed on the actual chart')
+            .toBeGreaterThan(0);
+          expect(section.paragraph).toContain(
+            `${sourceRoles[family]}: ${observed.join(' · ')}`);
+          // The readable explanation must not repeat a single first slot as
+          // an ill-formed family-labelled noun phrase.
+          expect(section.paragraph).not.toContain(
+            `${observed[0]}의 ${sourceRoles[family]}`);
         }
         expect(section.paragraph).toContain(
-          `같은 ${section.channel === 'visible_stems' ? '천간' : '지지 대표 십신'} 관찰 범위`,
+          `두 십신 계열이 같은 ${section.channel === 'visible_stems' ? '천간' : '지지 대표 십신'} 관찰 범위에서 각각 확인됐습니다`,
         );
         expect(section.paragraph).toContain(`‘${section.headline}’`);
         observedPatterns.add(section.pattern);
