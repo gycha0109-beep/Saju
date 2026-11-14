@@ -6,6 +6,7 @@ import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-e
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import {
   buildAnnualInterpretationFacts,
+  buildPrecedingAnnualInterpretationFacts,
   deriveAnnualStemTenGod,
 } from '../src/reading/annual-interpretation-facts.js';
 import { buildReadingCompositionEvidence } from '../src/reading/reading-intent-composition.js';
@@ -20,6 +21,7 @@ import {
   GENERAL_ANNUAL_THEME_CLAIM_TYPE,
   GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
   createGeneralAnnualReadingCandidateRegistry,
+  createGeneralAnnualCivilYearCandidateRegistry,
 } from '../src/research/general-annual-reading-candidate.js';
 
 const NOW = new Date('2026-09-03T13:00:00.000Z');
@@ -144,6 +146,31 @@ describe('MyeongHa general annual T9 reading candidate', () => {
         (claim) => claim.taxonomy.tier === 'T9' && claim.taxonomy.subcategory === 'annual',
       ),
     ).toBe(true);
+  });
+
+  it('selects both researched civil-year claims and preserves their distinct fact paths', () => {
+    const natal = snapshot();
+    const current = temporalFacts(natal, 2026);
+    const preceding = buildPrecedingAnnualInterpretationFacts(natal, current);
+    const registry = createGeneralAnnualCivilYearCandidateRegistry(NOW.toISOString());
+    const execution = runInterpretation(natal, registry, {
+      temporalFacts: { ...current, segmentsById: { before_ipchun: preceding } },
+      now: NOW,
+    });
+    expect(execution.integrity).toEqual({ valid: true, errors: [] });
+    const composition = buildReadingCompositionEvidence(natal, execution, registry, annualRequest(2026));
+    const primary = composition.evidence?.bundle.claims.filter(
+      claim => claim.claimType === GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType,
+    );
+    expect(primary).toHaveLength(2);
+    expect(primary).toEqual(expect.arrayContaining([
+      expect.objectContaining({ subject: 'annual_period', value: expect.objectContaining({ tenGod: current.annualStemTenGod }),
+        factRefs: expect.arrayContaining(['temporal.annualStemTenGod']) }),
+      expect.objectContaining({ subject: 'annual_period_before_ipchun', value: expect.objectContaining({ tenGod: preceding.annualStemTenGod }),
+        factRefs: expect.arrayContaining(['temporal.segmentsById.before_ipchun.annualStemTenGod']) }),
+    ]));
+    expect(new Set(primary?.map(claim => claim.claimId)).size).toBe(2);
+    expect(registry.pack.status).toBe('research');
   });
 
   it('changes deterministic run identity when the target year changes', () => {

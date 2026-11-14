@@ -358,3 +358,39 @@ export function createGeneralAnnualReadingCandidateRegistry(
     createdAt,
   );
 }
+
+/** Research candidate for a civil-year Reading that spans two annual pillars. */
+export function createGeneralAnnualCivilYearCandidateRegistry(createdAt: string) {
+  const baseRules = [...GENERAL_ANNUAL_ACTIVATION_RULES, ...GENERAL_ANNUAL_TENSION_RULES];
+  const precedingPrefix = 'segmentsById.before_ipchun.';
+  const precedingRules = baseRules.map((rule): RuleDefinition => ({
+    ...rule,
+    ruleId: rule.ruleId.replace('T9-', 'T9-BEFORE_IPCHUN-'),
+    inputs: rule.inputs.map(input => ({
+      ...input, pathOrClaimType: precedingPrefix + input.pathOrClaimType,
+    })),
+    output: { ...rule.output, subject: 'annual_period_before_ipchun' },
+  }));
+  const methodology: MethodologyDefinition = {
+    ...GENERAL_ANNUAL_READING_METHODOLOGY,
+    inputContract: {
+      factInputs: [
+        ...GENERAL_ANNUAL_READING_METHODOLOGY.inputContract.factInputs,
+        ...GENERAL_ANNUAL_READING_METHODOLOGY.inputContract.factInputs.map(input => ({
+          ...input, pathPattern: precedingPrefix + input.pathPattern,
+        })),
+      ],
+    },
+  };
+  return createRuleRegistrySnapshot(
+    {
+      rules: [...baseRules, ...precedingRules],
+      methodologies: [methodology],
+      sources: [GENERAL_ANNUAL_POLICY_SOURCE],
+      claimTypeDefinitions: [GENERAL_ANNUAL_THEME_CLAIM_TYPE, GENERAL_ANNUAL_TENSION_CLAIM_TYPE],
+      claimValueSchemas: [GENERAL_ANNUAL_THEME_SCHEMA, GENERAL_ANNUAL_TENSION_SCHEMA],
+    },
+    { ...GENERAL_ANNUAL_READING_PACK, packId: 'PACK-GENERAL-ANNUAL-CIVIL-YEAR-CANDIDATE' },
+    createdAt,
+  );
+}

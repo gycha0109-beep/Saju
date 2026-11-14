@@ -25,7 +25,7 @@ const unusedNarrativePolicy = {} as NarrativePolicy;
 const unusedReadingOptions = {} as ProductReadingServiceOptions;
 
 describe('product host annual temporal facts', () => {
-  it('calculates the natal snapshot before enriching an 올해 운세 request with personalized annual facts', async () => {
+  it.each([false, true])('uses the correct year across a Seoul year boundary (pinned=%s)', async (pinned) => {
     const seenContexts: ProductHostInterpretationRequestContext[] = [];
     let calculatedSnapshot: CanonicalSajuSnapshot | undefined;
 
@@ -50,7 +50,7 @@ describe('product host annual temporal facts', () => {
       },
       readingOptions: unusedReadingOptions,
       requestIdFactory: () => 'annual-context-test',
-      requestNowFactory: () => NOW,
+      requestNowFactory: () => pinned ? new Date('2026-12-31T15:00:00.000Z') : NOW,
     });
 
     await expect(
@@ -61,7 +61,10 @@ describe('product host annual temporal facts', () => {
           time: '09:30',
           sex: 'male',
         },
-        reading: { text: '올해 운세' },
+        reading: {
+          text: '올해 운세',
+          ...(pinned ? { periodReferenceDateTime: NOW.toISOString() } : {}),
+        },
       }),
     ).rejects.toBe(STOP_AFTER_INTERPRET);
 
