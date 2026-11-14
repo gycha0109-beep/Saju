@@ -68,6 +68,7 @@ describe('A4 private capture cannot bypass independent Production interpretation
       },
       { ...input, host: { ...input.host, a4SourceCapture: {} } },
       { ...input, a4: { ...input.a4, sourceRefFactory: () => 'client-controlled' } },
+      { ...input, a4: { ...input.a4, fetchImpl: modelCalls } },
     ]) {
       expect(() =>
         createUnstartedSajuA4CapturedProductionHostV1(

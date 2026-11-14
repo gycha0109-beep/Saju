@@ -57,6 +57,7 @@ export function createUnstartedSajuA4CapturedProductionHostV1(
     'fetchImpl' in input.openAI ||
     (input.openAI.endpoint !== undefined && input.openAI.endpoint !== OPENAI_RESPONSES_ENDPOINT) ||
     'a4SourceCapture' in input.host ||
+    'fetchImpl' in input.a4 ||
     input.a4.sourceRefFactory !== undefined
   ) {
     throw new TypeError(
