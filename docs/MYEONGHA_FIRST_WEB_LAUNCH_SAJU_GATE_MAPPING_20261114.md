@@ -1,6 +1,6 @@
 # Saju ↔ 명하 첫 웹 출시 로드맵 경계 (2026-11-14)
 
-> 목적: Saju의 **연구/계산/해석 의미**와 MyeongHa의 **14개 구매 상품·발급/결제/Reader**를 같은 개념으로 착각하지 않게 정리한다. [명하 최신 제품 범위](https://github.com/gycha0109-beep/MyeongHa/pull/3295) 및 [공통 게이트 정본 (동일 PR branch)](https://github.com/gycha0109-beep/MyeongHa/blob/docs/launch-six-character-all-saju-web-20261113/docs/LAUNCH_ROADMAP_CANONICAL_GATE_MATRIX_20261114.md).
+> 목적: Saju의 **연구/계산/해석 의미**와 MyeongHa의 **14개 구매 상품·발급/결제/Reader**를 같은 개념으로 착각하지 않게 정리한다. [명하 최신 제품 범위](https://github.com/gycha0109-beep/MyeongHa/pull/3295) 및 [공통 게이트 정본 (PR #3295 반영 후)](https://github.com/gycha0109-beep/MyeongHa/blob/main/docs/LAUNCH_ROADMAP_CANONICAL_GATE_MATRIX_20261114.md).
 > 출시 범위 분류의 추가 승인·상용 발급·판매 플래그 승격이 아니다. 각 트랙의 기존 구현·검증·권한·과거 기록을 보존한다.
 
 ## 1. 서로 다른 네 가지 대상
