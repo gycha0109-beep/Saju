@@ -1,5 +1,7 @@
 # SA-7A 상세 Official Reading 확장 로드맵 감사 v1
 
+> **2026-11-14 범위/종료 정정:** 이 파일은 SA-7A **당시 상세 해석 확장 후보 감사**다. 최초 웹 공개 범위는 [현행 Saju↔명하 기준](../MYEONGHA_FIRST_WEB_LAUNCH_SAJU_GATE_MAPPING_20261114.md)의 14개 승인 Offer/7개 의미 구성요소이며, 본 문서의 기존 확장 우선순위·초기 단일 판매 상품 가정이 이를 덮지 않는다. 연·월운 정식 발급은 Saju #2762, 관계 비교는 Saju #2763이 담당하고, 이미 확보한 원국 의미는 재사용한다. 기존 검증 완료/미완료 이력은 보존한다.
+
 Issue: #2336
 
 Watchtower-Track: saju-bridge
