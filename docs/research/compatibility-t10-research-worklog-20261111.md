@@ -460,3 +460,12 @@
 - **두 명식 전용 발급 입력자료:** `src/reading/t10-pair-source-reading-material.ts`에서 **원본 각 명식 식별자·계산 해시, 정책 버전, 해석 문단, 근거 ID, 문장별/전체 내용 해시**를 한 자료로 결속. Saju 사내 전용 Ed25519 서명 검토 응답에 함께 포함하고 MyeongHa `apps/api/src/saju-held-pair-review-v1.ts`가 별도 검증한다.
 - **변조 및 품질 검사:** Saju 실제 명식 간 순서 반전·원본/문장 바꿔치기·시각 미상 사례, 명하의 두 사람 불일치·해시/문장 변경·원본 누락·발급 상태 변경 거부 테스트를 추가했다. 추가 CI에서 테스트 파일의 미사용 변수·응답 자료형 문제를 확인해 수정했으며 **최신 커밋의 전체 CI 통과는 별도 확인한다**.
 - **로드맵:** 4단계 고객용 한국어 해석 내용 확대, 5단계 상용 발급 **원본 자료 규격/비공개 검증** 일부 구현. `source_owned_candidate_unissued`, `officialIssueAuthorized=false`, `maySell=false` 유지. 실제 Official Source Pair Issue Proof, 두 명식 서명 발급, 3상품 독립 구매·동의 철회·Reader/환불 E2E는 미완료. `ROADMAP_IN_PROGRESS`.
+
+## 52. 2026-11-14 — T10 두 명식 정식 발급 서명과 구매 재검증 실제 구현 착수
+
+- **현재 저장소:** Saju #2763과 MyeongHa #3174는 이관 기준 HEAD에서 계속 진행했으며 별도 연·월운 #2762는 병합·수정하지 않았다.
+- **Saju 정식 발급 구현:** `src/host/t10-production-pair-issue-proof.ts`에 Preview와 독립된 Ed25519 서명 영역을 구현. 실행 시도·구매·첫/추가 상대 상품·실제 상대/동의·양쪽 출생 Revision/입력 해시·두 Canonical 계산 해시·정식 Release·엔진·정책·한국어 문단/규칙/근거/자료 해시·발급 시점을 서명한다. `src/host/http-server.ts`에 별도 서비스 Bearer가 필요한 Production 발급 경로를 설정식으로 연결했다. 사용하지 않는 호스트/Preview에는 경로가 열리지 않는다.
+- **MyeongHa 원본 검증:** `apps/api/src/saju-t10-production-pair-issue-source-v1.ts`에서 신뢰된 공개키로 Production 발급 증명을 검사하고, 원본 자료 해시·문장별 규칙·각 사람의 출생 Revision/계산 해시·구매 Offer/동의/Release/실행 ID가 DB에서 읽은 승인 범위와 동일한지 확인한다.
+- **준비된 DB 시도 재확인:** `verifyApprovedSajuPreparedPairIssueV1`에서 현재 DB에 실제 실행 시도가 존재하고 승인된 경우에만 외부 정식 Source를 호출한다. 호출 전후 두 사람·동의·구매·명식 Revision·Release가 변경되면 결과를 거부한다. 기존 개인 명식 Worker의 `compatibility` 거부는 유지한다.
+- **검증:** Saju 정식 서명·Preview 분리 테스트, MyeongHa 3상품 원본 위조/해시·서명·동의 변경 거부 및 준비된 DB 실행 시도 테스트를 추가했다. 현재 신규 HEAD별 CI 결과는 각각 최종 확인 전이며 과거 성공을 재사용하지 않는다.
+- **남은 5단계:** 정식 Pair 결과를 기존 Postgres 읽기 기록·서명 증거 저장·중복 방지/재시도 상태 및 보관함/Reader 의미 보존과 연결하는 **최종 확정 작업은 아직 미구현**. T8+T10 묶음의 독립 결과, 동의 철회·환불 후 접근 차단, 운영 DB·배포 검증 또한 남는다. 실제 판매/운영 발급 HOLD, `ROADMAP_IN_PROGRESS`. 추가 학술 승인 요구 없음.
