@@ -22,7 +22,7 @@ try {
 }
 ```
 
-The script reads the trusted local certificate and the `.pgpass` files at runtime and uses the Saju Node.js pool adapter over actual certificate-validated TLS 1.3. It verifies all three dedicated roles, disallows direct receipt DELETE privileges, and calls the **existing** signed-receipt reader to check that a randomly generated non-existent receipt is absent. It performs **no INSERT, DELETE, paid provider call or cost ingestion**.
+The script reads the trusted local certificate and the `.pgpass` files at runtime and uses the Saju Node.js pool adapter over actual certificate-validated TLS 1.3. It verifies all three dedicated roles, disallows direct receipt DELETE privileges, and calls the **existing** signed-receipt reader to check that a randomly generated non-existent receipt is absent. It also runs the existing receipt Writer's real, read-only Source readiness check (receipt, callback coverage and pre-network dispatch intent grants). The separate Claim Writer must have precisely its approved INSERT and ID-only SELECT grants, with no proof digest read, UPDATE, DELETE or TRUNCATE authority. These checks use the existing local Docker database and never consume a prepared attempt. It performs **no INSERT, DELETE, paid provider call or cost ingestion**.
 
 The runtime pool implementation is `src/production/reading-ai-a4-local-postgres-pool-v1.ts`; it exposes the existing `SajuA4ReceiptDatabasePoolV1` contract and has no automatic production service registration.
 

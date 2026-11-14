@@ -9,6 +9,7 @@ import {
   SAJU_A4_LOCAL_SOURCE_ROLES,
 } from '../../dist/production/reading-ai-a4-local-postgres-pool-v1.js';
 import { createPostgresSajuSignedProviderReceiptReaderV1 } from '../../dist/production/reading-ai-provider-receipt-postgres-v1.js';
+import { assertSajuA4SourceWriterReadyV1 } from '../../dist/production/reading-ai-a4-source-writer-preflight-v1.js';
 
 const base = dirname(fileURLToPath(import.meta.url));
 const secrets = process.env.SAJU_A4_LOCAL_SECRETS_DIR
@@ -42,6 +43,53 @@ for (const role of SAJU_A4_LOCAL_SOURCE_ROLES) {
       }
     } finally {
       client.release();
+    }
+    if (role === 'saju_a4_provider_receipt_writer_v1') {
+      await assertSajuA4SourceWriterReadyV1(pool);
+      console.log('LOCAL_SOURCE_RECEIPT_WRITER_PREFLIGHT_OK');
+    }
+    if (role === 'saju_a4_prepared_attempt_claim_writer_v1') {
+      const claimClient = await pool.connect();
+      try {
+        await claimClient.query('BEGIN READ ONLY');
+        const result = await claimClient.query(`
+          SELECT current_user::text AS "currentUser",
+            to_regclass('saju_source_ops.a4_prepared_attempt_claims_v1')::text AS "claimTable",
+            has_column_privilege(current_user, 'saju_source_ops.a4_prepared_attempt_claims_v1', 'execution_attempt_id', 'INSERT') AS "idInsert",
+            has_column_privilege(current_user, 'saju_source_ops.a4_prepared_attempt_claims_v1', 'proof_digest_sha256', 'INSERT') AS "digestInsert",
+            has_column_privilege(current_user, 'saju_source_ops.a4_prepared_attempt_claims_v1', 'execution_attempt_id', 'SELECT') AS "idSelect",
+            has_column_privilege(current_user, 'saju_source_ops.a4_prepared_attempt_claims_v1', 'proof_digest_sha256', 'SELECT') AS "digestSelect",
+            has_table_privilege(current_user, 'saju_source_ops.a4_prepared_attempt_claims_v1', 'UPDATE') AS "canUpdate",
+            has_table_privilege(current_user, 'saju_source_ops.a4_prepared_attempt_claims_v1', 'DELETE') AS "canDelete",
+            has_table_privilege(current_user, 'saju_source_ops.a4_prepared_attempt_claims_v1', 'TRUNCATE') AS "canTruncate"
+        `);
+        const row = result.rows[0];
+        if (
+          result.rows.length !== 1 ||
+          row?.currentUser !== role ||
+          row.claimTable !== 'saju_source_ops.a4_prepared_attempt_claims_v1' ||
+          row.idInsert !== true ||
+          row.digestInsert !== true ||
+          row.idSelect !== true ||
+          row.digestSelect !== false ||
+          row.canUpdate !== false ||
+          row.canDelete !== false ||
+          row.canTruncate !== false
+        ) {
+          throw new Error('Local A4 single-use Claim Writer privileges mismatch');
+        }
+        await claimClient.query('COMMIT');
+        console.log('LOCAL_SOURCE_CLAIM_WRITER_PREFLIGHT_OK');
+      } catch (error) {
+        try {
+          await claimClient.query('ROLLBACK');
+        } catch {
+          // The original failed readiness check remains authoritative.
+        }
+        throw error;
+      } finally {
+        claimClient.release();
+      }
     }
     if (role === 'saju_a4_provider_receipt_reader_v1') {
       const reader = createPostgresSajuSignedProviderReceiptReaderV1(pool);
