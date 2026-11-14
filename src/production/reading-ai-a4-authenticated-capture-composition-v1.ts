@@ -41,7 +41,7 @@ export interface SajuA4AuthenticatedCaptureConfigV1 {
  */
 export function createSajuA4AuthenticatedCaptureCompositionV1(
   input: SajuA4AuthenticatedCaptureConfigV1,
-): ReturnType<typeof createSajuA4PrivateProviderCaptureV1> {
+) {
   if (
     !input ||
     !input.claimPool?.connect ||
@@ -93,34 +93,49 @@ export function createSajuA4AuthenticatedCaptureCompositionV1(
     keyId: input.sourceKeyId,
     keyBytes: input.sourceSigningKey,
   });
+  async function runAuditedAttempt<T>(
+    attempt: SajuSourceAttemptContextV1,
+    execute: (externalRequestRef: string) => Promise<T>,
+    deterministic: boolean,
+  ): Promise<T> {
+    const outcome = await capture.withPreparedAttempt(attempt, execute);
+    // Verify durable coverage before returning a Reading. A deterministic
+    // host is configured without a narrative provider and must observe zero.
+    const evidence = await audit.inspectAttempt(attempt.executionAttemptId);
+    if (
+      evidence.status !== 'observed_storage_consistent_unverified' ||
+      evidence.acknowledgedReceipts === null ||
+      (deterministic ? evidence.acknowledgedReceipts !== 0 : evidence.acknowledgedReceipts < 1) ||
+      evidence.storedSignedReceipts !== evidence.acknowledgedReceipts
+    ) {
+      throw new Error('Saju A4 local callback evidence incomplete; Reading response held');
+    }
+    const dispatched = await dispatchAudit.inspectAttempt(attempt.executionAttemptId);
+    const dispatchMatches = deterministic
+      ? dispatched.status === 'no_local_evidence' &&
+        dispatched.intentCount === 0 &&
+        dispatched.signedReceiptCount === 0
+      : dispatched.status === 'matched_with_provider_usage_unverified' ||
+        dispatched.status === 'matched_with_usage_unknown_unverified';
+    if (!dispatchMatches) {
+      throw new Error('Saju A4 pre-send intent/receipt evidence incomplete; Reading response held');
+    }
+    return outcome;
+  }
   return Object.freeze({
     onBeforeProviderRequest: capture.onBeforeProviderRequest,
     onProviderCall: capture.onProviderCall,
-    async withPreparedAttempt<T>(
+    withPreparedAttempt<T>(
       attempt: SajuSourceAttemptContextV1,
       execute: (externalRequestRef: string) => Promise<T>,
     ): Promise<T> {
-      const outcome = await capture.withPreparedAttempt(attempt, execute);
-      // Confirm durable, signed local callbacks AFTER the coverage report
-      // committed, BEFORE releasing a successful Production Reading response.
-      // This cannot certify all upstream API calls or invoice costs.
-      const evidence = await audit.inspectAttempt(attempt.executionAttemptId);
-      if (
-        evidence.status !== 'observed_storage_consistent_unverified' ||
-        evidence.acknowledgedReceipts === null ||
-        evidence.acknowledgedReceipts < 1 ||
-        evidence.storedSignedReceipts !== evidence.acknowledgedReceipts
-      ) {
-        throw new Error('Saju A4 local callback evidence incomplete; Reading response held');
-      }
-      const dispatched = await dispatchAudit.inspectAttempt(attempt.executionAttemptId);
-      if (
-        dispatched.status !== 'matched_with_provider_usage_unverified' &&
-        dispatched.status !== 'matched_with_usage_unknown_unverified'
-      ) {
-        throw new Error('Saju A4 pre-send intent/receipt evidence incomplete; Reading response held');
-      }
-      return outcome;
+      return runAuditedAttempt(attempt, execute, false);
+    },
+    withPreparedDeterministicAttempt<T>(
+      attempt: SajuSourceAttemptContextV1,
+      execute: (externalRequestRef: string) => Promise<T>,
+    ): Promise<T> {
+      return runAuditedAttempt(attempt, execute, true);
     },
   });
 }

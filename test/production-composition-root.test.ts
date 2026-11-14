@@ -1,3 +1,4 @@
+import { generateKeyPairSync } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { createRuleRegistrySnapshot } from '../src/interpretation/rule-registry.js';
 import { createI14StrengthEvidenceRegistry } from '../src/research/i14-strength-evidence-registry.js';
@@ -112,5 +113,20 @@ describe('production composition root', () => {
     expect(() => createAuthorizedMyeonghwaProductionHostServer({})).toThrow(
       ProductionCompositionBlockedError,
     );
+  });
+
+  it('cannot authorize a research registry by configuring a Production issue signing key', () => {
+    const { privateKey } = generateKeyPairSync('ed25519');
+    expect(() => createAuthorizedMyeonghwaProductionHostServer(
+      { registry: createI14StrengthEvidenceRegistry() },
+      { productionIssueProof: {
+        issuer: 'test-saju',
+        audience: 'test-myeongha',
+        keyId: 'test-key',
+        signingKey: privateKey,
+        engineVersion: 'test-engine',
+        releaseByReadingText: { '직업운': 'test-release' },
+      } },
+    )).toThrow(ProductionCompositionBlockedError);
   });
 });

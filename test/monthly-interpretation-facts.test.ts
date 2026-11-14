@@ -46,6 +46,22 @@ function monthlyContext(month: number, year = 2026): Extract<TemporalReadingCont
 }
 
 describe('MyeongHa monthly interpretation facts', () => {
+  it.each([
+    [1, [2025, 2025], ['을사', '을사']],
+    [2, [2025, 2026], ['을사', '병오']],
+    [3, [2026, 2026], ['병오', '병오']],
+  ])('binds month %i to the annual pillar effective during each segment', (month, years, pillars) => {
+    const natal = snapshot(9, false);
+    const dayMaster = natal.derivedFacts.dayMaster;
+    if (dayMaster.status !== 'resolved') throw new Error('Expected day master');
+    const { segments } = buildMonthlyInterpretationFacts(natal, monthlyContext(month));
+    expect(segments.map(segment => segment.annualContext.sajuYear)).toEqual(years);
+    expect(segments.map(({ annualContext: { pillar } }) => pillar.stem + pillar.branch)).toEqual(pillars);
+    for (const { annualContext } of segments) {
+      expect(annualContext.stemTenGod).toBe(deriveAnnualStemTenGod(dayMaster.value, annualContext.pillar.stem));
+    }
+  });
+
   it('preserves the civil September target month as two solar-term-aware month-pillar segments', () => {
     const natal = snapshot();
     const facts = buildMonthlyInterpretationFacts(natal, monthlyContext(9));

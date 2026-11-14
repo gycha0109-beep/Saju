@@ -1,7 +1,11 @@
+import { generateKeyPairSync } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { createI14StrengthEvidenceRegistry } from '../src/research/i14-strength-evidence-registry.js';
 import { ProductionCompositionBlockedError } from '../src/production/production-composition.js';
-import { createUnstartedSajuA4CapturedProductionHostV1 } from '../src/production/reading-ai-a4-authorized-product-host-composition-v1.js';
+import {
+  createUnstartedSajuA4CapturedProductionHostV1,
+  createUnstartedSajuA4DeterministicReadingHostV1,
+} from '../src/production/reading-ai-a4-authorized-product-host-composition-v1.js';
 
 const reader = () => ({
   async connect() {
@@ -37,6 +41,30 @@ function candidate() {
 }
 
 describe('A4 private capture cannot bypass independent Production interpretation authority', () => {
+  it('keeps the deterministic issue host behind Production interpretation and exact A4 capture', () => {
+    const { production, host, a4 } = candidate();
+    const input = {
+      production, host, a4,
+      issueProof: {
+        issuer: 'test-saju', audience: 'test-myeongha', keyId: 'test-issue-key', engineVersion: 'test-engine',
+        signingKey: generateKeyPairSync('ed25519').privateKey,
+        releaseByReadingText: { '올해': 'test-release' },
+      },
+    };
+    expect(() => createUnstartedSajuA4DeterministicReadingHostV1(input))
+      .toThrow(ProductionCompositionBlockedError);
+    expect(() => createUnstartedSajuA4DeterministicReadingHostV1({
+      ...input, production: { registry: createI14StrengthEvidenceRegistry() },
+    })).toThrow(ProductionCompositionBlockedError);
+    const suppliedCapture = { ...host, a4SourceCapture: {} };
+    expect(() => createUnstartedSajuA4DeterministicReadingHostV1({ ...input, host: suppliedCapture }))
+      .toThrow('requires the governed host and A4 transport');
+    expect(() => createUnstartedSajuA4DeterministicReadingHostV1({
+      ...input, a4: { ...a4, fetchImpl: modelCalls },
+    })).toThrow('requires the governed host and A4 transport');
+    expect(modelCalls).not.toHaveBeenCalled();
+  });
+
   it('never constructs a production host when official interpretation authority is missing', () => {
     expect(() => createUnstartedSajuA4CapturedProductionHostV1(candidate())).toThrow(
       ProductionCompositionBlockedError,

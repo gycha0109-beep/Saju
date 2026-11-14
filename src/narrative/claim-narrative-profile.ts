@@ -297,7 +297,7 @@ function itemMatchesClaim(item: DeterministicNarrativePlanItem, claim: Interpret
 }
 
 export function buildClaimNarrativePlan(
-  bundle: GovernedReadingEvidenceContentV1,
+  bundle: Pick<GovernedReadingEvidenceContentV1, 'claims'>,
   profiles: readonly ClaimNarrativeProfile[],
   language = 'ko',
 ): DeterministicNarrativePlan {
@@ -337,7 +337,7 @@ function profileAssertion(
 }
 
 export function renderClaimNarrativeProfileSections(
-  bundle: GovernedReadingEvidenceContentV1,
+  bundle: Pick<GovernedReadingEvidenceContentV1, 'claims'>,
   profiles: readonly ClaimNarrativeProfile[],
   language = 'ko',
 ): readonly NarrativeSection[] {
