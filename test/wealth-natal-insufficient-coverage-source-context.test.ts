@@ -21,6 +21,26 @@ function wealthReading(year: number, month: number, day: number, hour: number, m
 }
 
 describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
+  it('shows each shared Korean meaning once while retaining both observation channels', () => {
+    const { report } = wealthReading(1967, 8, 22, 10, 28);
+    const context = report.availableThemeContext!;
+    const repeated = context.themes.find((theme, index) =>
+      context.themes.slice(0, index).some(previous => previous.summary === theme.summary));
+    expect(repeated).toBeDefined();
+    const shared = context.themes.filter(theme => theme.summary === repeated!.summary);
+    expect(new Set(shared.map(theme => theme.channel)).size).toBe(2);
+    expect(context.paragraph.split(repeated!.summary)).toHaveLength(2);
+    for (const theme of shared) {
+      expect(theme.sourceIds.length).toBeGreaterThan(0);
+      expect(theme.observedFactPaths.length).toBeGreaterThan(0);
+      for (const position of theme.observedPositions) {
+        expect(context.paragraph).toContain(position);
+      }
+    }
+    expect(report.sections).toHaveLength(0);
+    expect(context.wealthConclusionAuthorized).toBe(false);
+  });
+
   it('explains actual absent wealth T5 without inventing a negative fortune', () => {
     const { execution, report } = wealthReading(1964, 11, 14, 14, 59);
     expect(execution.claims.some(c => c.state === 'active' &&

@@ -311,8 +311,13 @@ function buildAvailableThemeContext(
     (a.channel === 'visible_stems' ? -1 : 0) -
       (b.channel === 'visible_stems' ? -1 : 0) ||
     a.family.localeCompare(b.family));
-  const paragraphs = sorted.map(theme =>
-    `‘${theme.headline}’ — ${theme.observedPositions.join(' · ')}에서 확인됐습니다. ${theme.summary}`);
+  const displayedSummaries = new Set<string>();
+  const paragraphs = sorted.map(theme => {
+    const firstMeaning = !displayedSummaries.has(theme.summary);
+    displayedSummaries.add(theme.summary);
+    return `‘${theme.headline}’ — ${theme.observedPositions.join(' · ')}에서 확인됐습니다.` +
+      (firstMeaning ? ` ${theme.summary}` : '');
+  });
   // R27 denies narrative materiality; its observations remain a separate
   // calculated-facts appendix, never part of T5/T8 interpretive prose.
   const hiddenAssessment = observeHiddenWealthMembership(snapshot);
