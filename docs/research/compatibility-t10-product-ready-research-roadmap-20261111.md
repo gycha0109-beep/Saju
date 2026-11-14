@@ -160,3 +160,9 @@
 - MyeongHa #3174는 신뢰 공개키 검증과 실제 구매·상대 동의·출생 Revision·구매 구성 확인, DB 실행 시도 검증 및 Source 호출 전후 재확인을 추가했다.
 - **5단계 완료 조건 미충족:** 정식 결과의 DB 최종 확정·서명 아카이브, 세 상품 중 결합 상품의 독립 T8+T10 저장, 보관함·Reader 재열람, 취소/환불·동의 철회 및 중복/재시도 통합 검증은 남아 있다. 현재 Source 검증 결과는 `source_verified_not_committed`이고 공식 Reading/Grant를 생성하지 않는다.
 - 1~4단계의 기존 검증·부분지원 경계는 유지한다. CI는 각 신규 HEAD의 실제 결과로만 판정하며 판매는 HOLD, 전체 `ROADMAP_IN_PROGRESS`.
+
+### 2026-11-14 추가 진행 — 두 사람 표시 명식·DB 후보 확정·Reader 재열람 구현
+
+- 두 Canonical 명식의 계산된 연·월·일·시 기둥을 Production Pair Issue Proof에 함께 서명하고, 미상 항목은 미확인 상태를 보존한다.
+- MyeongHa #3174에 별도 두 명식 발급 작업자, 구매/동의 재확인, 문장·계산 해시를 포함한 DB 원자 확정 후보, 서명 보관, 첫/추가/결합 상품별 독립 Reading, 구매자/Reader 범위의 원본 재검증과 읽기 API를 구현했다. 단일 명식 Worker 보호는 유지했다.
+- **미완료:** 관련 최신 CI, 서명된 실제 two-chart Source부터 Postgres 17까지 통합 재실행, 운영 DB 설치/복구/배포 검증, 실사용 Reader 경험 확인. 후보 SQL과 미활성 런타임만으로 판매 가능 또는 전체 단계 완료를 판정하지 않는다. `ROADMAP_IN_PROGRESS`.
