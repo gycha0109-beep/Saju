@@ -17,6 +17,13 @@ import {
 import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './production-calculation-http-contract.js';
 import { buildCompatibilityTwoBirthResearchReading } from '../preview/compatibility-two-birth-research-runtime.js';
 import { buildT10PairSourceReadingMaterialV1 } from '../reading/t10-pair-source-reading-material.js';
+import {
+  createT10ProductionPairIssueProofV1,
+  T10_PRODUCTION_PAIR_ISSUE_PATH_V1,
+  T10_PRODUCTION_PAIR_ISSUE_PROOF_HEADER_V1,
+  type T10ProductionPairIssueBindingV1,
+  type T10ProductionPairIssueProofOptionsV1,
+} from './t10-production-pair-issue-proof.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-service-bearer-auth.js';
 import {
@@ -59,6 +66,8 @@ export interface MyeonghwaProductHostServerOptions {
   /** Internal Preview host option for structured cross-chart facts. */
   compatibilityEvidencePreviewEnabled?: boolean;
   compatibilityEvidenceProof?: Readonly<{ keyId: string; signingKey: KeyObject }>;
+  /** Explicitly configured Production-only issuer; independent of Preview proof. */
+  compatibilityProductionIssue?: T10ProductionPairIssueProofOptionsV1;
 }
 
 export interface MyeonghwaProductionCalculationHostServerOptions
@@ -278,6 +287,11 @@ function createMyeonghwaHttpServer(
   const bodyLimit = maxRequestBytes(options);
   const groundingBodyLimit = characterGroundingMaxRequestBytes(options);
   const pairReviewProof = options.compatibilityEvidenceProof;
+  if (options.compatibilityProductionIssue !== undefined &&
+      (authorizeReadingRequest === undefined || readingRoute.path !== '/api/readings'))
+    throw new TypeError('Pair Production issue requires an authenticated Production reading host.');
+  const pairIssuer = options.compatibilityProductionIssue === undefined ? undefined :
+    createT10ProductionPairIssueProofV1(options.compatibilityProductionIssue);
   if (pairReviewProof !== undefined && (
     options.compatibilityEvidencePreviewEnabled !== true || authorizeReadingRequest === undefined ||
     !/^[a-zA-Z0-9._:-]{3,128}$/u.test(pairReviewProof.keyId) ||
@@ -387,6 +401,63 @@ function createMyeonghwaHttpServer(
         });
       } catch (error) {
         if (!handleKnownError(response, error)) sendReadingOperationalError(response);
+      }
+      return;
+    }
+    // Distinct server-to-server T10 Production issuance. No browser/Preview gate
+    // can cause an unissued research candidate to be treated as a paid receipt.
+    if (path === T10_PRODUCTION_PAIR_ISSUE_PATH_V1) {
+      if (pairIssuer === undefined) {
+        sendJson(response, 404, { error: { code: 'HOST_ROUTE_NOT_FOUND', message: 'Route not found.' } });
+        return;
+      }
+      if (method !== 'POST') {
+        response.setHeader('allow', 'POST');
+        sendJson(response, 405, { error: { code: 'HOST_METHOD_NOT_ALLOWED', message: 'POST is required.' } });
+        return;
+      }
+      if (authorizeReadingRequest === undefined || !authorizeReadingRequest(request)) {
+        sendAuthRequired(response);
+        return;
+      }
+      try {
+        const data = await readJsonBody(request, bodyLimit);
+        if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+          throw new HostHttpError(400, 'HOST_INVALID_PAIR_ISSUE_REQUEST', 'Invalid pair issue request.');
+        }
+        const input = data as Record<string, unknown>;
+        if (Object.keys(input).length !== 3 || !Object.hasOwn(input, 'birth') ||
+            !Object.hasOwn(input, 'partnerBirth') || !Object.hasOwn(input, 'binding') ||
+            input.binding === null || typeof input.binding !== 'object' ||
+            Array.isArray(input.binding)) {
+          throw new HostHttpError(400, 'HOST_INVALID_PAIR_ISSUE_REQUEST', 'Invalid pair issue request.');
+        }
+        const own = parseProductHostCalculationRequest({ birth: input.birth });
+        const partner = parseProductHostCalculationRequest({ birth: input.partnerBirth });
+        const binding = input.binding as T10ProductionPairIssueBindingV1;
+        const calculation = buildCompatibilityTwoBirthResearchReading(own, partner, {
+          requestId: binding.executionAttemptId,
+          subjectPersonRef: 'self', targetPersonRef: 'partner',
+          referenceDateTime: new Date().toISOString(),
+          candidateScope: 'traditional_marital_palace_comparison',
+        });
+        const draft = calculation.internalServiceInterpretationDraft;
+        if (draft === undefined) throw new HostHttpError(409, 'HOST_PAIR_ISSUE_INCOMPLETE',
+          'Pair interpretation could not be constructed.');
+        const material = buildT10PairSourceReadingMaterialV1(calculation.sourceScopeHandoff, draft);
+        const issue = pairIssuer(binding, { birth: input.birth, partnerBirth: input.partnerBirth }, material);
+        sendJson(response, 200, issue.body, {
+          [T10_PRODUCTION_PAIR_ISSUE_PROOF_HEADER_V1]:
+            Buffer.from(JSON.stringify(issue.proof)).toString('base64url'),
+          [PRODUCT_READING_LIFECYCLE_HEADER]: 'production-pair-issued',
+        });
+      } catch (error) {
+        if (error instanceof TypeError) {
+          sendJson(response, 400, { error: { code: 'HOST_INVALID_PAIR_ISSUE_REQUEST',
+            message: 'Invalid pair issue request.' } });
+        } else if (!handleKnownError(response, error)) {
+          sendReadingOperationalError(response);
+        }
       }
       return;
     }
