@@ -16,7 +16,7 @@ import type {
   YinYang,
 } from '../contracts/calculation.js';
 import { resolved, unavailable, type FactState } from '../contracts/common.js';
-import type { TemporalReadingContext } from './temporal-reading-context.js';
+import { annualSexagenaryPillar, type TemporalReadingContext } from './temporal-reading-context.js';
 
 export const ANNUAL_INTERPRETATION_FACTS_VERSION =
   'myeongha-annual-interpretation-facts-v1' as const;
@@ -218,4 +218,15 @@ export function buildAnnualInterpretationFacts(
     ),
     annualBranchRelations,
   };
+}
+
+export function buildPrecedingAnnualInterpretationFacts(
+  snapshot: CanonicalSajuSnapshot,
+  facts: AnnualInterpretationFacts,
+): AnnualInterpretationFacts {
+  const targetYear = facts.targetYear - 1;
+  return buildAnnualInterpretationFacts(snapshot, {
+    scope: 'annual', targetYear, timeZone: facts.timeZone,
+    referenceDateTime: facts.referenceDateTime, annualPillar: annualSexagenaryPillar(targetYear),
+  });
 }

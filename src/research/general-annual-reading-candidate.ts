@@ -171,7 +171,7 @@ export const GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE = Object.freeze({
   allowedTaxonomyTiers: ['T9'],
 } satisfies ClaimTypeDefinition);
 
-export const GENERAL_ANNUAL_COMBINATION_METHODOLOGY: MethodologyDefinition = Object.freeze({
+export const GENERAL_ANNUAL_COMBINATION_METHODOLOGY = Object.freeze({
   methodologyId: COMBINATION_METHOD_ID,
   version: GENERAL_ANNUAL_READING_CANDIDATE_VERSION,
   family: 'time_dynamics',
@@ -201,7 +201,7 @@ export const GENERAL_ANNUAL_COMBINATION_METHODOLOGY: MethodologyDefinition = Obj
   },
   sourceIds: [GENERAL_ANNUAL_POLICY_SOURCE.sourceId, GENERAL_ANNUAL_SIX_COMBINATION_SOURCE.sourceId],
   status: 'research',
-});
+} satisfies MethodologyDefinition);
 
 export const GENERAL_ANNUAL_READING_METHODOLOGY = Object.freeze({
   methodologyId: METHOD_ID,
@@ -500,6 +500,46 @@ export function createGeneralAnnualReadingCandidateRegistry(
         GENERAL_ANNUAL_COMBINATION_SCHEMA],
     },
     GENERAL_ANNUAL_READING_PACK,
+    createdAt,
+  );
+}
+
+/** Research candidate for a civil-year Reading that spans two annual pillars. */
+export function createGeneralAnnualCivilYearCandidateRegistry(createdAt: string) {
+  const baseRules = [...GENERAL_ANNUAL_ACTIVATION_RULES, ...GENERAL_ANNUAL_TENSION_RULES,
+    ...GENERAL_ANNUAL_COMBINATION_RULES];
+  const precedingPrefix = 'segmentsById.before_ipchun.';
+  const precedingRules = baseRules.map((rule): RuleDefinition => ({
+    ...rule,
+    ruleId: rule.ruleId.replace('T9-', 'T9-BEFORE_IPCHUN-'),
+    inputs: rule.inputs.map(input => ({
+      ...input, pathOrClaimType: precedingPrefix + input.pathOrClaimType,
+    })),
+    output: { ...rule.output, subject: 'annual_period_before_ipchun' },
+  }));
+  const methodologies = [GENERAL_ANNUAL_READING_METHODOLOGY, GENERAL_ANNUAL_COMBINATION_METHODOLOGY]
+    .map((methodology): MethodologyDefinition => ({
+      ...methodology,
+      inputContract: {
+        factInputs: [
+          ...methodology.inputContract.factInputs,
+          ...methodology.inputContract.factInputs.map(input => ({
+            ...input, pathPattern: precedingPrefix + input.pathPattern,
+          })),
+        ],
+      },
+    }));
+  return createRuleRegistrySnapshot(
+    {
+      rules: [...baseRules, ...precedingRules],
+      methodologies,
+      sources: [GENERAL_ANNUAL_POLICY_SOURCE, GENERAL_ANNUAL_SIX_COMBINATION_SOURCE],
+      claimTypeDefinitions: [GENERAL_ANNUAL_THEME_CLAIM_TYPE, GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
+        GENERAL_ANNUAL_COMBINATION_CLAIM_TYPE],
+      claimValueSchemas: [GENERAL_ANNUAL_THEME_SCHEMA, GENERAL_ANNUAL_TENSION_SCHEMA,
+        GENERAL_ANNUAL_COMBINATION_SCHEMA],
+    },
+    { ...GENERAL_ANNUAL_READING_PACK, packId: 'PACK-GENERAL-ANNUAL-CIVIL-YEAR-CANDIDATE' },
     createdAt,
   );
 }

@@ -24,7 +24,7 @@ const unusedNarrativePolicy = {} as NarrativePolicy;
 const unusedReadingOptions = {} as ProductReadingServiceOptions;
 
 describe('product host monthly temporal facts', () => {
-  it('enriches 이번 달 운세 with two solar-term-aware personalized month segments', async () => {
+  it.each([false, true])('uses the correct month across a Seoul month boundary (pinned=%s)', async (pinned) => {
     const seenContexts: ProductHostInterpretationRequestContext[] = [];
     let calculatedSnapshot: CanonicalSajuSnapshot | undefined;
 
@@ -49,7 +49,7 @@ describe('product host monthly temporal facts', () => {
       },
       readingOptions: unusedReadingOptions,
       requestIdFactory: () => 'monthly-context-test',
-      requestNowFactory: () => NOW,
+      requestNowFactory: () => pinned ? new Date('2026-09-30T15:00:00.000Z') : NOW,
     });
 
     await expect(
@@ -60,7 +60,10 @@ describe('product host monthly temporal facts', () => {
           time: '09:30',
           sex: 'male',
         },
-        reading: { text: '이번 달 운세' },
+        reading: {
+          text: '이번 달 운세',
+          ...(pinned ? { periodReferenceDateTime: NOW.toISOString() } : {}),
+        },
       }),
     ).rejects.toBe(STOP_AFTER_INTERPRET);
 

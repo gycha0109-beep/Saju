@@ -226,3 +226,15 @@ export const GENERAL_ANNUAL_COMBINATION_NARRATIVE_PROFILES:
 export const GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES: readonly ClaimNarrativeProfile[] =
   Object.freeze([...THEME_COPY.map(themeProfile), ...TENSION_COPY.map(tensionProfile),
     ...GENERAL_ANNUAL_COMBINATION_NARRATIVE_PROFILES]);
+
+export const GENERAL_ANNUAL_CIVIL_YEAR_NARRATIVE_PROFILES: readonly ClaimNarrativeProfile[] =
+  Object.freeze(GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.map(profile => ({
+    ...profile,
+    templates: (profile.templates ?? []).map(template => ({
+      ...template,
+      text: template.text
+        .replaceAll('해당 연도', '이 구간')
+        .replaceAll('새 연도', '이 구간')
+        .replaceAll('연도 지지', '이 구간 지지'),
+    })),
+  })));

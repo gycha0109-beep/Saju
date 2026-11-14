@@ -9,6 +9,15 @@ main = 063d68a897cccbcec0be61b60536a4a52ce45c95
 production calculation authority = authorized
 ```
 
+## 2026-11-13 현행 내부 상용 해석 기준 정정 (당시 감사 기록 보존)
+
+> 이 문서의 아래 `main = 063d68a8` 감사와 `NO_BUILD` 판정은 **그 당시 저장소·의미 레지스트리에 대한 역사적 검사**다. 2026-11-13 제품 소유자는 [내부 상용 사주 해석 정책](43-internal-commercial-saju-interpretation-policy-20261113.md)을 별도 확정했다.
+
+- **외부 고전·학술 원문·전문가 감수의 추가 확보만을 기다리는 규칙은 공식 해석의 필수 조건이 아니다.** 제품 소유자가 채택한 명하 내부 명리 풀이 규칙과 실제 계산/한국어 해석·기간·상대 결속을 직접 검증한다.
+- **보존할 차단:** 내부 채택 의미의 미구현·원본 불일치·불완전한 문장 검증, 실제 운영 서명/Release·구매/동의/권한·Reader·환불/복구/배포의 보호 계약은 여전히 미충족시 중단한다. 이 문서를 수정했다고 이전의 BLOCKED 운영 설정이 자동 해제되지는 않는다.
+- 실제 진행 중인 Saju [연·월운 #2762](https://github.com/gycha0109-beep/Saju/pull/2762) 및 [T10 #2763](https://github.com/gycha0109-beep/Saju/pull/2763)의 최신 HEAD/CI·해석 구현/사용자 읽기 결과를 별도로 판정한다. MyeongHa [#3174](https://github.com/gycha0109-beep/MyeongHa/pull/3174) 구매/보호 발급은 변경 없이 유지한다.
+- **현재 이 문서의 갱신은 정책 정정이며 Production admission 결과가 아니다.** 과거 검사 코드/전문 서지/당시 결정에 손대지 않는다.
+
 ## Question
 
 Can Myeonghwa compose a real minimum production interpretation registry from existing repository authority **without** promoting research content, inventing provenance, weakening the production gate, or introducing new Saju semantics?

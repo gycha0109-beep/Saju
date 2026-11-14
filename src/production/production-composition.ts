@@ -1,6 +1,10 @@
 import type { Server } from 'node:http';
 import type { CalculationEngineOptions } from '../calculation/calculation-engine.js';
 import {
+  createProductionReadingIssueProof,
+  type ProductionReadingIssueProofOptions,
+} from '../host/production-reading-issue-proof.js';
+import {
   buildInterpretationExecutionPlan,
   ExecutionPlanError,
 } from '../interpretation/execution-plan.js';
@@ -15,6 +19,7 @@ import {
 import type { ReviewerTrustContext } from '../interpretation/reviewer-trust.js';
 import {
   createMyeonghwaProductHost,
+  createMyeonghwaProductionReadingIssueHost,
   type MyeonghwaProductHost,
   type MyeonghwaProductHostDependencies,
   type ProductHostExecutionContext,
@@ -306,6 +311,10 @@ function toDependencies(
 export function createAuthorizedMyeonghwaProductionHost(
   request: ProductionCompositionRequest,
 ): MyeonghwaProductHost {
+  return createMyeonghwaProductHost(prepareAuthorizedProductionHost(request).dependencies);
+}
+
+function prepareAuthorizedProductionHost(request: ProductionCompositionRequest) {
   const inspection = inspectMyeonghwaProductionComposition(request);
   if (inspection.status === 'blocked') {
     throw new ProductionCompositionBlockedError(inspection.blockers);
@@ -318,7 +327,10 @@ export function createAuthorizedMyeonghwaProductionHost(
     throw new Error('Production composition authority disappeared after readiness inspection.');
   }
 
-  return createMyeonghwaProductHost(toDependencies(request, registry));
+  return {
+    dependencies: toDependencies(request, registry),
+    authority: inspection.authority,
+  };
 }
 
 
@@ -330,12 +342,34 @@ export function createAuthorizedMyeonghwaProductionHost(
  * before any socket is created. When ready, both /api/calculations and /api/readings
  * require the same server-owned service bearer.
  */
+export interface MyeonghwaAuthorizedProductionHostServerOptions
+  extends MyeonghwaProductionProductHostServerOptions {
+  readonly productionIssueProof?: ProductionReadingIssueProofOptions;
+}
+
 export function createAuthorizedMyeonghwaProductionHostServer(
   request: ProductionCompositionRequest,
-  options: MyeonghwaProductionProductHostServerOptions = {},
+  options: MyeonghwaAuthorizedProductionHostServerOptions = {},
 ): Server {
-  const host = createAuthorizedMyeonghwaProductionHost(request);
-  return createMyeonghwaProductionProductHostServer(host, options);
+  const { dependencies, authority } = prepareAuthorizedProductionHost(request);
+  const { productionIssueProof, ...serverOptions } = options;
+  if (productionIssueProof !== undefined && (
+    serverOptions.a4SourceCapture?.withPreparedDeterministicAttempt === undefined ||
+    request.legacyNarrativeRuntime !== undefined ||
+    request.readingOptions?.consumerReadingAuthorityResolver === undefined ||
+    request.readingOptions?.officialReadingSemanticProjectionResolver === undefined
+  )) {
+    throw new TypeError('Official Reading issue proof requires a governed deterministic Reading host and attempt capture.');
+  }
+  const proof = productionIssueProof === undefined
+    ? undefined
+    : createProductionReadingIssueProof(authority, productionIssueProof);
+  return createMyeonghwaProductionProductHostServer(
+    proof === undefined ? createMyeonghwaProductHost(dependencies) : createMyeonghwaProductionReadingIssueHost(dependencies),
+    serverOptions,
+    undefined,
+    proof,
+  );
 }
 
 export type { MyeonghwaProductionProductHostServerOptions };
