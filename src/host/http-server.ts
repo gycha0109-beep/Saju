@@ -445,7 +445,26 @@ function createMyeonghwaHttpServer(
         if (draft === undefined) throw new HostHttpError(409, 'HOST_PAIR_ISSUE_INCOMPLETE',
           'Pair interpretation could not be constructed.');
         const material = buildT10PairSourceReadingMaterialV1(calculation.sourceScopeHandoff, draft);
-        const issue = pairIssuer(binding, { birth: input.birth, partnerBirth: input.partnerBirth }, material);
+        const display = (person: typeof calculation.report.subject) => ({
+          year: person.pillars.find(pillar => pillar.slot === 'year'),
+          month: person.pillars.find(pillar => pillar.slot === 'month'),
+          day: person.pillars.find(pillar => pillar.slot === 'day'),
+          hour: person.pillars.find(pillar => pillar.slot === 'hour'),
+        });
+        const pillarDisplay = (person: typeof calculation.report.subject) => {
+          const pillars = display(person);
+          const project = (pillar: (typeof pillars)['year']) =>
+            pillar?.status === 'resolved'
+              ? { status: 'resolved' as const, value: pillar.stemHanja! + pillar.branchHanja! }
+              : { status: 'unavailable' as const };
+          return { year: project(pillars.year), month: project(pillars.month),
+            day: project(pillars.day), hour: project(pillars.hour) };
+        };
+        const issue = pairIssuer(binding, { birth: input.birth, partnerBirth: input.partnerBirth },
+          material, [
+            { role: 'self', pillars: pillarDisplay(calculation.report.subject) },
+            { role: 'partner', pillars: pillarDisplay(calculation.report.target) },
+          ]);
         sendJson(response, 200, issue.body, {
           [T10_PRODUCTION_PAIR_ISSUE_PROOF_HEADER_V1]:
             Buffer.from(JSON.stringify(issue.proof)).toString('base64url'),
