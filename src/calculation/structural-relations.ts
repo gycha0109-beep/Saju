@@ -160,6 +160,34 @@ function availablePillars(input: StructuralPillarInput): readonly { slot: Pillar
   });
 }
 
+export interface StructuralPillarPairMatch {
+  readonly kind: Exclude<StructuralRelationKind, 'branch_three_combination'>;
+  readonly component: 'stem' | 'branch';
+  readonly sourceIds: readonly string[];
+}
+
+/** Only the exact table match. Callers supply the two participants' provenance. */
+export function matchStructuralPillarPair(
+  left: PillarFact,
+  right: PillarFact,
+): readonly StructuralPillarPairMatch[] {
+  const sourceIds = [
+    STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan.sourceId,
+    STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId,
+  ];
+  const matches: StructuralPillarPairMatch[] = [];
+  if (pairMatches(left.stem.value, right.stem.value, STEM_FIVE_COMBINATIONS)) {
+    matches.push({ kind: 'stem_five_combination', component: 'stem', sourceIds });
+  }
+  if (pairMatches(left.branch.value, right.branch.value, BRANCH_SIX_COMBINATIONS)) {
+    matches.push({ kind: 'branch_six_combination', component: 'branch', sourceIds });
+  }
+  if (pairMatches(left.branch.value, right.branch.value, BRANCH_CLASHES)) {
+    matches.push({ kind: 'branch_clash', component: 'branch', sourceIds });
+  }
+  return matches;
+}
+
 function pairCandidates(input: StructuralPillarInput): readonly StructuralRelationCandidate[] {
   const pillars = availablePillars(input);
   const result: StructuralRelationCandidate[] = [];
@@ -170,41 +198,15 @@ function pairCandidates(input: StructuralPillarInput): readonly StructuralRelati
       const right = pillars[rightIndex];
       if (left === undefined || right === undefined) continue;
 
-      if (pairMatches(left.pillar.stem.value, right.pillar.stem.value, STEM_FIVE_COMBINATIONS)) {
+      for (const { kind, component, sourceIds } of matchStructuralPillarPair(left.pillar, right.pillar)) {
         result.push(
           candidate(
-            'stem_five_combination',
+            kind,
             [
-              { pillar: left.slot, component: 'stem', value: left.pillar.stem.value },
-              { pillar: right.slot, component: 'stem', value: right.pillar.stem.value },
+              { pillar: left.slot, component, value: left.pillar[component].value },
+              { pillar: right.slot, component, value: right.pillar[component].value },
             ],
-            [STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan.sourceId, STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId],
-          ),
-        );
-      }
-
-      if (pairMatches(left.pillar.branch.value, right.pillar.branch.value, BRANCH_SIX_COMBINATIONS)) {
-        result.push(
-          candidate(
-            'branch_six_combination',
-            [
-              { pillar: left.slot, component: 'branch', value: left.pillar.branch.value },
-              { pillar: right.slot, component: 'branch', value: right.pillar.branch.value },
-            ],
-            [STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan.sourceId, STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId],
-          ),
-        );
-      }
-
-      if (pairMatches(left.pillar.branch.value, right.pillar.branch.value, BRANCH_CLASHES)) {
-        result.push(
-          candidate(
-            'branch_clash',
-            [
-              { pillar: left.slot, component: 'branch', value: left.pillar.branch.value },
-              { pillar: right.slot, component: 'branch', value: right.pillar.branch.value },
-            ],
-            [STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan.sourceId, STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId],
+            sourceIds,
           ),
         );
       }

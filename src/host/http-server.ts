@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import { sign, type KeyObject } from 'node:crypto';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import type {
   FaceGovernedHandoffRuntimeHostV1,
@@ -15,6 +16,15 @@ import {
 } from './product-host.js';
 import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './production-calculation-http-contract.js';
 import { buildCompatibilityTwoBirthResearchReading } from '../preview/compatibility-two-birth-research-runtime.js';
+import { buildT10PairSourceReadingMaterialV1 } from '../reading/t10-pair-source-reading-material.js';
+import {
+  createT10ProductionPairIssueProofV1,
+  T10_PRODUCTION_PAIR_ISSUE_PATH_V1,
+  T10_PRODUCTION_PAIR_ISSUE_PROOF_HEADER_V1,
+  type T10ProductionPairIssueBindingV1,
+  type T10ProductionPairIssueProofOptionsV1,
+} from './t10-production-pair-issue-proof.js';
+import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-service-bearer-auth.js';
 import {
   CHARACTER_GROUNDING_ADMISSION_HEADER,
@@ -54,11 +64,21 @@ export const PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH =
   '/api/preview/natal-five-domains' as const;
 export const PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH =
   '/api/preview/compatibility-charts' as const;
+export const PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH =
+  '/api/preview/compatibility-evidence' as const;
+const PAIR_REVIEW_PROOF_HEADER = 'x-myeonghwa-pair-review-proof';
+const PAIR_REVIEW_NONCE_HEADER = 'x-myeongha-pair-review-nonce';
+const PAIR_REVIEW_VERSION = 'myeonghwa-held-pair-review-v1';
 export const PRODUCT_READING_PREVIEW_LIFECYCLE = 'preview' as const;
 
 export interface MyeonghwaProductHostServerOptions {
   maxRequestBytes?: number;
   characterGroundingMaxRequestBytes?: number;
+  /** Internal Preview host option for structured cross-chart facts. */
+  compatibilityEvidencePreviewEnabled?: boolean;
+  compatibilityEvidenceProof?: Readonly<{ keyId: string; signingKey: KeyObject }>;
+  /** Explicitly configured Production-only issuer; independent of Preview proof. */
+  compatibilityProductionIssue?: T10ProductionPairIssueProofOptionsV1;
 }
 
 export interface MyeonghwaProductionCalculationHostServerOptions
@@ -280,6 +300,17 @@ function createMyeonghwaHttpServer(
 ): Server {
   const bodyLimit = maxRequestBytes(options);
   const groundingBodyLimit = characterGroundingMaxRequestBytes(options);
+  const pairReviewProof = options.compatibilityEvidenceProof;
+  if (options.compatibilityProductionIssue !== undefined &&
+      (authorizeReadingRequest === undefined || readingRoute.path !== '/api/readings'))
+    throw new TypeError('Pair Production issue requires an authenticated Production reading host.');
+  const pairIssuer = options.compatibilityProductionIssue === undefined ? undefined :
+    createT10ProductionPairIssueProofV1(options.compatibilityProductionIssue);
+  if (pairReviewProof !== undefined && (
+    options.compatibilityEvidencePreviewEnabled !== true || authorizeReadingRequest === undefined ||
+    !/^[a-zA-Z0-9._:-]{3,128}$/u.test(pairReviewProof.keyId) ||
+    pairReviewProof.signingKey.type !== 'private' || pairReviewProof.signingKey.asymmetricKeyType !== 'ed25519'
+  )) throw new TypeError('Protected comparison review signing requires an explicit preview key.');
 
   return createServer(async (request, response) => {
     const method = request.method ?? 'GET';
@@ -387,15 +418,94 @@ function createMyeonghwaHttpServer(
       }
       return;
     }
+    // Distinct server-to-server T10 Production issuance. No browser/Preview gate
+    // can cause an unissued research candidate to be treated as a paid receipt.
+    if (path === T10_PRODUCTION_PAIR_ISSUE_PATH_V1) {
+      if (pairIssuer === undefined) {
+        sendJson(response, 404, { error: { code: 'HOST_ROUTE_NOT_FOUND', message: 'Route not found.' } });
+        return;
+      }
+      if (method !== 'POST') {
+        response.setHeader('allow', 'POST');
+        sendJson(response, 405, { error: { code: 'HOST_METHOD_NOT_ALLOWED', message: 'POST is required.' } });
+        return;
+      }
+      if (authorizeReadingRequest === undefined || !authorizeReadingRequest(request)) {
+        sendAuthRequired(response);
+        return;
+      }
+      try {
+        const data = await readJsonBody(request, bodyLimit);
+        if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+          throw new HostHttpError(400, 'HOST_INVALID_PAIR_ISSUE_REQUEST', 'Invalid pair issue request.');
+        }
+        const input = data as Record<string, unknown>;
+        if (Object.keys(input).length !== 3 || !Object.hasOwn(input, 'birth') ||
+            !Object.hasOwn(input, 'partnerBirth') || !Object.hasOwn(input, 'binding') ||
+            input.binding === null || typeof input.binding !== 'object' ||
+            Array.isArray(input.binding)) {
+          throw new HostHttpError(400, 'HOST_INVALID_PAIR_ISSUE_REQUEST', 'Invalid pair issue request.');
+        }
+        const own = parseProductHostCalculationRequest({ birth: input.birth });
+        const partner = parseProductHostCalculationRequest({ birth: input.partnerBirth });
+        const binding = input.binding as T10ProductionPairIssueBindingV1;
+        const calculation = buildCompatibilityTwoBirthResearchReading(own, partner, {
+          requestId: binding.executionAttemptId,
+          subjectPersonRef: 'self', targetPersonRef: 'partner',
+          referenceDateTime: new Date().toISOString(),
+          candidateScope: 'traditional_marital_palace_comparison',
+        });
+        const draft = calculation.internalServiceInterpretationDraft;
+        if (draft === undefined) throw new HostHttpError(409, 'HOST_PAIR_ISSUE_INCOMPLETE',
+          'Pair interpretation could not be constructed.');
+        const material = buildT10PairSourceReadingMaterialV1(calculation.sourceScopeHandoff, draft);
+        const display = (person: typeof calculation.report.subject) => ({
+          year: person.pillars.find(pillar => pillar.slot === 'year'),
+          month: person.pillars.find(pillar => pillar.slot === 'month'),
+          day: person.pillars.find(pillar => pillar.slot === 'day'),
+          hour: person.pillars.find(pillar => pillar.slot === 'hour'),
+        });
+        const pillarDisplay = (person: typeof calculation.report.subject) => {
+          const pillars = display(person);
+          const project = (pillar: (typeof pillars)['year']) =>
+            pillar?.status === 'resolved'
+              ? { status: 'resolved' as const, value: pillar.stemHanja! + pillar.branchHanja! }
+              : { status: 'unavailable' as const };
+          return { year: project(pillars.year), month: project(pillars.month),
+            day: project(pillars.day), hour: project(pillars.hour) };
+        };
+        const issue = pairIssuer(binding, { birth: input.birth, partnerBirth: input.partnerBirth },
+          material, [
+            { role: 'self', pillars: pillarDisplay(calculation.report.subject) },
+            { role: 'partner', pillars: pillarDisplay(calculation.report.target) },
+          ]);
+        sendJson(response, 200, issue.body, {
+          [T10_PRODUCTION_PAIR_ISSUE_PROOF_HEADER_V1]:
+            Buffer.from(JSON.stringify(issue.proof)).toString('base64url'),
+          [PRODUCT_READING_LIFECYCLE_HEADER]: 'production-pair-issued',
+        });
+      } catch (error) {
+        if (error instanceof TypeError) {
+          sendJson(response, 400, { error: { code: 'HOST_INVALID_PAIR_ISSUE_REQUEST',
+            message: 'Invalid pair issue request.' } });
+        } else if (!handleKnownError(response, error)) {
+          sendReadingOperationalError(response);
+        }
+      }
+      return;
+    }
     // Existing 12-menu browser path, served only by an authenticated Preview host.
     // The body is deliberately limited to birth facts. It does NOT accept
     // or infer any interpersonal T10 interpretation or client-supplied score.
-    if (path === PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH) {
+    if (path === PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH ||
+        path === PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH) {
+      const withEvidence = path === PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH;
       const previewAvailable =
         readingRoute.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE ||
         secondaryReadingRoute?.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE;
       if (!previewAvailable || readingHost === undefined ||
-          authorizeReadingRequest === undefined) {
+          authorizeReadingRequest === undefined ||
+          (withEvidence && options.compatibilityEvidencePreviewEnabled !== true)) {
         sendJson(response, 404, {
           error: { code: 'HOST_ROUTE_NOT_FOUND', message: 'Route not found.' },
         });
@@ -418,9 +528,16 @@ function createMyeonghwaHttpServer(
           throw new HostHttpError(400, 'HOST_INVALID_PREVIEW_REQUEST', 'Two birth inputs are required.');
         }
         const body = data as Record<string, unknown>;
-        if (Object.keys(body).length !== 2 ||
+        const candidateScope = withEvidence && body.candidateScope === 'traditional_marital_palace_comparison'
+          ? body.candidateScope : undefined;
+        if (Object.keys(body).length !== (candidateScope === undefined ? 2 : 3) ||
             !Object.hasOwn(body, 'birth') || !Object.hasOwn(body, 'partnerBirth')) {
           throw new HostHttpError(400, 'HOST_INVALID_PREVIEW_REQUEST', 'Two birth inputs are required.');
+        }
+        const nonce = request.headers[PAIR_REVIEW_NONCE_HEADER];
+        if (nonce !== undefined && (!withEvidence || candidateScope === undefined ||
+          pairReviewProof === undefined || typeof nonce !== 'string' || !/^[a-zA-Z0-9_-]{43}$/u.test(nonce))) {
+          throw new HostHttpError(400, 'HOST_INVALID_PAIR_REVIEW_PROOF_REQUEST', 'Comparison review proof is unavailable.');
         }
         // The existing strict host parser forbids unknown calculation fields.
         const subjectBirth = parseProductHostCalculationRequest({ birth: body.birth });
@@ -431,6 +548,7 @@ function createMyeonghwaHttpServer(
             subjectPersonRef: 'self',
             targetPersonRef: 'partner',
             referenceDateTime: new Date().toISOString(),
+            ...(candidateScope === undefined ? {} : { candidateScope }),
           },
         );
         const pillars = (person: typeof result.report.subject) =>
@@ -440,7 +558,76 @@ function createMyeonghwaHttpServer(
               ? {}
               : { value: pillar.stemHanja! + pillar.branchHanja! }),
           }]));
-        sendJson(response, 200, {
+        const candidate = result.maritalDayBranchCandidate;
+        const draft = result.pairReadingBoundaryDraft;
+        const review = result.productReadingQualityReview;
+        const internalDraft = result.internalServiceInterpretationDraft;
+        const pairSourceMaterial = internalDraft === undefined ? undefined :
+          buildT10PairSourceReadingMaterialV1(result.sourceScopeHandoff, internalDraft);
+        const evidence = withEvidence ? {
+          version: 'myeonghwa-cross-chart-structural-evidence-v1',
+          matches: result.sourceScopeHandoff.crossChartStructuralMatches.map(match => {
+            const projectFact = (role: 'subject' | 'target') => {
+              const { factPath } = match[role];
+              const pillar = result.report[role].pillars.find(
+                item => factPath === `${role}.pillars.${item.slot}.value.${match.component}`,
+              );
+              const value = match.component === 'stem' ? pillar?.stemHanja : pillar?.branchHanja;
+              if (pillar?.status !== 'resolved' || value === undefined) {
+                throw new TypeError('Cross-chart match is outside the calculated chart.');
+              }
+              return { factPath, value };
+            };
+            return { ...match, subject: projectFact('subject'), target: projectFact('target') };
+          }),
+          ...(candidate === undefined ? {} : {
+            maritalDayBranchCandidate: {
+              scope: candidate.scope, state: candidate.state, source: candidate.source,
+              review: candidate.review, pairwiseT10Admitted: candidate.pairwiseT10Admitted,
+              ...(candidate.state === 'candidate_factor' ? {
+                kind: candidate.evidence.kind, sourceInterpretation: candidate.sourceInterpretation,
+              } : {}),
+            },
+          }),
+          ...(pairSourceMaterial === undefined ? {} : {
+            sourceReadingMaterial: pairSourceMaterial,
+          }),
+          ...(internalDraft === undefined || draft === undefined || review === undefined ? {} : {
+            internalServiceInterpretation: {
+              version: internalDraft.version,
+              lifecycle: internalDraft.lifecycle,
+              policyId: internalDraft.policy.policyId,
+              policyVersion: internalDraft.policy.policyVersion,
+              adoption: internalDraft.policy.adoption,
+              academicThirdPartyApprovalRequired: internalDraft.policy.academicThirdPartyApprovalRequired,
+              ruleCoverage: internalDraft.ruleCoverage,
+              charts: [internalDraft.subject, internalDraft.target].map(chart => ({
+                role: chart.personRef, calculationHash: chart.calculationHash,
+              })),
+              sentences: internalDraft.sentences,
+              readyForOfficialIssue: internalDraft.readyForOfficialIssue,
+              mayPublish: internalDraft.mayPublish,
+              maySell: internalDraft.maySell,
+            },
+          }),
+          ...(draft === undefined || review === undefined ? {} : {
+            readingReview: {
+              version: review.version,
+              state: 'held',
+              structuralSituation: draft.structuralSituation,
+              charts: [draft.subject, draft.target].map(chart => ({
+                role: chart.personRef, calculationHash: chart.calculationHash,
+              })),
+              sections: draft.sections.map(section => ({
+                id: section.id, title: section.title, sentences: section.sentences,
+              })),
+              actualCompatibilityReadingReady: review.actualCompatibilityReadingReady,
+              productEligibility: review.productEligibility,
+              mayGrantOfficialAuthority: review.mayGrantOfficialAuthority,
+            },
+          }),
+        } : undefined;
+        const reviewBody = {
           lifecycle: 'internal_preview_only',
           coverage: 'calculation_facts_only',
           generatedInterpretationClaims: false,
@@ -451,10 +638,28 @@ function createMyeonghwaHttpServer(
             { role: 'self', pillars: pillars(result.report.subject) },
             { role: 'partner', pillars: pillars(result.report.target) },
           ],
+          ...(evidence === undefined ? {} : { evidence }),
           explanation: '두 명식은 각각 실제 출생정보로 계산했습니다. ' +
             '두 사람 사이의 T10 궁합 해석과 결혼·갈등·점수 판단은 승인되지 않았습니다.',
           limitations: result.report.limitations,
-        }, { [PRODUCT_READING_LIFECYCLE_HEADER]: PRODUCT_READING_PREVIEW_LIFECYCLE });
+        };
+        const extraHeaders: Record<string, string> = {
+          [PRODUCT_READING_LIFECYCLE_HEADER]: PRODUCT_READING_PREVIEW_LIFECYCLE,
+        };
+        if (nonce !== undefined && pairReviewProof !== undefined) {
+          if (draft === undefined || review === undefined) {
+            throw new HostHttpError(409, 'HOST_PAIR_REVIEW_INCOMPLETE', 'Comparison review is incomplete.');
+          }
+          const payload = {
+            version: PAIR_REVIEW_VERSION, keyId: pairReviewProof.keyId, nonce, state: 'held',
+            requestBodyHash: deterministicContentHash(body),
+            responseBodyHash: deterministicContentHash(JSON.parse(JSON.stringify(reviewBody))),
+          };
+          const signature = sign(null, Buffer.from(PAIR_REVIEW_VERSION + '\0' + deterministicContentHash(payload)),
+            pairReviewProof.signingKey).toString('base64url');
+          extraHeaders[PAIR_REVIEW_PROOF_HEADER] = Buffer.from(JSON.stringify({ payload, signature })).toString('base64url');
+        }
+        sendJson(response, 200, reviewBody, extraHeaders);
       } catch (error) {
         if (!handleKnownError(response, error)) sendReadingOperationalError(response);
       }

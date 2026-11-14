@@ -1,0 +1,315 @@
+import { describe, expect, it } from 'vitest';
+import type { BirthInput } from '../src/contracts/calculation.js';
+import { buildCompatibilityTwoBirthResearchReading } from
+  '../src/preview/compatibility-two-birth-research-runtime.js';
+import { auditT10ProductReadingQualityV1 } from
+  '../src/research/compatibility-t10-product-reading-quality-review.js';
+import type { T10PairDraftSentence } from
+  '../src/research/compatibility-t10-pair-reading-boundary-draft.js';
+
+const birth = (
+  year: number, month: number, day: number,
+  known = true,
+): BirthInput => ({
+  calendarType: 'solar',
+  date: { year, month, day },
+  time: known ? { known: true, hour: 14, minute: 30 } : { known: false },
+  sexForTraditionalCalculation: 'unspecified',
+});
+const A = birth(1990, 5, 15);
+const OPPOSITE_A = birth(1996, 6, 5);
+const OPPOSITE_B = birth(1996, 8, 5);
+const SINGLE = birth(1990, 5, 8);
+const YEAR = birth(2017, 5, 15);
+const run = (a: BirthInput, b: BirthInput, research = true) =>
+  buildCompatibilityTwoBirthResearchReading(a, b, {
+    requestId: 't10-product-reading-quality-review',
+    subjectPersonRef: 'human-subject',
+    targetPersonRef: 'human-target',
+    referenceDateTime: '2026-11-11T00:00:00.000Z',
+    ...(research ? { candidateScope: 'traditional_marital_palace_comparison' as const } : {}),
+  });
+
+function sourceInputs(output: ReturnType<typeof run>) {
+  const factual = output.sourceBoundObservationReading;
+  const historical = output.historicalDayYearObservation;
+  const contrast = output.crossMethodContrastResearch;
+  const methods = output.threeMethodApplicabilityReading;
+  if (!factual || !historical || !contrast || !methods) {
+    throw new TypeError('Missing canonical research inputs.');
+  }
+  return [factual, historical, contrast, methods] as const;
+}
+
+function auditFromSource(
+  draft: NonNullable<ReturnType<typeof run>['pairReadingBoundaryDraft']>,
+) {
+  return auditT10ProductReadingQualityV1(
+    draft, ...sourceInputs(run(A, OPPOSITE_A)),
+  );
+}
+
+describe('T10 product quality: factual material never becomes a complete relationship product', () => {
+  it('audits fact provenance and the two opposing structural cases separately', () => {
+    const a = run(A, OPPOSITE_A).productReadingQualityReview;
+    const b = run(A, OPPOSITE_B).productReadingQualityReview;
+    expect(a?.caseDistinction).toBe('day_six_combination_and_other_clash');
+    expect(b?.caseDistinction).toBe('day_clash_and_other_six_combination');
+    expect(a?.traceAudit.sectionToTextRoundTrip).toBe(true);
+    expect(a?.traceAudit.exactSourceDerivedDraft).toBe(true);
+    expect(a?.traceAudit.validatedSentenceCount).toBeGreaterThan(4);
+    expect(a?.traceAudit.verifiedStructuralFactSentenceCount).toBeGreaterThan(0);
+    expect(a?.traceAudit.traditionalFactorScopeSentenceCount).toBe(1);
+    const pair = run(A, OPPOSITE_A);
+    const detail = pair.pairReadingBoundaryDraft?.sections.find(section =>
+      section.id === 'traditional_day_factor_scope')?.sentences[0];
+    expect(detail?.paragraph).toContain('일간(첫 번째 사람');
+    expect(detail?.paragraph).toContain('일지(첫 번째 사람');
+    expect(detail?.missingPrerequisites).toContain(
+      'DAY_STEM_CLASH_AND_BRANCH_PUNISHMENT_BREAK_NOT_EVALUATED');
+    expect(b?.traceAudit.traditionalFactorScopeSentenceCount).toBe(1);
+    expect(a?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);
+    expect(b?.traceAudit.qualitativeMaritalExceptionSentenceCount).toBe(1);
+    expect(a?.traceAudit.sectionIds).toContain('mixed_positions');
+    expect(a?.traceAudit.sectionIds).toContain('synthesis_hold');
+    expect(b?.traceAudit.sectionIds).toContain('synthesis_hold');
+    const mixed = pair.pairReadingBoundaryDraft?.sections.find(section =>
+      section.id === 'mixed_positions')?.sentences[0];
+    expect(mixed?.paragraph).toContain('실제 일지 비교는');
+    expect(mixed?.paragraph).toContain('다른 위치에서는 첫 번째 사람');
+    expect(a?.actualCompatibilityReadingReady).toBe(false);
+    expect(b?.actualCompatibilityReadingReady).toBe(false);
+  });
+
+  it('leaves disputed foreign-method factors out of every sale-eligible result', () => {
+    const output = run(birth(1990, 5, 11), birth(1990, 5, 20));
+    const review = output.productReadingQualityReview;
+    const disputed = output.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'reading_limits')?.sentences.find(s => s.missingPrerequisites.includes(
+        'FOREIGN_LIUREN_METHOD_NOT_BAZI_T10_RULE'));
+    expect(disputed?.evidenceLayer).toBe('source_limit');
+    expect(disputed?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(review?.traceAudit.exactSourceDerivedDraft).toBe(true);
+    expect(review?.actualCompatibilityReadingReady).toBe(false);
+    expect(review?.productEligibility.every(x =>
+      x.eligibleToHandoffForSalesOrIssuance === false)).toBe(true);
+    expect(review?.maySell).toBe(false);
+  });
+
+  it('accepts a real overlapping day-slot structural contrast with exactly three original paths', () => {
+    const first = run(birth(1990, 5, 13), birth(1990, 5, 22));
+    const reverse = run(birth(1990, 5, 22), birth(1990, 5, 13));
+    for (const result of [first, reverse]) {
+      const original = result.crossMethodContrastResearch?.structural[0];
+      const verified = result.pairReadingBoundaryDraft?.sections.find(section =>
+        section.id === 'mixed_positions')?.sentences[0];
+      expect(original).toBeDefined();
+      expect(verified?.observedFactPaths).toEqual([
+        ...new Set([
+          ...(original?.dayFactPaths ?? []),
+          ...(original?.otherFactPaths.flatMap(item => [item.subject, item.target]) ?? []),
+        ]),
+      ]);
+      expect(verified?.observedFactPaths).toHaveLength(3);
+      expect(verified?.missingPrerequisites)
+        .toContain('EXACT_TWO_PERSON_PRIORITIZATION_RULE');
+      expect(result.productReadingQualityReview?.traceAudit.exactSourceDerivedDraft)
+        .toBe(true);
+      expect(result.productReadingQualityReview?.actualCompatibilityReadingReady)
+        .toBe(false);
+      expect(result.maySell).toBe(false);
+    }
+  });
+
+  it('checks qualitative source counterexample remains a population observation', () => {
+    const out = run(A, OPPOSITE_B);
+    const source = out.crossMethodContrastResearch?.synthesisDecision;
+    const sentence = out.pairReadingBoundaryDraft?.sections.find(s =>
+      s.id === 'synthesis_hold')?.sentences[0];
+    expect(source?.qualitativeCounterexample.currentPairInterviewed).toBe(false);
+    expect(source?.qualitativeCounterexample.currentPairBehaviorObserved).toBe(false);
+    expect(source?.qualitativeCounterexample.currentPairOutcomeInferred).toBe(false);
+    expect(sentence?.observedFactPaths).toEqual(source?.observedFactPaths);
+    expect(sentence?.paragraph).toContain('두 번째 사람의 일주는');
+    expect(sentence?.sourceUrls).toContain(
+      'https://www.dbpia.co.kr/journal/detail?nodeId=T14205410');
+    expect(sentence?.missingPrerequisites).toContain(
+      'CURRENT_PAIR_TO_2016_INTERVIEW_CASE_NOT_LINKED');
+    expect(sentence?.individualRelationshipOutcomeAuthorized).toBe(false);
+    expect(out.productReadingQualityReview?.traceAudit.exactSourceDerivedDraft)
+      .toBe(true);
+    expect(out.productReadingQualityReview?.actualCompatibilityReadingReady)
+      .toBe(false);
+    expect(out.maySell).toBe(false);
+  });
+
+  it('keeps the absence of listed opposition separate from evidence of harmony', () => {
+    const output = run(A, SINGLE);
+    const draft = output.pairReadingBoundaryDraft;
+    const synthesis = draft?.sections.find(section =>
+      section.id === 'synthesis_hold')?.sentences[0];
+    expect(synthesis?.paragraph).toContain('잘 맞는다는 근거가 아닙니다');
+    expect(synthesis?.observedFactPaths)
+      .toEqual(output.crossMethodContrastResearch?.synthesisDecision.observedFactPaths);
+    expect(synthesis?.missingPrerequisites).toContain(
+      'NO_OBSERVED_OPPOSITE_IS_NOT_EVIDENCE_OF_HARMONY');
+    expect(output.productReadingQualityReview?.traceAudit.exactSourceDerivedDraft)
+      .toBe(true);
+    expect(output.productReadingQualityReview?.productEligibility.every(item =>
+      item.eligibleToHandoffForSalesOrIssuance === false)).toBe(true);
+    expect(output.maySell).toBe(false);
+  });
+
+  it('does not invent a multi-factor conflict if only one factor is present', () => {
+    const result = run(A, SINGLE).productReadingQualityReview;
+    expect(result?.caseDistinction).toBe('no_verified_mixed_day_structure');
+    expect(result?.traceAudit.sectionIds).not.toContain('mixed_positions');
+    expect(result?.researchReadingQuality).toBe('traceable_factual_draft_only');
+  });
+
+  it('audits all three configured product compositions independently', () => {
+    const review = run(A, YEAR).productReadingQualityReview;
+    expect(review?.productEligibility.map(x => x.product)).toEqual([
+      'first_comparison', 'repeat_comparison', 'natal_and_first_comparison',
+    ]);
+    expect(review?.productEligibility.every(x =>
+      x.t10IndependentInterpretationReady === false &&
+      x.t10ReadingCompleteness === 'factual_observations_only' &&
+      x.eligibleToHandoffForSalesOrIssuance === false)).toBe(true);
+    expect(review?.productEligibility[1]?.missingInterpretationPrerequisites)
+      .toContain('EACH_NEW_COUNTERPART_REQUIRES_ITS_OWN_INDEPENDENT_T10_INTERPRETATION');
+    expect(review?.productEligibility[2]?.missingInterpretationPrerequisites)
+      .toContain('T8_ONLY_PERSONAL_READING_CANNOT_SUBSTITUTE_MISSING_T10');
+    expect(review?.productEligibility[2]?.t8StandaloneEligibility)
+      .toBe('not_evaluated_here');
+    expect(review?.maySell).toBe(false);
+  });
+
+  it('preserves real birth-time uncertainty and identities on reversal', () => {
+    const unknown = birth(1996, 6, 5, false);
+    const first = run(A, unknown).productReadingQualityReview;
+    const reverse = run(unknown, A).productReadingQualityReview;
+    expect(first?.traceAudit.unverifiedPrerequisitePaths)
+      .toContain('target.pillars.hour');
+    expect(reverse?.traceAudit.unverifiedPrerequisitePaths)
+      .toContain('subject.pillars.hour');
+    expect(first?.target.calculationHash).toBe(reverse?.subject.calculationHash);
+    expect(reverse?.target.calculationHash).toBe(first?.subject.calculationHash);
+    expect(first?.traceAudit.unknownTimeUnresolved).toBe(true);
+    const sameBirth = run(A, A).productReadingQualityReview;
+    expect(sameBirth?.subject.personRef).not.toBe(sameBirth?.target.personRef);
+    expect(sameBirth?.subject.calculationHash)
+      .toBe(sameBirth?.target.calculationHash);
+  });
+
+  it('rejects removed source URLs and changed per-person fact paths', () => {
+    const draft = run(A, OPPOSITE_A).pairReadingBoundaryDraft;
+    if (!draft) throw new TypeError('Missing source-bounded draft.');
+    const broken = {
+      ...draft,
+      sections: draft.sections.map(section =>
+        section.id !== 'direct_day_facts' ? section : {
+          ...section,
+          sentences: section.sentences.map((sentence, index) => index !== 0
+            ? sentence : { ...sentence, sourceUrls: [] }),
+        }),
+    };
+    expect(() => auditFromSource(broken))
+      .toThrow('per-sentence original evidence');
+    const malformed = {
+      ...draft,
+      sections: draft.sections.map(section =>
+        section.id !== 'direct_day_facts' ? section : {
+          ...section,
+          sentences: section.sentences.map((sentence, index) => index !== 0
+            ? sentence : {
+              ...sentence,
+              observedFactPaths: ['unrelated.person.day.value'],
+            }),
+        }),
+    };
+    expect(() => auditFromSource(malformed))
+      .toThrow('per-sentence original evidence');
+  });
+
+
+  it('rejects plausible but forged source URLs, paths, identities and full Korean prose', () => {
+    const output = run(A, OPPOSITE_A);
+    const draft = output.pairReadingBoundaryDraft;
+    if (!draft) throw new TypeError('Missing source-bound draft.');
+    const mapFirst = (change: (
+      sentence: T10PairDraftSentence,
+    ) => T10PairDraftSentence) => ({
+      ...draft,
+      sections: draft.sections.map(section => section.id !== 'direct_day_facts'
+        ? section : {
+          ...section,
+          sentences: section.sentences.map((sentence, i) =>
+            i === 0 ? change(sentence) : sentence),
+        }),
+    });
+    const wrongUrl = mapFirst(sentence => ({
+      ...sentence,
+      sourceUrls: ['https://example.com/looks-valid-but-is-not-the-source'],
+    }));
+    expect(() => auditFromSource(wrongUrl))
+      .toThrow('not reproduced from original source-bound charts');
+
+    const wrongPath = mapFirst(sentence => ({
+      ...sentence,
+      observedFactPaths: [
+        'subject.pillars.year.value.stem.element',
+        'target.pillars.day.value.stem.element',
+      ],
+    }));
+    expect(() => auditFromSource(wrongPath))
+      .toThrow('not reproduced from original source-bound charts');
+
+    const changedPerson = {
+      ...draft,
+      subject: { ...draft.subject, personRef: 'foreign-subject' },
+    };
+    expect(() => auditFromSource(changedPerson))
+      .toThrow('not reproduced from original source-bound charts');
+
+    const altered = mapFirst(sentence => ({
+      ...sentence,
+      paragraph: '두 사람은 무조건 잘 맞으므로 결혼을 권장합니다.',
+    }));
+    const alteredWithMatchingText = {
+      ...altered,
+      koreanReadingDraft: altered.sections.map(section => section.title + '\n' +
+        section.sentences.map(sentence => sentence.paragraph).join('\n')).join('\n\n'),
+    };
+    expect(() => auditFromSource(alteredWithMatchingText))
+      .toThrow('not reproduced from original source-bound charts');
+
+    expect(() => auditT10ProductReadingQualityV1(
+      draft, ...sourceInputs(run(A, OPPOSITE_B)),
+    )).toThrow();
+  });
+
+  it('blocks an unauthorized interpretation flag and missing required method', () => {
+    const draft = run(A, OPPOSITE_A).pairReadingBoundaryDraft;
+    if (!draft) throw new TypeError('Missing source-bounded draft.');
+    expect(() => auditFromSource({
+      ...draft, eligibleForFirstComparison: true as never,
+    })).toThrow('protected full research draft');
+    expect(() => auditFromSource({
+      ...draft, sections: draft.sections.filter(section =>
+        section.id !== 'useful_god_method'),
+    })).toThrow('protected full research draft');
+  });
+
+  it('does not attach a product assessment to ordinary preview or alter public HTML', () => {
+    const ordinary = run(A, OPPOSITE_A, false);
+    const scoped = run(A, OPPOSITE_A, true);
+    expect(ordinary.productReadingQualityReview).toBeUndefined();
+    expect(ordinary.html).toBe(scoped.html);
+    expect(scoped.mayMarkMenuAvailable).toBe(false);
+    expect(scoped.mayPersist).toBe(false);
+    expect(scoped.maySell).toBe(false);
+    expect(scoped.productReadingQualityReview?.mayGrantOfficialAuthority)
+      .toBe(false);
+  });
+});

@@ -1,10 +1,13 @@
 import type { AddressInfo } from 'node:net';
+import { generateKeyPairSync, randomBytes, verify } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import type { MyeonghwaProductHost } from '../src/host/product-host.js';
+import { deterministicContentHash } from '../src/interpretation/rule-registry.js';
 import {
   createMyeonghwaProductionPreviewHostServer,
   createMyeonghwaProductionProductHostServer,
   PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH,
+  PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH,
 } from '../src/host/http-server.js';
 
 const host: MyeonghwaProductHost = {
@@ -37,14 +40,18 @@ type Result = {
 async function withHost(
   kind: 'preview' | 'production',
   test: (url: string, bearer: string) => Promise<void>,
+  evidence?: boolean,
+  proof?: Parameters<typeof createMyeonghwaProductionPreviewHostServer>[1],
 ) {
   const bearer = 'test-preview-only-secret';
+  const options = { ...proof, serviceBearer: bearer, compatibilityEvidencePreviewEnabled: evidence === true };
   const server = kind === 'preview'
-    ? createMyeonghwaProductionPreviewHostServer(host, { serviceBearer: bearer })
-    : createMyeonghwaProductionProductHostServer(host, { serviceBearer: bearer });
+    ? createMyeonghwaProductionPreviewHostServer(host, options)
+    : createMyeonghwaProductionProductHostServer(host, options);
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = 'http://127.0.0.1:' + (server.address() as AddressInfo).port +
-    PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH;
+    (evidence === undefined ? PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH :
+      PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH);
   try {
     await test(url, bearer);
   } finally {
@@ -54,6 +61,183 @@ async function withHost(
 }
 
 describe('existing compatibility browser route stays protected and research-only', () => {
+  it('signs the exact opted-in pair and complete held response for a fresh challenge', async () => {
+    const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+    const keyId = 'test-held-pair';
+    await withHost('preview', async (url, bearer) => {
+      const request = { birth: ownBirth, partnerBirth, candidateScope: 'traditional_marital_palace_comparison' };
+      const nonce = randomBytes(32).toString('base64url');
+      const reply = await fetch(url, {
+        method: 'POST', headers: { authorization: 'Bearer ' + bearer, 'content-type': 'application/json',
+          'x-myeongha-pair-review-nonce': nonce },
+        body: JSON.stringify(request),
+      });
+      expect(reply.status).toBe(200);
+      const body = await reply.json();
+      const { payload, signature } = JSON.parse(Buffer.from(
+        reply.headers.get('x-myeonghwa-pair-review-proof')!, 'base64url',
+      ).toString('utf8'));
+      expect(payload).toEqual({ version: 'myeonghwa-held-pair-review-v1', keyId, state: 'held', nonce,
+        requestBodyHash: deterministicContentHash(request), responseBodyHash: deterministicContentHash(body) });
+      expect(verify(null, Buffer.from(payload.version + '\0' + deterministicContentHash(payload)),
+        publicKey, Buffer.from(signature, 'base64url'))).toBe(true);
+      const sourceMaterial = (body as { evidence: { sourceReadingMaterial: {
+        materialHash: string; status: string; officialIssueAuthorized: boolean;
+        mayPublish: boolean; maySell: boolean;
+        charts: { calculationHash: string }[];
+        units: { unitId: string; paragraph: string }[];
+      } } }).evidence.sourceReadingMaterial;
+      const { materialHash, status, officialIssueAuthorized, mayPublish, maySell, ...unsigned } =
+        sourceMaterial;
+      expect(materialHash).toBe(deterministicContentHash(unsigned));
+      expect(status).toBe('source_owned_candidate_unissued');
+      expect(officialIssueAuthorized).toBe(false);
+      expect(mayPublish).toBe(false);
+      expect(maySell).toBe(false);
+      expect(sourceMaterial.charts).toHaveLength(2);
+      expect(sourceMaterial.charts[0]?.calculationHash)
+        .not.toBe(sourceMaterial.charts[1]?.calculationHash);
+      expect(sourceMaterial.units.length).toBeGreaterThanOrEqual(3);
+      expect(sourceMaterial.units.every((unit: { unitId: string; paragraph: string }) =>
+        /^t10_unit_[a-f0-9]{24}$/u.test(unit.unitId) && unit.paragraph.length > 0)).toBe(true);
+      expect(body).toMatchObject({
+        maySell: false, evidence: {
+          sourceReadingMaterial: {
+            version: 'saju-t10-pair-reading-material-v1',
+            policyId: 'myeongha-t10-internal-relational-explanation-v1',
+            sourceScope: 'two_canonical_natal_charts',
+            status: 'source_owned_candidate_unissued',
+            officialIssueAuthorized: false,
+            maySell: false,
+          },
+          readingReview: { state: 'held', actualCompatibilityReadingReady: false },
+          internalServiceInterpretation: {
+            version: 'saju-t10-internal-service-interpretation-v1',
+            lifecycle: 'internal_policy_trial',
+            policyId: 'myeongha-t10-internal-relational-explanation-v1',
+            academicThirdPartyApprovalRequired: false,
+            readyForOfficialIssue: false, mayPublish: false, maySell: false,
+          },
+        },
+      });
+    }, true, { compatibilityEvidenceProof: { keyId, signingKey: privateKey } });
+  });
+
+  it.each([
+    ['1990-05-08', 'candidate_factor', 'supportive_factor', 'branch_six_combination'],
+    ['1990-05-09', 'candidate_factor', 'challenging_factor', 'branch_clash'],
+    ['1990-05-15', 'no_covered_factor', undefined, undefined],
+  ])('returns only the explicit marital day-branch candidate for %s', async (date, state, factor, kind) => {
+    await withHost('preview', async (url, bearer) => {
+      const pair = { birth: ownBirth, partnerBirth: { ...ownBirth, date, time: null } };
+      const post = (body: unknown, path = url) => fetch(path, {
+        method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + bearer },
+        body: JSON.stringify(body),
+      });
+      const preview = await post(pair);
+      expect(preview.status).toBe(200);
+      const previewBody = await preview.json();
+      expect(previewBody).not.toHaveProperty('evidence.maritalDayBranchCandidate');
+      expect(previewBody).not.toHaveProperty('evidence.readingReview');
+      const request = { ...pair, candidateScope: 'traditional_marital_palace_comparison' };
+      const result = await post(request);
+      expect(result.status).toBe(200);
+      const evidenceBody = await result.json() as Result & {
+        evidence: {
+          internalServiceInterpretation: {
+            charts: Array<{ role: string; calculationHash: string }>;
+            sentences: Array<{ ruleId: string; paragraph: string;
+              individualOutcomeClaimed: boolean; observedFactPaths: string[] }>;
+          };
+          readingReview: {
+            charts: Array<{ role: string; calculationHash: string }>;
+            sections: Array<{
+              sentences: Array<{ observedFactPaths: string[]; individualRelationshipOutcomeAuthorized: boolean }>;
+            }>;
+          };
+        };
+      };
+      expect(evidenceBody).toMatchObject({
+        mayPublish: false, maySell: false, generatedInterpretationClaims: false,
+        evidence: {
+          maritalDayBranchCandidate: {
+            state, scope: request.candidateScope, review: 'unreviewed', pairwiseT10Admitted: false,
+            ...(factor === undefined ? {} : { sourceInterpretation: factor, kind }),
+          },
+          readingReview: {
+            state: 'held',
+            actualCompatibilityReadingReady: false,
+            mayGrantOfficialAuthority: false,
+            charts: [{ role: 'self', calculationHash: expect.any(String) },
+              { role: 'partner', calculationHash: expect.any(String) }],
+            productEligibility: ['first_comparison', 'repeat_comparison', 'natal_and_first_comparison']
+              .map(product => ({ product, eligibleToHandoffForSalesOrIssuance: false })),
+          },
+        },
+      });
+      const sentences = evidenceBody.evidence.readingReview.sections.flatMap(section => section.sentences);
+      expect(sentences.some(sentence => sentence.observedFactPaths.some(path => path.startsWith('subject.'))
+        && sentence.observedFactPaths.some(path => path.startsWith('target.')))).toBe(true);
+      expect(sentences.every(sentence => sentence.individualRelationshipOutcomeAuthorized === false)).toBe(true);
+      const service = evidenceBody.evidence.internalServiceInterpretation;
+      expect(service.charts).toEqual(evidenceBody.evidence.readingReview.charts);
+      expect(service.sentences.length).toBeGreaterThan(1);
+      expect(service.sentences.every(sentence =>
+        sentence.paragraph.trim().length > 0 &&
+        sentence.individualOutcomeClaimed === false &&
+        sentence.observedFactPaths.every(path =>
+          /^(subject|target)\.pillars\./u.test(path)))).toBe(true);
+      expect((await post({ ...request, candidateScope: 'other_relationship' })).status).toBe(400);
+      const chartsUrl = url.replace(PRODUCT_PREVIEW_COMPATIBILITY_EVIDENCE_HTTP_PATH, PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH);
+      expect((await post(request, chartsUrl)).status).toBe(400);
+    }, true);
+  });
+
+  it('projects source matches between actual calculated charts on the dedicated opt-in endpoint', async () => {
+    await withHost('preview', async (url, bearer) => {
+      const body = JSON.stringify({
+        birth: { ...ownBirth, date: '1992-07-14', time: '15:20' },
+        partnerBirth: { ...partnerBirth, date: '1996-06-22', time: null },
+      });
+      const options = { method: 'POST', headers: { 'content-type': 'application/json' }, body };
+      expect((await fetch(url, options)).status).toBe(401);
+      const response = await fetch(url, {
+        ...options, headers: { ...options.headers, authorization: 'Bearer ' + bearer },
+      });
+      expect(response.status).toBe(200);
+      const result = await response.json() as Result & { evidence: { version: string; matches: Array<{
+        subject: { factPath: string; value: string };
+        target: { factPath: string; value: string };
+        component: 'stem' | 'branch';
+        sourceIds: string[];
+        definitionContentHash: string;
+        pairwiseMeaningAuthorized: boolean;
+      }> } };
+      expect(result.evidence.version).toBe('myeonghwa-cross-chart-structural-evidence-v1');
+      expect(result.evidence.matches.length).toBeGreaterThan(0);
+      for (const match of result.evidence.matches) {
+        const slot = (path: string) => path.split('.')[2] as keyof Person['pillars'];
+        const index = match.component === 'stem' ? 0 : 1;
+        expect(match.subject.value).toBe(result.subjects[0]?.pillars[slot(match.subject.factPath)].value?.[index]);
+        expect(match.target.value).toBe(result.subjects[1]?.pillars[slot(match.target.factPath)].value?.[index]);
+        expect(match.target.factPath).not.toContain('.hour.');
+        expect(match.sourceIds.length).toBeGreaterThan(0);
+        expect(match.definitionContentHash).toMatch(/^[a-f0-9]{64}$/);
+        expect(match.pairwiseMeaningAuthorized).toBe(false);
+      }
+      expect(result.mayPersist).toBe(false);
+      expect(result.generatedInterpretationClaims).toBe(false);
+    }, true);
+  });
+
+  it.each([['preview', false], ['production', true]] as const)(
+    'does not expose evidence on a %s host with option %s', async (kind, option) => {
+      await withHost(kind, async (url, bearer) => {
+        expect((await fetch(url, { headers: { authorization: 'Bearer ' + bearer } })).status).toBe(404);
+      }, option);
+    },
+  );
+
   it('returns two real separate calculated charts but never a T10 interpretation', async () => {
     await withHost('preview', async (url, bearer) => {
       const unauthed = await fetch(url, {
@@ -97,6 +281,7 @@ describe('existing compatibility browser route stays protected and research-only
         'limitations', 'mayPersist', 'mayPublish', 'maySell', 'subjects',
       ]);
       expect(serialized).not.toContain('sourceScopeHandoff');
+      expect(serialized).not.toContain('crossChartStructuralMatches');
       expect(serialized).not.toContain('comparedSourceSurfaces');
       expect(serialized).not.toContain('eligiblePairwiseClaim');
       expect(serialized).not.toContain('pairwiseT10Admitted');
