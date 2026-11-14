@@ -61,12 +61,24 @@ function validMaterial(material: T10PairSourceReadingMaterialV1): boolean {
         unitId !== 't10_unit_' + deterministicContentHash(source).slice(0, 24) ||
         unit.sourceDefinitionHashes.some(hash => !HASH.test(hash))) return false;
   }
-  const { materialHash, status, officialIssueAuthorized, mayPublish, maySell, ...unsigned } = material;
-  return HASH.test(materialHash) && materialHash === deterministicContentHash(unsigned);
+  const unsigned = {
+    version: material.version, policyId: material.policyId,
+    policyVersion: material.policyVersion, readingDomain: material.readingDomain,
+    interpretationOwner: material.interpretationOwner, sourceScope: material.sourceScope,
+    charts: material.charts, units: material.units,
+  };
+  return HASH.test(material.materialHash) &&
+    material.materialHash === deterministicContentHash(unsigned);
 }
 
 /** A separate two-chart Production issue; never converts Preview signature into a receipt. */
-export function createT10ProductionPairIssueProofV1(options: T10ProductionPairIssueProofOptionsV1) {
+export function createT10ProductionPairIssueProofV1(
+  options: T10ProductionPairIssueProofOptionsV1,
+): (binding: T10ProductionPairIssueBindingV1, request: unknown,
+  material: T10PairSourceReadingMaterialV1) => Readonly<{
+    body: unknown;
+    proof: Readonly<{ payload: Readonly<Record<string, unknown>>; signature: string }>;
+  }> {
   if (options.signingKey.type !== 'private' ||
       options.signingKey.asymmetricKeyType !== 'ed25519' ||
       ![options.issuer, options.audience, options.keyId, options.engineVersion].every(value => TOKEN.test(value)) ||
