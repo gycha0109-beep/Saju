@@ -1,0 +1,49 @@
+name: saju-a4-source-local
+
+services:
+  postgres:
+    image: postgres:17.11-alpine
+    container_name: saju-a4-source-pg17
+    restart: unless-stopped
+    stop_grace_period: 60s
+    environment:
+      POSTGRES_DB: saju_a4_source
+      POSTGRES_USER: saju_a4_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_owner_password
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    secrets:
+      - pg_owner_password
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - saju_source_pgdata:/var/lib/postgresql/data
+      - ../../docs/ops/A4_ADMIN_PROVIDER_RECEIPT_SOURCE_POSTGRES_OFFLINE_V1.sql:/docker-entrypoint-initdb.d/01_receipts.sql:ro
+      - ../../docs/ops/A4_ADMIN_PROVIDER_CALLBACK_COVERAGE_OFFLINE_V1.sql:/docker-entrypoint-initdb.d/02_coverage.sql:ro
+      - ../../docs/ops/A4_ADMIN_SIGNED_PREPARED_ATTEMPT_CLAIMS_OFFLINE_V1.sql:/docker-entrypoint-initdb.d/03_claims.sql:ro
+      - ../../docs/ops/A4_ADMIN_PROVIDER_DISPATCH_INTENT_OFFLINE_V1.sql:/docker-entrypoint-initdb.d/04_intents.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -U saju_a4_owner -d saju_a4_source -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks:
+      - source_private
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+secrets:
+  pg_owner_password:
+    file: ./secrets/pg_owner_password.txt
+
+volumes:
+  saju_source_pgdata:
+    external: true
+    name: saju_a4_source_pg17_data_v1
+
+networks:
+  source_private:
+    driver: bridge

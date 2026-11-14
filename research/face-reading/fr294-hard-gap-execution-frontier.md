@@ -187,3 +187,11 @@ The next face-engine work should start with the smallest blocker that can be ind
 FR294 itself does not claim that any of these blockers are already satisfied.
 
 Watchtower-Track: face-engine
+
+## 2026-11-05 얼굴 전체 로드맵 연결 (실행 순서 조정만)
+
+**[명하 얼굴 전체 관측 → 전통 형태 판정 → 종합 판독 실행 로드맵](whole-face-observation-reading-roadmap-20261105.md)**을 관상 전반의 실행 순서 기준으로 사용한다.
+
+FR294는 **29개 중 미해결 11개**의 증거 분류와 권한 동결 기록이다. 위 통합 로드맵은 눈썹·미간·눈·코·광대·볼·입·턱·귀·이마 및 삼정/오관/십이궁의 항목별 관측 요구, 현재 정규 계산기와 실제 사진 자동 추출의 차이, 전통 형태 판정/종합 판독의 후속 연결을 정리한다. FR294의 숫자와 허용 범위를 수정하거나 신규 모델·전통 조건·측정 임계값을 승인하지 않는다.
+
+즉, 헤어라인 증거 경로가 아직 막혀 있더라도 **독립적으로 검증 가능한 다른 부위의 관측 작업을 멈추지 않는다.** 진행 중인 로컬 항목 우선 검토([PR #2453](https://github.com/gycha0109-beep/Saju/pull/2453))와 기존 귀/3D/헤어라인 증거 작업을 재사용하고, 중복 엔진·별도 사주 로드맵 개편은 만들지 않는다.

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type {
   CompiledNarrativePrompt,
   NarrativeGenerationParams,
@@ -72,6 +73,77 @@ export type OpenAIFetch = (
   init?: RequestInit,
 ) => Promise<Response>;
 
+/**
+ * Source-side event for a real provider request. This is a PRIVATE server
+ * callback, not a ProductReadingResponse, an invoice or a client event.
+ * No prompt, response, birth data or provider credential is included.
+ * Saju requestId alone is not a MyeongHa Reading/attempt identity; the
+ * caller must bind authoritative identities before writing an Admin ledger.
+ */
+export interface OpenAIProviderCallObservationV1 {
+  readonly callId: string;
+  readonly requestId: string;
+  readonly providerKey: 'openai';
+  readonly modelKey: string;
+  readonly source: 'provider_response_usage' | 'provider_attempt_without_usage';
+  readonly outcome: 'response_received' | 'http_failure' | 'network_failure' | 'timeout' | 'invalid_response';
+  readonly observedAt: string;
+  readonly usage: Readonly<{
+    inputTokens: number | null;
+    outputTokens: number | null;
+    cachedInputTokens: number | null;
+    reasoningTokens: number | null;
+  }>;
+}
+
+const UNKNOWN_OPENAI_USAGE_V1 = Object.freeze({
+  inputTokens: null,
+  outputTokens: null,
+  cachedInputTokens: null,
+  reasoningTokens: null,
+});
+
+function safeTokenCount(value: unknown): number | null {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
+    ? value
+    : null;
+}
+
+/** Extract provider COUNTERS only. Never copy model output or provider IDs. */
+function sourceUsageEvidence(raw: unknown, expectedModel: string):
+  OpenAIProviderCallObservationV1['usage'] | null {
+  const body = asRecord(raw);
+  if (body?.status !== 'completed' || body.model !== expectedModel) return null;
+  const usage = asRecord(body.usage);
+  const input = safeTokenCount(usage?.input_tokens);
+  const output = safeTokenCount(usage?.output_tokens);
+  if (input === null || output === null) return null;
+  const total = usage?.total_tokens;
+  if (total !== undefined && safeTokenCount(total) !== input + output) return null;
+  const cached = safeTokenCount(asRecord(usage?.input_tokens_details)?.cached_tokens);
+  const reasoning = safeTokenCount(asRecord(usage?.output_tokens_details)?.reasoning_tokens);
+  if ((cached !== null && cached > input) || (reasoning !== null && reasoning > output)) return null;
+  return Object.freeze({
+    inputTokens: input,
+    outputTokens: output,
+    cachedInputTokens: cached,
+    reasoningTokens: reasoning,
+  });
+}
+
+/**
+ * Server-private pre-network dispatch intent. Recording it does NOT prove
+ * packets were transmitted, accepted, billed, or that no other requests exist.
+ * No request body, provider credentials, birth data or model output is exposed.
+ */
+export interface OpenAIProviderDispatchIntentV1 {
+  readonly callId: string;
+  readonly requestId: string;
+  readonly providerKey: 'openai';
+  readonly modelKey: string;
+  readonly preparedAt: string;
+}
+
 export interface OpenAIResponsesAdapterConfig {
   apiKey: string;
   model?: string;
@@ -84,6 +156,10 @@ export interface OpenAIResponsesAdapterConfig {
   defaultMaxOutputTokens?: number;
   timeoutMs?: number;
   fetchImpl?: OpenAIFetch;
+  /** Optional PRIVATE pre-network intent writer; rejection prevents the HTTP call. */
+  onBeforeProviderRequest?: (intent: OpenAIProviderDispatchIntentV1) => void | Promise<void>;
+  /** Optional PRIVATE settled-call observer; never installed in consumer transport. */
+  onProviderCall?: (observation: OpenAIProviderCallObservationV1) => void | Promise<void>;
 }
 
 interface OpenAIResponseBody {
@@ -235,6 +311,8 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
   private readonly defaultMaxOutputTokens: number;
   private readonly timeoutMs: number;
   private readonly fetchImpl: OpenAIFetch;
+  private readonly onProviderCall: OpenAIResponsesAdapterConfig['onProviderCall'];
+  private readonly onBeforeProviderRequest: OpenAIResponsesAdapterConfig['onBeforeProviderRequest'];
 
   constructor(config: OpenAIResponsesAdapterConfig) {
     assertNonEmpty(config.apiKey, 'apiKey');
@@ -272,6 +350,8 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
     this.defaultMaxOutputTokens = defaultMaxOutputTokens;
     this.timeoutMs = timeoutMs;
     this.fetchImpl = config.fetchImpl ?? fetch;
+    this.onProviderCall = config.onProviderCall;
+    this.onBeforeProviderRequest = config.onBeforeProviderRequest;
   }
 
   async generateStructured(
@@ -321,6 +401,57 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
       ],
     };
 
+    const providerCallId = randomUUID();
+    let observed = false;
+    const observe = async (
+      outcome: OpenAIProviderCallObservationV1['outcome'],
+      responseBody?: unknown,
+    ): Promise<void> => {
+      if (observed) return;
+      observed = true;
+      const usage = outcome === 'response_received'
+        ? sourceUsageEvidence(responseBody, this.metadata.modelId)
+        : null;
+      const observation: OpenAIProviderCallObservationV1 = Object.freeze({
+        callId: providerCallId,
+        requestId: prompt.requestId,
+        providerKey: 'openai',
+        modelKey: this.metadata.modelId,
+        source: usage === null ? 'provider_attempt_without_usage' : 'provider_response_usage',
+        outcome,
+        observedAt: new Date().toISOString(),
+        usage: usage ?? UNKNOWN_OPENAI_USAGE_V1,
+      });
+      // Accounting must never turn a settled provider call into a second
+      // charge through retry or change the user's narrative result.
+      try {
+        await this.onProviderCall?.(observation);
+      } catch {
+        // The owner of this optional callback must report coverage gaps.
+      }
+    };
+    // Prepare an independent dispatch intent BEFORE starting the HTTP request.
+    // This fail-closed hook may be connected to a future durable Source writer;
+    // it is deliberately distinct from the post-response usage callback.
+    // Preparation is not proof that the network request was actually sent.
+    if (this.onBeforeProviderRequest !== undefined) {
+      const intent: OpenAIProviderDispatchIntentV1 = Object.freeze({
+        callId: providerCallId,
+        requestId: prompt.requestId,
+        providerKey: 'openai',
+        modelKey: this.metadata.modelId,
+        preparedAt: new Date().toISOString(),
+      });
+      try {
+        await this.onBeforeProviderRequest(intent);
+      } catch (cause) {
+        throw new OpenAIResponsesAdapterError(
+          'CONFIGURATION_ERROR',
+          'Provider dispatch evidence preflight failed; request was not sent.',
+          { cause },
+        );
+      }
+    }
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -334,12 +465,14 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
       });
     } catch (cause) {
       if (controller.signal.aborted) {
+        await observe('timeout');
         throw new OpenAIResponsesAdapterError(
           'TIMEOUT',
           `OpenAI Responses request exceeded ${this.timeoutMs}ms.`,
           { cause },
         );
       }
+      await observe('network_failure');
       throw new OpenAIResponsesAdapterError(
         'NETWORK_ERROR',
         'OpenAI Responses request could not reach the provider.',
@@ -354,6 +487,7 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
     try {
       responseBody = await response.json();
     } catch (cause) {
+      await observe('invalid_response');
       throw new OpenAIResponsesAdapterError(
         'RESPONSE_INVALID',
         'OpenAI response body was not valid JSON.',
@@ -362,6 +496,7 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
     }
 
     if (!response.ok) {
+      await observe('http_failure');
       throw new OpenAIResponsesAdapterError(
         'HTTP_ERROR',
         safeErrorMessage(responseBody),
@@ -372,6 +507,7 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
     const parsedBody = responseBody as OpenAIResponseBody;
     const responseId = extractResponseId(parsedBody);
     if (parsedBody.status !== 'completed') {
+      await observe('invalid_response');
       throw new OpenAIResponsesAdapterError(
         'RESPONSE_INCOMPLETE',
         `OpenAI response status was ${String(parsedBody.status)} instead of completed.`,
@@ -379,6 +515,7 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
       );
     }
 
+    await observe('response_received', parsedBody);
     const outputText = extractOutputText(parsedBody, requestId);
     try {
       return JSON.parse(outputText) as unknown;

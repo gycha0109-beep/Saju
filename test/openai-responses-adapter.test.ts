@@ -361,4 +361,171 @@ describe('OpenAI Responses narrative adapter', () => {
       () => new OpenAIResponsesNarrativeAdapter({ apiKey: 'test', endpoint: 'not-a-url' }),
     ).toThrow(OpenAIResponsesAdapterError);
   });
+  test('observes only server-side token counters from a completed live provider response', async () => {
+    const events: unknown[] = [];
+    const adapter = new OpenAIResponsesNarrativeAdapter({
+      apiKey: 'internal-test-secret',
+      model: 'fixture-narrative-model',
+      onProviderCall: async (event) => { events.push(event); },
+      fetchImpl: async () => new Response(JSON.stringify({
+        id: 'resp_never_store',
+        model: 'fixture-narrative-model',
+        status: 'completed',
+        output: [{ type: 'message', content: [
+          { type: 'output_text', text: JSON.stringify(validDraft) },
+        ] }],
+        usage: {
+          input_tokens: 1000,
+          output_tokens: 50,
+          total_tokens: 1050,
+          input_tokens_details: { cached_tokens: 300 },
+          output_tokens_details: { reasoning_tokens: 10 },
+        },
+      }), { status: 200 }),
+    });
+    expect(await adapter.generateStructured(prompt)).toEqual(validDraft);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      requestId: prompt.requestId,
+      providerKey: 'openai',
+      modelKey: 'fixture-narrative-model',
+      outcome: 'response_received',
+      source: 'provider_response_usage',
+      usage: { inputTokens: 1000, outputTokens: 50, cachedInputTokens: 300, reasoningTokens: 10 },
+    });
+    expect((events[0] as {callId:string}).callId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u,
+    );
+    const serialized = JSON.stringify(events[0]);
+    expect(serialized).not.toContain('resp_never_store');
+    expect(serialized).not.toContain('internal-test-secret');
+    expect(serialized).not.toContain('현재 선택된 근거');
+    expect(serialized).not.toContain('birth');
+    expect(serialized).not.toContain('output_text');
+  });
+
+
+  test('fails closed before network when private dispatch evidence preparation fails', async () => {
+    const fetchImpl = vi.fn<OpenAIFetch>(async () => completedResponse());
+    const settled = vi.fn();
+    const preflight = vi.fn(async () => {
+      throw new Error('offline Source dispatch evidence store');
+    });
+    const adapter = new OpenAIResponsesNarrativeAdapter({
+      apiKey: 'do-not-send-secret',
+      fetchImpl,
+      onBeforeProviderRequest: preflight,
+      onProviderCall: settled,
+    });
+    await expect(adapter.generateStructured(prompt)).rejects.toMatchObject({
+      code: 'CONFIGURATION_ERROR',
+      message: 'Provider dispatch evidence preflight failed; request was not sent.',
+    });
+    expect(preflight).toHaveBeenCalledTimes(1);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(settled).not.toHaveBeenCalled();
+  });
+
+  test('links a private pre-network intent to exactly the same settled call ID', async () => {
+    const sequence: string[] = [];
+    const intents: Array<{ callId: string; requestId: string }> = [];
+    const settled: Array<{ callId: string }> = [];
+    const adapter = new OpenAIResponsesNarrativeAdapter({
+      apiKey: 'do-not-send-secret',
+      onBeforeProviderRequest: async (intent) => {
+        sequence.push('intent');
+        intents.push(intent);
+        expect(intent).toMatchObject({
+          providerKey: 'openai',
+          requestId: prompt.requestId,
+          modelKey: 'gpt-5.6-terra',
+          preparedAt: expect.any(String),
+        });
+        expect(JSON.stringify(intent)).not.toContain('do-not-send-secret');
+        expect(JSON.stringify(intent)).not.toContain('birth');
+        expect(JSON.stringify(intent)).not.toContain('output_text');
+      },
+      fetchImpl: async () => {
+        sequence.push('network');
+        return completedResponse();
+      },
+      onProviderCall: (observation) => {
+        sequence.push('settled');
+        settled.push(observation);
+      },
+    });
+    expect(await adapter.generateStructured(prompt)).toEqual(validDraft);
+    expect(sequence).toEqual(['intent', 'network', 'settled']);
+    expect(intents).toHaveLength(1);
+    expect(settled).toHaveLength(1);
+    expect(intents[0]?.callId).toEqual(settled[0]?.callId);
+  });
+
+  test('preserves intent/callback IDs even when the transport fails', async () => {
+    const intents: string[] = [];
+    const outcomes: Array<{ callId: string; outcome: string }> = [];
+    const adapter = new OpenAIResponsesNarrativeAdapter({
+      apiKey: 'do-not-send-secret',
+      onBeforeProviderRequest: async (intent) => { intents.push(intent.callId); },
+      onProviderCall: async (observation) => {
+        outcomes.push({ callId: observation.callId, outcome: observation.outcome });
+      },
+      fetchImpl: async () => {
+        throw new Error('offline network failure');
+      },
+    });
+    await expect(adapter.generateStructured(prompt)).rejects.toMatchObject({
+      code: 'NETWORK_ERROR',
+    });
+    expect(intents).toHaveLength(1);
+    expect(outcomes).toEqual([{ callId: intents[0], outcome: 'network_failure' }]);
+  });
+
+  test('records an observed attempt with unknown usage when response omits usage', async () => {
+    const events: unknown[] = [];
+    const adapter = new OpenAIResponsesNarrativeAdapter({
+      apiKey: 'test-secret',
+      model: 'fixture-narrative-model',
+      onProviderCall: event => { events.push(event); },
+      fetchImpl: async () => new Response(JSON.stringify({
+        id: 'resp_without_usage',
+        model: 'fixture-narrative-model',
+        status: 'completed',
+        output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(validDraft) }] }],
+      }), { status: 200 }),
+    });
+    await adapter.generateStructured(prompt);
+    expect(events).toMatchObject([{
+      source: 'provider_attempt_without_usage',
+      outcome: 'response_received',
+      usage: { inputTokens: null, outputTokens: null, cachedInputTokens: null, reasoningTokens: null },
+    }]);
+  });
+
+  test('records failure attempts once and isolates a failing cost observer from the narrative output', async () => {
+    const errors: unknown[] = [];
+    const adapter = new OpenAIResponsesNarrativeAdapter({
+      apiKey: 'test-secret',
+      onProviderCall: event => { errors.push(event); throw new Error('cost DB offline'); },
+      fetchImpl: async () => completedResponse(),
+    });
+    expect(await adapter.generateStructured(prompt)).toEqual(validDraft);
+    expect(errors).toHaveLength(1);
+    const failure = new OpenAIResponsesNarrativeAdapter({
+      apiKey: 'test-secret',
+      onProviderCall: event => { errors.push(event); },
+      fetchImpl: async () => new Response(JSON.stringify({
+        error: { message: 'unavailable' },
+      }), { status: 503 }),
+    });
+    await expect(failure.generateStructured(prompt)).rejects.toMatchObject({ code: 'HTTP_ERROR' });
+    expect(errors).toHaveLength(2);
+    expect(errors[1]).toMatchObject({
+      outcome: 'http_failure',
+      source: 'provider_attempt_without_usage',
+      usage: { inputTokens: null, outputTokens: null, cachedInputTokens: null, reasoningTokens: null },
+    });
+    expect((errors[0] as {callId:string}).callId).not.toBe((errors[1] as {callId:string}).callId);
+  });
+
 });

@@ -1,6 +1,5 @@
-import type {
-  FaceTopicAuthoritySourceReceipt,
-} from '../../src/face-topic/authority.js';
+import type { FaceTopicAuthoritySourceReceipt } from '../../src/face-topic/authority.js';
+import { getReviewedMayiThreeDivisionsMethodology } from '../../packages/face-reading/src/mayi-three-divisions-reviewed-methodology.js';
 import {
   FR293_COLUMN_MAP_CONTRACT_VERSION,
   FR293_PRODUCT_COLUMN_MAP,
@@ -35,36 +34,27 @@ const BLOCKED_VERTICAL_REFERENCE_CAPABILITIES = Object.freeze([
   'face.vertical_reference.visible_hairline',
 ] as const);
 
-export function buildRepositoryFaceAuthorityReceiptForTopicFaceTest():
-FaceTopicAuthoritySourceReceipt {
+export function buildRepositoryFaceAuthorityReceiptForTopicFaceTest(): FaceTopicAuthoritySourceReceipt {
   assertFR293ProductColumnMap();
   assertFR294HardGapFrontier();
-  assertFRB006PartialBindingLedger(
-    T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006,
-  );
+  assertFRB006PartialBindingLedger(T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006);
 
-  const ledger =
-    T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006;
-  const canonicalMaterializedCapabilities = FR293_PRODUCT_COLUMN_MAP
-    .filter(
-      (entry) =>
-        entry.implementationState ===
-        'canonical_extractor_materialized',
-    )
-    .map((entry) => entry.featureKey);
-  const canonicalUnavailableOrHardGapCapabilities =
-    FR294_HARD_GAP_FRONTIER.map((entry) => entry.featureKey);
+  const ledger = T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006;
+  const reviewedMethodology = getReviewedMayiThreeDivisionsMethodology();
+  const canonicalMaterializedCapabilities = FR293_PRODUCT_COLUMN_MAP.filter(
+    (entry) => entry.implementationState === 'canonical_extractor_materialized',
+  ).map((entry) => entry.featureKey);
+  const canonicalUnavailableOrHardGapCapabilities = FR294_HARD_GAP_FRONTIER.map(
+    (entry) => entry.featureKey,
+  );
 
   if (
     canonicalMaterializedCapabilities.length !== 18 ||
     canonicalUnavailableOrHardGapCapabilities.length !== 11 ||
-    canonicalMaterializedCapabilities.length +
-      canonicalUnavailableOrHardGapCapabilities.length !==
+    canonicalMaterializedCapabilities.length + canonicalUnavailableOrHardGapCapabilities.length !==
       FR293_PRODUCT_COLUMN_MAP.length
   ) {
-    throw new Error(
-      'TOPIC_FACE_002_OBSERVATION_AUTHORITY_PARTITION_DRIFT',
-    );
+    throw new Error('TOPIC_FACE_002_OBSERVATION_AUTHORITY_PARTITION_DRIFT');
   }
 
   if (
@@ -75,12 +65,9 @@ FaceTopicAuthoritySourceReceipt {
     ledger.admittedTraditionalBindingCount !== 13 ||
     ledger.blockedTraditionalBindingCount !== 3 ||
     ledger.authorityBoundary.semanticClaimIssued !== false ||
-    FACE_TRADITIONAL_T7_CLOSEOUT.executableReadingAuthorized !==
-      false
+    FACE_TRADITIONAL_T7_CLOSEOUT.executableReadingAuthorized !== false
   ) {
-    throw new Error(
-      'TOPIC_FACE_005L_PARTIAL_VERTICAL_REFERENCE_AUTHORITY_DRIFT',
-    );
+    throw new Error('TOPIC_FACE_005L_PARTIAL_VERTICAL_REFERENCE_AUTHORITY_DRIFT');
   }
 
   const materializedCapabilities = Object.freeze([
@@ -95,8 +82,7 @@ FaceTopicAuthoritySourceReceipt {
   return Object.freeze({
     schemaVersion: 'face-topic-authority-source-receipt-v1',
     observation: Object.freeze({
-      authorityRef:
-        `${FR293_COLUMN_MAP_CONTRACT_VERSION}+${FR294_HARD_GAP_FRONTIER_CONTRACT_VERSION}+FRB006-reviewed-neutral-vertical-reference-snapshot`,
+      authorityRef: `${FR293_COLUMN_MAP_CONTRACT_VERSION}+${FR294_HARD_GAP_FRONTIER_CONTRACT_VERSION}+FRB006-reviewed-neutral-vertical-reference-snapshot`,
       materializedCapabilities,
       unavailableOrHardGapCapabilities,
       provenanceRefs: Object.freeze([
@@ -109,18 +95,12 @@ FaceTopicAuthoritySourceReceipt {
       authorityRef: FRB006_CONTRACT_VERSION,
       bindingGroups: Object.freeze([
         Object.freeze({
-          bindingGroupRef:
-            'face-bridge.frb005.three_divisions',
+          bindingGroupRef: 'face-bridge.frb005.three_divisions',
           requiredBindingCount: Number(ledger.slotCount),
-          admittedBindingCount: Number(
-            ledger.admittedTraditionalBindingCount,
-          ),
+          admittedBindingCount: Number(ledger.admittedTraditionalBindingCount),
           bindingReady:
-            Number(ledger.admittedTraditionalBindingCount) ===
-              Number(ledger.slotCount) &&
-            ledger.methodologyStatuses.every(
-              (status) => status.bindingReady,
-            ),
+            Number(ledger.admittedTraditionalBindingCount) === Number(ledger.slotCount) &&
+            ledger.methodologyStatuses.every((status) => status.bindingReady),
           provenanceRefs: Object.freeze([
             'packages/face-reading/src/traditional-three-divisions-binding-ledger-frb005.ts',
             'packages/face-reading/src/traditional-three-divisions-partial-binding-ledger-frb006.ts',
@@ -135,17 +115,17 @@ FaceTopicAuthoritySourceReceipt {
       ]),
     }),
     traditional: Object.freeze({
-      authorityRef:
-        FACE_TRADITIONAL_T7_BASELINE.baselinePackRef,
-      methodologyRefs: Object.freeze(
-        FACE_TRADITIONAL_T7_METHODOLOGY_BINDING_ACCEPTANCE.map(
-          (entry) => entry.methodologyRef,
-        ),
-      ),
+      authorityRef: FACE_TRADITIONAL_T7_BASELINE.baselinePackRef,
+      methodologyRefs: Object.freeze([
+        ...FACE_TRADITIONAL_T7_METHODOLOGY_BINDING_ACCEPTANCE.map((entry) => entry.methodologyRef),
+        `${reviewedMethodology.methodologyId}@${reviewedMethodology.version}`,
+      ]),
       semanticClaimFamilies: Object.freeze([]),
       provenanceRefs: Object.freeze([
         'packages/face-reading/src/traditional-three-divisions-methodology-pack-t6.ts',
         'packages/face-reading/src/traditional-three-divisions-binding-handoff-t7.ts',
+        'packages/face-reading/src/mayi-three-divisions-reviewed-methodology.ts',
+        'governance/face-reading/mayi-three-divisions-project-owner-methodology-approval-v1.md',
       ]),
     }),
   });
