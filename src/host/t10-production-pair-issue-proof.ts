@@ -31,6 +31,16 @@ export interface T10ProductionPairIssueBindingV1 {
   readonly releaseRef: string;
 }
 
+export type T10ProductionPairPillarV1 = Readonly<{ status: 'resolved'; value: string }> |
+  Readonly<{ status: 'unavailable' }>;
+export type T10ProductionPairPillarsV1 = Readonly<Record<
+  'year' | 'month' | 'day' | 'hour', T10ProductionPairPillarV1
+>>;
+export type T10ProductionPairChartDisplayV1 = Readonly<{
+  role: 'self' | 'partner';
+  pillars: T10ProductionPairPillarsV1;
+}>;
+
 export interface T10ProductionPairIssueProofOptionsV1 {
   readonly issuer: string;
   readonly audience: string;
@@ -75,7 +85,7 @@ function validMaterial(material: T10PairSourceReadingMaterialV1): boolean {
 export function createT10ProductionPairIssueProofV1(
   options: T10ProductionPairIssueProofOptionsV1,
 ): (binding: T10ProductionPairIssueBindingV1, request: unknown,
-  material: T10PairSourceReadingMaterialV1) => Readonly<{
+  material: T10PairSourceReadingMaterialV1, chartDisplays: readonly [T10ProductionPairChartDisplayV1, T10ProductionPairChartDisplayV1]) => Readonly<{
     body: unknown;
     proof: Readonly<{ payload: Readonly<Record<string, unknown>>; signature: string }>;
   }> {
@@ -88,7 +98,7 @@ export function createT10ProductionPairIssueProofV1(
     throw new TypeError('Invalid Production Pair Issue configuration.');
 
   return (binding: T10ProductionPairIssueBindingV1, request: unknown,
-    material: T10PairSourceReadingMaterialV1) => {
+    material: T10PairSourceReadingMaterialV1, chartDisplays: readonly [T10ProductionPairChartDisplayV1, T10ProductionPairChartDisplayV1]) => {
     if (!binding || !material || !validMaterial(material) ||
         ![binding.executionAttemptId, binding.readingId, binding.purchaseIntentId,
           binding.targetPersonId, binding.birthRevisionId, binding.targetBirthRevisionId]
@@ -103,7 +113,15 @@ export function createT10ProductionPairIssueProofV1(
         !HASH.test(binding.sourceRequestHash) ||
         !RELEASE.test(binding.releaseRef) ||
         options.releaseByOffer[binding.offerId] !== binding.releaseRef ||
-        deterministicContentHash(request) !== binding.sourceRequestHash) {
+        deterministicContentHash(request) !== binding.sourceRequestHash ||
+        !Array.isArray(chartDisplays) || chartDisplays.length !== 2 ||
+        chartDisplays[0].role !== 'self' || chartDisplays[1].role !== 'partner' ||
+        chartDisplays.some(chart => !(['year', 'month', 'day', 'hour'] as const).every(slot => {
+          const pillar = chart.pillars?.[slot];
+          return pillar && (pillar.status === 'unavailable' && !Object.hasOwn(pillar, 'value') ||
+            pillar.status === 'resolved' && typeof pillar.value === 'string' &&
+            /^[^\s]{2,4}$/u.test(pillar.value));
+        }))) {
       throw new TypeError('Production Pair Issue is not bound to the purchased two-chart request.');
     }
 
@@ -121,6 +139,7 @@ export function createT10ProductionPairIssueProofV1(
         birthInputHash: index === 0 ? binding.sourceBirthInputHash : binding.targetBirthInputHash,
       })),
       units: material.units,
+      chartDisplays,
       materialHash: material.materialHash,
     };
     const payload = {
