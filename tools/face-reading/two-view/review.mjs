@@ -905,7 +905,7 @@ function renderVisibleNoseMaskExperiment(record, result, previous) {
     result?.parsing?.status !== 'completed' ||
     result.parsing.methodVersion !== PARSING_VERSION ||
     result.parsing.morphology?.noseExtent?.status !== 'available' ||
-    result.parsing.regionScreening?.regions?.nose?.status === 'suppressed' ||
+    result.parsing.regionScreening?.regions?.nose?.status !== 'screened' ||
     !result.layerUrls?.nose
   ) {
     node.textContent =
@@ -1395,6 +1395,8 @@ const readinessReasons = {
   FACE_PARSING_EXECUTION_FAILED: '얼굴 분할 모델 분석 실패',
   FACE_PARSING_TIMED_OUT: '얼굴 분할 모델 시간 초과',
   FACE_PARSING_MODEL_UNAVAILABLE: '얼굴 분할 모델 사용 불가',
+  FACE_REGION_NOT_SCREENED: '해당 얼굴 부위 위치 확인 전',
+  FACE_REGION_SCREENING_SUPPRESSED: '모델이 해당 얼굴 부위를 제외함',
   CANONICAL_CALCULATOR_WITHOUT_VERIFIED_PHOTO_INPUT: '사진 입력 경계 검증 필요',
   NO_VERIFIED_IMAGE_EXTRACTOR: '검증된 부위별 이미지 관측기 없음',
 };

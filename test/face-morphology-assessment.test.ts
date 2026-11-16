@@ -255,7 +255,16 @@ describe('visible morphology measurements and item-first assessment', () => {
   it('classifies observable comparisons and keeps all eight distinct items with missing requirements', () => {
     const cards = assessMorphology({
       record: { captureRef: 'one', viewRole: 'frontal' },
-      result: { parsing: { morphology: computeMorphology(fixture()) } },
+      result: {
+        parsing: {
+          morphology: computeMorphology(fixture()),
+          regionScreening: {
+            regions: Object.fromEntries(
+              ['brows', 'lips', 'nose', 'ears'].map((id) => [id, { status: 'screened' }]),
+            ),
+          },
+        },
+      },
       catalogue: readingCatalogue(),
     });
     expect(cards).toHaveLength(8);
@@ -280,6 +289,43 @@ describe('visible morphology measurements and item-first assessment', () => {
       /matchedRuleIds|meaningSummary|personalityFact|wealth|temperament/,
     );
   });
+  it('withholds image-shape cards when their model region was not screened', () => {
+    const morphology = computeMorphology(fixture());
+    const unscreened = assessMorphology({
+      record: { captureRef: 'same', viewRole: 'frontal' },
+      result: { parsing: { morphology } },
+      catalogue: readingCatalogue(),
+    });
+    for (const id of ['brows', 'lips', 'nose']) {
+      expect(unscreened.find((card) => card.id === id)).toMatchObject({
+        status: 'unavailable',
+        classification: null,
+      });
+      expect(unscreened.find((card) => card.id === id)?.observation).toContain('위치가 검증되지');
+    }
+    const partlyScreened = assessMorphology({
+      record: { captureRef: 'same', viewRole: 'frontal' },
+      result: {
+        parsing: {
+          morphology,
+          regionScreening: {
+            regions: {
+              brows: { status: 'screened' },
+              lips: { status: 'suppressed' },
+              nose: { status: 'screened' },
+              ears: { status: 'unchecked' },
+            },
+          },
+        },
+      },
+      catalogue: readingCatalogue(),
+    });
+    expect(partlyScreened.find((card) => card.id === 'brows')?.status).toBe('observed');
+    expect(partlyScreened.find((card) => card.id === 'lips')?.status).toBe('unavailable');
+    expect(partlyScreened.find((card) => card.id === 'nose')?.status).toBe('partial');
+    expect(partlyScreened.every((card) => card.traditionalBindingAuthorized === false)).toBe(true);
+  });
+
   it('does not reuse a metric from another photo/view or invent history/new evidence', () => {
     const record = { captureRef: 'one', viewRole: 'frontal' as const },
       catalogue = readingCatalogue();

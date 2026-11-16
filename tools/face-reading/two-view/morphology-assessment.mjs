@@ -33,6 +33,8 @@ export function assessMorphology({ record, result, catalogue, previous = false }
   } catch {
     /* Invalid evidence is withheld. */
   }
+  const regionScreened = (region) =>
+    parsing?.regionScreening?.regions?.[region]?.status === 'screened';
   const metric = (key, zeroAllowed = false) =>
     result?.metrics?.find(
       (m) =>
@@ -90,6 +92,12 @@ export function assessMorphology({ record, result, catalogue, previous = false }
       card.missing = [item.requiredObservation];
       return card;
     };
+    const regionUnchecked = () => {
+      card.observation =
+        '모델 수치는 있지만 이 사진의 해당 얼굴 부위 위치가 검증되지 않아 관찰을 보류합니다.';
+      card.missing = [item.requiredObservation, '부위별 모델 영역 위치·가림 확인'];
+      return card;
+    };
     if (item.id === 'eyes') {
       const direction = parsing?.eyeDirection;
       if (!direction || (record.viewRole === 'profile' && direction.status === 'available')) {
@@ -123,6 +131,7 @@ export function assessMorphology({ record, result, catalogue, previous = false }
     if (item.id === 'brows') {
       const part = geometry?.browSpan;
       if (part?.status !== 'available') return absent(part);
+      if (!regionScreened('brows')) return regionUnchecked();
       card.status = 'observed';
       const relations = part.ratios.map((n) => compare(n, 1));
       card.classification = relations.every((n) => n > 0)
@@ -147,6 +156,7 @@ export function assessMorphology({ record, result, catalogue, previous = false }
     if (item.id === 'lips') {
       const part = geometry?.lipBalance;
       if (part?.status !== 'available') return absent(part);
+      if (!regionScreened('lips')) return regionUnchecked();
       const sign = compare(part.upper, part.lower);
       card.status = 'observed';
       card.classification =
@@ -166,6 +176,7 @@ export function assessMorphology({ record, result, catalogue, previous = false }
       const part = geometry?.noseExtent;
       const profile = record.viewRole === 'profile' && profileMetric('nose_width_to_face_height');
       if (part?.status !== 'available' && !profile) return absent(part);
+      if (!profile && !regionScreened('nose')) return regionUnchecked();
       card.status = 'partial';
       card.observation = '사진 평면에서 코로 분할된 영역의 범위를 확인했습니다.';
       card.measurements = profile
@@ -179,6 +190,8 @@ export function assessMorphology({ record, result, catalogue, previous = false }
     }
     if (item.id === 'ears') {
       const profile = record.viewRole === 'profile' && profileMetric('ear_height_to_face_height');
+      if (!profile && parsing?.earRefinement?.status === 'applied' && !regionScreened('ears'))
+        return regionUnchecked();
       if (!profile && parsing?.earRefinement?.status !== 'applied') {
         card.observation = '한 얼굴에 대응하는 귀 후보 범위를 확보하지 못했습니다.';
         card.missing = [item.requiredObservation];

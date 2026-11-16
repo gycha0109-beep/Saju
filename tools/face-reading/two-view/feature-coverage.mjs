@@ -7,6 +7,15 @@ export const COVERAGE_VERSION = 'local-whole-face-coverage@0.2.0';
 const VALID_METRICS = new Set(METRIC_DEFINITIONS.map((entry) => entry.id));
 const HUMAN_REVIEW_FEATURES = Object.freeze(['eye.eyelid_crease_or_hooded_category']);
 
+// Geometry availability is not enough when the parser has not localized the
+// corresponding face region. An unchecked/suppressed region cannot support a
+// per-feature photo proxy, even if a whole-image shape ratio was returned.
+const SCREENED_MODEL_REGIONS = Object.freeze({
+  'morphology:browSpan': 'brows',
+  'morphology:lipBalance': 'lips',
+  'morphology:noseExtent': 'nose',
+});
+
 // These are image-plane / model-boundary proxies, not the canonical FR293
 // feature or a traditional named-form verdict. Keep the map deliberately narrow.
 const CANDIDATE_SOURCES = Object.freeze({
@@ -41,6 +50,9 @@ function availableSource(capture, parsing, source) {
     );
   }
   if (!parsing || parsing.status !== 'completed') return false;
+  const modelRegion = SCREENED_MODEL_REGIONS[source];
+  if (modelRegion && parsing.regionScreening?.regions?.[modelRegion]?.status !== 'screened')
+    return false;
   if (source === 'eye:model_endpoints')
     return capture.viewRole === 'frontal' && parsing.eyeDirection?.status === 'available';
   if (source === 'morphology:browSpan')
@@ -60,9 +72,35 @@ function availableSource(capture, parsing, source) {
           Number.isFinite(metric.value) &&
           metric.value > 0,
       );
-    return profileValue || parsing.earRefinement?.status === 'applied';
+    return (
+      profileValue ||
+      (capture.viewRole === 'frontal' &&
+        parsing.regionScreening?.regions?.ears?.status === 'screened' &&
+        parsing.earRefinement?.status === 'applied')
+    );
   }
   throw Error('COVERAGE_UNKNOWN_SOURCE');
+}
+
+// Distinguish a model's unscreened region from an absent extractor in the
+// private failure trace. This does not change the underlying metric run.
+function regionScreeningFailure(capture, featureKey) {
+  if (capture.viewRole !== 'frontal' || capture.parsing?.status !== 'completed') return null;
+  for (const source of CANDIDATE_SOURCES[featureKey] || []) {
+    const region =
+      SCREENED_MODEL_REGIONS[source] || (source === 'ear:visible_model_candidate' ? 'ears' : null);
+    if (!region) continue;
+    const modelAvailable = source.startsWith('morphology:')
+      ? capture.parsing.morphology?.[source.slice('morphology:'.length)]?.status === 'available'
+      : capture.parsing.earRefinement?.status === 'applied';
+    if (!modelAvailable) continue;
+    const status = capture.parsing.regionScreening?.regions?.[region]?.status;
+    if (status !== 'screened')
+      return status === 'suppressed'
+        ? 'FACE_REGION_SCREENING_SUPPRESSED'
+        : 'FACE_REGION_NOT_SCREENED';
+  }
+  return null;
 }
 
 function summarizeHumanReviewEvidence(columns, captures, humanReviews) {
@@ -433,6 +471,7 @@ export function traceWholeFacePerCaptureReadiness(columns, captures, humanReview
         'deferred_unavailable';
       const candidate = feature.candidatePhotoCount > 0;
       const reviewerOnly = feature.humanReviewPhotoCount > 0;
+      const regionFailure = regionScreeningFailure(capture, feature.featureKey);
       let state, reason;
       if (deferred) {
         state = 'unavailable';
@@ -458,6 +497,9 @@ export function traceWholeFacePerCaptureReadiness(columns, captures, humanReview
       ) {
         state = 'unavailable';
         reason = parsingFailureReason;
+      } else if (regionFailure) {
+        state = 'unavailable';
+        reason = regionFailure;
       } else if (feature.canonicalCalculatorMaterialized) {
         state = 'calculation_only';
         reason = 'CANONICAL_CALCULATOR_WITHOUT_VERIFIED_PHOTO_INPUT';

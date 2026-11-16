@@ -107,6 +107,18 @@ describe('local canonical whole-face coverage audit', () => {
         metrics: [],
         parsing: {
           ...base,
+          regionScreening: {
+            backgroundRemoved: 0,
+            regions: Object.fromEntries(
+              ['skin', 'nose', 'lips', 'brows', 'ears'].map((id) => [
+                id,
+                {
+                  status: ['nose', 'lips', 'brows'].includes(id) ? 'screened' : 'unchecked',
+                  removedPixels: 0,
+                },
+              ]),
+            ),
+          },
           morphology: {
             ...base.morphology,
             browSpan: { status: 'available', ratios: [1.1, 1.2] },
@@ -128,6 +140,49 @@ describe('local canonical whole-face coverage audit', () => {
       });
     expect(feature(report, 'eyebrow.visible_hair_density_texture')?.candidatePhotoCount).toBe(0);
     expect(feature(report, 'forehead.visible_hairline_boundary')?.candidatePhotoCount).toBe(0);
+  });
+
+  it('requires a screened region for brow, lip and nose proxies while retaining independent eye numbers', () => {
+    const ref = 'capture-region-screen';
+    const base = parsing();
+    const capture = {
+      captureRef: ref,
+      viewRole: 'frontal' as const,
+      metrics: metrics(ref),
+      parsing: {
+        ...base,
+        regionScreening: {
+          backgroundRemoved: 0,
+          regions: {
+            ...base.regionScreening.regions,
+            brows: { status: 'suppressed', removedPixels: 0 },
+            lips: { status: 'screened', removedPixels: 0 },
+            nose: { status: 'unchecked', removedPixels: 0 },
+          },
+        },
+        morphology: {
+          ...base.morphology,
+          browSpan: { status: 'available', ratios: [1.1, 1.2] },
+          lipBalance: { status: 'available', upper: 0.1, lower: 0.2, opening: 0.03 },
+          noseExtent: { status: 'available', widthToEyeSpacing: 0.32, heightToEyeSpacing: 0.5 },
+        },
+      },
+    };
+    const report = summarizeWholeFaceCoverage(FR293_PRODUCT_COLUMN_MAP, [capture]);
+    expect(feature(report, 'eyebrow.span_arch_tail_orientation')?.candidatePhotoCount).toBe(0);
+    expect(feature(report, 'nose.alar_width_and_nostril_geometry')?.candidatePhotoCount).toBe(0);
+    expect(feature(report, 'mouth.visible_lip_fullness')?.candidatePhotoCount).toBe(1);
+    expect(feature(report, 'eye.width_height_ratio')?.candidatePhotoCount).toBe(1);
+    const readiness = summarizeWholeFacePerFeatureReadiness(FR293_PRODUCT_COLUMN_MAP, [capture]);
+    expect(
+      readiness.features.find((row) => row.featureKey === 'eyebrow.span_arch_tail_orientation')
+        ?.reasonCounts.FACE_REGION_SCREENING_SUPPRESSED,
+    ).toBe(1);
+    expect(
+      readiness.features.find((row) => row.featureKey === 'nose.alar_width_and_nostril_geometry')
+        ?.reasonCounts.FACE_REGION_NOT_SCREENED,
+    ).toBe(1);
+    expect(readiness.statusCounts.observed).toBe(0);
   });
 
   it('does not accept a profile as frontal metric evidence or invent hidden anatomy', () => {

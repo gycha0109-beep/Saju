@@ -86,6 +86,8 @@ describe('private whole-face readiness viewer projection', () => {
       'FACE_PARSING_EXECUTION_FAILED',
       'FACE_PARSING_TIMED_OUT',
       'FACE_PARSING_MODEL_UNAVAILABLE',
+      'FACE_REGION_NOT_SCREENED',
+      'FACE_REGION_SCREENING_SUPPRESSED',
     ]) {
       const failed = report();
       failed.captures[0]!.features[2]!.reason = reason;
