@@ -21,6 +21,7 @@ import {
   traceWholeFaceSourceGaps,
   traceWholeFaceExtensionRequirements,
   summarizeWholeFacePerFeatureReadiness,
+  summarizeScreenedModelProxyAvailability,
 } from '../../tools/face-reading/two-view/feature-coverage.mjs';
 import { FR282_RGB_SELFIE_FEATURE_ENTRIES } from '../../.face-reading-dist/rgb-selfie-feature-authority-matrix-fr282.js';
 
@@ -109,6 +110,7 @@ async function loadLocal(intake) {
   // Photo screening is a separate single-reviewer prerequisite, not an
   // eyelid annotation, a canonical measurement or an accuracy result.
   const captureScreenStore = await maybeJson(join(intake, 'capture-screen-human-reviews.json'));
+  let screeningForCoverage = {};
   let captureScreenReviewSummary = Object.freeze({
     ...summarizeCaptureScreenReviews({}, ids.length),
     staleSourceReviews: 0,
@@ -134,6 +136,21 @@ async function loadLocal(intake) {
       captureScreenStore,
       ids,
       currentDigests,
+    );
+    // Only source-current, single-reviewer pose/visibility selections enter
+    // the anonymous screen-qualified projection. Never pass photo digests.
+    screeningForCoverage = Object.fromEntries(
+      Object.entries(validated.records)
+        .filter(([ref, review]) => currentDigests.get(ref) === review.sourceSha256)
+        .map(([ref, review]) => [
+          ref,
+          {
+            pose: review.pose,
+            visibility: review.visibility,
+            humanReviewed: review.humanReviewed,
+            independentPoseValidated: review.independentPoseValidated,
+          },
+        ]),
     );
   }
 
@@ -203,6 +220,7 @@ async function loadLocal(intake) {
     staleHumanReviewCount,
     captureScreenReviewStoreValidated: Boolean(captureScreenStore),
     captureScreenReviewSummary,
+    screeningForCoverage,
   };
 }
 
@@ -229,6 +247,7 @@ async function main() {
         humanReviewStoreValidated: false,
         staleHumanReviewCount: 0,
         captureScreenReviewStoreValidated: false,
+        screeningForCoverage: {},
         captureScreenReviewSummary: {
           ...summarizeCaptureScreenReviews({}, 0),
           staleSourceReviews: 0,
@@ -252,6 +271,11 @@ async function main() {
     local.records,
     local.humanReviews,
   );
+  const screenedModelProxyAvailability = summarizeScreenedModelProxyAvailability(
+    FR293_PRODUCT_COLUMN_MAP,
+    local.records,
+    local.screeningForCoverage,
+  );
   const extensionRequirements = traceWholeFaceExtensionRequirements(
     await readFile(resolve('research/face-reading/whole-face-feature-mapping-20261105.md'), 'utf8'),
     FR293_PRODUCT_COLUMN_MAP.map((column) => column.featureKey),
@@ -263,6 +287,7 @@ async function main() {
         ...report,
         sourceTrace,
         perFeatureReadiness,
+        screenedModelProxyAvailability,
         extensionRequirements,
         evidenceSource: schemaOnly
           ? 'canonical_schema_only'

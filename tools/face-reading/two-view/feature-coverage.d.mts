@@ -208,8 +208,7 @@ export function traceWholeFacePerCaptureReadiness(
   humanReviews?: readonly CoverageHumanReview[],
 ): PerCaptureReadinessReport;
 
-export declare const WHOLE_FACE_READINESS_ROLLUP_VERSION:
-  'local-whole-face-feature-readiness-rollup@0.1.0';
+export declare const WHOLE_FACE_READINESS_ROLLUP_VERSION: 'local-whole-face-feature-readiness-rollup@0.1.0';
 
 export interface WholeFacePerFeatureReadinessFeature {
   readonly featureKey: string;
@@ -235,3 +234,42 @@ export declare function summarizeWholeFacePerFeatureReadiness(
   captures: readonly CoverageCapture[],
   humanReviews?: readonly CoverageHumanReview[],
 ): WholeFacePerFeatureReadinessReport;
+
+export declare const SCREENED_MODEL_PROXY_AVAILABILITY_VERSION: 'local-screened-model-proxy-availability@0.1.0';
+
+export type ScreenedCaptureStatus = Readonly<{
+  pose: 'frontal_usable_candidate' | 'not_frontal' | 'uncertain';
+  visibility: 'clear_enough_to_review' | 'partially_occluded' | 'unusable';
+  humanReviewed: true;
+  independentPoseValidated: false;
+}>;
+
+export interface ScreenedModelProxyAvailability {
+  readonly schemaVersion: typeof SCREENED_MODEL_PROXY_AVAILABILITY_VERSION;
+  readonly lifecycle: 'local_research_only';
+  readonly photoCount: number;
+  readonly canonicalFeatureCount: number;
+  readonly canonicalCalculatorCount: number;
+  readonly canonicalHardGapCount: number;
+  readonly rawModelProxySlots: number;
+  readonly frontalCandidatePhotos: number;
+  readonly excludedPhotos: number;
+  readonly notScreenedPhotos: number;
+  readonly partialVisibilityFrontalPhotos: number;
+  readonly frontalCandidateModelProxySlots: number;
+  readonly excludedModelProxySlots: number;
+  readonly notScreenedModelProxySlots: number;
+  readonly partialVisibilityRequiresRegionReview: boolean;
+  readonly independentPoseValidated: false;
+  readonly independentAccuracyValidated: false;
+  readonly canonicalF0Admitted: false;
+  readonly traditionalBindingAuthorized: false;
+  readonly productionAuthorized: false;
+  readonly sourcePhotoOrCaptureRefsEmitted: false;
+}
+
+export declare function summarizeScreenedModelProxyAvailability(
+  columns: readonly CoverageColumn[],
+  captures: readonly CoverageCapture[],
+  screenByCapture?: Readonly<Record<string, ScreenedCaptureStatus>>,
+): ScreenedModelProxyAvailability;

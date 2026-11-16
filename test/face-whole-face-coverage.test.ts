@@ -11,6 +11,8 @@ import {
   traceWholeFaceExtensionRequirements,
   summarizeWholeFacePerFeatureReadiness,
   WHOLE_FACE_READINESS_ROLLUP_VERSION,
+  summarizeScreenedModelProxyAvailability,
+  SCREENED_MODEL_PROXY_AVAILABILITY_VERSION,
 } from '../tools/face-reading/two-view/feature-coverage.mjs';
 import {
   METHOD_VERSION,
@@ -60,6 +62,72 @@ function parsing() {
 }
 
 describe('local canonical whole-face coverage audit', () => {
+  it('keeps raw model outputs separate from human pose-screened candidate availability', () => {
+    const refs = ['capture-eligible', 'capture-excluded', 'capture-unreviewed'];
+    const captures = refs.map((captureRef) => ({
+      captureRef,
+      viewRole: 'frontal' as const,
+      metrics: metrics(captureRef),
+    }));
+    const audited = {
+      'capture-eligible': {
+        pose: 'frontal_usable_candidate' as const,
+        visibility: 'partially_occluded' as const,
+        humanReviewed: true as const,
+        independentPoseValidated: false as const,
+      },
+      'capture-excluded': {
+        pose: 'not_frontal' as const,
+        visibility: 'clear_enough_to_review' as const,
+        humanReviewed: true as const,
+        independentPoseValidated: false as const,
+      },
+    };
+    const report = summarizeScreenedModelProxyAvailability(
+      FR293_PRODUCT_COLUMN_MAP,
+      captures,
+      audited,
+    );
+    expect(report).toMatchObject({
+      schemaVersion: SCREENED_MODEL_PROXY_AVAILABILITY_VERSION,
+      photoCount: 3,
+      canonicalFeatureCount: 29,
+      canonicalCalculatorCount: 18,
+      canonicalHardGapCount: 11,
+      frontalCandidatePhotos: 1,
+      excludedPhotos: 1,
+      notScreenedPhotos: 1,
+      partialVisibilityFrontalPhotos: 1,
+      partialVisibilityRequiresRegionReview: true,
+      independentPoseValidated: false,
+      independentAccuracyValidated: false,
+      canonicalF0Admitted: false,
+      traditionalBindingAuthorized: false,
+      sourcePhotoOrCaptureRefsEmitted: false,
+    });
+    expect(report.rawModelProxySlots).toBeGreaterThan(0);
+    expect(report.rawModelProxySlots).toBe(
+      report.frontalCandidateModelProxySlots +
+        report.excludedModelProxySlots +
+        report.notScreenedModelProxySlots,
+    );
+    expect(report.frontalCandidateModelProxySlots).toBe(report.rawModelProxySlots / 3);
+    expect(JSON.stringify(report)).not.toContain('capture-');
+    expect(() =>
+      summarizeScreenedModelProxyAvailability(FR293_PRODUCT_COLUMN_MAP, captures, {
+        invalid: audited['capture-eligible'],
+      }),
+    ).toThrow('SCREENED_MODEL_PROXY_INPUT_INVALID');
+    expect(() =>
+      summarizeScreenedModelProxyAvailability(FR293_PRODUCT_COLUMN_MAP, captures, {
+        'capture-eligible': {
+          ...audited['capture-eligible'],
+          independentPoseValidated: true as never,
+        },
+      }),
+    ).toThrow('SCREENED_MODEL_PROXY_INPUT_INVALID');
+  });
+
   it('uses the actual FR293 29-key map and keeps 18 calculators separate from photograph evidence', () => {
     const report = summarizeWholeFaceCoverage(FR293_PRODUCT_COLUMN_MAP, []);
     expect(report.schemaVersion).toBe(COVERAGE_VERSION);

@@ -621,3 +621,94 @@ export function summarizeWholeFacePerFeatureReadiness(columns, captures, humanRe
     features: Object.freeze(features),
   });
 }
+
+export const SCREENED_MODEL_PROXY_AVAILABILITY_VERSION =
+  'local-screened-model-proxy-availability@0.1.0';
+
+// A screening-qualified second view of existing model *candidates*, not a
+// replacement for the raw execution tally or independent anatomical accuracy.
+// No image, captureRef, geometry or reviewer provenance is emitted.
+export function summarizeScreenedModelProxyAvailability(columns, captures, screenByCapture = {}) {
+  const original = traceWholeFacePerCaptureReadiness(columns, captures);
+  if (
+    !screenByCapture ||
+    typeof screenByCapture !== 'object' ||
+    Array.isArray(screenByCapture) ||
+    Object.keys(screenByCapture).some(
+      (ref) => !original.captures.some((capture) => capture.captureRef === ref),
+    )
+  )
+    throw Error('SCREENED_MODEL_PROXY_INPUT_INVALID');
+
+  const counters = {
+    frontalCandidatePhotos: 0,
+    excludedPhotos: 0,
+    notScreenedPhotos: 0,
+    partialVisibilityFrontalPhotos: 0,
+    frontalCandidateModelProxySlots: 0,
+    excludedModelProxySlots: 0,
+    notScreenedModelProxySlots: 0,
+  };
+  for (const capture of original.captures) {
+    const review = screenByCapture[capture.captureRef];
+    if (
+      review &&
+      (Object.keys(review).length !== 4 ||
+        !['pose', 'visibility', 'humanReviewed', 'independentPoseValidated'].every((key) =>
+          Object.hasOwn(review, key),
+        ) ||
+        !['frontal_usable_candidate', 'not_frontal', 'uncertain'].includes(review.pose) ||
+        !['clear_enough_to_review', 'partially_occluded', 'unusable'].includes(review.visibility) ||
+        review.humanReviewed !== true ||
+        review.independentPoseValidated !== false)
+    )
+      throw Error('SCREENED_MODEL_PROXY_INPUT_INVALID');
+
+    const available = capture.features.filter(
+      (feature) => feature.state === 'candidate_only',
+    ).length;
+    if (!review) {
+      counters.notScreenedPhotos++;
+      counters.notScreenedModelProxySlots += available;
+    } else if (
+      capture.viewRole === 'frontal' &&
+      review.pose === 'frontal_usable_candidate' &&
+      review.visibility !== 'unusable'
+    ) {
+      counters.frontalCandidatePhotos++;
+      counters.frontalCandidateModelProxySlots += available;
+      if (review.visibility === 'partially_occluded') counters.partialVisibilityFrontalPhotos++;
+    } else {
+      counters.excludedPhotos++;
+      counters.excludedModelProxySlots += available;
+    }
+  }
+
+  if (
+    counters.frontalCandidatePhotos + counters.excludedPhotos + counters.notScreenedPhotos !==
+      original.photoCount ||
+    counters.frontalCandidateModelProxySlots +
+      counters.excludedModelProxySlots +
+      counters.notScreenedModelProxySlots !==
+      original.statusCounts.candidate_only
+  )
+    throw Error('SCREENED_MODEL_PROXY_SOURCE_MISMATCH');
+
+  return Object.freeze({
+    schemaVersion: SCREENED_MODEL_PROXY_AVAILABILITY_VERSION,
+    lifecycle: 'local_research_only',
+    photoCount: original.photoCount,
+    canonicalFeatureCount: original.canonicalFeatureCount,
+    canonicalCalculatorCount: original.canonicalCalculatorCount,
+    canonicalHardGapCount: original.canonicalHardGapCount,
+    rawModelProxySlots: original.statusCounts.candidate_only,
+    ...counters,
+    partialVisibilityRequiresRegionReview: counters.partialVisibilityFrontalPhotos > 0,
+    independentPoseValidated: false,
+    independentAccuracyValidated: false,
+    canonicalF0Admitted: false,
+    traditionalBindingAuthorized: false,
+    productionAuthorized: false,
+    sourcePhotoOrCaptureRefsEmitted: false,
+  });
+}
