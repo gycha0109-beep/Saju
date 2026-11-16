@@ -2320,12 +2320,18 @@ function renderWholeFaceReadingOverview(record, cards) {
     authorityNode.textContent = '전통 형태 판정과 개인별 관상 해석은 진행하지 않았습니다.';
     return;
   }
-  const report = summarizeMorphologyReadingEvidence(cards);
-  const screening = state.captureScreenReviews?.[record.captureRef];
+  const screeningEligibility = currentCaptureScreenEligibility(record);
+  const report = summarizeMorphologyReadingEvidence(cards, screeningEligibility);
   const screeningText =
-    screening?.humanReviewed === true && screening.pose === 'frontal_usable_candidate'
+    screeningEligibility === 'frontal_candidate'
       ? '사람 1명의 정면 후보 검토 기록이 있습니다(독립 자세 정답 아님).'
-      : '실제 정면 촬영 여부는 아직 사람 검토로 확정되지 않았습니다.';
+      : screeningEligibility === 'rejected'
+        ? '사람 촬영 상태 검토에서 정면 후보가 아니므로 종합 형태 설명을 보류합니다.'
+        : screeningEligibility === 'pending'
+          ? '사람 촬영 상태 검토가 없어 종합 형태 설명을 보류합니다.'
+          : screeningEligibility === 'unavailable'
+            ? '촬영 상태 검토 자료의 현재성을 확인할 수 없어 종합 형태 설명을 보류합니다.'
+            : '실제 정면 촬영 여부는 아직 사람 검토로 확정되지 않았습니다.';
   summaryNode.textContent =
     `8개 부위 중 모델 관찰 후보 ${report.modelCandidateRegionCount}개, ` +
     `관측 보류 ${report.withheldRegionCount}개. ${screeningText}`;

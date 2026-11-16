@@ -500,6 +500,36 @@ describe('one-photo whole-face reading evidence overview', () => {
     ).toHaveLength(3);
     expect(JSON.stringify(x)).not.toMatch(/captureRef|sourceSha256|rawLandmarks|faceMask/);
   });
+  it('withholds whole-face reading when a person rejects frontal capture or review is stale', () => {
+    const current = cards().map((card, index) =>
+      index < 2
+        ? { ...card, status: 'observed' as const, observation: 'MODEL_BROW_OR_EYE_PROXY' }
+        : card,
+    );
+    for (const [screen, phrase] of [
+      ['rejected', '정면 후보로 인정되지'],
+      ['pending', '사람 검토가 없어'],
+      ['unavailable', '무결성이 확인되지'],
+    ] as const) {
+      const report = summarizeMorphologyReadingEvidence(current, screen);
+      expect(report.modelCandidateRegionCount).toBe(0);
+      expect(report.withheldRegionCount).toBe(8);
+      expect(report.observations.every((item) => item.evidenceState === 'withheld')).toBe(true);
+      expect(report.observations.every((item) => item.description.includes(phrase))).toBe(true);
+      expect(JSON.stringify(report)).not.toContain('MODEL_BROW_OR_EYE_PROXY');
+      expect(report.canonicalF0Admitted).toBe(false);
+      expect(report.traditionalF1Matched).toBe(false);
+    }
+    expect(summarizeMorphologyReadingEvidence(current, 'frontal_candidate')).toMatchObject({
+      modelCandidateRegionCount: 2,
+      withheldRegionCount: 6,
+      traditionalInterpretationAuthorized: false,
+    });
+    expect(() =>
+      summarizeMorphologyReadingEvidence(current, 'independent_approved' as never),
+    ).toThrow('WHOLE_FACE_READING_SCREENING_INVALID');
+  });
+
   it('refuses a fabricated source permission, duplicate region, missing region or unknown state', () => {
     const current = cards();
     expect(() =>

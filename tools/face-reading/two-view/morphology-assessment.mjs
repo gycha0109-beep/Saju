@@ -234,7 +234,7 @@ export function assessMorphology({ record, result, catalogue, previous = false }
 // Reuse the existing eight item-first cards for a same-photo research overview.
 // An engineering card marked "observed" is still NOT independently validated F0.
 // No traditional named-form, life outcome or product interpretation is issued.
-export function summarizeMorphologyReadingEvidence(cards) {
+export function summarizeMorphologyReadingEvidence(cards, captureScreenEligibility = undefined) {
   const ids = ['eyes', 'brows', 'lips', 'nose', 'ears', 'forehead', 'cheeks', 'jaw'];
   if (
     !Array.isArray(cards) ||
@@ -252,8 +252,24 @@ export function summarizeMorphologyReadingEvidence(cards) {
     )
   )
     throw Error('WHOLE_FACE_READING_EVIDENCE_INVALID');
+  if (
+    ![undefined, 'frontal_candidate', 'pending', 'rejected', 'unavailable'].includes(
+      captureScreenEligibility,
+    )
+  )
+    throw Error('WHOLE_FACE_READING_SCREENING_INVALID');
+  const screenAllowsResearch =
+    captureScreenEligibility === undefined || captureScreenEligibility === 'frontal_candidate';
+  const screeningWithholdReason =
+    captureScreenEligibility === 'rejected'
+      ? '이 사진은 사람의 촬영 상태 검토에서 정면 후보로 인정되지 않아 형태 설명을 보류합니다.'
+      : captureScreenEligibility === 'pending'
+        ? '이 사진은 촬영 상태 사람 검토가 없어 형태 설명을 보류합니다.'
+        : '이 사진은 촬영 상태 검토 근거의 무결성이 확인되지 않아 형태 설명을 보류합니다.';
   const ordered = ids.map((id) => cards.find((card) => card.id === id));
-  const modelCandidates = ordered.filter((card) => card.status !== 'unavailable');
+  const modelCandidates = screenAllowsResearch
+    ? ordered.filter((card) => card.status !== 'unavailable')
+    : [];
   return Object.freeze({
     version: 'local-whole-face-reading-evidence@0.1.0',
     lifecycle: 'local_research_only',
@@ -267,8 +283,11 @@ export function summarizeMorphologyReadingEvidence(cards) {
         Object.freeze({
           id: card.id,
           title: card.title,
-          evidenceState: card.status === 'unavailable' ? 'withheld' : 'model_candidate_only',
-          description: card.observation,
+          evidenceState:
+            !screenAllowsResearch || card.status === 'unavailable'
+              ? 'withheld'
+              : 'model_candidate_only',
+          description: screenAllowsResearch ? card.observation : screeningWithholdReason,
         }),
       ),
     ),

@@ -26,6 +26,7 @@ export function summarizeMorphologyReadingEvidence(
       | 'traditionalBindingAuthorized'
     >
   >,
+  captureScreenEligibility?: 'frontal_candidate' | 'pending' | 'rejected' | 'unavailable',
 ): Readonly<{
   version: 'local-whole-face-reading-evidence@0.1.0';
   lifecycle: 'local_research_only';
