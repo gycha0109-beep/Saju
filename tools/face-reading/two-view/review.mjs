@@ -2130,6 +2130,7 @@ function renderGuidedMarking() {
   const locked = busy || captureScreenSaveBusy || reviewStoreNeedsRepair();
   const next = $('guided-marking-next');
   next.disabled = locked || queue.targets.length === 0;
+  $('guided-sticky-next').disabled = next.disabled;
   $('guided-marking-exit').hidden = !document.body.classList.contains('guided-marking-mode');
   $('guided-marking-count').textContent =
     '정면 후보 ' +
@@ -2153,6 +2154,12 @@ function renderGuidedMarking() {
       guidedPartNames[target.part] +
       (saved ? ' — 사람 표시 저장됨' : ' — 사람 표시 필요');
     $('guided-marking-instruction').textContent = guidedPartInstructions[target.part];
+    $('guided-sticky-title').textContent =
+      target.photoIndex + 1 + '번 사진 · ' + guidedPartNames[target.part];
+    $('guided-sticky-hint').textContent = saved
+      ? '사람 표시 저장됨 · 다음 부위로 이동할 수 있습니다.'
+      : '① 표시 모드 선택 → ② 보이는 선 표시 → ③ 표시 완료 → ④ 비공개 저장';
+    $('guided-sticky-next').textContent = saved ? '다음 미완료 부위' : '다음 부위 (미저장 시 보류)';
     next.textContent = saved ? '다음 미완료 부위 열기' : '다음 후보 열기 (미저장 시 보류)';
   }
   $('guided-marking-status').textContent = locked
@@ -2188,7 +2195,10 @@ $('guided-marking-next').onclick = () => {
   render();
   const section = $(guidedPartSections[target.part]);
   if (section && !section.hidden) section.scrollIntoView({ block: 'start' });
+  window.scrollTo({ left: 0, top: window.scrollY });
 };
+$('guided-sticky-next').onclick = () => $('guided-marking-next').click();
+$('guided-sticky-exit').onclick = () => $('guided-marking-exit').click();
 $('guided-marking-exit').onclick = () => {
   guidedMarkingTarget = null;
   document.body.classList.remove(

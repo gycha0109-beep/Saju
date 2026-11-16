@@ -357,6 +357,34 @@
       body.guided-marking-mode:not(.research-mode).guided-ear main > #ear-review:not([hidden]) { display: block !important; }
       body.guided-marking-mode:not(.research-mode) #capture-screen-review { display: block !important; }
       body.research-mode #guided-marking { display: none !important; }
+      #guided-sticky-nav { display: none; }
+      body.guided-marking-mode:not(.research-mode) #guided-sticky-nav {
+        display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+        padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
+        background: #182b44; border-top: 2px solid #a8cbfa; color: #f5f9ff;
+        gap: 12px; align-items: center; flex-wrap: wrap; box-shadow: 0 -5px 22px #0008;
+      }
+      #guided-sticky-nav strong { font-size: 16px; }
+      #guided-sticky-nav span { display: block; font-size: 12px; color: #d2e0f3; }
+      #guided-sticky-nav button { background: #2b4260; border-color: #829dbd; min-height: 44px; }
+      #guided-sticky-next { background: #245b53 !important; border-color: #9ce3cc !important; font-weight: 700; }
+      body.guided-marking-mode:not(.research-mode) main { padding-bottom: 150px; overflow-x: clip; }
+      body.guided-marking-mode:not(.research-mode) #eyelid-contour-review,
+      body.guided-marking-mode:not(.research-mode) #lip-border-review,
+      body.guided-marking-mode:not(.research-mode) #ear-review { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
+      body.guided-marking-mode:not(.research-mode) .eyelid-contour-group strong,
+      body.guided-marking-mode:not(.research-mode) .lip-border-review-group strong,
+      body.guided-marking-mode:not(.research-mode) .ear-review-group strong { min-width: 0; flex: 1 1 100%; }
+      body.guided-marking-mode:not(.research-mode) .eyelid-contour-group button,
+      body.guided-marking-mode:not(.research-mode) .lip-border-review-group button,
+      body.guided-marking-mode:not(.research-mode) .ear-review-group button { white-space: normal; }
+      body.guided-marking-mode:not(.research-mode) #guided-marking { scroll-margin-top: 14px; }
+      @media (max-width: 500px) {
+        #guided-sticky-nav { gap: 8px !important; }
+        #guided-sticky-nav > div { flex: 1 1 100%; }
+        #guided-sticky-nav button { flex: 1 1 44%; }
+        body.guided-marking-mode:not(.research-mode) main { padding-bottom: 170px; }
+      }
       @media (max-width: 500px) {
         main {
           padding: 12px;
@@ -383,6 +411,11 @@
     </style>
   </head>
   <body>
+    <nav id="guided-sticky-nav" aria-label="현재 얼굴 경계 검토" aria-live="polite">
+      <div><strong id="guided-sticky-title">얼굴 경계 검토</strong><span id="guided-sticky-hint">보이는 선만 표시하고 해당 도구에서 저장하세요.</span></div>
+      <button id="guided-sticky-next" type="button">다음 사진·부위</button>
+      <button id="guided-sticky-exit" type="button">검토 종료</button>
+    </nav>
     <main>
       <header>
         <h1>얼굴 측정</h1>

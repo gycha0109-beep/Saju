@@ -28,6 +28,15 @@ describe('private two-view review browser module routing', () => {
     const html = readFileSync(resolve(root, 'tools/face-reading/two-view/review.html'), 'utf8');
     expect(html).toContain('id="guided-marking"');
     expect(html).toContain('id="guided-marking-next"');
+    expect(html).toContain('id="guided-sticky-nav"');
+    expect(html).toContain('id="guided-sticky-title"');
+    expect(html).toContain('body.guided-marking-mode:not(.research-mode) #guided-sticky-nav');
+    expect(browser).toContain(
+      "$('guided-sticky-next').onclick = () => $('guided-marking-next').click()",
+    );
+    expect(browser).toContain(
+      "$('guided-sticky-exit').onclick = () => $('guided-marking-exit').click()",
+    );
     expect(html).toContain('id="simple-review-intro-text"');
     expect(browser).toContain('renderGuidedMarking();');
     expect(html).toContain('id="guided-marking-exit"');
