@@ -30,7 +30,9 @@ describe('private two-view review browser module routing', () => {
     expect(html).toContain('id="guided-marking-next"');
     expect(html).toContain('id="guided-sticky-nav"');
     expect(html).toContain('id="guided-sticky-title"');
-    expect(html).toContain('body.guided-marking-mode:not(.research-mode) #guided-sticky-nav');
+    expect(html).toContain(
+      'body.guided-marking-mode.guided-precision-mode:not(.research-mode) #guided-sticky-nav',
+    );
     expect(browser).toContain(
       "$('guided-sticky-next').onclick = () => $('guided-marking-next').click()",
     );
@@ -40,9 +42,15 @@ describe('private two-view review browser module routing', () => {
     expect(html).toContain('id="simple-review-intro-text"');
     expect(browser).toContain('renderGuidedMarking();');
     expect(html).toContain('id="guided-marking-exit"');
-    expect(html).toContain('guided-marking-mode:not(.research-mode).guided-eyelid');
-    expect(html).toContain('guided-marking-mode:not(.research-mode).guided-lip');
-    expect(html).toContain('guided-marking-mode:not(.research-mode).guided-ear');
+    expect(html).toContain(
+      'guided-marking-mode.guided-precision-mode:not(.research-mode).guided-eyelid',
+    );
+    expect(html).toContain(
+      'guided-marking-mode.guided-precision-mode:not(.research-mode).guided-lip',
+    );
+    expect(html).toContain(
+      'guided-marking-mode.guided-precision-mode:not(.research-mode).guided-ear',
+    );
     expect(browser).toContain('const queue = currentSamePhotoReviewQueue();');
     expect(browser).toContain(
       'guidedMarkingTarget = { photoIndex: target.photoIndex, part: target.part }',
@@ -52,6 +60,21 @@ describe('private two-view review browser module routing', () => {
     expect(browser).toContain('guidedTargetSaved(target)');
     expect(browser).toContain('reviewStoreNeedsRepair()');
     expect(browser).not.toContain('captureScreenReviews = Object.fromEntries');
+  });
+  it('summarizes model candidates without requiring manual contour annotation', () => {
+    const html = readFileSync(resolve(root, 'tools/face-reading/two-view/review.html'), 'utf8');
+    expect(html).toContain('id="guided-auto-summary"');
+    expect(html).toContain('id="guided-precision-details"');
+    expect(html).toContain('이 목록을 전부 클릭하거나 각 경계를 직접 그릴 필요는 없습니다.');
+    expect(html).toContain('body.screening-complete:not(.research-mode) .simple-review-options');
+    expect(browser).toContain('summaryList.replaceChildren();');
+    expect(browser).toContain("currentCaptureScreenEligibility(record) !== 'frontal_candidate'");
+    expect(browser).toContain(
+      "document.body.classList.toggle('screening-complete', screeningComplete)",
+    );
+    expect(browser).toContain(
+      "document.body.classList.add('guided-marking-mode', 'guided-precision-mode')",
+    );
   });
   it('serves landmark worker imports including the transient lower-face envelope module', () => {
     const worker = readFileSync(

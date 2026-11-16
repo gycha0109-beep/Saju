@@ -2120,6 +2120,7 @@ function renderGuidedMarking() {
     records.length > 0 &&
     Object.keys(state.captureScreenReviews || {}).length === records.length;
   panel.hidden = !screeningComplete;
+  document.body.classList.toggle('screening-complete', screeningComplete);
   $('simple-review-intro-text').textContent = screeningComplete
     ? '사진 ' +
       records.length +
@@ -2127,6 +2128,27 @@ function renderGuidedMarking() {
     : '사진을 보고 정면 여부와 가림 상태 두 질문에 답한 뒤 저장하세요.';
   if (!screeningComplete) return;
   const queue = currentSamePhotoReviewQueue();
+  const byPhoto = new Map();
+  for (const target of queue.targets) {
+    const parts = byPhoto.get(target.photoIndex) || [];
+    parts.push(guidedPartNames[target.part]);
+    byPhoto.set(target.photoIndex, parts);
+  }
+  const summaryList = $('guided-auto-summary');
+  summaryList.replaceChildren();
+  for (const [index, record] of records.entries()) {
+    if (currentCaptureScreenEligibility(record) !== 'frontal_candidate') continue;
+    const item = document.createElement('li');
+    const parts = byPhoto.get(index) || [];
+    item.textContent =
+      index +
+      1 +
+      '번 사진 — ' +
+      (parts.length
+        ? parts.join(' · ') + ' (모델 분석 선행조건 충족)'
+        : '현재 모델 기준 추가 비교 후보 없음');
+    summaryList.append(item);
+  }
   const locked = busy || captureScreenSaveBusy || reviewStoreNeedsRepair();
   const next = $('guided-marking-next');
   next.disabled = locked || queue.targets.length === 0;
@@ -2189,7 +2211,7 @@ $('guided-marking-next').onclick = () => {
   activeAnnotationTool = target.part;
   original = true;
   $('old-overlay').checked = false;
-  document.body.classList.add('guided-marking-mode');
+  document.body.classList.add('guided-marking-mode', 'guided-precision-mode');
   document.body.classList.remove('guided-eyelid', 'guided-lip', 'guided-ear');
   document.body.classList.add('guided-' + target.part);
   render();
@@ -2203,6 +2225,7 @@ $('guided-marking-exit').onclick = () => {
   guidedMarkingTarget = null;
   document.body.classList.remove(
     'guided-marking-mode',
+    'guided-precision-mode',
     'guided-eyelid',
     'guided-lip',
     'guided-ear',
@@ -2523,6 +2546,7 @@ function setRecords(next, nextMode) {
   guidedMarkingTarget = null;
   document.body.classList.remove(
     'guided-marking-mode',
+    'guided-precision-mode',
     'guided-eyelid',
     'guided-lip',
     'guided-ear',
