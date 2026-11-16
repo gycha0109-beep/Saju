@@ -80,6 +80,26 @@ describe('private whole-face readiness viewer projection', () => {
     for (const token of ['sourcePath', 'sourceSha256', 'rawCoordinates', 'sourceDigest', 'value'])
       expect(serialized).not.toContain(token);
   });
+  it('keeps failed landmark and parsing reasons available to the existing private review screen', () => {
+    for (const reason of [
+      'FACE_LANDMARK_DETECTION_FAILED',
+      'FACE_PARSING_EXECUTION_FAILED',
+      'FACE_PARSING_TIMED_OUT',
+      'FACE_PARSING_MODEL_UNAVAILABLE',
+    ]) {
+      const failed = report();
+      failed.captures[0]!.features[2]!.reason = reason;
+      const view = projectPrivatePhotoReadiness(failed, captures, keys, v);
+      expect(view.captures['capture-01']!.features[2]).toMatchObject({
+        state: 'unavailable',
+        reason,
+      });
+    }
+    const unexpected = report();
+    unexpected.captures[0]!.features[2]!.reason = 'UNKNOWN_MODEL_FAILURE';
+    expect(() => projectPrivatePhotoReadiness(unexpected, captures, keys, v)).toThrow();
+  });
+
   it('rejects version drift, forged authority and shape changes', () => {
     expect(() =>
       projectPrivatePhotoReadiness(report(), captures, keys, { ...v, metric: 'other' }),

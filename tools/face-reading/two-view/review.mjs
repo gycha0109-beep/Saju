@@ -1390,6 +1390,10 @@ const readinessReasons = {
   ENGINEERING_PROXY_NOT_CANONICAL: '모델 후보로 정규 측정 검증 전',
   SINGLE_REVIEWER_NOT_INDEPENDENT_GROUND_TRUTH: '독립 사람 정답이 아님',
   FRONTAL_CAPTURE_REQUIRED: '정면 사진 필요',
+  FACE_LANDMARK_DETECTION_FAILED: '얼굴 기준점 검출 실패',
+  FACE_PARSING_EXECUTION_FAILED: '얼굴 분할 모델 분석 실패',
+  FACE_PARSING_TIMED_OUT: '얼굴 분할 모델 시간 초과',
+  FACE_PARSING_MODEL_UNAVAILABLE: '얼굴 분할 모델 사용 불가',
   CANONICAL_CALCULATOR_WITHOUT_VERIFIED_PHOTO_INPUT: '사진 입력 경계 검증 필요',
   NO_VERIFIED_IMAGE_EXTRACTOR: '검증된 부위별 이미지 관측기 없음',
 };

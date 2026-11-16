@@ -398,6 +398,15 @@ export function traceWholeFacePerCaptureReadiness(columns, captures, humanReview
     const review = reviewByCapture.get(capture.captureRef);
     const local = summarizeWholeFaceCoverage(columns, [capture], review ? [review] : []);
     const hasRunEvidence = capture.metrics.length > 0 || Boolean(capture.parsing);
+    // A failed face parser is execution evidence, not evidence that the
+    // parser-dependent image shape could be measured. Other metric-only
+    // features remain independently reportable.
+    const parsingFailureReason =
+      {
+        PARSING_FAILED: 'FACE_PARSING_EXECUTION_FAILED',
+        PARSING_TIMEOUT: 'FACE_PARSING_TIMED_OUT',
+        PARSING_MODEL_UNAVAILABLE: 'FACE_PARSING_MODEL_UNAVAILABLE',
+      }[capture.parsing?.status === 'failed' ? capture.parsing.reason : ''] ?? null;
     // A completed parser batch is not evidence that the landmark model found
     // a face. The existing frontal metric contract explicitly distinguishes
     // face_not_detected from a missing/unverified canonical extractor.
@@ -443,6 +452,12 @@ export function traceWholeFacePerCaptureReadiness(columns, captures, humanReview
       } else if (landmarkFaceNotDetected) {
         state = 'unavailable';
         reason = 'FACE_LANDMARK_DETECTION_FAILED';
+      } else if (
+        parsingFailureReason &&
+        CANDIDATE_SOURCES[feature.featureKey]?.some((source) => !source.startsWith('metric:'))
+      ) {
+        state = 'unavailable';
+        reason = parsingFailureReason;
       } else if (feature.canonicalCalculatorMaterialized) {
         state = 'calculation_only';
         reason = 'CANONICAL_CALCULATOR_WITHOUT_VERIFIED_PHOTO_INPUT';

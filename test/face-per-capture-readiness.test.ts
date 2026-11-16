@@ -81,6 +81,45 @@ describe('29 canonical features per private photo research evidence', () => {
     expect(report.statusCounts.candidate_only).toBe(1);
   });
 
+  it('distinguishes parsing execution failures from missing calculators without hiding valid eye metrics', () => {
+    for (const [failure, expectedReason] of [
+      ['PARSING_FAILED', 'FACE_PARSING_EXECUTION_FAILED'],
+      ['PARSING_TIMEOUT', 'FACE_PARSING_TIMED_OUT'],
+      ['PARSING_MODEL_UNAVAILABLE', 'FACE_PARSING_MODEL_UNAVAILABLE'],
+    ] as const) {
+      const ref = 'capture-09';
+      const report = traceWholeFacePerCaptureReadiness(FR293_PRODUCT_COLUMN_MAP, [
+        {
+          ...capture(ref, [ratio(ref, 'eye_aperture_ratio'), ratio(ref, 'eye_span_ratio')]),
+          parsing: {
+            methodVersion: 'engineering.face-parsing.yakhyo-resnet18@0.7.0',
+            candidateOnly: true,
+            status: 'failed',
+            reason: failure,
+          },
+        },
+      ]);
+      expect(row(report, 0, 'eyebrow.span_arch_tail_orientation')).toMatchObject({
+        state: 'unavailable',
+        reason: expectedReason,
+        canonicalObservationAdmitted: false,
+      });
+      expect(row(report, 0, 'nose.alar_width_and_nostril_geometry')).toMatchObject({
+        state: 'unavailable',
+        reason: expectedReason,
+      });
+      expect(row(report, 0, 'eye.width_height_ratio')).toMatchObject({
+        state: 'candidate_only',
+        reason: 'ENGINEERING_PROXY_NOT_CANONICAL',
+      });
+      expect(row(report, 0, 'eye.inter_eye_spacing_ratio')).toMatchObject({
+        state: 'calculation_only',
+        reason: 'CANONICAL_CALCULATOR_WITHOUT_VERIFIED_PHOTO_INPUT',
+      });
+      expect(report.statusCounts.observed).toBe(0);
+    }
+  });
+
   it('classifies single human review evidence as partial, never validated observation', () => {
     const captureRef = 'capture-03';
     const report = traceWholeFacePerCaptureReadiness(
