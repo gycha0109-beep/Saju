@@ -344,6 +344,19 @@
       body:not(.research-mode) #capture-screen-review .toolbar > label { display: none !important; }
       body.research-mode .simple-review-options { display: none !important; }
       body.research-mode .simple-review-intro p { display: none !important; }
+      #guided-marking { margin-top: 16px; padding: 14px; border: 1px solid #657997; border-radius: 11px; background: #203147; }
+      #guided-marking p { font-size: 15px; }
+      #guided-marking button { min-height: 46px; }
+      body.guided-marking-mode .simple-review-options,
+      body.guided-marking-mode #capture-screen-review > .toolbar,
+      body.guided-marking-mode #capture-screen-review-status { display: none !important; }
+      body.guided-marking-mode .viewer { position: sticky; top: 5px; z-index: 8; height: min(48vh, 420px); }
+      body.guided-marking-mode #strip { display: none; }
+      body.guided-marking-mode:not(.research-mode).guided-eyelid main > #eyelid-contour-review:not([hidden]),
+      body.guided-marking-mode:not(.research-mode).guided-lip main > #lip-border-review:not([hidden]),
+      body.guided-marking-mode:not(.research-mode).guided-ear main > #ear-review:not([hidden]) { display: block !important; }
+      body.guided-marking-mode:not(.research-mode) #capture-screen-review { display: block !important; }
+      body.research-mode #guided-marking { display: none !important; }
       @media (max-width: 500px) {
         main {
           padding: 12px;
@@ -377,7 +390,7 @@
         <a href="/">기존 전체 표시</a>
       </header>
       <div class="simple-review-intro">
-        <p><strong>사진 1장씩 확인하면 됩니다.</strong> 사진을 보고 아래 두 질문에 답한 다음 저장하세요.</p>
+        <p id="simple-review-intro-text"><strong>사진 1장씩 확인하면 됩니다.</strong> 사진을 보고 아래 두 질문에 답한 다음 저장하세요.</p>
         <button id="research-mode-toggle" type="button" aria-pressed="false">개발용 상세 화면 보기</button>
       </div>
       <div class="inputs">
@@ -470,6 +483,17 @@
           <button id="capture-screen-next" type="button">다음 사진으로</button>
         </div>
         <p id="capture-screen-review-status" class="note" role="status"></p>
+        <div id="guided-marking" hidden>
+          <h3>다음 단계: 얼굴 경계 확인</h3>
+          <p id="guided-marking-count" role="status">저장된 정면 사진과 분석 결과를 확인합니다.</p>
+          <p id="guided-marking-target" role="status">아래 버튼으로 검토할 사진과 부위를 열 수 있습니다.</p>
+          <p id="guided-marking-instruction" class="note">사진에 실제로 보이는 선만 표시하세요. 가려져 있으면 해당 부위만 보류할 수 있습니다.</p>
+          <div class="toolbar">
+            <button type="button" id="guided-marking-next" disabled>첫 번째 부위 확인하기</button>
+            <button type="button" id="guided-marking-exit" hidden>사진 상태 검토로 돌아가기</button>
+          </div>
+          <p id="guided-marking-status" class="note" role="status">사람이 직접 표시한 경계만 저장합니다. 모델 선을 정답으로 복사하지 않습니다.</p>
+        </div>
       </section>
       <section aria-labelledby="readiness-heading">
         <h2 id="readiness-heading">사진별 정규 29개 관측 상태</h2>

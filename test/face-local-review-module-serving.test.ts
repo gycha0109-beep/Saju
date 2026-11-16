@@ -24,6 +24,26 @@ describe('private two-view review browser module routing', () => {
     expect(browser).toContain("original = nextMode === 'existing'");
     expect(browser).toContain('state.captureScreenReviews = {');
   });
+  it('guides an already screened human reviewer to pending eye, lip and ear contours without creating labels', () => {
+    const html = readFileSync(resolve(root, 'tools/face-reading/two-view/review.html'), 'utf8');
+    expect(html).toContain('id="guided-marking"');
+    expect(html).toContain('id="guided-marking-next"');
+    expect(html).toContain('id="simple-review-intro-text"');
+    expect(browser).toContain('renderGuidedMarking();');
+    expect(html).toContain('id="guided-marking-exit"');
+    expect(html).toContain('guided-marking-mode:not(.research-mode).guided-eyelid');
+    expect(html).toContain('guided-marking-mode:not(.research-mode).guided-lip');
+    expect(html).toContain('guided-marking-mode:not(.research-mode).guided-ear');
+    expect(browser).toContain('const queue = currentSamePhotoReviewQueue();');
+    expect(browser).toContain(
+      'guidedMarkingTarget = { photoIndex: target.photoIndex, part: target.part }',
+    );
+    expect(browser).toContain('activeAnnotationTool = target.part;');
+    expect(browser).toContain('original = true;');
+    expect(browser).toContain('guidedTargetSaved(target)');
+    expect(browser).toContain('reviewStoreNeedsRepair()');
+    expect(browser).not.toContain('captureScreenReviews = Object.fromEntries');
+  });
   it('serves landmark worker imports including the transient lower-face envelope module', () => {
     const worker = readFileSync(
       resolve(root, 'tools/face-reading/two-view/landmarks-worker.mjs'),

@@ -80,6 +80,7 @@ let state,
   busy = false,
   current2dSweepActive = false;
 let lastHumanReviewTarget = null;
+let guidedMarkingTarget = null;
 const results = new Map(),
   blobUrls = new Set(),
   files = new Map(),
@@ -2033,6 +2034,7 @@ function renderCaptureScreenReview(record) {
         ? '이 사진의 단독 사람 검토 기록이 있습니다. 변경하려면 원본을 확인한 뒤 다시 선택해 저장하세요.'
         : '아직 검토 기록이 없습니다. 원본을 표시하고 사진 자세와 가림 상태를 직접 선택하세요.');
   captureScreenDraftReady();
+  renderGuidedMarking();
 }
 function captureScreenDraftReady() {
   const validPose = ['frontal_usable_candidate', 'not_frontal', 'uncertain'].includes(
@@ -2082,6 +2084,122 @@ $('research-mode-toggle').onclick = () => {
     original = true;
     render();
   }
+};
+const guidedPartNames = Object.freeze({
+  eyelid: '눈꺼풀',
+  lip: '입술',
+  ear: '귀',
+});
+const guidedPartSections = Object.freeze({
+  eyelid: 'eyelid-contour-review',
+  lip: 'lip-border-review',
+  ear: 'ear-review',
+});
+const guidedPartInstructions = Object.freeze({
+  eyelid:
+    '사진의 왼쪽과 오른쪽 눈에서 보이는 위쪽 눈꺼풀 경계·쌍꺼풀 주름·덮인 피부만 직접 표시하세요. 안 보이는 선은 추측하지 말고 해당 상태를 보류로 선택하세요.',
+  lip: '입술의 실제 바깥 경계와 입꼬리를 직접 표시하세요. 가린 곳은 부분 표시하거나 보류하세요. 사진에 없는 경계를 그리지 마세요.',
+  ear: '양쪽 귀에서 실제로 보이는 바깥선·귓불·얼굴과 맞닿는 위치만 표시하세요. 머리카락에 가린 곳은 부분 표시하거나 보류하세요.',
+});
+function guidedTargetSaved(target) {
+  if (!target || !records[target.photoIndex]) return false;
+  const captureRef = records[target.photoIndex].captureRef;
+  return Boolean(
+    {
+      eyelid: state?.eyelidContourReviews,
+      lip: state?.lipReviews,
+      ear: state?.earReviews,
+    }[target.part]?.[captureRef],
+  );
+}
+function renderGuidedMarking() {
+  const panel = $('guided-marking');
+  const screeningComplete =
+    mode === 'existing' &&
+    state?.researchIntake?.researchOnly === true &&
+    records.length > 0 &&
+    Object.keys(state.captureScreenReviews || {}).length === records.length;
+  panel.hidden = !screeningComplete;
+  $('simple-review-intro-text').textContent = screeningComplete
+    ? '사진 ' +
+      records.length +
+      '장의 촬영 상태 검토가 저장됐습니다. 아래에서 실제 눈꺼풀·입술·귀 경계를 확인하세요.'
+    : '사진을 보고 정면 여부와 가림 상태 두 질문에 답한 뒤 저장하세요.';
+  if (!screeningComplete) return;
+  const queue = currentSamePhotoReviewQueue();
+  const locked = busy || captureScreenSaveBusy || reviewStoreNeedsRepair();
+  const next = $('guided-marking-next');
+  next.disabled = locked || queue.targets.length === 0;
+  $('guided-marking-exit').hidden = !document.body.classList.contains('guided-marking-mode');
+  $('guided-marking-count').textContent =
+    '정면 후보 ' +
+    queue.captureScreenReadySingleReviewerPhotos +
+    '장 · 모델과 비교할 수 있는 미완료 부위 ' +
+    queue.reviewTargetsCount +
+    '건 · 아직 사람이 표시한 경계는 독립적인 정확도 정답이 아닙니다.';
+  const target = guidedMarkingTarget;
+  if (!target || !document.body.classList.contains('guided-marking-mode')) {
+    next.textContent = '첫 번째 사진·부위 확인하기';
+    $('guided-marking-target').textContent =
+      '검토할 사진을 하나씩 열고, 모델 경계가 아닌 실제 보이는 선을 표시합니다.';
+    $('guided-marking-instruction').textContent =
+      '보이지 않는 부위는 보류할 수 있습니다. 저장하지 않은 부위는 완료 처리하지 않습니다.';
+  } else {
+    const saved = guidedTargetSaved(target);
+    $('guided-marking-target').textContent =
+      '현재: ' +
+      (target.photoIndex + 1) +
+      '번 사진 · ' +
+      guidedPartNames[target.part] +
+      (saved ? ' — 사람 표시 저장됨' : ' — 사람 표시 필요');
+    $('guided-marking-instruction').textContent = guidedPartInstructions[target.part];
+    next.textContent = saved ? '다음 미완료 부위 열기' : '다음 후보 열기 (미저장 시 보류)';
+  }
+  $('guided-marking-status').textContent = locked
+    ? '저장 기록 오류 또는 진행 중인 분석을 확인해야 다음 부위를 열 수 있습니다.'
+    : queue.targets.length
+      ? '표시 도구에서 보이는 경계를 직접 그리거나 가림·보류를 선택하고 저장하세요. 저장하지 않은 부위는 남겨둡니다.'
+      : '현재 모델 조건과 저장 상태에서 추가로 열 수 있는 후보가 없습니다. 사람 정확도 검증이 완료됐다는 뜻은 아닙니다.';
+}
+$('guided-marking-next').onclick = () => {
+  if (
+    busy ||
+    mode !== 'existing' ||
+    !state?.researchIntake?.researchOnly ||
+    reviewStoreNeedsRepair()
+  )
+    return;
+  const queue = currentSamePhotoReviewQueue();
+  if (!queue.targets.length) return;
+  const index = queue.targets.findIndex(
+    (item) =>
+      item.photoIndex === guidedMarkingTarget?.photoIndex &&
+      item.part === guidedMarkingTarget?.part,
+  );
+  const target = queue.targets[(index + 1) % queue.targets.length];
+  guidedMarkingTarget = { photoIndex: target.photoIndex, part: target.part };
+  selected = target.photoIndex;
+  activeAnnotationTool = target.part;
+  original = true;
+  $('old-overlay').checked = false;
+  document.body.classList.add('guided-marking-mode');
+  document.body.classList.remove('guided-eyelid', 'guided-lip', 'guided-ear');
+  document.body.classList.add('guided-' + target.part);
+  render();
+  const section = $(guidedPartSections[target.part]);
+  if (section && !section.hidden) section.scrollIntoView({ block: 'start' });
+};
+$('guided-marking-exit').onclick = () => {
+  guidedMarkingTarget = null;
+  document.body.classList.remove(
+    'guided-marking-mode',
+    'guided-eyelid',
+    'guided-lip',
+    'guided-ear',
+  );
+  original = true;
+  render();
+  $('capture-screen-review').scrollIntoView({ block: 'start' });
 };
 $('capture-screen-pose').onchange = captureScreenDraftReady;
 $('capture-screen-visibility').onchange = captureScreenDraftReady;
@@ -2392,6 +2510,13 @@ function render() {
 }
 function setRecords(next, nextMode) {
   lastHumanReviewTarget = null;
+  guidedMarkingTarget = null;
+  document.body.classList.remove(
+    'guided-marking-mode',
+    'guided-eyelid',
+    'guided-lip',
+    'guided-ear',
+  );
   records = next;
   mode = nextMode;
   selected = 0;
