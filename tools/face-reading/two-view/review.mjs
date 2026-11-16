@@ -3,7 +3,7 @@ import { PreviewJobs } from './jobs.mjs';
 import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
 import { PARSING_GROUPS, PARSING_VERSION, containSize } from './parsing-contract.mjs';
 import { PROFILE_DEFINITIONS } from './profile-metrics.mjs';
-import { assessMorphology } from './morphology-assessment.mjs';
+import { assessMorphology, summarizeMorphologyReadingEvidence } from './morphology-assessment.mjs';
 import { attachBrowCenterlineReview } from './brow-centerline-review-ui.mjs';
 import { attachNoseDetailReview } from './nose-detail-review-ui.mjs';
 import { compareNoseMaskToHumanAlarSpans } from './nose-model-human-alar-span.mjs';
@@ -2124,6 +2124,37 @@ $('capture-screen-save').onclick = async () => {
     render();
   }
 };
+function renderWholeFaceReadingOverview(record, cards) {
+  const summaryNode = $('whole-face-reading-summary');
+  const itemsNode = $('whole-face-reading-items');
+  const authorityNode = $('whole-face-reading-authority');
+  itemsNode.replaceChildren();
+  if (cards.length === 0) {
+    summaryNode.textContent = '이 사진의 형태 관측 자료가 준비되지 않았습니다.';
+    authorityNode.textContent = '전통 형태 판정과 개인별 관상 해석은 진행하지 않았습니다.';
+    return;
+  }
+  const report = summarizeMorphologyReadingEvidence(cards);
+  const screening = state.captureScreenReviews?.[record.captureRef];
+  const screeningText =
+    screening?.humanReviewed === true && screening.pose === 'frontal_usable_candidate'
+      ? '사람 1명의 정면 후보 검토 기록이 있습니다(독립 자세 정답 아님).'
+      : '실제 정면 촬영 여부는 아직 사람 검토로 확정되지 않았습니다.';
+  summaryNode.textContent =
+    `8개 부위 중 모델 관찰 후보 ${report.modelCandidateRegionCount}개, ` +
+    `관측 보류 ${report.withheldRegionCount}개. ${screeningText}`;
+  for (const item of report.observations) {
+    const listItem = document.createElement('li');
+    listItem.textContent =
+      `${item.title} — ${item.evidenceState === 'withheld' ? '근거 부족: ' : '모델 관측 후보: '}` +
+      item.description;
+    itemsNode.append(listItem);
+  }
+  authorityNode.textContent =
+    `기존 전통 문헌의 부위별 출처 단서 ${report.sourceContextRegionCount}개 영역 연결. ` +
+    '이는 개인에게 적용한 형태 조건이 아닙니다. ' +
+    '독립 사람 정확도 0건 확인 상태로 전통 형태 분류·종합 관상 해석은 보류합니다.';
+}
 function render() {
   const record = records[selected];
   if (!record) return;
@@ -2148,6 +2179,7 @@ function render() {
   const cards = state.readingCatalogue
     ? assessMorphology({ record, result, catalogue: state.readingCatalogue, previous })
     : [];
+  renderWholeFaceReadingOverview(record, cards);
   for (const card of cards) {
     const node = document.createElement('article');
     node.className = 'morphology-card';

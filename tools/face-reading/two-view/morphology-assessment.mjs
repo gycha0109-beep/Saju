@@ -217,3 +217,53 @@ export function assessMorphology({ record, result, catalogue, previous = false }
     return card;
   });
 }
+
+// Reuse the existing eight item-first cards for a same-photo research overview.
+// An engineering card marked "observed" is still NOT independently validated F0.
+// No traditional named-form, life outcome or product interpretation is issued.
+export function summarizeMorphologyReadingEvidence(cards) {
+  const ids = ['eyes', 'brows', 'lips', 'nose', 'ears', 'forehead', 'cheeks', 'jaw'];
+  if (
+    !Array.isArray(cards) ||
+    cards.length !== ids.length ||
+    new Set(cards.map((card) => card?.id)).size !== ids.length ||
+    cards.some(
+      (card) =>
+        !ids.includes(card?.id) ||
+        !['observed', 'partial', 'unavailable'].includes(card.status) ||
+        card.traditionalBindingAuthorized !== false ||
+        !Array.isArray(card.sourceRefs) ||
+        typeof card.title !== 'string' ||
+        typeof card.observation !== 'string' ||
+        !Array.isArray(card.missing),
+    )
+  )
+    throw Error('WHOLE_FACE_READING_EVIDENCE_INVALID');
+  const ordered = ids.map((id) => cards.find((card) => card.id === id));
+  const modelCandidates = ordered.filter((card) => card.status !== 'unavailable');
+  return Object.freeze({
+    version: 'local-whole-face-reading-evidence@0.1.0',
+    lifecycle: 'local_research_only',
+    regionCount: ids.length,
+    modelCandidateRegionCount: modelCandidates.length,
+    withheldRegionCount: ids.length - modelCandidates.length,
+    sourceContextRegionCount: ordered.filter((card) => card.sourceRefs.length > 0).length,
+    // Only photo-plane descriptions from the existing item assessor, never F1 claims.
+    observations: Object.freeze(
+      ordered.map((card) =>
+        Object.freeze({
+          id: card.id,
+          title: card.title,
+          evidenceState: card.status === 'unavailable' ? 'withheld' : 'model_candidate_only',
+          description: card.observation,
+        }),
+      ),
+    ),
+    independentHumanAccuracyValidated: false,
+    canonicalF0Admitted: false,
+    traditionalF1Matched: false,
+    traditionalInterpretationAuthorized: false,
+    productionAuthorized: false,
+    rawBiometricDataIncluded: false,
+  });
+}

@@ -4,7 +4,10 @@ import {
   validateMorphology,
   unavailableMorphology,
 } from '../tools/face-reading/two-view/morphology-geometry.mjs';
-import { assessMorphology } from '../tools/face-reading/two-view/morphology-assessment.mjs';
+import {
+  assessMorphology,
+  summarizeMorphologyReadingEvidence,
+} from '../tools/face-reading/two-view/morphology-assessment.mjs';
 import { readingCatalogue } from '../tools/face-reading/two-view/reading-catalogue.mjs';
 import {
   validateParsingSummary,
@@ -411,5 +414,63 @@ describe('visible morphology measurements and item-first assessment', () => {
     ]);
     expect(cards.find((card) => card.id === 'eyes')?.status).toBe('partial');
   });
+});
 
+describe('one-photo whole-face reading evidence overview', () => {
+  const cards = () =>
+    readingCatalogue().items.map((item) => ({
+      ...item,
+      status: 'unavailable' as const,
+      observation: '사진상 근거 부족',
+      missing: [item.requiredObservation],
+      traditionalBindingAuthorized: false as const,
+    }));
+  it('projects all eight items without promoting model geometry to F0 or F1', () => {
+    const current = cards().map((card, index) =>
+      index < 3
+        ? {
+            ...card,
+            status: index === 2 ? ('partial' as const) : ('observed' as const),
+            observation: '사진상 모델 경계 후보',
+          }
+        : card,
+    );
+    const x = summarizeMorphologyReadingEvidence(current);
+    expect(x).toMatchObject({
+      lifecycle: 'local_research_only',
+      regionCount: 8,
+      modelCandidateRegionCount: 3,
+      withheldRegionCount: 5,
+      independentHumanAccuracyValidated: false,
+      canonicalF0Admitted: false,
+      traditionalF1Matched: false,
+      traditionalInterpretationAuthorized: false,
+      productionAuthorized: false,
+      rawBiometricDataIncluded: false,
+    });
+    expect(x.observations).toHaveLength(8);
+    expect(
+      x.observations.filter((row) => row.evidenceState === 'model_candidate_only'),
+    ).toHaveLength(3);
+    expect(JSON.stringify(x)).not.toMatch(/captureRef|sourceSha256|rawLandmarks|faceMask/);
+  });
+  it('refuses a fabricated source permission, duplicate region, missing region or unknown state', () => {
+    const current = cards();
+    expect(() =>
+      summarizeMorphologyReadingEvidence([
+        { ...current[0]!, traditionalBindingAuthorized: true as never },
+        ...current.slice(1),
+      ]),
+    ).toThrow('WHOLE_FACE_READING_EVIDENCE_INVALID');
+    expect(() => summarizeMorphologyReadingEvidence(current.slice(1))).toThrow();
+    expect(() =>
+      summarizeMorphologyReadingEvidence([current[0]!, ...current.slice(0, 7)]),
+    ).toThrow();
+    expect(() =>
+      summarizeMorphologyReadingEvidence([
+        { ...current[0]!, status: 'verified' as never },
+        ...current.slice(1),
+      ]),
+    ).toThrow();
+  });
 });

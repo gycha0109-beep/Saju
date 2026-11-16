@@ -12,3 +12,39 @@ export function assessMorphology(input: {
   catalogue: ReturnType<typeof readingCatalogue>;
   previous?: boolean;
 }): MorphologyCard[];
+
+export function summarizeMorphologyReadingEvidence(
+  cards: ReadonlyArray<
+    Pick<
+      MorphologyCard,
+      | 'id'
+      | 'title'
+      | 'status'
+      | 'observation'
+      | 'missing'
+      | 'sourceRefs'
+      | 'traditionalBindingAuthorized'
+    >
+  >,
+): Readonly<{
+  version: 'local-whole-face-reading-evidence@0.1.0';
+  lifecycle: 'local_research_only';
+  regionCount: number;
+  modelCandidateRegionCount: number;
+  withheldRegionCount: number;
+  sourceContextRegionCount: number;
+  observations: ReadonlyArray<
+    Readonly<{
+      id: string;
+      title: string;
+      evidenceState: 'withheld' | 'model_candidate_only';
+      description: string;
+    }>
+  >;
+  independentHumanAccuracyValidated: false;
+  canonicalF0Admitted: false;
+  traditionalF1Matched: false;
+  traditionalInterpretationAuthorized: false;
+  productionAuthorized: false;
+  rawBiometricDataIncluded: false;
+}>;
