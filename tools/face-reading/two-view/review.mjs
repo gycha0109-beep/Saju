@@ -2372,11 +2372,19 @@ function render() {
     ? assessMorphology({ record, result, catalogue: state.readingCatalogue, previous })
     : [];
   renderWholeFaceReadingOverview(record, cards);
+  const screeningEligibility = currentCaptureScreenEligibility(record);
+  const screenBlocksReading =
+    screeningEligibility !== undefined && screeningEligibility !== 'frontal_candidate';
+  const screenWithholdReason = screenBlocksReading
+    ? screeningEligibility === 'rejected'
+      ? '정면 후보로 인정되지 않은 사진이므로 얼굴 형태 설명을 보류합니다.'
+      : '촬영 상태 검토가 없거나 검증되지 않아 얼굴 형태 설명을 보류합니다.'
+    : '';
   for (const card of cards) {
     const node = document.createElement('article');
     node.className = 'morphology-card';
     node.dataset.item = card.id;
-    node.dataset.status = card.status;
+    node.dataset.status = screenBlocksReading ? 'unavailable' : card.status;
     const title = document.createElement('h3'),
       status = document.createElement('strong'),
       source = document.createElement('p'),
@@ -2384,14 +2392,14 @@ function render() {
       detail = document.createElement('p'),
       basis = document.createElement('small');
     title.textContent = card.title;
-    status.textContent = { observed: '형태 관찰', partial: '일부 관찰', unavailable: '판정 보류' }[
-      card.status
-    ];
+    status.textContent = screenBlocksReading
+      ? '판정 보류'
+      : { observed: '형태 관찰', partial: '일부 관찰', unavailable: '판정 보류' }[card.status];
     source.textContent = card.sourceExpression
       ? '문헌의 형태·부위: ' + card.sourceExpression + ' — ' + card.sourceDescription
       : card.sourceDescription;
-    observation.textContent = card.observation;
-    detail.textContent = card.measurements.join(' · ');
+    observation.textContent = screenBlocksReading ? screenWithholdReason : card.observation;
+    detail.textContent = screenBlocksReading ? '' : card.measurements.join(' · ');
     basis.textContent = card.evidenceMeaning;
     node.append(title, status, source, observation, detail, basis);
     if (card.missing.length) {

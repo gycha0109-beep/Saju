@@ -76,6 +76,18 @@ describe('private two-view review browser module routing', () => {
       "document.body.classList.add('guided-marking-mode', 'guided-precision-mode')",
     );
   });
+  it('withholds detailed shape metrics when a human screening rejects frontal photo', () => {
+    expect(browser).toContain('const screenBlocksReading =');
+    expect(browser).toContain(
+      "node.dataset.status = screenBlocksReading ? 'unavailable' : card.status",
+    );
+    expect(browser).toContain(
+      'observation.textContent = screenBlocksReading ? screenWithholdReason : card.observation',
+    );
+    expect(browser).toContain(
+      "detail.textContent = screenBlocksReading ? '' : card.measurements.join(' · ')",
+    );
+  });
   it('serves landmark worker imports including the transient lower-face envelope module', () => {
     const worker = readFileSync(
       resolve(root, 'tools/face-reading/two-view/landmarks-worker.mjs'),
