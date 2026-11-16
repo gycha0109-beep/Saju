@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'unsafe-inline'; img-src 'self' blob:; connect-src 'self'; base-uri 'none'; form-action 'none'"
+    />
+    <title>얼굴 측정</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #10151d;
+        color: #edf2fc;
+        font: 14px/1.5 system-ui;
+      }
+      main {
+        max-width: 960px;
+        margin: auto;
+        padding: 16px;
+      }
+      header,
+      .actions,
+      .tabs {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      header {
+        justify-content: space-between;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0;
+      }
+      a {
+        color: #a9bcff;
+      }
+      button,
+      .file {
+        font: inherit;
+        border: 1px solid #43546e;
+        background: #202b3c;
+        color: inherit;
+        border-radius: 9px;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      .inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 16px 0;
+      }
+      .file {
+        display: block;
+        text-align: center;
+      }
+      .file input {
+        display: block;
+        width: 100%;
+        margin-top: 8px;
+        font-size: 12px;
+      }
+      .viewer {
+        position: relative;
+        background: #080e16;
+        border: 1px solid #344156;
+        border-radius: 12px;
+        height: 55vh;
+        min-height: 260px;
+        margin: 12px 0;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+      .viewer img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .viewer #image {
+        position: absolute;
+        inset: 0;
+      }
+      .viewer p {
+        color: #adbbd1;
+      }
+      .viewer #eyelid-contour-review-canvas {
+        position: absolute;
+        z-index: 6;
+        touch-action: none;
+        pointer-events: none;
+      }
+      #eyelid-contour-review .eyelid-contour-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin: 8px 0;
+      }
+      #eyelid-contour-review .eyelid-contour-group strong { min-width: 170px; }
+      #eyelid-contour-review .eyelid-contour-group button { padding: 7px 10px; }
+      #eyelid-contour-review .eyelid-contour-group button.active {
+        border-color: #a8b7ff;
+        background: #30415c;
+      }
+      .viewer #jaw-contour-review-canvas {
+        position: absolute;
+        z-index: 7;
+        touch-action: none;
+        pointer-events: none;
+      }
+      #jaw-contour-review #jaw-contour-review-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 8px 0;
+      }
+      #jaw-contour-review #jaw-contour-review-options button.active {
+        border-color: #8ce4b7;
+        background: #304b45;
+      }
+      .viewer #lip-border-review-canvas {
+        position: absolute;
+        z-index: 5;
+        touch-action: none;
+        pointer-events: none;
+      }
+      #lip-border-review .lip-border-review-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin: 8px 0;
+      }
+      #lip-border-review .lip-border-review-group strong { min-width: 155px; }
+      #lip-border-review .lip-border-review-group button { padding: 7px 10px; }
+      #lip-border-review .lip-border-review-group button.active {
+        border-color: #a8b7ff;
+        background: #30415c;
+      }
+      .viewer #ear-review-canvas {
+        position: absolute;
+        z-index: 4;
+        touch-action: none;
+        pointer-events: none;
+      }
+      #ear-review .ear-review-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin: 8px 0;
+      }
+      #ear-review .ear-review-group strong { min-width: 150px; }
+      #ear-review .ear-review-group button { padding: 7px 10px; }
+      #ear-review .ear-review-group button.active {
+        border-color: #a8b7ff;
+        background: #30415c;
+      }
+      .viewer #nose-review-canvas {
+        position: absolute;
+        z-index: 3;
+        touch-action: none;
+        pointer-events: none;
+      }
+      #nose-review .nose-review-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin: 8px 0;
+      }
+      #nose-review .nose-review-group strong { min-width: 145px; }
+      #nose-review .nose-review-group button { padding: 7px 10px; }
+      #nose-review .nose-review-group button.active {
+        border-color: #a8b7ff;
+        background: #30415c;
+      }
+      .viewer #brow-review-canvas {
+        position: absolute;
+        z-index: 2;
+        touch-action: none;
+        pointer-events: none;
+      }
+      #brow-review .active {
+        border-color: #a8b7ff;
+        background: #30415c;
+      }
+      #brow-review .toolbar {
+        margin: 10px 0;
+      }
+      .viewer .parsing-layer {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        object-fit: fill;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 8px;
+      }
+      .metric {
+        background: #192331;
+        border: 1px solid #344156;
+        border-radius: 9px;
+        padding: 12px;
+      }
+      .metric strong {
+        display: block;
+        font-size: 21px;
+      }
+      #reading-evidence {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+        gap: 12px;
+      }
+      .morphology-card {
+        background: #192331;
+        border: 1px solid #344156;
+        border-radius: 9px;
+        padding: 12px;
+        overflow-wrap: anywhere;
+      }
+      .morphology-card h3 {
+        margin-top: 0;
+      }
+      .morphology-card > strong {
+        color: #99d9c9;
+      }
+      .metric small,
+      .note {
+        color: #b0bfd2;
+        font-size: 12px;
+      }
+      .strip {
+        display: flex;
+        gap: 8px;
+        overflow: auto;
+        margin: 12px 0;
+      }
+      .thumb {
+        padding: 4px;
+        min-width: 54px;
+      }
+      .thumb img {
+        width: 42px;
+        height: 48px;
+        object-fit: cover;
+        display: block;
+      }
+      .thumb.active {
+        border-color: #a8b7ff;
+      }
+      .tabs .active {
+        border-color: #a8b7ff;
+      }
+      .eye-fold-review-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 12px 0;
+      }
+      .eye-fold-review-side {
+        background: #192331;
+        border: 1px solid #344156;
+        border-radius: 9px;
+        padding: 12px;
+      }
+      .eye-fold-review-side h3 {
+        margin: 0 0 8px;
+      }
+      .eye-fold-review-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .eye-fold-review-options button {
+        padding: 7px 9px;
+        font-size: 12px;
+      }
+      .eye-fold-review-options button.active {
+        border-color: #a8b7ff;
+        background: #30415c;
+      }
+      #eye-fold-review-status {
+        min-height: 22px;
+      }
+      .error {
+        color: #ffb6a7;
+      }
+      #status {
+        min-height: 22px;
+      }
+      #count {
+        font-size: 13px;
+        margin: 10px 0;
+      }
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 8px 0;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .simple-review-intro { margin: 16px 0; padding: 16px; border: 1px solid #566987; border-radius: 12px; background: #1b2b40; }
+      .simple-review-intro p { margin: 4px 0 12px; font-size: 16px; }
+      .simple-review-intro button { font-weight: 650; }
+      .simple-review-options { display: grid; gap: 14px; margin: 14px 0; }
+      .simple-review-question { margin: 0; padding: 14px; border: 1px solid #566987; border-radius: 10px; }
+      .simple-review-question legend { padding: 0 6px; font-size: 16px; font-weight: 700; }
+      .simple-review-choice-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .simple-review-choice-buttons button { min-height: 46px; font-weight: 600; }
+      .simple-review-choice-buttons button[aria-pressed='true'] { background: #235e57; border: 2px solid #9ae4cc; }
+      body:not(.research-mode) main > section:not(#capture-screen-review),
+      body:not(.research-mode) .inputs,
+      body:not(.research-mode) .actions,
+      body:not(.research-mode) #status,
+      body:not(.research-mode) #count,
+      body:not(.research-mode) #tabs,
+      body:not(.research-mode) #parsing-controls,
+      body:not(.research-mode) #parsing-status,
+      body:not(.research-mode) #quality-status,
+      body:not(.research-mode) #previous-parsing-label,
+      body:not(.research-mode) #old-label,
+      body:not(.research-mode) #original,
+      body:not(.research-mode) #fresh-research-note,
+      body:not(.research-mode) header > a,
+      body:not(.research-mode) #capture-screen-review .toolbar > label { display: none !important; }
+      body.research-mode .simple-review-options { display: none !important; }
+      body.research-mode .simple-review-intro p { display: none !important; }
+      #guided-marking { margin-top: 16px; padding: 14px; border: 1px solid #657997; border-radius: 11px; background: #203147; }
+      #guided-marking p { font-size: 15px; }
+      #guided-marking button { min-height: 46px; }
+      body.guided-marking-mode .simple-review-options,
+      body.guided-marking-mode #capture-screen-review > .toolbar,
+      body.guided-marking-mode #capture-screen-review-status { display: none !important; }
+      body.guided-marking-mode .viewer { position: sticky; top: 5px; z-index: 8; height: min(48vh, 420px); }
+      body.guided-marking-mode #strip { display: none; }
+      body.guided-marking-mode.guided-precision-mode:not(.research-mode).guided-eyelid main > #eyelid-contour-review:not([hidden]),
+      body.guided-marking-mode.guided-precision-mode:not(.research-mode).guided-lip main > #lip-border-review:not([hidden]),
+      body.guided-marking-mode.guided-precision-mode:not(.research-mode).guided-ear main > #ear-review:not([hidden]) { display: block !important; }
+      body.screening-complete:not(.research-mode) .simple-review-options,
+      body.screening-complete:not(.research-mode) #capture-screen-review > .toolbar,
+      body.screening-complete:not(.research-mode) #capture-screen-review-status { display: none !important; }
+      #guided-auto-summary { display: grid; gap: 7px; margin: 12px 0; padding: 0; list-style: none; }
+      #guided-auto-summary li { border: 1px solid #4a637d; border-radius: 8px; padding: 10px 12px; background: #14283d; }
+      #guided-precision-details { margin-top: 20px; border-top: 1px solid #50647a; padding-top: 14px; }
+      #guided-precision-details > summary { cursor: pointer; font-weight: 600; }
+      body.guided-marking-mode:not(.research-mode) #capture-screen-review { display: block !important; }
+      body.research-mode #guided-marking { display: none !important; }
+      #guided-sticky-nav { display: none; }
+      body.guided-marking-mode.guided-precision-mode:not(.research-mode) #guided-sticky-nav {
+        display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+        padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
+        background: #182b44; border-top: 2px solid #a8cbfa; color: #f5f9ff;
+        gap: 12px; align-items: center; flex-wrap: wrap; box-shadow: 0 -5px 22px #0008;
+      }
+      #guided-sticky-nav strong { font-size: 16px; }
+      #guided-sticky-nav span { display: block; font-size: 12px; color: #d2e0f3; }
+      #guided-sticky-nav button { background: #2b4260; border-color: #829dbd; min-height: 44px; }
+      #guided-sticky-next { background: #245b53 !important; border-color: #9ce3cc !important; font-weight: 700; }
+      body.guided-marking-mode:not(.research-mode) main { padding-bottom: 150px; overflow-x: clip; }
+      body.guided-marking-mode:not(.research-mode) #eyelid-contour-review,
+      body.guided-marking-mode:not(.research-mode) #lip-border-review,
+      body.guided-marking-mode:not(.research-mode) #ear-review { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
+      body.guided-marking-mode:not(.research-mode) .eyelid-contour-group strong,
+      body.guided-marking-mode:not(.research-mode) .lip-border-review-group strong,
+      body.guided-marking-mode:not(.research-mode) .ear-review-group strong { min-width: 0; flex: 1 1 100%; }
+      body.guided-marking-mode:not(.research-mode) .eyelid-contour-group button,
+      body.guided-marking-mode:not(.research-mode) .lip-border-review-group button,
+      body.guided-marking-mode:not(.research-mode) .ear-review-group button { white-space: normal; }
+      body.guided-marking-mode:not(.research-mode) #guided-marking { scroll-margin-top: 14px; }
+      @media (max-width: 500px) {
+        #guided-sticky-nav { gap: 8px !important; }
+        #guided-sticky-nav > div { flex: 1 1 100%; }
+        #guided-sticky-nav button { flex: 1 1 44%; }
+        body.guided-marking-mode:not(.research-mode) main { padding-bottom: 170px; }
+      }
+      @media (max-width: 500px) {
+        main {
+          padding: 12px;
+        }
+        .metrics {
+          grid-template-columns: 1fr 1fr;
+        }
+        .metric {
+          padding: 9px;
+        }
+        .metric strong {
+          font-size: 18px;
+        }
+        .inputs {
+          grid-template-columns: 1fr;
+        }
+        .eye-fold-review-grid {
+          grid-template-columns: 1fr;
+        }
+        .viewer {
+          height: 44vh;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav id="guided-sticky-nav" aria-label="현재 얼굴 경계 검토" aria-live="polite">
+      <div><strong id="guided-sticky-title">얼굴 경계 검토</strong><span id="guided-sticky-hint">보이는 선만 표시하고 해당 도구에서 저장하세요.</span></div>
+      <button id="guided-sticky-next" type="button">다음 사진·부위</button>
+      <button id="guided-sticky-exit" type="button">검토 종료</button>
+    </nav>
+    <main>
+      <header>
+        <h1>얼굴 측정</h1>
+        <a href="/two-view/experience">가상 풀이 체험</a>
+        <a href="/">기존 전체 표시</a>
+      </header>
+      <div class="simple-review-intro">
+        <p id="simple-review-intro-text"><strong>사진 1장씩 확인하면 됩니다.</strong> 사진을 보고 아래 두 질문에 답한 다음 저장하세요.</p>
+        <button id="research-mode-toggle" type="button" aria-pressed="false">개발용 상세 화면 보기</button>
+      </div>
+      <div class="inputs">
+        <label class="file"
+          >정면 사진<input
+            id="frontal"
+            type="file"
+            accept="image/jpeg,image/png,image/webp" /></label
+        ><label class="file"
+          >측면 사진<input id="profile" type="file" accept="image/jpeg,image/png,image/webp"
+        /></label>
+      </div>
+      <div class="actions">
+        <button id="analyze" disabled>전체 분석</button
+        ><button id="batch">기존 18장 모두 분석</button><button id="cancel" hidden>중단</button>
+      </div>
+      <p id="status" role="status">사진을 선택하거나 기존 사진을 확인하세요.</p>
+      <p id="count"></p>
+      <p id="fresh-research-note" class="note" role="status" hidden></p>
+      <div id="tabs" class="tabs"></div>
+      <div class="toolbar">
+        <button id="original" hidden>원본 보기</button
+        ><label id="old-label" hidden
+          ><input id="old-overlay" type="checkbox" />기존 헤어라인·코 표시 함께 보기</label
+        >
+      </div>
+      <div id="parsing-controls" class="toolbar" hidden></div>
+      <label id="previous-parsing-label" hidden
+        ><input id="previous-parsing" type="checkbox" />기존 전체 분할과 비교</label
+      >
+      <p id="parsing-status" class="note"></p>
+      <p id="quality-status" class="note"></p>
+      <div class="viewer">
+        <p id="empty">원본과 측정 표시를 여기서 확인합니다.</p>
+        <img id="image" alt="선택한 사진의 측정 표시" hidden />
+        <svg id="brow-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="눈썹 중심선 표시" hidden></svg>
+        <svg id="nose-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="코끝과 콧볼·콧구멍 경계 사람 표시" hidden></svg>
+        <svg id="ear-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="귀 외곽·귓불·부착부 사람 표시" hidden></svg>
+        <svg
+          id="jaw-contour-review-canvas"
+          viewBox="0 0 1 1"
+          preserveAspectRatio="none"
+          aria-label="턱 하단 가시 윤곽 사람 표시"
+          hidden
+        ></svg>
+        <svg id="lip-border-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="입술·인중 경계와 입꼬리 사람 표시" hidden></svg>
+        <svg id="eyelid-contour-review-canvas" viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="눈꺼풀 윗경계·주름선·덮임 경계 사람 표시" hidden></svg>
+      </div>
+      <nav id="strip" class="strip" aria-label="전체 사진 목록"></nav>
+      <section id="capture-screen-review" aria-labelledby="capture-screen-review-heading" hidden>
+        <h2 id="capture-screen-review-heading">이 사진 확인하기</h2>
+        <p class="note">사진만 보고 정면인지, 얼굴 부위가 가려졌는지 선택하세요. 정답을 모르겠다면 '잘 모르겠습니다'를 누르셔도 됩니다.</p>
+        <p id="capture-screen-review-count" class="note" role="status"></p>
+        <div class="simple-review-options">
+          <fieldset class="simple-review-question">
+            <legend>1. 얼굴이 정면을 보고 있나요?</legend>
+            <div class="simple-review-choice-buttons" id="simple-review-pose">
+              <button type="button" data-review-pose="frontal_usable_candidate" aria-pressed="false">네, 정면입니다</button>
+              <button type="button" data-review-pose="not_frontal" aria-pressed="false">아니요, 옆을 보고 있습니다</button>
+              <button type="button" data-review-pose="uncertain" aria-pressed="false">잘 모르겠습니다</button>
+            </div>
+          </fieldset>
+          <fieldset class="simple-review-question">
+            <legend>2. 눈·코·입·귀가 잘 보이나요?</legend>
+            <div class="simple-review-choice-buttons" id="simple-review-visibility">
+              <button type="button" data-review-visibility="clear_enough_to_review" aria-pressed="false">네, 잘 보입니다</button>
+              <button type="button" data-review-visibility="partially_occluded" aria-pressed="false">일부가 가려졌습니다</button>
+              <button type="button" data-review-visibility="unusable" aria-pressed="false">거의 보이지 않습니다</button>
+            </div>
+          </fieldset>
+        </div>
+        <div class="toolbar">
+          <label for="capture-screen-pose">사진 자세
+            <select id="capture-screen-pose">
+              <option value="">직접 확인 전</option>
+              <option value="frontal_usable_candidate">정면으로 보임 (임시 검토)</option>
+              <option value="not_frontal">정면 아님</option>
+              <option value="uncertain">판정 어려움</option>
+            </select>
+          </label>
+          <label for="capture-screen-visibility">부위 가림
+            <select id="capture-screen-visibility">
+              <option value="">직접 확인 전</option>
+              <option value="clear_enough_to_review">확인할 수 있음</option>
+              <option value="partially_occluded">일부 가림</option>
+              <option value="unusable">검토 불가능</option>
+            </select>
+          </label>
+          <button id="capture-screen-save" type="button" disabled>이 사진 답변 저장</button>
+          <button id="capture-screen-next" type="button">다음 사진으로</button>
+        </div>
+        <p id="capture-screen-review-status" class="note" role="status"></p>
+        <div id="guided-marking" hidden>
+          <h3>사진 상태 검토 완료 — 추가 입력은 필요하지 않습니다</h3>
+          <p id="guided-marking-count" role="status">저장된 촬영 검토와 모델 분석 결과를 확인합니다.</p>
+          <p>기존 모델이 자동 분석한 사진 중 연구용 확인 후보만 아래에 정리했습니다. <strong>이 목록을 전부 클릭하거나 각 경계를 직접 그릴 필요는 없습니다.</strong></p>
+          <ul id="guided-auto-summary" aria-label="사진별 모델 분석 후보"></ul>
+          <p class="note">이 결과는 모델 분석 가능 범위이지 얼굴 경계의 정확도 검증이나 관상 판정은 아닙니다.</p>
+          <details id="guided-precision-details">
+            <summary>연구 정확도 비교를 위한 직접 경계 표시 (선택 사항)</summary>
+            <p>정밀한 모델 오차 검증에 사람 표시선이 필요할 때만 이용합니다. 그리지 않은 항목은 미검증으로 남고, 모델이 사람 정답을 대신 만들지 않습니다.</p>
+            <p id="guided-marking-target" role="status">선택하면 사진과 부위를 하나씩 열 수 있습니다.</p>
+            <p id="guided-marking-instruction" class="note"></p>
+            <div class="toolbar">
+              <button type="button" id="guided-marking-next" disabled>정밀 표시 시작하기</button>
+              <button type="button" id="guided-marking-exit" hidden>정밀 표시 종료</button>
+            </div>
+            <p id="guided-marking-status" class="note" role="status"></p>
+          </details>
+        </div>
+      </section>
+      <section aria-labelledby="readiness-heading">
+        <h2 id="readiness-heading">사진별 정규 29개 관측 상태</h2>
+        <p id="readiness-status" class="note" role="status">
+          비공개 실사진 검증 결과가 확인되면 항목별 모델 후보·계산기·보류 사유를 표시합니다.
+          모델 후보는 정규 관측이나 전통 관상 판독이 아닙니다.
+        </p>
+        <details id="readiness-details">
+          <summary>29개 항목과 관측 보류 이유 펼치기</summary>
+          <div id="readiness-features"></div>
+        </details>
+      </section>
+      <section aria-labelledby="current-2d-evidence-heading">
+        <h2 id="current-2d-evidence-heading">현재 사진의 2D 관측 근거 — 연구용</h2>
+        <p id="current-2d-evidence-status" class="note" role="status">
+          현재 사진의 모델 후보와 사람 표시를 비교할 수 있는 경우에만 상태를 표시합니다.
+          독립 사람 정답이 없는 수치는 실제 형태 정확도나 전통 관상 판독이 아닙니다.
+        </p>
+        <button id="current-2d-sweep" type="button" disabled>기존 사진의 2D 후보 전체 검사</button>
+        <p id="current-2d-sweep-status" class="note" role="status">사진 분석이 끝나면 전체 후보 검사를 실행할 수 있습니다.</p>
+        <p id="current-2d-session-status" class="note" role="status">
+          현재 세션의 정면 사진에서 분석된 2D 후보·부분·보류 항목 수만 집계합니다.
+          이 수치는 독립 사람 정답과의 정확도·촬영 반복성·전통 관상형 판정이 아닙니다.
+        </p>
+        <details>
+          <summary>미해결 2D 관측 6항목의 근거와 보류 사유 보기</summary>
+          <div id="current-2d-evidence-rows"></div>
+          <h3>전체 실사진의 미평가·보류 원인 및 필요한 독립 근거</h3>
+          <div id="current-2d-session-reasons"></div>
+          <h3>동일 사진의 사람 표시선·모델 경계 비교 준비 현황</h3>
+          <p id="human-model-comparison-status" class="note" role="status"></p>
+          <div id="human-model-comparison-rows"></div>
+          <button id="human-model-next-review" type="button" disabled>다음 사람 표시 검토 사진 열기</button>
+          <p id="human-model-review-queue-status" class="note" role="status"></p>
+        </details>
+      </section>
+      <section aria-labelledby="reading-heading">
+        <h2 id="reading-heading">관상 형태 항목별 결과</h2>
+        <article class="morphology-card" id="whole-face-reading-overview" aria-label="전체 얼굴 관측과 판독 연결 상태">
+          <h3>전체 얼굴 종합 보기 — 연구용</h3>
+          <p id="whole-face-reading-summary" role="status">사진별 형태 분석을 확인하는 중입니다.</p>
+          <ul id="whole-face-reading-items"></ul>
+          <p id="whole-face-reading-authority" class="note"></p>
+          <p class="note">전통 관상형의 자동 분류와 개인별 해석은 실제 얼굴 형태·문헌 조건의 검증이 끝나기 전까지 보류합니다. <a href="#capture-screen-review">사람 촬영 상태 검토</a>부터 진행할 수 있습니다.</p>
+        </article>
+        <div id="reading-evidence"></div>
+      </section>
+      <section aria-labelledby="brow-experiment-heading">
+        <h2 id="brow-experiment-heading">
+          눈썹 영역 띠 두께·중앙선 굽음·영역 사이 간격 — 모델 후보
+        </h2>
+        <p id="brow-mask-experiment" class="note" role="status">
+          현재 사진의 눈썹 분할 마스크가 있으면 가시 띠 두께, 분할 중앙선의 굽음·기울기와 두 영역
+          사이 간격 비율을 확인합니다. 실제 미간의 해부학적 너비, 눈 사이 거리, 개별 눈썹 털의
+          굵기·밀도, 전통 관상 형태 판정은 하지 않습니다.
+        </p>
+        <p id="brow-texture-experiment" class="note" role="status">
+          현재 원본 사진의 양쪽 눈썹 모델 영역 안에서만 이웃 화소의 밝기 차이를 관찰합니다.
+          화소 차이로 개별 털의 굵기·밀도나 방향을 판정하지 않습니다.
+        </p>
+      </section>
+      <section aria-labelledby="hair-skin-experiment-heading">
+        <h2 id="hair-skin-experiment-heading">이마·모발 접경 — 분할 영역 연구 후보</h2>
+        <p id="hair-skin-experiment" class="note" role="status">
+          기존 머리카락–피부 접경 마스크를 사진 평면에서 평가합니다. 가려진 구간과 분리된 접경을
+          구별하며 실제 모근선·이마 높이·관상형을 자동 확정하지 않습니다.
+        </p>
+        <p id="forehead-skin-experiment" class="note" role="status">
+          정면 한 사람의 얼굴 타원과 눈썹 위에 위치한 피부 분할 후보를 확인합니다.
+          실제 모근선과 가려진 이마를 추측하지 않습니다.
+        </p>
+      </section>
+      <section aria-labelledby="ear-experiment-heading">
+        <h2 id="ear-experiment-heading">귀 전체 분할 가시 영역 — 2D 모델 후보</h2>
+        <p id="ear-mask-experiment" class="note" role="status">
+          기존 귀 전체 마스크의 상대 폭·높이·면적을 사진별로 비교합니다.
+          분할된 귀 전체 영역을 귓바퀴·귓불·부착부로 나누거나 실제 귀 두께·펼쳐짐을 측정하지 않습니다.
+        </p>
+        <p id="ear-rim-curve-comparison" class="note" role="status">
+          비공개 사람 귀 외곽 표시가 있을 때 표시선 다섯 지점과 모델 귀 전체 영역 경계의
+          사진상 거리를 대조합니다. 실제 귀 해부학적 정답이나 3D 돌출을 측정하지 않습니다.
+        </p>
+      </section>
+      <section aria-labelledby="nose-experiment-heading">
+        <h2 id="nose-experiment-heading">코 분할 윤곽의 단면별 폭과 중심 이동 — 모델 후보</h2>
+        <p id="nose-mask-experiment" class="note" role="status">
+          현재 정면 사진의 코 분할 마스크가 유효하면 위·중간·아래의 상대 폭과 중심 이동을
+          표시합니다. 분할 마스크의 높이 비율로 단면을 고른 것으로 실제 콧볼·콧구멍·코끝을 구분하지
+          않습니다.
+        </p>
+      </section>
+      <section aria-labelledby="eye-class-experiment-heading">
+        <h2 id="eye-class-experiment-heading">양쪽 눈 분할 영역 — 2D 모델 후보</h2>
+        <p id="eye-class-experiment" class="note" role="status">
+          양쪽 눈 클래스의 폭·높이·면적·중심 간격을 확인합니다. 눈꺼풀 실제 경계·쌍꺼풀·전통
+          관상형은 판정하지 않습니다.
+        </p>
+      </section>
+      <section id="eyelid-contour-review" aria-labelledby="eyelid-contour-review-heading" hidden>
+        <h2 id="eyelid-contour-review-heading">눈꺼풀 실제 경계·주름선 — 사람 직접 표시</h2>
+        <p class="note">
+          정면 원본 사진에서 화면 왼쪽·오른쪽의 눈꺼풀 윗경계, 쌍꺼풀 주름선 및
+          피부 덮임의 가시 경계를 따로 표시합니다. 보이지 않는 주름은
+          임의로 생성하지 않고 해당 부위만 보류합니다.
+          기존 쌍꺼풀 보임/덮임 상태 라벨과 별개인 연구 검토 자료이며,
+          한 사람의 선은 검증된 해부학적 정답·입체 돌출·전통 관상형이 아닙니다.
+        </p>
+        <button type="button" id="eyelid-contour-review-activate">눈꺼풀 경계 표시 모드 선택</button>
+        <p id="eyelid-contour-review-count" class="note"></p>
+        <div id="eyelid-contour-review-options"></div>
+        <div class="toolbar">
+          <button type="button" id="eyelid-contour-review-done">현재 표시 완료</button>
+          <button type="button" id="eyelid-contour-review-undo">마지막 획 취소</button>
+          <button type="button" id="eyelid-contour-review-reset">저장 전 표시 초기화</button>
+          <button type="button" id="eyelid-contour-review-save" disabled>비공개 사람 표시 저장</button>
+        </div>
+        <p id="eyelid-contour-review-status" class="note" role="status"></p>
+        <p id="eyelid-manual-line-offsets" class="note" role="status"></p>
+      </section>
+      <section id="jaw-contour-review" aria-labelledby="jaw-contour-review-heading" hidden>
+        <h2 id="jaw-contour-review-heading">턱·하관의 보이는 하단 윤곽 사람 표시</h2>
+        <p class="note">
+          정면 원본에서 사진에 실제로 보이는 턱 아래 얼굴 외곽만 표시합니다. 완전 표시와 부분 가림을
+          구분하며, 골격·턱끝 돌출·실제 안면 해부학·전통 관상형을 판단하지 않습니다. 파일은 비공개
+          로컬에 보관하며 독립 정확도 검증 전에는 연구용 자료입니다.
+        </p>
+        <button type="button" id="jaw-contour-review-activate">턱 하단 윤곽 표시 모드</button>
+        <p id="jaw-contour-review-count" class="note"></p>
+        <p id="jaw-model-comparison" class="note" role="status"></p>
+        <div id="jaw-contour-review-options"></div>
+        <div class="toolbar">
+          <button type="button" id="jaw-contour-review-done">표시 완료</button>
+          <button type="button" id="jaw-contour-review-undo">마지막 획 취소</button>
+          <button type="button" id="jaw-contour-review-reset">변경 취소</button>
+          <button type="button" id="jaw-contour-review-save" disabled>비공개 표시 저장</button>
+        </div>
+        <p id="jaw-contour-review-status" class="note" role="status"></p>
+      </section>
+      <section id="lip-border-review" aria-labelledby="lip-border-review-heading" hidden>
+        <h2 id="lip-border-review-heading">입술·인중 경계 — 사람 직접 표시</h2>
+        <p class="note">
+          정면 원본 사진에서 윗입술/아랫입술의 실제 보이는 경계, 인중 양쪽 경계,
+          화면 기준 좌우 입꼬리를 구분해 검토합니다. 분할 클래스 비율은 실제 입술 피부 경계의 정답이 아닙니다.
+          가려지거나 확인되지 않는 부분은 해당 부위만 보류합니다.
+          사람 표시 후보는 정확도 검증 전 모델 학습·정규 관측·전통 판독에 사용하지 않습니다.
+        </p>
+        <button type="button" id="lip-border-review-activate">입술 경계 표시 모드 선택</button>
+        <p id="lip-border-review-count" class="note"></p>
+        <div id="lip-border-review-options"></div>
+        <div class="toolbar">
+          <button type="button" id="lip-border-review-done">현재 표시 완료</button>
+          <button type="button" id="lip-border-review-undo">마지막 획 취소</button>
+          <button type="button" id="lip-border-review-reset">저장 전 표시 초기화</button>
+          <button type="button" id="lip-border-review-save" disabled>비공개 사람 표시 저장</button>
+        </div>
+        <p id="lip-border-review-status" class="note" role="status"></p>
+      </section>
+      <section id="ear-review" aria-labelledby="ear-review-heading" hidden>
+        <h2 id="ear-review-heading">귀 외곽·귓불·부착부 — 사람 직접 표시</h2>
+        <p class="note">
+          정면 및 선택적 측면 사진에서 실제 보이는 귀의 외곽·귓불 경계와 얼굴에 맞닿는 점을 각각 기록합니다.
+          화면 좌우는 인물의 해부학적 좌우가 아닙니다. 불확실한 부위는 가림·사진 밖·판단 보류로 표시하세요.
+          이 결과는 연구용 사람 검토이며, 정면 사진만으로 귀 두께·펼쳐짐·전통 관상형을 판정하지 않습니다.
+        </p>
+        <button type="button" id="ear-review-activate">귀 표시 모드 선택</button>
+        <p id="ear-review-count" class="note"></p>
+        <div id="ear-review-options"></div>
+        <div class="toolbar">
+          <button type="button" id="ear-review-done">현재 표시 완료</button>
+          <button type="button" id="ear-review-undo">마지막 획 취소</button>
+          <button type="button" id="ear-review-reset">저장 전 표시 초기화</button>
+          <button type="button" id="ear-review-save" disabled>비공개 사람 표시 저장</button>
+        </div>
+        <p id="ear-review-status" class="note" role="status"></p>
+      </section>
+      <section id="nose-review" aria-labelledby="nose-review-heading" hidden>
+        <h2 id="nose-review-heading">코끝·콧볼·콧구멍 — 사람 직접 표시</h2>
+        <p class="note">모델은 코끝·콧볼·콧구멍의 독립 해부학적 경계를 확정하지 못합니다.
+          정면 원본 사진을 보면서 보이는 부분만 직접 표시합니다.
+          화면 좌우는 인물의 해부학적 좌우가 아니며, 사람 표시선은 독립 정답·전통 판독이 아닙니다.
+          콧구멍 외곽이 선명하게 모두 보이는 경우에만 단일 선을 한 바퀴 그려 시작점으로 닫으세요.
+          완전히 보이지 않으면 일부 표시 또는 보류 상태를 선택하세요. 닫힌 표시선의 픽셀 명도 차이도 실제 내부 구조를 판정하지 않습니다.</p>
+        <div class="toolbar">
+          <button id="nose-review-activate" type="button">코 표시 모드 선택</button>
+        </div>
+        <p id="nose-review-count" class="note"></p>
+        <p id="nose-rim-photometry" class="note" role="status"></p>
+        <div id="nose-review-options"></div>
+        <div class="toolbar">
+          <button id="nose-review-done" type="button">현재 표시 완료</button>
+          <button id="nose-review-undo" type="button">마지막 획 취소</button>
+          <button id="nose-review-reset" type="button">저장 전 표시 초기화</button>
+          <button id="nose-review-save" type="button" disabled>비공개 사람 표시 저장</button>
+        </div>
+        <p id="nose-review-status" class="note" role="status"></p>
+      </section>
+      <section id="brow-review" aria-labelledby="brow-review-heading" hidden>
+        <h2 id="brow-review-heading">눈썹 중심선 — 사람 직접 표시</h2>
+        <p class="note">모델 분할선이 아닌 원본 사진 위에 사람이 표시합니다. 화면 왼쪽·오른쪽 구별만 사용하며 전통 관상 판정이나 모델 학습에 자동 연결되지 않습니다.</p>
+        <button id="brow-review-activate" type="button">눈썹 표시 모드 선택</button>
+        <p id="brow-review-count" class="note"></p>
+        <div class="toolbar">
+          <button type="button" data-brow-side="imageLeft" data-brow-state="marked">왼쪽 전체 표시</button>
+          <button type="button" data-brow-side="imageLeft" data-brow-state="partial">왼쪽 일부 표시</button>
+          <button type="button" data-brow-side="imageLeft" data-brow-state="occluded">왼쪽 가림</button>
+          <button type="button" data-brow-side="imageLeft" data-brow-state="out_of_frame">왼쪽 사진 밖</button>
+          <button type="button" data-brow-side="imageLeft" data-brow-state="no_visible_brow">왼쪽 없음</button>
+          <button type="button" data-brow-side="imageLeft" data-brow-state="unknown">왼쪽 판단 불가</button>
+        </div>
+        <div class="toolbar">
+          <button type="button" data-brow-side="imageRight" data-brow-state="marked">오른쪽 전체 표시</button>
+          <button type="button" data-brow-side="imageRight" data-brow-state="partial">오른쪽 일부 표시</button>
+          <button type="button" data-brow-side="imageRight" data-brow-state="occluded">오른쪽 가림</button>
+          <button type="button" data-brow-side="imageRight" data-brow-state="out_of_frame">오른쪽 사진 밖</button>
+          <button type="button" data-brow-side="imageRight" data-brow-state="no_visible_brow">오른쪽 없음</button>
+          <button type="button" data-brow-side="imageRight" data-brow-state="unknown">오른쪽 판단 불가</button>
+        </div>
+        <div class="toolbar">
+          <button id="brow-review-done" type="button">획 표시 완료</button>
+          <button id="brow-review-undo" type="button">마지막 획 취소</button>
+          <button id="brow-review-reset" type="button">저장 전 표시 취소</button>
+          <button id="brow-review-save" type="button" disabled>로컬에 사람 표시 저장</button>
+        </div>
+        <p id="brow-review-status" class="note" role="status"></p>
+        <p id="brow-review-comparison" class="note" role="status">사람의 중심선 표시 후 모델 분할선과 비교합니다.</p>
+      </section>
+      <section id="eye-fold-review" aria-labelledby="eye-fold-review-heading" hidden>
+        <h2 id="eye-fold-review-heading">눈꺼풀 주름·덮임 — 사람 검토 라벨</h2>
+        <p class="note">
+          원본 정면 사진에서 화면 왼쪽·오른쪽 눈을 각각 검토합니다. 화면 좌우는 인물의 해부학적 좌우를 뜻하지 않습니다.
+          모델이 자동으로 분류하지 않으며, 이 라벨은 연구용 검토 자료입니다. 사람 간 합의와 정확도 검증 전에는 모델 학습·정규 관측·전통 판독에 사용하지 않습니다.
+        </p>
+        <p id="eye-fold-review-count" class="note"></p>
+        <div class="eye-fold-review-grid">
+          <div class="eye-fold-review-side">
+            <h3>화면 왼쪽 눈</h3>
+            <div id="eye-fold-left-options" class="eye-fold-review-options">
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="visible">쌍꺼풀 선 보임</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="hooded">쌍꺼풀 선이 덮여 보임</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="no_visible_crease">쌍꺼풀 선 보이지 않음</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="partial">일부만 보임</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="occluded">가려짐</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="out_of_frame">사진 밖</button>
+              <button type="button" data-eye-fold-side="imageLeft" data-eye-fold-status="unknown">판단 불가</button>
+            </div>
+          </div>
+          <div class="eye-fold-review-side">
+            <h3>화면 오른쪽 눈</h3>
+            <div id="eye-fold-right-options" class="eye-fold-review-options">
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="visible">쌍꺼풀 선 보임</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="hooded">쌍꺼풀 선이 덮여 보임</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="no_visible_crease">쌍꺼풀 선 보이지 않음</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="partial">일부만 보임</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="occluded">가려짐</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="out_of_frame">사진 밖</button>
+              <button type="button" data-eye-fold-side="imageRight" data-eye-fold-status="unknown">판단 불가</button>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button id="eye-fold-review-save" disabled>사람 검토 저장</button>
+          <button id="eye-fold-review-reset" disabled>저장 전 선택 취소</button>
+        </div>
+        <p id="eye-fold-review-status" class="note" role="status"></p>
+      </section>
+      <section aria-labelledby="lip-class-experiment-heading">
+        <h2 id="lip-class-experiment-heading">위·아래 입술 분할 클래스 — 모델 형태 후보</h2>
+        <p id="lip-class-experiment" class="note" role="status">
+          현재 사진에서 위·아래 입술 클래스의 면적·폭·높이·위치를 각각 확인합니다. 실제 피부 경계나
+          전통 관상형을 판정하지 않습니다.
+        </p>
+        <p id="lip-pixel-color-experiment" class="note" role="status">
+          현재 정면 사진에서 윗입술·아랫입술 분할 영역의 내부 화소 색 채널만 비교합니다.
+          조명·화이트밸런스·화장 효과를 통제하지 않은 사진 통계이며 실제 입술색 판정은 아닙니다.
+        </p>
+      </section>
+      <div id="metrics" class="metrics"></div>
+      <p class="note">
+        영역 표시와 수치는 검출 후보입니다. 빨간 접경은 앞머리 경계도 포함하며, 확정 헤어라인이
+        아닙니다. 측면 수치는 사진에 보이는 피부·코·입술·귀 후보 영역의 비율입니다.
+      </p>
+    </main>
+    <script type="module" src="/two-view/review.mjs"></script>
+  </body>
+</html>

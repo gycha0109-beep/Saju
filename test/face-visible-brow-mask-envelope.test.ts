@@ -1,0 +1,202 @@
+import { describe, expect, it } from 'vitest';
+import {
+  eyebrowBinaryFromOverlayRGBA,
+  measureVisibleBrowMaskEnvelope,
+  VISIBLE_BROW_MASK_ENVELOPE_VERSION,
+} from '../tools/face-reading/two-view/visible-brow-mask-envelope.mjs';
+
+const width = 40,
+  height = 22;
+function mask() {
+  return new Uint8Array(width * height);
+}
+function rectangle(m: Uint8Array, x: number, y: number, w: number, h: number) {
+  for (let row = y; row < y + h; row++)
+    for (let col = x; col < x + w; col++) m[row * width + col] = 1;
+  return m;
+}
+function paired() {
+  const m = mask();
+  rectangle(m, 4, 7, 8, 2);
+  rectangle(m, 25, 6, 8, 4);
+  return m;
+}
+
+describe('visible eyebrow mask envelope candidate', () => {
+  it('measures distinct visible mask bands, not hair fibre or traditional features', () => {
+    const measured = measureVisibleBrowMaskEnvelope(paired(), width, height);
+    expect(measured).toMatchObject({
+      methodVersion: VISIBLE_BROW_MASK_ENVELOPE_VERSION,
+      status: 'available',
+      candidateOnly: true,
+      individualHairThicknessMeasured: false,
+      hairDensityMeasured: false,
+      anatomicalLateralityAssigned: false,
+      accuracyValidated: false,
+      traditionalBindingAuthorized: false,
+    });
+    if (measured.status !== 'available') throw Error();
+    expect(measured.brows.map((x) => x.imageSide)).toEqual(['left', 'right']);
+    expect(measured.brows[0]?.apparentMaskThicknessToLongSpan).toBeCloseTo(0.25);
+    expect(measured.brows[1]?.apparentMaskThicknessToLongSpan).toBeCloseTo(0.5);
+    // 13 mask columns between two eight-column eyebrow regions.
+    expect(measured.apparentInterBrowGapToMeanMaskXSpan).toBeCloseTo(13 / 8);
+  });
+
+  it('corrects original image aspect ratio before area/axis measurement', () => {
+    const square = measureVisibleBrowMaskEnvelope(paired(), width, height);
+    const stretched = measureVisibleBrowMaskEnvelope(paired(), width, height, {
+      imageWidth: width * 2,
+      imageHeight: height,
+    });
+    expect(square.status).toBe('available');
+    expect(stretched.status).toBe('available');
+    if (square.status !== 'available' || stretched.status !== 'available') throw Error();
+    expect(stretched.brows[0]?.apparentMaskThicknessToLongSpan).toBeCloseTo(
+      square.brows[0]!.apparentMaskThicknessToLongSpan / 2,
+    );
+    expect(stretched.apparentInterBrowGapToMeanMaskXSpan).toBeCloseTo(
+      square.apparentInterBrowGapToMeanMaskXSpan,
+    );
+  });
+
+  it('tracks visible inner-mask gap independently from brow band thickness', () => {
+    const original = measureVisibleBrowMaskEnvelope(paired(), width, height);
+    const fartherMask = mask();
+    rectangle(fartherMask, 4, 7, 8, 2);
+    rectangle(fartherMask, 29, 6, 8, 4);
+    const farther = measureVisibleBrowMaskEnvelope(fartherMask, width, height);
+    expect(original.status).toBe('available');
+    expect(farther.status).toBe('available');
+    if (original.status !== 'available' || farther.status !== 'available') throw Error();
+    expect(farther.apparentInterBrowGapToMeanMaskXSpan).toBeCloseTo(17 / 8);
+    expect(farther.brows[0]?.apparentMaskThicknessToLongSpan).toBeCloseTo(
+      original.brows[0]!.apparentMaskThicknessToLongSpan,
+    );
+    expect(farther.brows[1]?.apparentMaskThicknessToLongSpan).toBeCloseTo(
+      original.brows[1]!.apparentMaskThicknessToLongSpan,
+    );
+  });
+
+  it('does not issue a gap candidate when paired mask regions are untrustworthy', () => {
+    const missing = measureVisibleBrowMaskEnvelope(mask(), width, height);
+    expect(missing.status).toBe('unavailable');
+    expect('apparentInterBrowGapToMeanMaskXSpan' in missing).toBe(false);
+    const overlapping = paired();
+    rectangle(overlapping, 11, 7, 15, 1);
+    const joined = measureVisibleBrowMaskEnvelope(overlapping, width, height);
+    expect(joined.status).toBe('unavailable');
+    expect('apparentInterBrowGapToMeanMaskXSpan' in joined).toBe(false);
+  });
+
+  it('rejects one, three, joined, clipped or degenerate brow areas rather than guessing', () => {
+    expect(measureVisibleBrowMaskEnvelope(mask(), width, height)).toMatchObject({
+      status: 'unavailable',
+      reason: 'BOTH_VISIBLE_BROWS_REQUIRED',
+    });
+    const third = paired();
+    third[15 * width + 20] = 1;
+    expect(measureVisibleBrowMaskEnvelope(third, width, height)).toMatchObject({
+      status: 'unavailable',
+      reason: 'FRAGMENTED_OR_MULTIPLE_COMPONENTS',
+    });
+    const clipped = paired();
+    rectangle(clipped, 0, 7, 12, 2);
+    expect(measureVisibleBrowMaskEnvelope(clipped, width, height)).toMatchObject({
+      status: 'unavailable',
+      reason: 'IMAGE_EDGE_CLIPPED',
+    });
+    const singleLine = paired();
+    for (let x = 25; x < 33; x++) for (let y = 7; y < 10; y++) singleLine[y * width + x] = 0;
+    expect(measureVisibleBrowMaskEnvelope(singleLine, width, height)).toMatchObject({
+      status: 'unavailable',
+      reason: 'INSUFFICIENT_REGION_EXTENT',
+    });
+    const joined = paired();
+    rectangle(joined, 11, 7, 15, 1);
+    expect(measureVisibleBrowMaskEnvelope(joined, width, height)).toMatchObject({
+      status: 'unavailable',
+      reason: 'BOTH_VISIBLE_BROWS_REQUIRED',
+    });
+  });
+
+  it('accepts only the pinned transparent overlay RGB/alpha palette', () => {
+    const binary = paired();
+    const rgba = new Uint8ClampedArray(width * height * 4);
+    for (let i = 0; i < binary.length; i++) {
+      if (binary[i]) {
+        rgba.set([70, 245, 130, 255], i * 4);
+      }
+    }
+    const converted = eyebrowBinaryFromOverlayRGBA(rgba, width, height);
+    expect(Array.from(converted)).toEqual(Array.from(binary));
+    rgba[4 * (7 * width + 4)] = 71;
+    expect(() => eyebrowBinaryFromOverlayRGBA(rgba, width, height)).toThrow('BROW_OVERLAY_INVALID');
+    expect(() => eyebrowBinaryFromOverlayRGBA(new Uint8Array(7), width, height)).toThrow();
+  });
+
+  it('rejects invalid masks and dimensions instead of producing fabricated geometry', () => {
+    const bad = paired();
+    bad[0] = 2;
+    expect(() => measureVisibleBrowMaskEnvelope(bad, width, height)).toThrow('BROW_MASK_INVALID');
+    expect(() =>
+      measureVisibleBrowMaskEnvelope(paired(), width, height, {
+        imageWidth: 0,
+        imageHeight: 100,
+      }),
+    ).toThrow('BROW_MASK_INVALID');
+  });
+
+  it('measures a curved mask midline without declaring a true eyebrow arch or anatomical endpoints', () => {
+    const curved = mask();
+    const heights = [11, 10, 9, 8, 8, 9, 10, 11];
+    heights.forEach((y, i) => rectangle(curved, 4 + i, y, 1, 2));
+    rectangle(curved, 25, 6, 8, 4);
+    const measured = measureVisibleBrowMaskEnvelope(curved, width, height);
+    expect(measured.status).toBe('available');
+    if (measured.status !== 'available') throw Error();
+    const left = measured.brows[0]!;
+    const right = measured.brows[1]!;
+    expect(left.apparentMidlineUpwardBendToMaskXSpan).toBeCloseTo(3 / 7);
+    expect(left.apparentMidlineDownwardBendToMaskXSpan).toBe(0);
+    expect(left.apparentMidlineEndToEndVerticalSlope).toBe(0);
+    expect(left.upwardBendPositionOnMaskXSpan).toBeCloseTo(3 / 7);
+    expect(right.apparentMidlineUpwardBendToMaskXSpan).toBe(0);
+    expect(right.apparentMidlineDownwardBendToMaskXSpan).toBe(0);
+    expect(right.upwardBendPositionOnMaskXSpan).toBeNull();
+    expect(JSON.stringify(measured)).not.toContain('indices');
+    expect(JSON.stringify(measured)).not.toContain('sourceImage');
+  });
+
+  it('keeps bend ratios in the original image aspect and separates slope from bend', () => {
+    const sloping = mask();
+    for (let i = 0; i < 8; i++) rectangle(sloping, 4 + i, 6 + i, 1, 2);
+    rectangle(sloping, 25, 6, 8, 4);
+    const base = measureVisibleBrowMaskEnvelope(sloping, width, height);
+    expect(base.status).toBe('available');
+    if (base.status !== 'available') throw Error();
+    expect(base.brows[0]?.apparentMidlineEndToEndVerticalSlope).toBeCloseTo(1);
+    expect(base.brows[0]?.apparentMidlineUpwardBendToMaskXSpan).toBe(0);
+    expect(base.brows[0]?.apparentMidlineDownwardBendToMaskXSpan).toBe(0);
+
+    const curved = mask();
+    const heights = [11, 10, 9, 8, 8, 9, 10, 11];
+    heights.forEach((y, i) => rectangle(curved, 4 + i, y, 1, 2));
+    rectangle(curved, 25, 6, 8, 4);
+    const original = measureVisibleBrowMaskEnvelope(curved, width, height);
+    const stretched = measureVisibleBrowMaskEnvelope(curved, width, height, {
+      imageWidth: width * 2,
+      imageHeight: height,
+    });
+    expect(original.status).toBe('available');
+    expect(stretched.status).toBe('available');
+    if (original.status !== 'available' || stretched.status !== 'available') throw Error();
+    expect(stretched.brows[0]?.apparentMidlineUpwardBendToMaskXSpan).toBeCloseTo(
+      original.brows[0]!.apparentMidlineUpwardBendToMaskXSpan / 2,
+    );
+    expect(stretched.brows[0]?.upwardBendPositionOnMaskXSpan).toBeCloseTo(
+      original.brows[0]!.upwardBendPositionOnMaskXSpan!,
+    );
+  });
+
+});
