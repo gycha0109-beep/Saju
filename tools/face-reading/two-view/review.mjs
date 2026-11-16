@@ -2049,7 +2049,40 @@ function captureScreenDraftReady() {
     captureScreenSaveBusy ||
     state?.captureScreenRestoreFailed ||
     state?.captureScreenReviewStaleCount > 0;
+  for (const button of document.querySelectorAll('[data-review-pose]'))
+    button.setAttribute(
+      'aria-pressed',
+      String(button.dataset.reviewPose === $('capture-screen-pose').value),
+    );
+  for (const button of document.querySelectorAll('[data-review-visibility]'))
+    button.setAttribute(
+      'aria-pressed',
+      String(button.dataset.reviewVisibility === $('capture-screen-visibility').value),
+    );
 }
+for (const button of document.querySelectorAll('[data-review-pose]')) {
+  button.onclick = () => {
+    $('capture-screen-pose').value = button.dataset.reviewPose;
+    captureScreenDraftReady();
+  };
+}
+for (const button of document.querySelectorAll('[data-review-visibility]')) {
+  button.onclick = () => {
+    $('capture-screen-visibility').value = button.dataset.reviewVisibility;
+    captureScreenDraftReady();
+  };
+}
+$('research-mode-toggle').onclick = () => {
+  const research = document.body.classList.toggle('research-mode');
+  $('research-mode-toggle').setAttribute('aria-pressed', String(research));
+  $('research-mode-toggle').textContent = research
+    ? '간편 검토 화면으로 돌아가기'
+    : '개발용 상세 화면 보기';
+  if (!research) {
+    original = true;
+    render();
+  }
+};
 $('capture-screen-pose').onchange = captureScreenDraftReady;
 $('capture-screen-visibility').onchange = captureScreenDraftReady;
 $('capture-screen-next').onclick = () => {
@@ -2362,7 +2395,7 @@ function setRecords(next, nextMode) {
   records = next;
   mode = nextMode;
   selected = 0;
-  original = false;
+  original = nextMode === 'existing' && !document.body.classList.contains('research-mode');
   $('old-overlay').checked = false;
   $('current-2d-sweep').disabled =
     nextMode !== 'existing' || !next.length || busy || current2dSweepActive;
@@ -2373,6 +2406,7 @@ function setRecords(next, nextMode) {
     button.type = 'button';
     button.onclick = () => {
       selected = i;
+      if (!document.body.classList.contains('research-mode')) original = true;
       render();
     };
     if (nextMode === 'existing') {

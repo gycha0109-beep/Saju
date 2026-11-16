@@ -7,6 +7,23 @@ const browser = readFileSync(resolve(root, 'tools/face-reading/two-view/review.m
 const server = readFileSync(resolve(root, 'tools/face-reading/two-view/server.mjs'), 'utf8');
 
 describe('private two-view review browser module routing', () => {
+  it('shows two plain-language review choices by default and keeps existing research controls accessible', () => {
+    const html = readFileSync(resolve(root, 'tools/face-reading/two-view/review.html'), 'utf8');
+    expect(html).toContain('얼굴이 정면을 보고 있나요?');
+    expect(html).toContain('눈·코·입·귀가 잘 보이나요?');
+    expect(html).toContain('data-review-pose="uncertain"');
+    expect(html).toContain('data-review-visibility="partially_occluded"');
+    expect(html).toContain('body:not(.research-mode) main > section:not(#capture-screen-review)');
+    expect(html).toContain('id="research-mode-toggle"');
+    expect(html).toContain('id="capture-screen-save"');
+    expect(browser).toContain("document.body.classList.toggle('research-mode')");
+    expect(browser).toContain("$('capture-screen-pose').value = button.dataset.reviewPose");
+    expect(browser).toContain(
+      "$('capture-screen-visibility').value = button.dataset.reviewVisibility",
+    );
+    expect(browser).toContain("original = nextMode === 'existing'");
+    expect(browser).toContain('state.captureScreenReviews = {');
+  });
   it('serves landmark worker imports including the transient lower-face envelope module', () => {
     const worker = readFileSync(
       resolve(root, 'tools/face-reading/two-view/landmarks-worker.mjs'),

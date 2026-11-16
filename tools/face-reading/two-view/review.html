@@ -318,6 +318,32 @@
       [hidden] {
         display: none !important;
       }
+      .simple-review-intro { margin: 16px 0; padding: 16px; border: 1px solid #566987; border-radius: 12px; background: #1b2b40; }
+      .simple-review-intro p { margin: 4px 0 12px; font-size: 16px; }
+      .simple-review-intro button { font-weight: 650; }
+      .simple-review-options { display: grid; gap: 14px; margin: 14px 0; }
+      .simple-review-question { margin: 0; padding: 14px; border: 1px solid #566987; border-radius: 10px; }
+      .simple-review-question legend { padding: 0 6px; font-size: 16px; font-weight: 700; }
+      .simple-review-choice-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .simple-review-choice-buttons button { min-height: 46px; font-weight: 600; }
+      .simple-review-choice-buttons button[aria-pressed='true'] { background: #235e57; border: 2px solid #9ae4cc; }
+      body:not(.research-mode) main > section:not(#capture-screen-review),
+      body:not(.research-mode) .inputs,
+      body:not(.research-mode) .actions,
+      body:not(.research-mode) #status,
+      body:not(.research-mode) #count,
+      body:not(.research-mode) #tabs,
+      body:not(.research-mode) #parsing-controls,
+      body:not(.research-mode) #parsing-status,
+      body:not(.research-mode) #quality-status,
+      body:not(.research-mode) #previous-parsing-label,
+      body:not(.research-mode) #old-label,
+      body:not(.research-mode) #original,
+      body:not(.research-mode) #fresh-research-note,
+      body:not(.research-mode) header > a,
+      body:not(.research-mode) #capture-screen-review .toolbar > label { display: none !important; }
+      body.research-mode .simple-review-options { display: none !important; }
+      body.research-mode .simple-review-intro p { display: none !important; }
       @media (max-width: 500px) {
         main {
           padding: 12px;
@@ -350,6 +376,10 @@
         <a href="/two-view/experience">가상 풀이 체험</a>
         <a href="/">기존 전체 표시</a>
       </header>
+      <div class="simple-review-intro">
+        <p><strong>사진 1장씩 확인하면 됩니다.</strong> 사진을 보고 아래 두 질문에 답한 다음 저장하세요.</p>
+        <button id="research-mode-toggle" type="button" aria-pressed="false">개발용 상세 화면 보기</button>
+      </div>
       <div class="inputs">
         <label class="file"
           >정면 사진<input
@@ -398,9 +428,27 @@
       </div>
       <nav id="strip" class="strip" aria-label="전체 사진 목록"></nav>
       <section id="capture-screen-review" aria-labelledby="capture-screen-review-heading" hidden>
-        <h2 id="capture-screen-review-heading">사진 촬영 자세·가림 상태 사람 검토</h2>
-        <p class="note">원본 사진을 보고 직접 선택합니다. 단독 사람 검토이며 독립 자세 정답·해부학적 정확도·상용 승인으로 사용하지 않습니다.</p>
+        <h2 id="capture-screen-review-heading">이 사진 확인하기</h2>
+        <p class="note">사진만 보고 정면인지, 얼굴 부위가 가려졌는지 선택하세요. 정답을 모르겠다면 '잘 모르겠습니다'를 누르셔도 됩니다.</p>
         <p id="capture-screen-review-count" class="note" role="status"></p>
+        <div class="simple-review-options">
+          <fieldset class="simple-review-question">
+            <legend>1. 얼굴이 정면을 보고 있나요?</legend>
+            <div class="simple-review-choice-buttons" id="simple-review-pose">
+              <button type="button" data-review-pose="frontal_usable_candidate" aria-pressed="false">네, 정면입니다</button>
+              <button type="button" data-review-pose="not_frontal" aria-pressed="false">아니요, 옆을 보고 있습니다</button>
+              <button type="button" data-review-pose="uncertain" aria-pressed="false">잘 모르겠습니다</button>
+            </div>
+          </fieldset>
+          <fieldset class="simple-review-question">
+            <legend>2. 눈·코·입·귀가 잘 보이나요?</legend>
+            <div class="simple-review-choice-buttons" id="simple-review-visibility">
+              <button type="button" data-review-visibility="clear_enough_to_review" aria-pressed="false">네, 잘 보입니다</button>
+              <button type="button" data-review-visibility="partially_occluded" aria-pressed="false">일부가 가려졌습니다</button>
+              <button type="button" data-review-visibility="unusable" aria-pressed="false">거의 보이지 않습니다</button>
+            </div>
+          </fieldset>
+        </div>
         <div class="toolbar">
           <label for="capture-screen-pose">사진 자세
             <select id="capture-screen-pose">
@@ -418,8 +466,8 @@
               <option value="unusable">검토 불가능</option>
             </select>
           </label>
-          <button id="capture-screen-save" type="button" disabled>현재 사진 사람 검토 기록 저장</button>
-          <button id="capture-screen-next" type="button">다음 미검토 사진 열기</button>
+          <button id="capture-screen-save" type="button" disabled>이 사진 답변 저장</button>
+          <button id="capture-screen-next" type="button">다음 사진으로</button>
         </div>
         <p id="capture-screen-review-status" class="note" role="status"></p>
       </section>
