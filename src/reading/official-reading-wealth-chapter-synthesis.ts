@@ -50,7 +50,7 @@ function citedRef(
   entries: readonly EvidenceEntry[],
 ): string | undefined {
   const matches = entries.filter(entry =>
-    entry.primaryUnitRefs?.includes(unit.unitId) &&
+    entry.primaryUnitRefs?.length === 1 && entry.primaryUnitRefs[0] === unit.unitId &&
     entry.claimIds.includes(unit.claimId) &&
     entry.sourceIds.length > 0 &&
     entry.methodologyIds.length > 0,
