@@ -44,7 +44,7 @@ function context(input: { kinds: readonly Kind[]; domain?:string; contradict?:bo
   const sections:ReadingSectionView[]=[{
     sectionId:'official-existing-section',sectionType:'wealth',
     title:'돈·자원',state:'complete',explainabilityRefs:units.map((_,i)=>'explain-'+i),
-    blocks:[{type:'insights',items:units.map(u=>({headline:u.canonicalText?.headline,summary:u.canonicalText?.summary}))}],
+    blocks:[{type:'insights',items:units.map(u=>({headline:u.canonicalText!.headline!,summary:u.canonicalText!.summary!}))}],
   },{sectionId:'limits',sectionType:'structure',title:'해석 범위',state:'complete',
     blocks:[{type:'paragraph',text:'현재 근거 범위에서는 미래 재물 사건을 확정하지 않습니다.'}],
   }];
