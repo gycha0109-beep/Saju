@@ -17,7 +17,7 @@ import { createBusinessNatalReadingCandidateRegistry } from '../src/research/bus
 import { createCareerNatalReadingCandidateRegistry } from '../src/research/career-natal-reading-candidate.js';
 import { createGeneralNatalUsefulReadingCandidateRegistry } from '../src/research/general-natal-useful-reading-candidate.js';
 import { createRelationshipNatalReadingCandidateRegistry } from '../src/research/relationship-natal-reading-candidate.js';
-import { createWealthNatalReadingCandidateRegistry } from '../src/research/wealth-natal-reading-candidate.js';
+import { createWealthNatalReadingCandidateRegistry, WEALTH_NATAL_READING_RULES } from '../src/research/wealth-natal-reading-candidate.js';
 import {
   buildCanonicalReadingSemanticBundleV1,
   isCanonicalReadingScopeGuardUnitV1,
@@ -27,6 +27,7 @@ import {
   OFFICIAL_READING_CONCISE_SUPPORTED_DOMAIN_KEYS_V1,
   assessApprovedOfficialReadingConciseCoverageV1,
 } from '../src/reading/official-reading-concise-presentation-registry.js';
+import { WEALTH_NATAL_APPROVED_CONCISE_DEFINITIONS } from '../src/reading/official-reading-concise-presentation-wealth.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
 import { buildReadingCompositionEvidence } from '../src/reading/reading-profile-authorization.js';
@@ -227,6 +228,35 @@ describe('Official Reading concise domain coverage', () => {
       expect(concise.sections).toHaveLength(standard.sections.length);
     },
   );
+
+
+  it('delivers revised Wealth source semantics through the official standard report without profile drift', () => {
+    expect(WEALTH_NATAL_APPROVED_CONCISE_DEFINITIONS).toHaveLength(11);
+    for (const definition of WEALTH_NATAL_APPROVED_CONCISE_DEFINITIONS) {
+      const rule = WEALTH_NATAL_READING_RULES.find(
+        (candidate) => candidate.output.claimType === definition.claimType,
+      );
+      expect(rule).toBeDefined();
+      expect(definition.standardText.summary).toBe(
+        (rule?.output.value as { summary?: string }).summary,
+      );
+    }
+
+    const semantics = semanticsFor(CASES.find((candidate) => candidate.label === 'wealth')!);
+    const plan = buildOfficialReadingPlanV1(semantics);
+    const standard = renderOfficialReadingV1(semantics, plan, { preferredDetail: 'standard' });
+    const visible = visiblePrimaryUnits(semantics).filter(
+      (unit) => unit.claimType.startsWith('WEALTH_NATAL_CONCLUSION_'),
+    );
+    expect(visible.length).toBeGreaterThan(0);
+    const rendered = JSON.stringify(standard.sections);
+    for (const unit of visible) {
+      const summary = unit.canonicalText?.summary;
+      expect(summary).toBeDefined();
+      expect(summary?.length).toBeGreaterThan(120);
+      expect(rendered).toContain(summary);
+    }
+  });
 
   it('distinguishes stale approved material from a missing definition', () => {
     const semantics = semanticsFor(
