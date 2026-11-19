@@ -25,6 +25,21 @@ const PAIR_QUESTIONS: Readonly<Record<string,string>> = Object.freeze({
   'management|friction':'미리 정한 관리 원칙과 지금의 선택이 충돌한다면, 원칙을 바꿀지 선택을 바꿀지 무엇부터 확인해야 할까요?',
 });
 
+
+const EXACT_CLAIM_FOCUS: Readonly<Record<string,string>> = Object.freeze({
+  WEALTH_NATAL_CONCLUSION_WEALTH_RESULT_AS_RESOURCE:'목적이 분명한 자원과 용도가 정해지지 않은 자원을 구분하는 기준',
+  WEALTH_NATAL_CONCLUSION_OUTPUT_CREATE_VALUE:'능력을 실제 결과물로 만들어 쓰임을 확인하는 과정',
+  WEALTH_NATAL_CONCLUSION_RESOURCE_CAPABILITY_SPEND:'배움과 도구에 지출한 뒤 실제 사용하는 시점',
+  WEALTH_NATAL_CONCLUSION_OFFICER_RULED_MANAGEMENT:'고정적으로 지킬 비용과 유연하게 바꿀 수 있는 한도',
+  WEALTH_NATAL_CONCLUSION_PEER_AUTONOMY_SPEND:'독립성과 시간을 확보하는 지출의 의미',
+  WEALTH_NATAL_CONCLUSION_OUTPUT_WEALTH_MAKE_TO_VALUE:'만든 결과가 다른 사람에게 실제로 쓰이는지 확인하는 단계',
+  WEALTH_NATAL_CONCLUSION_WEALTH_OFFICER_RESULT_TO_BUDGET:'생활비·계획 지출·여유자금을 서로 다른 목적으로 나누는 방식',
+  WEALTH_NATAL_CONCLUSION_WEALTH_RESOURCE_LEARN_VS_RETURN:'더 준비할지 가진 것으로 먼저 시도할지의 선택',
+  WEALTH_NATAL_CONCLUSION_PEER_WEALTH_MY_WAY_VS_BUDGET:'원하는 방식을 지키기 위해 감당할 비용과 조정할 비용',
+  WEALTH_NATAL_CONCLUSION_OUTPUT_WEALTH_OFFICER_VALUE_OPERATING_LOOP:'만들기·쓰임 확인·다음 자원 배분을 연결하는 순서',
+  WEALTH_NATAL_CONCLUSION_PEER_WEALTH_RESOURCE_CHOICE_GROWTH_TRADEOFF:'선택권·성장·생활 유지 사이의 자원 우선순위',
+});
+
 function topicOf(unit: CanonicalReadingSemanticUnitV1): Topic | undefined {
   if (unit.role !== 'primary' || unit.scenarioRef !== undefined ||
       unit.taxonomy.tier !== 'T8' || unit.taxonomy.category !== 'wealth' ||
@@ -97,7 +112,13 @@ export function composeOfficialWealthNatalChaptersV1(input: Readonly<{
     if (conflictingPairs.has([first.unit.claimId,second.unit.claimId].sort().join('|'))) continue;
     const question=PAIR_QUESTIONS[left+'|'+right];
     if(!question) throw new TypeError('Missing approved Wealth chapter question');
-    pairs.push({refs:[first.ref,second.ref],text:question});
+    const firstFocus=EXACT_CLAIM_FOCUS[first.unit.claimType];
+    const secondFocus=EXACT_CLAIM_FOCUS[second.unit.claimType];
+    if (!firstFocus || !secondFocus) continue;
+    pairs.push({
+      refs:[first.ref,second.ref],
+      text:`‘${firstFocus}’와 ‘${secondFocus}’를 함께 살펴야 한다면, ${question}`,
+    });
   }
   if(pairs.length === 0) return input.sections;
   const topics=ORDER.filter(topic=>byTopic.has(topic));
