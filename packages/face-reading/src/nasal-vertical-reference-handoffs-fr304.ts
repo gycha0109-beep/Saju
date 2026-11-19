@@ -9,7 +9,6 @@ import {
   type NeutralNasalApexVerticalReferenceFR266V1,
 } from './provider-independent-nasal-apex-reference-fr266.js';
 import {
-  FR297_NASAL_BRIDGE_ROOT_REFERENCE_CONTRACT_VERSION,
   FR297_NASAL_BRIDGE_ROOT_REFERENCE_DEFINITION_REF,
   assertFR297NasalBridgeRootAuthority,
   type FR297NeutralNasalBridgeRootReference,

@@ -1,8 +1,6 @@
 import {
-  FR307_CURRENT_GATE,
   FR307_LOCAL_RUNNER,
   FR307_PRIMARY_MODEL,
-  FR307_VISIBLE_HAIRLINE_EMPIRICAL_RUNNER_CONTRACT_VERSION,
   assertFR307CurrentGate,
   assertVisibleHairlineEmpiricalRunnerFR307,
 } from './visible-hairline-empirical-runner-fr307.js';
