@@ -14,7 +14,12 @@ function unit(kind: Kind, index: number): CanonicalReadingSemanticUnitV1 {
   return {
     unitId: 'unit-'+index, role:'primary', claimId:'claim-'+index,
     taxonomy: { tier:'T8', category:'wealth', subcategory:kind },
-    claimType:'WEALTH_NATAL_CONCLUSION_TEST_'+index,
+    claimType:{
+      value_creation:'WEALTH_NATAL_CONCLUSION_OUTPUT_WEALTH_MAKE_TO_VALUE',
+      spending:'WEALTH_NATAL_CONCLUSION_PEER_AUTONOMY_SPEND',
+      management:'WEALTH_NATAL_CONCLUSION_WEALTH_OFFICER_RESULT_TO_BUDGET',
+      friction:'WEALTH_NATAL_CONCLUSION_PEER_WEALTH_MY_WAY_VS_BUDGET',
+    }[kind],
     subject:'natal_chart',predicate:'wealth_conclusion',semanticKey:'wealth_'+kind,
     canonicalText:{headline:'실제 고객에게 보여 줄 관점 '+index,summary:'기존 승인 해석 문장 '+index},
     semanticPayload:{wealthKind:kind,families:['wealth','officer']},
