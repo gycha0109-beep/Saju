@@ -21,6 +21,7 @@ import {
   summarizeMissingWealthCauses,
   ROOT_CAUSE_AUDIT_VERSION,
 } from './saju-500-root-cause.mjs';
+import { auditSixMenuQuestionCoverage } from './saju-500-six-menu-question-coverage.mjs';
 
 const REFERENCE = '2026-10-25T00:00:00.000Z';
 const COUNT = 500;
@@ -248,6 +249,7 @@ export function runFiveHundredSajuAudit() {
     sameCalculationHashGroups:sameChart.slice(0,10),
     elapsedMs:Date.now()-startedAt,
     menuResults:Object.fromEntries(DOMAIN_NAMES.map(name=>[name,summarize(rows[name])])),
+    sixMenuQuestionCoverage: auditSixMenuQuestionCoverage(rows),
     rootCauseDiagnostics: {
       version: ROOT_CAUSE_AUDIT_VERSION,
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
