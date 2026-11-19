@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'scripts/saju-500-eight-menu-audit.mjs'
+      - 'scripts/saju-500-six-menu-question-coverage.mjs'
+      - 'scripts/saju-500-six-menu-question-coverage.node-check.mjs'
       - '.github/workflows/saju-500-reading-audit.yml'
   workflow_dispatch:
 
@@ -25,6 +27,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci --no-audit --no-fund --ignore-scripts
+      - name: Check six-menu question evidence classification
+        run: node --test scripts/saju-500-six-menu-question-coverage.node-check.mjs
       - name: Build the real Saju engine
         run: npm run build
       - name: Run deterministic 500-case audit with eight actual menu engines
