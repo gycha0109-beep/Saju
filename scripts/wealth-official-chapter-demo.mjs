@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import process from 'node:process';
 import { calculateCanonicalSajuSnapshot } from '../dist/calculation/calculation-engine.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
@@ -48,5 +49,5 @@ for(const input of cases){
  mkdirSync(dirname(dest),{recursive:true});
  writeFileSync(dest,htmlFor(input,result),'utf8');
  const summary={label:input.label,birth:input.date,chapters:result.sections.map(x=>x.title),semanticUnitCount:bundle.targetClaimIds.length,evidenceCount:result.explainability.entries.length,reportHash:result.reportHash,output:dest};
- console.log(JSON.stringify(summary));
+ process.stdout.write(JSON.stringify(summary)+'\n');
 }
