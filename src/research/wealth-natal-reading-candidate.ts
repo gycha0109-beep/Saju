@@ -23,7 +23,7 @@ import {
   CAREER_NATAL_READING_RULES,
 } from './career-natal-reading-candidate.js';
 
-export const WEALTH_NATAL_READING_CANDIDATE_VERSION = '0.4.1-research' as const;
+export const WEALTH_NATAL_READING_CANDIDATE_VERSION = '0.4.0-research' as const;
 
 const METHOD_ID = 'M-WEALTH-NATAL-READING-TEN-GOD-SYNTHESIS-V1';
 const WEALTH_RULE_SET = 'wealth-natal-consumer-reading';
