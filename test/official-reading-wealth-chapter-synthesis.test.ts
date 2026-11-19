@@ -9,8 +9,8 @@ import type {
 } from '../src/reading/canonical-reading-semantics.js';
 import type { ExplainabilityIndex, ReadingSectionView } from '../src/contracts/reading.js';
 
-const kinds = ['value_creation','spending','management','friction'] as const;
-function unit(kind: typeof kinds[number], index: number): CanonicalReadingSemanticUnitV1 {
+type Kind = 'value_creation' | 'spending' | 'management' | 'friction';
+function unit(kind: Kind, index: number): CanonicalReadingSemanticUnitV1 {
   return {
     unitId: 'unit-'+index, role:'primary', claimId:'claim-'+index,
     taxonomy: { tier:'T8', category:'wealth', subcategory:kind },
@@ -24,7 +24,7 @@ function unit(kind: typeof kinds[number], index: number): CanonicalReadingSemant
     prohibitedExtensions:[],
   } as unknown as CanonicalReadingSemanticUnitV1;
 }
-function context(input: { kinds: readonly (typeof kinds[number])[]; domain?:string; contradict?:boolean; scenario?:boolean }) {
+function context(input: { kinds: readonly Kind[]; domain?:string; contradict?:boolean; scenario?:boolean }) {
   const units = input.kinds.map((kind,i)=>unit(kind,i));
   if(input.scenario) units[0] = {...units[0]!,scenarioRef:'alternative'};
   const bundle = {
