@@ -73,12 +73,13 @@ export function composeOfficialWealthNatalChaptersV1(input: Readonly<{
 
   const selected = new Set(input.bundle.targetClaimIds);
   const primary = input.bundle.units.filter(unit => selected.has(unit.claimId) && topicOf(unit));
-  const conflicting = new Set(input.bundle.claimRelations.flatMap(relation =>
-    relation.relation === 'contradicts' ? [relation.fromClaimId,relation.toClaimId] : []));
+  const conflictingPairs = new Set(input.bundle.claimRelations
+    .filter(relation => relation.relation === 'contradicts')
+    .map(relation => [relation.fromClaimId,relation.toClaimId].sort().join('|')));
   const byTopic = new Map<Topic,{unit:CanonicalReadingSemanticUnitV1;ref:string}>();
   for (const topic of ORDER) {
     const candidates = primary.filter(unit =>
-      topicOf(unit) === topic && !conflicting.has(unit.claimId))
+      topicOf(unit) === topic)
       .map(unit => ({unit,ref:citedRef(unit,input.explainability.entries)}))
       .filter((item):item is {unit:CanonicalReadingSemanticUnitV1;ref:string} =>
         item.ref !== undefined)
@@ -93,10 +94,12 @@ export function composeOfficialWealthNatalChaptersV1(input: Readonly<{
     const left=ORDER[i]!,right=ORDER[j]!;
     const first=byTopic.get(left),second=byTopic.get(right);
     if(!first||!second) continue;
+    if (conflictingPairs.has([first.unit.claimId,second.unit.claimId].sort().join('|'))) continue;
     const question=PAIR_QUESTIONS[left+'|'+right];
     if(!question) throw new TypeError('Missing approved Wealth chapter question');
     pairs.push({refs:[first.ref,second.ref],text:question});
   }
+  if(pairs.length === 0) return input.sections;
   const topics=ORDER.filter(topic=>byTopic.has(topic));
   const representative=topics.slice(0,3).map(topic=>{
     const selected=byTopic.get(topic)!;
