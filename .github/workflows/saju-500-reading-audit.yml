@@ -6,6 +6,10 @@ on:
       - 'scripts/saju-500-eight-menu-audit.mjs'
       - 'scripts/saju-500-six-menu-question-coverage.mjs'
       - 'scripts/saju-500-six-menu-question-coverage.node-check.mjs'
+      - 'scripts/wealth-official-chapter-demo.mjs'
+      - 'src/reading/official-reading-wealth-chapter-synthesis.ts'
+      - 'src/reading/official-reading-renderer.ts'
+      - 'test/official-reading-wealth-chapter-synthesis.test.ts'
       - '.github/workflows/saju-500-reading-audit.yml'
   workflow_dispatch:
 
@@ -31,6 +35,18 @@ jobs:
         run: node --test scripts/saju-500-six-menu-question-coverage.node-check.mjs
       - name: Build the real Saju engine
         run: npm run build
+      - name: Test official Wealth chapter composition
+        run: npx vitest run test/official-reading-wealth-chapter-synthesis.test.ts test/official-reading-detailed-domain-coverage.test.ts test/official-reading-concise-domain-coverage.test.ts
+      - name: Generate official Wealth chapters for two real charts
+        run: node scripts/wealth-official-chapter-demo.mjs "$RUNNER_TEMP/wealth-chapters"
+      - name: Upload Wealth chapter previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-wealth-official-chapters
+          path: ${{ runner.temp }}/wealth-chapters/*.html
+          if-no-files-found: warn
+          retention-days: 30
       - name: Run deterministic 500-case audit with eight actual menu engines
         run: node scripts/saju-500-eight-menu-audit.mjs "$RUNNER_TEMP/saju-500-eight-menu-report.json"
       - name: Upload audit results
