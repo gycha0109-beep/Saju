@@ -46,6 +46,7 @@ import {
   buildOfficialReadingAnnualTemporalSectionV1,
 } from './official-reading-annual-temporal-presentation.js';
 import type { ReadingAnnualTemporalStructureV1 } from './annual-temporal-structure-projection.js';
+import { composeOfficialWealthNatalChaptersV1 } from './official-reading-wealth-chapter-synthesis.js';
 import { buildApprovedRelationshipMultifactorOverviewV1 } from './approved-relationship-multifactor-overview.js';
 
 export const OFFICIAL_READING_RENDERER_VERSION =
@@ -1047,6 +1048,9 @@ function renderOfficialReadingInternalV1(
       left.explainabilityRef.localeCompare(right.explainabilityRef),
     ),
   };
+  const renderedSections = composeOfficialWealthNatalChaptersV1({
+    bundle, sections, explainability,
+  });
   const reportMaterial = {
     rendererVersion: OFFICIAL_READING_RENDERER_VERSION,
     structuralRealizationPolicyVersion:
@@ -1089,7 +1093,7 @@ function renderOfficialReadingInternalV1(
         }),
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
-    sections,
+    sections: renderedSections,
     disclosures,
     explainability,
   };
