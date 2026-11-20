@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'scripts/saju-500-eight-menu-audit.mjs'
+      - 'scripts/saju-500-six-menu-question-coverage.mjs'
+      - 'scripts/saju-500-six-menu-question-coverage.node-check.mjs'
       - 'scripts/wealth-official-chapter-demo.mjs'
       - 'src/reading/official-reading-wealth-chapter-synthesis.ts'
       - 'src/reading/official-reading-renderer.ts'
@@ -29,6 +31,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci --no-audit --no-fund --ignore-scripts
+      - name: Check six-menu question evidence classification
+        run: node --test scripts/saju-500-six-menu-question-coverage.node-check.mjs
       - name: Build the real Saju engine
         run: npm run build
       - name: Test official Wealth chapter composition
