@@ -1,5 +1,6 @@
 import {mkdirSync,writeFileSync} from 'node:fs';
-import {resolve,dirname} from 'node:path';
+import {resolve} from 'node:path';
+import process from 'node:process';
 import {createHash} from 'node:crypto';
 import {calculateCanonicalSajuSnapshot} from '../dist/calculation/calculation-engine.js';
 import {PRODUCTION_DEFAULT_CALCULATION_POLICY} from '../dist/production/production-calculation-policy.js';
