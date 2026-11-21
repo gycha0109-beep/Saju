@@ -4,6 +4,7 @@ import { runInterpretation } from '../interpretation/interpretation-engine.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import { buildMonthlyInterpretationFacts } from '../reading/monthly-interpretation-facts.js';
 import { buildTemporalReadingContext } from '../reading/temporal-reading-context.js';
+import { buildNatalStructureContext } from './natal-structure-context.js';
 import { createGeneralMonthlyReadingCandidateRegistry } from '../research/general-monthly-reading-candidate.js';
 import {
   buildTemporalResearchMenuReadings,
@@ -52,23 +53,35 @@ export function buildAnnualMonthlyBirthResearchReading(
   birth: BirthInput,
   target: AnnualMonthlyBirthResearchTarget,
 ): AnnualMonthlyBirthResearchReading {
-  if (!Number.isInteger(target.targetYear) ||
-      target.targetYear < 1800 || target.targetYear > 2300 ||
-      !Number.isInteger(target.targetMonth) ||
-      target.targetMonth < 1 || target.targetMonth > 12) {
-    throw new RangeError('Annual/monthly research requires a supported civil year (1800-2300) and month (1-12).');
+  if (
+    !Number.isInteger(target.targetYear) ||
+    target.targetYear < 1800 ||
+    target.targetYear > 2300 ||
+    !Number.isInteger(target.targetMonth) ||
+    target.targetMonth < 1 ||
+    target.targetMonth > 12
+  ) {
+    throw new RangeError(
+      'Annual/monthly research requires a supported civil year (1800-2300) and month (1-12).',
+    );
   }
-  if (typeof target.requestId !== 'string' ||
-      !target.requestId.trim() || target.requestId.length > 200) {
+  if (
+    typeof target.requestId !== 'string' ||
+    !target.requestId.trim() ||
+    target.requestId.length > 200
+  ) {
     throw new TypeError('Annual/monthly research requires a nonempty bounded request ID.');
   }
-  if (typeof target.referenceDateTime !== 'string' ||
-      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(target.referenceDateTime)) {
-    throw new TypeError('Annual/monthly research requires an explicit canonical UTC ISO timestamp.');
+  if (
+    typeof target.referenceDateTime !== 'string' ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(target.referenceDateTime)
+  ) {
+    throw new TypeError(
+      'Annual/monthly research requires an explicit canonical UTC ISO timestamp.',
+    );
   }
   const now = new Date(target.referenceDateTime);
-  if (!Number.isFinite(now.getTime()) ||
-      now.toISOString() !== target.referenceDateTime) {
+  if (!Number.isFinite(now.getTime()) || now.toISOString() !== target.referenceDateTime) {
     throw new RangeError('Annual/monthly research reference date must exist on the calendar.');
   }
   // No alternate calculation policies or scenario collapse are accepted.
@@ -89,6 +102,7 @@ export function buildAnnualMonthlyBirthResearchReading(
   if (temporalContext?.scope !== 'monthly') {
     throw new TypeError('Expected an exact monthly research target.');
   }
+  const natalContext = buildNatalStructureContext(snapshot, now);
   const facts = buildMonthlyInterpretationFacts(snapshot, temporalContext);
   const registry = createGeneralMonthlyReadingCandidateRegistry(target.referenceDateTime);
   const execution = runInterpretation(snapshot, registry, {
@@ -97,20 +111,34 @@ export function buildAnnualMonthlyBirthResearchReading(
     now,
   });
   const report = buildGeneralAnnualMonthlyExplorationReport(
-    snapshot, facts, execution, registry, request,
+    snapshot,
+    facts,
+    execution,
+    registry,
+    request,
+    natalContext,
   );
-  if (!report.researchOnly || report.mayPublish || report.maySell ||
-      report.annual.permissions.mayClaimOfficialAuthority ||
-      report.monthly.status !== 'not_official_reading') {
+  if (
+    !report.researchOnly ||
+    report.mayPublish ||
+    report.maySell ||
+    report.annual.permissions.mayClaimOfficialAuthority ||
+    report.monthly.status !== 'not_official_reading'
+  ) {
     throw new TypeError('Annual/monthly internal preview cannot become an official reading.');
   }
 
   const monthlyMenu = buildTemporalResearchMenuReadings({ annualMonthly: report })[1];
-  if (monthlyMenu?.menuId !== 'monthly' ||
-      monthlyMenu.provenance.snapshotId !== snapshot.snapshotId ||
-      monthlyMenu.provenance.calculationHash !== snapshot.calculationHash ||
-      monthlyMenu.authority.mayCallOfficial || monthlyMenu.authority.mayMarkMenuAvailable) {
-    throw new TypeError('Real-birth monthly menu projection must preserve chart and restricted authority.');
+  if (
+    monthlyMenu?.menuId !== 'monthly' ||
+    monthlyMenu.provenance.snapshotId !== snapshot.snapshotId ||
+    monthlyMenu.provenance.calculationHash !== snapshot.calculationHash ||
+    monthlyMenu.authority.mayCallOfficial ||
+    monthlyMenu.authority.mayMarkMenuAvailable
+  ) {
+    throw new TypeError(
+      'Real-birth monthly menu projection must preserve chart and restricted authority.',
+    );
   }
 
   return {

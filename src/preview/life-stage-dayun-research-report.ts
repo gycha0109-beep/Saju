@@ -29,6 +29,11 @@ export interface LifeStageNatalStructureContext {
   sections: readonly {
     title: string;
     paragraph: string;
+    pattern: string;
+    families: readonly ('peer' | 'resource' | 'output' | 'wealth' | 'officer')[];
+    axis: 'core' | 'expression' | 'response' | 'responsibility' | 'tension';
+    channel: 'visible_stems' | 'branches';
+    observedPositions: readonly string[];
     sourceIds: readonly string[];
     factPaths: readonly string[];
   }[];
@@ -66,8 +71,7 @@ function normalizedLocalDateTime(input: string): { instant: string; local: strin
   if (!Number.isFinite(parsed.getTime())) {
     throw new RangeError('Life-stage reference time is invalid.');
   }
-  const local = new Date(parsed.getTime() + 9 * 60 * 60 * 1000)
-    .toISOString().slice(0, 16);
+  const local = new Date(parsed.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 16);
   return { instant: parsed.toISOString(), local, year: Number(local.slice(0, 4)) };
 }
 
@@ -87,15 +91,27 @@ const UNAVAILABLE_REASON_KO: Readonly<
 
 function period(kind: 'current' | 'next', segment: DayunTemporalSegment): LifeStageDayunFactPeriod {
   const pillar = segment.pillar.stem.value + segment.pillar.branch.value;
-  const text = kind === 'current'
-    ? '현재 기준으로 명식에서 계산된 대운은 ' + pillar + ' 구간입니다. ' +
-      segment.startLocalDateTime + '부터 ' + segment.endExclusiveLocalDateTime +
-      ' 전까지로 계산됩니다. 이 구간의 간지와 기간만 확인한 것으로, 삶의 성패나 사건을 뜻하지 않습니다.'
-    : '다음 계산상 대운은 ' + pillar + ' 구간입니다. ' +
-      segment.startLocalDateTime + '부터 ' + segment.endExclusiveLocalDateTime +
-      ' 전까지로 계산됩니다. 전환 시각은 계산상의 구간 경계이며 특정 변화를 예고하지 않습니다.';
+  const text =
+    kind === 'current'
+      ? '현재 기준으로 명식에서 계산된 대운은 ' +
+        pillar +
+        ' 구간입니다. ' +
+        segment.startLocalDateTime +
+        '부터 ' +
+        segment.endExclusiveLocalDateTime +
+        ' 전까지로 계산됩니다. 이 구간의 간지와 기간만 확인한 것으로, 삶의 성패나 사건을 뜻하지 않습니다.'
+      : '다음 계산상 대운은 ' +
+        pillar +
+        ' 구간입니다. ' +
+        segment.startLocalDateTime +
+        '부터 ' +
+        segment.endExclusiveLocalDateTime +
+        ' 전까지로 계산됩니다. 전환 시각은 계산상의 구간 경계이며 특정 변화를 예고하지 않습니다.';
   return {
-    kind, pillar, cycleIndex: segment.index, ageMarker: segment.ageMarker,
+    kind,
+    pillar,
+    cycleIndex: segment.index,
+    ageMarker: segment.ageMarker,
     startsAt: segment.startLocalDateTime,
     endsAtExclusive: segment.endExclusiveLocalDateTime,
     text,
@@ -106,22 +122,32 @@ function period(kind: 'current' | 'next', segment: DayunTemporalSegment): LifeSt
 function summarizeDayunTransition(
   periods: readonly LifeStageDayunFactPeriod[],
 ): string | undefined {
-  const current = periods.find(item => item.kind === 'current');
+  const current = periods.find((item) => item.kind === 'current');
   if (current === undefined) return undefined;
-  const next = periods.find(item => item.kind === 'next');
+  const next = periods.find((item) => item.kind === 'next');
   if (next === undefined) {
-    return '현재 확인 가능한 대운은 ' + current.pillar + '이며 ' +
-      current.endsAtExclusive + ' 이전까지가 계산 범위입니다. ' +
-      '그 이후의 대운 간지·시작 구간은 아직 확인되지 않아 전환을 설명하지 않습니다.';
+    return (
+      '현재 확인 가능한 대운은 ' +
+      current.pillar +
+      '이며 ' +
+      current.endsAtExclusive +
+      ' 이전까지가 계산 범위입니다. ' +
+      '그 이후의 대운 간지·시작 구간은 아직 확인되지 않아 전환을 설명하지 않습니다.'
+    );
   }
-  if (next.cycleIndex !== current.cycleIndex + 1 ||
-      next.startsAt !== current.endsAtExclusive) {
+  if (next.cycleIndex !== current.cycleIndex + 1 || next.startsAt !== current.endsAtExclusive) {
     throw new TypeError('Life-stage transition must use adjacent canonical Dayun periods.');
   }
-  return '이 명식에서 ' + current.pillar + ' 대운은 ' +
-    current.endsAtExclusive + ' 직전까지, 이어지는 ' +
-    next.pillar + ' 대운은 같은 시각부터 계산됩니다. ' +
-    '이는 서로 맞닿는 대운 기간을 보여주는 계산 사실이며 삶의 변화·길흉·사건 발생을 뜻하지 않습니다.';
+  return (
+    '이 명식에서 ' +
+    current.pillar +
+    ' 대운은 ' +
+    current.endsAtExclusive +
+    ' 직전까지, 이어지는 ' +
+    next.pillar +
+    ' 대운은 같은 시각부터 계산됩니다. ' +
+    '이는 서로 맞닿는 대운 기간을 보여주는 계산 사실이며 삶의 변화·길흉·사건 발생을 뜻하지 않습니다.'
+  );
 }
 
 /**
@@ -146,20 +172,24 @@ export function buildLifeStageDayunResearchReport(
     if (currentYear.snapshotId !== snapshot.snapshotId) {
       throw new TypeError('Life-stage Dayun result must belong to the source natal chart.');
     }
-    const current = currentYear.segments.find(segment =>
-      segment.startLocalDateTime <= ref.local &&
-      ref.local < segment.endExclusiveLocalDateTime);
+    const current = currentYear.segments.find(
+      (segment) =>
+        segment.startLocalDateTime <= ref.local && ref.local < segment.endExclusiveLocalDateTime,
+    );
     if (current === undefined) {
       missing.push('현재 시각에 해당하는 계산상 대운 구간을 확인할 수 없습니다.');
     } else {
       periods.push(period('current', current));
       const boundaryYear = Number(current.endExclusiveLocalDateTime.slice(0, 4));
       const boundary = resolveDayunTemporalContext(snapshot, boundaryYear);
-      const next = boundary.status === 'resolved'
-        ? boundary.segments.find(segment =>
-            segment.index === current.index + 1 &&
-            segment.startLocalDateTime === current.endExclusiveLocalDateTime)
-        : undefined;
+      const next =
+        boundary.status === 'resolved'
+          ? boundary.segments.find(
+              (segment) =>
+                segment.index === current.index + 1 &&
+                segment.startLocalDateTime === current.endExclusiveLocalDateTime,
+            )
+          : undefined;
       if (next !== undefined) periods.push(period('next', next));
       else missing.push('다음 대운의 시작 시각 및 간지는 계산 자료에서 확정할 수 없습니다.');
     }
@@ -167,12 +197,18 @@ export function buildLifeStageDayunResearchReport(
   const transitionSummary = summarizeDayunTransition(periods);
   return {
     version: LIFE_STAGE_DAYUN_RESEARCH_REPORT_VERSION,
-    mode: 'internal_exploration', status: 'not_official_reading',
+    mode: 'internal_exploration',
+    status: 'not_official_reading',
     coverage: periods.length > 0 ? 'calculated_only' : 'unavailable',
     interpretationStatus: 'source_authority_not_established',
-    researchOnly: true, usefulComplete: false, mayPublish: false, maySell: false,
-    snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
-    referenceDateTime: ref.instant, referenceLocalDateTime: ref.local,
+    researchOnly: true,
+    usefulComplete: false,
+    mayPublish: false,
+    maySell: false,
+    snapshotId: snapshot.snapshotId,
+    calculationHash: snapshot.calculationHash,
+    referenceDateTime: ref.instant,
+    referenceLocalDateTime: ref.local,
     timeZone: 'Asia/Seoul',
     policyId: DAYUN_TEMPORAL_CONTEXT_POLICY.policyId,
     policyHash: DAYUN_TEMPORAL_CONTEXT_POLICY_CONTENT_HASH,
@@ -189,9 +225,17 @@ export function buildLifeStageDayunResearchReport(
 }
 
 function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/gu, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  })[c]!);
+  return value.replace(
+    /[&<>"']/gu,
+    (c) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[c]!,
+  );
 }
 
 export function renderLifeStageDayunResearchHtml(
@@ -199,52 +243,113 @@ export function renderLifeStageDayunResearchHtml(
   natalContext?: LifeStageNatalStructureContext,
 ): string {
   const e = escapeHtml;
-  if (natalContext !== undefined &&
-      (natalContext.snapshotId !== report.snapshotId ||
-       natalContext.calculationHash !== report.calculationHash ||
-       natalContext.sections.some(section =>
-         section.title.trim().length === 0 ||
-         section.paragraph.trim().length === 0 ||
-         section.sourceIds.length < 2 || section.factPaths.length < 2) ||
-       (natalContext.availability === 'bounded_natal_t8_research'
-         ? natalContext.sections.length === 0
-         : natalContext.sections.length !== 0))) {
-    throw new TypeError('Life-stage natal context must be from the identical canonical chart and T8 sources.');
+  if (
+    natalContext !== undefined &&
+    (natalContext.snapshotId !== report.snapshotId ||
+      natalContext.calculationHash !== report.calculationHash ||
+      natalContext.sections.some(
+        (section) =>
+          section.title.trim().length === 0 ||
+          section.paragraph.trim().length === 0 ||
+          section.pattern.trim().length === 0 ||
+          section.families.length < 2 ||
+          section.observedPositions.length < 2 ||
+          section.sourceIds.length < 2 ||
+          section.factPaths.length < 2,
+      ) ||
+      (natalContext.availability === 'bounded_natal_t8_research'
+        ? natalContext.sections.length === 0
+        : natalContext.sections.length !== 0))
+  ) {
+    throw new TypeError(
+      'Life-stage natal context must be from the identical canonical chart and T8 sources.',
+    );
   }
-  const periods = report.periods.map(p =>
-    '<section><h2>' + (p.kind === 'current' ? '지금의 계산 구간' : '다음 계산 구간') +
-    '</h2><p>' + e(p.text) + '</p>' +
-    '<details><summary>계산 근거</summary><p>대운 순서: ' + p.cycleIndex +
-    ', 전통식 연령 표시: ' + p.ageMarker + '</p><p>구간: ' +
-    e(p.startsAt) + ' — ' + e(p.endsAtExclusive) + ' (종료 시각 제외)</p><p>정책: ' +
-    e(report.policyId) + ' · ' + e(report.policyHash) + '</p></details></section>',
-  ).join('\n');
-  const natalHtml = natalContext === undefined ? '' :
-    '<section aria-label="같은 명식의 원국 구조 해석"><h2>지금의 대운과 별개인 원국 해석</h2>' +
-    '<p>아래 설명은 이 사람의 원국에 대한 기존 T8 연구 풀이입니다. ' +
-    '현재·다음 대운의 길흉이나 특정 시기 결과를 나타내지 않습니다.</p>' +
-    '<p>' + e(natalContext.introduction) + '</p>' +
-    (natalContext.sections.length === 0
-      ? '<p>같은 명식에 연결할 수 있는 출처 있는 원국 구조 해석이 부족합니다.</p>'
-      : natalContext.sections.map(item =>
-        '<article><h3>' + e(item.title) + '</h3><p>' + e(item.paragraph) + '</p>' +
-        '<details><summary>원국 해석 근거</summary><p>' +
-        e(item.sourceIds.join(' · ')) + '</p><p>' +
-        e(item.factPaths.join(' · ')) + '</p></details></article>',
-      ).join('')) + '</section>';
-  return '<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
+  const periods = report.periods
+    .map(
+      (p) =>
+        '<section><h2>' +
+        (p.kind === 'current' ? '지금의 계산 구간' : '다음 계산 구간') +
+        '</h2><p>' +
+        e(p.text) +
+        '</p>' +
+        '<details><summary>계산 근거</summary><p>대운 순서: ' +
+        p.cycleIndex +
+        ', 전통식 연령 표시: ' +
+        p.ageMarker +
+        '</p><p>구간: ' +
+        e(p.startsAt) +
+        ' — ' +
+        e(p.endsAtExclusive) +
+        ' (종료 시각 제외)</p><p>정책: ' +
+        e(report.policyId) +
+        ' · ' +
+        e(report.policyHash) +
+        '</p></details></section>',
+    )
+    .join('\n');
+  const natalHtml =
+    natalContext === undefined
+      ? ''
+      : '<section aria-label="같은 명식의 원국 구조 해석"><h2>지금의 대운과 별개인 원국 해석</h2>' +
+        '<p>아래 설명은 이 사람의 원국에 대한 기존 T8 연구 풀이입니다. ' +
+        '현재·다음 대운의 길흉이나 특정 시기 결과를 나타내지 않습니다.</p>' +
+        '<p>' +
+        e(natalContext.introduction) +
+        '</p>' +
+        (natalContext.sections.length === 0
+          ? '<p>같은 명식에 연결할 수 있는 출처 있는 원국 구조 해석이 부족합니다.</p>'
+          : natalContext.sections
+              .map(
+                (item) =>
+                  '<article><h3>' +
+                  e(item.title) +
+                  '</h3><p>' +
+                  e(item.paragraph) +
+                  '</p>' +
+                  '<p>확인된 계열: ' +
+                  e(item.families.join(' · ')) +
+                  ' · 관측 위치: ' +
+                  e(item.observedPositions.join(' · ')) +
+                  '</p>' +
+                  '<details><summary>원국 해석 근거</summary><p>패턴: ' +
+                  e(item.pattern) +
+                  ' · 축: ' +
+                  e(item.axis) +
+                  ' · 관측 채널: ' +
+                  e(item.channel) +
+                  '</p><p>' +
+                  e(item.sourceIds.join(' · ')) +
+                  '</p><p>' +
+                  e(item.factPaths.join(' · ')) +
+                  '</p></details></article>',
+              )
+              .join('')) +
+        '</section>';
+  return (
+    '<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-    '<title>' + e(report.headline) + ' · 내부 연구</title>' +
+    '<title>' +
+    e(report.headline) +
+    ' · 내부 연구</title>' +
     '<style>body{font-family:system-ui,"Malgun Gothic",sans-serif;background:#f6f2eb;color:#292a27;line-height:1.75;margin:0}' +
     'main{max-width:800px;margin:auto;padding:30px 20px 60px}section{background:#fff;padding:22px;border-radius:16px;margin:16px 0}' +
     'details{font-size:12px;overflow-wrap:anywhere}aside{background:#eee8de;padding:20px;border-radius:12px}</style>' +
     '</head><body><main><small>MYEONGHA · INTERNAL RESEARCH ONLY</small>' +
-    '<h1>' + e(report.headline) + '</h1><p>조회 기준: ' +
-    e(report.referenceLocalDateTime) + ' KST</p>' + natalHtml +
-    (report.transitionSummary === undefined ? '' :
-      '<section aria-label="현재와 다음 대운의 계산 전환"><h2>지금과 다음 대운의 경계</h2><p>' +
-      e(report.transitionSummary) + '</p></section>') + periods +
+    '<h1>' +
+    e(report.headline) +
+    '</h1><p>조회 기준: ' +
+    e(report.referenceLocalDateTime) +
+    ' KST</p>' +
+    natalHtml +
+    (report.transitionSummary === undefined
+      ? ''
+      : '<section aria-label="현재와 다음 대운의 계산 전환"><h2>지금과 다음 대운의 경계</h2><p>' +
+        e(report.transitionSummary) +
+        '</p></section>') +
+    periods +
     '<aside><strong>아직 알 수 없는 부분</strong><ul>' +
-    [...report.missing, ...report.caveats].map(s => '<li>' + e(s) + '</li>').join('') +
-    '</ul></aside></main></body></html>';
+    [...report.missing, ...report.caveats].map((s) => '<li>' + e(s) + '</li>').join('') +
+    '</ul></aside></main></body></html>'
+  );
 }
