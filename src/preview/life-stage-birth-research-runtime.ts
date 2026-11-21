@@ -1,9 +1,7 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
-import { runInterpretation } from '../interpretation/interpretation-engine.js';
-import { createGeneralNatalMultifactorRegistry } from
-  '../research/general-natal-multifactor-candidate.js';
-import { buildGeneralNatalMultifactorReport } from './general-natal-multifactor-report.js';
+
+import { buildNatalStructureContext } from './natal-structure-context.js';
 
 import {
   buildLifeStageDayunResearchReport,
@@ -40,10 +38,15 @@ export interface LifeStageBirthResearchReading {
 export function buildLifeStageBirthResearchReading(
   birth: BirthInput,
   referenceDateTime: string,
+  precomputedNatalContext?: LifeStageNatalStructureContext,
 ): LifeStageBirthResearchReading {
-  if (typeof referenceDateTime !== 'string' ||
-      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(referenceDateTime)) {
-    throw new TypeError('Life-stage research requires an explicit canonical UTC reference timestamp.');
+  if (
+    typeof referenceDateTime !== 'string' ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(referenceDateTime)
+  ) {
+    throw new TypeError(
+      'Life-stage research requires an explicit canonical UTC reference timestamp.',
+    );
   }
   const now = new Date(referenceDateTime);
   if (!Number.isFinite(now.getTime()) || now.toISOString() !== referenceDateTime) {
@@ -51,37 +54,28 @@ export function buildLifeStageBirthResearchReading(
   }
   const { snapshot } = calculateAuthorizedMyeonghwaProductionSnapshot(birth, { now });
   const report = buildLifeStageDayunResearchReport(snapshot, referenceDateTime);
-  const registry = createGeneralNatalMultifactorRegistry();
-  const execution = runInterpretation(snapshot, registry, { now });
-  const natal = buildGeneralNatalMultifactorReport(snapshot, execution, registry);
-  if (natal.snapshotId !== snapshot.snapshotId ||
-      natal.calculationHash !== snapshot.calculationHash ||
-      !natal.researchOnly || natal.usefulComplete ||
-      natal.mayPublish || natal.maySell ||
-      natal.sections.some(section => section.upstreamClaimIds.length < 2 ||
-        section.sourceIds.length < 2 ||
-        section.observedFactPaths.length < 2)) {
-    throw new TypeError('Life-stage natal context must retain original chart-specific T8 research sources.');
+  const natalContext = precomputedNatalContext ?? buildNatalStructureContext(snapshot, now);
+  if (
+    natalContext.snapshotId !== snapshot.snapshotId ||
+    natalContext.calculationHash !== snapshot.calculationHash ||
+    natalContext.sections.some(
+      (section) =>
+        section.families.length < 2 || section.sourceIds.length < 2 || section.factPaths.length < 2,
+    )
+  ) {
+    throw new TypeError('Life-stage natal context must belong to the exact same canonical chart.');
   }
-  const natalSections = natal.sections.map(section => ({
-    title: section.headline,
-    paragraph: section.paragraph,
-    sourceIds: [...section.sourceIds],
-    factPaths: [...section.observedFactPaths],
-  }));
-  const natalContext: LifeStageNatalStructureContext = {
-    snapshotId: snapshot.snapshotId,
-    calculationHash: snapshot.calculationHash,
-    availability: natalSections.length === 0
-      ? 'insufficient_evidence' : 'bounded_natal_t8_research',
-    introduction: natal.readingGuide?.paragraph ?? natal.introduction,
-    sections: natalSections,
-  };
 
-  if (report.interpretationStatus !== 'source_authority_not_established' ||
-      !report.researchOnly || report.usefulComplete ||
-      report.mayPublish || report.maySell) {
-    throw new TypeError('Life-stage Canonical period facts cannot be promoted to official interpretations.');
+  if (
+    report.interpretationStatus !== 'source_authority_not_established' ||
+    !report.researchOnly ||
+    report.usefulComplete ||
+    report.mayPublish ||
+    report.maySell
+  ) {
+    throw new TypeError(
+      'Life-stage Canonical period facts cannot be promoted to official interpretations.',
+    );
   }
   return {
     version: LIFE_STAGE_BIRTH_RESEARCH_RUNTIME_VERSION,
