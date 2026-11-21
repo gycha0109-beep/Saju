@@ -1,0 +1,32 @@
+import {writeFileSync,mkdirSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {calculateCanonicalSajuSnapshot} from '../dist/calculation/calculation-engine.js';
+import {PRODUCTION_DEFAULT_CALCULATION_POLICY} from '../dist/production/production-calculation-policy.js';
+import {runInterpretation} from '../dist/interpretation/interpretation-engine.js';
+import {buildAnnualInterpretationFacts} from '../dist/reading/annual-interpretation-facts.js';
+import {buildMonthlyInterpretationFacts} from '../dist/reading/monthly-interpretation-facts.js';
+import {buildTemporalReadingContext} from '../dist/reading/temporal-reading-context.js';
+import {createCareerAnnualReadingCandidateRegistry} from '../dist/research/career-annual-reading-candidate.js';
+import {createCareerMonthlyReadingCandidateRegistry} from '../dist/research/career-monthly-reading-candidate.js';
+import {buildLifeStageDayunResearchReport} from '../dist/preview/life-stage-dayun-research-report.js';
+const out=resolve(process.argv[2]??'outputs/yeoul-career-temporal');mkdirSync(out,{recursive:true});
+const now=new Date('2026-11-21T03:00:00.000Z');
+const birth={calendarType:'solar',date:{year:2001,month:11,day:30},time:{known:true,hour:15,minute:30},sexForTraditionalCalculation:'female'};
+const snapshot=calculateCanonicalSajuSnapshot(birth,PRODUCTION_DEFAULT_CALCULATION_POLICY,{now});
+function execute(scope,year,month){
+ const request={requestId:'yeoul-career-temporal-'+scope+'-'+year+'-'+(month??'0'),intent:{domain:'career',temporalScope:scope},targetPeriod:{scope,year,...(month?{month}:{}),timeZone:'Asia/Seoul',referenceDateTime:now.toISOString(),resolution:'explicit'}};
+ const context=buildTemporalReadingContext(request);
+ const facts=scope==='annual'?buildAnnualInterpretationFacts(snapshot,context):buildMonthlyInterpretationFacts(snapshot,context);
+ const registry=scope==='annual'?createCareerAnnualReadingCandidateRegistry(now.toISOString()):createCareerMonthlyReadingCandidateRegistry(now.toISOString());
+ const execution=runInterpretation(snapshot,registry,{requestId:request.requestId,now,temporalFacts:{...facts}});
+ const path=resolve(out,scope+'-'+year+(month?'-'+String(month).padStart(2,'0'):'')+'.json');
+ const result={sourceKind:'saju_career_t9_research_only',productionIssuance:false,scope,year,month:month??null,referenceDateTime:now.toISOString(),snapshotId:snapshot.snapshotId,calculationHash:snapshot.calculationHash,context,facts,execution,registryVersion:scope==='annual'?'0.1.0-research':'0.1.0-research'};
+ writeFileSync(path,JSON.stringify(result,null,2),'utf8');
+ console.log(JSON.stringify({scope,year,month,status:execution.run.status,claims:execution.claims?.length??null,executionKeys:Object.keys(execution),file:path}));
+}
+for(const year of [2026,2027,2028,2029,2030])execute('annual',year);
+for(const month of [11,12])execute('monthly',2026,month);
+for(const month of [1,2,3,4])execute('monthly',2027,month);
+const life=buildLifeStageDayunResearchReport(snapshot,now.toISOString());
+writeFileSync(resolve(out,'dayun.json'),JSON.stringify({sourceKind:'saju_dayun_calculated_only',productionIssuance:false,report:life},null,2),'utf8');
+console.log(JSON.stringify({dayun:life.coverage,periods:life.periods.length,missing:life.missing}));
