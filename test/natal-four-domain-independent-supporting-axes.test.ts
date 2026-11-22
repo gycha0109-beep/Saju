@@ -55,7 +55,14 @@ describe('four different consumer natal menus require independently observed T0 
           expect(section.sourceIds.length, entry.domain).toBeGreaterThan(0);
           expect(section.upstreamClaimIds.length, entry.domain).toBeGreaterThanOrEqual(2);
           expect(section.observedFactPaths.length, entry.domain).toBeGreaterThanOrEqual(2);
-          expect(section.paragraph, entry.domain).toContain('이 원국에서 확인된 근거');
+          const evidenceIntro = entry.domain === '재물'
+            ? '이 명식에서 확인한 위치는'
+            : '이 원국에서 확인된 근거';
+          expect(section.paragraph, entry.domain).toContain(evidenceIntro);
+          expect(section.observedPositions).toHaveLength(section.observedFactPaths.length);
+          for (const position of section.observedPositions) {
+            expect(section.paragraph, entry.domain).toContain(position);
+          }
           if (index > 0) {
             const novel = section.observedFactPaths.filter(path => !used.has(path));
             expect(novel.length, entry.domain + ': duplicated Canonical fact cannot be a new axis')
