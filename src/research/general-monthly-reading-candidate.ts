@@ -8,6 +8,7 @@ import type {
   SourceReference,
 } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
+import { createStemInteractionResearchRegistry } from './general-temporal-stem-interaction-candidate.js';
 
 export const GENERAL_MONTHLY_READING_CANDIDATE_VERSION = '0.1.0-research' as const;
 
@@ -445,16 +446,17 @@ export const GENERAL_MONTHLY_READING_PACK = Object.freeze({
 
 export function createGeneralMonthlyReadingCandidateRegistry(
   createdAt = '1970-01-01T00:00:00.000Z',
+  { includeStemInteractions = false } = {},
 ) {
-  return createRuleRegistrySnapshot(
-    {
-      rules: [...GENERAL_MONTHLY_ACTIVATION_RULES, ...GENERAL_MONTHLY_TENSION_RULES],
-      methodologies: [GENERAL_MONTHLY_READING_METHODOLOGY],
-      sources: [GENERAL_MONTHLY_POLICY_SOURCE],
-      claimTypeDefinitions: [GENERAL_MONTHLY_THEME_CLAIM_TYPE, GENERAL_MONTHLY_TENSION_CLAIM_TYPE],
-      claimValueSchemas: [GENERAL_MONTHLY_THEME_SCHEMA, GENERAL_MONTHLY_TENSION_SCHEMA],
-    },
-    GENERAL_MONTHLY_READING_PACK,
-    createdAt,
-  );
+  const input = {
+    rules: [...GENERAL_MONTHLY_ACTIVATION_RULES, ...GENERAL_MONTHLY_TENSION_RULES],
+    methodologies: [GENERAL_MONTHLY_READING_METHODOLOGY],
+    sources: [GENERAL_MONTHLY_POLICY_SOURCE],
+    claimTypeDefinitions: [GENERAL_MONTHLY_THEME_CLAIM_TYPE, GENERAL_MONTHLY_TENSION_CLAIM_TYPE],
+    claimValueSchemas: [GENERAL_MONTHLY_THEME_SCHEMA, GENERAL_MONTHLY_TENSION_SCHEMA],
+  };
+  return includeStemInteractions
+    ? createStemInteractionResearchRegistry('monthly', GENERAL_MONTHLY_THEME_CLAIM_TYPE.claimType,
+      input, GENERAL_MONTHLY_READING_PACK, createdAt)
+    : createRuleRegistrySnapshot(input, GENERAL_MONTHLY_READING_PACK, createdAt);
 }

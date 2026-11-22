@@ -8,6 +8,7 @@ import type {
   SourceReference,
 } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
+import { createStemInteractionResearchRegistry } from './general-temporal-stem-interaction-candidate.js';
 
 export const GENERAL_ANNUAL_READING_CANDIDATE_VERSION = '0.1.0-research' as const;
 
@@ -345,16 +346,17 @@ export const GENERAL_ANNUAL_READING_PACK = Object.freeze({
 
 export function createGeneralAnnualReadingCandidateRegistry(
   createdAt = '1970-01-01T00:00:00.000Z',
+  { includeStemInteractions = false } = {},
 ) {
-  return createRuleRegistrySnapshot(
-    {
-      rules: [...GENERAL_ANNUAL_ACTIVATION_RULES, ...GENERAL_ANNUAL_TENSION_RULES],
-      methodologies: [GENERAL_ANNUAL_READING_METHODOLOGY],
-      sources: [GENERAL_ANNUAL_POLICY_SOURCE],
-      claimTypeDefinitions: [GENERAL_ANNUAL_THEME_CLAIM_TYPE, GENERAL_ANNUAL_TENSION_CLAIM_TYPE],
-      claimValueSchemas: [GENERAL_ANNUAL_THEME_SCHEMA, GENERAL_ANNUAL_TENSION_SCHEMA],
-    },
-    GENERAL_ANNUAL_READING_PACK,
-    createdAt,
-  );
+  const input = {
+    rules: [...GENERAL_ANNUAL_ACTIVATION_RULES, ...GENERAL_ANNUAL_TENSION_RULES],
+    methodologies: [GENERAL_ANNUAL_READING_METHODOLOGY],
+    sources: [GENERAL_ANNUAL_POLICY_SOURCE],
+    claimTypeDefinitions: [GENERAL_ANNUAL_THEME_CLAIM_TYPE, GENERAL_ANNUAL_TENSION_CLAIM_TYPE],
+    claimValueSchemas: [GENERAL_ANNUAL_THEME_SCHEMA, GENERAL_ANNUAL_TENSION_SCHEMA],
+  };
+  return includeStemInteractions
+    ? createStemInteractionResearchRegistry('annual', GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType,
+      input, GENERAL_ANNUAL_READING_PACK, createdAt)
+    : createRuleRegistrySnapshot(input, GENERAL_ANNUAL_READING_PACK, createdAt);
 }

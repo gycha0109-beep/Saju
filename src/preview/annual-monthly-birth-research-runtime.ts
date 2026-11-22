@@ -104,7 +104,7 @@ export function buildAnnualMonthlyBirthResearchReading(
   }
   const natalContext = buildNatalStructureContext(snapshot, now);
   const facts = buildMonthlyInterpretationFacts(snapshot, temporalContext);
-  const registry = createGeneralMonthlyReadingCandidateRegistry(target.referenceDateTime);
+  const registry = createGeneralMonthlyReadingCandidateRegistry(target.referenceDateTime, { includeStemInteractions: true });
   const execution = runInterpretation(snapshot, registry, {
     requestId: request.requestId,
     temporalFacts: { ...facts },

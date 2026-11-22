@@ -1,3 +1,7 @@
+import { runInterpretation } from '../interpretation/interpretation-engine.js';
+import { buildReadingCompositionEvidence } from '../reading/reading-intent-composition.js';
+import { createGeneralAnnualReadingCandidateRegistry, GENERAL_ANNUAL_THEME_CLAIM_TYPE } from '../research/general-annual-reading-candidate.js';
+import { readTemporalStemInteractions, renderTemporalStemInteractions } from './temporal-stem-interaction-reading.js';
 import type { CanonicalSajuSnapshot, TenGod } from '../contracts/calculation.js';
 import type { LifeStageNatalStructureContext } from './life-stage-dayun-research-report.js';
 import { buildNatalStructureContext } from './natal-structure-context.js';
@@ -138,9 +142,19 @@ export function buildGeneralAnnualMonthlyExplorationReport(
   };
   const annualContext = buildTemporalReadingContext(annualRequest);
   requireLinkedPeriod(annualContext?.scope === 'annual', 'annual context unavailable');
-  const annual = buildGeneralAnnualExplorationReport(
-    buildAnnualInterpretationFacts(snapshot, annualContext),
-  );
+  const annualFacts = buildAnnualInterpretationFacts(snapshot, annualContext);
+  const annualRegistry = createGeneralAnnualReadingCandidateRegistry(facts.referenceDateTime, { includeStemInteractions: true });
+  const annualExecution = runInterpretation(snapshot, annualRegistry, {
+    requestId: annualRequest.requestId,
+    temporalFacts: { ...annualFacts },
+    now: new Date(facts.referenceDateTime),
+  });
+  const annualSelection = buildReadingCompositionEvidence(snapshot, annualExecution, annualRegistry, annualRequest);
+  const annual: GeneralAnnualExplorationReport = {
+    ...buildGeneralAnnualExplorationReport(annualFacts),
+    stemInteractions: readTemporalStemInteractions(annualExecution,
+      new Set(annualSelection.selection.selectedClaimIds), GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType),
+  };
   requireLinkedPeriod(
     annual.targetYear === monthly.targetYear &&
       annual.referenceDateTime === facts.referenceDateTime &&
@@ -280,9 +294,9 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     natalContext,
     temporalNatalComparison,
     caveats: [
-      '원국 T8과 연운 연구 후보·월운 T9의 같은 십성 계열은 함께 관측된 사실만 비교합니다. 서로의 작용·강화·길흉을 새로 추론하지 않습니다.',
+      '같은 계열의 원국과 기간 십신은 관측 사실로 비교합니다. 천간 상호작용 풀이는 별도의 조건을 충족한 연구 주장에만 표시합니다.',
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
-      '이 연결 화면은 별도 통합 운세 규칙이 아니라 기존 연운 연구 문구와 월운 T9 근거를 순서대로 보여줍니다.',
+      '천간 상호작용은 원국의 연·월·시주 천간이 확인되는 경우에만 비교합니다. 연운과 월운의 작용은 각각 해당 기간에 한해 읽습니다.',
       '개인별 명식의 계산 사실 외에 특정 사건, 재물 규모, 건강 및 관계 결과를 예측하지 않습니다.',
       '내부 연구 미리보기이며 Official Reading, 공개 또는 판매 권한을 부여하지 않습니다.',
     ],
@@ -373,7 +387,8 @@ function monthlyCard(
     '</h4><p>' +
     e(section.text) +
     '</p>' +
-    (section.kind === 'theme' ? renderTemporalNatalEvidence(report, `monthly_${section.segmentId}`) : '') +
+    (section.kind === 'theme' ? renderTemporalNatalEvidence(report, `monthly_${section.segmentId}`) +
+      renderTemporalStemInteractions(report.monthly.stemInteractions, section.segmentId, e) : '') +
     '<details><summary>이 풀이의 계산 근거와 출처</summary>' +
     '<p>기간: ' +
     e(formatTemporalKst(section.calculatedInterval.startsAt)) +
@@ -414,7 +429,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
         '</h3><p>' +
         e(section.text) +
         '</p>' +
-        (section.kind === 'core' ? renderTemporalNatalEvidence(report, 'annual') : '') +
+        (section.kind === 'core' ? renderTemporalNatalEvidence(report, 'annual') +
+          renderTemporalStemInteractions(report.annual.stemInteractions, 'annual', e) : '') +
         '<details><summary>올해 문구의 계산 근거와 연구 출처</summary>' +
         '<p>해석 범위: 내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)</p>' +
         '<p>문구 프로필: ' +

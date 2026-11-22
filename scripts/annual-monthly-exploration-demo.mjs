@@ -65,7 +65,7 @@ const request = {
 const context = buildTemporalReadingContext(request);
 if (context?.scope !== 'monthly') throw new Error('Expected monthly context');
 const facts = buildMonthlyInterpretationFacts(natal, context);
-const registry = createGeneralMonthlyReadingCandidateRegistry(now.toISOString());
+const registry = createGeneralMonthlyReadingCandidateRegistry(now.toISOString(), { includeStemInteractions: true });
 const execution = runInterpretation(natal, registry, {
   requestId: request.requestId, temporalFacts: { ...facts }, now,
 });
