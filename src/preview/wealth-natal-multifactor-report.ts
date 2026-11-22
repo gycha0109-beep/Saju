@@ -1,5 +1,4 @@
 import { getTenGod } from 'manseryeok';
-import { describeQuotedReadingAxis } from './korean-reading-headline.js';
 import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -354,20 +353,13 @@ function toSection(
     );
     return `${EVIDENCE_ROLES[family]}: ${actual.map((x) => x.display).join(' · ')}`;
   });
-  const observedChannel =
-    value.channel === 'visible_stems'
-      ? '\uCC9C\uAC04'
-      : value.channel === 'branches'
-        ? '\uC9C0\uC9C0 \uB300\uD45C \uC2ED\uC2E0'
-        : '\uC9C0\uC7A5\uAC04';
-  const headline = textFor(claim.claimType, 'headline');
   return {
     claimType: claim.claimType,
     pattern: value.pattern,
     axis: value.axis as Axis,
     channel: value.channel as Channel,
     headline: textFor(claim.claimType, 'headline'),
-    paragraph: `이 원국에서 확인된 근거는 ${observedByFamily.join(' / ')}입니다. 같은 ${observedChannel}에서 관측된 서로 다른 십신 계열을 ${describeQuotedReadingAxis(headline)} 구조적 관점에서 함께 읽습니다. ${textFor(claim.claimType, 'summary')}`,
+    paragraph: `${textFor(claim.claimType, 'summary')} 이 명식에서 확인한 위치는 ${observedByFamily.join(' / ')}입니다.`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
@@ -383,7 +375,7 @@ function toSection(
 function buildWealthNatalReadingGuide(
   core: WealthNatalMultifactorSection | undefined,
   supports: readonly WealthNatalMultifactorSection[],
-  state: Status,
+  birthTimeKnown: boolean,
 ): WealthNatalReadingGuide | undefined {
   if (core === undefined || core.axis === 'tension') return undefined;
   guard(
@@ -426,13 +418,12 @@ function buildWealthNatalReadingGuide(
       (section, index) =>
         `별도 관점인 ‘${section.headline}’은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 추가로 확인된 계산 근거를 바탕으로 함께 살핍니다.`,
     ),
-    ...(state === 'complete'
-      ? [
-          '중심 관점 하나와 독립적인 계산 근거를 더하는 보조 관점 두 가지를 구분해 읽을 수 있습니다. 다만 이 기준 충족은 실제 소득·재산·투자 성과의 판단이 아닙니다.',
-        ]
-      : [
-          `독립적인 보조 관점은 현재 ${supporting.length}개만 확인되어 필요한 두 가지를 모두 설명하지 못합니다. 재물운 전체 종합 판단은 보류합니다.`,
-        ]),
+    ...(supporting.length < 2
+      ? [`중심 풀이에 더할 독립 근거가 ${supporting.length}개 확인되어, 근거가 있는 관점까지만 설명합니다.`]
+      : []),
+    ...(!birthTimeKnown
+      ? ['출생시각을 알 수 없어 시주를 빼고 확인된 세 기둥의 범위에서만 읽습니다.']
+      : []),
   ];
   return {
     title: '내 명식의 재물·자원 중심과 보조 관점',
@@ -517,7 +508,7 @@ export function buildWealthNatalMultifactorReport(
     const sourceBoundReason = explainMissingWealthT8(snapshot, execution);
     if (sourceBoundReason) missing.push(sourceBoundReason);
   }
-  if (!core) missing.push('출처 있는 원국 중심 복합 해석 축');
+  if (!core) missing.push('이 명식에서는 여러 십신 근거를 연결해 재물을 설명할 중심 조합이 확인되지 않았습니다.');
   if (!core && chosen[0]?.axis === 'tension') {
     missing.push(
       '중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.',
@@ -547,7 +538,7 @@ export function buildWealthNatalMultifactorReport(
   const readingGuide = buildWealthNatalReadingGuide(
     core,
     core === undefined ? [] : chosen.slice(1),
-    state,
+    snapshot.completeness.birthTimeKnown,
   );
   if (!snapshot.completeness.birthTimeKnown) {
     missing.unshift(

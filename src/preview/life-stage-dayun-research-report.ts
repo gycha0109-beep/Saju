@@ -28,6 +28,10 @@ export interface LifeStageNatalStructureContext {
   introduction: string;
   sections: readonly {
     title: string;
+    claimId: string;
+    claimType: string;
+    ruleId: string;
+    methodologyId: string;
     paragraph: string;
     pattern: string;
     families: readonly ('peer' | 'resource' | 'output' | 'wealth' | 'officer')[];

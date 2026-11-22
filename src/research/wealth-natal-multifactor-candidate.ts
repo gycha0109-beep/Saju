@@ -40,7 +40,7 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     axis: 'core',
     headline: '자원의 관리 기준과 준비가 이어지는 구조',
     summary:
-      '재성(현실 자원)·관성(기준과 책임)·인성(준비와 수용)이 하나의 실제 관측 채널에 함께 있습니다. 재성에서 관성, 관성에서 인성으로 이어지는 고전의 생조 관계를 토대로 자원을 다루는 기준과 필요한 준비를 함께 살피는 제한된 구조 해석입니다. 개인의 실제 재산·경제적 결과·투자 능력과 미래 재물운을 예측하는 결론은 아닙니다.',
+      '자원을 운용하기 전에 어떤 관리 기준을 세우고 그 기준을 지키려면 무엇을 준비해야 하는지 살펴봅니다. 재성에서 관성으로, 관성에서 인성으로 이어지는 생조 관계를 적용한 구조 풀이입니다.',
   },
   {
     id: 'OUTPUT_WEALTH_OFFICER',
@@ -48,7 +48,7 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     axis: 'core',
     headline: '만들어 낸 가치와 자원, 관리 기준이 이어지는 구조',
     summary:
-      '식상(산출·표현), 재성(자원·교환), 관성(규범·책임)이 하나의 관측 채널에서 연결됩니다. 재물 영역에서는 무엇을 가치로 만들고, 어떤 자원으로 옮기며, 어떤 관리 원칙에 둘 것인지 세 질문을 함께 살피는 전통적 구조 해석입니다. 개인의 수입·성과를 예상하는 뜻은 아닙니다.',
+      '만들어 낸 결과가 어떤 자원으로 이어질 수 있는지, 그 자원을 계속 다루려면 어떤 관리 책임이 필요한지 함께 살펴봅니다. 식상으로 시작해 재성과 관성으로 이어지는 구조를 읽습니다.',
   },
   {
     id: 'OUTPUT_WEALTH',
@@ -56,7 +56,7 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     axis: 'creation',
     headline: '만든 결과와 자원의 교환을 함께 보는 구조',
     summary:
-      '식상이 가리키는 생산·표현과 재성이 가리키는 현실 자원이 함께 놓입니다. 재물 해석에서는 산출한 것을 어떤 가치·자원으로 연결해 볼지에 주목하는 한정된 축이며, 소득 창출 능력이나 수익을 보증하지 않습니다.',
+      '식상과 재성의 연결에서는 만들어 낸 결과를 어떤 형태의 자원과 교환할 수 있을지에 초점을 둡니다. 예를 들어 무엇을 산출물로 삼고 무엇을 교환 대상으로 볼지를 구분하는 관점입니다.',
   },
   {
     id: 'WEALTH_OFFICER',
@@ -64,7 +64,7 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     axis: 'management',
     headline: '자원 활용과 관리 책임을 연결하는 구조',
     summary:
-      '재성의 자원 관점과 관성의 기준·책임 관점이 만납니다. 자원을 어떻게 다룰지와 그 운용에 어떤 규칙을 둘지를 분리하지 않고 읽는 근거입니다. 실제 저축 성향이나 재정 상태를 안다는 뜻은 아닙니다.',
+      '재성과 관성의 연결에서는 확보한 자원에 어떤 운용 기준을 두고 누가 그 기준을 지킬 책임을 맡는지 살펴봅니다.',
   },
   {
     id: 'WEALTH_RESOURCE',
@@ -72,7 +72,7 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     axis: 'planning',
     headline: '지금 가진 자원과 준비·학습 사이를 조율하는 구조',
     summary:
-      '재성(현실 자원)과 인성(준비·수용)이 함께 관측됩니다. 전통적인 견제 관계를 바탕으로 현재 활용할 자원과 준비에 배분할 자원을 함께 고려하는 구조로 읽습니다. 구체적인 지출 습관이나 투자 행동을 추정하지 않습니다.',
+      '재성과 인성의 견제 관계에서는 지금 활용할 자원과 학습이나 준비를 위해 남겨 둘 자원 사이의 배분을 살펴봅니다.',
   },
   {
     id: 'PEER_WEALTH',
@@ -80,7 +80,7 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     axis: 'tension',
     headline: '자기 결정과 자원 배분이 마주하는 구조',
     summary:
-      '비겁의 주도·공유 관점과 재성의 현실 자원 관점이 한 채널에 있습니다. 자기 기준과 자원을 어떻게 함께 배치할지를 해석의 질문으로 삼되, 소비 성향·채무·수입을 단정하지 않습니다.',
+      '비겁과 재성이 함께 놓인 구조에서는 자원을 배분할 때 스스로 정할 몫과 다른 사람과 조율할 몫이 각각 무엇인지 살펴봅니다.',
   },
   {
     id: 'PEER_WEALTH_RESOURCE',
@@ -88,7 +88,7 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     axis: 'tension',
     headline: '주도권, 현실 자원, 준비의 세 기준이 교차하는 구조',
     summary:
-      '비겁의 자기 결정, 재성의 자원, 인성의 준비라는 세 축이 함께 관측됩니다. 서로 다른 목적 사이의 배분이라는 제한된 전통적 구조를 보여 줄 뿐, 실제 선택 충돌이나 자산 규모를 추론하지 않습니다.',
+      '비겁·재성·인성이 함께 놓인 구조에서는 자신의 판단으로 당장 쓸 자원과 준비를 위해 남겨 둘 자원 사이의 배분을 살펴봅니다.',
   },
   {
     id: 'OFFICER_RESOURCE_CONTEXT',
@@ -424,7 +424,7 @@ export const WEALTH_NATAL_MULTIFACTOR_NARRATIVES: readonly ClaimNarrativeProfile
               : channel === 'branches'
                 ? '\uC9C0\uC9C0 \uB300\uD45C \uC2ED\uC2E0\uC5D0\uC11C \uAD00\uCE21\uB41C \uBCF4\uC870 \uC870\uD569\uC785\uB2C8\uB2E4. '
                 : '\uC9C0\uC7A5\uAC04\uC5D0\uC11C \uBCC4\uB3C4\uB85C \uAD00\uCE21\uB41C \uC870\uD569\uC785\uB2C8\uB2E4. \uCC9C\uAC04 \uBC0F \uC9C0\uC9C0 \uB300\uD45C \uC2ED\uC2E0\uACFC \uC11E\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. ') +
-            pattern.summary,
+            pattern.summary + ' 이 구조만으로 소득, 재산이나 투자 성과를 판단할 수 없습니다.',
         },
       ],
     })),

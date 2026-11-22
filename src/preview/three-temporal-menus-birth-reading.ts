@@ -1,3 +1,8 @@
+import {
+  formatTemporalKst,
+  renderTemporalNatalEvidence,
+} from './general-annual-monthly-exploration-report.js';
+export { describeTemporalNatalEvidence } from './general-annual-monthly-exploration-report.js';
 import type { BirthInput } from '../contracts/calculation.js';
 import {
   buildAnnualMonthlyBirthResearchReading,
@@ -40,78 +45,6 @@ const e = (s: string): string =>
         "'": '&#39;',
       })[x]!,
   );
-
-type NatalComparisonPeriod =
-  AnnualMonthlyBirthResearchReading['report']['temporalNatalComparison'][number]['period'];
-const FAMILY_NAMES = {
-  peer: '비겁',
-  resource: '인성',
-  output: '식상',
-  wealth: '재성',
-  officer: '관성',
-} as const;
-const CHANNEL_NAMES: Readonly<Record<string, string>> = {
-  visible_stems: '천간',
-  branches: '지지 대표 십신',
-  hidden_stems: '지장간',
-};
-const AXIS_NAMES: Readonly<Record<string, string>> = {
-  core: '핵심',
-  response: '대응',
-  responsibility: '책임',
-  tension: '구조적 긴장',
-  creation: '생산',
-  planning: '준비',
-  management: '관리',
-  allocation: '배분',
-  context: '맥락',
-};
-
-/** Shows only same-chart, same-family co-observations. Never creates T9 interaction claims. */
-export function describeTemporalNatalEvidence(
-  report: AnnualMonthlyBirthResearchReading['report'],
-  period: NatalComparisonPeriod,
-): string {
-  const comparison = report.temporalNatalComparison.find((item) => item.period === period);
-  if (!comparison) return '이 기간에 연결할 수 있는 T9 십성 주제가 확인되지 않았습니다.';
-  const family = FAMILY_NAMES[comparison.periodFamily];
-  if (comparison.natalMatches.length === 0) {
-    return (
-      '기간 십신 ' +
-      comparison.periodTenGod +
-      '(' +
-      family +
-      ')과 함께 보여 줄 원국 T8 연구 근거가 선택되지 않았습니다.'
-    );
-  }
-  const evidence = comparison.natalMatches
-    .map((match) => {
-      const pattern = match.pattern
-        .split('_')
-        .map((name) => FAMILY_NAMES[name.toLowerCase() as keyof typeof FAMILY_NAMES])
-        .filter(Boolean)
-        .join('·');
-      return (
-        pattern +
-        ' 조합의 ' +
-        (AXIS_NAMES[match.axis] ?? '관찰') +
-        ' 관점 (' +
-        (CHANNEL_NAMES[match.channel] ?? match.channel) +
-        '): ' +
-        match.matchedFamilyPositions.join(' · ')
-      );
-    })
-    .join(' / ');
-  return (
-    '기간 십신 ' +
-    comparison.periodTenGod +
-    '(' +
-    family +
-    ')과 같은 계열로 원국에서 관측된 정확한 십신·위치: ' +
-    evidence +
-    '. 같은 계열 안에서도 기간과 원국의 세부 십신이 다를 수 있습니다. 동시 관측만 의미하며, 서로 강화하거나 사건을 일으킨다는 판단은 아닙니다.'
-  );
-}
 
 function enforceSourceScope(
   annualMonthly: AnnualMonthlyBirthResearchReading,
@@ -176,8 +109,11 @@ function render(
           '</h3><p>' +
           e(section.text) +
           '</p>' +
+          (section.kind === 'core' ? renderTemporalNatalEvidence(report, 'annual') : '') +
           '<details><summary>연운 원문 출처와 계산 근거</summary><p>후보 프로필: ' +
           e(section.researchProfileId) +
+          '</p><p>후보 규칙: ' +
+          e(section.candidateRuleId) +
           '</p><p>계산 경로: ' +
           e(section.calculationFactPaths.join(' · ')) +
           '</p><p>정책: ' +
@@ -199,7 +135,9 @@ function render(
         e(theme.title) +
         '</h3><p>' +
         e(theme.text) +
-        '</p><details><summary>이 구간의 T9 근거</summary><p>Claim: ' +
+        '</p>' +
+        renderTemporalNatalEvidence(report, `monthly_${theme.segmentId}`) +
+        '<details><summary>이 구간의 T9 근거</summary><p>Claim: ' +
         e(theme.claimId) +
         '</p><p>계산 구간: ' +
         e(theme.calculatedInterval.startsAt) +
@@ -219,7 +157,9 @@ function render(
           e(section.title) +
           '</h3><p>' +
           e(section.text) +
-          '</p><details><summary>절입 기간·T9 Claim과 출처</summary>' +
+          '</p>' +
+          (section.kind === 'theme' ? renderTemporalNatalEvidence(report, `monthly_${section.segmentId}`) : '') +
+          '<details><summary>절입 기간·T9 Claim과 출처</summary>' +
           '<p>기간: ' +
           e(section.calculatedInterval.startsAt) +
           ' — ' +
@@ -306,24 +246,15 @@ function render(
     e(yearNote) +
     '</p>' +
     annual +
-    '<h3>원국과 올해의 실제 근거 비교</h3><article><p>' +
-    e(describeTemporalNatalEvidence(report, 'annual')) +
-    '</p></article>' +
     '</section>' +
     '<section id="monthly"><h2>이번 달 — ' +
     report.targetMonth +
     '월</h2>' +
+    '<p>절입 시각은 ' + e(formatTemporalKst(report.monthly.jeolBoundary.at)) + '</p>' +
     '<h3>조회 시각에 해당하는 월운</h3>' +
     currentMonth +
     '<h3>절입 전후 전체 풀이</h3>' +
     monthly +
-    '<h3>원국과 절입 전후 근거 비교</h3>' +
-    '<article><h4>절입 전</h4><p>' +
-    e(describeTemporalNatalEvidence(report, 'monthly_before_jeol')) +
-    '</p></article>' +
-    '<article><h4>절입 이후</h4><p>' +
-    e(describeTemporalNatalEvidence(report, 'monthly_after_jeol')) +
-    '</p></article>' +
     '</section>' +
     '<section id="life-stage"><h2>삶의 단계 — 계산된 대운</h2><p>' +
     '대운의 간지·시각만 계산된 사실입니다. 길흉이나 사건 시기를 해석하지 않습니다.</p>' +

@@ -7,17 +7,28 @@ import { buildMonthlyInterpretationFacts } from '../src/reading/monthly-interpre
 import { buildTemporalReadingContext } from '../src/reading/temporal-reading-context.js';
 import { createGeneralMonthlyReadingCandidateRegistry } from '../src/research/general-monthly-reading-candidate.js';
 import {
+  GENERAL_ANNUAL_POLICY_SOURCE,
+  GENERAL_ANNUAL_READING_METHODOLOGY,
+  GENERAL_ANNUAL_ACTIVATION_RULES,
+  GENERAL_ANNUAL_TENSION_RULES,
+} from '../src/research/general-annual-reading-candidate.js';
+import {
   buildGeneralAnnualMonthlyExplorationReport,
   renderGeneralAnnualMonthlyExplorationHtml,
 } from '../src/preview/general-annual-monthly-exploration-report.js';
 
 const NOW = new Date('2026-09-03T13:00:00.000Z');
 function sample(day = 9, known = true) {
-  return calculateCanonicalSajuSnapshot({
-    calendarType: 'solar', date: { year: 1996, month: 1, day },
-    time: known ? { known: true, hour: 9, minute: 30 } : { known: false },
-    sexForTraditionalCalculation: 'unspecified',
-  }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+  return calculateCanonicalSajuSnapshot(
+    {
+      calendarType: 'solar',
+      date: { year: 1996, month: 1, day },
+      time: known ? { known: true, hour: 9, minute: 30 } : { known: false },
+      sexForTraditionalCalculation: 'unspecified',
+    },
+    PRODUCTION_DEFAULT_CALCULATION_POLICY,
+    { now: NOW },
+  );
 }
 function run(month: number, day = 9, known = true, referenceDateTime = NOW.toISOString()) {
   const natal = sample(day, known);
@@ -25,8 +36,12 @@ function run(month: number, day = 9, known = true, referenceDateTime = NOW.toISO
     requestId: 'joined-year-month-' + month + '-' + day + '-' + known,
     intent: { domain: 'general', temporalScope: 'monthly' },
     targetPeriod: {
-      scope: 'monthly', year: 2026, month, timeZone: 'Asia/Seoul',
-      referenceDateTime, resolution: 'relative_current',
+      scope: 'monthly',
+      year: 2026,
+      month,
+      timeZone: 'Asia/Seoul',
+      referenceDateTime,
+      resolution: 'relative_current',
     },
   };
   const context = buildTemporalReadingContext(request);
@@ -34,10 +49,16 @@ function run(month: number, day = 9, known = true, referenceDateTime = NOW.toISO
   const facts = buildMonthlyInterpretationFacts(natal, context);
   const registry = createGeneralMonthlyReadingCandidateRegistry(NOW.toISOString());
   const execution = runInterpretation(natal, registry, {
-    requestId: request.requestId, temporalFacts: { ...facts }, now: NOW,
+    requestId: request.requestId,
+    temporalFacts: { ...facts },
+    now: NOW,
   });
   const report = buildGeneralAnnualMonthlyExplorationReport(
-    natal, facts, execution, registry, request,
+    natal,
+    facts,
+    execution,
+    registry,
+    request,
   );
   return { natal, facts, registry, request, execution, report };
 }
@@ -54,16 +75,21 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(report.periodComparison).toContain('절입 이후');
     expect(report.referenceReading.state).toBe('in_period');
     expect(report.referenceReading.segmentId).toBe('before_jeol');
-    const themes = report.monthly.sections.filter(x => x.kind === 'theme');
-    expect(themes.map(x => x.segmentId)).toEqual(['before_jeol', 'after_jeol']);
+    const themes = report.monthly.sections.filter((x) => x.kind === 'theme');
+    expect(themes.map((x) => x.segmentId)).toEqual(['before_jeol', 'after_jeol']);
     const html = renderGeneralAnnualMonthlyExplorationHtml(report);
     const displayKst = (instant: string) =>
       new Date(new Date(instant).getTime() + 9 * 60 * 60 * 1000)
-        .toISOString().slice(0, 16).replace('T', ' ') + ' KST';
+        .toISOString()
+        .slice(0, 16)
+        .replace('T', ' ') + ' KST';
     for (const phase of themes) {
       expect(html).toContain(
-        '실제 계산 적용 기간: ' + displayKst(phase.calculatedInterval.startsAt) +
-        '부터 ' + displayKst(phase.calculatedInterval.endsAt) + ' 전까지',
+        '실제 계산 적용 기간: ' +
+          displayKst(phase.calculatedInterval.startsAt) +
+          '부터 ' +
+          displayKst(phase.calculatedInterval.endsAt) +
+          ' 전까지',
       );
     }
     expect(html.match(/실제 계산 적용 기간:/gu)).toHaveLength(2);
@@ -78,7 +104,35 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).toContain('올해 문구의 계산 근거와 연구 출처');
     expect(html).toContain('내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)');
     expect(html).toContain('명하 내부 연구 정책, 독립 고전 근거 아님');
+    expect(GENERAL_ANNUAL_POLICY_SOURCE.sourceType).toBe('internal_research');
+    expect(GENERAL_ANNUAL_POLICY_SOURCE.provenanceTier).toBe('internal');
+    expect(GENERAL_ANNUAL_READING_METHODOLOGY.status).toBe('research');
+    expect(GENERAL_ANNUAL_READING_METHODOLOGY.sourceIds).toEqual([
+      GENERAL_ANNUAL_POLICY_SOURCE.sourceId,
+    ]);
+    expect(
+      GENERAL_ANNUAL_ACTIVATION_RULES.every(
+        (rule) =>
+          rule.status === 'research' &&
+          rule.quality.provenanceQuality === 'heuristic' &&
+          rule.quality.reviewerStatus === 'unreviewed',
+      ),
+    ).toBe(true);
+    expect(
+      GENERAL_ANNUAL_TENSION_RULES.every(
+        (rule) =>
+          rule.status === 'research' &&
+          rule.quality.provenanceQuality === 'heuristic' &&
+          rule.quality.reviewerStatus === 'unreviewed',
+      ),
+    ).toBe(true);
+
     for (const section of report.annual.sections) {
+      expect(section.evidenceStatus).toBe(
+        'research_profile_projection_not_an_executed_official_claim',
+      );
+      expect(section.policySourceId).toBe(GENERAL_ANNUAL_POLICY_SOURCE.sourceId);
+      expect(section.methodologyId).toBe(GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId);
       expect(html).toContain(section.researchProfileId);
       expect(html).toContain(section.candidateClaimType);
       expect(html).toContain(section.policySourceId);
@@ -102,8 +156,11 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(oct.report.annual.annualStemTenGod).toBe(sep.report.annual.annualStemTenGod);
     expect(oct.report.annual.sections).toEqual(sep.report.annual.sections);
     expect(oct.report.monthly.jeolBoundary.at).not.toBe(sep.report.monthly.jeolBoundary.at);
-    expect(oct.report.monthly.sections.filter(x => x.kind === 'theme').map(x => x.title))
-      .not.toEqual(sep.report.monthly.sections.filter(x => x.kind === 'theme').map(x => x.title));
+    expect(
+      oct.report.monthly.sections.filter((x) => x.kind === 'theme').map((x) => x.title),
+    ).not.toEqual(
+      sep.report.monthly.sections.filter((x) => x.kind === 'theme').map((x) => x.title),
+    );
   });
 
   it('selects the exact source-owned Korean reading across the real Jeol instant', () => {
@@ -111,16 +168,19 @@ describe('one-person annual to monthly source-bound research reading', () => {
     const before = run(9, 9, true, new Date(Date.parse(jeolAt) - 1).toISOString());
     const after = run(9, 9, true, jeolAt);
     expect(before.report.referenceReading).toMatchObject({
-      state: 'in_period', segmentId: 'before_jeol',
+      state: 'in_period',
+      segmentId: 'before_jeol',
     });
     expect(after.report.referenceReading).toMatchObject({
-      state: 'in_period', segmentId: 'after_jeol',
+      state: 'in_period',
+      segmentId: 'after_jeol',
     });
     const selected = after.report.referenceReading.theme!;
     expect(selected.kind).toBe('theme');
     expect(selected.claimId).toBe(
-      after.report.monthly.sections.find(section =>
-        section.kind === 'theme' && section.segmentId === 'after_jeol')!.claimId,
+      after.report.monthly.sections.find(
+        (section) => section.kind === 'theme' && section.segmentId === 'after_jeol',
+      )!.claimId,
     );
     const html = renderGeneralAnnualMonthlyExplorationHtml(after.report);
     expect(html).toContain(selected.text);
@@ -133,7 +193,8 @@ describe('one-person annual to monthly source-bound research reading', () => {
   it('does not mislabel a different calendar month as the current segment', () => {
     const { report } = run(10);
     expect(report.referenceReading).toEqual({
-      state: 'outside_target_month', referenceDateTime: NOW.toISOString(),
+      state: 'outside_target_month',
+      referenceDateTime: NOW.toISOString(),
     });
     const html = renderGeneralAnnualMonthlyExplorationHtml(report);
     expect(html).toContain('월 밖에 있어 현재 적용 구간을 정하지 않았습니다.');
@@ -183,30 +244,36 @@ describe('one-person annual to monthly source-bound research reading', () => {
 
   it('rejects a manipulated annual civil reference instead of mislabeling current year', () => {
     const { report } = run(9);
-    expect(() => renderGeneralAnnualMonthlyExplorationHtml({
-      ...report,
-      annualReference: {
-        ...report.annualReference,
-        civilYearAtReference: 2040,
-        state: 'outside_target_civil_year',
-      },
-    })).toThrow('civil-year reference');
-    expect(() => renderGeneralAnnualMonthlyExplorationHtml({
-      ...report,
-      annualReference: {
-        ...report.annualReference,
-        state: 'outside_target_civil_year',
-      },
-    })).toThrow('civil-year reference');
+    expect(() =>
+      renderGeneralAnnualMonthlyExplorationHtml({
+        ...report,
+        annualReference: {
+          ...report.annualReference,
+          civilYearAtReference: 2040,
+          state: 'outside_target_civil_year',
+        },
+      }),
+    ).toThrow('civil-year reference');
+    expect(() =>
+      renderGeneralAnnualMonthlyExplorationHtml({
+        ...report,
+        annualReference: {
+          ...report.annualReference,
+          state: 'outside_target_civil_year',
+        },
+      }),
+    ).toThrow('civil-year reference');
   });
 
   it('keeps genuine monthly phases but suppresses unsupported birth-hour relations', () => {
     const { report } = run(9, 9, false);
     expect(report.annual.unavailablePillars).toContain('hour');
-    expect(report.annual.sections.some(section =>
-      section.calculationFactPaths.includes('temporal.annualBranchRelations.hour')))
-      .toBe(false);
-    expect(report.monthly.sections.some(x => x.relatedPillar === 'hour')).toBe(false);
+    expect(
+      report.annual.sections.some((section) =>
+        section.calculationFactPaths.includes('temporal.annualBranchRelations.hour'),
+      ),
+    ).toBe(false);
+    expect(report.monthly.sections.some((x) => x.relatedPillar === 'hour')).toBe(false);
     expect(report.monthly.missing.join(' ')).toContain('시주');
     expect(report.researchOnly).toBe(true);
     expect(report.usefulComplete).toBe(false);
@@ -218,18 +285,34 @@ describe('one-person annual to monthly source-bound research reading', () => {
 
   it('rejects cross-person data or a stale different month', () => {
     const valid = run(9);
-    expect(() => buildGeneralAnnualMonthlyExplorationReport(
-      sample(10), valid.facts, valid.execution, valid.registry, valid.request,
-    )).toThrow();
+    expect(() =>
+      buildGeneralAnnualMonthlyExplorationReport(
+        sample(10),
+        valid.facts,
+        valid.execution,
+        valid.registry,
+        valid.request,
+      ),
+    ).toThrow();
     const differentMonth: ReadingRequest = {
       ...valid.request,
       targetPeriod: {
-        scope: 'monthly', year: 2026, month: 10, timeZone: 'Asia/Seoul',
-        referenceDateTime: NOW.toISOString(), resolution: 'relative_current',
+        scope: 'monthly',
+        year: 2026,
+        month: 10,
+        timeZone: 'Asia/Seoul',
+        referenceDateTime: NOW.toISOString(),
+        resolution: 'relative_current',
       },
     };
-    expect(() => buildGeneralAnnualMonthlyExplorationReport(
-      valid.natal, valid.facts, valid.execution, valid.registry, differentMonth,
-    )).toThrow();
+    expect(() =>
+      buildGeneralAnnualMonthlyExplorationReport(
+        valid.natal,
+        valid.facts,
+        valid.execution,
+        valid.registry,
+        differentMonth,
+      ),
+    ).toThrow();
   });
 });

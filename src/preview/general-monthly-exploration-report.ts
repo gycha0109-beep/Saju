@@ -1,4 +1,4 @@
-import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
+import type { CanonicalSajuSnapshot, PillarSlot, TenGod } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -23,11 +23,12 @@ const SEGMENT_KO: Readonly<Record<MonthlySegmentId, string>> = {
 
 export interface GeneralMonthlyExplorationSection {
   kind: 'theme' | 'tension';
+  semanticKey: string;
   segmentId: MonthlySegmentId;
   title: string;
   text: string;
   calculatedInterval: { startsAt: string; endsAt: string };
-  tenGod: string;
+  tenGod: TenGod;
   claimId: string;
   ruleIds: readonly string[];
   methodologyId: string;
@@ -111,6 +112,7 @@ export function buildGeneralMonthlyExplorationReport(
     request.targetPeriod?.scope === 'monthly' &&
     request.targetPeriod.year === facts.targetYear &&
     request.targetPeriod.month === facts.targetMonth &&
+    request.targetPeriod.timeZone === facts.timeZone &&
     request.targetPeriod.referenceDateTime === facts.referenceDateTime &&
     facts.scope === 'monthly' &&
     registry.pack.status === 'research', 'wrong request, temporal facts, or pack authority');
@@ -158,7 +160,9 @@ export function buildGeneralMonthlyExplorationReport(
     themeCount.add(segmentId);
     sections.push({
       kind: 'theme', segmentId,
-      title: copy.title, text: copy.text,
+      semanticKey: value.semanticKey,
+      title: copy.title,
+      text: `${SEGMENT_KO[segmentId]} 월주는 ${segment.monthlyPillar.stem}${segment.monthlyPillar.branch}이고, 월간의 십신은 ${segment.monthlyStemTenGod}입니다. ${copy.text}`,
       calculatedInterval: { startsAt: segment.startsAt, endsAt: segment.endsAt },
       tenGod: segment.monthlyStemTenGod,
       claimId: theme.claimId,
@@ -178,12 +182,16 @@ export function buildGeneralMonthlyExplorationReport(
     const relation = segment.monthlyBranchRelations[slot];
     requireEvidence(relation.status === 'resolved' &&
       relation.value.relation === 'clash' &&
+      relation.value.pillar === slot &&
+      relation.value.monthlyBranch === segment.monthlyPillar.branch &&
       claim.factRefs.includes(`temporal.segmentsById.${value.segmentId}.monthlyBranchRelations.${slot}.relation`) &&
       claim.sourceRefs.length > 0, 'unresolved or foreign monthly tension');
     const copy = researchCopy(claim);
     sections.push({
       kind: 'tension', segmentId: value.segmentId,
-      title: copy.title, text: copy.text,
+      semanticKey: value.semanticKey,
+      title: copy.title,
+      text: `${SEGMENT_KO[value.segmentId]} 월지 ${relation.value.monthlyBranch}와 원국 ${SLOT_KO[slot]}의 지지 ${relation.value.natalBranch} 사이에서 충이 확인됩니다. ${copy.text}`,
       calculatedInterval: { startsAt: segment.startsAt, endsAt: segment.endsAt },
       tenGod: segment.monthlyStemTenGod,
       claimId: claim.claimId,
@@ -256,7 +264,7 @@ function escapeHtml(value: string): string {
 
 function kst(instant: string): string {
   const date = new Date(new Date(instant).getTime() + 9 * 60 * 60 * 1000)
-    .toISOString().slice(0, 16).replace('T', ' ');
+    .toISOString().slice(0, 23).replace('T', ' ').replace(/:00\.000$|\.000$/u, '');
   return `${date} KST`;
 }
 

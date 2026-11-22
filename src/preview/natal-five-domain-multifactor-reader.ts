@@ -206,7 +206,7 @@ function renderCareerReadingGuide(report: CareerMultifactorReport): string {
   );
 }
 
-function renderWealthReadingGuide(report: WealthNatalMultifactorReport): string {
+function renderWealthReadingGuide(report: WealthNatalMultifactorReport, birthTimeKnown: boolean): string {
   const guide = report.readingGuide;
   if (guide === undefined) return '';
   const core = report.sections[0];
@@ -252,7 +252,7 @@ function renderWealthReadingGuide(report: WealthNatalMultifactorReport): string 
 
   guard(
     (report.state === 'complete' && guide.supporting.length === 2) ||
-      (report.state === 'partial' && guide.supporting.length < 2),
+      (report.state === 'partial' && (!birthTimeKnown || guide.supporting.length < 2)),
     'Wealth guide cannot misrepresent minimum useful reading status',
   );
   return (
@@ -526,7 +526,7 @@ function renderDomain(
     domain === 'career'
       ? renderCareerReadingGuide(report as CareerMultifactorReport)
       : domain === 'wealth'
-        ? renderWealthReadingGuide(report as WealthNatalMultifactorReport)
+        ? renderWealthReadingGuide(report as WealthNatalMultifactorReport, birthTimeKnown)
         : domain === 'business'
           ? renderBusinessReadingGuide(report as BusinessNatalMultifactorReport)
           : domain === 'relationship'

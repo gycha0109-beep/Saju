@@ -25,6 +25,12 @@ import {
   ROOT_CAUSE_AUDIT_VERSION,
 } from './saju-500-root-cause.mjs';
 import { auditSixMenuQuestionCoverage } from './saju-500-six-menu-question-coverage.mjs';
+import {
+  createEvidenceFingerprint,
+  summarizeEvidenceProfiles,
+  summarizeEvidenceTextRepetition,
+  summarizeResearchMURCoverage,
+} from './saju-500-evidence-audit.mjs';
 
 const REFERENCE = '2026-10-25T00:00:00.000Z';
 const DEFAULT_COUNT = 500;
@@ -78,21 +84,53 @@ function sampleBirth(used) {
 function digest(v) {
   return createHash('sha256').update(String(v)).digest('hex');
 }
-function entry(text, meaning, state, sectionCount, kind) {
+function entry(text, meaning, state, sectionCount, kind, evidence = null, mur = null) {
   const str = text.trim();
   return {
     text: str,
     exactKey: digest(str),
     meaningKey: digest(JSON.stringify(meaning)),
     meaningComponents: meaning,
+    ...(evidence === null
+      ? {}
+      : { evidenceKey: createEvidenceFingerprint(evidence), evidenceComponents: evidence }),
+    ...(mur === null ? {} : { mur }),
     state,
     sectionCount,
     kind,
   };
 }
-function natalEntry(report) {
+function readingGuideEvidence(guide) {
+  if (!guide) return null;
+  return {
+    sourceClaimType: guide.sourceClaimType ?? null,
+    coreClaimType: guide.coreClaimType ?? null,
+    sourceIds: [...(guide.sourceIds ?? [])].sort(),
+    ruleIds: [...(guide.ruleIds ?? [])].sort(),
+    supporting: (guide.supporting ?? []).map((support) => ({
+      claimType: support.claimType,
+      factPaths: [
+        ...(support.distinctObservedFactPaths ?? support.distinctCalculatedFactPaths ?? []),
+      ].sort(),
+      positions: [
+        ...(support.distinctObservedPositions ?? support.distinctCalculatedPositions ?? []),
+      ],
+    })),
+  };
+}
+function natalEntry(report, graphLinks) {
   const sections = report.sections ?? [];
+  const additionalVerifiedSections = report.additionalVerifiedSections ?? [];
   const prose = sections.map((s) => s.headline + '\n' + s.paragraph);
+  if (additionalVerifiedSections.length > 0) {
+    prose.push(
+      '추가로 확인된 직업 관련 구조\n' +
+        '아래는 실제 명식과 출처가 확인된 연구용 관찰입니다. 위의 최소 유효 풀이 판정에 새로운 해석 축으로 더하지 않으며, 직업 적성이나 성패를 확정하지 않습니다.\n' +
+        additionalVerifiedSections
+          .map((section) => section.headline + '\n' + section.paragraph)
+          .join('\n\n'),
+    );
+  }
   if (report.readingGuide?.paragraph) prose.push(report.readingGuide.paragraph);
   if (report.missing?.length) {
     prose.push(...report.missing.map((reason) => 'Support explanation:\n' + reason));
@@ -101,13 +139,137 @@ function natalEntry(report) {
   if (sections.length === 0 && report.missing?.length) {
     meaning.push(['insufficient_support', ...report.missing]);
   }
-  return entry(
+  const evidence = {
+    state: report.state,
+    permissions: {
+      researchOnly: report.researchOnly,
+      usefulComplete: report.usefulComplete,
+      mayPublish: report.mayPublish,
+      maySell: report.maySell,
+    },
+    missingRequirements: [...(report.missing ?? [])],
+    readingGuide: readingGuideEvidence(report.readingGuide),
+    sections: sections.map((section) => ({
+      claimType: section.claimType,
+      pattern: section.pattern,
+      axis: section.axis,
+      channel: section.channel,
+      ruleId: section.ruleId ?? null,
+      methodologyId: graphLinks.methods.get(section.claimType)?.methodologyId ?? null,
+      sourceIds: [...(section.sourceIds ?? [])].sort(),
+      factPaths: [...(section.observedFactPaths ?? section.factPaths ?? [])].sort(),
+      observedPositions: [...(section.observedPositions ?? [])],
+      relatedPillar: section.relatedPillar ?? null,
+    })),
+    additionalVerifiedSections: additionalVerifiedSections.map((section) => ({
+      claimType: section.claimType,
+      pattern: section.pattern,
+      axis: section.axis,
+      channel: section.channel,
+      ruleId: section.ruleId ?? null,
+      methodologyId: graphLinks.methods.get(section.claimType)?.methodologyId ?? null,
+      sourceIds: [...(section.sourceIds ?? [])].sort(),
+      factPaths: [
+        ...(section.calculatedFactPaths ?? section.observedFactPaths ?? section.factPaths ?? []),
+      ].sort(),
+      observedPositions: [...(section.calculatedPositions ?? section.observedPositions ?? [])],
+    })),
+  };
+  const mur = {
+    state: report.state,
+    usefulComplete: report.usefulComplete === true,
+    selectedSectionCount: sections.length,
+    additionalVerifiedSectionCount: additionalVerifiedSections.length,
+    coreClaimType:
+      report.readingGuide?.sourceClaimType ?? report.readingGuide?.coreClaimType ?? null,
+    supportingClaimCount: report.readingGuide?.supporting?.length ?? 0,
+    supportingClaimTypes: (report.readingGuide?.supporting ?? []).map(
+      (support) => support.claimType,
+    ),
+    missingRequirements: [...(report.missing ?? [])],
+  };
+  const row = entry(
     prose.join('\n\n'),
     meaning,
     report.state,
     sections.length,
     'sourced_natal_research',
+    evidence,
+    mur,
   );
+  row.selectedClaims = [...graphLinks.methods.values()];
+  return row;
+}
+function assertReportClaimGraph(snapshot, execution, report, domain) {
+  const sections = [...(report.sections ?? []), ...(report.additionalVerifiedSections ?? [])];
+  let activeT5UpstreamReferences = 0;
+  const methods = new Map();
+  for (const section of sections) {
+    const claim = execution.claims.find(
+      (candidate) =>
+        candidate.claimType === section.claimType &&
+        candidate.taxonomy.tier === 'T8' &&
+        candidate.state === 'active' &&
+        candidate.snapshotId === snapshot.snapshotId,
+    );
+    if (!claim) {
+      throw new Error(
+        domain + ': selected section has no active same-chart T8 Claim: ' + section.claimType,
+      );
+    }
+    if (!claim.methodologyRef?.id || !claim.ruleRefs.some((ref) => ref.ruleId === section.ruleId)) {
+      throw new Error(
+        domain + ': T8 Claim is missing its methodology or selected rule: ' + section.claimType,
+      );
+    }
+    if (!section.sourceIds.every((sourceId) => claim.sourceRefs.includes(sourceId))) {
+      throw new Error(
+        domain + ': T8 Claim is missing a section source reference: ' + section.claimType,
+      );
+    }
+    if (JSON.stringify(claim.upstreamClaimRefs) !== JSON.stringify(section.upstreamClaimIds)) {
+      throw new Error(
+        domain + ': section upstream Claim links differ from the T8 Claim: ' + section.claimType,
+      );
+    }
+    if (section.upstreamClaimIds.length < 2) {
+      throw new Error(
+        domain + ': T8 Claim has fewer than two upstream Claim links: ' + section.claimType,
+      );
+    }
+    methods.set(section.claimType, {
+      claimId: claim.claimId,
+      claimType: claim.claimType,
+      methodologyId: claim.methodologyRef.id,
+      ruleRefs: claim.ruleRefs.map(({ ruleId, version }) => ({ ruleId, version })),
+      sourceIds: claim.sourceRefs,
+      upstreamClaimIds: claim.upstreamClaimRefs,
+      factPaths: claim.factRefs,
+    });
+    for (const upstreamId of section.upstreamClaimIds) {
+      const upstream = execution.claims.find((candidate) => candidate.claimId === upstreamId);
+      if (
+        !upstream ||
+        upstream.taxonomy.tier !== 'T5' ||
+        upstream.state !== 'active' ||
+        upstream.snapshotId !== snapshot.snapshotId ||
+        upstream.factRefs.length === 0 ||
+        upstream.sourceRefs.length === 0
+      ) {
+        throw new Error(
+          domain + ': upstream Claim is not active, same-chart, sourced T5 evidence: ' + upstreamId,
+        );
+      }
+      activeT5UpstreamReferences += 1;
+    }
+  }
+  return {
+    selectedMURSections: report.sections.length,
+    additionalVerifiedSections: report.additionalVerifiedSections?.length ?? 0,
+    boundT8Claims: sections.length,
+    activeT5UpstreamReferences,
+    methods,
+  };
 }
 function temporalEntries(result) {
   const report = result.annualMonthly.report;
@@ -145,10 +307,14 @@ function temporalEntries(result) {
     annualStemTenGod: report.annual.annualStemTenGod,
     annualCalendarPolicy: report.annual.calendarPolicy,
     natalComparison: report.temporalNatalComparison.filter((item) => item.period === 'annual'),
+    permissions: report.annual.permissions,
     sections: annual.map((s) => ({
       kind: s.kind,
       sourceProfileId: s.researchProfileId,
       candidateClaimType: s.candidateClaimType,
+      candidateRuleId: s.candidateRuleId,
+      methodologyId: s.methodologyId,
+      sourceIds: [s.policySourceId],
       calculatedFactPaths: [...s.calculationFactPaths],
       relatedPillar: s.relatedPillar ?? null,
     })),
@@ -156,6 +322,15 @@ function temporalEntries(result) {
   m.sourceEvidence = {
     referenceState: focus.state,
     referenceSegment: focus.segmentId ?? null,
+    referenceDateTime: focus.referenceDateTime,
+    jeolBoundary: report.monthly.jeolBoundary,
+    missing: report.monthly.missing,
+    permissions: {
+      researchOnly: report.monthly.researchOnly,
+      usefulComplete: report.monthly.usefulComplete,
+      mayPublish: report.monthly.mayPublish,
+      maySell: report.monthly.maySell,
+    },
     natalComparison: report.temporalNatalComparison.filter((item) =>
       item.period.startsWith('monthly_'),
     ),
@@ -164,10 +339,72 @@ function temporalEntries(result) {
       segmentId: s.segmentId,
       tenGod: s.tenGod,
       claimId: s.claimId,
+      semanticKey: s.semanticKey,
+      methodologyId: s.methodologyId,
+      interval: s.calculatedInterval,
       sourceIds: [...s.sourceIds],
       ruleIds: [...s.ruleIds],
       factPaths: [...s.factPaths],
       relatedPillar: s.relatedPillar ?? null,
+    })),
+  };
+  // Keep generated Claim IDs in the case trace, excluding them from identity.
+  const natalEvidence = (comparisons) => comparisons.map((comparison) => ({
+    ...comparison,
+    natalMatches: comparison.natalMatches.map((match) => {
+      const fingerprint = { ...match };
+      delete fingerprint.claimId;
+      return fingerprint;
+    }),
+  }));
+  const annualEvidence = {
+    ...a.sourceEvidence,
+    natalComparison: natalEvidence(a.sourceEvidence.natalComparison),
+  };
+  const monthlyEvidence = {
+    ...m.sourceEvidence,
+    natalComparison: natalEvidence(m.sourceEvidence.natalComparison),
+    sections: m.sourceEvidence.sections.map((section) => {
+      const fingerprint = { ...section };
+      delete fingerprint.claimId;
+      return fingerprint;
+    }),
+  };
+  // The original meaning profile stays comparable with the baseline. The comparison signature
+  // records the substantive relation (exact subtype, family only, or unavailable), independent
+  // of the count of locations, printed dates, Claim IDs, and prose changes.
+  const comparisonMeaning = (comparisons) => comparisons.map((comparison) => {
+    const observations = comparison.natalMatches.flatMap((match) => match.matchedFamilyObservations);
+    return [
+      comparison.period, comparison.periodTenGod,
+      observations.some((item) => item.tenGod === comparison.periodTenGod),
+      observations.some((item) => item.tenGod !== comparison.periodTenGod),
+    ];
+  });
+  a.comparisonMeaning = comparisonMeaning(a.sourceEvidence.natalComparison);
+  m.comparisonMeaning = comparisonMeaning(m.sourceEvidence.natalComparison);
+  a.evidenceComponents = annualEvidence;
+  a.evidenceKey = createEvidenceFingerprint(annualEvidence);
+  m.evidenceComponents = monthlyEvidence;
+  m.evidenceKey = createEvidenceFingerprint(monthlyEvidence);
+  const lifeEvidence = {
+    policyId: life.policyId,
+    policyHash: life.policyHash,
+    interpretationStatus: life.interpretationStatus,
+    missing: life.missing,
+    permissions: {
+      researchOnly: life.researchOnly,
+      usefulComplete: life.usefulComplete,
+      mayPublish: life.mayPublish,
+      maySell: life.maySell,
+    },
+    periods: life.periods.map((period) => ({
+      kind: period.kind,
+      pillar: period.pillar,
+      cycleIndex: period.cycleIndex,
+      ageMarker: period.ageMarker,
+      startsAt: period.startsAt,
+      endsAtExclusive: period.endsAtExclusive,
     })),
   };
   const l = entry(
@@ -176,6 +413,7 @@ function temporalEntries(result) {
     life.interpretationStatus,
     life.periods.length,
     'calculated_dayun_only',
+    lifeEvidence,
   );
   return [a, m, l];
 }
@@ -203,6 +441,7 @@ function tally(rows, key) {
 }
 function summarize(rows) {
   const nonEmpty = rows.filter((r) => r.text.length > 0);
+  const evidenceBound = nonEmpty.filter((r) => r.evidenceKey);
   return {
     generated: rows.length,
     withReadableText: nonEmpty.length,
@@ -212,6 +451,16 @@ function summarize(rows) {
       : 0,
     exactText: tally(nonEmpty, 'exactKey'),
     meaningProfile: tally(nonEmpty, 'meaningKey'),
+    evidenceProfile: summarizeEvidenceProfiles(evidenceBound),
+    ...(rows.some((row) => row.comparisonMeaning)
+      ? { temporalComparisonMeaning: tally(nonEmpty.map((row) => ({
+          ...row,
+          meaningComponents: [row.meaningComponents, row.comparisonMeaning],
+          meaningKey: digest(JSON.stringify([row.meaningComponents, row.comparisonMeaning])),
+        })), 'meaningKey') }
+      : {}),
+    evidenceTextRepetition: summarizeEvidenceTextRepetition(nonEmpty),
+    researchMURCoverage: summarizeResearchMURCoverage(nonEmpty),
     reportStates: Object.fromEntries(
       [...new Set(rows.map((r) => r.state))]
         .sort()
@@ -221,7 +470,7 @@ function summarize(rows) {
     examples: rows.slice(0, 2).map((r) => ({ birth: r.birth, text: r.text.slice(0, 550) })),
   };
 }
-export function runFiveHundredSajuAudit(count = DEFAULT_COUNT) {
+export function runFiveHundredSajuAudit(count = DEFAULT_COUNT, { includeCases = false } = {}) {
   if (count !== DEFAULT_COUNT && count !== EXPANDED_COUNT)
     throw new RangeError('Supported fixed-seed audit sample sizes are exactly 500 or 3000.');
   seed = 0x5a1a2026;
@@ -245,6 +494,18 @@ export function runFiveHundredSajuAudit(count = DEFAULT_COUNT) {
   const failures = [];
   const wealthMissingCases = [];
   const wealthChartDiagnostics = [];
+  const claimGraphAudit = Object.fromEntries(
+    NATAL.map((domain) => [
+      domain,
+      {
+        reports: 0,
+        selectedMURSections: 0,
+        additionalVerifiedSections: 0,
+        boundT8Claims: 0,
+        activeT5UpstreamReferences: 0,
+      },
+    ]),
+  );
   const startedAt = Date.now();
   for (let i = 0; i < count; i++) {
     const { stamp, birth } = sampleBirth(inputs);
@@ -265,6 +526,16 @@ export function runFiveHundredSajuAudit(count = DEFAULT_COUNT) {
         if (report.snapshotId !== snapshot.snapshotId || report.calculationHash !== chartKey) {
           throw new Error(domain + ' did not use the same exact natal snapshot');
         }
+        if (!report.researchOnly || report.usefulComplete || report.mayPublish || report.maySell) {
+          throw new Error(domain + ' changed the research authority boundary');
+        }
+        const graphLinks = assertReportClaimGraph(snapshot, interpretation, report, domain);
+        const graphCount = claimGraphAudit[domain];
+        graphCount.reports += 1;
+        graphCount.selectedMURSections += graphLinks.selectedMURSections;
+        graphCount.additionalVerifiedSections += graphLinks.additionalVerifiedSections;
+        graphCount.boundT8Claims += graphLinks.boundT8Claims;
+        graphCount.activeT5UpstreamReferences += graphLinks.activeT5UpstreamReferences;
         rows[
           {
             general: '전체 사주',
@@ -273,7 +544,7 @@ export function runFiveHundredSajuAudit(count = DEFAULT_COUNT) {
             relationship: '연애·관계',
             business: '사업',
           }[domain]
-        ].push({ ...natalEntry(report), birth: stamp, calculationHash: chartKey });
+        ].push({ ...natalEntry(report, graphLinks), birth: stamp, calculationHash: chartKey });
         if (domain === 'wealth') {
           const activeT5 = interpretation.claims.filter(
             (claim) =>
@@ -379,6 +650,22 @@ export function runFiveHundredSajuAudit(count = DEFAULT_COUNT) {
     sameCalculationHashGroups: sameChart.slice(0, 10),
     elapsedMs: Date.now() - startedAt,
     menuResults: Object.fromEntries(DOMAIN_NAMES.map((name) => [name, summarize(rows[name])])),
+    ...(includeCases
+      ? {
+          casesByMenu: Object.fromEntries(
+            DOMAIN_NAMES.map((name) => [
+              name,
+              rows[name].map((row, index) => {
+                const output = { caseNumber: index + 1, ...row };
+                delete output.birth;
+                delete output.calculationHash;
+                return output;
+              }),
+            ]),
+          ),
+        }
+      : {}),
+    claimGraphAudit,
     sixMenuQuestionCoverage: auditSixMenuQuestionCoverage(rows),
     wealthChartDiagnostics,
     rootCauseDiagnostics: {
@@ -412,6 +699,13 @@ export function runFiveHundredSajuAudit(count = DEFAULT_COUNT) {
     inputs.size !== count ||
     failures.length ||
     DOMAIN_NAMES.some((name) => rows[name].length !== count) ||
+    NATAL.some(
+      (domain) =>
+        claimGraphAudit[domain].reports !== count ||
+        claimGraphAudit[domain].boundT8Claims !==
+          claimGraphAudit[domain].selectedMURSections +
+            claimGraphAudit[domain].additionalVerifiedSections,
+    ) ||
     !result.rootCauseDiagnostics.wealth.allCasesHaveExplicitCause ||
     result.rootCauseDiagnostics.wealth.missingCaseCount !==
       wealthChartDiagnostics.filter((chart) => chart.sections.length === 0).length ||
@@ -430,5 +724,5 @@ export function runFiveHundredSajuAudit(count = DEFAULT_COUNT) {
 if (process.argv[1] && /saju-500-eight-menu-audit\.mjs$/u.test(process.argv[1])) {
   const countFlag = process.argv.indexOf('--count');
   const count = countFlag === -1 ? DEFAULT_COUNT : Number(process.argv[countFlag + 1]);
-  runFiveHundredSajuAudit(count);
+  runFiveHundredSajuAudit(count, { includeCases: process.argv.includes('--include-cases') });
 }

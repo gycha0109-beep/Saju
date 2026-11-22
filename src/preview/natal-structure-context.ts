@@ -32,17 +32,28 @@ export function buildNatalStructureContext(
   ) {
     throw new TypeError('Natal context must retain exact same-chart T5 → T8 research evidence.');
   }
-  const sections = natal.sections.map((s) => ({
-    title: s.headline,
-    paragraph: s.paragraph,
-    pattern: s.pattern,
-    families: [...s.families],
-    axis: s.axis,
-    channel: s.channel,
-    observedPositions: [...s.observedPositions],
-    sourceIds: [...s.sourceIds],
-    factPaths: [...s.observedFactPaths],
-  }));
+  const sections = natal.sections.map((section) => {
+    const claim = execution.claims.find(
+      (item) => item.state === 'active' && item.snapshotId === snapshot.snapshotId &&
+        item.claimType === section.claimType && item.ruleRefs.some((ref) => ref.ruleId === section.ruleId),
+    );
+    if (!claim) throw new TypeError('Natal context section lost its executed T8 claim.');
+    return {
+      title: section.headline,
+      claimId: claim.claimId,
+      claimType: claim.claimType,
+      ruleId: section.ruleId,
+      methodologyId: claim.methodologyRef.id,
+      paragraph: section.paragraph,
+      pattern: section.pattern,
+      families: [...section.families],
+      axis: section.axis,
+      channel: section.channel,
+      observedPositions: [...section.observedPositions],
+      sourceIds: [...section.sourceIds],
+      factPaths: [...section.observedFactPaths],
+    };
+  });
   return {
     snapshotId: snapshot.snapshotId,
     calculationHash: snapshot.calculationHash,

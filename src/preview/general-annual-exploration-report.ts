@@ -2,6 +2,8 @@ import type { PillarSlot, TenGod } from '../contracts/calculation.js';
 import type { AnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
 import { GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES } from '../research/general-annual-narrative-profiles.js';
 import {
+  GENERAL_ANNUAL_ACTIVATION_RULES,
+  GENERAL_ANNUAL_TENSION_RULES,
   GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
   GENERAL_ANNUAL_THEME_CLAIM_TYPE,
   GENERAL_ANNUAL_POLICY_SOURCE,
@@ -41,6 +43,7 @@ export interface GeneralAnnualExplorationSection {
   evidenceStatus: 'research_profile_projection_not_an_executed_official_claim';
   researchProfileId: string;
   candidateClaimType: string;
+  candidateRuleId: string;
   calculationFactPaths: readonly string[];
   policySourceId: typeof GENERAL_ANNUAL_POLICY_SOURCE.sourceId;
   methodologyId: typeof GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId;
@@ -70,7 +73,11 @@ export interface GeneralAnnualExplorationReport {
   };
 }
 
-function profileCopy(claimType: string, key: string): { headline: string; summary: string; profileId: string } {
+function profileCopy(claimType: string, key: string) {
+  const rule = [...GENERAL_ANNUAL_ACTIVATION_RULES, ...GENERAL_ANNUAL_TENSION_RULES].find(
+    (candidate) => candidate.output.claimType === claimType &&
+      (candidate.output.value as { semanticKey: string }).semanticKey === key,
+  );
   const profiles = GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.filter(
     (profile) => profile.claimType === claimType && profile.semanticKeys?.includes(key) === true,
   );
@@ -80,10 +87,10 @@ function profileCopy(claimType: string, key: string): { headline: string; summar
   const templates = profiles[0]!.templates;
   const headline = templates?.find((template) => template.templateKey === 'headline' && template.language === 'ko')?.text;
   const summary = templates?.find((template) => template.templateKey === 'summary' && template.language === 'ko')?.text;
-  if (!headline || !summary) {
+  if (!headline || !summary || !rule) {
     throw new Error(`Annual narrative profile ${key} is missing consumer copy.`);
   }
-  return { headline, summary, profileId: profiles[0]!.profileId };
+  return { headline, summary, profileId: profiles[0]!.profileId, ruleId: rule.ruleId };
 }
 
 /**
@@ -107,11 +114,12 @@ export function buildGeneralAnnualExplorationReport(
       kind: 'core',
       id: semanticKey,
       title: core.headline,
-      text: core.summary,
+      text: `서울 달력 ${facts.targetYear}년의 간지 ${facts.annualPillar.stem}${facts.annualPillar.branch}에서 연간의 십신은 ${facts.annualStemTenGod}입니다. ${core.summary}`,
       interpretationStatus: 'internal_research',
       evidenceStatus: 'research_profile_projection_not_an_executed_official_claim',
       researchProfileId: core.profileId,
       candidateClaimType: GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType,
+      candidateRuleId: core.ruleId,
       calculationFactPaths: [
         'temporal.targetYear', 'temporal.annualPillar', 'temporal.annualStemTenGod',
       ],
@@ -137,11 +145,12 @@ export function buildGeneralAnnualExplorationReport(
       kind: 'tension',
       id: key,
       title: copy.headline,
-      text: copy.summary,
+      text: `올해 간지의 지지 ${state.value.annualBranch}와 ${SLOT_LABELS[slot]}의 지지 ${state.value.natalBranch} 사이에서 충이 확인됩니다. ${copy.summary}`,
       interpretationStatus: 'internal_research',
       evidenceStatus: 'research_profile_projection_not_an_executed_official_claim',
       researchProfileId: copy.profileId,
       candidateClaimType: GENERAL_ANNUAL_TENSION_CLAIM_TYPE.claimType,
+      candidateRuleId: copy.ruleId,
       calculationFactPaths: [
         'temporal.targetYear', 'temporal.annualPillar',
         'temporal.annualBranchRelations.' + slot,
