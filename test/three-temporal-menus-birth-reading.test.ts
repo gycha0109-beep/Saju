@@ -46,6 +46,16 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
         expect(displayedEvidence).toContain(selected!.periodTenGod);
       }
     }
+    const before = describeTemporalNatalEvidence(report, 'monthly_before_jeol');
+    const after = describeTemporalNatalEvidence(report, 'monthly_after_jeol');
+    expect(before).toContain('기간과 같은 십신(상관)을 확인할 수 있습니다');
+    expect(after).toContain('같은 식상 계열의 다른 십신이 확인됩니다');
+    expect(report.monthly.sections.find(({ segmentId }) => segmentId === 'before_jeol')?.text)
+      .toContain('절입 전 월주는 병신이고, 월간의 십신은 상관');
+    expect(report.monthly.sections.find(({ segmentId }) => segmentId === 'after_jeol')?.text)
+      .toContain('절입 이후 월주는 정유이고, 월간의 십신은 식신');
+    expect(reading.annualMonthly.monthlyMenu.referenceFocus?.currentSection?.natalComparison?.text)
+      .toBe(before);
     expect(reading.html).toContain('id="annual"');
     expect(reading.html).toContain('id="monthly"');
     expect(reading.html).toContain('id="life-stage"');

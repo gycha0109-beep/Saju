@@ -1,4 +1,8 @@
-import type { GeneralAnnualMonthlyExplorationReport } from './general-annual-monthly-exploration-report.js';
+import {
+  describeTemporalNatalEvidence,
+  type GeneralAnnualMonthlyExplorationReport,
+  type TemporalNatalComparison,
+} from './general-annual-monthly-exploration-report.js';
 import type { LifeStageDayunResearchReport } from './life-stage-dayun-research-report.js';
 
 export const TEMPORAL_RESEARCH_MENU_READING_VERSION =
@@ -18,6 +22,11 @@ export interface TemporalResearchMenuSection {
   /** Monthly claim ID is only an internal research Claim, not Official authority. */
   claimId?: string;
   researchProfileKey?: string;
+  candidateRuleId?: string;
+  ruleIds?: readonly string[];
+  methodologyId?: string;
+  /** Same-chart co-observation with its own T8 provenance, separate from the period claim. */
+  natalComparison?: { text: string; evidence: TemporalNatalComparison };
   sourceIds: readonly string[];
   factPaths: readonly string[];
   interval?: {
@@ -132,6 +141,12 @@ export function buildTemporalResearchMenuReadings(
     targetMonth: joined.targetMonth,
     timeZone: 'Asia/Seoul' as const,
   };
+  const natalComparison = (period: TemporalNatalComparison['period']) => {
+    const evidence = joined?.temporalNatalComparison.find((item) => item.period === period);
+    return joined === undefined || evidence === undefined
+      ? {}
+      : { natalComparison: { text: describeTemporalNatalEvidence(joined, period), evidence } };
+  };
   const annual = joined?.annual.sections.filter(section =>
     section.text.trim().length > 0).map(section => ({
       title: section.title,
@@ -139,10 +154,11 @@ export function buildTemporalResearchMenuReadings(
       evidenceKind: 'annual_research_profile' as const,
       // The annual section ID is a research semantic key, not a source ID.
       researchProfileKey: section.id,
-      sourceIds: [],
-      factPaths: section.relatedPillar === undefined
-        ? ['temporal.annualStemTenGod']
-        : ['temporal.annualBranchRelations.' + section.relatedPillar],
+      candidateRuleId: section.candidateRuleId,
+      methodologyId: section.methodologyId,
+      sourceIds: [section.policySourceId],
+      factPaths: [...section.calculationFactPaths],
+      ...(section.kind === 'core' ? natalComparison('annual') : {}),
     })) ?? [];
   const monthly = joined?.monthly.sections.filter(section =>
     section.text.trim().length > 0 &&
@@ -153,6 +169,9 @@ export function buildTemporalResearchMenuReadings(
       text: section.text,
       evidenceKind: 'monthly_t9_research_claim' as const,
       claimId: section.claimId,
+      ruleIds: section.ruleIds,
+      methodologyId: section.methodologyId,
+      ...(section.kind === 'theme' ? natalComparison(`monthly_${section.segmentId}`) : {}),
       sourceIds: [...section.sourceIds],
       factPaths: [...section.factPaths],
       interval: {

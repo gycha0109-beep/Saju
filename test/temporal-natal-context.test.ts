@@ -60,8 +60,19 @@ describe('same-chart natal context in annual/monthly research reading', () => {
     expect(report.mayPublish).toBe(false);
     expect(report.maySell).toBe(false);
     expect(result.html).toContain('id="natal-context"');
-    expect(result.html).toContain('id="natal-temporal-comparison"');
-    expect(result.html).toContain('상호작용이나 길흉을 뜻하지 않습니다');
+    expect(result.html).toContain('비교에 사용한 원국 풀이 근거');
+    expect(result.html).toContain('이 비교의 범위는 두 곳에서 관측된 십신의 일치 여부까지입니다');
+    for (const entry of report.temporalNatalComparison) {
+      for (const match of entry.natalMatches) {
+        const original = report.natalContext.sections.find((part) => part.claimId === match.claimId);
+        expect(original?.ruleId).toBe(match.ruleId);
+        expect(original?.methodologyId).toBe(match.methodologyId);
+        expect(original?.sourceIds).toEqual(match.sourceIds);
+        for (const item of match.matchedFamilyObservations) {
+          expect(original?.factPaths[original.observedPositions.indexOf(item.position)]).toBe(item.factPath);
+        }
+      }
+    }
   });
 
   it('keeps unknown-hour and insufficient natal evidence local without inventing a match', () => {

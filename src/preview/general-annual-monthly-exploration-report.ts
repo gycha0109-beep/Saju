@@ -1,4 +1,4 @@
-import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { CanonicalSajuSnapshot, TenGod } from '../contracts/calculation.js';
 import type { LifeStageNatalStructureContext } from './life-stage-dayun-research-report.js';
 import { buildNatalStructureContext } from './natal-structure-context.js';
 import type { ReadingRequest } from '../contracts/reading.js';
@@ -51,7 +51,7 @@ export interface GeneralAnnualMonthlyExplorationReport {
     period: 'annual' | 'monthly_before_jeol' | 'monthly_after_jeol';
     periodFamily: 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
     /** Exact selected period Ten-God; sharing a family does not imply the same subtype. */
-    periodTenGod: string;
+    periodTenGod: TenGod;
     natalMatches: readonly {
       pattern: string;
       family: 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
@@ -60,6 +60,16 @@ export interface GeneralAnnualMonthlyExplorationReport {
       observedPositions: readonly string[];
       /** Exact natal positions for the period family only; other pattern families stay out. */
       matchedFamilyPositions: readonly string[];
+      matchedFamilyObservations: readonly {
+        position: string;
+        factPath: string;
+        tenGod: TenGod;
+      }[];
+      claimId: string;
+      claimType: string;
+      ruleId: string;
+      methodologyId: string;
+      sourceIds: readonly string[];
     }[];
     interpretation: 'co_observed_only_no_interaction_claim';
   }[];
@@ -148,7 +158,9 @@ export function buildGeneralAnnualMonthlyExplorationReport(
         (section) =>
           section.families.length >= 2 &&
           section.sourceIds.length > 0 &&
-          section.factPaths.length > 0,
+          section.factPaths.length > 0 &&
+          section.factPaths.length === section.observedPositions.length &&
+          section.claimId.length > 0 && section.ruleId.length > 0 && section.methodologyId.length > 0,
       ),
     'natal context must be grounded in the exact same canonical chart',
   );
@@ -201,14 +213,14 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       })),
   ];
   type TenGodFamily = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
-  const tenGodsByFamily: Readonly<Record<TenGodFamily, readonly string[]>> = {
+  const tenGodsByFamily: Readonly<Record<TenGodFamily, readonly TenGod[]>> = {
     peer: ['비견', '겁재'],
     resource: ['정인', '편인'],
     output: ['식신', '상관'],
     wealth: ['정재', '편재'],
     officer: ['정관', '편관'],
   };
-  const familyOf = (god: string): TenGodFamily => {
+  const familyOf = (god: TenGod): TenGodFamily => {
     const family = (Object.keys(tenGodsByFamily) as TenGodFamily[]).find((name) =>
       tenGodsByFamily[name].includes(god),
     );
@@ -224,10 +236,11 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       natalMatches: natalContext.sections
         .filter((section) => section.families.includes(periodFamily))
         .map((section) => {
-          const matchedFamilyPositions = section.observedPositions.filter((position) =>
-            tenGodsByFamily[periodFamily].some((god) => position.endsWith(' ' + god)),
-          );
-          if (matchedFamilyPositions.length === 0)
+          const matchedFamilyObservations = section.observedPositions.flatMap((position, index) => {
+            const tenGod = tenGodsByFamily[periodFamily].find((god) => position.endsWith(' ' + god));
+            return tenGod === undefined ? [] : [{ position, tenGod, factPath: section.factPaths[index]! }];
+          });
+          if (matchedFamilyObservations.length === 0)
             throw new TypeError('Temporal natal family has no matching observed positions.');
           return {
             pattern: section.pattern,
@@ -235,7 +248,13 @@ export function buildGeneralAnnualMonthlyExplorationReport(
             axis: section.axis,
             channel: section.channel,
             observedPositions: [...section.observedPositions],
-            matchedFamilyPositions,
+            matchedFamilyPositions: matchedFamilyObservations.map((item) => item.position),
+            matchedFamilyObservations,
+            claimId: section.claimId,
+            claimType: section.claimType,
+            ruleId: section.ruleId,
+            methodologyId: section.methodologyId,
+            sourceIds: section.sourceIds,
           };
         }),
       interpretation: 'co_observed_only_no_interaction_claim' as const,
@@ -261,7 +280,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     natalContext,
     temporalNatalComparison,
     caveats: [
-      '원국 T8과 연·월운 T9의 같은 십성 계열은 함께 관측된 사실만 비교합니다. 서로의 작용·강화·길흉을 새로 추론하지 않습니다.',
+      '원국 T8과 연운 연구 후보·월운 T9의 같은 십성 계열은 함께 관측된 사실만 비교합니다. 서로의 작용·강화·길흉을 새로 추론하지 않습니다.',
       '올해는 서울 달력 연도(입춘 효력 연주가 아님), 이번 달은 실제 절입 시각으로 구분합니다.',
       '이 연결 화면은 별도 통합 운세 규칙이 아니라 기존 연운 연구 문구와 월운 T9 근거를 순서대로 보여줍니다.',
       '개인별 명식의 계산 사실 외에 특정 사건, 재물 규모, 건강 및 관계 결과를 예측하지 않습니다.',
@@ -289,12 +308,60 @@ function escapeHtml(value: string): string {
       })[char]!,
   );
 }
-function kst(instant: string): string {
+export function formatTemporalKst(instant: string): string {
   const local = new Date(new Date(instant).getTime() + 9 * 60 * 60 * 1000);
-  return local.toISOString().slice(0, 16).replace('T', ' ') + ' KST';
+  return local.toISOString().slice(0, 23).replace('T', ' ').replace(/:00\.000$|\.000$/u, '') + ' KST';
 }
 
-function monthlyCard(section: GeneralMonthlyExplorationSection): string {
+export type TemporalNatalComparison = GeneralAnnualMonthlyExplorationReport['temporalNatalComparison'][number];
+type NatalComparisonPeriod = TemporalNatalComparison['period'];
+const FAMILY_NAMES = { peer: '비겁', resource: '인성', output: '식상', wealth: '재성', officer: '관성' } as const;
+
+/** Explain the relation the selected evidence can establish: subtype equality or family only. */
+export function describeTemporalNatalEvidence(
+  report: GeneralAnnualMonthlyExplorationReport,
+  period: NatalComparisonPeriod,
+): string {
+  const comparison = report.temporalNatalComparison.find((item) => item.period === period);
+  if (!comparison) return '이 기간에 연결할 수 있는 십신 풀이 근거가 확인되지 않았습니다.';
+  const { periodTenGod, periodFamily, natalMatches } = comparison;
+  const family = FAMILY_NAMES[periodFamily];
+  const intro = `이 기간에 확인된 십신은 ${family} 계열의 ${periodTenGod}입니다.`;
+  if (natalMatches.length === 0) {
+    return `${intro} 이번 원국 풀이에서 비교에 사용할 같은 계열의 근거가 선택되지 않아 기간 주제만 읽을 수 있습니다.`;
+  }
+  const observations = natalMatches.flatMap((match) => match.matchedFamilyObservations);
+  const positionsFor = (sameTenGod: boolean) => [...new Set(observations
+    .filter((item) => (item.tenGod === periodTenGod) === sameTenGod)
+    .map((item) => item.position))].join(' · ');
+  const exact = positionsFor(true);
+  const familyOnly = positionsFor(false);
+  return [
+    intro,
+    ...(exact ? [`선택된 원국 근거 중 ${exact}에서 기간과 같은 십신(${periodTenGod})을 확인할 수 있습니다.`] : []),
+    ...(familyOnly ? [`원국의 ${familyOnly}에서는 같은 ${family} 계열의 다른 십신이 확인됩니다.`] : []),
+    '이 비교의 범위는 두 곳에서 관측된 십신의 일치 여부까지입니다.',
+  ].join(' ');
+}
+
+/** A separate paragraph and provenance, adjacent to its own period theme. */
+export function renderTemporalNatalEvidence(
+  report: GeneralAnnualMonthlyExplorationReport,
+  period: NatalComparisonPeriod,
+): string {
+  const comparison = report.temporalNatalComparison.find((item) => item.period === period);
+  const details = comparison?.natalMatches.map((match) =>
+    `<li>${escapeHtml([match.claimType, match.ruleId, match.methodologyId, ...match.sourceIds,
+      ...match.matchedFamilyObservations.map((item) => item.factPath)].join(' · '))}</li>`,
+  ).join('');
+  return '<p>' + escapeHtml(describeTemporalNatalEvidence(report, period)) + '</p>' +
+    (details ? '<details><summary>비교에 사용한 원국 풀이 근거</summary><ul>' + details + '</ul></details>' : '');
+}
+
+function monthlyCard(
+  section: GeneralMonthlyExplorationSection,
+  report: GeneralAnnualMonthlyExplorationReport,
+): string {
   const e = escapeHtml;
   return (
     '<article class="reading-card">' +
@@ -306,11 +373,12 @@ function monthlyCard(section: GeneralMonthlyExplorationSection): string {
     '</h4><p>' +
     e(section.text) +
     '</p>' +
+    (section.kind === 'theme' ? renderTemporalNatalEvidence(report, `monthly_${section.segmentId}`) : '') +
     '<details><summary>이 풀이의 계산 근거와 출처</summary>' +
     '<p>기간: ' +
-    e(kst(section.calculatedInterval.startsAt)) +
+    e(formatTemporalKst(section.calculatedInterval.startsAt)) +
     '부터 ' +
-    e(kst(section.calculatedInterval.endsAt)) +
+    e(formatTemporalKst(section.calculatedInterval.endsAt)) +
     ' 전까지</p>' +
     '<p>십신: ' +
     e(section.tenGod) +
@@ -331,7 +399,7 @@ function monthlyCard(section: GeneralMonthlyExplorationSection): string {
   );
 }
 
-/** Consumer-readable internal HTML; all interpretive copy is pre-existing profile text. */
+/** Korean research profiles with adjacent, separately sourced natal observations. */
 export function renderGeneralAnnualMonthlyExplorationHtml(
   report: GeneralAnnualMonthlyExplorationReport,
 ): string {
@@ -346,6 +414,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
         '</h3><p>' +
         e(section.text) +
         '</p>' +
+        (section.kind === 'core' ? renderTemporalNatalEvidence(report, 'annual') : '') +
         '<details><summary>올해 문구의 계산 근거와 연구 출처</summary>' +
         '<p>해석 범위: 내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)</p>' +
         '<p>문구 프로필: ' +
@@ -353,6 +422,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
         '</p>' +
         '<p>후보 Claim 유형: ' +
         e(section.candidateClaimType) +
+        '</p><p>후보 규칙: ' +
+        e(section.candidateRuleId) +
         '</p>' +
         '<p>계산 경로: ' +
         e(section.calculationFactPaths.join(' · ')) +
@@ -380,12 +451,12 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   const annualContext =
     annualAt.state === 'in_target_civil_year'
       ? '조회 시각 ' +
-        kst(annualAt.referenceDateTime) +
+        formatTemporalKst(annualAt.referenceDateTime) +
         '은 서울 달력 ' +
         report.targetYear +
         '년에 속합니다. 이 연운은 해당 선택 연도의 연구용 풀이입니다.'
       : '조회 시각 ' +
-        kst(annualAt.referenceDateTime) +
+        formatTemporalKst(annualAt.referenceDateTime) +
         '은 서울 달력 ' +
         annualAt.civilYearAtReference +
         '년입니다. 아래 ' +
@@ -396,11 +467,11 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       ? '<p class="muted">해당 절입 구간: ' +
         e(SEGMENT_LABEL[selected.segmentId!]) +
         ' · ' +
-        e(kst(selected.theme.calculatedInterval.startsAt)) +
+        e(formatTemporalKst(selected.theme.calculatedInterval.startsAt)) +
         '부터 ' +
-        e(kst(selected.theme.calculatedInterval.endsAt)) +
+        e(formatTemporalKst(selected.theme.calculatedInterval.endsAt)) +
         ' 전까지</p>' +
-        monthlyCard(selected.theme)
+        monthlyCard(selected.theme, report)
       : selected.state === 'insufficient_evidence'
         ? '<p>이 조회 시각에 적용되는 ' +
           e(SEGMENT_LABEL[selected.segmentId!]) +
@@ -418,9 +489,9 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       interval === undefined
         ? ''
         : '<p class="muted">실제 계산 적용 기간: ' +
-          escapeHtml(kst(interval.startsAt)) +
+          escapeHtml(formatTemporalKst(interval.startsAt)) +
           '부터 ' +
-          escapeHtml(kst(interval.endsAt)) +
+          escapeHtml(formatTemporalKst(interval.endsAt)) +
           ' 전까지</p>';
     return (
       '<section class="phase" id="phase-' +
@@ -432,7 +503,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
       visiblePeriod +
       (sections.length === 0
         ? '<p>이 구간의 해석 근거가 충분하지 않습니다.</p>'
-        : sections.map(monthlyCard).join('\n')) +
+        : sections.map((section) => monthlyCard(section, report)).join('\n')) +
       '</section>'
     );
   }).join('\n');
@@ -463,36 +534,6 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
               '</p></details></article>',
           )
           .join('')) +
-    '</section>';
-  const comparisonHtml =
-    '<section id="natal-temporal-comparison"><h2>원국과 기간별 십성 주제 비교</h2>' +
-    '<p>같은 계열이 원국과 해당 기간에 함께 관측되는지만 보여줍니다. 상호작용이나 길흉을 뜻하지 않습니다.</p>' +
-    report.temporalNatalComparison
-      .map(
-        (item) =>
-          '<article class="reading-card"><h4>' +
-          e(item.period) +
-          ' · ' +
-          e(item.periodFamily) +
-          ' · 기간 십신 ' +
-          e(item.periodTenGod) +
-          '</h4><p>' +
-          (item.natalMatches.length === 0
-            ? '같은 계열의 원국 T8 관측 근거가 선택되지 않았습니다.'
-            : item.natalMatches
-                .map((match) =>
-                  e(
-                    match.pattern +
-                      ' · ' +
-                      match.channel +
-                      ' · ' +
-                      match.matchedFamilyPositions.join(' / '),
-                  ),
-                )
-                .join('<br>')) +
-          '</p></article>',
-      )
-      .join('') +
     '</section>';
   const caveats = [
     ...report.annual.caveats,
@@ -534,11 +575,10 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '월 절입 전·후</a>' +
     '<a href="#reference-month-reading">조회 시각의 풀이</a></nav>' +
     natalContextHtml +
-    comparisonHtml +
     '<section class="current-reading" id="reference-month-reading">' +
     '<h2>조회 시각에 해당하는 이번 달의 풀이</h2>' +
     '<p class="muted">조회 기준: ' +
-    e(kst(selected.referenceDateTime)) +
+    e(formatTemporalKst(selected.referenceDateTime)) +
     ' · 연구용 월별 적용 범위만 안내합니다.</p>' +
     focus +
     '</section>' +
@@ -564,7 +604,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<p class="muted">' +
     e(report.monthly.jeolBoundary.name) +
     ' 절입: ' +
-    e(kst(report.monthly.jeolBoundary.at)) +
+    e(formatTemporalKst(report.monthly.jeolBoundary.at)) +
     '</p>' +
     monthly +
     '</section>' +

@@ -43,7 +43,7 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
   });
 
   it('uses the officer-peer context when officer-resource does not match the same channel', () => {
-    const { execution, report } = wealthReading(1962, 5, 5, 0, 3);
+    const { execution, report } = wealthReading(1997, 1, 19, 17, 5);
     expect(execution.claims.some(c => c.state === 'active' &&
       c.claimType.startsWith('TEN_GOD_WEALTH_'))).toBe(false);
     expect(report.sections).toHaveLength(1);
@@ -57,16 +57,16 @@ describe('evidence-exact explanation for unsupported Wealth synthesis', () => {
     expect(report.maySell).toBe(false);
   });
 
-  it('distinguishes a present wealth T5 with no eligible same-channel combination', () => {
-    const { execution, report } = wealthReading(1955, 10, 31, 19, 35);
+  it('keeps confirmed peer-wealth tension as partial when no core combination qualifies', () => {
+    const { execution, report } = wealthReading(1960, 11, 15, 12, 41);
     expect(execution.claims.some(c => c.state === 'active' &&
       c.claimType.startsWith('TEN_GOD_WEALTH_'))).toBe(true);
-    expect(report.sections).toHaveLength(0);
-    expect(report.state).toBe('insufficient');
-    const reason = report.missing.join(' ');
-    expect(reason).toContain('재성 관련 십신 관점은 있지만');
-    expect(reason).toContain('같은 관측 범위');
-    expect(reason).toContain('실제 소득·재산·재물운의 좋고 나쁨을 뜻하지 않습니다');
+    expect(report.sections).toHaveLength(1);
+    expect(report.sections[0]?.pattern).toBe('PEER_WEALTH');
+    expect(report.sections[0]?.axis).toBe('tension');
+    expect(report.state).toBe('partial');
+    expect(report.readingGuide).toBeUndefined();
+    expect(report.missing.join(' ')).toContain('중심 종합 근거 없이 실제 확인된 긴장 관점');
     expect(report.usefulComplete).toBe(false);
   });
 });

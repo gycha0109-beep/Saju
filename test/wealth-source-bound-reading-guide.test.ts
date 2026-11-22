@@ -68,12 +68,20 @@ describe('Wealth natal source-owned Korean reading guide', () => {
     expect(reading(3, 10)).toEqual(reading(3, 10));
   });
 
-  it('does not invent a Wealth synthesis for missing time, tension-only or no core', () => {
+  it('reads only resolved natal evidence when the hour or core combination is unavailable', () => {
     const unknown = reading(3, 10, null);
-    expect(unknown.state).toBe('insufficient');
+    expect(unknown.state).toBe('partial');
     expect(unknown.readingGuide).toBeUndefined();
-    expect(unknown.sections).toHaveLength(0);
-    expect(unknown.missing.join(' ')).toContain('출생시각 미상');
+    expect(unknown.sections.map((section) => section.axis)).toEqual(['context']);
+    expect(unknown.missing.join(' ')).toContain('시주 미확정');
+
+    const unknownWithTwoSupports = reading(4, 11, null);
+    expect(unknownWithTwoSupports.state).toBe('partial');
+    expect(unknownWithTwoSupports.readingGuide?.supporting).toHaveLength(2);
+    expect(unknownWithTwoSupports.readingGuide?.paragraph).toContain('출생시각을 알 수 없어');
+    expect(unknownWithTwoSupports.readingGuide?.paragraph).not.toContain('독립 근거가 2개 확인되어');
+    expect(unknownWithTwoSupports.sections.flatMap((section) => section.observedFactPaths)
+      .some((path) => path.includes('.hour.'))).toBe(false);
 
     for (const [month, day] of [[2,3],[2,11],[3,7],[4,11],[5,7]] as const) {
       const report = reading(month, day);
@@ -97,7 +105,7 @@ describe('Wealth natal source-owned Korean reading guide', () => {
     }
     expect(partial).toBeDefined();
     expect(partial?.readingGuide?.supporting.length).toBeLessThan(2);
-    expect(partial?.readingGuide?.paragraph).toContain('재물운 전체 종합 판단은 보류합니다');
+    expect(partial?.readingGuide?.paragraph).toContain('근거가 있는 관점까지만 설명합니다');
     expect(partial?.missing.length).toBeGreaterThan(0);
     expect(partial?.usefulComplete).toBe(false);
     expect(partial?.mayPublish).toBe(false);
