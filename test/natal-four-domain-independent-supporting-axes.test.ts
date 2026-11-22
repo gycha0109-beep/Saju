@@ -64,9 +64,10 @@ describe('four different consumer natal menus require independently observed T0 
           }
           expect(axes.has(section.axis), entry.domain).toBe(false);
           axes.add(section.axis);
-          expect(section.observedFactPaths.every(path =>
-            /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path),
-          )).toBe(true);
+          const allowedFactPath = entry.domain === '재물'
+            ? /^((derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value)|(derivedFacts\.hiddenStems\.(year|month|day|hour)\.value\.[0-2]))$/u
+            : /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u;
+          expect(section.observedFactPaths.every(path => allowedFactPath.test(path))).toBe(true);
         }
         if (report.state === 'complete') {
           expect(report.sections, entry.domain).toHaveLength(3);

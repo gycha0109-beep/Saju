@@ -5,7 +5,7 @@
 export const NATAL_SHARED_EVIDENCE_VERSION = 'natal-shared-fact-cross-domain-v1' as const;
 export type NatalDomainKey = 'general' | 'career' | 'wealth' | 'business' | 'relationship';
 const ORDER: readonly NatalDomainKey[] = ['general', 'career', 'wealth', 'business', 'relationship'];
-const FACT_PATH = /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u;
+const FACT_PATH = /^(derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value|derivedFacts\.hiddenStems\.(year|month|day|hour)\.value\.[0-2])$/u;
 
 export interface NatalDomainEvidenceSection {
   headline: string;
