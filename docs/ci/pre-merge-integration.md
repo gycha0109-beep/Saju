@@ -1,4 +1,8 @@
-# PR feedback and pre-merge integration
+# PR feedback and pre-merge integration (archived)
+
+> Saju retired the automatic PR regression and pre-merge integration workflows in [PR #2801](https://github.com/gycha0109-beep/Saju/pull/2801). The staged integration instructions below record the previous design. Label dispatch has no active workflow in Saju. The integration helper tests still cover candidate validation, prerequisite checks, and isolated Git assembly.
+>
+> Run the current full local regression with `npm test -- --maxWorkers=2`. The active GitHub workflows are under [`.github/workflows`](../../.github/workflows) and cover deployment and operational verification.
 
 Full-regression import-cost optimization and its measured sample are documented
 in [test import performance](test-import-performance.md).
