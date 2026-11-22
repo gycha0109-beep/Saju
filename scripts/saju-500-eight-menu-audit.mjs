@@ -393,7 +393,10 @@ export function runFiveHundredSajuAudit() {
     DOMAIN_NAMES.some((name) => rows[name].length !== COUNT) ||
     !result.rootCauseDiagnostics.wealth.allCasesHaveExplicitCause ||
     result.rootCauseDiagnostics.wealth.missingCaseCount !==
-      result.menuResults['재물'].withoutReadableText ||
+      wealthChartDiagnostics.filter((chart) => chart.sections.length === 0).length ||
+    wealthChartDiagnostics.some(
+      (chart) => chart.sections.length === 0 && chart.reportMissing.length === 0,
+    ) ||
     result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups !==
       result.menuResults['올해'].exactText.casesInRepeatedGroups ||
     result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups !==

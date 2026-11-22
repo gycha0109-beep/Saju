@@ -210,8 +210,29 @@ export function runNatalS6QualityRegression(): {
         caseId + '/' + domain.domain + ': incomplete Korean meaning or provenance');
       }
       if (scenario === 'unknown_time') {
-        requireEvidence(domain.state === 'insufficient' && domain.sections.length === 0,
-          caseId + '/' + domain.domain + ': unknown birth hour must fail closed');
+        if (domain.domain === 'wealth' && domain.sections.length > 0) {
+          requireEvidence(
+            domain.state === 'partial' &&
+              domain.missing.length > 0 &&
+              domain.sections.every(
+                (section) =>
+                  section.channel === 'hidden_stems' &&
+                  section.factPaths.length > 0 &&
+                  section.factPaths.every((path) =>
+                    /^derivedFacts\.hiddenStems\.(year|month|day)\.value\.[0-2]$/u.test(path),
+                  ),
+              ),
+            caseId +
+              '/' +
+              domain.domain +
+              ': unknown birth hour must use resolved non-hour hidden stems only',
+          );
+        } else {
+          requireEvidence(
+            domain.state === 'insufficient' && domain.sections.length === 0,
+            caseId + '/' + domain.domain + ': unknown birth hour has no supported interpretation',
+          );
+        }
       }
     }
     // Strip channel suffix: moving a claim from branch to stem alone is not

@@ -29,11 +29,32 @@ describe('S6 real-chart Korean meaning and contrast quality regression', () => {
         for (const s of domain.sections) {
           expect(s.sourceIds.length).toBeGreaterThan(0);
           expect(s.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
-          expect(s.factPaths.every(path => path.startsWith('derivedFacts.tenGods.value.'))).toBe(true);
+          expect(s.factPaths.every(path =>
+            s.channel === 'hidden_stems'
+              ? /^derivedFacts\.hiddenStems\.(year|month|day|hour)\.value\.[0-2]$/u.test(path)
+              : /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path),
+          )).toBe(true);
         }
       }
       if (item.scenario === 'unknown_time') {
-        expect(item.domains.every(d => d.state === 'insufficient' && d.sections.length === 0)).toBe(true);
+        const wealth = item.domains.find((d) => d.domain === 'wealth');
+        expect(wealth?.state).toBe('partial');
+        expect(wealth?.sections.length).toBeGreaterThan(0);
+        expect(
+          wealth?.sections.every(
+            (s) =>
+              s.channel === 'hidden_stems' &&
+              s.factPaths.length > 0 &&
+              s.factPaths.every((path) =>
+                /^derivedFacts\.hiddenStems\.(year|month|day)\.value\.[0-2]$/u.test(path),
+              ),
+          ),
+        ).toBe(true);
+        expect(
+          item.domains
+            .filter((d) => d.domain !== 'wealth')
+            .every((d) => d.state === 'insufficient' && d.sections.length === 0),
+        ).toBe(true);
       }
     }
     expect(new Set(audit.cases.map(c => c.scenario))).toEqual(new Set([
