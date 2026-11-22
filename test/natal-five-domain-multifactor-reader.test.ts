@@ -29,14 +29,17 @@ const domains = ['general', 'career', 'wealth', 'business', 'relationship'] as c
 const labels = ['총운', '직업운', '재물운', '사업운', '관계운'] as const;
 
 function sample(month: number, day: number, hour: number | null = 12) {
-  return calculateCanonicalSajuSnapshot({
-    calendarType: 'solar',
-    date: { year: 2024, month, day },
-    time: hour === null
-      ? { known: false } as const
-      : { known: true, hour, minute: 0 } as const,
-    sexForTraditionalCalculation: 'unspecified',
-  }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+  return calculateCanonicalSajuSnapshot(
+    {
+      calendarType: 'solar',
+      date: { year: 2024, month, day },
+      time:
+        hour === null ? ({ known: false } as const) : ({ known: true, hour, minute: 0 } as const),
+      sexForTraditionalCalculation: 'unspecified',
+    },
+    PRODUCTION_DEFAULT_CALCULATION_POLICY,
+    { now: NOW },
+  );
 }
 function reports(snapshot: ReturnType<typeof sample>): NatalFiveDomainMultifactorReports {
   const a = runInterpretation(snapshot, registry.general, { now: NOW });
@@ -69,14 +72,17 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(html).toContain('aria-label="사업운 읽기 요약"');
     expect(html).toContain(sections.business.readingGuide!.paragraph);
     const businessCard = html.split('<h2 id="domain-business">')[1]!;
-    expect(businessCard.indexOf(sections.business.readingGuide!.title))
-      .toBeLessThan(businessCard.indexOf('명식 근거와 출처 확인'));
+    expect(businessCard.indexOf(sections.business.readingGuide!.title)).toBeLessThan(
+      businessCard.indexOf('명식 근거와 출처 확인'),
+    );
     const wealthCard = html.split('<h2 id="domain-wealth">')[1]!;
-    expect(wealthCard.indexOf(sections.wealth.readingGuide!.title))
-      .toBeLessThan(wealthCard.indexOf('명식 근거와 출처 확인'));
+    expect(wealthCard.indexOf(sections.wealth.readingGuide!.title)).toBeLessThan(
+      wealthCard.indexOf('명식 근거와 출처 확인'),
+    );
     const careerCard = html.split('<h2 id="domain-career">')[1]!;
-    expect(careerCard.indexOf(sections.career.readingGuide!.title))
-      .toBeLessThan(careerCard.indexOf('명식 근거와 출처 확인'));
+    expect(careerCard.indexOf(sections.career.readingGuide!.title)).toBeLessThan(
+      careerCard.indexOf('명식 근거와 출처 확인'),
+    );
     expect(html).toContain('<html lang="ko">');
     expect(html).toContain('내부 연구용 미리보기 · 검토되지 않은 해석 · 출판 및 판매 불가');
     let prior = -1;
@@ -93,8 +99,8 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       prior = html.indexOf(anchor);
       for (const item of section.sections) {
         expect(html).toContain(item.headline);
-        const displayedPositions = 'calculatedPositions' in item
-          ? item.calculatedPositions : item.observedPositions;
+        const displayedPositions =
+          'calculatedPositions' in item ? item.calculatedPositions : item.observedPositions;
         expect(displayedPositions.length).toBeGreaterThanOrEqual(2);
         for (const position of displayedPositions) expect(item.paragraph).toContain(position);
         expect(item.sourceIds.length).toBeGreaterThan(0);
@@ -116,8 +122,9 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       expect(overview.indexOf(link)).toBeGreaterThan(previousLink);
       previousLink = overview.indexOf(link);
       const report = sections[domain];
-      expect(overview).toContain(report.sections[0]?.headline ??
-        report.missing[0] ?? '현재 확인된 해석 문단이 없습니다.');
+      expect(overview).toContain(
+        report.sections[0]?.headline ?? report.missing[0] ?? '현재 확인된 해석 문단이 없습니다.',
+      );
     }
     expect(html).toContain('다섯 분야의 근거 기반 요약');
     expect(html.match(/<article aria-labelledby=/gu)).toHaveLength(5);
@@ -143,16 +150,21 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     const firstScreen = ownCard.slice(first, details);
     for (const section of general.sections) {
       // Rendered HTML escapes the source-owned Korean paragraph unchanged in meaning.
-      const displayed = section.paragraph.replace(/&/gu, '&amp;')
-        .replace(/</gu, '&lt;').replace(/>/gu, '&gt;')
-        .replace(/"/gu, '&quot;').replace(/'/gu, '&#39;');
+      const displayed = section.paragraph
+        .replace(/&/gu, '&amp;')
+        .replace(/</gu, '&lt;')
+        .replace(/>/gu, '&gt;')
+        .replace(/"/gu, '&quot;')
+        .replace(/'/gu, '&#39;');
       expect(firstScreen).toContain('<p>' + displayed + '</p>');
       expect(ownCard).toContain(section.ruleId);
       expect(ownCard).toContain(section.sourceIds[0]!);
     }
-    expect(ownCard).toContain(general.state === 'complete'
-      ? '성격·미래 사건을 단정하지 않습니다.'
-      : '종합 결론으로 채우지 않습니다.');
+    expect(ownCard).toContain(
+      general.state === 'complete'
+        ? '성격·미래 사건을 단정하지 않습니다.'
+        : '종합 결론으로 채우지 않습니다.',
+    );
     expect(general.researchOnly).toBe(true);
     expect(general.usefulComplete).toBe(false);
     expect(general.mayPublish).toBe(false);
@@ -167,8 +179,9 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         readingGuide: { ...general.readingGuide!, sourceClaimType: 'FAKE_GENERAL_T8' },
       },
     };
-    expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
-      .toThrow(/General first-screen reading/);
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged)).toThrow(
+      /General first-screen reading/,
+    );
   });
 
   it('puts exact Business and Relationship T8 Korean meaning before collapsed attribution', () => {
@@ -179,25 +192,29 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       const report = original[domain];
       expect(report.readingGuide).toBeDefined();
       expect(report.sections.length).toBeGreaterThan(0);
-      const ownCard = html.split('<h2 id="domain-' + domain + '">')[1]!
-        .split('</article>')[0]!;
+      const ownCard = html.split('<h2 id="domain-' + domain + '">')[1]!.split('</article>')[0]!;
       const firstMeaning = ownCard.indexOf('이 명식에서 먼저 읽을 실제 풀이');
       const fullEvidence = ownCard.indexOf('<details class="full-claim-evidence">');
       expect(firstMeaning).toBeGreaterThanOrEqual(0);
       expect(fullEvidence).toBeGreaterThan(firstMeaning);
       for (const section of report.sections) {
-        const originalParagraph = section.paragraph.replace(/&/gu, '&amp;')
-          .replace(/</gu, '&lt;').replace(/>/gu, '&gt;')
-          .replace(/"/gu, '&quot;').replace(/'/gu, '&#39;');
+        const originalParagraph = section.paragraph
+          .replace(/&/gu, '&amp;')
+          .replace(/</gu, '&lt;')
+          .replace(/>/gu, '&gt;')
+          .replace(/"/gu, '&quot;')
+          .replace(/'/gu, '&#39;');
         const first = ownCard.indexOf(originalParagraph);
         expect(first).toBeGreaterThan(firstMeaning);
         expect(first).toBeLessThan(fullEvidence);
         expect(ownCard).toContain(section.ruleId);
         expect(ownCard).toContain(section.sourceIds[0]!);
       }
-      expect(ownCard).toContain(report.state === 'complete'
-        ? '실제 사업·관계 결과를 예측하지 않습니다.'
-        : '보조 근거가 부족한 종합 결론은 보류합니다.');
+      expect(ownCard).toContain(
+        report.state === 'complete'
+          ? '실제 사업·관계 결과를 예측하지 않습니다.'
+          : '보조 근거가 부족한 종합 결론은 보류합니다.',
+      );
     }
     const unknown = sample(3, 10, null);
     const unknownHtml = renderNatalFiveDomainMultifactorResearchHtml(unknown, reports(unknown));
@@ -232,22 +249,61 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(html).toContain('출판 및 판매 불가');
   });
 
+  it('explains remaining Wealth insufficiency using all three observed channels', () => {
+    const chart = calculateCanonicalSajuSnapshot(
+      {
+        calendarType: 'solar',
+        date: { year: 1971, month: 3, day: 28 },
+        time: { known: true, hour: 22, minute: 44 },
+        sexForTraditionalCalculation: 'male',
+      },
+      PRODUCTION_DEFAULT_CALCULATION_POLICY,
+      { now: NOW },
+    );
+    const result = reports(chart);
+    expect(result.wealth.state).toBe('insufficient');
+    expect(result.wealth.sections).toHaveLength(0);
+    expect(result.wealth.missing[0]).toContain('\uC9C0\uC7A5\uAC04');
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, result);
+    expect(html).toContain(result.wealth.missing[0]!);
+    expect(result.wealth.mayPublish).toBe(false);
+    expect(result.wealth.maySell).toBe(false);
+  });
+
   it('does not fabricate five-domain interpretation when birth hour is unknown', () => {
     const chart = sample(3, 10, null);
     const sections = reports(chart);
     const html = renderNatalFiveDomainMultifactorResearchHtml(chart, sections);
     for (const domain of domains) {
-      expect(sections[domain].state).toBe('insufficient');
-      expect(sections[domain].sections).toHaveLength(0);
-      expect(sections[domain].missing.join(' ')).toContain('출생시각 미상');
+      const report = sections[domain];
+      if (domain === 'wealth' && report.state === 'partial') {
+        expect(report.sections.length).toBeGreaterThan(0);
+        expect(report.sections.every((section) => section.channel === 'hidden_stems')).toBe(true);
+        expect(
+          report.sections.every((section) => {
+            const paths =
+              'calculatedFactPaths' in section
+                ? section.calculatedFactPaths
+                : section.observedFactPaths;
+            return paths.every((path) => !path.includes('.hour.'));
+          }),
+        ).toBe(true);
+      } else {
+        expect(report.state).toBe('insufficient');
+        expect(report.sections).toHaveLength(0);
+      }
     }
     const overview = html.split('</nav>')[0]!;
-    expect(overview.match(/출생시각 미상/gu)).toHaveLength(5);
-    expect(overview).not.toContain('class="meaning"');
-    // The new overview also labels five held domains; count body cards only.
-    expect(html.split('</nav>')[1]?.match(/풀이 보류 · 근거 부족/gu)).toHaveLength(5);
-    expect(html.match(/현재 이 명식에서 근거가 확인된 해석 문단은 없습니다/gu)).toHaveLength(5);
-    expect(html).not.toContain('class="meaning"');
+    expect(overview).toContain(
+      '\uBD80\uBD84 \uD480\uC774 \u00B7 \uCD94\uAC00 \uADFC\uAC70 \uD544\uC694',
+    );
+    expect(overview).toContain(
+      '\uD655\uC778\uB41C \uBD80\uBD84 \uD574\uC11D: ' + sections.wealth.sections[0]!.headline,
+    );
+    // Only the Wealth context section is shown, grounded in resolved non-hour facts.
+    expect(html.split('</nav>')[1]?.match(/<article aria-labelledby=/gu) ?? []).toHaveLength(5);
+    expect(html.match(/class="first-meaning"/gu) ?? []).toHaveLength(0);
+    expect(html.match(/class="meaning"/gu) ?? []).toHaveLength(sections.wealth.sections.length);
   });
 
   it('rejects another chart, altered evidence status and forged full completeness', () => {
@@ -256,125 +312,167 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     const ra = reports(a);
     const rb = reports(b);
     expect(renderNatalFiveDomainMultifactorResearchHtml(a, ra)).not.toBe(
-      renderNatalFiveDomainMultifactorResearchHtml(b, rb));
-    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
-      ...ra, wealth: rb.wealth,
-    })).toThrow(/mismatched canonical chart/);
-    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
-      ...ra, career: { ...ra.career, maySell: true },
-    } as unknown as NatalFiveDomainMultifactorReports)).toThrow(/bounded source-qualified/);
-    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
-      ...ra, general: { ...ra.general, state: 'complete', sections: [] },
-    })).toThrow(/bounded source-qualified/);
+      renderNatalFiveDomainMultifactorResearchHtml(b, rb),
+    );
+    expect(() =>
+      renderNatalFiveDomainMultifactorResearchHtml(a, {
+        ...ra,
+        wealth: rb.wealth,
+      }),
+    ).toThrow(/mismatched canonical chart/);
+    expect(() =>
+      renderNatalFiveDomainMultifactorResearchHtml(a, {
+        ...ra,
+        career: { ...ra.career, maySell: true },
+      } as unknown as NatalFiveDomainMultifactorReports),
+    ).toThrow(/bounded source-qualified/);
+    expect(() =>
+      renderNatalFiveDomainMultifactorResearchHtml(a, {
+        ...ra,
+        general: { ...ra.general, state: 'complete', sections: [] },
+      }),
+    ).toThrow(/bounded source-qualified/);
     expect(ra.career.sections.length).toBeGreaterThan(0);
-    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
-      ...ra, wealth: {
-        ...ra.wealth,
-        sections: ra.career.sections,
-      },
-    } as unknown as NatalFiveDomainMultifactorReports)).toThrow(/bounded source-qualified/);
+    expect(() =>
+      renderNatalFiveDomainMultifactorResearchHtml(a, {
+        ...ra,
+        wealth: {
+          ...ra.wealth,
+          sections: ra.career.sections,
+        },
+      } as unknown as NatalFiveDomainMultifactorReports),
+    ).toThrow(/bounded source-qualified/);
     expect(ra.career.readingGuide).toBeDefined();
-    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
-      ...ra,
-      career: {
-        ...ra.career,
-        readingGuide: {
-          ...ra.career.readingGuide!,
-          coreClaimType: 'FORGED_T8_CLAIM',
+    expect(() =>
+      renderNatalFiveDomainMultifactorResearchHtml(a, {
+        ...ra,
+        career: {
+          ...ra.career,
+          readingGuide: {
+            ...ra.career.readingGuide!,
+            coreClaimType: 'FORGED_T8_CLAIM',
+          },
         },
-      },
-    })).toThrow(/reading guide must be derived/u);
+      }),
+    ).toThrow(/reading guide must be derived/u);
     expect(ra.business.readingGuide).toBeDefined();
-    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
-      ...ra,
-      business: {
-        ...ra.business,
-        readingGuide: {
-          ...ra.business.readingGuide!,
-          coreClaimType: 'FAKE_BUSINESS_T8',
+    expect(() =>
+      renderNatalFiveDomainMultifactorResearchHtml(a, {
+        ...ra,
+        business: {
+          ...ra.business,
+          readingGuide: {
+            ...ra.business.readingGuide!,
+            coreClaimType: 'FAKE_BUSINESS_T8',
+          },
         },
-      },
-    })).toThrow(/Business guide must describe the selected/u);
-    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
-      ...ra,
-      business: {
-        ...ra.business,
-        readingGuide: {
-          ...ra.business.readingGuide!,
-          supporting: [{
-            claimType: 'FAKE_SUPPORT',
-            distinctObservedFactPaths: ['derivedFacts.tenGods.value.hour.stem.value'],
-            distinctObservedPositions: ['허위 명식'],
-          }],
+      }),
+    ).toThrow(/Business guide must describe the selected/u);
+    expect(() =>
+      renderNatalFiveDomainMultifactorResearchHtml(a, {
+        ...ra,
+        business: {
+          ...ra.business,
+          readingGuide: {
+            ...ra.business.readingGuide!,
+            supporting: [
+              {
+                claimType: 'FAKE_SUPPORT',
+                distinctObservedFactPaths: ['derivedFacts.tenGods.value.hour.stem.value'],
+                distinctObservedPositions: ['허위 명식'],
+              },
+            ],
+          },
         },
-      },
-    })).toThrow();
+      }),
+    ).toThrow();
     expect(ra.wealth.readingGuide).toBeDefined();
-    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
-      ...ra,
-      wealth: {
-        ...ra.wealth,
-        readingGuide: {
-          ...ra.wealth.readingGuide!,
-          coreClaimType: 'FORGED_WEALTH_T8',
+    expect(() =>
+      renderNatalFiveDomainMultifactorResearchHtml(a, {
+        ...ra,
+        wealth: {
+          ...ra.wealth,
+          readingGuide: {
+            ...ra.wealth.readingGuide!,
+            coreClaimType: 'FORGED_WEALTH_T8',
+          },
         },
-      },
-    })).toThrow(/Wealth reading guide must follow/u);
-    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
-      ...ra,
-      wealth: {
-        ...ra.wealth,
-        readingGuide: {
-          ...ra.wealth.readingGuide!,
-          supporting: [{
-            claimType: 'FORGED_SUPPORT',
-            distinctObservedFactPaths: ['derivedFacts.tenGods.value.hour.stem.value'],
-            distinctObservedPositions: ['시간 조작'],
-          }],
+      }),
+    ).toThrow(/Wealth reading guide must follow/u);
+    expect(() =>
+      renderNatalFiveDomainMultifactorResearchHtml(a, {
+        ...ra,
+        wealth: {
+          ...ra.wealth,
+          readingGuide: {
+            ...ra.wealth.readingGuide!,
+            supporting: [
+              {
+                claimType: 'FORGED_SUPPORT',
+                distinctObservedFactPaths: ['derivedFacts.tenGods.value.hour.stem.value'],
+                distinctObservedPositions: ['시간 조작'],
+              },
+            ],
+          },
         },
-      },
-    })).toThrow();
+      }),
+    ).toThrow();
     const unknown = sample(3, 10, null);
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(unknown, ra)).toThrow();
   });
 
   it('shows sourced relationship core before evidence and rejects forged supporting paths', () => {
-    const cases = [[3, 10], [4, 12], [5, 17], [6, 23]] as const;
-    const selected = cases.map(([month, day]) => {
-      const chart = sample(month, day);
-      return { chart, readings: reports(chart) };
-    }).find(item => item.readings.relationship.readingGuide !== undefined);
+    const cases = [
+      [3, 10],
+      [4, 12],
+      [5, 17],
+      [6, 23],
+    ] as const;
+    const selected = cases
+      .map(([month, day]) => {
+        const chart = sample(month, day);
+        return { chart, readings: reports(chart) };
+      })
+      .find((item) => item.readings.relationship.readingGuide !== undefined);
     expect(selected).toBeDefined();
     if (!selected) return;
     const guide = selected.readings.relationship.readingGuide!;
-    const html = renderNatalFiveDomainMultifactorResearchHtml(
-      selected.chart, selected.readings);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(selected.chart, selected.readings);
     expect(html).toContain('aria-label="관계운 읽기 요약"');
     expect(html).toContain(guide.paragraph);
     const relationCard = html.split('<h2 id="domain-relationship">')[1]!;
-    expect(relationCard.indexOf(guide.title))
-      .toBeLessThan(relationCard.indexOf('명식 근거와 출처 확인'));
-    expect(() => renderNatalFiveDomainMultifactorResearchHtml(selected.chart, {
-      ...selected.readings,
-      relationship: {
-        ...selected.readings.relationship,
-        readingGuide: { ...guide, coreClaimType: 'FORGED_RELATIONSHIP_T8' },
-      },
-    })).toThrow(/Relationship guide must follow/u);
-    if (guide.supporting.length > 0) {
-      expect(() => renderNatalFiveDomainMultifactorResearchHtml(selected.chart, {
+    expect(relationCard.indexOf(guide.title)).toBeLessThan(
+      relationCard.indexOf('명식 근거와 출처 확인'),
+    );
+    expect(() =>
+      renderNatalFiveDomainMultifactorResearchHtml(selected.chart, {
         ...selected.readings,
         relationship: {
           ...selected.readings.relationship,
-          readingGuide: {
-            ...guide,
-            supporting: [{ ...guide.supporting[0]!,
-              distinctObservedFactPaths: ['derivedFacts.tenGods.value.year.stem.value'],
-              distinctObservedPositions: ['허위 관계 증거'],
-            }, ...guide.supporting.slice(1)],
-          },
+          readingGuide: { ...guide, coreClaimType: 'FORGED_RELATIONSHIP_T8' },
         },
-      })).toThrow();
+      }),
+    ).toThrow(/Relationship guide must follow/u);
+    if (guide.supporting.length > 0) {
+      expect(() =>
+        renderNatalFiveDomainMultifactorResearchHtml(selected.chart, {
+          ...selected.readings,
+          relationship: {
+            ...selected.readings.relationship,
+            readingGuide: {
+              ...guide,
+              supporting: [
+                {
+                  ...guide.supporting[0]!,
+                  distinctObservedFactPaths: ['derivedFacts.tenGods.value.year.stem.value'],
+                  distinctObservedPositions: ['허위 관계 증거'],
+                },
+                ...guide.supporting.slice(1),
+              ],
+            },
+          },
+        }),
+      ).toThrow();
     }
     const unknown = sample(3, 10, null);
     expect(reports(unknown).relationship.readingGuide).toBeUndefined();
