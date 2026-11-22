@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { BirthInput } from '../src/contracts/calculation.js';
-import { buildThreeTemporalMenusBirthReading } from
-  '../src/preview/three-temporal-menus-birth-reading.js';
+import {
+  buildThreeTemporalMenusBirthReading,
+  describeTemporalNatalEvidence,
+} from '../src/preview/three-temporal-menus-birth-reading.js';
 
 const BIRTH: BirthInput = {
   calendarType: 'solar',
@@ -32,6 +34,17 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
     expect(life.snapshotId).toBe(report.snapshotId);
     expect(report.annual.sections.length).toBeGreaterThan(0);
     expect(report.monthly.referenceReading.state).toBe('in_period');
+    for (const period of ['annual', 'monthly_before_jeol', 'monthly_after_jeol'] as const) {
+      const displayedEvidence = describeTemporalNatalEvidence(report, period);
+      expect(displayedEvidence.length).toBeGreaterThan(10);
+      expect(reading.html).toContain(displayedEvidence);
+      const selected = report.temporalNatalComparison.find((item) => item.period === period);
+      for (const match of selected?.natalMatches ?? []) {
+        for (const observed of match.observedPositions) {
+          expect(displayedEvidence).toContain(observed);
+        }
+      }
+    }
     expect(reading.html).toContain('id="annual"');
     expect(reading.html).toContain('id="monthly"');
     expect(reading.html).toContain('id="life-stage"');
@@ -57,32 +70,38 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
   it('uses a different year/month only as selected-period research, never claims current month or future outcomes', () => {
     const inPeriod = buildThreeTemporalMenusBirthReading(BIRTH, target());
     const outside = buildThreeTemporalMenusBirthReading(BIRTH, target(2030, 6));
-    expect(outside.annualMonthly.report.annualReference.state).toBe(
-      'outside_target_civil_year');
+    expect(outside.annualMonthly.report.annualReference.state).toBe('outside_target_civil_year');
     expect(outside.annualMonthly.report.monthly.referenceReading.state).toBe(
-      'outside_target_month');
+      'outside_target_month',
+    );
     expect(outside.html).toContain('현재 연운으로 적용하지 않고 비교만 합니다');
     expect(outside.html).toContain('현재 월운으로 표시하지 않습니다');
     expect(outside.html).not.toContain('조회 시각에 해당하는 월운</h3><article class="current">');
     expect(outside.lifeStage.report).toEqual(inPeriod.lifeStage.report);
-    expect(outside.annualMonthly.report.monthly.sections.map(s => s.claimId))
-      .not.toEqual(inPeriod.annualMonthly.report.monthly.sections.map(s => s.claimId));
+    expect(outside.annualMonthly.report.monthly.sections.map((s) => s.claimId)).not.toEqual(
+      inPeriod.annualMonthly.report.monthly.sections.map((s) => s.claimId),
+    );
     expect(outside.researchOnly).toBe(true);
   });
 
   it('preserves birth-time HOLD and rejects invalid temporal scopes', () => {
     const missingTime = buildThreeTemporalMenusBirthReading(
-      { ...BIRTH, time: { known: false } }, target(),
+      { ...BIRTH, time: { known: false } },
+      target(),
     );
     expect(missingTime.lifeStage.report.periods).toHaveLength(0);
     expect(missingTime.lifeStage.report.coverage).toBe('unavailable');
     expect(missingTime.html).toContain('대운 계산');
     expect(missingTime.annualMonthly.report.annual.unavailablePillars).toContain('hour');
-    expect(missingTime.annualMonthly.report.monthly.sections
-      .some(section => section.relatedPillar === 'hour')).toBe(false);
+    expect(
+      missingTime.annualMonthly.report.monthly.sections.some(
+        (section) => section.relatedPillar === 'hour',
+      ),
+    ).toBe(false);
     expect(missingTime.maySell).toBe(false);
     expect(() => buildThreeTemporalMenusBirthReading(BIRTH, target(2026, 13))).toThrow();
-    expect(() => buildThreeTemporalMenusBirthReading(BIRTH,
-      target(2026, 9, '2026-09-03T22:00:00+09:00'))).toThrow();
+    expect(() =>
+      buildThreeTemporalMenusBirthReading(BIRTH, target(2026, 9, '2026-09-03T22:00:00+09:00')),
+    ).toThrow();
   });
 });

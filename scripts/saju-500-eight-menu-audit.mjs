@@ -14,7 +14,10 @@ import { buildCareerMultifactorResearchReport } from '../dist/preview/career-nat
 import { buildWealthNatalMultifactorReport } from '../dist/preview/wealth-natal-multifactor-report.js';
 import { buildBusinessNatalMultifactorReport } from '../dist/preview/business-natal-multifactor-report.js';
 import { buildRelationshipNatalMultifactorReport } from '../dist/preview/relationship-natal-multifactor-report.js';
-import { buildThreeTemporalMenusBirthReading } from '../dist/preview/three-temporal-menus-birth-reading.js';
+import {
+  buildThreeTemporalMenusBirthReading,
+  describeTemporalNatalEvidence,
+} from '../dist/preview/three-temporal-menus-birth-reading.js';
 import {
   diagnoseMissingWealthReading,
   analyzeTemporalRepetition,
@@ -111,8 +114,13 @@ function temporalEntries(result) {
   const monthly = report.monthly.sections;
   const focus = report.monthly.referenceReading;
   const life = result.lifeStage.report;
+  const annualNatalEvidence = describeTemporalNatalEvidence(report, 'annual');
+  const monthNatalEvidence = [
+    describeTemporalNatalEvidence(report, 'monthly_before_jeol'),
+    describeTemporalNatalEvidence(report, 'monthly_after_jeol'),
+  ];
   const a = entry(
-    annual.map((s) => s.title + '\n' + s.text).join('\n\n'),
+    [annual.map((s) => s.title + '\n' + s.text).join('\n\n'), annualNatalEvidence].join('\n\n'),
     annual.map((s) => [s.researchProfileId, s.title]),
     report.annualReference.state,
     annual.length,
@@ -121,7 +129,9 @@ function temporalEntries(result) {
   const current =
     focus.state === 'in_period' && focus.theme ? focus.theme.title + '\n' + focus.theme.text : '';
   const m = entry(
-    [current, ...monthly.map((s) => s.title + '\n' + s.text)].filter(Boolean).join('\n\n'),
+    [current, ...monthly.map((s) => s.title + '\n' + s.text), ...monthNatalEvidence]
+      .filter(Boolean)
+      .join('\n\n'),
     [focus.state, focus.theme?.title ?? '', ...monthly.map((s) => [s.segmentId, s.title])],
     focus.state,
     monthly.length + (current ? 1 : 0),
@@ -133,6 +143,7 @@ function temporalEntries(result) {
   a.sourceEvidence = {
     annualStemTenGod: report.annual.annualStemTenGod,
     annualCalendarPolicy: report.annual.calendarPolicy,
+    natalComparison: report.temporalNatalComparison.filter((item) => item.period === 'annual'),
     sections: annual.map((s) => ({
       kind: s.kind,
       sourceProfileId: s.researchProfileId,
@@ -144,6 +155,9 @@ function temporalEntries(result) {
   m.sourceEvidence = {
     referenceState: focus.state,
     referenceSegment: focus.segmentId ?? null,
+    natalComparison: report.temporalNatalComparison.filter((item) =>
+      item.period.startsWith('monthly_'),
+    ),
     sections: monthly.map((s) => ({
       kind: s.kind,
       segmentId: s.segmentId,
