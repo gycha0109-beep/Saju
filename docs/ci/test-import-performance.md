@@ -83,9 +83,10 @@ old shard order, and ordinary PR parallelism of eight. It must not be compared a
 an equal-capacity measurement with the earlier four-slot integration's 20 minutes
 2 seconds. Updated smoke imports and scheduling require a new exact-head run.
 
-The existing integration document contains historical rollout status. Check the
-live `CI_STAGED_VERIFICATION` variable and required-check policy before operating
-that mode; this performance change does not alter either setting.
+The staged integration rollout and Linux matrix above describe the former CI
+workflow. Saju retired that workflow in [PR #2801](https://github.com/gycha0109-beep/Saju/pull/2801).
+See [the CI retirement record](pre-merge-integration.md) for the current local
+regression command.
 
 ## Architecture Check
 

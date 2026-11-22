@@ -4,6 +4,7 @@ import { runInterpretation } from '../src/interpretation/interpretation-engine.j
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import { inspectMyeonghwaProductionComposition } from '../src/production/production-composition.js';
 import {
+  WEALTH_NATAL_MULTIFACTOR_NARRATIVES,
   WEALTH_NATAL_MULTIFACTOR_RULES,
   WEALTH_NATAL_MULTIFACTOR_PACK,
   createWealthNatalMultifactorRegistry,
@@ -121,10 +122,16 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
         expect(s.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(s.observedPositions.length).toBeGreaterThanOrEqual(2);
         expect(s.observedPositions).toHaveLength(s.observedFactPaths.length);
-        expect(s.paragraph).toContain('이 원국에서 확인된 근거는');
+        const profile = WEALTH_NATAL_MULTIFACTOR_NARRATIVES.find(
+          (candidate) => candidate.claimType === s.claimType,
+        );
+        const koreanTemplates = profile?.templates?.filter((template) => template.language === 'ko');
+        const headline = koreanTemplates?.find((template) => template.templateKey === 'headline');
+        const summary = koreanTemplates?.find((template) => template.templateKey === 'summary');
+        expect(headline?.text).toBe(s.headline);
+        expect(summary?.text).toBeTruthy();
+        expect(s.paragraph.startsWith(`${summary?.text} 이 명식에서 확인한 위치는 `)).toBe(true);
         expect(s.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
-        expect(s.paragraph).toMatch(/\uAC19\uC740 .{1,24}\uC5D0\uC11C \uAD00\uCE21\uB41C/u);
-        expect(s.paragraph).toContain(s.headline);
         expect(s.observedPositions.every((p) => s.paragraph.includes(p))).toBe(true);
         expect(
           s.observedFactPaths.every((path) =>

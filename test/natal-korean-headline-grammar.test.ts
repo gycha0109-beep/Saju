@@ -24,8 +24,14 @@ describe('source-owned Korean natal headline particle agreement', () => {
       for (const domain of birthCase.domains) {
         if (!['general', 'wealth', 'business', 'relationship'].includes(domain.domain)) continue;
         for (const section of domain.sections) {
-          expect(section.paragraph).toContain(describeQuotedReadingAxis(section.headline));
-          expect(section.paragraph).toContain(section.positions[0]);
+          if (domain.domain === 'wealth') {
+            expect(section.paragraph).toContain('이 명식에서 확인한 위치는');
+            expect(section.paragraph).not.toContain(describeQuotedReadingAxis(section.headline));
+          } else {
+            expect(section.paragraph).toContain(describeQuotedReadingAxis(section.headline));
+          }
+          expect(section.positions.length).toBeGreaterThan(0);
+          for (const position of section.positions) expect(section.paragraph).toContain(position);
           expect(section.sourceIds.length).toBeGreaterThan(0);
           expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
           verified += 1;
