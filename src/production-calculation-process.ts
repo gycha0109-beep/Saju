@@ -1,3 +1,4 @@
+import { createPrivateKey } from 'node:crypto';
 import type { Server } from 'node:http';
 import {
   createMyeonghwaProductionPreviewHostServer,
@@ -5,10 +6,12 @@ import {
 } from './production-calculation-host.js';
 import { createApprovedPreviewE2eProductHost } from './preview/preview-product-host.js';
 import { createBoundedProductionSpouseOfficialReadingHostV1 } from './production/production-spouse-official-reading-host.js';
+import type { T10ProductionPairIssueProofOptionsV1 } from './host/t10-production-pair-issue-proof.js';
 
 export const PRODUCTION_CALCULATION_PROCESS_ENV_V1 = {
   serviceBearer: 'SAJU_PRODUCTION_SERVICE_BEARER',
   previousServiceBearer: 'SAJU_PRODUCTION_PREVIOUS_SERVICE_BEARER',
+  pairIssuerConfig: 'SAJU_T10_PRODUCTION_PAIR_ISSUER_CONFIG',
   host: 'SAJU_PRODUCTION_HOST',
   port: 'PORT',
 } as const;
@@ -123,6 +126,46 @@ function readingServerOptions(config: ProductionCalculationProcessConfigV1) {
   };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** Load the existing pair issuer only when a server-owned configuration is supplied. */
+function readPairIssuerOptions(env: Environment): T10ProductionPairIssueProofOptionsV1 | undefined {
+  const name = PRODUCTION_CALCULATION_PROCESS_ENV_V1.pairIssuerConfig;
+  const raw = env[name];
+  if (raw === undefined) return undefined;
+
+  const invalid = () => new ProductionCalculationProcessConfigErrorV1(`Invalid environment variable ${name}.`);
+  if (raw.length > 4096) throw invalid();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw invalid();
+  }
+  if (!isRecord(parsed) || Object.keys(parsed).length !== 6) throw invalid();
+  const { issuer, audience, keyId, engineVersion, releaseByOffer, privateKeyPkcs8Base64 } = parsed;
+  if (typeof issuer !== 'string' || typeof audience !== 'string' ||
+      typeof keyId !== 'string' || typeof engineVersion !== 'string' ||
+      !isRecord(releaseByOffer) || typeof privateKeyPkcs8Base64 !== 'string') throw invalid();
+
+  const releases = Object.entries(releaseByOffer);
+  if (!releases.every((entry): entry is [string, string] => typeof entry[1] === 'string')) {
+    throw invalid();
+  }
+  const key = Buffer.from(privateKeyPkcs8Base64, 'base64');
+  if (key.length === 0 || key.toString('base64') !== privateKeyPkcs8Base64) throw invalid();
+  try {
+    return {
+      issuer, audience, keyId, engineVersion, releaseByOffer: Object.fromEntries(releases),
+      signingKey: createPrivateKey({ key, format: 'der', type: 'pkcs8' }),
+    };
+  } catch {
+    throw invalid();
+  }
+}
+
 export function createMyeonghwaProductionPreviewOnlyCalculationProcessV1(
   env: Environment = process.env,
 ): MyeonghwaProductionCalculationProcessV1 {
@@ -143,10 +186,14 @@ export function createMyeonghwaProductionCalculationProcessV1(
   env: Environment = process.env,
 ): MyeonghwaProductionCalculationProcessV1 {
   const config = readMyeonghwaProductionCalculationProcessConfigV1(env);
+  const compatibilityProductionIssue = readPairIssuerOptions(env);
   const server = createMyeonghwaProductionReadingHostServer(
     createBoundedProductionSpouseOfficialReadingHostV1(),
     createApprovedPreviewE2eProductHost(),
-    readingServerOptions(config),
+    {
+      ...readingServerOptions(config),
+      ...(compatibilityProductionIssue === undefined ? {} : { compatibilityProductionIssue }),
+    },
   );
 
   return {
