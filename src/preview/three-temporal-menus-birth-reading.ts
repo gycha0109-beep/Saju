@@ -76,7 +76,13 @@ export function describeTemporalNatalEvidence(
   if (!comparison) return '이 기간에 연결할 수 있는 T9 십성 주제가 확인되지 않았습니다.';
   const family = FAMILY_NAMES[comparison.periodFamily];
   if (comparison.natalMatches.length === 0) {
-    return '기간의 ' + family + ' 계열과 함께 보여 줄 원국 T8 연구 근거가 선택되지 않았습니다.';
+    return (
+      '기간 십신 ' +
+      comparison.periodTenGod +
+      '(' +
+      family +
+      ')과 함께 보여 줄 원국 T8 연구 근거가 선택되지 않았습니다.'
+    );
   }
   const evidence = comparison.natalMatches
     .map((match) => {
@@ -92,16 +98,18 @@ export function describeTemporalNatalEvidence(
         ' 관점 (' +
         (CHANNEL_NAMES[match.channel] ?? match.channel) +
         '): ' +
-        match.observedPositions.join(' · ')
+        match.matchedFamilyPositions.join(' · ')
       );
     })
     .join(' / ');
   return (
-    '기간의 ' +
+    '기간 십신 ' +
+    comparison.periodTenGod +
+    '(' +
     family +
-    ' 계열과 원국에서 함께 관측된 근거: ' +
+    ')과 같은 계열로 원국에서 관측된 정확한 십신·위치: ' +
     evidence +
-    '. 같은 계열의 동시 관측만 의미하며, 서로 강화하거나 사건을 일으킨다는 판단은 아닙니다.'
+    '. 같은 계열 안에서도 기간과 원국의 세부 십신이 다를 수 있습니다. 동시 관측만 의미하며, 서로 강화하거나 사건을 일으킨다는 판단은 아닙니다.'
   );
 }
 

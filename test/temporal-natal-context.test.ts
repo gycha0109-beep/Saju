@@ -30,12 +30,31 @@ describe('same-chart natal context in annual/monthly research reading', () => {
     for (const item of report.temporalNatalComparison) {
       expect(item.interpretation).toBe('co_observed_only_no_interaction_claim');
       expect(['peer', 'resource', 'output', 'wealth', 'officer']).toContain(item.periodFamily);
+      expect(item.periodTenGod).toMatch(/^(비견|겁재|정인|편인|식신|상관|정재|편재|정관|편관)$/u);
       for (const match of item.natalMatches) {
         const source = report.natalContext.sections.find(
           (section) => section.pattern === match.pattern && section.families.includes(match.family),
         );
         expect(source).toBeDefined();
         expect(match.observedPositions).toEqual(source?.observedPositions);
+        expect(match.matchedFamilyPositions.length).toBeGreaterThan(0);
+        expect(match.matchedFamilyPositions.every((p) => match.observedPositions.includes(p))).toBe(
+          true,
+        );
+        const expected = {
+          peer: ['비견', '겁재'],
+          resource: ['정인', '편인'],
+          output: ['식신', '상관'],
+          wealth: ['정재', '편재'],
+          officer: ['정관', '편관'],
+        }[item.periodFamily];
+        expect(
+          match.matchedFamilyPositions.every((p) => expected.some((god) => p.endsWith(' ' + god))),
+        ).toBe(true);
+        const otherFamily = match.observedPositions.filter(
+          (p) => !match.matchedFamilyPositions.includes(p),
+        );
+        expect(otherFamily.length).toBeGreaterThan(0);
       }
     }
     expect(report.mayPublish).toBe(false);

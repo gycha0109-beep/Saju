@@ -50,12 +50,16 @@ export interface GeneralAnnualMonthlyExplorationReport {
   temporalNatalComparison: readonly {
     period: 'annual' | 'monthly_before_jeol' | 'monthly_after_jeol';
     periodFamily: 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
+    /** Exact selected period Ten-God; sharing a family does not imply the same subtype. */
+    periodTenGod: string;
     natalMatches: readonly {
       pattern: string;
       family: 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
       axis: string;
       channel: string;
       observedPositions: readonly string[];
+      /** Exact natal positions for the period family only; other pattern families stay out. */
+      matchedFamilyPositions: readonly string[];
     }[];
     interpretation: 'co_observed_only_no_interaction_claim';
   }[];
@@ -197,28 +201,43 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       })),
   ];
   type TenGodFamily = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
+  const tenGodsByFamily: Readonly<Record<TenGodFamily, readonly string[]>> = {
+    peer: ['비견', '겁재'],
+    resource: ['정인', '편인'],
+    output: ['식신', '상관'],
+    wealth: ['정재', '편재'],
+    officer: ['정관', '편관'],
+  };
   const familyOf = (god: string): TenGodFamily => {
-    if (['\uBE44\uACAC', '\uAC81\uC7AC'].includes(god)) return 'peer';
-    if (['\uC815\uC778', '\uD3B8\uC778'].includes(god)) return 'resource';
-    if (['\uC2DD\uC2E0', '\uC0C1\uAD00'].includes(god)) return 'output';
-    if (['\uC815\uC7AC', '\uD3B8\uC7AC'].includes(god)) return 'wealth';
-    if (['\uC815\uAD00', '\uD3B8\uAD00'].includes(god)) return 'officer';
-    throw new TypeError('Unknown Ten-God family in temporal reading.');
+    const family = (Object.keys(tenGodsByFamily) as TenGodFamily[]).find((name) =>
+      tenGodsByFamily[name].includes(god),
+    );
+    if (family === undefined) throw new TypeError('Unknown Ten-God family in temporal reading.');
+    return family;
   };
   const temporalNatalComparison = periodThemes.map((item) => {
     const periodFamily = familyOf(item.family);
     return {
       period: item.period,
       periodFamily,
+      periodTenGod: item.family,
       natalMatches: natalContext.sections
         .filter((section) => section.families.includes(periodFamily))
-        .map((section) => ({
-          pattern: section.pattern,
-          family: periodFamily,
-          axis: section.axis,
-          channel: section.channel,
-          observedPositions: [...section.observedPositions],
-        })),
+        .map((section) => {
+          const matchedFamilyPositions = section.observedPositions.filter((position) =>
+            tenGodsByFamily[periodFamily].some((god) => position.endsWith(' ' + god)),
+          );
+          if (matchedFamilyPositions.length === 0)
+            throw new TypeError('Temporal natal family has no matching observed positions.');
+          return {
+            pattern: section.pattern,
+            family: periodFamily,
+            axis: section.axis,
+            channel: section.channel,
+            observedPositions: [...section.observedPositions],
+            matchedFamilyPositions,
+          };
+        }),
       interpretation: 'co_observed_only_no_interaction_claim' as const,
     };
   });
@@ -455,6 +474,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
           e(item.period) +
           ' · ' +
           e(item.periodFamily) +
+          ' · 기간 십신 ' +
+          e(item.periodTenGod) +
           '</h4><p>' +
           (item.natalMatches.length === 0
             ? '같은 계열의 원국 T8 관측 근거가 선택되지 않았습니다.'
@@ -465,7 +486,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
                       ' · ' +
                       match.channel +
                       ' · ' +
-                      match.observedPositions.join(' / '),
+                      match.matchedFamilyPositions.join(' / '),
                   ),
                 )
                 .join('<br>')) +

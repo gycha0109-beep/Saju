@@ -40,9 +40,10 @@ describe('same birth → actual three Korean temporal menu outputs', () => {
       expect(reading.html).toContain(displayedEvidence);
       const selected = report.temporalNatalComparison.find((item) => item.period === period);
       for (const match of selected?.natalMatches ?? []) {
-        for (const observed of match.observedPositions) {
+        for (const observed of match.matchedFamilyPositions) {
           expect(displayedEvidence).toContain(observed);
         }
+        expect(displayedEvidence).toContain(selected!.periodTenGod);
       }
     }
     expect(reading.html).toContain('id="annual"');

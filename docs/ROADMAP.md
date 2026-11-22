@@ -334,3 +334,11 @@
 - **재물운 누락 근본 해결 정책(병합):** https://github.com/gycha0109-beep/Saju/pull/2742
 - **핵심 소스:** src/research/wealth-natal-multifactor-candidate.ts, src/preview/wealth-natal-multifactor-report.ts, src/research/general-annual-reading-candidate.ts, src/preview/general-annual-exploration-report.ts, src/research/general-monthly-reading-candidate.ts, src/preview/general-monthly-exploration-report.ts
 - **기존 사주 해석 설계 근거:** Myeonghwa Personalized Interpretation Architecture v1.3 및 MyeongHa Saju Product Interpretation Architecture v1.2. 이 문서들은 **별도의 실행 로드맵이 아니라 구현·의미·권한을 판단하는 설계 근거**다.
+
+## 2026-11-22 — 연·월운 같은 계열 위치 정합성 및 3,000건 확대 검사(중간 증거)
+
+- #2802 이후 기존 단계 5~7 진행 범위에서, 기간 십신과 함께 표시할 원국 T8 관측 위치를 **일치한 십신 계열로만 제한**했다. 전체 원국 T8의 다른 계열 위치·출처는 원본에 그대로 보존한다. 기간 십신 원형(정재/편재 등)을 구분하고, 새로운 운세 상호작용·길흉·시기별 사건을 만들지 않는다.
+- 동일 난수 시드 500건 재실행: 계산 실패 0, 재물 근거 부족 2. 연운 기본 의미 56종/표시 문구 290종, 월운 기본 의미 131종/표시 문구 442종. 이전 323/449종보다 감소한 것은 타 계열 원국 위치의 **거짓 기간 차별화 표기를 제거**한 결과다.
+- 같은 시드의 첫 500건을 포함한 3,000건 감사: 계산 3,000/3,000, 고유 계산 해시 3,000, 재물 complete 2,573/partial 418/근거 부족 9. 연운 기본 의미 90종·표시 문구 1,138종, 월운 기본 의미 364종·표시 문구 2,334종.
+- 3,000건 반복 집단에서 기간과 **무관한 다른 원국 배경 위치만** 다른 그룹은 연운 235개·월운 157개였고, 기간에 실제로 선택·표시된 근거가 다르지만 같은 문구로 합쳐진 그룹은 0개였다. 동일 500건에서도 해당 오류 0개. 배경 차이 자체를 무효화한 것은 아니며 원국 해설에는 보존된다.
+- [수정 및 실측 기록](research/temporal-family-positions-3000-audit-20261122.md). 기본 500건 로드맵을 3,000건으로 대체하지 않는다. 단계 3~7의 **기간 의미 종합·품질/경계 최종 판정은 미완료**이고, Official·발급·판매 및 `ROADMAP_COMPLETE`도 미선언.

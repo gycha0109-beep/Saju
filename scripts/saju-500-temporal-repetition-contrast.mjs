@@ -9,11 +9,28 @@ export const SAJU_TEMPORAL_REPETITION_CONTRAST_VERSION = 'saju-temporal-repeat-c
 function diagnoseGroup(menu, group) {
   const members = group.members;
   const comparisonSets = members.map((member) => member.sourceEvidence?.natalComparison ?? []);
+  // The reader only shows the period-family positions. Other families in the
+  // same T8 pattern are retained internally, but are NOT claimed as period matches.
+  const visibleComparisonSets = comparisonSets.map((items) =>
+    items.map((item) => ({
+      period: item.period,
+      periodFamily: item.periodFamily,
+      periodTenGod: item.periodTenGod,
+      natalMatches: item.natalMatches.map((match) => ({
+        pattern: match.pattern,
+        axis: match.axis,
+        channel: match.channel,
+        matchedFamilyPositions: match.matchedFamilyPositions,
+      })),
+    })),
+  );
   const matchedCounts = comparisonSets.map((items) =>
     items.reduce((n, item) => n + item.natalMatches.length, 0),
   );
   const allUnmatched = matchedCounts.every((n) => n === 0);
-  const distinctComparisonCount = new Set(comparisonSets.map(JSON.stringify)).size;
+  const distinctComparisonCount = new Set(visibleComparisonSets.map(JSON.stringify)).size;
+  const distinctFullComparisonCount = new Set(comparisonSets.map(JSON.stringify)).size;
+  const backgroundOnlyDifference = distinctFullComparisonCount > 1 && distinctComparisonCount === 1;
   const distinctProfileCount = new Set(members.map((x) => x.meaningKey)).size;
   const periodRuleSignatures = members.map((member) =>
     menu === 'annual'
@@ -38,6 +55,7 @@ function diagnoseGroup(menu, group) {
     distinctCoreProfiles: distinctProfileCount,
     distinctPeriodRuleSignatures,
     distinctNatalComparisons: distinctComparisonCount,
+    backgroundOnlyDifference,
     withMatchedNatalContext: matchedCounts.filter((n) => n > 0).length,
     cause,
     examples: members.slice(0, 3).map((m) => ({
@@ -52,13 +70,15 @@ function diagnoseGroup(menu, group) {
 export function analyzeSajuTemporalRepetition(audit) {
   if (
     audit.seed !== '0x5a1a2026' ||
-    audit.count !== 500 ||
+    ![500, 3000].includes(audit.count) ||
     audit.failedCases !== 0 ||
-    audit.uniqueCalculationHashes !== 500 ||
-    audit.rootCauseDiagnostics?.annualRepetition?.generated !== 500 ||
-    audit.rootCauseDiagnostics?.monthlyRepetition?.generated !== 500
+    audit.uniqueCalculationHashes !== audit.count ||
+    audit.rootCauseDiagnostics?.annualRepetition?.generated !== audit.count ||
+    audit.rootCauseDiagnostics?.monthlyRepetition?.generated !== audit.count
   ) {
-    throw new Error('Only the exact successful 500-chart fixed-seed temporal audit is admissible');
+    throw new Error(
+      'Only the exact successful 500- or 3000-chart fixed-seed temporal audit is admissible',
+    );
   }
   const annual = audit.rootCauseDiagnostics.annualRepetition;
   const monthly = audit.rootCauseDiagnostics.monthlyRepetition;
@@ -83,7 +103,7 @@ export function analyzeSajuTemporalRepetition(audit) {
     return {
       menu,
       label,
-      totalCharts: 500,
+      totalCharts: audit.count,
       coreSemanticProfiles: summary.meaningProfile.unique,
       exactRenderedTexts: summary.exactText.unique,
       repeatedGroups: groups.length,
@@ -100,6 +120,10 @@ export function analyzeSajuTemporalRepetition(audit) {
       distinctEvidenceSameText: {
         groups: unsupportedRepeat.length,
         cases: unsupportedRepeat.reduce((n, g) => n + g.count, 0),
+      },
+      backgroundOnlyContextDifferences: {
+        groups: groups.filter((g) => g.backgroundOnlyDifference).length,
+        cases: groups.filter((g) => g.backgroundOnlyDifference).reduce((n, g) => n + g.count, 0),
       },
       causeGroups: byCause,
       cases: groups,
@@ -120,7 +144,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const [input, output] = process.argv.slice(2);
   if (!input || !output) {
     console.error(
-      'Usage: node scripts/saju-500-temporal-repetition-contrast.mjs <500-audit.json> <comparison-output.json>',
+      'Usage: node scripts/saju-500-temporal-repetition-contrast.mjs <500-or-3000-audit.json> <comparison-output.json>',
     );
     process.exitCode = 2;
   } else {
@@ -136,6 +160,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
           noSelectedNatalContext: menu.groupsWithoutSelectedNatalT8,
           identicalNatalContext: menu.groupsWithSameSelectedNatalT8,
           distinctEvidenceSameText: menu.distinctEvidenceSameText,
+          backgroundOnlyContextDifferences: menu.backgroundOnlyContextDifferences,
         })),
         null,
         2,

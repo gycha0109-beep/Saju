@@ -27,7 +27,8 @@ import {
 import { auditSixMenuQuestionCoverage } from './saju-500-six-menu-question-coverage.mjs';
 
 const REFERENCE = '2026-10-25T00:00:00.000Z';
-const COUNT = 500;
+const DEFAULT_COUNT = 500;
+const EXPANDED_COUNT = 3000;
 const DOMAIN_NAMES = [
   '전체 사주',
   '직업·커리어',
@@ -220,7 +221,10 @@ function summarize(rows) {
     examples: rows.slice(0, 2).map((r) => ({ birth: r.birth, text: r.text.slice(0, 550) })),
   };
 }
-export function runFiveHundredSajuAudit() {
+export function runFiveHundredSajuAudit(count = DEFAULT_COUNT) {
+  if (count !== DEFAULT_COUNT && count !== EXPANDED_COUNT)
+    throw new RangeError('Supported fixed-seed audit sample sizes are exactly 500 or 3000.');
+  seed = 0x5a1a2026;
   const registries = {
     general: createGeneralNatalMultifactorRegistry(),
     career: createCareerMultifactorResearchRegistry(),
@@ -242,7 +246,7 @@ export function runFiveHundredSajuAudit() {
   const wealthMissingCases = [];
   const wealthChartDiagnostics = [];
   const startedAt = Date.now();
-  for (let i = 0; i < COUNT; i++) {
+  for (let i = 0; i < count; i++) {
     const { stamp, birth } = sampleBirth(inputs);
     try {
       const snapshot = calculateCanonicalSajuSnapshot(
@@ -343,7 +347,7 @@ export function runFiveHundredSajuAudit() {
         }
       }
       const temporal = buildThreeTemporalMenusBirthReading(birth, {
-        requestId: '500-sample-audit-' + i,
+        requestId: 'fixed-seed-sample-audit-' + i,
         targetYear: 2026,
         targetMonth: 10,
         referenceDateTime: REFERENCE,
@@ -357,15 +361,18 @@ export function runFiveHundredSajuAudit() {
     } catch (error) {
       failures.push({ birth: stamp, error: String(error?.stack ?? error).slice(0, 1200) });
     }
-    if ((i + 1) % 100 === 0) process.stdout.write('SAJU500_PROGRESS ' + (i + 1) + '/500\n');
+    if ((i + 1) % 100 === 0)
+      process.stdout.write('SAJU_AUDIT_PROGRESS ' + (i + 1) + '/' + count + '\n');
   }
   const sameChart = [...chartHashGroups.values()].filter((x) => x.length > 1);
   const result = {
-    spec: '500 deterministic pseudorandom real solar birth dates, times and minutes; 8 menu engines; fixed 2026-10 year/month; no partner/family/question',
+    spec:
+      count +
+      ' deterministic pseudorandom real solar birth dates, times and minutes; 8 menu engines; fixed 2026-10 year/month; no partner/family/question',
     seed: '0x5a1a2026',
-    count: COUNT,
+    count,
     uniqueBirthDateTimes: inputs.size,
-    attempted: COUNT,
+    attempted: count,
     failedCases: failures.length,
     failureExamples: failures.slice(0, 10),
     uniqueCalculationHashes: chartHashGroups.size,
@@ -402,9 +409,9 @@ export function runFiveHundredSajuAudit() {
       : 'SAJU500_RESULT_JSON ' + JSON.stringify(result) + '\n',
   );
   if (
-    inputs.size !== COUNT ||
+    inputs.size !== count ||
     failures.length ||
-    DOMAIN_NAMES.some((name) => rows[name].length !== COUNT) ||
+    DOMAIN_NAMES.some((name) => rows[name].length !== count) ||
     !result.rootCauseDiagnostics.wealth.allCasesHaveExplicitCause ||
     result.rootCauseDiagnostics.wealth.missingCaseCount !==
       wealthChartDiagnostics.filter((chart) => chart.sections.length === 0).length ||
@@ -420,5 +427,8 @@ export function runFiveHundredSajuAudit() {
   }
   return result;
 }
-if (process.argv[1] && /saju-500-eight-menu-audit\.mjs$/u.test(process.argv[1]))
-  runFiveHundredSajuAudit();
+if (process.argv[1] && /saju-500-eight-menu-audit\.mjs$/u.test(process.argv[1])) {
+  const countFlag = process.argv.indexOf('--count');
+  const count = countFlag === -1 ? DEFAULT_COUNT : Number(process.argv[countFlag + 1]);
+  runFiveHundredSajuAudit(count);
+}
