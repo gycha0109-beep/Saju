@@ -1,3 +1,4 @@
+import type { TemporalStemInteraction } from './temporal-stem-interaction-reading.js';
 import {
   describeTemporalNatalEvidence,
   type GeneralAnnualMonthlyExplorationReport,
@@ -26,6 +27,7 @@ export interface TemporalResearchMenuSection {
   ruleIds?: readonly string[];
   methodologyId?: string;
   /** Same-chart co-observation with its own T8 provenance, separate from the period claim. */
+  stemInteractions?: readonly TemporalStemInteraction[];
   natalComparison?: { text: string; evidence: TemporalNatalComparison };
   sourceIds: readonly string[];
   factPaths: readonly string[];
@@ -158,7 +160,7 @@ export function buildTemporalResearchMenuReadings(
       methodologyId: section.methodologyId,
       sourceIds: [section.policySourceId],
       factPaths: [...section.calculationFactPaths],
-      ...(section.kind === 'core' ? natalComparison('annual') : {}),
+      ...(section.kind === 'core' ? { ...natalComparison('annual'), stemInteractions: joined.annual.stemInteractions } : {}),
     })) ?? [];
   const monthly = joined?.monthly.sections.filter(section =>
     section.text.trim().length > 0 &&
@@ -171,7 +173,10 @@ export function buildTemporalResearchMenuReadings(
       claimId: section.claimId,
       ruleIds: section.ruleIds,
       methodologyId: section.methodologyId,
-      ...(section.kind === 'theme' ? natalComparison(`monthly_${section.segmentId}`) : {}),
+      ...(section.kind === 'theme' ? { ...natalComparison(`monthly_${section.segmentId}`),
+        stemInteractions: joined.monthly.stemInteractions.filter((item) =>
+          item.period === section.segmentId && item.periodClaimId === section.claimId),
+      } : {}),
       sourceIds: [...section.sourceIds],
       factPaths: [...section.factPaths],
       interval: {

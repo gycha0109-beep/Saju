@@ -277,27 +277,44 @@ function temporalEntries(result) {
   const monthly = report.monthly.sections;
   const focus = report.monthly.referenceReading;
   const life = result.lifeStage.report;
+  const annualInteractions = report.annual.stemInteractions;
+  const monthlyInteractions = report.monthly.stemInteractions;
+  const interactionText = (items) => items.map((item) => item.title + '\n' + item.text);
+  const interactionMeaning = (items) => items.map((item) => [item.period, item.pair, item.state]);
+  const interactionEvidence = (items) => items.map((item) => ({
+    period: item.period,
+    pair: item.pair,
+    state: item.state,
+    natalSlots: item.natalSlots,
+    visibleMediators: item.visibleMediators,
+    methodologyId: item.methodologyId,
+    ruleIds: item.ruleIds,
+    sourceIds: item.sourceIds,
+    factPaths: item.factPaths,
+  }));
   const annualNatalEvidence = describeTemporalNatalEvidence(report, 'annual');
   const monthNatalEvidence = [
     describeTemporalNatalEvidence(report, 'monthly_before_jeol'),
     describeTemporalNatalEvidence(report, 'monthly_after_jeol'),
   ];
   const a = entry(
-    [annual.map((s) => s.title + '\n' + s.text).join('\n\n'), annualNatalEvidence].join('\n\n'),
+    [...annual.map((s) => s.title + '\n' + s.text), annualNatalEvidence, ...interactionText(annualInteractions)]
+      .join('\n\n'),
     annual.map((s) => [s.researchProfileId, s.title]),
     report.annualReference.state,
-    annual.length,
+    annual.length + annualInteractions.length,
     'annual_research',
   );
   const current =
     focus.state === 'in_period' && focus.theme ? focus.theme.title + '\n' + focus.theme.text : '';
   const m = entry(
-    [current, ...monthly.map((s) => s.title + '\n' + s.text), ...monthNatalEvidence]
+    [current, ...monthly.map((s) => s.title + '\n' + s.text), ...monthNatalEvidence,
+      ...interactionText(monthlyInteractions)]
       .filter(Boolean)
       .join('\n\n'),
     [focus.state, focus.theme?.title ?? '', ...monthly.map((s) => [s.segmentId, s.title])],
     focus.state,
-    monthly.length + (current ? 1 : 0),
+    monthly.length + monthlyInteractions.length + (current ? 1 : 0),
     'monthly_research',
   );
   // IMPORTANT: Dayun periods describe calendar/pillar facts, not supported
@@ -308,6 +325,7 @@ function temporalEntries(result) {
     annualCalendarPolicy: report.annual.calendarPolicy,
     natalComparison: report.temporalNatalComparison.filter((item) => item.period === 'annual'),
     permissions: report.annual.permissions,
+    stemInteractions: annualInteractions,
     sections: annual.map((s) => ({
       kind: s.kind,
       sourceProfileId: s.researchProfileId,
@@ -325,6 +343,7 @@ function temporalEntries(result) {
     referenceDateTime: focus.referenceDateTime,
     jeolBoundary: report.monthly.jeolBoundary,
     missing: report.monthly.missing,
+    stemInteractions: monthlyInteractions,
     permissions: {
       researchOnly: report.monthly.researchOnly,
       usefulComplete: report.monthly.usefulComplete,
@@ -360,10 +379,12 @@ function temporalEntries(result) {
   const annualEvidence = {
     ...a.sourceEvidence,
     natalComparison: natalEvidence(a.sourceEvidence.natalComparison),
+    stemInteractions: interactionEvidence(annualInteractions),
   };
   const monthlyEvidence = {
     ...m.sourceEvidence,
     natalComparison: natalEvidence(m.sourceEvidence.natalComparison),
+    stemInteractions: interactionEvidence(monthlyInteractions),
     sections: m.sourceEvidence.sections.map((section) => {
       const fingerprint = { ...section };
       delete fingerprint.claimId;
@@ -381,8 +402,8 @@ function temporalEntries(result) {
       observations.some((item) => item.tenGod !== comparison.periodTenGod),
     ];
   });
-  a.comparisonMeaning = comparisonMeaning(a.sourceEvidence.natalComparison);
-  m.comparisonMeaning = comparisonMeaning(m.sourceEvidence.natalComparison);
+  a.comparisonMeaning = [...comparisonMeaning(a.sourceEvidence.natalComparison), ...interactionMeaning(annualInteractions)];
+  m.comparisonMeaning = [...comparisonMeaning(m.sourceEvidence.natalComparison), ...interactionMeaning(monthlyInteractions)];
   a.evidenceComponents = annualEvidence;
   a.evidenceKey = createEvidenceFingerprint(annualEvidence);
   m.evidenceComponents = monthlyEvidence;

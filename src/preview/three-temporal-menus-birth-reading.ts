@@ -1,3 +1,4 @@
+import { renderTemporalStemInteractions } from './temporal-stem-interaction-reading.js';
 import {
   formatTemporalKst,
   renderTemporalNatalEvidence,
@@ -109,7 +110,8 @@ function render(
           '</h3><p>' +
           e(section.text) +
           '</p>' +
-          (section.kind === 'core' ? renderTemporalNatalEvidence(report, 'annual') : '') +
+          (section.kind === 'core' ? renderTemporalNatalEvidence(report, 'annual') +
+            renderTemporalStemInteractions(report.annual.stemInteractions, 'annual', e) : '') +
           '<details><summary>연운 원문 출처와 계산 근거</summary><p>후보 프로필: ' +
           e(section.researchProfileId) +
           '</p><p>후보 규칙: ' +
@@ -137,6 +139,7 @@ function render(
         e(theme.text) +
         '</p>' +
         renderTemporalNatalEvidence(report, `monthly_${theme.segmentId}`) +
+        renderTemporalStemInteractions(report.monthly.stemInteractions, theme.segmentId, e) +
         '<details><summary>이 구간의 T9 근거</summary><p>Claim: ' +
         e(theme.claimId) +
         '</p><p>계산 구간: ' +
@@ -158,7 +161,8 @@ function render(
           '</h3><p>' +
           e(section.text) +
           '</p>' +
-          (section.kind === 'theme' ? renderTemporalNatalEvidence(report, `monthly_${section.segmentId}`) : '') +
+          (section.kind === 'theme' ? renderTemporalNatalEvidence(report, `monthly_${section.segmentId}`) +
+            renderTemporalStemInteractions(report.monthly.stemInteractions, section.segmentId, e) : '') +
           '<details><summary>절입 기간·T9 Claim과 출처</summary>' +
           '<p>기간: ' +
           e(section.calculatedInterval.startsAt) +

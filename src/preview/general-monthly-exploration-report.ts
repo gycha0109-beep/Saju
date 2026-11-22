@@ -1,3 +1,4 @@
+import { readTemporalStemInteractions, renderTemporalStemInteractions, type TemporalStemInteraction } from './temporal-stem-interaction-reading.js';
 import type { CanonicalSajuSnapshot, PillarSlot, TenGod } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -5,6 +6,7 @@ import type { InterpretationExecutionResult } from '../interpretation/interpreta
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import { buildReadingCompositionEvidence } from '../reading/reading-intent-composition.js';
 import type { MonthlyInterpretationFacts, MonthlySegmentId } from '../reading/monthly-interpretation-facts.js';
+import { STEM_INTERACTION_RULE_SET } from '../research/general-temporal-stem-interaction-candidate.js';
 import { GENERAL_MONTHLY_CLAIM_NARRATIVE_PROFILES } from '../research/general-monthly-narrative-profiles.js';
 import {
   GENERAL_MONTHLY_TENSION_CLAIM_TYPE,
@@ -54,6 +56,7 @@ export interface GeneralMonthlyExplorationReport {
   jeolBoundary: MonthlyInterpretationFacts['jeolBoundary'];
   coverage: 'complete' | 'partial' | 'insufficient';
   sections: readonly GeneralMonthlyExplorationSection[];
+  stemInteractions: readonly TemporalStemInteraction[];
   missing: readonly string[];
   caveats: readonly string[];
   /** The exact monthly segment applicable to the request's reference instant. */
@@ -247,12 +250,16 @@ export function buildGeneralMonthlyExplorationReport(
     jeolBoundary: facts.jeolBoundary,
     coverage: themeCount.size === 2 ? 'complete' : themeCount.size === 1 ? 'partial' : 'insufficient',
     sections,
+    stemInteractions: readTemporalStemInteractions(execution, selectedIds, GENERAL_MONTHLY_THEME_CLAIM_TYPE.claimType),
     missing,
     referenceReading,
     caveats: [
       '이번 달 내용은 기존 연구 T9 Claim과 한국어 프로필에 한정한 내부 시제품으로, 공식 해석이나 판매 가능한 결과가 아닙니다.',
       '월운은 서울 달력 월을 절입 시각 전후로 나누어 관찰하며, 올해의 민간 연도 표시와 같은 계산 정책으로 합쳐 단정하지 않습니다.',
       '해석 문구는 검토 중인 구조적 경향 후보일 뿐 금전·건강·관계의 특정 사건이나 시기를 예언하지 않습니다.',
+      ...(registry.pack.enabledRuleSets.includes(STEM_INTERACTION_RULE_SET) && !snapshot.completeness.birthTimeKnown
+        ? ['태어난 시각을 알 수 없어 원국 천간의 조절 요인을 모두 확인할 수 없습니다. 기간과 원국 천간의 상호작용 풀이는 보류합니다.']
+        : []),
     ],
   };
 }
@@ -282,7 +289,7 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
       '<p>규칙: ' + escapeHtml(theme.ruleIds.join(' · ')) +
       ' / 방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
       '<p>출처: ' + escapeHtml(theme.sourceIds.join(' · ')) +
-      '</p></details>'
+      '</p></details>' + renderTemporalStemInteractions(report.stemInteractions, theme.segmentId, escapeHtml)
     : reference.state === 'insufficient_evidence'
       ? '<p>' + escapeHtml(SEGMENT_KO[reference.segmentId!]) +
         '의 한국어 해석 근거가 아직 충분하지 않습니다.</p>'
@@ -305,7 +312,8 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
     const interval = items[0]?.calculatedInterval;
     return `<section><h2>${SEGMENT_KO[id]}</h2>
       ${interval ? `<p class="muted">${kst(interval.startsAt)}부터 ${kst(interval.endsAt)} 전까지</p>` : ''}
-      ${cards || '<p>이 구간에서 보여줄 근거가 충분하지 않습니다.</p>'}</section>`;
+      ${cards || '<p>이 구간에서 보여줄 근거가 충분하지 않습니다.</p>'}
+      ${renderTemporalStemInteractions(report.stemInteractions, id, escapeHtml)}</section>`;
   }).join('');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
