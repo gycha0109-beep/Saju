@@ -354,7 +354,7 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(found.report.sections.some(section =>
       section.channel === 'visible_stems' && section.axis === 'tension')).toBe(true);
     expect(found.report.missing.join(' ')).toContain('두 관측 채널 모두에서 중심으로 삼을 비긴장 구조 해석이 없어');
-    expect(found.report.missing.join(' ')).toContain('부분 풀이만 보여드립니다');
+    expect(found.report.missing.join(' ')).toContain('부분 풀이로 보여드립니다');
     const actualAxes = new Set(found.execution.claims.filter(claim =>
       claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'career' &&
       claim.state === 'active').map(claim =>
