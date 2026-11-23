@@ -515,7 +515,9 @@ function renderDomain(
   );
   const originalText =
     report.sections.map(renderSection).join('') ||
-    '<p>현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.</p>';
+    (domain === 'relationship' && 'intimacy' in report
+      ? '<p>일반 대인관계 풀이는 근거가 더 필요합니다.</p>'
+      : '<p>현재 이 명식에서 근거가 확인된 해석 문단은 없습니다.</p>');
   const missing =
     report.missing.length > 0
       ? '<section class="missing"><h3>아직 설명하지 못하는 부분</h3>' +
@@ -533,6 +535,13 @@ function renderDomain(
             ? renderRelationshipReadingGuide(report as RelationshipNatalMultifactorReport)
             : '';
   const firstMeaning = renderFirstScreenSelectedInterpretations(domain, report);
+  const intimacy = 'intimacy' in report ? report.intimacy : undefined;
+  const closeRelationship = intimacy === undefined ? '' :
+    '<section aria-label="연애와 가까운 관계"><h3>' + escapeHtml(intimacy.headline) +
+    '</h3><p>' + escapeHtml(intimacy.paragraph) +
+    '</p><details><summary>일지 근거와 출처</summary>' +
+    renderList([intimacy.claimId, intimacy.ruleId, intimacy.methodologyId, ...intimacy.sourceIds, ...intimacy.factPaths]) +
+    '</details></section>';
   const details =
     firstMeaning === ''
       ? readingGuide + originalText
@@ -556,6 +565,7 @@ function renderDomain(
     escapeHtml(report.introduction) +
     '</p>' +
     firstMeaning +
+    closeRelationship +
     details +
     missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +

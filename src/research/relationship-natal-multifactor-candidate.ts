@@ -7,6 +7,7 @@ import {
   GENERAL_NATAL_USEFUL_TEN_GOD_RULES,
 } from './general-natal-useful-reading-candidate.js';
 import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
+import { INTIMACY_METHODOLOGY, INTIMACY_RULES, INTIMACY_RULE_SET, INTIMACY_SOURCE } from './relationship-natal-intimacy-candidate.js';
 
 /** Canonical T5 -> source-qualified relationship-general T8; no parallel product interpretation. */
 export const RELATIONSHIP_NATAL_MULTIFACTOR_VERSION = '0.2.0-research' as const;
@@ -179,16 +180,18 @@ export const RELATIONSHIP_NATAL_MULTIFACTOR_NARRATIVES: readonly ClaimNarrativeP
   }))));
 export const RELATIONSHIP_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
   packId: 'PACK-RELATIONSHIP-NATAL-SOURCE-BOUNDED-MULTIFACTOR-RESEARCH',
-  version: RELATIONSHIP_NATAL_MULTIFACTOR_VERSION,
+  version: `${RELATIONSHIP_NATAL_MULTIFACTOR_VERSION}.intimacy`,
   name: 'Relationship natal multifactor synthesis / internal research',
   methodologyRefs: [
     { id: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.methodologyId,
       version: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.version },
     { id: METHOD_ID, version: RELATIONSHIP_NATAL_MULTIFACTOR_VERSION },
+    { id: INTIMACY_METHODOLOGY.methodologyId, version: INTIMACY_METHODOLOGY.version },
   ],
   enabledRuleSets: [...new Set([
     ...GENERAL_NATAL_USEFUL_TEN_GOD_RULES.map(x => x.ruleSetId),
     RULE_SET,
+    INTIMACY_RULE_SET,
   ])],
   conflictPolicy: 'preserve_all',
   ambiguityPolicy: 'propagate',
@@ -200,9 +203,9 @@ export const RELATIONSHIP_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.fr
 });
 export function createRelationshipNatalMultifactorRegistry(createdAt = '1970-01-01T00:00:00.000Z') {
   return createRuleRegistrySnapshot({
-    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...RELATIONSHIP_NATAL_MULTIFACTOR_RULES],
+    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...RELATIONSHIP_NATAL_MULTIFACTOR_RULES, ...INTIMACY_RULES],
     methodologies: [GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
-      RELATIONSHIP_NATAL_MULTIFACTOR_METHODOLOGY],
-    sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE],
+      RELATIONSHIP_NATAL_MULTIFACTOR_METHODOLOGY, INTIMACY_METHODOLOGY],
+    sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE, INTIMACY_SOURCE],
   }, RELATIONSHIP_NATAL_MULTIFACTOR_PACK, createdAt);
 }

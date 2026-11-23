@@ -29,11 +29,12 @@ function run(month: number, day: number, known = true) {
     report: buildRelationshipNatalMultifactorReport(snapshot, execution, registry) };
 }
 describe('actual-source Relationship natal T5→T8→Korean five-domain report', () => {
-  it('is Relationship-only, research-only, and every T8 has 2/3 exact T5 inputs', () => {
+  it('keeps the general T5 synthesis and exact day-branch intimacy rules research-only', () => {
     expect(registry.pack.packId).toBe(RELATIONSHIP_NATAL_MULTIFACTOR_PACK.packId);
     expect(RELATIONSHIP_NATAL_MULTIFACTOR_RULES).toHaveLength(20);
     expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(20);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(23);
+    expect(registry.rules.filter(r => r.taxonomy.subcategory === 'intimacy_day_branch')).toHaveLength(3);
     expect(registry.rules.filter(r => r.taxonomy.subcategory === 'self_baseline')).toHaveLength(0);
     for(const rule of RELATIONSHIP_NATAL_MULTIFACTOR_RULES) {
       expect(rule.taxonomy.category).toBe('relationship');
@@ -44,6 +45,28 @@ describe('actual-source Relationship natal T5→T8→Korean five-domain report',
       expect(rule.status).toBe('research');
     }
     expect(inspectMyeonghwaProductionComposition({registry}).status).toBe('blocked');
+  });
+
+  it.each([
+    [1998, 3, 28, 22, 19, 'combination', '월주 지지 卯와 육합'],
+    [1955, 10, 31, 19, 35, 'clash', '연주 지지 未와 육충'],
+    [1993, 8, 14, 20, 48, 'mixed', '연주 지지 酉와 육충, 시주 지지 戌와 육합'],
+  ] as const)('reads separate close-relationship meaning for %s from verified day branch contacts', (
+    year, month, day, hour, minute, kind, reading,
+  ) => {
+    const snapshot = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar', date: { year, month, day },
+      time: { known: true, hour, minute }, sexForTraditionalCalculation: 'female',
+    }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+    const execution = runInterpretation(snapshot, registry, { now: NOW });
+    const report = buildRelationshipNatalMultifactorReport(snapshot, execution, registry);
+    expect(report.intimacy?.kind).toBe(kind);
+    expect(report.intimacy?.paragraph).toContain(reading);
+    expect(report.intimacy?.factPaths).toContain('pillars.day');
+    expect(report.intimacy?.sourceIds).toContain('SRC-T0-YISI-ZHAN-10');
+    expect(execution.claims.filter(claim => claim.ruleRefs[0]?.ruleId.startsWith('RULE-RELATIONSHIP_NATAL_INTIMACY')).length).toBe(1);
+    expect(run(3, 10, false).report.intimacy).toBeUndefined();
+    expect(report.maySell).toBe(false);
   });
 
   it('produces real chart-specific Relationship meanings, with two or three matching upstream Claims', () => {

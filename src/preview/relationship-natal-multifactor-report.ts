@@ -1,4 +1,9 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
+import { deriveBranchPairRelation } from '../calculation/structural-relations.js';
+import {
+  INTIMACY_CLAIM, INTIMACY_SLOTS, INTIMACY_METHODOLOGY, INTIMACY_SOURCE,
+  intimacyCopy, type IntimacyContact,
+} from '../research/relationship-natal-intimacy-candidate.js';
 import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -10,7 +15,7 @@ import {
   RELATIONSHIP_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/relationship-natal-multifactor-candidate.js';
 
-export const RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION = '0.4.0-research-preview' as const;
+export const RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION = '0.5.0-research-preview' as const;
 type Axis = 'core' | 'expression' | 'boundaries' | 'reception' | 'coordination';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
@@ -46,12 +51,23 @@ export interface RelationshipNatalMultifactorReport {
   introduction: string;
   sections: readonly RelationshipNatalMultifactorSection[];
   readingGuide?: RelationshipNatalReadingGuide;
+  intimacy?: RelationshipIntimacyReading;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
   mayPublish: false;
   maySell: false;
   usefulComplete: false;
+}
+interface RelationshipIntimacyReading {
+  headline: string;
+  paragraph: string;
+  kind: IntimacyContact;
+  claimId: string;
+  ruleId: string;
+  methodologyId: string;
+  sourceIds: readonly string[];
+  factPaths: readonly string[];
 }
 const AXES: readonly Axis[] = ['core', 'expression', 'boundaries', 'reception', 'coordination'];
 const SLOT_NAMES: Readonly<Record<PillarSlot, string>> = {
@@ -259,6 +275,49 @@ function buildRelationshipNatalReadingGuide(
   };
 }
 
+function readIntimacy(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+  selected: ReadonlySet<string>,
+): RelationshipIntimacyReading | undefined {
+  const claims = execution.claims.filter(claim =>
+    claim.state === 'active' && claim.claimType === INTIMACY_CLAIM && selected.has(claim.claimId),
+  );
+  if (!claims.length) return undefined;
+  const claim = claims[0]!;
+  const day = snapshot.pillars.day;
+  const rule = claim.ruleRefs[0];
+  const kind = (claim.value as { kind: IntimacyContact }).kind;
+  guard(
+    claims.length === 1 && day.status === 'resolved' && rule &&
+    claim.snapshotId === snapshot.snapshotId && claim.scenarioRef === undefined &&
+    claim.methodologyRef.id === INTIMACY_METHODOLOGY.methodologyId &&
+    claim.sourceRefs.includes(INTIMACY_SOURCE.sourceId) &&
+    execution.evaluations.some(item => item.evaluationId === rule.evaluationId &&
+      item.status === 'matched' && item.emittedClaimIds.includes(claim.claimId)),
+    'intimacy reading must come from one selected same-chart day-branch claim',
+  );
+  const positions = INTIMACY_SLOTS.flatMap(slot => {
+    const pillar = snapshot.pillars[slot];
+    guard(pillar.status === 'resolved' && claim.factRefs.includes('pillars.' + slot), 'unresolved intimacy position');
+    const branch = pillar.value.branch;
+    const relation = deriveBranchPairRelation(day.value.branch.value, branch.value);
+    return relation === 'none' ? [] : [{
+      relation, display: `${SLOT_NAMES[slot]} 지지 ${branch.hanja}와 ${relation === 'combination' ? '육합' : '육충'}`,
+    }];
+  });
+  const relations = new Set(positions.map(position => position.relation));
+  guard(claim.factRefs.includes('pillars.day') &&
+    (kind === 'mixed' ? relations.size === 2 : relations.size === 1 && relations.has(kind)),
+    'intimacy narrative must agree with the calculated pair contacts');
+  return {
+    headline: intimacyCopy(kind, 'headline'), kind,
+    paragraph: `원국 일지 ${day.value.branch.hanja}에 ${positions.map(position => position.display).join(', ')}이 확인됩니다. ${intimacyCopy(kind, 'summary')}`,
+    claimId: claim.claimId, ruleId: rule.ruleId, methodologyId: claim.methodologyRef.id,
+    sourceIds: claim.sourceRefs, factPaths: claim.factRefs,
+  };
+}
+
 export function buildRelationshipNatalMultifactorReport(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
@@ -278,6 +337,7 @@ export function buildRelationshipNatalMultifactorReport(
     intent: { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'general' },
   });
   const selected = new Set(selection.evidence?.bundle.claims.map(c => c.claimId) ?? []);
+  const intimacy = readIntimacy(snapshot, execution, selected);
   const claims = execution.claims.filter(c =>
     c.taxonomy.tier === 'T8' && c.taxonomy.category === 'relationship' &&
     c.predicate === 'relationship_multifactor_structure' &&
@@ -337,6 +397,7 @@ export function buildRelationshipNatalMultifactorReport(
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
+    ...(intimacy === undefined ? {} : { intimacy }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],
