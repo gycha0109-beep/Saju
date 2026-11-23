@@ -68,13 +68,6 @@ const EVIDENCE_ROLES: Readonly<Record<string, string>> = {
   'wealth': '재성(현실 자원·교환)',
   'officer': '관성(규범·역할 기준)'
 };
-const AXIS_NAMES: Readonly<Record<Axis, string>> = {
-  'core': '전체 구조',
-  'execution': '실행',
-  'governance': '운영 기준',
-  'preparation': '준비',
-  'coordination': '조율'
-};
 const LIMITATIONS = [
   '전통 문헌의 제한된 구조 관계를 이용한 미검토 연구 풀이입니다. 실제 삶의 성격·사건을 판정하지 않습니다.',
   '사업 성공·실패, 매출, 창업 역량, 수익, 조직 갈등이나 미래 사업 사건을 예측하지 않습니다.',
@@ -214,7 +207,6 @@ function toSection(
 function buildBusinessNatalReadingGuide(
   core: BusinessNatalMultifactorSection | undefined,
   supports: readonly BusinessNatalMultifactorSection[],
-  state: Status,
 ): BusinessNatalReadingGuide | undefined {
   if (core === undefined || core.axis === 'coordination') return undefined;
   guard(core.sourceIds.length > 0 && core.upstreamClaimIds.length >= 2 &&
@@ -318,7 +310,7 @@ export function buildBusinessNatalMultifactorReport(
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly BusinessNatalMultifactorSection[] = chosen;
   const readingGuide = buildBusinessNatalReadingGuide(
-    core, core === undefined ? [] : chosen.slice(1), state,
+    core, core === undefined ? [] : chosen.slice(1),
   );
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 사업의 다중 근거 T8 해석은 보류합니다.');
