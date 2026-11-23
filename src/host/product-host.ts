@@ -5,6 +5,7 @@ import {
   type NatalFiveDomainProductBundle,
 } from '../reading/natal-five-domain-product-service.js';
 
+import { buildOfficialReadingCharacterGroundingV1 } from '../reading/official-reading-reader-parity.js';
 import type {
   BirthInput,
   CalendarType,
@@ -483,6 +484,38 @@ export function createMyeonghwaProductHost(
   return {
     async requestReading(body: unknown): Promise<ProductReadingResponse> {
       return (await runProductHostReadingInternals(dependencies, body)).response;
+    },
+  };
+}
+
+/** Provides the original semantic source from the same deterministic execution. */
+export function createMyeonghwaProductionReadingIssueHost(
+  dependencies: MyeonghwaProductHostDependencies,
+) {
+  assertDependencies(dependencies);
+  return {
+    async requestReadingForIssue(body: unknown, engineVersion: string) {
+      const { response, execution, officialSemanticSourceHandoff } =
+        await runProductHostReadingInternals(dependencies, body);
+      if (response.state !== 'delivered' || !execution.canonicalSemantics ||
+          !execution.officialReadingReport || !officialSemanticSourceHandoff) {
+        return { response };
+      }
+      const { grounding } = buildOfficialReadingCharacterGroundingV1({
+        response,
+        semanticBundle: execution.canonicalSemantics,
+        officialReadingReport: execution.officialReadingReport,
+        engineVersion,
+      });
+      const canonicalUnits = new Map(execution.canonicalSemantics.units.map(unit => [unit.unitId, unit]));
+      const semanticSource = {
+        ...officialSemanticSourceHandoff,
+        units: officialSemanticSourceHandoff.units.map(unit => ({
+          ...unit,
+          ruleRefs: canonicalUnits.get(unit.unitId)!.ruleRefs,
+        })),
+      };
+      return { response, readerSource: { grounding, semanticSource } };
     },
   };
 }

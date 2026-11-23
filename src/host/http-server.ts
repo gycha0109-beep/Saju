@@ -27,6 +27,13 @@ import {
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-service-bearer-auth.js';
 import {
+  PRODUCTION_READING_ISSUE_PROOF_HEADER,
+  PRODUCTION_READING_RELEASE_HEADER,
+  PRODUCTION_READER_SOURCE_HEADER,
+  PRODUCTION_READER_SOURCE_VERSION,
+  type createProductionRelationshipIssuer,
+} from '../production/production-relationship-official-reading-issuer.js';
+import {
   CHARACTER_GROUNDING_ADMISSION_HEADER,
   CHARACTER_GROUNDING_ADMISSION_VERSION,
   CHARACTER_GROUNDING_HTTP_PATH,
@@ -93,6 +100,7 @@ export interface MyeonghwaProductionProductHostServerOptions
   previousServiceBearer?: string;
   /** Explicit server-only installation, never sourced from an HTTP request. */
   a4SourceCapture?: SajuA4ServerOnlyCapturePortV1;
+  relationshipProductionIssue?: ReturnType<typeof createProductionRelationshipIssuer>;
 }
 
 interface MyeonghwaReadingHttpRoute {
@@ -297,6 +305,7 @@ function createMyeonghwaHttpServer(
   secondaryReadingRoute?: MyeonghwaReadingHttpRoute,
   faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
   a4SourceCapture?: SajuA4ServerOnlyCapturePortV1,
+  relationshipProductionIssue?: ReturnType<typeof createProductionRelationshipIssuer>,
 ): Server {
   const bodyLimit = maxRequestBytes(options);
   const groundingBodyLimit = characterGroundingMaxRequestBytes(options);
@@ -732,6 +741,24 @@ function createMyeonghwaHttpServer(
       try {
         const body = await readJsonBody(request, bodyLimit);
         const preparedAttemptId = request.headers[SAJU_A4_PREPARED_ATTEMPT_HEADER_V1];
+        const release = request.headers[PRODUCTION_READING_RELEASE_HEADER];
+        const readerMode = request.headers[PRODUCTION_READER_SOURCE_HEADER];
+        if (relationshipProductionIssue !== undefined && (release !== undefined || readerMode !== undefined)) {
+          const issue = typeof release === 'string' && matchedReading.route.path === '/api/readings' &&
+            typeof preparedAttemptId === 'string' && SAJU_A4_UUID_V1.test(preparedAttemptId) &&
+            readerMode === PRODUCTION_READER_SOURCE_VERSION
+            ? await relationshipProductionIssue.issue(body, preparedAttemptId, release)
+            : null;
+          if (issue === null) {
+            throw new HostHttpError(403, 'HOST_PRODUCTION_ISSUE_UNAVAILABLE', 'Production issue is unavailable.');
+          }
+          sendJson(response, 200, issue.body, {
+            [PRODUCT_READING_RESPONSE_ADMISSION_HEADER]: PRODUCT_READING_RESPONSE_VERSION,
+            [SAJU_A4_SOURCE_REF_HEADER_V1]: issue.externalRequestRef,
+            [PRODUCTION_READING_ISSUE_PROOF_HEADER]: issue.proof,
+          });
+          return;
+        }
         let sourceRef: string | undefined;
         const execute = () => matchedReading.host.requestReading(body);
         let result: Awaited<ReturnType<MyeonghwaProductHost['requestReading']>>;
@@ -852,7 +879,7 @@ export function createMyeonghwaProductionReadingHostServer(
   options: MyeonghwaProductionProductHostServerOptions = {},
   faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
 ): Server {
-  const { serviceBearer, previousServiceBearer, a4SourceCapture, ...serverOptions } = options;
+  const { serviceBearer, previousServiceBearer, a4SourceCapture, relationshipProductionIssue, ...serverOptions } = options;
   const authorizeRequest = createMyeonghwaProductionServiceBearerAuthorizer({
     activeBearer: serviceBearer,
     previousBearer: previousServiceBearer,
@@ -867,6 +894,7 @@ export function createMyeonghwaProductionReadingHostServer(
     PREVIEW_READING_ROUTE,
     faceGovernedHandoffHost,
     a4SourceCapture,
+    relationshipProductionIssue,
   );
 }
 
