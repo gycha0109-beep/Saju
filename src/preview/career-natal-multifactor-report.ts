@@ -65,8 +65,8 @@ export interface CareerMultifactorReport {
 }
 
 const MUR = Object.freeze([
-  '하나의 천간 기반 다중 근거 중심 해석',
-  '그것과 구별되는 두 가지 보조 구조 해석 축',
+  '천간 또는 지지에서 실제 관측된 비긴장 다중 근거 중심 해석',
+  '실제 독립 계산 위치가 확인되는 경우에만 보조 구조 해석을 추가',
   '출처와 해당 근거 및 불확실성 명시',
 ]);
 
@@ -246,7 +246,7 @@ function buildCareerMultifactorReadingGuide(
   supporting: readonly CareerMultifactorReportSection[],
   state: Status,
 ): CareerMultifactorReadingGuide | undefined {
-  if (core === undefined || core.channel !== 'visible_stems' || core.axis === 'tension') {
+  if (core === undefined || core.axis === 'tension') {
     return undefined;
   }
   const usedPaths = new Set(core.calculatedFactPaths);
@@ -270,8 +270,8 @@ function buildCareerMultifactorReadingGuide(
     ...supporting.map((section, index) =>
       `별도 관점인 ‘${section.headline}’은 ${AXIS_LABELS[section.axis]}에 관한 기존 연구 문구입니다. 중심 관찰과 앞선 보조 관찰에서 사용하지 않은 ${distinctSupporting[index]!.distinctCalculatedPositions.join(' · ')}를 추가 근거로 확인했습니다.`),
     ...(state === 'complete'
-      ? ['중심 관점 하나와 서로 다른 계산 근거를 더하는 보조 관점 두 가지를 구분해 읽을 수 있습니다. 이는 연구용 풀이 구성 기준이지 직업 적성·성공 여부의 검증이 아닙니다.']
-      : [`현재 독립적인 보조 관점은 ${distinctSupporting.length}개만 확인되어, 필요한 두 가지 보조 관점을 모두 설명할 수 없습니다. 직업운 종합 결론은 보류합니다.`]),
+      ? [`${core.channel === 'visible_stems' ? '천간' : '지지'}에서 확인한 중심 구조를 바탕으로, 추가 독립 근거 ${distinctSupporting.length}개를 구별해 읽습니다.`]
+      : []),
   ];
   return {
     title: '이 명식에서 확인된 일의 중심과 보조 관점',
@@ -322,9 +322,12 @@ export function buildCareerMultifactorResearchReport(
           (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
     : [];
   const visible = units.filter(unit => unit.channel === 'visible_stems');
-  // A tension-only visible-stem finding is meaningful supporting evidence,
-  // but cannot stand in for the independent central Career interpretation.
-  const primary = visible.find(unit => unit.axis !== 'tension');
+  const branch = units.filter(unit => unit.channel === 'branches');
+  // Each channel must prove its own source-bound two-T5 structure. Prefer a
+  // non-tension visible pair when present; otherwise use a genuine branch
+  // non-tension pair instead of treating an entire natal channel as absent.
+  const primary = visible.find(unit => unit.axis !== 'tension') ??
+    branch.find(unit => unit.axis !== 'tension');
   // MUR needs genuinely distinct interpretation axes, not merely three
   // rules that restate the same responsibility or tension perspective.
   const supporting: typeof units = [];
@@ -348,8 +351,8 @@ export function buildCareerMultifactorResearchReport(
     for (const path of unit.calculatedFactPaths) usedFactPaths.add(path);
     if (supporting.length === 2) break;
   }
-  // Without a visible-stem core preserve each DISTINCT grounded supporting
-  // axis, even though three supports cannot establish a complete Career MUR.
+  // When no non-tension core exists, retain actual tension observations
+  // as partial evidence without inventing a central Career relation.
   const partialEvidence = primary === undefined
     ? [...visible, ...units.filter(unit => unit.channel === 'branches')]
       .filter((unit, index, all) =>
@@ -369,23 +372,14 @@ export function buildCareerMultifactorResearchReport(
     additionalVerifiedSections.push(unit);
     for (const path of unit.calculatedFactPaths) seenFactPaths.add(path);
   }
-  const enough = primary !== undefined && supporting.length >= 2;
-  const state: Status = snapshot.completeness.birthTimeKnown && enough
+  const state: Status = snapshot.completeness.birthTimeKnown && primary !== undefined
     ? 'complete' : units.length > 0 ? 'partial' : 'insufficient';
   const missing: string[] = [];
   if (!primary) {
     missing.push(MUR[0]!);
     if (partialEvidence.length > 0) {
       missing.push(`이 명식에서는 ${partialEvidence.map(s =>
-        `${s.channel === 'visible_stems' ? '천간' : '지지 대표 십신'}의 ${AXIS_LABELS[s.axis]}`).join('·')}에 관한 보조 근거를 확인했습니다. 그러나 천간 중심의 독립된 종합 근거가 없어 전체 직업운으로 판단하지 않고 부분 풀이만 보여드립니다.`);
-    }
-  }
-  if (primary && supporting.length < 2) {
-    const observed = shown.map(section => AXIS_LABELS[section.axis]);
-    const label = observed.length > 0 ? observed.join('·') : '없음';
-    missing.push(`현재 확인된 해석 관점: ${label}. 완전한 직업 종합풀이에는 천간 중심 해석에 더해 서로 구별되는 보조 근거 축 ${2 - supporting.length}개가 필요합니다.`);
-    if (overlappingOnlyCount > 0) {
-      missing.push('서로 다른 해석 제목이 있어도 앞선 해석에 사용한 계산 위치만 반복하면 독립적인 보조 근거로 세지 않습니다.');
+        `${s.channel === 'visible_stems' ? '천간' : '지지 대표 십신'}의 ${AXIS_LABELS[s.axis]}`).join('·')}에 관한 보조 근거를 확인했습니다. 그러나 두 관측 채널 모두에서 중심으로 삼을 비긴장 구조 해석이 없어 부분 풀이로 보여드립니다.`);
     }
   }
   if (!primary) {
@@ -393,9 +387,9 @@ export function buildCareerMultifactorResearchReport(
     // prevents a complete Career MUR when real partial evidence exists.
     const unexplainedAxes = AXES.filter(axis =>
       !partialEvidence.some(section => section.axis === axis));
-    missing.push(`완전한 직업 종합풀이에는 천간 중심의 독립된 핵심 해석이 먼저 필요합니다.${unexplainedAxes.length > 0
+    missing.push(`중심 구조 해석을 구성하려면 천간 또는 지지의 실제 비긴장 조합이 필요합니다.${unexplainedAxes.length > 0
       ? ` 현재 명식에서 등록된 다중 근거 규칙으로 설명하지 못한 관점: ${unexplainedAxes.map(axis => AXIS_LABELS[axis]).join('·')}.`
-      : ' 서로 다른 보조 관점 세 가지가 관측되어도 핵심 근거 부재를 대신할 수 없습니다.'}`);
+      : ' 긴장 관찰만으로 별도의 중심 구조를 만들지 않습니다.'}`);
   }
   if (!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상');
