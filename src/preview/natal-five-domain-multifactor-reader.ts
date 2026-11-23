@@ -165,7 +165,7 @@ function renderCareerReadingGuide(report: CareerMultifactorReport): string {
   guard(
     core !== undefined &&
       core.claimType === guide.coreClaimType &&
-      core.channel === 'visible_stems' &&
+      (core.channel === 'visible_stems' || core.channel === 'branches') &&
       core.axis !== 'tension' &&
       guide.paragraph.includes(core.headline) &&
       core.calculatedPositions.every((position) => guide.paragraph.includes(position)) &&
@@ -499,7 +499,7 @@ function renderDomain(
       report.title.trim().length > 0 &&
       report.introduction.trim().length > 0 &&
       ['complete', 'partial', 'insufficient'].includes(report.state) &&
-      (report.state !== 'complete' || report.sections.length >= 3) &&
+      (report.state !== 'complete' || report.sections.length >= (domain === 'career' ? 1 : 3)) &&
       (report.state !== 'insufficient' || report.sections.length === 0) &&
       (report.state !== 'partial' || report.missing.length > 0) &&
       // Same-chart evidence is not interchangeable across domain claims.
