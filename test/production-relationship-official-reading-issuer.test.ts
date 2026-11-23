@@ -21,6 +21,19 @@ const firstBirth = { calendarType: 'solar', date: '1990-05-15', time: '14:30', s
 const secondBirth = { ...firstBirth, date: '1988-03-20', time: '09:00' };
 const request = { birth: firstBirth, reading: { text: '연애운' } };
 
+interface SignedRelationshipBody {
+  state: string;
+  readerSource: {
+    semanticSource: { units: {
+      role: string;
+      claimType: string;
+      ruleRefs: { ruleId: string }[];
+      upstreamClaimRefs: string[];
+      canonicalText: { summary: string };
+    }[] };
+  };
+}
+
 function post(body: unknown, headers: Record<string, string> = {}, token = bearer, path = '/api/readings') {
   const { port } = server.address() as AddressInfo;
   return fetch('http://127.0.0.1:' + port + path, {
@@ -57,7 +70,7 @@ describe('prepared general relationship Official Reading', () => {
       const headers = prepared();
       const reply = await post(body, headers);
       expect(reply.status).toBe(200);
-      const { readerSource, ...reading } = await reply.json();
+      const { readerSource, ...reading } = await reply.json() as SignedRelationshipBody;
       expect(reading.state).toBe('delivered');
       expect(JSON.stringify(reading)).toMatch(/[가-힣]/u);
       const proof = JSON.parse(Buffer.from(reply.headers.get('x-myeonghwa-production-issue-proof')!,
@@ -73,15 +86,15 @@ describe('prepared general relationship Official Reading', () => {
       });
       expect(verify(null, Buffer.from('myeongha/saju/production-reading-issue/v1\0' +
         deterministicContentHash(proof.payload)), publicKey, Buffer.from(proof.signature, 'base64url'))).toBe(true);
-      const primary = readerSource.semanticSource.units.filter((unit: {role: string}) => unit.role === 'primary');
+      const primary = readerSource.semanticSource.units.filter(unit => unit.role === 'primary');
       expect(primary.length).toBeGreaterThan(0);
       for (const unit of primary) {
         expect(unit.claimType).toMatch(/^RELATIONSHIP_NATAL_CONCLUSION_/u);
-        expect(unit.ruleRefs[0].ruleId).toMatch(/^RULE-RELATIONSHIP-NATAL-/u);
+        expect(unit.ruleRefs[0]?.ruleId).toMatch(/^RULE-RELATIONSHIP-NATAL-/u);
         expect(unit.upstreamClaimRefs.length).toBeGreaterThan(0);
         expect(unit.canonicalText.summary).toMatch(/[가-힣]/u);
       }
-      resolved.push(primary.map((unit: { claimType: string }) => unit.claimType));
+      resolved.push(primary.map(unit => unit.claimType));
     }
     expect(resolved[0]).not.toEqual(resolved[1]);
   });
@@ -105,7 +118,7 @@ describe('prepared general relationship Official Reading', () => {
     expect((await post(spouse, prepared())).status).toBe(403);
     const reply = await post(spouse);
     expect(reply.status).toBe(200);
-    expect((await reply.json()).state).toBe('delivered');
+    expect(await reply.json()).toMatchObject({ state: 'delivered' });
     expect(reply.headers.has('x-myeonghwa-production-issue-proof')).toBe(false);
   }, 180_000);
 });
