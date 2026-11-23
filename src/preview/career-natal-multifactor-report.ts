@@ -8,7 +8,7 @@ import {
   CAREER_MULTIFACTOR_PACK,
 } from '../research/career-natal-multifactor-candidate.js';
 
-export const CAREER_MULTIFACTOR_REPORT_VERSION = '0.4.0-research-preview' as const;
+export const CAREER_MULTIFACTOR_REPORT_VERSION = '0.5.0-research-preview' as const;
 type Axis = 'execution' | 'preparation' | 'responsibility' | 'tension';
 const AXIS_LABELS: Readonly<Record<Axis, string>> = {
   execution: '실행·산출',
