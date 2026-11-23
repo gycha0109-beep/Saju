@@ -247,9 +247,7 @@ function buildBusinessNatalReadingGuide(
     `사업이라는 주제에서 이 명식의 중심 구조적 관점은 ‘${core.headline}’입니다. 이 표현은 ${core.observedPositions.join(' · ')}에서 실제 관측된 기존 십신 근거에 연결된 연구 후보입니다.`,
     ...supports.map((section, index) =>
       `또 다른 관점인 ‘${section.headline}’은 기존 관찰과 다른 ${supporting[index]!.distinctObservedPositions.join(' · ')}의 계산 사실을 추가해 구별합니다.`),
-    ...(state === 'complete'
-      ? ['서로 다른 구조적 관점 세 가지를 확인했지만, 이것은 창업 적성·매출·사업 성공이나 실패를 판정하지 않습니다.']
-      : [`이 명식에서 독립적으로 설명할 수 있는 보조 관점은 ${supporting.length}개뿐이어서, 사업운 전체 종합 설명은 보류합니다.`]),
+    `추가로 확인된 독립 보조 관점은 ${supporting.length}개입니다. 보조 관점의 개수로 풀이를 미완성 처리하지 않으며, 창업 적성·매출·사업 성공이나 실패를 판정하지 않습니다.`,
   ];
   return {
     title: '이 명식의 사업·실행 중심과 보조 관점',
@@ -310,15 +308,13 @@ export function buildBusinessNatalMultifactorReport(
   const missing: string[] = [];
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
   if(!core && chosen.length > 0) missing.push('중심 해석 근거가 없어 실제 확인된 조율 관점만 부분적으로 보여줍니다. 전체 사업운 종합으로 확장할 수 없습니다.');
-  if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
+  if (supportSelection && supportSelection.overlapOnlyCount > 0) {
     missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
   }
-  if(chosen.length < 3) {
-    const observed = chosen.map(s => `${AXIS_NAMES[s.axis]}(${s.channel === 'visible_stems' ? '천간' : '지지'})`);
-    missing.push(`이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}. 최소 유효 풀이에는 독립된 근거의 추가 해석 축 ${3 - chosen.length}개가 더 필요합니다.`);
-  }
+  // Real source-bound core evidence, rather than a fixed count of three
+  // different axes, determines the research reading's completeness.
   const state: Status = snapshot.completeness.birthTimeKnown &&
-    core !== undefined && chosen.length === 3
+    core !== undefined
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly BusinessNatalMultifactorSection[] = chosen;
   const readingGuide = buildBusinessNatalReadingGuide(
@@ -339,7 +335,7 @@ export function buildBusinessNatalMultifactorReport(
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
-      ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],
+      ['명식에 직접 연결된 사업운 중심 해석이 확인되지 않아 부분 관점으로 표시합니다.'])],
     researchOnly: true, mayPublish: false, maySell: false, usefulComplete: false,
   };
 }
