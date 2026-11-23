@@ -247,9 +247,7 @@ function buildRelationshipNatalReadingGuide(
     `이 명식의 관계·소통 주제에서 먼저 읽을 출처 있는 중심 관점은 ‘${core.headline}’입니다. 실제 계산된 ${core.observedPositions.join(' · ')}의 십신 위치에서 확인된 연구 해석입니다.`,
     ...supports.map((section, index) =>
       `이와 별개로 ‘${section.headline}’ 관점은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 앞의 관점과 겹치지 않는 계산 위치를 추가합니다.`),
-    ...(state === 'complete'
-      ? ['중심 하나와 독립된 보조 관점 두 가지가 확인됩니다. 이는 본인의 관계 구조를 읽는 연구용 최소 근거이며, 상대의 성격이나 결혼·연애 결과를 판정하지 않습니다.']
-      : [`추가로 구별되는 보조 관점은 ${supporting.length}개이며, 필요한 두 가지에 미치지 못하므로 전체 관계운 종합 판단은 보류합니다.`]),
+    `추가로 확인된 독립 보조 관점은 ${supporting.length}개입니다. 보조 관점의 개수로 풀이를 미완성 처리하지 않으며, 상대의 성격이나 결혼·연애 결과를 판정하지 않습니다.`,
   ];
   return {
     title: '이 명식에서 확인된 관계의 중심과 독립 보조 관점',
@@ -310,15 +308,13 @@ export function buildRelationshipNatalMultifactorReport(
   const missing: string[] = [];
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
   if(!core && chosen.length > 0) missing.push('중심 해석 근거가 없어 실제 확인된 조율 관점만 부분적으로 보여줍니다. 전체 관계운 종합이나 상대의 행동을 추론하지 않습니다.');
-  if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
+  if (supportSelection && supportSelection.overlapOnlyCount > 0) {
     missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
   }
-  if(chosen.length < 3) {
-    const observed = chosen.map(s => `${AXIS_NAMES[s.axis]}(${s.channel === 'visible_stems' ? '천간' : '지지'})`);
-    missing.push(`이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}. 최소 유효 풀이에는 독립된 근거의 추가 해석 축 ${3 - chosen.length}개가 더 필요합니다.`);
-  }
+  // Real source-bound core evidence, rather than a fixed count of three
+  // different axes, determines the research reading's completeness.
   const state: Status = snapshot.completeness.birthTimeKnown &&
-    core !== undefined && chosen.length === 3
+    core !== undefined
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly RelationshipNatalMultifactorSection[] = chosen;
   const readingGuide = buildRelationshipNatalReadingGuide(
@@ -339,7 +335,7 @@ export function buildRelationshipNatalMultifactorReport(
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
-      ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],
+      ['명식에 직접 연결된 관계운 중심 해석이 확인되지 않아 부분 관점으로 표시합니다.'])],
     researchOnly: true, mayPublish: false, maySell: false, usefulComplete: false,
   };
 }
