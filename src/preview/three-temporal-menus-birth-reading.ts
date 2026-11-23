@@ -1,4 +1,5 @@
 import { renderTemporalStemInteractions } from './temporal-stem-interaction-reading.js';
+import { renderTemporalBranchLayers } from './temporal-branch-layer-reading.js';
 import {
   formatTemporalKst,
   renderTemporalNatalEvidence,
@@ -95,6 +96,10 @@ function render(
   const life = lifeStage.report;
   const annualReference = report.annualReference;
   const monthlyFocus = report.monthly.referenceReading;
+  const activeYear = report.annualEffectivePillar;
+  const pillarNote = activeYear
+    ? `입춘 기준 조회 시각의 세운은 ${activeYear.effectiveYear}년 ${activeYear.stem}${activeYear.branch}입니다. 연간 기본 문단은 선택한 서울 달력연도에 해당합니다.`
+    : '';
   const yearNote =
     annualReference.state === 'in_target_civil_year'
       ? '조회 시각의 서울 달력 연도에 해당하는 연구용 연운입니다.'
@@ -111,7 +116,8 @@ function render(
           e(section.text) +
           '</p>' +
           (section.kind === 'core' ? renderTemporalNatalEvidence(report, 'annual') +
-            renderTemporalStemInteractions(report.annual.stemInteractions, 'annual', e) : '') +
+            renderTemporalStemInteractions(report.annual.stemInteractions, 'annual', e) +
+            renderTemporalBranchLayers(report.annual.branchLayers, 'annual', e) : '') +
           '<details><summary>연운 원문 출처와 계산 근거</summary><p>후보 프로필: ' +
           e(section.researchProfileId) +
           '</p><p>후보 규칙: ' +
@@ -140,6 +146,7 @@ function render(
         '</p>' +
         renderTemporalNatalEvidence(report, `monthly_${theme.segmentId}`) +
         renderTemporalStemInteractions(report.monthly.stemInteractions, theme.segmentId, e) +
+        renderTemporalBranchLayers(report.monthly.branchLayers, theme.segmentId, e) +
         '<details><summary>이 구간의 T9 근거</summary><p>Claim: ' +
         e(theme.claimId) +
         '</p><p>계산 구간: ' +
@@ -162,7 +169,8 @@ function render(
           e(section.text) +
           '</p>' +
           (section.kind === 'theme' ? renderTemporalNatalEvidence(report, `monthly_${section.segmentId}`) +
-            renderTemporalStemInteractions(report.monthly.stemInteractions, section.segmentId, e) : '') +
+            renderTemporalStemInteractions(report.monthly.stemInteractions, section.segmentId, e) +
+            renderTemporalBranchLayers(report.monthly.branchLayers, section.segmentId, e) : '') +
           '<details><summary>절입 기간·T9 Claim과 출처</summary>' +
           '<p>기간: ' +
           e(section.calculatedInterval.startsAt) +
@@ -248,6 +256,7 @@ function render(
     report.targetYear +
     '년</h2><p>' +
     e(yearNote) +
+    (pillarNote ? '</p><p>' + e(pillarNote) : '') +
     '</p>' +
     annual +
     '</section>' +

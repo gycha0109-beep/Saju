@@ -1,6 +1,7 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
+import { buildResearchTemporalBranchLayers } from '../reading/research-temporal-branch-layers.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import { buildMonthlyInterpretationFacts } from '../reading/monthly-interpretation-facts.js';
 import { buildTemporalReadingContext } from '../reading/temporal-reading-context.js';
@@ -104,10 +105,12 @@ export function buildAnnualMonthlyBirthResearchReading(
   }
   const natalContext = buildNatalStructureContext(snapshot, now);
   const facts = buildMonthlyInterpretationFacts(snapshot, temporalContext);
-  const registry = createGeneralMonthlyReadingCandidateRegistry(target.referenceDateTime, { includeStemInteractions: true });
+  const registry = createGeneralMonthlyReadingCandidateRegistry(target.referenceDateTime, {
+    includeStemInteractions: true, includeBranchLayers: true,
+  });
   const execution = runInterpretation(snapshot, registry, {
     requestId: request.requestId,
-    temporalFacts: { ...facts },
+    temporalFacts: { ...facts, branchLayers: buildResearchTemporalBranchLayers(snapshot, facts) },
     now,
   });
   const report = buildGeneralAnnualMonthlyExplorationReport(

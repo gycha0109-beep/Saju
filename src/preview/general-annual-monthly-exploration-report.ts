@@ -1,4 +1,6 @@
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
+import { buildResearchTemporalBranchLayers, effectiveAnnualPillar } from '../reading/research-temporal-branch-layers.js';
+import { readTemporalBranchLayers, renderTemporalBranchLayers } from './temporal-branch-layer-reading.js';
 import { buildReadingCompositionEvidence } from '../reading/reading-intent-composition.js';
 import { createGeneralAnnualReadingCandidateRegistry, GENERAL_ANNUAL_THEME_CLAIM_TYPE } from '../research/general-annual-reading-candidate.js';
 import { readTemporalStemInteractions, renderTemporalStemInteractions } from './temporal-stem-interaction-reading.js';
@@ -40,6 +42,7 @@ export interface GeneralAnnualMonthlyExplorationReport {
   targetYear: number;
   targetMonth: number;
   annual: GeneralAnnualExplorationReport;
+  annualEffectivePillar?: ReturnType<typeof effectiveAnnualPillar>;
   monthly: GeneralMonthlyExplorationReport;
   periodComparison: string;
   /** The yearly profile is for a Seoul civil calendar year, not an Ipchun annual pillar. */
@@ -143,17 +146,21 @@ export function buildGeneralAnnualMonthlyExplorationReport(
   const annualContext = buildTemporalReadingContext(annualRequest);
   requireLinkedPeriod(annualContext?.scope === 'annual', 'annual context unavailable');
   const annualFacts = buildAnnualInterpretationFacts(snapshot, annualContext);
-  const annualRegistry = createGeneralAnnualReadingCandidateRegistry(facts.referenceDateTime, { includeStemInteractions: true });
+  const annualRegistry = createGeneralAnnualReadingCandidateRegistry(facts.referenceDateTime, {
+    includeStemInteractions: true, includeBranchLayers: true,
+  });
   const annualExecution = runInterpretation(snapshot, annualRegistry, {
     requestId: annualRequest.requestId,
-    temporalFacts: { ...annualFacts },
+    temporalFacts: { ...annualFacts, branchLayers: buildResearchTemporalBranchLayers(snapshot, annualFacts) },
     now: new Date(facts.referenceDateTime),
   });
   const annualSelection = buildReadingCompositionEvidence(snapshot, annualExecution, annualRegistry, annualRequest);
+  const annualSelected = new Set(annualSelection.selection.selectedClaimIds);
   const annual: GeneralAnnualExplorationReport = {
     ...buildGeneralAnnualExplorationReport(annualFacts),
     stemInteractions: readTemporalStemInteractions(annualExecution,
-      new Set(annualSelection.selection.selectedClaimIds), GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType),
+      annualSelected, GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType),
+    branchLayers: readTemporalBranchLayers(annualExecution, annualSelected, GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType),
   };
   requireLinkedPeriod(
     annual.targetYear === monthly.targetYear &&
@@ -287,6 +294,9 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     targetYear: monthly.targetYear,
     targetMonth: monthly.targetMonth,
     annual,
+    ...(civilYearAtReference === annual.targetYear
+      ? { annualEffectivePillar: effectiveAnnualPillar(annual.targetYear, facts.referenceDateTime) }
+      : {}),
     monthly,
     periodComparison,
     annualReference,
@@ -388,7 +398,8 @@ function monthlyCard(
     e(section.text) +
     '</p>' +
     (section.kind === 'theme' ? renderTemporalNatalEvidence(report, `monthly_${section.segmentId}`) +
-      renderTemporalStemInteractions(report.monthly.stemInteractions, section.segmentId, e) : '') +
+      renderTemporalStemInteractions(report.monthly.stemInteractions, section.segmentId, e) +
+      renderTemporalBranchLayers(report.monthly.branchLayers, section.segmentId, e) : '') +
     '<details><summary>이 풀이의 계산 근거와 출처</summary>' +
     '<p>기간: ' +
     e(formatTemporalKst(section.calculatedInterval.startsAt)) +
@@ -430,7 +441,8 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
         e(section.text) +
         '</p>' +
         (section.kind === 'core' ? renderTemporalNatalEvidence(report, 'annual') +
-          renderTemporalStemInteractions(report.annual.stemInteractions, 'annual', e) : '') +
+          renderTemporalStemInteractions(report.annual.stemInteractions, 'annual', e) +
+          renderTemporalBranchLayers(report.annual.branchLayers, 'annual', e) : '') +
         '<details><summary>올해 문구의 계산 근거와 연구 출처</summary>' +
         '<p>해석 범위: 내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)</p>' +
         '<p>문구 프로필: ' +
@@ -603,6 +615,9 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '</h2>' +
     '<p class="muted" id="reference-year-context">' +
     e(annualContext) +
+    (report.annualEffectivePillar
+      ? '</p><p>' + e(`입춘 기준 조회 시각의 세운은 ${report.annualEffectivePillar.effectiveYear}년 ${report.annualEffectivePillar.stem}${report.annualEffectivePillar.branch}입니다.`)
+      : '') +
     '</p>' +
     '<p class="muted">서울 달력 연도 기준 · 연간 ' +
     e(report.annual.annualPillarLabel) +

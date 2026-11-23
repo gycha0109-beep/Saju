@@ -1,4 +1,5 @@
 import type { TenGod } from '../contracts/calculation.js';
+import { addBranchLayerRules } from './general-temporal-branch-layer-candidate.js';
 import type {
   ClaimTypeDefinition,
   ClaimValueSchemaDefinition,
@@ -446,7 +447,7 @@ export const GENERAL_MONTHLY_READING_PACK = Object.freeze({
 
 export function createGeneralMonthlyReadingCandidateRegistry(
   createdAt = '1970-01-01T00:00:00.000Z',
-  { includeStemInteractions = false } = {},
+  { includeStemInteractions = false, includeBranchLayers = false } = {},
 ) {
   const input = {
     rules: [...GENERAL_MONTHLY_ACTIVATION_RULES, ...GENERAL_MONTHLY_TENSION_RULES],
@@ -455,8 +456,11 @@ export function createGeneralMonthlyReadingCandidateRegistry(
     claimTypeDefinitions: [GENERAL_MONTHLY_THEME_CLAIM_TYPE, GENERAL_MONTHLY_TENSION_CLAIM_TYPE],
     claimValueSchemas: [GENERAL_MONTHLY_THEME_SCHEMA, GENERAL_MONTHLY_TENSION_SCHEMA],
   };
+  const configured = includeBranchLayers
+    ? addBranchLayerRules('monthly', GENERAL_MONTHLY_THEME_CLAIM_TYPE.claimType, input, GENERAL_MONTHLY_READING_PACK)
+    : { input, pack: GENERAL_MONTHLY_READING_PACK };
   return includeStemInteractions
     ? createStemInteractionResearchRegistry('monthly', GENERAL_MONTHLY_THEME_CLAIM_TYPE.claimType,
-      input, GENERAL_MONTHLY_READING_PACK, createdAt)
-    : createRuleRegistrySnapshot(input, GENERAL_MONTHLY_READING_PACK, createdAt);
+      configured.input, configured.pack, createdAt)
+    : createRuleRegistrySnapshot(configured.input, configured.pack, createdAt);
 }

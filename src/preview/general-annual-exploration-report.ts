@@ -1,4 +1,5 @@
 import type { TemporalStemInteraction } from './temporal-stem-interaction-reading.js';
+import type { TemporalBranchLayerReading } from './temporal-branch-layer-reading.js';
 import type { PillarSlot, TenGod } from '../contracts/calculation.js';
 import type { AnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
 import { GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES } from '../research/general-annual-narrative-profiles.js';
@@ -62,6 +63,7 @@ export interface GeneralAnnualExplorationReport {
   annualPillarLabel: string;
   annualStemTenGod: TenGod;
   stemInteractions: readonly TemporalStemInteraction[];
+  branchLayers: readonly TemporalBranchLayerReading[];
   headline: string;
   sections: readonly GeneralAnnualExplorationSection[];
   unavailablePillars: readonly PillarSlot[];
@@ -174,6 +176,7 @@ export function buildGeneralAnnualExplorationReport(
     annualPillarLabel: `${facts.annualPillar.stem}${facts.annualPillar.branch}`,
     annualStemTenGod: facts.annualStemTenGod,
     stemInteractions: [],
+    branchLayers: [],
     headline: `${facts.targetYear}년 연운 미리보기`,
     sections,
     unavailablePillars,

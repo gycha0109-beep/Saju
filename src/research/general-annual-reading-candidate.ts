@@ -1,4 +1,5 @@
 import type { TenGod } from '../contracts/calculation.js';
+import { addBranchLayerRules } from './general-temporal-branch-layer-candidate.js';
 import type {
   ClaimTypeDefinition,
   ClaimValueSchemaDefinition,
@@ -346,7 +347,7 @@ export const GENERAL_ANNUAL_READING_PACK = Object.freeze({
 
 export function createGeneralAnnualReadingCandidateRegistry(
   createdAt = '1970-01-01T00:00:00.000Z',
-  { includeStemInteractions = false } = {},
+  { includeStemInteractions = false, includeBranchLayers = false } = {},
 ) {
   const input = {
     rules: [...GENERAL_ANNUAL_ACTIVATION_RULES, ...GENERAL_ANNUAL_TENSION_RULES],
@@ -355,8 +356,11 @@ export function createGeneralAnnualReadingCandidateRegistry(
     claimTypeDefinitions: [GENERAL_ANNUAL_THEME_CLAIM_TYPE, GENERAL_ANNUAL_TENSION_CLAIM_TYPE],
     claimValueSchemas: [GENERAL_ANNUAL_THEME_SCHEMA, GENERAL_ANNUAL_TENSION_SCHEMA],
   };
+  const configured = includeBranchLayers
+    ? addBranchLayerRules('annual', GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType, input, GENERAL_ANNUAL_READING_PACK)
+    : { input, pack: GENERAL_ANNUAL_READING_PACK };
   return includeStemInteractions
     ? createStemInteractionResearchRegistry('annual', GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType,
-      input, GENERAL_ANNUAL_READING_PACK, createdAt)
-    : createRuleRegistrySnapshot(input, GENERAL_ANNUAL_READING_PACK, createdAt);
+      configured.input, configured.pack, createdAt)
+    : createRuleRegistrySnapshot(configured.input, configured.pack, createdAt);
 }

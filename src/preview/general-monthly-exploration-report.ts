@@ -1,4 +1,5 @@
 import { readTemporalStemInteractions, renderTemporalStemInteractions, type TemporalStemInteraction } from './temporal-stem-interaction-reading.js';
+import { readTemporalBranchLayers, renderTemporalBranchLayers, type TemporalBranchLayerReading } from './temporal-branch-layer-reading.js';
 import type { CanonicalSajuSnapshot, PillarSlot, TenGod } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -57,6 +58,7 @@ export interface GeneralMonthlyExplorationReport {
   coverage: 'complete' | 'partial' | 'insufficient';
   sections: readonly GeneralMonthlyExplorationSection[];
   stemInteractions: readonly TemporalStemInteraction[];
+  branchLayers: readonly TemporalBranchLayerReading[];
   missing: readonly string[];
   caveats: readonly string[];
   /** The exact monthly segment applicable to the request's reference instant. */
@@ -251,6 +253,7 @@ export function buildGeneralMonthlyExplorationReport(
     coverage: themeCount.size === 2 ? 'complete' : themeCount.size === 1 ? 'partial' : 'insufficient',
     sections,
     stemInteractions: readTemporalStemInteractions(execution, selectedIds, GENERAL_MONTHLY_THEME_CLAIM_TYPE.claimType),
+    branchLayers: readTemporalBranchLayers(execution, selectedIds, GENERAL_MONTHLY_THEME_CLAIM_TYPE.claimType),
     missing,
     referenceReading,
     caveats: [
@@ -289,7 +292,8 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
       '<p>규칙: ' + escapeHtml(theme.ruleIds.join(' · ')) +
       ' / 방법론: ' + escapeHtml(theme.methodologyId) + '</p>' +
       '<p>출처: ' + escapeHtml(theme.sourceIds.join(' · ')) +
-      '</p></details>' + renderTemporalStemInteractions(report.stemInteractions, theme.segmentId, escapeHtml)
+      '</p></details>' + renderTemporalStemInteractions(report.stemInteractions, theme.segmentId, escapeHtml) +
+      renderTemporalBranchLayers(report.branchLayers, theme.segmentId, escapeHtml)
     : reference.state === 'insufficient_evidence'
       ? '<p>' + escapeHtml(SEGMENT_KO[reference.segmentId!]) +
         '의 한국어 해석 근거가 아직 충분하지 않습니다.</p>'
@@ -313,7 +317,8 @@ export function renderGeneralMonthlyExplorationHtml(report: GeneralMonthlyExplor
     return `<section><h2>${SEGMENT_KO[id]}</h2>
       ${interval ? `<p class="muted">${kst(interval.startsAt)}부터 ${kst(interval.endsAt)} 전까지</p>` : ''}
       ${cards || '<p>이 구간에서 보여줄 근거가 충분하지 않습니다.</p>'}
-      ${renderTemporalStemInteractions(report.stemInteractions, id, escapeHtml)}</section>`;
+      ${renderTemporalStemInteractions(report.stemInteractions, id, escapeHtml)}
+      ${renderTemporalBranchLayers(report.branchLayers, id, escapeHtml)}</section>`;
   }).join('');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">

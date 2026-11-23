@@ -123,6 +123,15 @@ function pairMatches<T extends string>(
   );
 }
 
+export function deriveBranchPairRelation(
+  natal: EarthlyBranch,
+  period: EarthlyBranch,
+): 'combination' | 'clash' | 'none' {
+  if (pairMatches(natal, period, BRANCH_SIX_COMBINATIONS)) return 'combination';
+  if (pairMatches(natal, period, BRANCH_CLASHES)) return 'clash';
+  return 'none';
+}
+
 function tripleMatches(
   values: readonly EarthlyBranch[],
   groups: readonly (readonly [EarthlyBranch, EarthlyBranch, EarthlyBranch])[],
@@ -179,10 +188,11 @@ export function matchStructuralPillarPair(
   if (pairMatches(left.stem.value, right.stem.value, STEM_FIVE_COMBINATIONS)) {
     matches.push({ kind: 'stem_five_combination', component: 'stem', sourceIds });
   }
-  if (pairMatches(left.branch.value, right.branch.value, BRANCH_SIX_COMBINATIONS)) {
+  const branchRelation = deriveBranchPairRelation(left.branch.value, right.branch.value);
+  if (branchRelation === 'combination') {
     matches.push({ kind: 'branch_six_combination', component: 'branch', sourceIds });
   }
-  if (pairMatches(left.branch.value, right.branch.value, BRANCH_CLASHES)) {
+  if (branchRelation === 'clash') {
     matches.push({ kind: 'branch_clash', component: 'branch', sourceIds });
   }
   return matches;
