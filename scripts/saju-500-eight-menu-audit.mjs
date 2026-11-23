@@ -687,6 +687,34 @@ export function runFiveHundredSajuAudit(count = DEFAULT_COUNT, { includeCases = 
         }
       : {}),
     claimGraphAudit,
+    natalInterpretationDiagnostics: Object.fromEntries(
+      DOMAIN_NAMES.slice(0, 5).map((name) => {
+        const menuRows = rows[name];
+        const states = ['complete', 'partial', 'insufficient'];
+        return [name, {
+          stateCounts: Object.fromEntries(
+            states.map((state) => [state, menuRows.filter((row) => row.state === state).length]),
+          ),
+          missingReasonCounts: Object.fromEntries(
+            [...menuRows.reduce((counts, row) => {
+              for (const reason of row.mur?.missingRequirements ?? []) {
+                counts.set(reason, (counts.get(reason) ?? 0) + 1);
+              }
+              return counts;
+            }, new Map())].sort((a, b) => b[1] - a[1]),
+          ),
+          selectedSectionCounts: Object.fromEntries(
+            [0, 1, 2, 3].map((n) => [
+              String(n),
+              menuRows.filter((row) => row.sectionCount === n).length,
+            ]),
+          ),
+          // A research authorization flag is separate from evidence completeness.
+          researchOnlyCases: menuRows.filter((row) => row.evidenceComponents?.permissions?.researchOnly === true).length,
+          usefulCompleteCases: menuRows.filter((row) => row.evidenceComponents?.permissions?.usefulComplete === true).length,
+        }];
+      }),
+    ),
     sixMenuQuestionCoverage: auditSixMenuQuestionCoverage(rows),
     wealthChartDiagnostics,
     rootCauseDiagnostics: {
