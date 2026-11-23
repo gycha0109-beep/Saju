@@ -249,7 +249,7 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(html).toContain('출판 및 판매 불가');
   });
 
-  it('explains remaining Wealth insufficiency using all three observed channels', () => {
+  it('shows a partial month-output reading when all three channels have no wealth witness', () => {
     const chart = calculateCanonicalSajuSnapshot(
       {
         calendarType: 'solar',
@@ -261,11 +261,12 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       { now: NOW },
     );
     const result = reports(chart);
-    expect(result.wealth.state).toBe('insufficient');
-    expect(result.wealth.sections).toHaveLength(0);
+    expect(result.wealth.state).toBe('partial');
+    expect(result.wealth.sections[0]?.pattern).toBe('OUTPUT_PEER_CONTEXT');
     expect(result.wealth.missing[0]).toContain('\uC9C0\uC7A5\uAC04');
     const html = renderNatalFiveDomainMultifactorResearchHtml(chart, result);
     expect(html).toContain(result.wealth.missing[0]!);
+    expect(html).toContain('기존 산출물을 어떻게 바꾸고');
     expect(result.wealth.mayPublish).toBe(false);
     expect(result.wealth.maySell).toBe(false);
   });

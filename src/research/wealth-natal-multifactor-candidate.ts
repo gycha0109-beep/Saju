@@ -6,6 +6,7 @@ import type {
   MethodologyDefinition,
   RuleDefinition,
   RuleExpression,
+  RuleInputRequirement,
   SourceReference,
 } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
@@ -17,8 +18,10 @@ import {
 import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
 
 /** Canonical T5 -> source-qualified Wealth T8; no parallel product interpretation. */
-export const WEALTH_NATAL_MULTIFACTOR_VERSION = '0.2.0-research' as const;
+export const WEALTH_NATAL_MULTIFACTOR_VERSION = '0.3.0-research' as const;
+const EXISTING_WEALTH_VERSION = '0.2.0-research';
 const METHOD_ID = 'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1';
+export const WEALTH_MONTH_OUTPUT_METHOD_ID = 'M-WEALTH-NATAL-MONTH-OUTPUT-CONTEXT-V1';
 const RULE_SET = 'wealth-natal-source-bounded-multifactor';
 const HIDDEN_STEM_METHOD_ID = 'M-WEALTH-NATAL-HIDDEN-STEM-T5-OBSERVATION-V1';
 const HIDDEN_STEM_METHOD_VERSION = '0.1.0-research' as const;
@@ -32,6 +35,7 @@ interface Pattern {
   axis: Axis;
   headline: string;
   summary: string;
+  monthOutput?: '식신' | '상관';
 }
 const PATTERNS: readonly Pattern[] = Object.freeze([
   {
@@ -106,8 +110,42 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     summary:
       '관성(규범·역할)과 비겁(자기 기준·동료)이 같은 관측 채널에 함께 확인됩니다. 전통적인 관성과 비겁의 견제 관계를 바탕으로 외부 요구와 자기 기준을 나란히 살피는 제한된 주변 맥락입니다. 재성에 관한 직접 해석이나 개인의 실제 재정 행동·성공·실패를 판단할 근거가 아닙니다.',
   },
+  {
+    id: 'OUTPUT_PEER_CONTEXT',
+    families: ['output', 'peer'],
+    axis: 'context',
+    monthOutput: '상관',
+    headline: '자기 방식으로 만든 결과의 교환 조건',
+    summary:
+      '월지의 한 지장간이 상관이고 다른 지장간에서 비겁이 확인됩니다. 자원을 읽을 때는 스스로 정한 방식으로 기존 산출물을 어떻게 바꾸고 그 결과를 어떤 조건에서 교환할 수 있는지부터 살펴봅니다. 명식에서 확인한 근거는 산출 방식까지이며, 그 산출이 재성으로 이어지는 연결은 확인되지 않습니다.',
+  },
+  {
+    id: 'OUTPUT_RESOURCE_CONTEXT',
+    families: ['output', 'resource'],
+    axis: 'context',
+    monthOutput: '식신',
+    headline: '꾸준히 만들고 준비에 쓸 몫을 가르는 구조',
+    summary:
+      '월지의 한 지장간이 식신이고 다른 지장간에서 인성이 확인됩니다. 반복해서 만들어 낼 수 있는 결과를 먼저 구체화하고, 준비와 검토에 드는 몫을 산출에 투입하는 몫과 구분해 읽습니다. 인성이 식신을 뒷받침하거나 제약하는 정도는 여기서 확정하지 않으며, 산출이 자원으로 바뀌는 연결도 확인되지 않습니다.',
+  },
 ]);
 const CHANNELS: readonly Channel[] = ['visible_stems', 'branches', 'hidden_stems'];
+const PATTERN_CHANNELS = PATTERNS.flatMap((pattern) =>
+  (pattern.monthOutput ? CHANNELS.filter((channel) => channel === 'hidden_stems') : CHANNELS).map(
+    (channel) => ({ pattern, channel }),
+  ),
+);
+const MONTH_ORDER_SOURCE = {
+  sourceId: 'SRC-WEALTH-JAPYEONG-JINJEON-MONTH-ORDER',
+  sourceType: 'classical_text',
+  title: '子平真詮 論用神・論用神成敗救應',
+  language: 'zh-Hant',
+  locator: { section: '八、論用神 / 九、論用神成敗救應' },
+  url: 'https://www.donglishuzhai.net/chapter/3722.html',
+  provenanceTier: 'primary',
+  notes:
+    'Month branch as a starting context and the conditional distinction between output and its generating Wealth. No determination of Gyeokguk or its establishment.',
+} satisfies SourceReference;
 const SOURCE_REFS: RuleDefinition['sourceRefs'] = [
   {
     sourceId: GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId,
@@ -205,10 +243,13 @@ const QUALITY: RuleDefinition['quality'] = {
   reviewerStatus: 'unreviewed',
 };
 
-function hiddenStemPresenceCondition(family: Family): RuleExpression {
+function hiddenStemPresenceCondition(
+  tenGods: readonly TenGod[],
+  slots: readonly (typeof HIDDEN_STEM_SLOTS)[number][] = HIDDEN_STEM_SLOTS,
+): RuleExpression {
   const byDayMaster: RuleExpression[] = DAY_STEMS.map((dayStem) => {
     const allowedHiddenStems = DAY_STEMS.filter((hiddenStem) =>
-      FAMILY_TEN_GODS[family].includes(getTenGod(dayStem, hiddenStem)),
+      tenGods.includes(getTenGod(dayStem, hiddenStem)),
     );
     return {
       op: 'and' as const,
@@ -220,7 +261,7 @@ function hiddenStemPresenceCondition(family: Family): RuleExpression {
         },
         {
           op: 'or' as const,
-          expressions: HIDDEN_STEM_SLOTS.flatMap((slot) =>
+          expressions: slots.flatMap((slot) =>
             HIDDEN_STEM_INDEXES.map((index) => ({
               op: 'in' as const,
               value: {
@@ -246,7 +287,7 @@ function hiddenStemPresenceCondition(family: Family): RuleExpression {
 function hiddenStemT5Rule(family: Family): RuleDefinition {
   return {
     ruleId: 'RULE-WEALTH-NATAL-T5-' + family.toUpperCase() + '-HIDDEN-STEMS',
-    version: WEALTH_NATAL_MULTIFACTOR_VERSION,
+    version: EXISTING_WEALTH_VERSION,
     ruleSetId: HIDDEN_STEM_RULE_SET,
     taxonomy: { tier: 'T5', category: 'ten_gods', subcategory: family + '_hidden_stems' },
     methodologyRef: { id: HIDDEN_STEM_METHOD_ID, version: HIDDEN_STEM_METHOD_VERSION },
@@ -272,7 +313,7 @@ function hiddenStemT5Rule(family: Family): RuleDefinition {
         ambiguityBehavior: 'scenario_preserving' as const,
       })),
     ],
-    condition: hiddenStemPresenceCondition(family),
+    condition: hiddenStemPresenceCondition(FAMILY_TEN_GODS[family]),
     output: {
       claimType: 'TEN_GOD_' + family.toUpperCase() + '_HIDDEN_STEMS_THEME',
       subject: 'natal_chart',
@@ -302,7 +343,7 @@ export const WEALTH_NATAL_HIDDEN_STEM_TEN_GOD_RULES: readonly RuleDefinition[] =
 
 export const WEALTH_NATAL_MULTIFACTOR_METHODOLOGY: MethodologyDefinition = Object.freeze({
   methodologyId: METHOD_ID,
-  version: WEALTH_NATAL_MULTIFACTOR_VERSION,
+  version: EXISTING_WEALTH_VERSION,
   family: 'domain_synthesis',
   name: 'Wealth natal synthesis of multiple source-bounded Ten-God family channels (research)',
   description:
@@ -325,6 +366,26 @@ export const WEALTH_NATAL_MULTIFACTOR_METHODOLOGY: MethodologyDefinition = Objec
   status: 'research',
 });
 
+const MONTH_OUTPUT_METHODOLOGY: MethodologyDefinition = {
+  methodologyId: WEALTH_MONTH_OUTPUT_METHOD_ID,
+  version: WEALTH_NATAL_MULTIFACTOR_VERSION,
+  family: 'domain_synthesis',
+  name: 'Month-position output in a resolved chart with no observed wealth',
+  description: 'Uses a solitary month hidden stem to describe a value-production context.',
+  assumptions: [
+    'All three channels are resolved and no Wealth subtype is observed in any channel.',
+    'The only month hidden stem maps to the same exact Output subtype as the month branch.',
+    'Same-chart hidden-stem peer or resource support distinguishes permissible topics; no strength, pattern establishment, or financial outcome is inferred.',
+  ],
+  requiredFactTypes: [
+    'derivedFacts.dayMaster',
+    'derivedFacts.tenGods',
+    ...HIDDEN_STEM_SLOTS.map((slot) => 'derivedFacts.hiddenStems.' + slot),
+  ],
+  sourceIds: [...WEALTH_NATAL_MULTIFACTOR_METHODOLOGY.sourceIds, MONTH_ORDER_SOURCE.sourceId],
+  status: 'research',
+};
+
 function sourceRefsForChannel(channel: Channel): RuleDefinition['sourceRefs'] {
   return channel === 'hidden_stems'
     ? [
@@ -341,32 +402,81 @@ function sourceRefsForChannel(channel: Channel): RuleDefinition['sourceRefs'] {
 function claimType(pattern: Pattern, channel: Channel) {
   return `WEALTH_NATAL_MULTIFACTOR_${pattern.id}_${channel.toUpperCase()}`;
 }
+const monthOutputInputs: readonly RuleInputRequirement[] = [
+  { key: 'dayMaster', pathOrClaimType: 'derivedFacts.dayMaster' },
+  { key: 'tenGods', pathOrClaimType: 'derivedFacts.tenGods' },
+  ...HIDDEN_STEM_SLOTS.map((slot) => ({
+    key: 'hidden' + slot[0]!.toUpperCase() + slot.slice(1),
+    pathOrClaimType: 'derivedFacts.hiddenStems.' + slot,
+  })),
+].map((input) => ({
+  ...input,
+  source: 'derived_fact',
+  acceptedStatuses: ['resolved'],
+  required: true,
+  ambiguityBehavior: 'scenario_preserving',
+}));
+
+function monthOutputConditions(monthOutput: '식신' | '상관'): RuleExpression[] {
+  return [
+    {
+      op: 'eq',
+      left: { kind: 'input', key: 'tenGods', path: 'month.branch.value' },
+      right: { kind: 'literal', value: monthOutput },
+    },
+    {
+      op: 'not',
+      expression: { op: 'exists', value: { kind: 'input', key: 'hiddenMonth', path: '1' } },
+    },
+    hiddenStemPresenceCondition([monthOutput], ['month']),
+    { op: 'not', expression: hiddenStemPresenceCondition(FAMILY_TEN_GODS.wealth) },
+    ...HIDDEN_STEM_SLOTS.flatMap((slot): RuleExpression[] =>
+      (slot === 'day' ? ['branch'] : ['stem', 'branch']).map((position) => ({
+        op: 'not',
+        expression: {
+          op: 'in',
+          value: { kind: 'input', key: 'tenGods', path: `${slot}.${position}.value` },
+          set: FAMILY_TEN_GODS.wealth,
+        },
+      })),
+    ),
+  ];
+}
+
 function rule(pattern: Pattern, channel: Channel): RuleDefinition {
   return {
     ruleId: `RULE-${claimType(pattern, channel)}`,
-    version: WEALTH_NATAL_MULTIFACTOR_VERSION,
+    version: pattern.monthOutput ? WEALTH_NATAL_MULTIFACTOR_VERSION : EXISTING_WEALTH_VERSION,
     ruleSetId: RULE_SET,
     taxonomy: { tier: 'T8', category: 'wealth', subcategory: 'multifactor_structure' },
-    methodologyRef: { id: METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION },
+    methodologyRef: pattern.monthOutput
+      ? { id: WEALTH_MONTH_OUTPUT_METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION }
+      : { id: METHOD_ID, version: EXISTING_WEALTH_VERSION },
     title: `${pattern.headline} — ${channel}`,
     description:
       pattern.axis === 'context'
         ? 'Indirect source-bounded resource-context structure; cannot determine wealth direction or fulfill a wealth synthesis core.'
         : 'Wealth natal research synthesis of exact channel-bound upstream T5 themes.',
-    inputs: pattern.families.map((family, i) => ({
-      key: `family${i + 1}`,
-      source: 'interpretation_claim' as const,
-      pathOrClaimType: `TEN_GOD_${family.toUpperCase()}_${channel.toUpperCase()}_THEME`,
-      required: true,
-      cardinality: 'exactly_one' as const,
-      ambiguityBehavior: 'scenario_preserving' as const,
-    })),
+    inputs: [
+      ...pattern.families.map((family, i) => ({
+        key: `family${i + 1}`,
+        source: 'interpretation_claim' as const,
+        pathOrClaimType: `TEN_GOD_${family.toUpperCase()}_${channel.toUpperCase()}_THEME`,
+        required: true,
+        cardinality: 'exactly_one' as const,
+        ambiguityBehavior: 'scenario_preserving' as const,
+      })),
+      ...(pattern.monthOutput ? monthOutputInputs : []),
+    ],
     condition: {
       op: 'and',
-      expressions: pattern.families.map((_, i) => ({
-        op: 'exists' as const,
-        value: { kind: 'input' as const, key: `family${i + 1}` },
-      })),
+      expressions: [
+        ...pattern.families.map((_, i) => ({
+          op: 'exists' as const,
+          value: { kind: 'input' as const, key: `family${i + 1}` },
+        })),
+        ...(pattern.monthOutput ? monthOutputConditions(pattern.monthOutput) : []),
+      ],
     },
     output: {
       claimType: claimType(pattern, channel),
@@ -377,6 +487,7 @@ function rule(pattern: Pattern, channel: Channel): RuleDefinition {
         families: [...pattern.families],
         channel,
         axis: pattern.axis,
+        ...(pattern.monthOutput ? { monthOutput: pattern.monthOutput } : {}),
         ...(pattern.axis === 'context' ? { directWealthReadingAuthorized: false } : {}),
         realLifeOutcomeAuthorized: false,
         futureTimingAuthorized: false,
@@ -388,47 +499,57 @@ function rule(pattern: Pattern, channel: Channel): RuleDefinition {
         pattern.axis === 'core' ? 'major' : pattern.axis === 'context' ? 'minor' : 'moderate',
       tags: ['research', 'wealth-natal', 'source-bound-multifactor', pattern.axis, channel],
     },
-    sourceRefs: sourceRefsForChannel(channel),
+    sourceRefs: pattern.monthOutput
+      ? [
+          ...sourceRefsForChannel(channel),
+          { sourceId: MONTH_ORDER_SOURCE.sourceId, supportType: 'interpretive_basis' },
+        ]
+      : sourceRefsForChannel(channel),
     quality: QUALITY,
     status: 'research',
   };
 }
 export const WEALTH_NATAL_MULTIFACTOR_RULES: readonly RuleDefinition[] = Object.freeze(
-  PATTERNS.flatMap((pattern) => CHANNELS.map((channel) => rule(pattern, channel))),
+  PATTERN_CHANNELS.map(({ pattern, channel }) => rule(pattern, channel)),
 );
 export const WEALTH_NATAL_MULTIFACTOR_NARRATIVES: readonly ClaimNarrativeProfile[] = Object.freeze(
-  PATTERNS.flatMap((pattern, order) =>
-    CHANNELS.map((channel) => ({
-      profileId: `PROFILE-${claimType(pattern, channel)}`,
-      version: WEALTH_NATAL_MULTIFACTOR_VERSION,
-      claimType: claimType(pattern, channel),
-      semanticKeys: ['pattern', 'families', 'channel', 'axis'],
-      allowedEpistemicTypes: ['interpretation' as const],
-      requiredMethodAttribution: true,
-      prohibitedPhrases: [
-        '반드시 성공',
-        '승진한다',
-        '돈이 들어온다',
-        '성격이 확정된다',
-        '운명이 정해져',
-      ],
-      renderingHints: [`axis:${pattern.axis}`, `order:${order}`],
-      templates: [
-        { templateKey: 'headline', language: 'ko', text: pattern.headline },
-        {
-          templateKey: 'summary',
-          language: 'ko',
-          text:
-            (channel === 'visible_stems'
-              ? '\uCC9C\uAC04\uC5D0\uC11C \uC2E4\uC81C\uB85C \uAD00\uCE21\uB41C \uC870\uD569\uC785\uB2C8\uB2E4. '
-              : channel === 'branches'
-                ? '\uC9C0\uC9C0 \uB300\uD45C \uC2ED\uC2E0\uC5D0\uC11C \uAD00\uCE21\uB41C \uBCF4\uC870 \uC870\uD569\uC785\uB2C8\uB2E4. '
-                : '\uC9C0\uC7A5\uAC04\uC5D0\uC11C \uBCC4\uB3C4\uB85C \uAD00\uCE21\uB41C \uC870\uD569\uC785\uB2C8\uB2E4. \uCC9C\uAC04 \uBC0F \uC9C0\uC9C0 \uB300\uD45C \uC2ED\uC2E0\uACFC \uC11E\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. ') +
-            pattern.summary + ' 이 구조만으로 소득, 재산이나 투자 성과를 판단할 수 없습니다.',
-        },
-      ],
-    })),
-  ),
+  PATTERN_CHANNELS.map(({ pattern, channel }, order) => ({
+    profileId: `PROFILE-${claimType(pattern, channel)}`,
+    version: pattern.monthOutput ? WEALTH_NATAL_MULTIFACTOR_VERSION : EXISTING_WEALTH_VERSION,
+    claimType: claimType(pattern, channel),
+    semanticKeys: [
+      'pattern',
+      'families',
+      'channel',
+      'axis',
+      ...(pattern.monthOutput ? ['monthOutput'] : []),
+    ],
+    allowedEpistemicTypes: ['interpretation' as const],
+    requiredMethodAttribution: true,
+    prohibitedPhrases: [
+      '반드시 성공',
+      '승진한다',
+      '돈이 들어온다',
+      '성격이 확정된다',
+      '운명이 정해져',
+    ],
+    renderingHints: [`axis:${pattern.axis}`, `order:${order}`],
+    templates: [
+      { templateKey: 'headline', language: 'ko', text: pattern.headline },
+      {
+        templateKey: 'summary',
+        language: 'ko',
+        text:
+          (channel === 'visible_stems'
+            ? '\uCC9C\uAC04\uC5D0\uC11C \uC2E4\uC81C\uB85C \uAD00\uCE21\uB41C \uC870\uD569\uC785\uB2C8\uB2E4. '
+            : channel === 'branches'
+              ? '\uC9C0\uC9C0 \uB300\uD45C \uC2ED\uC2E0\uC5D0\uC11C \uAD00\uCE21\uB41C \uBCF4\uC870 \uC870\uD569\uC785\uB2C8\uB2E4. '
+              : '\uC9C0\uC7A5\uAC04\uC5D0\uC11C \uBCC4\uB3C4\uB85C \uAD00\uCE21\uB41C \uC870\uD569\uC785\uB2C8\uB2E4. \uCC9C\uAC04 \uBC0F \uC9C0\uC9C0 \uB300\uD45C \uC2ED\uC2E0\uACFC \uC11E\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. ') +
+          pattern.summary +
+          ' 이 구조만으로 소득, 재산이나 투자 성과를 판단할 수 없습니다.',
+      },
+    ],
+  })),
 );
 export const WEALTH_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
   packId: 'PACK-WEALTH-NATAL-SOURCE-BOUNDED-MULTIFACTOR-RESEARCH',
@@ -440,7 +561,8 @@ export const WEALTH_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
       version: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.version,
     },
     { id: HIDDEN_STEM_METHOD_ID, version: HIDDEN_STEM_METHOD_VERSION },
-    { id: METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION },
+    { id: METHOD_ID, version: EXISTING_WEALTH_VERSION },
+    { id: WEALTH_MONTH_OUTPUT_METHOD_ID, version: WEALTH_NATAL_MULTIFACTOR_VERSION },
   ],
   enabledRuleSets: [
     ...new Set([
@@ -469,11 +591,13 @@ export function createWealthNatalMultifactorRegistry(createdAt = '1970-01-01T00:
         GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
         WEALTH_NATAL_HIDDEN_STEM_T5_METHODOLOGY,
         WEALTH_NATAL_MULTIFACTOR_METHODOLOGY,
+        MONTH_OUTPUT_METHODOLOGY,
       ],
       sources: [
         GENERAL_NATAL_USEFUL_READING_SOURCE,
         HIDDEN_STEMS_SOURCE,
         GENERAL_NATAL_CONCLUSION_SOURCE,
+        MONTH_ORDER_SOURCE,
       ],
     },
     WEALTH_NATAL_MULTIFACTOR_PACK,

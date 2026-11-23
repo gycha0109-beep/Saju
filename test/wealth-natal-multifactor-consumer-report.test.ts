@@ -37,25 +37,29 @@ function run(month: number, day: number, known = true, hour = 12) {
   };
 }
 describe('actual-source Wealth natal T5→T8→Korean five-domain report', () => {
-  it('is Wealth-only, research-only, and every T8 has 2/3 exact T5 inputs', () => {
+  it('requires exact same-channel T5 inputs and bounds canonical month output rules', () => {
     expect(registry.pack.packId).toBe(WEALTH_NATAL_MULTIFACTOR_PACK.packId);
-    expect(WEALTH_NATAL_MULTIFACTOR_RULES).toHaveLength(27);
+    expect(WEALTH_NATAL_MULTIFACTOR_RULES).toHaveLength(29);
     expect(registry.rules.filter((r) => r.taxonomy.tier === 'T5')).toHaveLength(15);
-    expect(registry.rules.filter((r) => r.taxonomy.tier === 'T8')).toHaveLength(27);
+    expect(registry.rules.filter((r) => r.taxonomy.tier === 'T8')).toHaveLength(29);
     expect(registry.rules.filter((r) => r.taxonomy.subcategory === 'self_baseline')).toHaveLength(
       0,
     );
     for (const rule of WEALTH_NATAL_MULTIFACTOR_RULES) {
       expect(rule.taxonomy.category).toBe('wealth');
-      expect(rule.inputs.length).toBeGreaterThanOrEqual(2);
-      expect(
-        rule.inputs.every(
-          (i) =>
-            i.source === 'interpretation_claim' && i.cardinality === 'exactly_one' && i.required,
-        ),
-      ).toBe(true);
+      const monthOutput = (rule.output.value as { monthOutput?: string }).monthOutput;
+      const upstream = rule.inputs.filter((i) => i.source === 'interpretation_claim');
+      expect(upstream.length).toBeGreaterThanOrEqual(2);
+      expect(upstream.every((i) => i.cardinality === 'exactly_one' && i.required)).toBe(true);
+      expect(rule.inputs.filter((i) => i.source === 'derived_fact')).toHaveLength(
+        monthOutput ? 6 : 0,
+      );
       expect(rule.sourceRefs).toHaveLength(
-        (rule.output.value as { channel?: string }).channel === 'hidden_stems' ? 3 : 2,
+        monthOutput
+          ? 4
+          : (rule.output.value as { channel?: string }).channel === 'hidden_stems'
+            ? 3
+            : 2,
       );
       expect(rule.status).toBe('research');
     }
@@ -76,7 +80,7 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     const indirect = WEALTH_NATAL_MULTIFACTOR_RULES.filter(
       (rule) => (rule.output.value as { axis?: string }).axis === 'context',
     );
-    expect(indirect).toHaveLength(6);
+    expect(indirect).toHaveLength(8);
     expect(
       indirect.every(
         (rule) =>
@@ -86,6 +90,51 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     ).toBe(true);
     expect(inspectMyeonghwaProductionComposition({ registry }).status).toBe('blocked');
   });
+
+  it.each([
+    [1971, 3, 28, 22, 44, 'OUTPUT_PEER_CONTEXT', '상관', '기존 산출물을 어떻게 바꾸고'],
+    [1957, 10, 4, 10, 59, 'OUTPUT_RESOURCE_CONTEXT', '식신', '반복해서 만들어 낼 수 있는 결과'],
+  ] as const)(
+    'reads distinct month output in the original no-Wealth chart %s',
+    (year, month, day, hour, minute, pattern, tenGod, meaning) => {
+      const birth = {
+        calendarType: 'solar' as const,
+        date: { year, month, day },
+        time: { known: true as const, hour, minute },
+        sexForTraditionalCalculation: 'male' as const,
+      };
+      const runBirth = (input: Parameters<typeof calculateCanonicalSajuSnapshot>[0]) => {
+        const snapshot = calculateCanonicalSajuSnapshot(
+          input,
+          PRODUCTION_DEFAULT_CALCULATION_POLICY,
+          { now: NOW },
+        );
+        const execution = runInterpretation(snapshot, registry, { now: NOW });
+        return {
+          execution,
+          report: buildWealthNatalMultifactorReport(snapshot, execution, registry),
+        };
+      };
+      const { execution, report } = runBirth(birth);
+      expect(report.state).toBe('partial');
+      expect(report.sections.map((section) => section.pattern)).toEqual([pattern]);
+      const section = report.sections[0]!;
+      expect(section.paragraph).toContain(meaning);
+      expect(section.paragraph).toContain('월지의 한 지장간이 ' + tenGod);
+      const claim = execution.claims.find((claim) => claim.claimType === section.claimType);
+      expect(claim?.factRefs).toContain('derivedFacts.hiddenStems.month');
+      expect(claim?.factRefs).toContain('derivedFacts.hiddenStems.hour');
+      expect(claim?.sourceRefs).toContain('SRC-WEALTH-JAPYEONG-JINJEON-MONTH-ORDER');
+      expect(runBirth(birth).report).toEqual(report);
+      const unknown = runBirth({ ...birth, time: { known: false } });
+      expect(unknown.execution.claims.some((claim) => claim.claimType === section.claimType)).toBe(
+        false,
+      );
+      expect(
+        run(3, 10).execution.claims.some((claim) => claim.claimType === section.claimType),
+      ).toBe(false);
+    },
+  );
 
   it('produces real chart-specific Wealth meanings, with two or three matching upstream Claims', () => {
     const data = [];
@@ -125,7 +174,9 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
         const profile = WEALTH_NATAL_MULTIFACTOR_NARRATIVES.find(
           (candidate) => candidate.claimType === s.claimType,
         );
-        const koreanTemplates = profile?.templates?.filter((template) => template.language === 'ko');
+        const koreanTemplates = profile?.templates?.filter(
+          (template) => template.language === 'ko',
+        );
         const headline = koreanTemplates?.find((template) => template.templateKey === 'headline');
         const summary = koreanTemplates?.find((template) => template.templateKey === 'summary');
         expect(headline?.text).toBe(s.headline);

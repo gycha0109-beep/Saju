@@ -11,9 +11,10 @@ import { buildReadingCompositionEvidence } from '../reading/reading-intent-compo
 import {
   WEALTH_NATAL_MULTIFACTOR_PACK,
   WEALTH_NATAL_MULTIFACTOR_NARRATIVES,
+  WEALTH_MONTH_OUTPUT_METHOD_ID,
 } from '../research/wealth-natal-multifactor-candidate.js';
 
-export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.4.0-research-preview' as const;
+export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.5.0-research-preview' as const;
 type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension' | 'context';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches' | 'hidden_stems';
@@ -287,7 +288,10 @@ function toSection(
   );
   guard(
     claim.scenarioRef === undefined &&
-      claim.methodologyRef.id === 'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1' &&
+      claim.methodologyRef.id ===
+        (value.monthOutput
+          ? WEALTH_MONTH_OUTPUT_METHOD_ID
+          : 'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1') &&
       new Set(claim.upstreamClaimRefs).size === claim.upstreamClaimRefs.length &&
       upstream.every(
         (c) =>
@@ -325,7 +329,12 @@ function toSection(
       evalResult.emittedClaimIds.includes(claim.claimId),
     'Claim is not bound to the exact matched wealth source rule',
   );
+  const expectedFacts = rule.inputs
+    .filter((input) => input.source === 'derived_fact')
+    .map((input) => input.pathOrClaimType)
+    .sort();
   const expected = rule.inputs
+    .filter((input) => input.source === 'interpretation_claim')
     .map((i) => {
       guard(
         i.required && i.source === 'interpretation_claim' && i.cardinality === 'exactly_one',
@@ -339,6 +348,10 @@ function toSection(
     expected.length >= 2 &&
       expected.length <= 3 &&
       JSON.stringify(expected) === JSON.stringify(actual) &&
+      JSON.stringify(expectedFacts) === JSON.stringify([...claim.factRefs].sort()) &&
+      (expectedFacts.length === 0 ||
+        value.monthOutput === '식신' ||
+        value.monthOutput === '상관') &&
       rule.sourceRefs.length === claim.sourceRefs.length &&
       rule.sourceRefs.every((x) => claim.sourceRefs.includes(x.sourceId)) &&
       claim.sourceRefs.every((id) => registry.sources.some((x) => x.sourceId === id)),
@@ -419,7 +432,9 @@ function buildWealthNatalReadingGuide(
         `별도 관점인 ‘${section.headline}’은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 추가로 확인된 계산 근거를 바탕으로 함께 살핍니다.`,
     ),
     ...(supporting.length < 2
-      ? [`중심 풀이에 더할 독립 근거가 ${supporting.length}개 확인되어, 근거가 있는 관점까지만 설명합니다.`]
+      ? [
+          `중심 풀이에 더할 독립 근거가 ${supporting.length}개 확인되어, 근거가 있는 관점까지만 설명합니다.`,
+        ]
       : []),
     ...(!birthTimeKnown
       ? ['출생시각을 알 수 없어 시주를 빼고 확인된 세 기둥의 범위에서만 읽습니다.']
@@ -497,24 +512,37 @@ export function buildWealthNatalMultifactorReport(
       )
     : undefined;
   const tensionOnly = result.filter((section) => section.axis === 'tension').slice(0, 1);
-  const contextOnly = result.filter((section) => section.axis === 'context').slice(0, 1);
+  const contextOnly =
+    result.find(
+      (section) =>
+        section.pattern === 'OUTPUT_PEER_CONTEXT' || section.pattern === 'OUTPUT_RESOURCE_CONTEXT',
+    ) ?? result.find((section) => section.axis === 'context');
   const chosen: WealthNatalMultifactorSection[] = core
     ? [core, ...(supportSelection?.supporting ?? [])]
     : tensionOnly.length
       ? tensionOnly
-      : contextOnly;
+      : contextOnly
+        ? [contextOnly]
+        : [];
   const missing: string[] = [];
   if (chosen.length === 0 || chosen[0]?.axis === 'context') {
     const sourceBoundReason = explainMissingWealthT8(snapshot, execution);
     if (sourceBoundReason) missing.push(sourceBoundReason);
   }
-  if (!core) missing.push('이 명식에서는 여러 십신 근거를 연결해 재물을 설명할 중심 조합이 확인되지 않았습니다.');
+  if (!core)
+    missing.push(
+      '이 명식에서는 여러 십신 근거를 연결해 재물을 설명할 중심 조합이 확인되지 않았습니다.',
+    );
   if (!core && chosen[0]?.axis === 'tension') {
     missing.push(
       '중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.',
     );
   }
-  if (!core && chosen[0]?.axis === 'context') {
+  if (chosen[0]?.pattern.startsWith('OUTPUT_') && chosen[0].axis === 'context') {
+    missing.push(
+      '월지 식상은 자원을 만들기 전의 산출 방식을 설명합니다. 재성을 통한 교환과 관리 구조는 부분 풀이의 범위를 벗어납니다.',
+    );
+  } else if (!core && chosen[0]?.axis === 'context') {
     missing.push(
       '관성·인성 또는 관성·비겁의 간접적인 구조 설명만 확인됩니다. 이것은 재성 중심 재물운 종합 해석이 아니며 결과를 부분 연구 관점으로 제한합니다.',
     );

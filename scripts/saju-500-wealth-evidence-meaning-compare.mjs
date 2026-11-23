@@ -74,6 +74,29 @@ function verifySection(snapshot, chart, section, errors) {
   ) {
     fail('selected section diverges from T8 upstream or source references');
   }
+  const monthOutput = { OUTPUT_PEER_CONTEXT: '상관', OUTPUT_RESOURCE_CONTEXT: '식신' }[section.pattern];
+  if (monthOutput) {
+    const stems = snapshot.derivedFacts.hiddenStems;
+    const god = snapshot.derivedFacts.tenGods;
+    const master = snapshot.derivedFacts.dayMaster;
+    const knownHidden = Object.keys(SLOTS).map((slot) => stems?.[slot]);
+    if (
+      section.axis !== 'context' ||
+      !section.sourceIds.includes('SRC-WEALTH-JAPYEONG-JINJEON-MONTH-ORDER') ||
+      god.status !== 'resolved' || master.status !== 'resolved' ||
+      god.value.month.branch.status !== 'resolved' || god.value.month.branch.value !== monthOutput ||
+      stems?.month.status !== 'resolved' || stems.month.value.length !== 1 ||
+      getTenGod(master.value.value, stems.month.value[0]) !== monthOutput ||
+      knownHidden.some((state) => state?.status !== 'resolved' || state.value.some(
+        (stem) => FAMILIES.wealth.includes(getTenGod(master.value.value, stem)),
+      )) ||
+      Object.values(god.value).some((slot) => [slot.stem, slot.branch].some(
+        (state) => state.status !== 'resolved' || FAMILIES.wealth.includes(state.value),
+      ))
+    ) {
+      fail('month-output context is unsupported by exact source or resolved chart facts');
+    }
+  }
   if (
     !Array.isArray(section.observedFactPaths) ||
     section.observedFactPaths.length !== section.observedPositions.length ||
