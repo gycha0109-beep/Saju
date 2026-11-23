@@ -7,11 +7,13 @@ import {
 import { createApprovedPreviewE2eProductHost } from './preview/preview-product-host.js';
 import { createBoundedProductionSpouseOfficialReadingHostV1 } from './production/production-spouse-official-reading-host.js';
 import type { T10ProductionPairIssueProofOptionsV1 } from './host/t10-production-pair-issue-proof.js';
+import { createProductionRelationshipIssuer } from './production/production-relationship-official-reading-issuer.js';
 
 export const PRODUCTION_CALCULATION_PROCESS_ENV_V1 = {
   serviceBearer: 'SAJU_PRODUCTION_SERVICE_BEARER',
   previousServiceBearer: 'SAJU_PRODUCTION_PREVIOUS_SERVICE_BEARER',
   pairIssuerConfig: 'SAJU_T10_PRODUCTION_PAIR_ISSUER_CONFIG',
+  relationshipIssuerConfig: 'SAJU_T8_PRODUCTION_RELATIONSHIP_ISSUER_CONFIG',
   host: 'SAJU_PRODUCTION_HOST',
   port: 'PORT',
 } as const;
@@ -130,9 +132,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-/** Load the existing pair issuer only when a server-owned configuration is supplied. */
-function readPairIssuerOptions(env: Environment): T10ProductionPairIssueProofOptionsV1 | undefined {
-  const name = PRODUCTION_CALCULATION_PROCESS_ENV_V1.pairIssuerConfig;
+function readIssuerConfig(env: Environment, name: string, releaseKey: 'releaseByOffer' | 'releaseRef') {
   const raw = env[name];
   if (raw === undefined) return undefined;
 
@@ -145,25 +145,38 @@ function readPairIssuerOptions(env: Environment): T10ProductionPairIssueProofOpt
     throw invalid();
   }
   if (!isRecord(parsed) || Object.keys(parsed).length !== 6) throw invalid();
-  const { issuer, audience, keyId, engineVersion, releaseByOffer, privateKeyPkcs8Base64 } = parsed;
+  const { issuer, audience, keyId, engineVersion, privateKeyPkcs8Base64 } = parsed;
   if (typeof issuer !== 'string' || typeof audience !== 'string' ||
       typeof keyId !== 'string' || typeof engineVersion !== 'string' ||
-      !isRecord(releaseByOffer) || typeof privateKeyPkcs8Base64 !== 'string') throw invalid();
-
-  const releases = Object.entries(releaseByOffer);
-  if (!releases.every((entry): entry is [string, string] => typeof entry[1] === 'string')) {
-    throw invalid();
-  }
+      !Object.hasOwn(parsed, releaseKey) || typeof privateKeyPkcs8Base64 !== 'string') throw invalid();
   const key = Buffer.from(privateKeyPkcs8Base64, 'base64');
   if (key.length === 0 || key.toString('base64') !== privateKeyPkcs8Base64) throw invalid();
   try {
     return {
-      issuer, audience, keyId, engineVersion, releaseByOffer: Object.fromEntries(releases),
+      issuer, audience, keyId, engineVersion, release: parsed[releaseKey], invalid,
       signingKey: createPrivateKey({ key, format: 'der', type: 'pkcs8' }),
     };
   } catch {
     throw invalid();
   }
+}
+
+function readPairIssuerOptions(env: Environment): T10ProductionPairIssueProofOptionsV1 | undefined {
+  const config = readIssuerConfig(env, PRODUCTION_CALCULATION_PROCESS_ENV_V1.pairIssuerConfig, 'releaseByOffer');
+  if (config === undefined) return undefined;
+  const { release, invalid, ...options } = config;
+  if (!isRecord(release)) throw invalid();
+  const releases = Object.entries(release);
+  if (!releases.every((entry): entry is [string, string] => typeof entry[1] === 'string')) throw invalid();
+  return { ...options, releaseByOffer: Object.fromEntries(releases) };
+}
+
+function readRelationshipIssuer(env: Environment) {
+  const config = readIssuerConfig(env, PRODUCTION_CALCULATION_PROCESS_ENV_V1.relationshipIssuerConfig, 'releaseRef');
+  if (config === undefined) return undefined;
+  const { release, invalid, ...options } = config;
+  if (typeof release !== 'string') throw invalid();
+  return createProductionRelationshipIssuer({ ...options, releaseRef: release });
 }
 
 export function createMyeonghwaProductionPreviewOnlyCalculationProcessV1(
@@ -187,12 +200,14 @@ export function createMyeonghwaProductionCalculationProcessV1(
 ): MyeonghwaProductionCalculationProcessV1 {
   const config = readMyeonghwaProductionCalculationProcessConfigV1(env);
   const compatibilityProductionIssue = readPairIssuerOptions(env);
+  const relationshipProductionIssue = readRelationshipIssuer(env);
   const server = createMyeonghwaProductionReadingHostServer(
     createBoundedProductionSpouseOfficialReadingHostV1(),
     createApprovedPreviewE2eProductHost(),
     {
       ...readingServerOptions(config),
       ...(compatibilityProductionIssue === undefined ? {} : { compatibilityProductionIssue }),
+      ...(relationshipProductionIssue === undefined ? {} : { relationshipProductionIssue }),
     },
   );
 
