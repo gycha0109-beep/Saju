@@ -79,7 +79,7 @@ describe('Career evidence-linked Korean reader guide', () => {
     expect(report(3, 10)).toEqual(report(3, 10));
   });
 
-  it('does not manufacture a core reading guide for unknown-hour or supporting-only evidence', () => {
+  it('does not manufacture a core guide for unknown-hour or tension-only evidence', () => {
     const unknown = report(3, 10, null);
     expect(unknown.readingGuide).toBeUndefined();
     expect(unknown.state).toBe('insufficient');
@@ -91,19 +91,19 @@ describe('Career evidence-linked Korean reader guide', () => {
     ] as const;
     for (const [month, day] of supportingOnly) {
       const current = report(month, day);
-      if (!current.sections.some(section => section.channel === 'visible_stems' && section.axis !== 'tension')) {
+      if (!current.sections.some(section => section.axis !== 'tension')) {
         expect(current.readingGuide).toBeUndefined();
         expect(current.state).not.toBe('complete');
       }
     }
   });
 
-  it('keeps an incomplete career report visibly incomplete when only one supporting axis exists', () => {
+  it('keeps tension-only observations partial without manufacturing a reading guide', () => {
     let partial: ReturnType<typeof report> | undefined;
     for (const month of [2, 3, 4, 5, 6, 7, 8, 9]) {
       for (const day of [3, 7, 11, 17, 23]) {
         const candidate = report(month, day);
-        if (candidate.state === 'partial' && candidate.readingGuide !== undefined) {
+        if (candidate.state === 'partial') {
           partial = candidate;
           break;
         }
@@ -111,8 +111,8 @@ describe('Career evidence-linked Korean reader guide', () => {
       if (partial !== undefined) break;
     }
     expect(partial).toBeDefined();
-    expect(partial?.readingGuide?.supporting.length).toBeLessThan(2);
-    expect(partial?.readingGuide?.paragraph).toContain('직업운 종합 결론은 보류합니다');
+    expect(partial?.readingGuide).toBeUndefined();
+    expect(partial?.sections.every(section => section.axis === 'tension')).toBe(true);
     expect(partial?.missing.length).toBeGreaterThan(0);
     expect(partial?.usefulComplete).toBe(false);
     expect(partial?.maySell).toBe(false);
