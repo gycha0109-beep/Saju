@@ -19,7 +19,7 @@ import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synt
  * Coexistence supports a traditional interpretive axis, NOT a personal fact,
  * career aptitude, success, occupation, prediction or a ranked dominance.
  */
-export const CAREER_MULTIFACTOR_VERSION = '0.3.0-research' as const;
+export const CAREER_MULTIFACTOR_VERSION = '0.4.0-research' as const;
 const METHOD_ID = 'M-CAREER-NATAL-SOURCE-BOUNDED-PAIR-SYNTHESIS-V1';
 const RULE_SET = 'career-natal-source-bounded-multifactor';
 const CHANNELS = ['visible_stems', 'branches'] as const;
