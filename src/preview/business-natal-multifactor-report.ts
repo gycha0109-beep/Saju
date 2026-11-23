@@ -145,8 +145,9 @@ function toSection(
     value.healthOrMoneyOutcomeAuthorized === false && value.numericScoringAuthorized === false,
     'invalid or overclaiming structured T8 meaning');
   const upstream = claim.upstreamClaimRefs.map(id => execution.claims.find(c => c.claimId === id));
+  const monthFood = value.pattern === 'MONTH_FOOD_WEALTH';
   guard(claim.scenarioRef === undefined && claim.methodologyRef.id ===
-    'M-BUSINESS-NATAL-MULTIFACTOR-EXECUTION-GOVERNANCE-V1' &&
+    (monthFood ? 'M-BUSINESS-NATAL-MONTH-FOOD-WEALTH-V1' : 'M-BUSINESS-NATAL-MULTIFACTOR-EXECUTION-GOVERNANCE-V1') &&
     new Set(claim.upstreamClaimRefs).size === claim.upstreamClaimRefs.length &&
     upstream.every(c => c && c.state === 'active' && c.taxonomy.tier === 'T5' &&
       c.snapshotId === snapshot.snapshotId && c.scenarioRef === undefined),
@@ -169,14 +170,17 @@ function toSection(
     evalResult.interpretationPackRef.version === registry.pack.version &&
     evalResult.emittedClaimIds.includes(claim.claimId),
     'Claim is not bound to the exact matched business source rule');
-  const expected = rule.inputs.map(i => {
+  const expected = rule.inputs.filter(i => i.source === 'interpretation_claim').map(i => {
     guard(i.required && i.source === 'interpretation_claim' &&
       i.cardinality === 'exactly_one', 'nonexact upstream T5');
     return i.pathOrClaimType;
   }).sort();
   const actual = upstream.map(c => c!.claimType).sort();
+  const expectedFacts = rule.inputs.filter(i => i.source !== 'interpretation_claim')
+    .map(i => i.pathOrClaimType).sort();
   guard(expected.length >= 2 && expected.length <= 3 &&
     JSON.stringify(expected) === JSON.stringify(actual) &&
+    JSON.stringify(expectedFacts) === JSON.stringify([...claim.factRefs].sort()) &&
     rule.sourceRefs.length === claim.sourceRefs.length &&
     rule.sourceRefs.every(x => claim.sourceRefs.includes(x.sourceId)) &&
     claim.sourceRefs.every(id => registry.sources.some(x => x.sourceId === id)),
@@ -192,18 +196,38 @@ function toSection(
   });
   const channelName = value.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
   const headline = textFor(claim.claimType,'headline');
+  const hidden = snapshot.derivedFacts.hiddenStems?.month;
+  const stems = snapshot.derivedFacts.tenGods;
+  const anchors = monthFood && hidden?.status === 'resolved' && stems.status === 'resolved'
+    ? hidden.value.flatMap((stem, index) => {
+        const slots = (['year', 'month', 'hour'] as const).filter(slot => {
+          const pillar = snapshot.pillars[slot];
+          const god = stems.value[slot].stem;
+          return pillar.status === 'resolved' && pillar.value.stem.value === stem &&
+            god?.status === 'resolved' && god.value === '식신';
+        });
+        return slots.length ? [{
+          display: `월지 지장간 ${stem}(식신)과 ${slots.map(slot => SLOT_NAMES[slot] + ' 천간').join('·')}의 일치`,
+          factPath: `derivedFacts.hiddenStems.month.value.${index}`,
+        }] : [];
+      })
+    : [];
+  guard(!monthFood || anchors.length > 0, 'month Food God claim must retain the matched hidden stem');
+  const paragraph = monthFood
+    ? `${anchors.map(anchor => anchor.display).join(' · ')}가 확인됩니다. ${evidenceByFamily.join(' / ')}. ${textFor(claim.claimType,'summary')}`
+    : `이 원국에서 확인된 근거는 ${evidenceByFamily.join(' / ')}입니다. 같은 ${channelName}에서 ${evidenceByFamily.length}개 십신 계열이 함께 확인되므로 ${describeQuotedReadingAxis(headline)} 구조적 관점으로 연결해 읽습니다. ${textFor(claim.claimType,'summary')}`;
   return {
     claimType: claim.claimType,
     pattern: value.pattern,
     axis: value.axis as Axis,
     channel: value.channel as Channel,
     headline: textFor(claim.claimType,'headline'),
-    paragraph: `이 원국에서 확인된 근거는 ${evidenceByFamily.join(' / ')}입니다. 같은 ${channelName}에서 ${evidenceByFamily.length}개 십신 계열이 함께 확인되므로 ${describeQuotedReadingAxis(headline)} 구조적 관점으로 연결해 읽습니다. ${textFor(claim.claimType,'summary')}`,
+    paragraph,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
-    observedPositions: locations.map(x => x.display),
-    observedFactPaths: locations.map(x => x.factPath),
+    observedPositions: [...locations, ...anchors].map(x => x.display),
+    observedFactPaths: [...locations, ...anchors].map(x => x.factPath),
   };
 }
 /**

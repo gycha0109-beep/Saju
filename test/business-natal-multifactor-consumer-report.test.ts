@@ -31,19 +31,41 @@ function run(month: number, day: number, known = true) {
 describe('actual-source Business natal T5→T8→Korean five-domain report', () => {
   it('is Business-only, research-only, and every T8 has 2/3 exact T5 inputs', () => {
     expect(registry.pack.packId).toBe(BUSINESS_NATAL_MULTIFACTOR_PACK.packId);
-    expect(BUSINESS_NATAL_MULTIFACTOR_RULES).toHaveLength(20);
+    expect(BUSINESS_NATAL_MULTIFACTOR_RULES).toHaveLength(21);
     expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(20);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(21);
     expect(registry.rules.filter(r => r.taxonomy.subcategory === 'self_baseline')).toHaveLength(0);
     for(const rule of BUSINESS_NATAL_MULTIFACTOR_RULES) {
       expect(rule.taxonomy.category).toBe('business');
-      expect(rule.inputs.length).toBeGreaterThanOrEqual(2);
-      expect(rule.inputs.every(i => i.source === 'interpretation_claim' &&
-        i.cardinality === 'exactly_one' && i.required)).toBe(true);
-      expect(rule.sourceRefs).toHaveLength(2);
+      const anchored = rule.output.claimType.includes('MONTH_FOOD_WEALTH');
+      const upstream = rule.inputs.filter(i => i.source === 'interpretation_claim');
+      expect(upstream.length).toBeGreaterThanOrEqual(2);
+      expect(upstream.every(i => i.cardinality === 'exactly_one' && i.required)).toBe(true);
+      expect(rule.inputs.some(i => i.pathOrClaimType === 'derivedFacts.hiddenStems.month')).toBe(anchored);
+      expect(rule.sourceRefs).toHaveLength(anchored ? 3 : 2);
       expect(rule.status).toBe('research');
     }
     expect(inspectMyeonghwaProductionComposition({registry}).status).toBe('blocked');
+  });
+
+  it('connects the exact exposed month Food God to visible Wealth and holds when Indirect Resource is visible', () => {
+    const read = (year: number, month: number, day: number, hour: number, minute: number) => {
+      const snapshot = calculateCanonicalSajuSnapshot({
+        calendarType: 'solar', date: { year, month, day },
+        time: { known: true, hour, minute }, sexForTraditionalCalculation: 'male',
+      }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
+      const execution = runInterpretation(snapshot, registry, { now: NOW });
+      return { execution, report: buildBusinessNatalMultifactorReport(snapshot, execution, registry) };
+    };
+    const supported = read(1987, 6, 15, 5, 57);
+    const section = supported.report.sections.find(item => item.pattern === 'MONTH_FOOD_WEALTH');
+    expect(section?.paragraph).toContain('월지 지장간 정(식신)과 연주 천간의 일치');
+    expect(section?.paragraph).toContain('같은 품질로 반복해 만들 수 있는 산출물');
+    expect(section?.observedFactPaths).toContain('derivedFacts.hiddenStems.month.value.0');
+    expect(section?.sourceIds).toContain('SRC-BUSINESS-JAPYEONG-JINJEON-FOOD-WEALTH');
+    const held = read(1953, 12, 16, 1, 29);
+    expect(held.execution.claims.some(item => item.claimType === section?.claimType)).toBe(false);
+    expect(held.report.sections.length).toBeGreaterThan(0);
   });
 
   it('produces real chart-specific Business meanings, with two or three matching upstream Claims', () => {
@@ -67,10 +89,9 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
         expect(s.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(s.observedPositions.length).toBeGreaterThanOrEqual(2);
         expect(s.observedPositions).toHaveLength(s.observedFactPaths.length);
-        expect(s.paragraph).toContain('이 원국에서 확인된 근거는');
         expect(s.observedPositions.every(p=>s.paragraph.includes(p))).toBe(true);
         expect(s.observedFactPaths.every(path =>
-          /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path)))
+          /^derivedFacts\.(tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value|hiddenStems\.month\.value\.[0-2])$/u.test(path)))
           .toBe(true);
       }
       expect(x.report.mayPublish).toBe(false);

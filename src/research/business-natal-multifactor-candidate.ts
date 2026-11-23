@@ -1,5 +1,5 @@
 import type { ClaimNarrativeProfile } from '../contracts/narrative.js';
-import type { InterpretationPack, MethodologyDefinition, RuleDefinition } from '../contracts/interpretation.js';
+import type { InterpretationPack, MethodologyDefinition, RuleDefinition, RuleExpression, RuleInputRequirement, SourceReference } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import {
   GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
@@ -12,6 +12,7 @@ import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synt
 export const BUSINESS_NATAL_MULTIFACTOR_VERSION = '0.2.0-research' as const;
 const METHOD_ID = 'M-BUSINESS-NATAL-MULTIFACTOR-EXECUTION-GOVERNANCE-V1';
 const RULE_SET = 'business-natal-source-bounded-multifactor';
+const MONTH_FOOD_PATTERN = 'MONTH_FOOD_WEALTH';
 type Family = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
 type Axis = 'core' | 'execution' | 'governance' | 'preparation' | 'coordination';
 type Channel = 'visible_stems' | 'branches';
@@ -27,6 +28,11 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     id: 'OUTPUT_WEALTH_OFFICER', families: ['output','wealth','officer'],
     axis: 'core', headline: '산출, 자원, 운영 기준을 함께 조망하는 사업 구조',
     summary: '식상의 산출·표현, 재성의 교환·자원, 관성의 규범·책임이 동일 관측 채널에 함께 놓입니다. 사업이라는 해석 분야에서는 무엇을 제안하고 어떤 자원을 다루며 어떤 운영 기준을 적용할지를 연결해 읽는 제한된 전통 구조입니다. 실제 창업 적합성·매출·성공 여부를 단정하지 않습니다.',
+  },
+  {
+    id: MONTH_FOOD_PATTERN, families: ['output','wealth'],
+    axis: 'execution', headline: '꾸준한 산출을 교환 가능한 제안으로 잇는 구조',
+    summary: '월지에 든 식신과 같은 글자가 원국 천간에 보이고, 재성도 천간에서 확인됩니다. 식신생재의 국소 관계를 사업에 적용하면, 같은 품질로 반복해 만들 수 있는 산출물과 상대가 그 산출물을 선택할 교환 조건을 연결해 봅니다. 운영 책임과 기준은 관성 근거가 확인되는 범위에서 따로 살핍니다.',
   },
   {
     id: 'OUTPUT_OFFICER', families: ['output','officer'],
@@ -75,6 +81,62 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
   },
 ]);
 const CHANNELS: readonly Channel[] = ['visible_stems', 'branches'];
+const PATTERN_CHANNELS = PATTERNS.flatMap(pattern =>
+  CHANNELS.filter(channel => pattern.id !== MONTH_FOOD_PATTERN || channel === 'visible_stems')
+    .map(channel => ({ pattern, channel })),
+);
+const FOOD_SOURCE: SourceReference = {
+  sourceId: 'SRC-BUSINESS-JAPYEONG-JINJEON-FOOD-WEALTH',
+  sourceType: 'classical_text', title: '子平真詮 論用神成敗救應・論食神',
+  language: 'zh-Hant', locator: { section: '九、論用神成敗救應' },
+  url: 'https://www.donglishuzhai.net/chapter/3722.html', provenanceTier: 'primary',
+  notes: 'Distinguishes Food God generating Wealth from Food God encountering Indirect Resource. No establishment or outcome verdict.',
+};
+const BUSINESS_MONTH_METHOD: MethodologyDefinition = {
+  methodologyId: 'M-BUSINESS-NATAL-MONTH-FOOD-WEALTH-V1', version: '0.1.0-research',
+  family: 'domain_synthesis', name: 'Month-position Food God and visible Wealth in business',
+  description: 'Locally connects a repeated, exact month-hidden Food God stem to visible Wealth.',
+  assumptions: [
+    'Match the same exact stem in the month hidden membership and an observed Food God visible position.',
+    'Visible Wealth is required. If Indirect Resource is also visible, withhold this local execution reading.',
+    'No hidden-stem rank, established pattern, strength, remedy efficacy, or business outcome is decided.',
+  ],
+  requiredFactTypes: ['derivedFacts.hiddenStems.month', 'derivedFacts.tenGods'],
+  sourceIds: [FOOD_SOURCE.sourceId, GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, GENERAL_NATAL_CONCLUSION_SOURCE.sourceId],
+  status: 'research',
+};
+const VISIBLE_SLOTS = ['year', 'month', 'hour'] as const;
+const MONTH_FOOD_INPUTS: readonly RuleInputRequirement[] = [
+  { key: 'hiddenMonth', pathOrClaimType: 'derivedFacts.hiddenStems.month', source: 'derived_fact' },
+  ...VISIBLE_SLOTS.flatMap(slot => [
+    { key: slot + 'Pillar', pathOrClaimType: 'pillars.' + slot, source: 'canonical_fact' as const },
+    { key: slot + 'God', pathOrClaimType: `derivedFacts.tenGods.${slot}.stem`, source: 'derived_fact' as const },
+  ]),
+].map(input => ({ ...input, required: true, ambiguityBehavior: 'requires_resolved' })) as readonly RuleInputRequirement[];
+
+const MONTH_FOOD_CONDITIONS: readonly RuleExpression[] = [
+  {
+    op: 'or',
+    expressions: VISIBLE_SLOTS.map(slot => ({
+      op: 'and', expressions: [
+        { op: 'eq', left: { kind: 'input', key: slot + 'God' }, right: { kind: 'literal', value: '식신' } },
+        { op: 'or', expressions: ['0', '1', '2'].map(path => ({
+          op: 'and', expressions: [
+            { op: 'exists', value: { kind: 'input', key: 'hiddenMonth', path } },
+            { op: 'eq', left: { kind: 'input', key: slot + 'Pillar', path: 'stem.value' },
+              right: { kind: 'input', key: 'hiddenMonth', path } },
+          ],
+        })) },
+      ],
+    })),
+  },
+  {
+    op: 'not',
+    expression: { op: 'or', expressions: VISIBLE_SLOTS.map(slot => ({
+      op: 'eq', left: { kind: 'input', key: slot + 'God' }, right: { kind: 'literal', value: '편인' },
+    })) },
+  },
+];
 const SOURCE_REFS: RuleDefinition['sourceRefs'] = [
   { sourceId: GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, supportType: 'interpretive_basis',
     notes: 'Bounded Ten-God structural language only.' },
@@ -110,28 +172,31 @@ function claimType(pattern: Pattern, channel: Channel) {
   return `BUSINESS_NATAL_MULTIFACTOR_${pattern.id}_${channel.toUpperCase()}`;
 }
 function rule(pattern: Pattern, channel: Channel): RuleDefinition {
+  const anchored = pattern.id === MONTH_FOOD_PATTERN;
   return {
     ruleId: `RULE-${claimType(pattern, channel)}`,
     version: BUSINESS_NATAL_MULTIFACTOR_VERSION,
     ruleSetId: RULE_SET,
     taxonomy: { tier: 'T8', category: 'business', subcategory: 'multifactor_structure' },
-    methodologyRef: { id: METHOD_ID, version: BUSINESS_NATAL_MULTIFACTOR_VERSION },
+    methodologyRef: anchored
+      ? { id: BUSINESS_MONTH_METHOD.methodologyId, version: BUSINESS_MONTH_METHOD.version }
+      : { id: METHOD_ID, version: BUSINESS_NATAL_MULTIFACTOR_VERSION },
     title: `${pattern.headline} — ${channel}`,
     description: 'Business natal research synthesis of exact channel-bound upstream T5 themes.',
-    inputs: pattern.families.map((family, i) => ({
+    inputs: [...pattern.families.map((family, i) => ({
       key: `family${i + 1}`,
       source: 'interpretation_claim' as const,
       pathOrClaimType: `TEN_GOD_${family.toUpperCase()}_${channel.toUpperCase()}_THEME`,
       required: true,
       cardinality: 'exactly_one' as const,
       ambiguityBehavior: 'scenario_preserving' as const,
-    })),
+    })), ...(anchored ? MONTH_FOOD_INPUTS : [])],
     condition: {
       op: 'and',
-      expressions: pattern.families.map((_, i) => ({
+      expressions: [...pattern.families.map((_, i) => ({
         op: 'exists' as const,
         value: { kind: 'input' as const, key: `family${i + 1}` },
-      })),
+      })), ...(anchored ? MONTH_FOOD_CONDITIONS : [])],
     },
     output: {
       claimType: claimType(pattern, channel),
@@ -151,16 +216,18 @@ function rule(pattern: Pattern, channel: Channel): RuleDefinition {
       emphasis: pattern.axis === 'core' ? 'major' : 'moderate',
       tags: ['research', 'business-natal', 'source-bound-multifactor', pattern.axis, channel],
     },
-    sourceRefs: SOURCE_REFS,
+    sourceRefs: anchored
+      ? [...SOURCE_REFS, { sourceId: FOOD_SOURCE.sourceId, supportType: 'interpretive_basis' }]
+      : SOURCE_REFS,
     quality: QUALITY,
     status: 'research',
   };
 }
 export const BUSINESS_NATAL_MULTIFACTOR_RULES: readonly RuleDefinition[] = Object.freeze(
-  PATTERNS.flatMap(pattern => CHANNELS.map(channel => rule(pattern, channel))),
+  PATTERN_CHANNELS.map(({ pattern, channel }) => rule(pattern, channel)),
 );
 export const BUSINESS_NATAL_MULTIFACTOR_NARRATIVES: readonly ClaimNarrativeProfile[] =
-  Object.freeze(PATTERNS.flatMap((pattern, order) => CHANNELS.map(channel => ({
+  Object.freeze(PATTERN_CHANNELS.map(({ pattern, channel }, order) => ({
     profileId: `PROFILE-${claimType(pattern, channel)}`,
     version: BUSINESS_NATAL_MULTIFACTOR_VERSION,
     claimType: claimType(pattern, channel),
@@ -176,15 +243,16 @@ export const BUSINESS_NATAL_MULTIFACTOR_NARRATIVES: readonly ClaimNarrativeProfi
           ? '천간에서 실제로 관측된 조합입니다. '
           : '지지 대표 십신에서 관측된 보조 조합입니다. ') + pattern.summary },
     ],
-  }))));
+  })));
 export const BUSINESS_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
   packId: 'PACK-BUSINESS-NATAL-SOURCE-BOUNDED-MULTIFACTOR-RESEARCH',
-  version: BUSINESS_NATAL_MULTIFACTOR_VERSION,
+  version: `${BUSINESS_NATAL_MULTIFACTOR_VERSION}.month-food`,
   name: 'Business natal multifactor synthesis / internal research',
   methodologyRefs: [
     { id: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.methodologyId,
       version: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.version },
     { id: METHOD_ID, version: BUSINESS_NATAL_MULTIFACTOR_VERSION },
+    { id: BUSINESS_MONTH_METHOD.methodologyId, version: BUSINESS_MONTH_METHOD.version },
   ],
   enabledRuleSets: [...new Set([
     ...GENERAL_NATAL_USEFUL_TEN_GOD_RULES.map(x => x.ruleSetId),
@@ -202,7 +270,7 @@ export function createBusinessNatalMultifactorRegistry(createdAt = '1970-01-01T0
   return createRuleRegistrySnapshot({
     rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...BUSINESS_NATAL_MULTIFACTOR_RULES],
     methodologies: [GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
-      BUSINESS_NATAL_MULTIFACTOR_METHODOLOGY],
-    sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE],
+      BUSINESS_NATAL_MULTIFACTOR_METHODOLOGY, BUSINESS_MONTH_METHOD],
+    sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE, FOOD_SOURCE],
   }, BUSINESS_NATAL_MULTIFACTOR_PACK, createdAt);
 }
