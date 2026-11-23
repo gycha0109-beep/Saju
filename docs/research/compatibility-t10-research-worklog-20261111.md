@@ -484,3 +484,12 @@
 - **작업 초점:** 기존 연월일시 명식 계산/해석 JSON에서 실제 두 사람 해석을 출력하고, 현재의 3개 Offer에 맞는 한국어 Reading을 명하 리포트·캐릭터 Reader로 연결하는 작업. 새 범위나 품질 연구 트랙을 발명하지 않는다.
 - **기존 안전조건:** 이미 구현된 서명·대상 동의·구매·환불·철회·보관본 접근 조건을 제거하거나 우회하지 않는다. 해당 부분은 실패가 확인된 기존 필수 검사·구현 오류를 수정하는 범위로 제한한다. 운영 배포·실결제·판매 재개는 자동 수행하지 않는다.
 - **기록:** 이전에 작성한 확장 연구/검증 계획은 이 시점부터 작업 지시가 아닌 과거 기록으로 취급한다. 현 로드맵의 실제 미완료 항목에 한해서만 진행하며, 완료 증거 없는 `ROADMAP_COMPLETE` 선언은 금지한다.
+
+## 2026-11-23 — T10 5단계 최종 문서·인수 종료
+
+- **범위:** 2026-11-14 사용자 확정에 따라 추가 학술/서명/권한 연구 없이 승인된 계산→관계 해석 JSON→한국어 Reading→3개 구매 구성의 정식 발급과 명하 Reader 연결만 완료 판정한다. 본 로그의 1~53번 등 이전 연구 이력과 당시 보류 기록은 변경하지 않는다.
+- **Saju:** [#2807](https://github.com/gycha0109-beep/Saju/pull/2807) main `5a1edd13fcf06ba7d83348015077f99ab5d6031e`에서 첫/추가/결합 구성의 T10 정식 서명 발급; [#2808](https://github.com/gycha0109-beep/Saju/pull/2808) main `d38412d3879bf59ffe7e928bce1183ebde67cc5e`에서 본인 T8 일반 연애운을 배우자운과 분리해 실제 Canonical 근거/한국어/정책 버전과 함께 정식 서명한다.
+- **명하:** [#3401](https://github.com/gycha0109-beep/MyeongHa/pull/3401) main `3c63edac256299259fe5a9c232750a562be0f10d`, [#3402](https://github.com/gycha0109-beep/MyeongHa/pull/3402) main `5e27103e2fa98cb860bdcd1fe93d1a6998e8725c`. 합성 영수증·격리 PostgreSQL 17에서 T8+T10의 독립 서명/아카이브/보관함/Reader, 3개 구성, 동의 철회·환불·출생 revision/상대 위조·타 회원 차단·중복 발급과 시도 할당 전 재청구를 검증했다. 기존 재물 Luna TypeScript 오류 수정으로 전체 타입 검사도 통과했다.
+- **CI:** [PR 검사 45098349016](https://github.com/gycha0109-beep/MyeongHa/actions/runs/45098349016), [병합 main 검사 45100054582](https://github.com/gycha0109-beep/MyeongHa/actions/runs/45100054582) 모두 `completed/success`. [Supabase Production 45100054553](https://github.com/gycha0109-beep/MyeongHa/actions/runs/45100054553)은 `completed/success`이되 실제 `deploy-migrations` 작업은 `skipped`였다. [Cloudflare main 빌드 f3c30f02](https://dash.cloudflare.com/410d3f82ed3ccc66609a2b698803859b/workers/services/view/myeongha/production/builds/f3c30f02-0477-4fa1-a21f-66554433d8a8)는 성공하고, 병합 시 새 운영 Worker 배포가 생성되지 않았음이 확인됐다. Cloudflare 운영 배포 명령은 HOLD용 비배포 명령으로 전환된 상태다.
+- **경계:** 생시 미상에서 Canonical 십신 근거가 없으면 T8 보류. 발급 도달 여부가 불명확한 전송 실패는 기존 조정 대기. 실제 결제·판매 활성화·운영 DB 반영·운영 배포·유료 AI 호출은 수행하지 않는다.
+- **최종 판정:** 승인된 T10 5단계의 내부 서비스 해석·격리 환경 정식 Source 서명 발급·세 구매 구성의 Reader 통합은 `ROADMAP_COMPLETE`. 별도 Saju 전체 7단계, 명하 판매/운영 결정은 이 판정 대상이 아니며 판매 `HOLD`.
