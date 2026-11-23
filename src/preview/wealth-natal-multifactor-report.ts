@@ -418,9 +418,7 @@ function buildWealthNatalReadingGuide(
       (section, index) =>
         `별도 관점인 ‘${section.headline}’은 ${supporting[index]!.distinctObservedPositions.join(' · ')}에서 추가로 확인된 계산 근거를 바탕으로 함께 살핍니다.`,
     ),
-    ...(supporting.length < 2
-      ? [`중심 풀이에 더할 독립 근거가 ${supporting.length}개 확인되어, 근거가 있는 관점까지만 설명합니다.`]
-      : []),
+    `독립 보조 관점은 ${supporting.length}개 확인됐으며, 관점 개수만으로 중심 풀이를 미완성 처리하지 않습니다.`,
     ...(!birthTimeKnown
       ? ['출생시각을 알 수 없어 시주를 빼고 확인된 세 기둥의 범위에서만 읽습니다.']
       : []),
@@ -519,17 +517,15 @@ export function buildWealthNatalMultifactorReport(
       '관성·인성 또는 관성·비겁의 간접적인 구조 설명만 확인됩니다. 이것은 재성 중심 재물운 종합 해석이 아니며 결과를 부분 연구 관점으로 제한합니다.',
     );
   }
-  if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
+  if (supportSelection && supportSelection.overlapOnlyCount > 0) {
     missing.push(
       '서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.',
     );
   }
-  const missingSupportingAxes =
-    2 - (core ? chosen.length - 1 : chosen.filter((s) => s.axis === 'tension').length);
-  if (missingSupportingAxes > 0)
-    missing.push(`중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
+  // A real wealth synthesis is sufficient: two extra axes are optional detail,
+  // not a prerequisite for interpreting the source-bound central claim.
   const state: Status =
-    snapshot.completeness.birthTimeKnown && core !== undefined && chosen.length === 3
+    snapshot.completeness.birthTimeKnown && core !== undefined
       ? 'complete'
       : result.length
         ? 'partial'
@@ -561,7 +557,7 @@ export function buildWealthNatalMultifactorReport(
       ...LIMITATIONS,
       ...(state === 'complete'
         ? []
-        : ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.']),
+        : ['재물 중심의 직접적인 종합 해석이 확인되지 않아 부분 관점으로 표시합니다.']),
     ],
     researchOnly: true,
     mayPublish: false,
