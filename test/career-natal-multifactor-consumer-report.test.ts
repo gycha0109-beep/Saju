@@ -269,7 +269,7 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
       }
       expect(html.includes('추가로 확인된 직업 관련 구조'))
         .toBe(report.additionalVerifiedSections.length > 0);
-      expect(report.state === 'complete' ? report.sections.length === 3 : true).toBe(true);
+      expect(report.state === 'complete' ? report.sections.length >= 1 : true).toBe(true);
       expect(report.usefulComplete).toBe(false);
       expect(report.researchOnly).toBe(true);
       expect(report.mayPublish).toBe(false);
@@ -279,16 +279,16 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(withExtra).toBeGreaterThan(0);
   }, 60000);
 
-  it('never mistakes a single composite Claim for a full minimum useful reading', () => {
+  it('accepts an observed non-tension central Career pair without mandatory extra axes', () => {
     for (const [month, day] of [[3, 10], [4, 11], [5, 7]] as const) {
       const x = run(month, day);
       const primary = x.report.sections[0];
       const supplement = x.report.sections.slice(1);
       if (x.report.state === 'complete') {
-        expect(primary?.channel).toBe('visible_stems');
-        expect(supplement).toHaveLength(2);
-        expect(new Set(x.report.sections.map(c => c.pattern)).size).toBe(3);
-        expect(new Set(x.report.sections.map(c => c.axis)).size).toBe(3);
+        expect(primary?.axis).not.toBe('tension');
+        expect(['visible_stems', 'branches']).toContain(primary?.channel);
+        expect(new Set(x.report.sections.map(c => c.axis)).size).toBe(x.report.sections.length);
+        expect(supplement.length).toBeLessThanOrEqual(2);
       } else {
         expect(x.report.state).toMatch(/partial|insufficient/);
         expect(x.report.missing.length).toBeGreaterThan(0);
@@ -300,7 +300,7 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     for (const [month, day] of [[3,10],[4,11],[5,7],[6,3],[7,17]] as const) {
       const { report } = run(month, day);
       const primary = report.sections[0];
-      if (!primary || primary.channel !== 'visible_stems' || primary.axis === 'tension') {
+      if (!primary || primary.axis === 'tension') {
         expect(report.state).not.toBe('complete');
         continue;
       }
@@ -315,8 +315,8 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
         support.calculatedFactPaths.forEach(path => used.add(path));
       }
       if (report.state === 'complete') {
-        expect(report.sections).toHaveLength(3);
-        expect(new Set(report.sections.map(s => s.axis)).size).toBe(3);
+        expect(report.sections.length).toBeGreaterThanOrEqual(1);
+        expect(new Set(report.sections.map(s => s.axis)).size).toBe(report.sections.length);
       } else {
         expect(report.state).toBe('partial');
         expect(report.missing.length).toBeGreaterThan(0);
@@ -339,7 +339,10 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
             claim.state === 'active' &&
             (claim.value as { channel?: string }).channel === 'visible_stems');
           if (visible.length === 0 || !visible.every(claim =>
-            (claim.value as { axis?: string }).axis === 'tension')) continue;
+            (claim.value as { axis?: string }).axis === 'tension') ||
+            candidate.execution.claims.some(claim => claim.taxonomy.tier === 'T8' &&
+              claim.taxonomy.category === 'career' && claim.state === 'active' &&
+              (claim.value as { axis?: string }).axis !== 'tension')) continue;
           found = candidate;
           break outer;
         }
@@ -350,14 +353,14 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(found.report.state).toBe('partial');
     expect(found.report.sections.some(section =>
       section.channel === 'visible_stems' && section.axis === 'tension')).toBe(true);
-    expect(found.report.missing.join(' ')).toContain('천간 중심의 독립된 종합 근거가 없어');
+    expect(found.report.missing.join(' ')).toContain('두 관측 채널 모두에서 중심으로 삼을 비긴장 구조 해석이 없어');
     expect(found.report.missing.join(' ')).toContain('부분 풀이만 보여드립니다');
     const actualAxes = new Set(found.execution.claims.filter(claim =>
       claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'career' &&
       claim.state === 'active').map(claim =>
       (claim.value as { axis: 'execution' | 'responsibility' | 'tension' }).axis));
     expect(new Set(found.report.sections.map(section => section.axis))).toEqual(actualAxes);
-    expect(found.report.missing.join(' ')).toContain('독립된 핵심 해석이 먼저 필요합니다.');
+    expect(found.report.missing.join(' ')).toContain('천간 또는 지지의 실제 비긴장 조합이 필요합니다.');
     const partialHtml = renderCareerMultifactorResearchHtml(found.report);
     for (const section of found.report.sections) expect(partialHtml).toContain(section.paragraph);
     for (const section of found.report.sections) {
@@ -371,57 +374,41 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(found.report.maySell).toBe(false);
   }, 120000);
 
-  it('shows only genuinely observed branch Career evidence when a visible-stem core is missing, without calling it complete', () => {
+  it('recognizes an exact non-tension branch pair as a Career core when stems have no T8 pair', () => {
     let found: ReturnType<typeof run> | undefined;
-    for (const month of [2,3,4,5,6,7,8,9,10,11,12]) {
+    outer: for (const month of [2,3,4,5,6,7,8,9,10,11,12]) {
       for (const day of [3,7,11,17,23]) {
         for (const hour of [0,6,12,18]) {
-          const x = run(month,day,hour);
-          const claims = x.execution.claims.filter(c => c.taxonomy.tier === 'T8' &&
-            c.taxonomy.category === 'career' && c.state === 'active');
-          if (claims.some(c => (c.value as {channel?: string}).channel === 'visible_stems') ||
-            !claims.some(c => (c.value as {channel?: string}).channel === 'branches')) continue;
-          found = x;
-          break;
+          const candidate = run(month, day, hour);
+          const active = candidate.execution.claims.filter(claim =>
+            claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'career' &&
+            claim.state === 'active');
+          if (active.some(claim => (claim.value as { channel: string }).channel === 'visible_stems') ||
+            !active.some(claim => (claim.value as { channel: string; axis: string }).channel === 'branches' &&
+              (claim.value as { axis: string }).axis !== 'tension')) continue;
+          found = candidate;
+          break outer;
         }
-        if(found) break;
       }
-      if(found) break;
     }
-    expect(found).toBeDefined();
-    if(!found) return;
-    expect(found.report.state).toBe('partial');
-    expect(found.report.sections.length).toBeGreaterThan(0);
-    expect(found.report.sections.every(s => s.channel === 'branches')).toBe(true);
-    const observedAxes = new Set(found.execution.claims.filter(claim =>
-      claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'career' &&
-      claim.state === 'active').map(claim =>
-      (claim.value as { axis: 'execution' | 'responsibility' | 'tension' }).axis));
-    // Every distinct observed two-T5 partial interpretation stays visible;
-    // even all three supporting axes cannot manufacture an absent core.
-    expect(new Set(found.report.sections.map(s => s.axis))).toEqual(observedAxes);
-    expect(found.report.sections).toHaveLength(observedAxes.size);
-    expect(found.report.state).toBe('partial');
-    expect(found.report.missing.join(' ')).toContain('천간 중심의 독립된 종합 근거가 없어');
-    expect(found.report.missing.join(' ')).toContain('완전한 직업 종합풀이');
-    const explanation = found.report.missing.join(' ');
-    expect(explanation).toContain('천간 중심의 독립된 핵심 해석이 먼저 필요합니다.');
-    expect(explanation).not.toContain('보조 근거 축 2개가 필요합니다.');
-    if (observedAxes.size === 3) {
-      expect(explanation).toContain('서로 다른 보조 관점 세 가지가 관측되어도');
-    }
-    expect(explanation).toMatch(/실행·산출|역할·책임|서로 다른 기준의 조율/u);
-    expect(explanation).not.toMatch(/(?:^|[\s·])(?:execution|responsibility|tension)(?:[\s·]|$)/u);
-    for(const section of found.report.sections) {
-      expect(section.calculatedPositions.every(position => section.paragraph.includes(position))).toBe(true);
-      expect(section.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
-      expect(section.sourceIds.length).toBeGreaterThan(0);
+    expect(found, 'real natal case with a source-owned non-tension branch pair').toBeDefined();
+    if (!found) return;
+    expect(found.report.state).toBe('complete');
+    expect(found.report.sections[0]?.channel).toBe('branches');
+    expect(found.report.sections[0]?.axis).not.toBe('tension');
+    expect(found.report.readingGuide?.coreClaimType).toBe(found.report.sections[0]?.claimType);
+    for (const section of found.report.sections) {
+      const claim = found.execution.claims.find(item => item.claimType === section.claimType);
+      expect(claim?.state).toBe('active');
+      expect(claim?.sourceRefs).toEqual(section.sourceIds);
+      expect(claim?.upstreamClaimRefs).toEqual(section.upstreamClaimIds);
       expect(section.upstreamClaimIds).toHaveLength(2);
+      expect(section.calculatedPositions.every(position => section.paragraph.includes(position))).toBe(true);
     }
     expect(found.report.researchOnly).toBe(true);
-    expect(found.report.usefulComplete).toBe(false);
     expect(found.report.mayPublish).toBe(false);
     expect(found.report.maySell).toBe(false);
+    expect(found.report.usefulComplete).toBe(false);
   }, 120000);
 
   it('actually renders personalized partial reasons and unknown-hour hold in readable Korean HTML', () => {
