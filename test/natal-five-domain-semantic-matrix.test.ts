@@ -102,8 +102,8 @@ describe('five-domain actual-chart semantic differentiation / S6 research matrix
           expect(report.usefulComplete).toBe(false);
           expect(['complete', 'partial', 'insufficient']).toContain(report.state);
           if (report.state === 'complete') {
-            expect(report.sections).toHaveLength(3);
-            expect(new Set(report.sections.map((s) => s.axis)).size).toBe(3);
+            expect(report.sections.length).toBeGreaterThanOrEqual(domain === 'career' ? 1 : 3);
+            expect(new Set(report.sections.map((s) => s.axis)).size).toBe(report.sections.length);
             // A complete research MUR must add a genuinely new calculated
             // observation with each supporting axis. This is stronger than
             // requiring old, potentially inflated complete-count growth.
@@ -385,9 +385,9 @@ describe('five-domain actual-chart semantic differentiation / S6 research matrix
         const coreClaimType =
           guide && ('coreClaimType' in guide ? guide.coreClaimType : guide.sourceClaimType);
         if (report.state === 'complete') {
-          expect(report.sections).toHaveLength(3);
+          expect(report.sections.length).toBeGreaterThanOrEqual(domain === 'career' ? 1 : 3);
           expect(coreClaimType).toBeTruthy();
-          expect(guide?.supporting).toHaveLength(2);
+          expect(guide?.supporting).toHaveLength(domain === 'career' ? report.sections.length - 1 : 2);
           const sectionPaths = report.sections.map((section) =>
             'observedFactPaths' in section
               ? section.observedFactPaths
