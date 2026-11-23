@@ -269,9 +269,7 @@ function buildCareerMultifactorReadingGuide(
     `이 명식에서 직업운의 중심으로 살펴볼 구조적 관점은 ‘${core.headline}’입니다. ${core.calculatedPositions.join(' · ')}에서 관측된 근거에 연결된 연구용 해석 후보입니다.`,
     ...supporting.map((section, index) =>
       `별도 관점인 ‘${section.headline}’은 ${AXIS_LABELS[section.axis]}에 관한 기존 연구 문구입니다. 중심 관찰과 앞선 보조 관찰에서 사용하지 않은 ${distinctSupporting[index]!.distinctCalculatedPositions.join(' · ')}를 추가 근거로 확인했습니다.`),
-    ...(state === 'complete'
-      ? ['중심 관점 하나와 서로 다른 계산 근거를 더하는 보조 관점 두 가지를 구분해 읽을 수 있습니다. 이는 연구용 풀이 구성 기준이지 직업 적성·성공 여부의 검증이 아닙니다.']
-      : [`현재 독립적인 보조 관점은 ${distinctSupporting.length}개만 확인되어, 필요한 두 가지 보조 관점을 모두 설명할 수 없습니다. 직업운 종합 결론은 보류합니다.`]),
+    `별도로 확인된 독립 보조 관점은 ${distinctSupporting.length}개입니다. 보조 관점의 개수만으로 풀이를 미완성 처리하지 않으며, 직업 적성·성공 여부를 검증하거나 확정하지 않습니다.`,
   ];
   return {
     title: '이 명식에서 확인된 일의 중심과 보조 관점',
@@ -356,7 +354,7 @@ export function buildCareerMultifactorResearchReport(
         all.findIndex(other => other.axis === unit.axis) === index).slice(0, AXES.length)
     : [];
   const shown = primary ? [primary, ...supporting] : partialEvidence;
-  // A first-screen MUR has a three-axis cap, but extra observed and verified
+  // The first-screen guide presents up to three axes, but extra observed and verified
   // Career structure must remain inspectable in the *research* preview. Do not
   // count the extras as new MUR evidence, change the chosen core, or infer an
   // additional relationship from their coexistence.
@@ -369,8 +367,9 @@ export function buildCareerMultifactorResearchReport(
     additionalVerifiedSections.push(unit);
     for (const path of unit.calculatedFactPaths) seenFactPaths.add(path);
   }
-  const enough = primary !== undefined && supporting.length >= 2;
-  const state: Status = snapshot.completeness.birthTimeKnown && enough
+  // A source-qualified primary is sufficient for the research reading state;
+  // additional axes deepen it but are not a mandatory numeric quota.
+  const state: Status = snapshot.completeness.birthTimeKnown && primary !== undefined
     ? 'complete' : units.length > 0 ? 'partial' : 'insufficient';
   const missing: string[] = [];
   if (!primary) {
@@ -380,13 +379,8 @@ export function buildCareerMultifactorResearchReport(
         `${s.channel === 'visible_stems' ? '천간' : '지지 대표 십신'}의 ${AXIS_LABELS[s.axis]}`).join('·')}에 관한 보조 근거를 확인했습니다. 그러나 천간 중심의 독립된 종합 근거가 없어 전체 직업운으로 판단하지 않고 부분 풀이만 보여드립니다.`);
     }
   }
-  if (primary && supporting.length < 2) {
-    const observed = shown.map(section => AXIS_LABELS[section.axis]);
-    const label = observed.length > 0 ? observed.join('·') : '없음';
-    missing.push(`현재 확인된 해석 관점: ${label}. 완전한 직업 종합풀이에는 천간 중심 해석에 더해 서로 구별되는 보조 근거 축 ${2 - supporting.length}개가 필요합니다.`);
-    if (overlappingOnlyCount > 0) {
-      missing.push('서로 다른 해석 제목이 있어도 앞선 해석에 사용한 계산 위치만 반복하면 독립적인 보조 근거로 세지 않습니다.');
-    }
+  if (primary && overlappingOnlyCount > 0) {
+    missing.push('일부 보조 관점은 기존 계산 위치와 중복되어 별도의 독립 근거로 세지 않았습니다.');
   }
   if (!primary) {
     // The missing core, not a fabricated shortage of two supports, is what
@@ -416,7 +410,7 @@ export function buildCareerMultifactorResearchReport(
     limitations: [
       '사용한 해석은 고전 관계를 제한적으로 참고한 미검토 연구 후보입니다. Production 또는 유료 보고서에 사용할 수 없습니다.',
       '명식에 관측된 관계만 설명하며 직업 적성·연봉·성공·미래 사건·신강신약·용신을 단정하지 않습니다.',
-      ...(state !== 'complete' ? ['개인별 종합풀이의 최소 근거가 부족하므로 완성된 해석으로 표시하지 않습니다.'] : []),
+      ...(state !== 'complete' ? ['명식에 직접 연결된 중심 직업 해석이 없어 부분 관점으로 표시합니다.'] : []),
     ],
     missing,
     researchOnly: true, mayPublish: false, maySell: false, usefulComplete: false,
@@ -444,7 +438,7 @@ export function renderCareerMultifactorResearchHtml(report: CareerMultifactorRep
   // not merely in the report object that downstream readers may never inspect.
   const stateLabel: Readonly<Record<Status, string>> = {
     complete: '연구 풀이 최소 근거 충족 · 제품 품질 검증 전',
-    partial: '부분 풀이 · 원국 종합 근거 부족',
+    partial: '부분 풀이 · 중심 직업 해석 미확인',
     insufficient: '풀이 보류 · 출생정보 또는 근거 부족',
   };
   const missingMarkup = report.missing.length > 0
