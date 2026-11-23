@@ -361,11 +361,9 @@ function generalSourceBoundReadingGuide(
     )
     .join(' ');
   const incomplete =
-    support.length < 2
-      ? ' 아직 중심 근거와 구별되는 보조 구조 ' +
-        (2 - support.length) +
-        '개가 부족하여 전체 원국의 확정된 종합 결론으로 사용하지 않습니다.'
-      : ' 세 축은 서로 다른 계산 위치를 사용하는 연구용 구조적 독해이며 개인의 성격이나 장래 사건을 확정하지 않습니다.';
+    ' 확인된 독립 보조 관점은 ' + support.length +
+    '개이며, 이 개수만으로 풀이를 미완성 처리하지 않습니다. ' +
+    '이것은 연구용 구조적 독해이며 개인의 성격이나 장래 사건을 확정하지 않습니다.';
   const intro =
     '이번 명식의 중심 구조는 "' +
     core.headline +
@@ -461,16 +459,15 @@ export function buildGeneralNatalMultifactorReport(
           ' · ',
         )}. 이 근거만으로 원국 전체의 중심 결론을 세울 수 없어 부분 풀이로만 보여드립니다.`,
     );
-  if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
+  if (supportSelection && supportSelection.overlapOnlyCount > 0) {
     missing.push(
       '서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.',
     );
   }
-  const missingSupportingAxes = 2 - Math.max(0, chosen.length - 1);
-  if (missingSupportingAxes > 0)
-    missing.push(`중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
+  // The existence of a source-bound central reading, not an arbitrary
+  // three-axis quota, determines whether a research reading is complete.
   const state: Status =
-    snapshot.completeness.birthTimeKnown && chosen.length === 3
+    snapshot.completeness.birthTimeKnown && core !== undefined
       ? 'complete'
       : result.length
         ? 'partial'
@@ -499,7 +496,7 @@ export function buildGeneralNatalMultifactorReport(
       ...LIMITATIONS,
       ...(state === 'complete'
         ? []
-        : ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.']),
+        : ['명식 전체를 대표할 중심 연구 해석이 확인되지 않아 부분 관점으로 표시합니다.']),
     ],
     researchOnly: true,
     mayPublish: false,
