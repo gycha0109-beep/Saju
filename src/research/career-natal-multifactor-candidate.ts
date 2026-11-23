@@ -95,7 +95,7 @@ export const CAREER_MULTIFACTOR_METHODOLOGY: MethodologyDefinition = Object.free
   description: 'Combines two distinct matched T5 Ten-God family themes in the SAME canonical observation channel to surface a bounded Career structure, never an outcome.',
   assumptions: [
     'A matched pair is a structural interpretation candidate, not the user\'s observed behavior.',
-    'Visible stems may form an interpretive headline; branch channel is supporting context.',
+    'Visible-stem and branch-channel pairs are both independently chart-observed structural candidates. A non-tension pair in either channel may anchor the bounded Career interpretation; neither channel establishes a priority or cross-channel relationship by itself.',
     'Officer-to-resource describes demand-to-preparation; wealth-to-officer describes responsibility. These are different source-owned reading axes, and a tension axis is optional, never mandatory.',
     'A shared whole-chart family count does not establish the channel-specific pair.',
     'The wealth→officer and wealth↔resource patterns use only the bounded, contested relationship categories already listed in the General natal conclusion research source. They never infer outcomes.',
@@ -155,7 +155,7 @@ function ruleFor(pattern: Pattern, channel: Channel): RuleDefinition {
         numericScoringAuthorized: false,
       },
       polarity: 'neutral',
-      emphasis: channel === 'visible_stems' ? 'major' : 'minor',
+      emphasis: pattern.axis === 'tension' ? 'minor' : 'moderate',
       tags: ['research', 'career', 'natal', 'two-upstream-t5', channel, pattern.axis],
     },
     sourceRefs: sources,
@@ -184,8 +184,8 @@ export const CAREER_MULTIFACTOR_NARRATIVE_PROFILES: readonly ClaimNarrativeProfi
         { templateKey: 'headline', language: 'ko', text: pattern.title },
         { templateKey: 'summary', language: 'ko',
           text: channel === 'branches'
-            ? `지지 대표 십신에서 관측되는 보조 맥락입니다. ${pattern.description}`
-            : `천간에 드러난 조합에서 관측되는 중심 해석 후보입니다. ${pattern.description}` },
+            ? `지지 대표 십신에서 관측되는 직업 관련 구조 해석 후보입니다. ${pattern.description}`
+            : `천간에 드러난 조합에서 관측되는 직업 관련 구조 해석 후보입니다. ${pattern.description}` },
       ],
     };
   })));
