@@ -244,7 +244,6 @@ function unknownHourCalculatedContext(snapshot: CanonicalSajuSnapshot): string {
 function buildCareerMultifactorReadingGuide(
   core: CareerMultifactorReportSection | undefined,
   supporting: readonly CareerMultifactorReportSection[],
-  state: Status,
 ): CareerMultifactorReadingGuide | undefined {
   if (core === undefined || core.channel !== 'visible_stems' || core.axis === 'tension') {
     return undefined;
@@ -395,7 +394,7 @@ export function buildCareerMultifactorResearchReport(
     missing.unshift('출생시각 미상');
     missing.push('이 계산 정책에서 십신(T5) 전체가 미확정이므로 직업의 다중 근거 T8 해석을 보류합니다. 확정된 간지만 계산 사실로 표시합니다.');
   }
-  const readingGuide = buildCareerMultifactorReadingGuide(primary, supporting, state);
+  const readingGuide = buildCareerMultifactorReadingGuide(primary, supporting);
   return {
     version: CAREER_MULTIFACTOR_REPORT_VERSION,
     snapshotId: snapshot.snapshotId,
