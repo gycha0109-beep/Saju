@@ -34,7 +34,7 @@ import {
 
 const REFERENCE = '2026-10-25T00:00:00.000Z';
 const DEFAULT_COUNT = 500;
-const EXPANDED_COUNT = 3000;
+const EXPANDED_COUNTS = [3000, 10000];
 const DOMAIN_NAMES = [
   '전체 사주',
   '직업·커리어',
@@ -122,6 +122,7 @@ function natalEntry(report, graphLinks) {
   const sections = report.sections ?? [];
   const additionalVerifiedSections = report.additionalVerifiedSections ?? [];
   const prose = sections.map((s) => s.headline + '\n' + s.paragraph);
+  if (report.intimacy) prose.push(report.intimacy.headline + '\n' + report.intimacy.paragraph);
   if (additionalVerifiedSections.length > 0) {
     prose.push(
       '추가로 확인된 직업 관련 구조\n' +
@@ -136,11 +137,16 @@ function natalEntry(report, graphLinks) {
     prose.push(...report.missing.map((reason) => 'Support explanation:\n' + reason));
   }
   const meaning = sections.map((s) => [s.claimType, s.pattern, s.axis, s.channel]);
+  if (report.intimacy) meaning.push(['day_branch_intimacy', report.intimacy.kind]);
   if (sections.length === 0 && report.missing?.length) {
     meaning.push(['insufficient_support', ...report.missing]);
   }
   const evidence = {
     state: report.state,
+    ...(report.intimacy ? { intimacy: {
+      kind: report.intimacy.kind, ruleId: report.intimacy.ruleId, methodologyId: report.intimacy.methodologyId,
+      sourceIds: report.intimacy.sourceIds, factPaths: report.intimacy.factPaths,
+    } } : {}),
     permissions: {
       researchOnly: report.researchOnly,
       usefulComplete: report.usefulComplete,
@@ -279,6 +285,8 @@ function temporalEntries(result) {
   const life = result.lifeStage.report;
   const annualInteractions = report.annual.stemInteractions;
   const monthlyInteractions = report.monthly.stemInteractions;
+  const annualBranchLayers = report.annual.branchLayers;
+  const monthlyBranchLayers = report.monthly.branchLayers;
   const interactionText = (items) => items.map((item) => item.title + '\n' + item.text);
   const interactionMeaning = (items) => items.map((item) => [item.period, item.pair, item.state]);
   const interactionEvidence = (items) => items.map((item) => ({
@@ -292,29 +300,35 @@ function temporalEntries(result) {
     sourceIds: item.sourceIds,
     factPaths: item.factPaths,
   }));
+  const layerEvidence = (items) => items.map((item) => ({
+    period: item.period, slot: item.slot, state: item.state,
+    effectiveYear: item.effectiveYear, ruleId: item.ruleId,
+    methodologyId: item.methodologyId, sourceIds: item.sourceIds, factPaths: item.factPaths,
+  }));
   const annualNatalEvidence = describeTemporalNatalEvidence(report, 'annual');
   const monthNatalEvidence = [
     describeTemporalNatalEvidence(report, 'monthly_before_jeol'),
     describeTemporalNatalEvidence(report, 'monthly_after_jeol'),
   ];
   const a = entry(
-    [...annual.map((s) => s.title + '\n' + s.text), annualNatalEvidence, ...interactionText(annualInteractions)]
+    [...annual.map((s) => s.title + '\n' + s.text), annualNatalEvidence,
+      ...interactionText(annualInteractions), ...interactionText(annualBranchLayers)]
       .join('\n\n'),
     annual.map((s) => [s.researchProfileId, s.title]),
     report.annualReference.state,
-    annual.length + annualInteractions.length,
+    annual.length + annualInteractions.length + annualBranchLayers.length,
     'annual_research',
   );
   const current =
     focus.state === 'in_period' && focus.theme ? focus.theme.title + '\n' + focus.theme.text : '';
   const m = entry(
     [current, ...monthly.map((s) => s.title + '\n' + s.text), ...monthNatalEvidence,
-      ...interactionText(monthlyInteractions)]
+      ...interactionText(monthlyInteractions), ...interactionText(monthlyBranchLayers)]
       .filter(Boolean)
       .join('\n\n'),
     [focus.state, focus.theme?.title ?? '', ...monthly.map((s) => [s.segmentId, s.title])],
     focus.state,
-    monthly.length + monthlyInteractions.length + (current ? 1 : 0),
+    monthly.length + monthlyInteractions.length + monthlyBranchLayers.length + (current ? 1 : 0),
     'monthly_research',
   );
   // IMPORTANT: Dayun periods describe calendar/pillar facts, not supported
@@ -326,6 +340,7 @@ function temporalEntries(result) {
     natalComparison: report.temporalNatalComparison.filter((item) => item.period === 'annual'),
     permissions: report.annual.permissions,
     stemInteractions: annualInteractions,
+    branchLayers: annualBranchLayers,
     sections: annual.map((s) => ({
       kind: s.kind,
       sourceProfileId: s.researchProfileId,
@@ -344,6 +359,7 @@ function temporalEntries(result) {
     jeolBoundary: report.monthly.jeolBoundary,
     missing: report.monthly.missing,
     stemInteractions: monthlyInteractions,
+    branchLayers: monthlyBranchLayers,
     permissions: {
       researchOnly: report.monthly.researchOnly,
       usefulComplete: report.monthly.usefulComplete,
@@ -380,11 +396,13 @@ function temporalEntries(result) {
     ...a.sourceEvidence,
     natalComparison: natalEvidence(a.sourceEvidence.natalComparison),
     stemInteractions: interactionEvidence(annualInteractions),
+    branchLayers: layerEvidence(annualBranchLayers),
   };
   const monthlyEvidence = {
     ...m.sourceEvidence,
     natalComparison: natalEvidence(m.sourceEvidence.natalComparison),
     stemInteractions: interactionEvidence(monthlyInteractions),
+    branchLayers: layerEvidence(monthlyBranchLayers),
     sections: m.sourceEvidence.sections.map((section) => {
       const fingerprint = { ...section };
       delete fingerprint.claimId;
@@ -402,8 +420,9 @@ function temporalEntries(result) {
       observations.some((item) => item.tenGod !== comparison.periodTenGod),
     ];
   });
-  a.comparisonMeaning = [...comparisonMeaning(a.sourceEvidence.natalComparison), ...interactionMeaning(annualInteractions)];
-  m.comparisonMeaning = [...comparisonMeaning(m.sourceEvidence.natalComparison), ...interactionMeaning(monthlyInteractions)];
+  const layerMeaning = (items) => items.map(item => [item.period, item.slot, item.state]);
+  a.comparisonMeaning = [...comparisonMeaning(a.sourceEvidence.natalComparison), ...interactionMeaning(annualInteractions), ...layerMeaning(annualBranchLayers)];
+  m.comparisonMeaning = [...comparisonMeaning(m.sourceEvidence.natalComparison), ...interactionMeaning(monthlyInteractions), ...layerMeaning(monthlyBranchLayers)];
   a.evidenceComponents = annualEvidence;
   a.evidenceKey = createEvidenceFingerprint(annualEvidence);
   m.evidenceComponents = monthlyEvidence;
@@ -492,8 +511,8 @@ function summarize(rows) {
   };
 }
 export function runFiveHundredSajuAudit(count = DEFAULT_COUNT, { includeCases = false } = {}) {
-  if (count !== DEFAULT_COUNT && count !== EXPANDED_COUNT)
-    throw new RangeError('Supported fixed-seed audit sample sizes are exactly 500 or 3000.');
+  if (count !== DEFAULT_COUNT && !EXPANDED_COUNTS.includes(count))
+    throw new RangeError('Supported fixed-seed audit sample sizes are 500, 3000 or 10000.');
   seed = 0x5a1a2026;
   const registries = {
     general: createGeneralNatalMultifactorRegistry(),
