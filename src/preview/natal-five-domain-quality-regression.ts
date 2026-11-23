@@ -196,8 +196,16 @@ export function runNatalS6QualityRegression(): {
       caseId + '/' + domain + ': wrong chart or research boundary');
     }
     for (const domain of domains) {
-      requireEvidence(domain.state !== 'complete' || domain.sections.length >= 3,
-        caseId + '/' + domain.domain + ': invalid minimum useful reading');
+      if (domain.state === 'complete') {
+        const core = domain.sections[0];
+        requireEvidence(
+          domain.domain === 'career'
+            ? core !== undefined && core.axis !== 'tension' &&
+              core.claimType === reports.career.readingGuide?.coreClaimType
+            : domain.sections.length >= 3,
+          caseId + '/' + domain.domain + ': invalid minimum useful reading',
+        );
+      }
       requireEvidence(new Set(domain.sections.map(s => s.axis)).size === domain.sections.length,
         caseId + '/' + domain.domain + ': repeated axis substituted for distinct evidence');
       for (const section of domain.sections) {

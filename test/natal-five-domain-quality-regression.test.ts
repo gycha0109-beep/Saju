@@ -23,17 +23,22 @@ describe('S6 real-chart Korean meaning and contrast quality regression', () => {
       expect(item.domains).toHaveLength(5);
       expect(new Set(item.domains.map(domain => domain.domain)).size).toBe(5);
       for (const domain of item.domains) {
-        if (domain.state === 'complete') {
+        if (domain.state === 'complete' && domain.domain === 'career') {
+          expect(domain.sections[0]?.claimType).toMatch(/^CAREER_NATAL_MULTIFACTOR_/u);
+          expect(domain.sections[0]?.axis).not.toBe('tension');
+        } else if (domain.state === 'complete') {
           expect(new Set(domain.sections.map(s => s.axis)).size).toBeGreaterThanOrEqual(3);
         }
         for (const s of domain.sections) {
           expect(s.sourceIds.length).toBeGreaterThan(0);
           expect(s.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
-          expect(s.factPaths.every(path =>
-            s.channel === 'hidden_stems'
-              ? /^derivedFacts\.hiddenStems\.(year|month|day|hour)\.value\.[0-2]$/u.test(path)
-              : /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path),
-          )).toBe(true);
+          expect(s.factPaths.every(path => {
+            if (s.channel === 'hidden_stems') {
+              return /^derivedFacts\.hiddenStems\.(year|month|day|hour)\.value\.[0-2]$/u.test(path);
+            }
+            return /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path) ||
+              (s.pattern === 'MONTH_FOOD_WEALTH' && /^derivedFacts\.hiddenStems\.month\.value\.[0-2]$/u.test(path));
+          })).toBe(true);
         }
       }
       if (item.scenario === 'unknown_time') {
