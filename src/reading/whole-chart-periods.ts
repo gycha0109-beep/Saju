@@ -227,7 +227,7 @@ export function judgeWholeChartPeriods(
           ? 'repeats_challenge'
           : roles?.supportCandidates.some((item) => item.god === god)
             ? 'repeats_support'
-            : roles?.repair.some((item) => item.god === god)
+            : roles?.remedyCandidates.some((item) => item.god === god)
               ? 'repeats_possible_remedy'
               : 'unsettled';
       return {
@@ -285,7 +285,7 @@ export function judgeWholeChartPeriods(
     const direction =
       !cycle || (monthly && !month) || judgment.state !== 'observed' || !judgment.allResolved
         ? 'held'
-        : (pressure && support) ||
+        : pressure && support
           ? 'competing'
           : pressure
             ? 'pressure'
