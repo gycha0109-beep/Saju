@@ -14,6 +14,8 @@ import { effectiveAnnualPillar } from './research-temporal-branch-layers.js';
 
 const KST_OFFSET = 9 * 3600000;
 const SLOTS = ['year', 'month', 'day', 'hour'] as const;
+const HIDDEN_ROLE_SOURCE = 'https://www.donglishuzhai.net/chapter/3741.html';
+const YEAR_AND_LUCK_SOURCE = 'https://ncc.com.tw/fate/paleo/bg/bg_034.htm';
 type Ganji = { stem: HeavenlyStem; branch: EarthlyBranch };
 type Area = 'career' | 'business' | 'wealth' | 'relationship';
 const FAMILY_AREAS = {
@@ -25,19 +27,52 @@ const FAMILY_AREAS = {
 } as const satisfies Record<string, readonly Area[]>;
 type PeriodLayer = {
   kind: 'dayun' | 'annual' | 'monthly';
+  pillar: Ganji;
   god: TenGod | undefined;
   contacts: readonly { slot: PillarSlot; relation: 'combination' | 'clash' }[];
   roleImpact: 'repeats_challenge' | 'repeats_support' | 'repeats_possible_remedy' | 'unsettled';
 };
 
-function periodTopics(layers: readonly PeriodLayer[], monthly: boolean) {
+function periodLayerRelations(layers: readonly PeriodLayer[]) {
+  return layers.flatMap((background, i) =>
+    layers.slice(i + 1).flatMap((current) => {
+      const relation = deriveBranchPairRelation(background.pillar.branch, current.pillar.branch);
+      if (relation === 'none') return [];
+      return [
+        {
+          background: background.kind,
+          current: current.kind,
+          branches: [background.pillar.branch, current.pillar.branch] as const,
+          relation,
+          effect:
+            relation === 'clash' && background.roleImpact === 'repeats_support'
+              ? ('support_under_review' as const)
+              : ('observed_contact' as const),
+          backgroundGod: background.god,
+          sources: [YEAR_AND_LUCK_SOURCE],
+        },
+      ];
+    }),
+  );
+}
+
+function periodTopics(
+  layers: readonly PeriodLayer[],
+  layerRelations: ReturnType<typeof periodLayerRelations>,
+  monthly: boolean,
+) {
   const signals: {
     area: Area;
     layer: PeriodLayer['kind'];
     direction: 'support' | 'pressure';
     basis:
       | { kind: 'contact'; slot: PillarSlot; relation: 'combination' | 'clash' }
-      | { kind: 'stem_role'; god: TenGod };
+      | { kind: 'stem_role'; god: TenGod }
+      | {
+          kind: 'background_clash';
+          background: PeriodLayer['kind'];
+          branches: readonly [EarthlyBranch, EarthlyBranch];
+        };
   }[] = [];
   for (const layer of layers) {
     for (const contact of layer.contacts) {
@@ -68,6 +103,21 @@ function periodTopics(layers: readonly PeriodLayer[], monthly: boolean) {
         direction: layer.roleImpact === 'repeats_challenge' ? 'pressure' : 'support',
         basis: { kind: 'stem_role', god: layer.god },
       });
+  }
+  for (const contact of layerRelations) {
+    if (contact.effect !== 'support_under_review' || !contact.backgroundGod) continue;
+    for (const area of FAMILY_AREAS[TEN_GOD_FAMILY[contact.backgroundGod]]) {
+      signals.push({
+        area,
+        layer: contact.current,
+        direction: 'pressure',
+        basis: {
+          kind: 'background_clash',
+          background: contact.background,
+          branches: contact.branches,
+        },
+      });
+    }
   }
   const areas = ['career', 'business', 'wealth', 'relationship'] as const;
   return areas.flatMap((area) => {
@@ -158,6 +208,17 @@ export function judgeWholeChartPeriods(
         god && roles?.fuyi.status === 'conditional_direction'
           ? roles.fuyi.families?.includes(TEN_GOD_FAMILY[god]) === true
           : false;
+      const hiddenMonthRole =
+        judgment.state === 'observed' &&
+        judgment.pattern.selectionMode === 'single_hidden_month_role' &&
+        judgment.pattern.anchor?.stem === pillar.stem
+          ? {
+              god: judgment.pattern.anchor.god,
+              stem: pillar.stem,
+              paths: [judgment.pattern.anchor.path],
+              source: HIDDEN_ROLE_SOURCE,
+            }
+          : undefined;
       const roleImpact =
         judgment.state === 'observed' &&
         judgment.pattern.challenges.some((item) => item.god === god)
@@ -167,37 +228,49 @@ export function judgeWholeChartPeriods(
             : roles?.repair.some((item) => item.god === god)
               ? 'repeats_possible_remedy'
               : 'unsettled';
-      return { kind, pillar, god, contacts, roleImpact, regulation } as const;
+      return { kind, pillar, god, contacts, roleImpact, regulation, hiddenMonthRole } as const;
     };
     const layers = [
       ...(cycle ? [layer(cycle.pillar, 'dayun')] : []),
       layer(annual, 'annual'),
       ...(month ? [layer(month.monthlyPillar, 'monthly')] : []),
     ];
-    const pressure = layers.some(
-      (item) =>
-        item.roleImpact === 'repeats_challenge' ||
-        item.contacts.some(
-          (contact) =>
-            contact.relation === 'clash' &&
-            (contact.slot === 'month' ||
-              contact.slot === 'day' ||
-              (judgment.state === 'observed' &&
-                judgment.strength.availableRoots.includes(contact.slot))),
-        ),
+    const layerRelations = periodLayerRelations(layers);
+    const backgroundTension = layerRelations.some(
+      ({ effect }) => effect === 'support_under_review',
     );
+    const pressure =
+      backgroundTension ||
+      layers.some(
+        (item) =>
+          item.roleImpact === 'repeats_challenge' ||
+          item.contacts.some(
+            (contact) =>
+              contact.relation === 'clash' &&
+              (contact.slot === 'month' ||
+                contact.slot === 'day' ||
+                (judgment.state === 'observed' &&
+                  judgment.strength.availableRoots.includes(contact.slot))),
+          ),
+      );
     const support = layers.some((item) => item.roleImpact === 'repeats_support');
     const monthLayer = layers.find((item) => item.kind === 'monthly');
     const monthlyShift = !monthLayer
       ? undefined
-      : monthLayer.roleImpact === 'repeats_challenge' ||
-          monthLayer.contacts.some((contact) => contact.relation === 'clash')
-        ? 'requires_adjustment'
-        : monthLayer.roleImpact === 'repeats_support'
-          ? 'reinforces_natal_role'
-          : monthLayer.contacts.some((contact) => contact.relation === 'combination')
-            ? 'adds_coordination'
-            : 'limited_change';
+      : layerRelations.some(
+            ({ current, effect }) => current === 'monthly' && effect === 'support_under_review',
+          )
+        ? 'contests_background_support'
+        : monthLayer.roleImpact === 'repeats_challenge' ||
+            monthLayer.contacts.some((contact) => contact.relation === 'clash')
+          ? 'requires_adjustment'
+          : monthLayer.roleImpact === 'repeats_support'
+            ? 'reinforces_natal_role'
+            : monthLayer.contacts.some((contact) => contact.relation === 'combination')
+              ? 'adds_coordination'
+              : monthLayer.hiddenMonthRole
+                ? 'reveals_month_role'
+                : 'limited_change';
     const direction =
       !cycle || (monthly && !month) || judgment.state !== 'observed' || !judgment.allResolved
         ? 'held'
@@ -217,9 +290,11 @@ export function judgeWholeChartPeriods(
       dayunIndex: cycle?.index,
       monthSegment: month?.segmentId,
       layers,
+      layerRelations,
       direction,
       monthlyShift,
-      topics: direction === 'held' ? [] : periodTopics(layers, monthly !== undefined),
+      topics:
+        direction === 'held' ? [] : periodTopics(layers, layerRelations, monthly !== undefined),
     };
   });
   return {

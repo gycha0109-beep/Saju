@@ -158,7 +158,9 @@ function describeTopic(topic: WholeChartPeriods['windows'][number]['topics'][num
         const detail =
           basis.kind === 'contact'
             ? `${basis.slot === 'day' ? '일지' : '월지'} ${basis.relation === 'clash' ? '충' : '합'}`
-            : basis.god;
+            : basis.kind === 'background_clash'
+              ? `${TIMING_SCOPE[basis.background]} 지지와의 충`
+              : basis.god;
         return `${TIMING_SCOPE[layer]}의 ${detail}`;
       }),
     ),
@@ -197,6 +199,19 @@ function describeWindow(window: WholeChartPeriods['windows'][number], monthly: b
     .filter((layer) => layer.regulation)
     .map((layer) => layer.god)
     .join('·');
+  const revealedRoles = window.layers.flatMap(({ kind, hiddenMonthRole }) =>
+    hiddenMonthRole
+      ? [
+          `${TIMING_SCOPE[kind]} 천간의 ${hiddenMonthRole.stem}에서 원국 월지에 숨어 있던 ${hiddenMonthRole.god} 작용이 드러납니다.`,
+        ]
+      : [],
+  );
+  const competingBackground = window.layerRelations
+    .filter(({ effect }) => effect === 'support_under_review')
+    .map(
+      ({ background, current, branches }) =>
+        `${TIMING_SCOPE[background]}의 지지(${branches[0]})와 ${TIMING_SCOPE[current]}의 지지(${branches[1]})가 충을 이루어, 앞선 운의 지원이 이어지는지는 보류합니다.`,
+    );
   const title = {
     held: '대운 또는 원국 근거가 더 필요합니다.',
     competing:
@@ -215,6 +230,8 @@ function describeWindow(window: WholeChartPeriods['windows'][number], monthly: b
           reinforces_natal_role:
             '월운이 원국의 보조 역할을 더합니다. 이번 절입 구간에서 활용할 여지를 봅니다.',
           adds_coordination: '월운에서 새로 확인되는 합의 자리에서 상대와 맞춰 갈 조건을 살핍니다.',
+          contests_background_support: '월운에서 배경 운의 지원을 흔드는 근거가 새로 나타납니다.',
+          reveals_month_role: '월운은 원국 월지에 모여 있던 역할이 드러나는 조건을 더합니다.',
           limited_change: '이번 월운이 연운과 대운의 작용을 추가로 바꾼다는 근거는 제한됩니다.',
         }[window.monthlyShift];
   const topics = window.topics.map(describeTopic);
@@ -224,6 +241,7 @@ function describeWindow(window: WholeChartPeriods['windows'][number], monthly: b
       : '',
     title,
     specificMonth,
+    ...(window.direction === 'held' ? [] : [...competingBackground, ...revealedRoles]),
     ...topics,
     activities.size ? `지지 충이 닿는 자리에서 ${[...activities].join('과 ')}을 점검합니다.` : '',
     signals.length ? `원국 판단과 연결되는 천간은 ${signals.join(', ')}입니다.` : '',
@@ -343,7 +361,20 @@ export function describeWholeChartPeriods(periods: WholeChartPeriods) {
     text: describeWindow(window, periods.scope === 'monthly'),
     evidence: {
       rule: periods.rule,
-      paths: periods.paths,
+      paths: [
+        ...new Set([
+          ...periods.paths,
+          ...window.layers.flatMap(({ hiddenMonthRole }) => hiddenMonthRole?.paths ?? []),
+        ]),
+      ],
+      sources: [
+        ...new Set([
+          ...window.layerRelations.flatMap(({ sources }) => sources),
+          ...window.layers.flatMap(({ hiddenMonthRole }) =>
+            hiddenMonthRole ? [hiddenMonthRole.source] : [],
+          ),
+        ]),
+      ],
       snapshotId: periods.snapshotId,
       calculationHash: periods.calculationHash,
     },

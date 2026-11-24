@@ -209,6 +209,58 @@ describe('whole-chart interpretation by structural context', () => {
     expect(result.mayGrantOfficialAuthority).toBe(false);
   });
 
+  it('revisits a supporting Dayun only when the active year or month directly clashes with it', () => {
+    const result = buildThreeTemporalMenusBirthReading(birth(1992, 9, 25, 8, 30, 'male'), {
+      requestId: 'whole-chart-supporting-dayun',
+      targetYear: 2026,
+      targetMonth: 6,
+      referenceDateTime: NOW,
+    });
+    const { annualChartReading, monthlyChartReading } = result.annualMonthly.report;
+    expect(annualChartReading[0]?.layerRelations).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ effect: 'support_under_review' })]),
+    );
+    const afterIpchun = annualChartReading.find(({ effectiveYear }) => effectiveYear === 2026)!;
+    expect(afterIpchun.layerRelations).toContainEqual(
+      expect.objectContaining({
+        background: 'dayun',
+        current: 'annual',
+        branches: ['자', '오'],
+        effect: 'support_under_review',
+      }),
+    );
+    expect(afterIpchun.direction).toBe('competing');
+    expect(monthlyChartReading[0]?.monthlyShift).toBe('adds_coordination');
+    expect(monthlyChartReading[1]?.startsAt).toBe('2026-06-05T15:48:00.000Z');
+    expect(monthlyChartReading[1]?.monthlyShift).toBe('contests_background_support');
+    expect(monthlyChartReading[1]?.layerRelations).toContainEqual(
+      expect.objectContaining({ current: 'monthly', effect: 'support_under_review' }),
+    );
+    expect(monthlyChartReading[1]?.text).toContain('월운에서 배경 운의 지원');
+    expect(monthlyChartReading[1]?.topics).toContainEqual(
+      expect.objectContaining({ area: 'business', direction: 'competing' }),
+    );
+    expect(afterIpchun.text).not.toContain('월운에서 배경 운의 지원');
+  });
+
+  it('traces the exact transient stem exposing a hidden natal month role across Jeol', () => {
+    const result = buildThreeTemporalMenusBirthReading(birth(1960, 1, 1, 0, 30, 'male'), {
+      requestId: 'whole-chart-hidden-month-role',
+      targetYear: 2026,
+      targetMonth: 6,
+      referenceDateTime: NOW,
+    });
+    const [before, after] = result.annualMonthly.report.monthlyChartReading;
+    expect(before?.layers.find(({ kind }) => kind === 'monthly')?.hiddenMonthRole).toMatchObject({
+      stem: '계',
+      god: '정재',
+      paths: ['derivedFacts.hiddenStems.month.value.0'],
+    });
+    expect(before?.text).toContain('월운 천간의 계에서');
+    expect(after?.layers.find(({ kind }) => kind === 'monthly')?.hiddenMonthRole).toBeUndefined();
+    expect(after?.text).not.toContain('월운 천간의 계에서');
+  });
+
   it('renders integrated conclusions in the four existing natal articles', () => {
     const example = runNatalS6QualityRegression().cases[0]!.html;
     for (const domain of ['career', 'business', 'wealth', 'relationship']) {
