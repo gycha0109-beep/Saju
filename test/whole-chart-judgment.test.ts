@@ -67,6 +67,30 @@ describe('whole-chart interpretation by structural context', () => {
       execution.run.runHash,
     );
   });
+  it('attaches a source-bounded non-numeric readiness graph instead of a strong/weak verdict', () => {
+    const chart = observed(birth(1992, 6, 25, 22, 40, 'male'));
+    expect(chart.strengthReadiness.ordinaryStrengthClassificationAuthorized).toBe(false);
+    expect(chart.strengthReadiness.numericScoringAuthorized).toBe(false);
+    expect(chart.strengthReadiness.strongWeakVerdict).toBe('not_emitted');
+    expect(chart.strengthReadiness.blockers).toContain('SUPPORT_EFFECT_VERDICT_UNRESOLVED');
+    expect(chart.strengthReadiness.blockers).toContain('CHALLENGE_EFFECT_VERDICT_UNRESOLVED');
+    expect(chart.strengthReadiness.blockers).toContain('CLASSIFIER_POLICY_NOT_AUTHORIZED');
+    expect([
+      'STOP_WITH_INDETERMINATE',
+      'ROUTE_SPECIAL_PATTERN_REVIEW',
+      'STOP_FOR_METHODOLOGY_REVIEW',
+    ]).toContain(chart.strengthReadiness.terminalDecision);
+  });
+
+  it('routes unknown-time strength review to an indeterminate scenario instead of using the base snapshot', () => {
+    const input = birth(1992, 6, 25, 22, 40, 'male');
+    const chart = observed({ ...input, time: { known: false } });
+    expect(chart.strengthReadiness.status).toBe('INPUT_INDETERMINATE');
+    expect(chart.strengthReadiness.terminalDecision).toBe('STOP_WITH_INDETERMINATE');
+    expect(chart.strengthReadiness.blockers[0]).toBe('INPUT_OR_SCENARIO_INDETERMINATE');
+    expect(chart.strengthReadiness.strongWeakVerdict).toBe('not_emitted');
+  });
+
   it('changes the underlying interpretation when the visible Ten-God sequence is identical', () => {
     const first = birth(1992, 6, 25, 22, 40, 'male');
     const second = birth(1969, 10, 1, 3, 5);
