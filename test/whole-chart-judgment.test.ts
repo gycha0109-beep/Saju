@@ -86,7 +86,7 @@ describe('whole-chart interpretation by structural context', () => {
     ).toBe(true);
     expect(
       buildWholeChartNatalReading(snapshot(first), 'career', NOW).paragraphs.join(' '),
-    ).toContain('복수의 지장간 투간 신호를 관찰했습니다');
+    ).toContain('복수의 지장간 신호를 관찰했습니다');
     expect(
       buildWholeChartNatalReading(snapshot(first), 'career', NOW).semanticKey.some((key) =>
         key.startsWith('month_signal:'),
@@ -101,7 +101,7 @@ describe('whole-chart interpretation by structural context', () => {
     expect(profile(first)).not.toEqual(profile(second));
   });
 
-  it('preserves multiple independently supported month candidates without forcing one pattern', () => {
+  it('records multiple independently supported month signals without establishing a pattern', () => {
     const base = snapshot(birth(2000, 1, 10, 12, 0));
     if (base.derivedFacts.dayMaster.status !== 'resolved' || !base.derivedFacts.hiddenStems) {
       throw new Error('Expected a complete base snapshot for the synthetic structural fixture.');
@@ -141,7 +141,7 @@ describe('whole-chart interpretation by structural context', () => {
     };
     const synthetic = {
       ...base,
-      calculationHash: 'synthetic-coexisting-month-candidates',
+      calculationHash: 'synthetic-month-signals',
       pillars: {
         year: pillar(base.pillars.year, '신', '辛', '금', '음', '인', '寅', '목', '양'),
         month: pillar(base.pillars.month, '갑', '甲', '목', '양', '축', '丑', '토', '음'),
