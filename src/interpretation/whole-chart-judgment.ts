@@ -568,11 +568,13 @@ function assessMonthCandidate(
   const supports = supportContext.active;
   const challenges = clause ? visible.filter(({ god }) => clause.challenges.includes(god)) : [];
   const disrupting = monthContacts.filter(({ kind }) => DISRUPTIVE.includes(kind));
-  const anchorBound = contacts.some(
+  const anchorCombinationContacts = contacts.filter(
     ({ kind, slots }) =>
       kind === 'stem_combination' &&
       visible.some(({ slot, stem }) => stem === candidate.stem && slots.includes(slot)),
   );
+  const anchorBound = anchorCombinationContacts.length > 0;
+  const combinationUnderReview = monthContacts.some(({ kind }) => kind === 'combination');
   const repairApplicable = challenges.some(
     ({ god }) =>
       (candidate.god === '식신' && god === '편인') ||
@@ -606,11 +608,18 @@ function assessMonthCandidate(
             ? 'challenged'
             : requiresBodySupport && !bodySupportsClause
               ? 'strength_required'
-              : supports.length
-                ? 'supported'
-                : 'candidate_only';
+              : combinationUnderReview
+                ? 'candidate_only'
+                : supports.length
+                  ? 'supported'
+                  : 'candidate_only';
   const evidence: JudgmentEvidence = {
-    rule: clause?.supportRule ?? 'unsettled-month-candidate',
+    rule:
+      state === 'repair_under_review' || state === 'locally_protected'
+        ? (clause?.repairRule ?? 'unsettled-month-remedy')
+        : state === 'challenged'
+          ? (clause?.pressureRule ?? 'month-contact')
+          : (clause?.supportRule ?? 'unsettled-month-candidate'),
     paths: [
       ...new Set([
         candidate.path,
@@ -618,6 +627,7 @@ function assessMonthCandidate(
         ...challenges.map(({ path }) => path),
         ...remedies.map(({ path }) => path),
         ...monthContacts.flatMap(({ evidence: item }) => item.paths),
+        ...anchorCombinationContacts.flatMap(({ evidence: item }) => item.paths),
         ...('evidence' in officerRepair ? officerRepair.evidence.paths : []),
         ...(requiresBodySupport ? strength.evidence.paths : []),
       ]),
@@ -628,6 +638,7 @@ function assessMonthCandidate(
         SELECTION_SOURCE,
         ...supportContext.evidence.sources,
         ...monthContacts.flatMap(({ evidence: item }) => item.sources),
+        ...anchorCombinationContacts.flatMap(({ evidence: item }) => item.sources),
         ...('evidence' in officerRepair ? officerRepair.evidence.sources : []),
         ...(requiresBodySupport ? strength.evidence.sources : []),
       ]),
@@ -642,6 +653,7 @@ function assessMonthCandidate(
     remedies,
     disrupting,
     anchorBound,
+    combinationUnderReview,
     officerRepair,
     evidence,
   } as const;
