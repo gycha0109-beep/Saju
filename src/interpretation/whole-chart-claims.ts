@@ -32,7 +32,6 @@ const STATES = [
   'unavailable',
   'unresolved',
   'competing_month_signals',
-  'coexisting_month_candidates',
   'candidate_only',
   'repair_under_review',
   'locally_protected',
