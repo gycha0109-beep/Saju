@@ -172,18 +172,21 @@ describe('whole-chart interpretation by structural context', () => {
     };
     const judgment = judgeWholeChart(synthetic);
     if (judgment.state !== 'observed') throw new Error('Expected the synthetic chart to be observable.');
-    expect(judgment.pattern.monthSignals.map(({ god }) => god)).toEqual(['정인', '정관']);
-    expect(judgment.pattern.monthSignalAssessments.map(({ state }) => state)).toEqual([
-      'supported',
-      'supported',
-    ]);
+    expect(
+      judgment.pattern.monthStemObservations.map(({ position }) => position.god),
+    ).toEqual(['정인', '정관']);
+    expect(
+      judgment.pattern.monthStemObservations.every(({ evidence }) =>
+        evidence.paths.some((path) => path.startsWith('derivedFacts.hiddenStems.month')),
+      ),
+    ).toBe(true);
     expect(judgment.pattern.state).toBe('competing_month_signals');
     expect(judgment.roles.xi).toEqual([]);
     const reading = buildWholeChartNatalReading(synthetic, 'career', NOW);
-    expect(reading.paragraphs.join(' ')).toContain('지원·제약·구응 접점은 따로 기록했지만');
+    expect(reading.paragraphs.join(' ')).toContain('격국 후보의 정체·순위·강도·성립');
     expect(
       reading.paragraphs.filter((paragraph) =>
-        paragraph.includes('월지에서 복수의 지장간 신호를 관찰했습니다'),
+        paragraph.includes('월지 지장간 구성 요소를 각각 관측했습니다'),
       ),
     ).toHaveLength(1);
     expect(reading.paragraphs.join(' ')).toContain('정인');
