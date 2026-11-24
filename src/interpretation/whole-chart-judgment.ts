@@ -674,9 +674,10 @@ function assessPattern(
   );
   const competingMeeting = monthContacts.some(({ kind }) => kind === 'meeting');
   const monthSignals = exposed.length ? exposed : month;
-  const monthSignalAssessments = monthSignals.map((signal) =>
-    assessMonthSignal(signal, visible, positions, contacts, monthContacts, strength, allResolved),
-  );
+  const monthSignalAssessments = monthSignals.map((signal) => ({
+    ...assessMonthSignal(signal, visible, positions, contacts, monthContacts, strength, allResolved),
+    exposure: visible.some(({ stem }) => stem === signal.stem) ? 'visible' as const : 'concealed' as const,
+  }));
   const anchor =
     allResolved &&
     !competingMeeting &&
