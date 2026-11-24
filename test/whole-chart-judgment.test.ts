@@ -101,6 +101,90 @@ describe('whole-chart interpretation by structural context', () => {
     expect(profile(first)).not.toEqual(profile(second));
   });
 
+  it('preserves multiple independently supported month candidates without forcing one pattern', () => {
+    const base = snapshot(birth(2000, 1, 10, 12, 0));
+    if (base.derivedFacts.dayMaster.status !== 'resolved' || !base.derivedFacts.hiddenStems) {
+      throw new Error('Expected a complete base snapshot for the synthetic structural fixture.');
+    }
+    const pillar = (
+      current: typeof base.pillars.year,
+      stem: '갑' | '신' | '계',
+      stemHanja: string,
+      stemElement: '목' | '금' | '수',
+      stemYinYang: '양' | '음',
+      branch: '인' | '축',
+      branchHanja: string,
+      branchElement: '목' | '토',
+      branchYinYang: '양' | '음',
+    ) => {
+      if (current.status !== 'resolved') throw new Error('Expected a resolved pillar.');
+      return {
+        ...current,
+        value: {
+          ...current.value,
+          stem: {
+            ...current.value.stem,
+            value: stem,
+            hanja: stemHanja,
+            element: stemElement,
+            yinYang: stemYinYang,
+          },
+          branch: {
+            ...current.value.branch,
+            value: branch,
+            hanja: branchHanja,
+            element: branchElement,
+            yinYang: branchYinYang,
+          },
+        },
+      };
+    };
+    const synthetic = {
+      ...base,
+      calculationHash: 'synthetic-coexisting-month-candidates',
+      pillars: {
+        year: pillar(base.pillars.year, '신', '辛', '금', '음', '인', '寅', '목', '양'),
+        month: pillar(base.pillars.month, '갑', '甲', '목', '양', '축', '丑', '토', '음'),
+        day: pillar(base.pillars.day, '갑', '甲', '목', '양', '인', '寅', '목', '양'),
+        hour: pillar(base.pillars.hour, '계', '癸', '수', '음', '인', '寅', '목', '양'),
+      },
+      derivedFacts: {
+        ...base.derivedFacts,
+        dayMaster: {
+          status: 'resolved' as const,
+          value: {
+            ...base.derivedFacts.dayMaster.value,
+            value: '갑' as const,
+            hanja: '甲',
+            element: '목' as const,
+            yinYang: '양' as const,
+          },
+        },
+        hiddenStems: {
+          ...base.derivedFacts.hiddenStems,
+          year: { status: 'resolved' as const, value: ['무', '병', '갑'] as const },
+          month: { status: 'resolved' as const, value: ['계', '신', '기'] as const },
+          day: { status: 'resolved' as const, value: ['무', '병', '갑'] as const },
+          hour: { status: 'resolved' as const, value: ['무', '병', '갑'] as const },
+        },
+        structuralRelations: { status: 'resolved' as const, value: [] },
+      },
+    };
+    const judgment = judgeWholeChart(synthetic);
+    if (judgment.state !== 'observed') throw new Error('Expected the synthetic chart to be observable.');
+    expect(judgment.pattern.candidates.map(({ god }) => god)).toEqual(['정인', '정관']);
+    expect(judgment.pattern.candidateAssessments.map(({ state }) => state)).toEqual([
+      'supported',
+      'supported',
+    ]);
+    expect(judgment.pattern.state).toBe('coexisting_month_candidates');
+    expect(judgment.roles.xi.map(({ god }) => god)).toEqual(['정관', '정인']);
+    const reading = buildWholeChartNatalReading(synthetic, 'career', NOW);
+    expect(reading.paragraphs.join(' ')).toContain('성립 근거가 독립적으로 확인됩니다');
+    expect(reading.paragraphs.join(' ')).toContain('정인');
+    expect(reading.paragraphs.join(' ')).toContain('정관');
+  });
+
   it('distinguishes two charts with the same Hurting Officer anchor using counterevidence', () => {
     const compatible = birth(2004, 8, 10, 7, 55);
     const contested = birth(1984, 9, 11, 1, 24);
