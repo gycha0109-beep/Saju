@@ -9,6 +9,7 @@ import type {
   SourceReference,
 } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
+import { withWholeChartRules } from '../interpretation/whole-chart-claims.js';
 import { createStemInteractionResearchRegistry } from './general-temporal-stem-interaction-candidate.js';
 
 export const GENERAL_MONTHLY_READING_CANDIDATE_VERSION = '0.1.0-research' as const;
@@ -457,9 +458,10 @@ export function createGeneralMonthlyReadingCandidateRegistry(
     claimTypeDefinitions: [GENERAL_MONTHLY_THEME_CLAIM_TYPE, GENERAL_MONTHLY_TENSION_CLAIM_TYPE],
     claimValueSchemas: [GENERAL_MONTHLY_THEME_SCHEMA, GENERAL_MONTHLY_TENSION_SCHEMA],
   };
-  const configured = includeBranchLayers
+  const layered = includeBranchLayers
     ? addBranchLayerRules('monthly', GENERAL_MONTHLY_THEME_CLAIM_TYPE.claimType, input, GENERAL_MONTHLY_READING_PACK)
     : { input, pack: GENERAL_MONTHLY_READING_PACK };
+  const configured = withWholeChartRules(layered.input, layered.pack);
   return includeStemInteractions
     ? createStemInteractionResearchRegistry('monthly', GENERAL_MONTHLY_THEME_CLAIM_TYPE.claimType,
       configured.input, configured.pack, createdAt)

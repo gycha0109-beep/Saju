@@ -2,7 +2,7 @@ import type {
   InterpretationPack, MethodologyDefinition, RuleDefinition, RuleExpression,
 } from '../contracts/interpretation.js';
 import type { ClaimNarrativeProfile } from '../contracts/narrative.js';
-import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
+import { createWholeChartRegistrySnapshot } from '../interpretation/whole-chart-claims.js';
 import {
   GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
   GENERAL_NATAL_USEFUL_READING_SOURCE,
@@ -213,7 +213,7 @@ export const CAREER_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
 export function createCareerMultifactorResearchRegistry(
   createdAt = '1970-01-01T00:00:00.000Z',
 ) {
-  return createRuleRegistrySnapshot({
+  return createWholeChartRegistrySnapshot({
     rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...CAREER_MULTIFACTOR_RULES],
     methodologies: [GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY, CAREER_MULTIFACTOR_METHODOLOGY],
     sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE],

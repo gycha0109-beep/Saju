@@ -1,6 +1,5 @@
 import { getTenGod } from 'manseryeok';
-import { requireWholeChartJudgment } from '../interpretation/interpretation-engine.js';
-import { buildWholeChartNatalReading, type WholeChartNatalReading } from './whole-chart-reading.js';
+import { buildSelectedWholeChartNatalReading, type WholeChartNatalReading } from './whole-chart-reading.js';
 import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -578,8 +577,8 @@ export function buildWealthNatalMultifactorReport(
   }
   return {
     snapshotId: snapshot.snapshotId,
-    wholeChart: buildWholeChartNatalReading(
-      snapshot, 'wealth', execution.run.startedAt, requireWholeChartJudgment(snapshot, execution),
+    wholeChart: buildSelectedWholeChartNatalReading(
+      snapshot, 'wealth', execution, registry,
     ),
     calculationHash: snapshot.calculationHash,
     version: WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION,

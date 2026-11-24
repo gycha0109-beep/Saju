@@ -16,7 +16,7 @@ import { deriveGeneralNatalSourceScopedBranchBreakCandidates } from '../research
 import { buildSajuR34StrengthRootSubstrate } from '../research/saju-r34-strength-root-substrate.js';
 import { deterministicContentHash } from './rule-registry.js';
 
-export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v1';
+export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v2';
 export const TEN_GOD_FAMILY = {
   비견: 'peer',
   겁재: 'peer',
@@ -36,6 +36,7 @@ const PATTERN_SOURCE = 'https://www.donglishuzhai.net/chapter/3722.html';
 const SEASON_SOURCE = 'https://www.donglishuzhai.net/chapter/3719.html';
 const MONTH_SOURCE = 'https://www.donglishuzhai.net/chapter/3721.html';
 const SELECTION_SOURCE = 'https://www.donglishuzhai.net/chapter/3723.html';
+const OFFICER_SOURCE = 'https://m.donglishuzhai.net/chapter/3744.html';
 const FUYI_SOURCE = 'https://ncc.com.tw/fate/paleo/bg/bg_033.htm';
 const SPOUSE_SOURCE =
   'https://www.shidianguji.com/zh/book/NGJ892411999032112149610/chapter/1lqbsmhhckpvt';
@@ -143,6 +144,15 @@ const CONTACT_KIND = {
   stem_five_combination: 'stem_combination',
 } as const;
 const DISRUPTIVE: readonly ChartContact['kind'][] = ['clash', 'punishment', 'harm', 'break'];
+const ROOT_CONTEST: readonly ChartContact['kind'][] = [...DISRUPTIVE, 'combination', 'meeting'];
+
+function hasContact(
+  contacts: readonly ChartContact[],
+  slot: PillarSlot,
+  kinds: readonly ChartContact['kind'][],
+) {
+  return contacts.some(({ kind, slots }) => slots.includes(slot) && kinds.includes(kind));
+}
 
 function chartContacts(snapshot: CanonicalSajuSnapshot): ChartContact[] {
   const native = snapshot.derivedFacts.structuralRelations;
@@ -303,25 +313,15 @@ function assessStrength(
     rootSubstrate.status === 'resolved'
       ? SLOTS.filter((slot) => rootSubstrate.substrate.rootTopology[slot].intrinsicTonggen)
       : [];
-  const availableRoots = rootSlots.filter(
-    (slot) =>
-      !contacts.some(
-        (contact) =>
-          contact.slots.includes(slot) &&
-          (DISRUPTIVE.includes(contact.kind) ||
-            contact.kind === 'meeting' ||
-            contact.kind === 'combination'),
-      ),
-  );
+  const contestedRootSlots = rootSlots.filter((slot) => hasContact(contacts, slot, ROOT_CONTEST));
+  const availableRoots = rootSlots.filter((slot) => !contestedRootSlots.includes(slot));
   const visible = positions.filter(({ location }) => location === 'visible');
   const grounded = visible.flatMap((position) => {
     const roots = positions.filter(
       ({ stem, location, slot }) =>
         stem === position.stem &&
         location === 'hidden' &&
-        !contacts.some(
-          (contact) => contact.slots.includes(slot) && DISRUPTIVE.includes(contact.kind),
-        ),
+        !hasContact(contacts, slot, ROOT_CONTEST),
     );
     return roots.length ? [{ position, roots }] : [];
   });
@@ -332,10 +332,12 @@ function assessStrength(
   const state =
     rootSubstrate.status !== 'resolved'
       ? 'unresolved'
-      : rootSlots.length !== availableRoots.length
-        ? 'contested_roots'
-        : hasSubstrate && groundedPressure.length
-          ? 'support_and_pressure'
+      : hasSubstrate && groundedPressure.length
+        ? 'support_and_pressure'
+        : contestedRootSlots.length
+          ? hasSubstrate
+            ? 'independent_support_with_contested_roots'
+            : 'contested_roots'
           : availableRoots.length
             ? seasonalSupport
               ? 'season_and_roots_support'
@@ -354,6 +356,12 @@ function assessStrength(
       'pillars.month',
       'derivedFacts.structuralRelations',
       ...rootSlots.map((slot) => `derivedFacts.hiddenStems.${slot}`),
+      ...contacts
+        .filter(
+          ({ kind, slots }) =>
+            ROOT_CONTEST.includes(kind) && slots.some((slot) => rootSlots.includes(slot)),
+        )
+        .flatMap(({ evidence }) => evidence.paths),
       ...grounded.flatMap(({ position, roots }) => [
         position.path,
         ...roots.map(({ path }) => path),
@@ -365,6 +373,7 @@ function assessStrength(
     state,
     seasonalSupport,
     rootSlots,
+    contestedRootSlots,
     availableRoots,
     groundedSupport,
     groundedPressure,
@@ -372,8 +381,51 @@ function assessStrength(
   } as const;
 }
 
+function resolveOfficerRepair(
+  anchor: TenGodPosition | undefined,
+  challenges: readonly TenGodPosition[],
+  remedies: readonly TenGodPosition[],
+  visible: readonly TenGodPosition[],
+  contacts: readonly ChartContact[],
+  strength: ReturnType<typeof assessStrength>,
+) {
+  // 官逢傷，透印以解之 and 官格透傷用印又忌見財.
+  // Keep this source clause local to the officer/Seal relation and preserve unrelated damage.
+  const damage = challenges[0];
+  if (anchor?.god !== '정관' || challenges.length !== 1 || damage?.god !== '상관') {
+    return { state: 'not_applicable' } as const;
+  }
+  const groundedRemedies = strength.groundedSupport.filter(({ position }) =>
+    remedies.includes(position),
+  );
+  const competingWealth = visible.filter(({ god }) => TEN_GOD_FAMILY[god] === 'wealth');
+  const effectiveRemedies = hasContact(contacts, damage.slot, ['stem_combination'])
+    ? []
+    : groundedRemedies
+        .filter(({ position }) => !hasContact(contacts, position.slot, ['stem_combination']))
+        .map(({ position }) => position);
+  const evidence: JudgmentEvidence = {
+    rule: 'officer-hurting-officer-seal-protection',
+    paths: [
+      anchor.path,
+      damage.path,
+      ...remedies.map(({ path }) => path),
+      ...groundedRemedies.flatMap(({ roots }) => roots.map(({ path }) => path)),
+      ...competingWealth.map(({ path }) => path),
+      'derivedFacts.structuralRelations',
+    ],
+    sources: [PATTERN_SOURCE, OFFICER_SOURCE],
+  };
+  if (!remedies.length) return { state: 'not_applicable' } as const;
+  if (competingWealth.length) return { state: 'competing_wealth', evidence } as const;
+  if (!effectiveRemedies.length)
+    return { state: 'grounding_or_combination_unsettled', evidence } as const;
+  return { state: 'local_protection', remedies: effectiveRemedies, evidence } as const;
+}
+
 function assessPattern(
   month: readonly TenGodPosition[],
+  monthGod: TenGod,
   visible: readonly TenGodPosition[],
   contacts: readonly ChartContact[],
   strength: ReturnType<typeof assessStrength>,
@@ -402,6 +454,13 @@ function assessPattern(
     ],
     sources: [MONTH_SOURCE, SELECTION_SOURCE],
   };
+  const selectionMode = !anchor
+    ? 'held'
+    : anchor.god !== monthGod
+      ? 'exposed_secondary_month_role'
+      : exposed.length
+        ? 'exposed_representative_month_role'
+        : 'single_hidden_month_role';
   const clause = anchor && CLAUSES[anchor.god];
   const supports = clause ? visible.filter(({ god }) => clause.follows.includes(god)) : [];
   const challenges = clause ? visible.filter(({ god }) => clause.challenges.includes(god)) : [];
@@ -426,6 +485,15 @@ function assessPattern(
     );
   const remedies =
     clause && repairApplicable ? visible.filter(({ god }) => clause.remedy.includes(god)) : [];
+  const officerRepair = resolveOfficerRepair(
+    anchor,
+    challenges,
+    remedies,
+    visible,
+    contacts,
+    strength,
+  );
+  const localProtection = officerRepair.state === 'local_protection';
   const requiresBodySupport = anchor?.god === '편관';
   const bodySupportsClause = strength.state === 'season_and_roots_support';
   const state = !allResolved
@@ -434,15 +502,17 @@ function assessPattern(
       ? 'competing_month_signals'
       : !anchor || !clause
         ? 'candidate_only'
-        : remedies.length
-          ? 'repair_under_review'
-          : challenges.length || disrupting.length || anchorBound
-            ? 'challenged'
-            : requiresBodySupport && !bodySupportsClause
-              ? 'strength_required'
-              : supports.length
-                ? 'supported'
-                : 'candidate_only';
+        : localProtection && !disrupting.length && !anchorBound
+          ? 'locally_protected'
+          : remedies.length
+            ? 'repair_under_review'
+            : challenges.length || disrupting.length || anchorBound
+              ? 'challenged'
+              : requiresBodySupport && !bodySupportsClause
+                ? 'strength_required'
+                : supports.length
+                  ? 'supported'
+                  : 'candidate_only';
   return {
     state,
     anchor,
@@ -451,10 +521,12 @@ function assessPattern(
     challenges,
     remedies,
     disrupting,
+    selectionMode,
+    officerRepair,
     selection,
     evidence: {
       rule:
-        state === 'repair_under_review'
+        state === 'repair_under_review' || state === 'locally_protected'
           ? (clause?.repairRule ?? 'unsettled-remedy')
           : state === 'challenged'
             ? (clause?.pressureRule ?? 'month-contact')
@@ -466,11 +538,13 @@ function assessPattern(
           ...supports.map(({ path }) => path),
           ...challenges.map(({ path }) => path),
           ...remedies.map(({ path }) => path),
+          ...('evidence' in officerRepair ? officerRepair.evidence.paths : []),
           ...monthContacts.flatMap(({ evidence }) => evidence.paths),
         ]),
       ],
       sources: [
         PATTERN_SOURCE,
+        ...('evidence' in officerRepair ? officerRepair.evidence.sources : []),
         ...(requiresBodySupport ? strength.evidence.sources : []),
         ...new Set(monthContacts.flatMap(({ evidence }) => evidence.sources)),
       ],
@@ -503,13 +577,18 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
   const strength = assessStrength(snapshot, monthGod, positions, contacts);
   const pattern = assessPattern(
     positions.filter(({ slot, location }) => slot === 'month' && location === 'hidden'),
+    monthGod,
     visible,
     contacts,
     strength,
     allResolved,
   );
   const themes = thematicStructures(snapshot, positions, contacts);
-  const supported = pattern.state === 'supported';
+  const supported = pattern.state === 'supported' || pattern.state === 'locally_protected';
+  const effectiveSupports =
+    pattern.state === 'locally_protected' && pattern.officerRepair.state === 'local_protection'
+      ? pattern.officerRepair.remedies
+      : pattern.supports;
   const fuyi =
     strength.state === 'season_and_roots_support'
       ? {
@@ -525,7 +604,7 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
   const methodConflict =
     supported &&
     fuyi.status === 'conditional_direction' &&
-    pattern.supports.some(({ god }) =>
+    effectiveSupports.some(({ god }) =>
       fuyi.direction === 'support' ? !isSupporting(god) : isSupporting(god),
     );
   const roleEvidence: JudgmentEvidence = {
@@ -537,8 +616,8 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
   const roles = {
     method: 'month_pattern',
     yong: pattern.anchor,
-    xi: supported && !methodConflict ? pattern.supports : [],
-    ji: pattern.challenges,
+    xi: supported && !methodConflict ? effectiveSupports : [],
+    ji: pattern.state === 'locally_protected' ? [] : pattern.challenges,
     repair: pattern.remedies,
     fuyi,
     status: methodConflict ? 'competing_methods' : supported ? 'conditional_pattern_roles' : 'held',

@@ -1,7 +1,7 @@
-import { requireWholeChartJudgment, runInterpretation } from '../interpretation/interpretation-engine.js';
+import { runInterpretation } from '../interpretation/interpretation-engine.js';
 import type { WholeChartJudgment } from '../interpretation/whole-chart-judgment.js';
 import { judgeWholeChartPeriods } from '../reading/whole-chart-periods.js';
-import { currentWholeChartWindow, describeWholeChartPeriods, renderWholeChartPeriods } from './whole-chart-reading.js';
+import { currentWholeChartWindow, describeWholeChartPeriods, renderWholeChartPeriods, selectWholeChartJudgment } from './whole-chart-reading.js';
 import { buildResearchTemporalBranchLayers, effectiveAnnualPillar } from '../reading/research-temporal-branch-layers.js';
 import { readTemporalBranchLayers, renderTemporalBranchLayers } from './temporal-branch-layer-reading.js';
 import { buildReadingCompositionEvidence } from '../reading/reading-intent-composition.js';
@@ -48,6 +48,7 @@ export interface GeneralAnnualMonthlyExplorationReport {
   wholeChart: WholeChartJudgment;
   annualChartReading: ReturnType<typeof describeWholeChartPeriods>;
   monthlyChartReading: ReturnType<typeof describeWholeChartPeriods>;
+  wholeChartGrounding: { claimId: string; evidenceBundleHash: string };
   annualEffectivePillar?: ReturnType<typeof effectiveAnnualPillar>;
   monthly: GeneralMonthlyExplorationReport;
   periodComparison: string;
@@ -287,7 +288,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       interpretation: 'co_observed_only_no_interaction_claim' as const,
     };
   });
-  const wholeChart = requireWholeChartJudgment(snapshot, execution);
+  const { chart: wholeChart, ...wholeChartGrounding } = selectWholeChartJudgment(snapshot, execution, registry);
   return {
     version: GENERAL_ANNUAL_MONTHLY_EXPLORATION_VERSION,
     mode: 'internal_exploration',
@@ -304,6 +305,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     wholeChart,
     annualChartReading: describeWholeChartPeriods(judgeWholeChartPeriods(snapshot, wholeChart, facts.targetYear)),
     monthlyChartReading: describeWholeChartPeriods(judgeWholeChartPeriods(snapshot, wholeChart, facts.targetYear, facts)),
+    wholeChartGrounding,
     ...(civilYearAtReference === annual.targetYear
       ? { annualEffectivePillar: effectiveAnnualPillar(annual.targetYear, facts.referenceDateTime) }
       : {}),

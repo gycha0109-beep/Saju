@@ -1,6 +1,5 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
-import { requireWholeChartJudgment } from '../interpretation/interpretation-engine.js';
-import { buildWholeChartNatalReading, type WholeChartNatalReading } from './whole-chart-reading.js';
+import { buildSelectedWholeChartNatalReading, type WholeChartNatalReading } from './whole-chart-reading.js';
 import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
@@ -356,8 +355,8 @@ export function buildBusinessNatalMultifactorReport(
   }
   return {
     snapshotId: snapshot.snapshotId,
-    wholeChart: buildWholeChartNatalReading(
-      snapshot, 'business', execution.run.startedAt, requireWholeChartJudgment(snapshot, execution),
+    wholeChart: buildSelectedWholeChartNatalReading(
+      snapshot, 'business', execution, registry,
     ),
     calculationHash: snapshot.calculationHash,
     version: BUSINESS_NATAL_MULTIFACTOR_REPORT_VERSION,

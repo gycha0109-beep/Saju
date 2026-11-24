@@ -1,6 +1,5 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
-import { requireWholeChartJudgment } from '../interpretation/interpretation-engine.js';
-import { buildWholeChartNatalReading, type WholeChartNatalReading } from './whole-chart-reading.js';
+import { buildSelectedWholeChartNatalReading, type WholeChartNatalReading } from './whole-chart-reading.js';
 import { deriveBranchPairRelation } from '../calculation/structural-relations.js';
 import {
   INTIMACY_CLAIM, INTIMACY_SLOTS, INTIMACY_METHODOLOGY, INTIMACY_SOURCE,
@@ -392,8 +391,8 @@ export function buildRelationshipNatalMultifactorReport(
   }
   return {
     snapshotId: snapshot.snapshotId,
-    wholeChart: buildWholeChartNatalReading(
-      snapshot, 'relationship', execution.run.startedAt, requireWholeChartJudgment(snapshot, execution),
+    wholeChart: buildSelectedWholeChartNatalReading(
+      snapshot, 'relationship', execution, registry,
     ),
     calculationHash: snapshot.calculationHash,
     version: RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION,

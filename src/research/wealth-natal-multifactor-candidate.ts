@@ -9,7 +9,7 @@ import type {
   RuleInputRequirement,
   SourceReference,
 } from '../contracts/interpretation.js';
-import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
+import { createWholeChartRegistrySnapshot } from '../interpretation/whole-chart-claims.js';
 import {
   GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
   GENERAL_NATAL_USEFUL_READING_SOURCE,
@@ -581,7 +581,7 @@ export const WEALTH_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
   status: 'research',
 });
 export function createWealthNatalMultifactorRegistry(createdAt = '1970-01-01T00:00:00.000Z') {
-  return createRuleRegistrySnapshot(
+  return createWholeChartRegistrySnapshot(
     {
       rules: [
         ...GENERAL_NATAL_USEFUL_TEN_GOD_RULES,

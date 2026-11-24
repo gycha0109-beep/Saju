@@ -12,6 +12,7 @@ import { runNatalS6QualityRegression } from '../src/preview/natal-five-domain-qu
 import {
   buildWholeChartNatalReading,
   currentWholeChartWindow,
+  selectWholeChartJudgment,
 } from '../src/preview/whole-chart-reading.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import { judgeWholeChartPeriods } from '../src/reading/whole-chart-periods.js';
@@ -53,6 +54,12 @@ describe('whole-chart interpretation by structural context', () => {
     const registry = createCareerMultifactorResearchRegistry();
     const execution = runInterpretation(first, registry, { now: new Date(NOW) });
     expect(requireWholeChartJudgment(first, execution)).toEqual(judgeWholeChart(first));
+    const selected = selectWholeChartJudgment(first, execution, registry);
+    expect(execution.evidenceIndex[selected.claimId]?.researchEvidenceRefs).toHaveLength(1);
+    expect(selected.evidenceBundleHash).toMatch(/^[a-f0-9]{64}$/u);
+    expect(() => selectWholeChartJudgment(first, { ...execution, claims: [] }, registry)).toThrow(
+      /single whole-chart claim/u,
+    );
     expect(() => requireWholeChartJudgment(second, execution)).toThrow(
       /same successful interpretation run/u,
     );
@@ -112,6 +119,38 @@ describe('whole-chart interpretation by structural context', () => {
     expect(observed(input)).toEqual(chart);
   });
 
+  it('distinguishes grounded Seal protection from ungrounded and wealth-countered remedies', () => {
+    const protectedInput = birth(1965, 12, 28, 22, 30);
+    const protectedChart = observed(protectedInput);
+    const ungrounded = observed(birth(1960, 11, 17, 0, 30));
+    const wealthCounter = observed(birth(1962, 9, 13, 6, 30));
+    for (const chart of [protectedChart, ungrounded, wealthCounter]) {
+      expect(chart.pattern.anchor?.god).toBe('정관');
+      expect(chart.pattern.challenges.map(({ god }) => god)).toContain('상관');
+      expect(chart.pattern.remedies.length).toBeGreaterThan(0);
+    }
+    expect(protectedChart.pattern.state).toBe('locally_protected');
+    expect(protectedChart.roles.xi.map(({ god }) => god)).toEqual(['정인']);
+    expect(ungrounded.pattern.officerRepair.state).toBe('grounding_or_combination_unsettled');
+    expect(wealthCounter.pattern.officerRepair.state).toBe('competing_wealth');
+    expect(ungrounded.roles.xi).toEqual([]);
+    expect(wealthCounter.roles.xi).toEqual([]);
+    expect(
+      buildWholeChartNatalReading(snapshot(protectedInput), 'career', NOW).paragraphs.join(' '),
+    ).toContain('정인 작용이 이 부담을 조절할 근거');
+  });
+
+  it('preserves independent root support and distinguishes the exposed month role', () => {
+    const roots = observed(birth(1960, 1, 5, 2, 30));
+    expect(roots.strength.state).toBe('independent_support_with_contested_roots');
+    expect(roots.strength.availableRoots).toEqual(['year']);
+    expect(roots.strength.contestedRootSlots).toEqual(['month', 'day', 'hour']);
+    const shift = observed(birth(1960, 2, 5, 6, 30));
+    expect(shift.pattern.selectionMode).toBe('exposed_secondary_month_role');
+    expect(shift.month.god).toBe('상관');
+    expect(shift.pattern.anchor?.god).toBe('정관');
+  });
+
   it('preserves verified positions without inferring an unknown hour or a spouse star from missing input', () => {
     const input = {
       ...birth(1998, 3, 28, 22, 19),
@@ -139,6 +178,8 @@ describe('whole-chart interpretation by structural context', () => {
       referenceDateTime: NOW,
     });
     const { annualChartReading, monthlyChartReading } = result.annualMonthly.report;
+    expect(result.annualMonthly.report.wholeChartGrounding.claimId).toMatch(/^claim_/u);
+    expect(result.annualMonthly.report.wholeChartGrounding.evidenceBundleHash).toHaveLength(64);
     expect(annualChartReading.map((item) => [item.effectiveYear, item.dayunIndex])).toEqual([
       [2025, 2],
       [2026, 2],

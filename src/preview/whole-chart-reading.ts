@@ -1,5 +1,15 @@
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import {
+  WHOLE_CHART_CLAIM,
+  wholeChartClaimValue,
+  wholeChartRuleEvidence,
+} from '../interpretation/whole-chart-claims.js';
+import {
+  requireWholeChartJudgment,
+  type InterpretationExecutionResult,
+} from '../interpretation/interpretation-engine.js';
+import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
+import {
   judgeWholeChart,
   TEN_GOD_FAMILY,
   type ChartContact,
@@ -8,6 +18,7 @@ import {
   type TenGodFamily,
   type WholeChartJudgment,
 } from '../interpretation/whole-chart-judgment.js';
+import { buildGovernedReadingEvidenceBundle } from '../narrative/evidence-selector.js';
 import { judgeWholeChartPeriods, type WholeChartPeriods } from '../reading/whole-chart-periods.js';
 
 export type WholeChartNatalDomain = 'career' | 'business' | 'wealth' | 'relationship';
@@ -70,6 +81,8 @@ const STRENGTH: Record<ObservedWholeChart['strength']['state'], string> = {
     '계절의 지원은 확인됩니다. 뿌리의 뒷받침까지 확정하기에는 근거가 부족합니다.',
   contested_roots:
     '뿌리가 있는 자리에 다른 지지 관계도 걸려, 그 뿌리의 실제 지원 정도를 보류합니다.',
+  independent_support_with_contested_roots:
+    '관계가 겹친 뿌리의 작용은 보류하되, 다른 자리에서 독립적으로 확인되는 뒷받침을 고려합니다.',
   support_and_pressure:
     '남아 있는 뿌리와 뿌리 있는 극·설이 함께 작용할 수 있어 한 방향으로 단정하기 어렵습니다.',
   season_and_grounded_pressure:
@@ -79,10 +92,83 @@ const STRENGTH: Record<ObservedWholeChart['strength']['state'], string> = {
 
 export interface WholeChartNatalReading {
   judgmentId?: string;
+  grounding?: { claimId: string; evidenceBundleHash: string };
   state: string;
   semanticKey: readonly string[];
   paragraphs: readonly string[];
   evidence: readonly JudgmentEvidence[];
+}
+
+export function buildSelectedWholeChartNatalReading(
+  snapshot: CanonicalSajuSnapshot,
+  domain: WholeChartNatalDomain,
+  execution: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+): WholeChartNatalReading {
+  const { chart, ...grounding } = selectWholeChartJudgment(snapshot, execution, registry);
+  return {
+    ...buildWholeChartNatalReading(snapshot, domain, execution.run.startedAt, chart),
+    grounding,
+  };
+}
+
+export function selectWholeChartJudgment(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+) {
+  const chart = requireWholeChartJudgment(snapshot, execution);
+  const claimIds = execution.claims
+    .filter(({ state, claimType }) => state === 'active' && claimType === WHOLE_CHART_CLAIM)
+    .map(({ claimId }) => claimId);
+  if (claimIds.length !== 1) throw new TypeError('A single whole-chart claim is required.');
+  const selected = buildGovernedReadingEvidenceBundle(snapshot, execution, registry, {
+    requestId: execution.run.requestId,
+    purpose: 'section_reading',
+    targetClaimIds: claimIds,
+  });
+  const claim = selected.bundle.claims.find(({ claimType }) => claimType === WHOLE_CHART_CLAIM);
+  const expected = wholeChartRuleEvidence(snapshot, chart).envelope.envelopeId;
+  if (
+    claim?.value !== wholeChartClaimValue(chart) ||
+    !claim.researchEvidenceRefs?.includes(expected)
+  ) {
+    throw new TypeError('Whole-chart claim does not match the selected calculation judgment.');
+  }
+  return {
+    chart,
+    claimId: claim.claimId,
+    evidenceBundleHash: selected.evidenceBundleHash,
+  };
+}
+
+const TIMING_SCOPE = { dayun: '대운', annual: '세운', monthly: '월운' } as const;
+const TOPIC_COPY = {
+  career: ['직업', '업무 일정과 역할 배분'],
+  business: ['사업', '운영 순서와 책임 분담'],
+  wealth: ['재물', '교환 조건과 지출에 쓸 몫'],
+  relationship: ['관계', '약속과 생활의 경계'],
+} as const;
+
+function describeTopic(topic: WholeChartPeriods['windows'][number]['topics'][number]) {
+  const [label, focus] = TOPIC_COPY[topic.area];
+  const reasons = [
+    ...new Set(
+      topic.evidence.map(({ basis, layer }) => {
+        const detail =
+          basis.kind === 'contact'
+            ? `${basis.slot === 'day' ? '일지' : '월지'} ${basis.relation === 'clash' ? '충' : '합'}`
+            : basis.god;
+        return `${TIMING_SCOPE[layer]}의 ${detail}`;
+      }),
+    ),
+  ];
+  const action = {
+    competing: '이어갈 부분과 조율할 부분으로 나눠 봅니다.',
+    pressure: '조정할 조건이 무엇인지 먼저 봅니다.',
+    support: '이어갈 여지가 있는지 봅니다.',
+  }[topic.direction];
+  return `${label}에서는 ${reasons.join('·')}에 따라 ${focus}을 ${action}`;
 }
 
 function describeWindow(window: WholeChartPeriods['windows'][number], monthly: boolean) {
@@ -131,21 +217,7 @@ function describeWindow(window: WholeChartPeriods['windows'][number], monthly: b
           adds_coordination: '월운에서 새로 확인되는 합의 자리에서 상대와 맞춰 갈 조건을 살핍니다.',
           limited_change: '이번 월운이 연운과 대운의 작용을 추가로 바꾼다는 근거는 제한됩니다.',
         }[window.monthlyShift];
-  const topics = window.topics.map(({ area, direction }) => {
-    const label = { career: '직업', wealth: '재물', relationship: '관계' }[area];
-    const focus = {
-      career: '업무 일정과 역할 배분',
-      wealth: '교환 조건과 지출에 쓸 몫',
-      relationship: '약속과 생활의 경계',
-    }[area];
-    return `${label}에서는 ${focus}을 ${
-      direction === 'competing'
-        ? '이어갈 부분과 조율할 부분으로 나눠 봅니다.'
-        : direction === 'pressure'
-          ? '조정할 조건이 무엇인지 먼저 봅니다.'
-          : '이어갈 여지가 있는지 봅니다.'
-    }`;
-  });
+  const topics = window.topics.map(describeTopic);
   return [
     focus
       ? `${monthly ? '이 구간의 월운' : '입춘 기준 세운'}은 ${focus.pillar.stem}${focus.pillar.branch}입니다.`
@@ -178,18 +250,26 @@ export function buildWholeChartNatalReading(
   const family = TEN_GOD_FAMILY[pattern.anchor?.god ?? chart.month.god];
   const paragraph = DOMAIN[domain][family];
   const observations = pattern.anchor
-    ? `${chart.month.branch}월의 지장간에서 ${pattern.anchor.god}를 중심 후보로 살폈습니다.`
+    ? pattern.selectionMode === 'exposed_secondary_month_role'
+      ? `${chart.month.branch}월의 대표 작용은 ${chart.month.god}입니다. 지장간에서 밖으로 드러난 ${pattern.anchor.god} 작용을 중심 후보로 삼았습니다.`
+      : `${chart.month.branch}월의 지장간에서 살핀 중심 후보는 ${pattern.anchor.god}입니다.`
     : `${chart.month.branch}월은 ${FAMILY[family]}의 단서를 줍니다. ${chart.allResolved ? '월령 후보 사이의 우선순위는 보류합니다.' : '확정된 기둥을 기준으로 부분적으로 읽습니다.'}`;
   const roleText =
     roles.status === 'competing_methods'
       ? '월령의 구조를 받치는 작용과 일간의 균형에 필요한 방향이 엇갈려, 한 가지 유리한 역할을 확정하는 판단은 보류합니다.'
-      : roles.xi.length
-        ? `${[...new Set(roles.xi.map((item) => `${SLOT[item.slot]}의 ${item.god}`))].join(', ')}가 이 구조의 작용을 뒷받침합니다.`
-        : pattern.remedies.length
-          ? `${pattern.challenges.map((item) => item.god).join('·')}의 부담과 ${pattern.remedies.map((item) => item.god).join('·')}의 구응 가능성이 공존합니다.`
-          : pattern.challenges.length
-            ? `${pattern.challenges.map((item) => item.god).join('·')}이 중심 작용을 제약할 수 있습니다.`
-            : '';
+      : pattern.state === 'locally_protected' && pattern.officerRepair.state === 'local_protection'
+        ? `상관이 정관을 제약할 수 있습니다. ${pattern.officerRepair.remedies.map(({ slot, god }) => `${SLOT[slot]}의 ${god}`).join('·')} 작용이 이 부담을 조절할 근거가 됩니다.`
+        : roles.xi.length
+          ? `${[...new Set(roles.xi.map((item) => `${SLOT[item.slot]}의 ${item.god}`))].join(', ')}가 이 구조의 작용을 뒷받침합니다.`
+          : pattern.officerRepair.state === 'competing_wealth'
+            ? '상관의 부담을 덜어 줄 인성이 드러났고 그 인성을 제약할 재성도 함께 있어, 정관을 보호하는 효과는 보류합니다.'
+            : pattern.officerRepair.state === 'grounding_or_combination_unsettled'
+              ? '드러난 인성이 상관을 조절할 수 있으나 통근이나 천간합을 함께 검토해야 하므로 효과를 보류합니다.'
+              : pattern.remedies.length
+                ? `${pattern.challenges.map((item) => item.god).join('·')}의 부담과 ${pattern.remedies.map((item) => item.god).join('·')}의 구응 가능성이 공존합니다.`
+                : pattern.challenges.length
+                  ? `${pattern.challenges.map((item) => item.god).join('·')}이 중심 작용을 제약할 수 있습니다.`
+                  : '';
   const focusContacts =
     domain === 'relationship'
       ? chart.themes.relationship.dayBranchContacts
@@ -224,6 +304,7 @@ export function buildWholeChartNatalReading(
           ({ startsAt, endsAt }) => startsAt <= reference && reference < endsAt,
         )
       : undefined;
+  const periodTopic = period?.topics.find(({ area }) => area === domain);
   return {
     judgmentId: chart.judgmentId,
     state: chart.pattern.state,
@@ -231,16 +312,19 @@ export function buildWholeChartNatalReading(
       family,
       strength.state,
       pattern.state,
+      pattern.selectionMode,
+      pattern.officerRepair.state,
       roles.status,
       ...contacts,
       ...(topical ? ['present_topic_witness'] : []),
       period?.direction ?? 'no_period',
+      periodTopic?.direction ?? 'no_direct_topic',
     ],
     paragraphs: [
       `${observations} ${paragraph} ${STRENGTH[strength.state]}`,
       [roleText, contactText].filter(Boolean).join(' '),
       topical,
-      ...(period ? [describeWindow(period, false)] : []),
+      ...(periodTopic ? [describeTopic(periodTopic)] : []),
     ].filter(Boolean),
     evidence: [
       pattern.selection,

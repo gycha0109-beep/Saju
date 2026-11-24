@@ -15,7 +15,14 @@ import { effectiveAnnualPillar } from './research-temporal-branch-layers.js';
 const KST_OFFSET = 9 * 3600000;
 const SLOTS = ['year', 'month', 'day', 'hour'] as const;
 type Ganji = { stem: HeavenlyStem; branch: EarthlyBranch };
-type Area = 'career' | 'wealth' | 'relationship';
+type Area = 'career' | 'business' | 'wealth' | 'relationship';
+const FAMILY_AREAS = {
+  peer: ['career', 'business'],
+  output: ['career', 'business', 'wealth'],
+  wealth: ['business', 'wealth'],
+  officer: ['career', 'business'],
+  resource: ['career', 'business'],
+} as const satisfies Record<string, readonly Area[]>;
 type PeriodLayer = {
   kind: 'dayun' | 'annual' | 'monthly';
   god: TenGod | undefined;
@@ -28,18 +35,24 @@ function periodTopics(layers: readonly PeriodLayer[], monthly: boolean) {
     area: Area;
     layer: PeriodLayer['kind'];
     direction: 'support' | 'pressure';
-    basis: string;
+    basis:
+      | { kind: 'contact'; slot: PillarSlot; relation: 'combination' | 'clash' }
+      | { kind: 'stem_role'; god: TenGod };
   }[] = [];
   for (const layer of layers) {
     for (const contact of layer.contacts) {
-      const area =
-        contact.slot === 'day' ? 'relationship' : contact.slot === 'month' ? 'career' : undefined;
-      if (area)
+      const areas: readonly Area[] =
+        contact.slot === 'day'
+          ? ['relationship']
+          : contact.slot === 'month'
+            ? ['career', 'business']
+            : [];
+      for (const area of areas)
         signals.push({
           area,
           layer: layer.kind,
           direction: contact.relation === 'clash' ? 'pressure' : 'support',
-          basis: `${contact.slot}:${contact.relation}`,
+          basis: { kind: 'contact', ...contact },
         });
     }
     if (
@@ -48,17 +61,15 @@ function periodTopics(layers: readonly PeriodLayer[], monthly: boolean) {
     )
       continue;
     const family = TEN_GOD_FAMILY[layer.god];
-    const areas: readonly Area[] =
-      family === 'output' ? ['career', 'wealth'] : family === 'wealth' ? ['wealth'] : ['career'];
-    for (const area of areas)
+    for (const area of FAMILY_AREAS[family])
       signals.push({
         area,
         layer: layer.kind,
         direction: layer.roleImpact === 'repeats_challenge' ? 'pressure' : 'support',
-        basis: layer.god,
+        basis: { kind: 'stem_role', god: layer.god },
       });
   }
-  const areas = ['career', 'wealth', 'relationship'] as const;
+  const areas = ['career', 'business', 'wealth', 'relationship'] as const;
   return areas.flatMap((area) => {
     const evidence = signals.filter((item) => item.area === area);
     if (monthly ? !evidence.some((item) => item.layer === 'monthly') : evidence.length === 0)
@@ -147,13 +158,15 @@ export function judgeWholeChartPeriods(
         god && roles?.fuyi.status === 'conditional_direction'
           ? roles.fuyi.families?.includes(TEN_GOD_FAMILY[god]) === true
           : false;
-      const roleImpact = roles?.ji.some((item) => item.god === god)
-        ? 'repeats_challenge'
-        : roles?.xi.some((item) => item.god === god)
-          ? 'repeats_support'
-          : roles?.repair.some((item) => item.god === god)
-            ? 'repeats_possible_remedy'
-            : 'unsettled';
+      const roleImpact =
+        judgment.state === 'observed' &&
+        judgment.pattern.challenges.some((item) => item.god === god)
+          ? 'repeats_challenge'
+          : roles?.xi.some((item) => item.god === god)
+            ? 'repeats_support'
+            : roles?.repair.some((item) => item.god === god)
+              ? 'repeats_possible_remedy'
+              : 'unsettled';
       return { kind, pillar, god, contacts, roleImpact, regulation } as const;
     };
     const layers = [

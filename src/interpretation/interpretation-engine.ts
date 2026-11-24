@@ -1,5 +1,6 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { judgeWholeChart, type WholeChartJudgment } from './whole-chart-judgment.js';
+import { wholeChartRuleEvidence } from './whole-chart-claims.js';
 import type {
   ClaimRelation,
   EvidenceIndexEntry,
@@ -272,7 +273,14 @@ export function runInterpretation(
   options: InterpretationRunOptions = {},
 ): InterpretationExecutionResult {
   const now = options.now ?? new Date();
-  const validatedResearchEvidence = validateResearchEvidenceInput(snapshot, options.researchEvidence);
+  const providedEvidence = validateResearchEvidenceInput(snapshot, options.researchEvidence);
+  const wholeChartJudgment =
+    registry.pack.status === 'research' && registry.pack.wholeChartJudgment === 'research'
+      ? judgeWholeChart(snapshot)
+      : undefined;
+  const validatedResearchEvidence = wholeChartJudgment
+    ? [...providedEvidence, wholeChartRuleEvidence(snapshot, wholeChartJudgment)]
+    : providedEvidence;
   if (
     options.promotionAuthorityContext !== undefined &&
     options.reviewerTrustContext !== undefined
@@ -343,11 +351,6 @@ export function runInterpretation(
   const integrityErrors = [...graphIntegrity.errors, ...relationErrors].sort();
   const integrityValid = integrityErrors.length === 0;
   const completeness = executionCompleteness(registry, sortedEvaluations, integrityValid);
-  const wholeChartJudgment =
-    registry.pack.status === 'research' && registry.pack.wholeChartJudgment === 'research' &&
-    integrityValid && completeness.state !== 'failed'
-      ? judgeWholeChart(snapshot)
-      : undefined;
   const runHash = makeRunHash(
     snapshot,
     registry,
