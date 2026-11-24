@@ -1,0 +1,76 @@
+name: Whole Chart Regression
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/whole-chart-regression.yml'
+      - 'package-lock.json'
+      - 'scripts/saju-500-eight-menu-audit.mjs'
+      - 'src/calculation/**'
+      - 'src/interpretation/**'
+      - 'src/preview/**'
+      - 'src/production/**'
+      - 'src/reading/**'
+      - 'src/research/**'
+      - 'test/whole-chart-judgment.test.ts'
+      - 'test/production-relationship-official-reading-issuer.test.ts'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: whole-chart-regression-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  reading-tests:
+    name: Menu and issuance regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - name: Chart, Reader, and protected issuance
+        run: >-
+          npx vitest run --maxWorkers=2 --testTimeout=120000
+          test/whole-chart-judgment.test.ts
+          test/career-natal-multifactor-consumer-report.test.ts
+          test/business-natal-multifactor-consumer-report.test.ts
+          test/wealth-natal-multifactor-consumer-report.test.ts
+          test/relationship-natal-multifactor-consumer-report.test.ts
+          test/annual-monthly-birth-research-runtime.test.ts
+          test/consumer-reading-request-adapter.test.ts
+          test/lunar-leap-institutional.test.ts
+          test/production-calculation-service-auth.test.ts
+          test/production-interpretation-authorization.test.ts
+          test/official-reading-consumer-authority-cutover.test.ts
+          test/source-reading-proof-issuer-http.test.ts
+      - name: Separate relationship and spouse issuance
+        run: npx vitest run --maxWorkers=1 test/production-relationship-official-reading-issuer.test.ts
+
+  menu-audit:
+    name: Menu audit (${{ matrix.cases }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        cases: [500, 10000]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: node scripts/saju-500-eight-menu-audit.mjs "$RUNNER_TEMP/saju-audit.json" --count ${{ matrix.cases }}
