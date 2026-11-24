@@ -554,6 +554,99 @@ function qualifyPatternSupport(
   return { active, concealed, witnesses, needsRoot, evidence } as const;
 }
 
+function assessMonthCandidate(
+  candidate: TenGodPosition,
+  visible: readonly TenGodPosition[],
+  positions: readonly TenGodPosition[],
+  contacts: readonly ChartContact[],
+  monthContacts: readonly ChartContact[],
+  strength: ReturnType<typeof assessStrength>,
+  allResolved: boolean,
+) {
+  const clause = CLAUSES[candidate.god];
+  const supportContext = qualifyPatternSupport(candidate, clause, positions, contacts);
+  const supports = supportContext.active;
+  const challenges = clause ? visible.filter(({ god }) => clause.challenges.includes(god)) : [];
+  const disrupting = monthContacts.filter(({ kind }) => DISRUPTIVE.includes(kind));
+  const anchorBound = contacts.some(
+    ({ kind, slots }) =>
+      kind === 'stem_combination' &&
+      visible.some(({ slot, stem }) => stem === candidate.stem && slots.includes(slot)),
+  );
+  const repairApplicable = challenges.some(
+    ({ god }) =>
+      (candidate.god === '식신' && god === '편인') ||
+      (candidate.god === '상관' && god === '정관') ||
+      (candidate.god === '정관' && god === '상관') ||
+      (TEN_GOD_FAMILY[candidate.god] === 'wealth' && god === '겁재') ||
+      TEN_GOD_FAMILY[candidate.god] === 'resource',
+  );
+  const remedies =
+    clause && repairApplicable ? visible.filter(({ god }) => clause.remedy.includes(god)) : [];
+  const officerRepair = resolveOfficerRepair(
+    candidate,
+    challenges,
+    remedies,
+    visible,
+    contacts,
+    strength,
+  );
+  const localProtection = officerRepair.state === 'local_protection';
+  const requiresBodySupport = candidate.god === '편관';
+  const bodySupportsClause = strength.state === 'season_and_roots_support';
+  const state = !allResolved
+    ? 'unresolved'
+    : !clause
+      ? 'candidate_only'
+      : localProtection && !disrupting.length && !anchorBound
+        ? 'locally_protected'
+        : remedies.length
+          ? 'repair_under_review'
+          : challenges.length || disrupting.length || anchorBound
+            ? 'challenged'
+            : requiresBodySupport && !bodySupportsClause
+              ? 'strength_required'
+              : supports.length
+                ? 'supported'
+                : 'candidate_only';
+  const evidence: JudgmentEvidence = {
+    rule: clause?.supportRule ?? 'unsettled-month-candidate',
+    paths: [
+      ...new Set([
+        candidate.path,
+        ...supportContext.evidence.paths,
+        ...challenges.map(({ path }) => path),
+        ...remedies.map(({ path }) => path),
+        ...monthContacts.flatMap(({ evidence: item }) => item.paths),
+        ...('evidence' in officerRepair ? officerRepair.evidence.paths : []),
+        ...(requiresBodySupport ? strength.evidence.paths : []),
+      ]),
+    ],
+    sources: [
+      ...new Set([
+        MONTH_SOURCE,
+        SELECTION_SOURCE,
+        ...supportContext.evidence.sources,
+        ...monthContacts.flatMap(({ evidence: item }) => item.sources),
+        ...('evidence' in officerRepair ? officerRepair.evidence.sources : []),
+        ...(requiresBodySupport ? strength.evidence.sources : []),
+      ]),
+    ],
+  };
+  return {
+    position: candidate,
+    state,
+    supports,
+    supportContext,
+    challenges,
+    remedies,
+    disrupting,
+    anchorBound,
+    officerRepair,
+    evidence,
+  } as const;
+}
+
 function assessPattern(
   month: readonly TenGodPosition[],
   monthGod: TenGod,
@@ -569,6 +662,9 @@ function assessPattern(
   );
   const competingMeeting = monthContacts.some(({ kind }) => kind === 'meeting');
   const candidates = exposed.length ? exposed : month;
+  const candidateAssessments = candidates.map((candidate) =>
+    assessMonthCandidate(candidate, visible, positions, contacts, monthContacts, strength, allResolved),
+  );
   const anchor =
     allResolved &&
     !competingMeeting &&
@@ -576,6 +672,9 @@ function assessPattern(
     (exposed.length === 1 || month.length === 1)
       ? candidates[0]
       : undefined;
+  const primaryAssessment = anchor
+    ? candidateAssessments.find(({ position }) => position.path === anchor.path)
+    : undefined;
   const selection: JudgmentEvidence = {
     rule: 'month-membership-and-exact-transparency',
     paths: [
@@ -594,62 +693,49 @@ function assessPattern(
         ? 'exposed_representative_month_role'
         : 'single_hidden_month_role';
   const clause = anchor && CLAUSES[anchor.god];
-  const supportContext = qualifyPatternSupport(anchor, clause, positions, contacts);
-  const supports = supportContext.active;
-  const challenges = clause ? visible.filter(({ god }) => clause.challenges.includes(god)) : [];
+  const supportContext = primaryAssessment?.supportContext ?? {
+    active: [],
+    concealed: candidateAssessments.flatMap(({ supportContext: item }) => item.concealed),
+    witnesses: candidateAssessments.flatMap(({ supportContext: item }) => item.witnesses),
+    needsRoot: candidateAssessments.some(({ supportContext: item }) => item.needsRoot),
+    evidence: {
+      rule: 'retain-each-month-candidate-support-evidence',
+      paths: [...new Set(candidateAssessments.flatMap(({ supportContext: item }) => item.evidence.paths))],
+      sources: [...new Set(candidateAssessments.flatMap(({ supportContext: item }) => item.evidence.sources))],
+    },
+  };
+  const supports = primaryAssessment?.supports ?? [];
+  const challenges = primaryAssessment?.challenges ?? [];
   const disrupting = monthContacts.filter(({ kind }) => DISRUPTIVE.includes(kind));
-  const anchorBound =
-    !!anchor &&
-    contacts.some(
-      ({ kind, slots }) =>
-        kind === 'stem_combination' &&
-        visible.some(({ slot, stem }) => stem === anchor.stem && slots.includes(slot)),
-    );
-  // A remedy is considered only for the matching disturbance. A second disturbance can still prevent settlement.
-  const repairApplicable =
-    !!anchor &&
-    challenges.some(
-      ({ god }) =>
-        (anchor.god === '식신' && god === '편인') ||
-        (anchor.god === '상관' && god === '정관') ||
-        (anchor.god === '정관' && god === '상관') ||
-        (TEN_GOD_FAMILY[anchor.god] === 'wealth' && god === '겁재') ||
-        TEN_GOD_FAMILY[anchor.god] === 'resource',
-    );
-  const remedies =
-    clause && repairApplicable ? visible.filter(({ god }) => clause.remedy.includes(god)) : [];
-  const officerRepair = resolveOfficerRepair(
-    anchor,
-    challenges,
-    remedies,
-    visible,
-    contacts,
-    strength,
-  );
+  const anchorBound = primaryAssessment?.anchorBound ?? false;
+  const remedies = primaryAssessment?.remedies ?? [];
+  const officerRepair = primaryAssessment?.officerRepair ?? { state: 'not_applicable' as const };
   const localProtection = officerRepair.state === 'local_protection';
   const requiresBodySupport = anchor?.god === '편관';
   const bodySupportsClause = strength.state === 'season_and_roots_support';
+  const coexistingCandidates =
+    candidates.length > 1 &&
+    !competingMeeting &&
+    candidateAssessments.every(
+      ({ state: candidateState }) =>
+        candidateState === 'supported' || candidateState === 'locally_protected',
+    );
   const state = !allResolved
     ? 'unresolved'
-    : competingMeeting || candidates.length > 1
+    : competingMeeting
       ? 'competing_month_signals'
-      : !anchor || !clause
-        ? 'candidate_only'
-        : localProtection && !disrupting.length && !anchorBound
-          ? 'locally_protected'
-          : remedies.length
-            ? 'repair_under_review'
-            : challenges.length || disrupting.length || anchorBound
-              ? 'challenged'
-              : requiresBodySupport && !bodySupportsClause
-                ? 'strength_required'
-                : supports.length
-                  ? 'supported'
-                  : 'candidate_only';
+      : candidates.length > 1
+        ? coexistingCandidates
+          ? 'coexisting_month_candidates'
+          : 'competing_month_signals'
+        : !anchor || !clause
+          ? 'candidate_only'
+          : primaryAssessment?.state ?? 'candidate_only';
   return {
     state,
     anchor,
     candidates,
+    candidateAssessments,
     supports,
     supportContext,
     challenges,
@@ -675,6 +761,7 @@ function assessPattern(
           ...remedies.map(({ path }) => path),
           ...('evidence' in officerRepair ? officerRepair.evidence.paths : []),
           ...monthContacts.flatMap(({ evidence }) => evidence.paths),
+          ...candidateAssessments.flatMap(({ evidence: item }) => item.paths),
         ]),
       ],
       sources: [
@@ -682,7 +769,10 @@ function assessPattern(
         ...supportContext.evidence.sources,
         ...('evidence' in officerRepair ? officerRepair.evidence.sources : []),
         ...(requiresBodySupport ? strength.evidence.sources : []),
-        ...new Set(monthContacts.flatMap(({ evidence }) => evidence.sources)),
+        ...new Set([
+          ...monthContacts.flatMap(({ evidence }) => evidence.sources),
+          ...candidateAssessments.flatMap(({ evidence: item }) => item.sources),
+        ]),
       ],
     },
   } as const;
@@ -729,11 +819,19 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
     strength,
     pattern,
   );
-  const supported = pattern.state === 'supported' || pattern.state === 'locally_protected';
+  const supported =
+    pattern.state === 'supported' ||
+    pattern.state === 'locally_protected' ||
+    pattern.state === 'coexisting_month_candidates';
   const effectiveSupports =
-    pattern.state === 'locally_protected' && pattern.officerRepair.state === 'local_protection'
-      ? pattern.officerRepair.remedies
-      : pattern.supports;
+    pattern.state === 'coexisting_month_candidates'
+      ? pattern.candidateAssessments.flatMap(({ supports }) => supports)
+      : pattern.state === 'locally_protected' && pattern.officerRepair.state === 'local_protection'
+        ? pattern.officerRepair.remedies
+        : pattern.supports;
+  const distinctEffectiveSupports = [
+    ...new Map(effectiveSupports.map((item) => [`${item.path}:${item.god}`, item])).values(),
+  ];
   const fuyi =
     strength.state === 'season_and_roots_support'
       ? {
@@ -761,9 +859,17 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
   const roles = {
     method: 'month_pattern',
     yong: pattern.anchor,
-    xi: supported && !methodConflict ? effectiveSupports : [],
-    ji: pattern.state === 'locally_protected' ? [] : pattern.challenges,
-    repair: pattern.remedies,
+    xi: supported && !methodConflict ? distinctEffectiveSupports : [],
+    ji:
+      pattern.state === 'locally_protected' || pattern.state === 'coexisting_month_candidates'
+        ? []
+        : pattern.state === 'competing_month_signals'
+          ? pattern.candidateAssessments.flatMap(({ challenges }) => challenges)
+          : pattern.challenges,
+    repair:
+      pattern.state === 'coexisting_month_candidates'
+        ? pattern.candidateAssessments.flatMap(({ remedies }) => remedies)
+        : pattern.remedies,
     fuyi,
     status: methodConflict ? 'competing_methods' : supported ? 'conditional_pattern_roles' : 'held',
     evidence: roleEvidence,
