@@ -820,9 +820,7 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
     pattern,
   );
   const supported =
-    pattern.state === 'supported' ||
-    pattern.state === 'locally_protected' ||
-
+    pattern.state === 'supported' || pattern.state === 'locally_protected';
   const effectiveSupports =
     pattern.state === 'locally_protected' && pattern.officerRepair.state === 'local_protection'
         ? pattern.officerRepair.remedies
