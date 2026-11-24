@@ -429,7 +429,9 @@ export function buildWholeChartNatalReading(
       ? {
           wealthBasis: {
             observation: storage.state,
-            indirectPath: storage.indirectEvidence?.relation,
+            ...(storage.indirectEvidence
+              ? { indirectPath: storage.indirectEvidence.relation }
+              : {}),
           },
         }
       : {}),
