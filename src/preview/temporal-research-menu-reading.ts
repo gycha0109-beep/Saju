@@ -1,5 +1,6 @@
 import type { TemporalStemInteraction } from './temporal-stem-interaction-reading.js';
 import type { TemporalBranchLayerReading } from './temporal-branch-layer-reading.js';
+import { currentWholeChartWindow } from './whole-chart-reading.js';
 import {
   describeTemporalNatalEvidence,
   type GeneralAnnualMonthlyExplorationReport,
@@ -19,6 +20,7 @@ export type TemporalResearchMeaning =
 
 export interface TemporalResearchMenuSection {
   title: string;
+  chartWindows?: GeneralAnnualMonthlyExplorationReport['annualChartReading'];
   text: string;
   evidenceKind: 'annual_research_profile' | 'monthly_t9_research_claim' | 'canonical_dayun_fact';
   /** Monthly claim ID is only an internal research Claim, not Official authority. */
@@ -45,6 +47,7 @@ export interface TemporalMonthlyReferenceFocus {
   /** Only the actually selected Jeol interval can have a current claim. */
   segmentId?: 'before_jeol' | 'after_jeol';
   currentSection?: TemporalResearchMenuSection;
+  currentChartWindow?: NonNullable<TemporalResearchMenuSection['chartWindows']>[number];
   message: string;
 }
 
@@ -165,6 +168,7 @@ export function buildTemporalResearchMenuReadings(
       ...(section.kind === 'core' ? {
         ...natalComparison('annual'), stemInteractions: joined.annual.stemInteractions,
         branchLayers: joined.annual.branchLayers,
+        chartWindows: joined.annualChartReading,
       } : {}),
     })) ?? [];
   const monthly = joined?.monthly.sections.filter(section =>
@@ -183,6 +187,7 @@ export function buildTemporalResearchMenuReadings(
           item.period === section.segmentId && item.periodClaimId === section.claimId),
         branchLayers: joined.monthly.branchLayers.filter((item) =>
           item.period === section.segmentId && item.periodClaimId === section.claimId),
+        chartWindows: joined.monthlyChartReading.filter((item) => item.monthSegment === section.segmentId),
       } : {}),
       sourceIds: [...section.sourceIds],
       factPaths: [...section.factPaths],
@@ -215,11 +220,13 @@ export function buildTemporalResearchMenuReadings(
             at < Date.parse(theme.calculatedInterval.endsAt))) {
         throw new TypeError('Monthly reference must match one original source-qualified T9 theme and interval.');
       }
+      const wholeChartWindow = currentWholeChartWindow(joined.monthlyChartReading, reference.referenceDateTime);
       referenceFocus = {
         referenceDateTime: reference.referenceDateTime,
         state: 'in_period',
         segmentId: reference.segmentId,
         currentSection: matched[0]!,
+        ...(wholeChartWindow ? { currentChartWindow: wholeChartWindow } : {}),
         message: '조회 시각에 해당하는 절입 구간의 기존 T9 연구 풀이입니다. 다른 구간의 문구는 현재 풀이가 아닙니다.',
       };
     } else if (reference.state === 'insufficient_evidence') {

@@ -1,4 +1,7 @@
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
+import { judgeWholeChart } from '../interpretation/whole-chart-judgment.js';
+import { judgeWholeChartPeriods } from '../reading/whole-chart-periods.js';
+import { currentWholeChartWindow, describeWholeChartPeriods, renderWholeChartPeriods } from './whole-chart-reading.js';
 import { buildResearchTemporalBranchLayers, effectiveAnnualPillar } from '../reading/research-temporal-branch-layers.js';
 import { readTemporalBranchLayers, renderTemporalBranchLayers } from './temporal-branch-layer-reading.js';
 import { buildReadingCompositionEvidence } from '../reading/reading-intent-composition.js';
@@ -42,6 +45,9 @@ export interface GeneralAnnualMonthlyExplorationReport {
   targetYear: number;
   targetMonth: number;
   annual: GeneralAnnualExplorationReport;
+  wholeChart: ReturnType<typeof judgeWholeChart>;
+  annualChartReading: ReturnType<typeof describeWholeChartPeriods>;
+  monthlyChartReading: ReturnType<typeof describeWholeChartPeriods>;
   annualEffectivePillar?: ReturnType<typeof effectiveAnnualPillar>;
   monthly: GeneralMonthlyExplorationReport;
   periodComparison: string;
@@ -281,6 +287,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       interpretation: 'co_observed_only_no_interaction_claim' as const,
     };
   });
+  const wholeChart = judgeWholeChart(snapshot);
   return {
     version: GENERAL_ANNUAL_MONTHLY_EXPLORATION_VERSION,
     mode: 'internal_exploration',
@@ -294,6 +301,9 @@ export function buildGeneralAnnualMonthlyExplorationReport(
     targetYear: monthly.targetYear,
     targetMonth: monthly.targetMonth,
     annual,
+    wholeChart,
+    annualChartReading: describeWholeChartPeriods(judgeWholeChartPeriods(snapshot, wholeChart, facts.targetYear)),
+    monthlyChartReading: describeWholeChartPeriods(judgeWholeChartPeriods(snapshot, wholeChart, facts.targetYear, facts)),
     ...(civilYearAtReference === annual.targetYear
       ? { annualEffectivePillar: effectiveAnnualPillar(annual.targetYear, facts.referenceDateTime) }
       : {}),
@@ -467,6 +477,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     .join('\n');
   const selected = report.referenceReading;
   const annualAt = report.annualReference;
+  const activeMonth = currentWholeChartWindow(report.monthlyChartReading, selected.referenceDateTime);
   if (
     annualAt.referenceDateTime !== selected.referenceDateTime ||
     annualAt.civilYearAtReference !==
@@ -608,6 +619,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     '<p class="muted">조회 기준: ' +
     e(formatTemporalKst(selected.referenceDateTime)) +
     ' · 연구용 월별 적용 범위만 안내합니다.</p>' +
+    (activeMonth ? renderWholeChartPeriods([activeMonth], e, formatTemporalKst) : '') +
     focus +
     '</section>' +
     '<section id="year-reading"><h2>' +
@@ -624,11 +636,13 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
     ' · 십신 ' +
     e(report.annual.annualStemTenGod) +
     '</p>' +
+    renderWholeChartPeriods(report.annualChartReading, e, formatTemporalKst) +
     annual +
     '</section>' +
     '<section id="monthly-reading"><h2>' +
     e(report.monthly.headline) +
     '</h2>' +
+    renderWholeChartPeriods(report.monthlyChartReading, e, formatTemporalKst) +
     '<p>' +
     e(report.periodComparison) +
     '</p>' +

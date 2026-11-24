@@ -1,4 +1,5 @@
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
+import { buildWholeChartNatalReading, type WholeChartNatalReading } from './whole-chart-reading.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import { deterministicContentHash, type ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
@@ -56,6 +57,7 @@ export interface CareerMultifactorReport {
    */
   additionalVerifiedSections: readonly CareerMultifactorReportSection[];
   readingGuide?: CareerMultifactorReadingGuide;
+  wholeChart: WholeChartNatalReading;
   limitations: readonly string[];
   missing: readonly string[];
   researchOnly: true;
@@ -333,7 +335,6 @@ export function buildCareerMultifactorResearchReport(
   const supporting: typeof units = [];
   const usedAxes = new Set<Axis>(primary === undefined ? [] : [primary.axis]);
   const usedFactPaths = new Set(primary?.calculatedFactPaths ?? []);
-  let overlappingOnlyCount = 0;
   for (const unit of units) {
     if (primary === undefined || unit.claimType === primary.claimType ||
       usedAxes.has(unit.axis)) continue;
@@ -342,10 +343,7 @@ export function buildCareerMultifactorResearchReport(
     // beyond those already consumed by the core and preceding supports.
     // Never turn repeated labels for the same facts into a complete MUR.
     const newFactPaths = unit.calculatedFactPaths.filter(path => !usedFactPaths.has(path));
-    if (newFactPaths.length === 0) {
-      overlappingOnlyCount++;
-      continue;
-    }
+    if (newFactPaths.length === 0) continue;
     supporting.push(unit);
     usedAxes.add(unit.axis);
     for (const path of unit.calculatedFactPaths) usedFactPaths.add(path);
@@ -399,6 +397,7 @@ export function buildCareerMultifactorResearchReport(
   return {
     version: CAREER_MULTIFACTOR_REPORT_VERSION,
     snapshotId: snapshot.snapshotId,
+    wholeChart: buildWholeChartNatalReading(snapshot, 'career', execution.run.startedAt),
     calculationHash: snapshot.calculationHash,
     state,
     title: '나의 일과 역할 — 명식 구조 기반 해석',
@@ -426,6 +425,7 @@ function escapeHtml(s: string): string {
 /** Real reader-facing preview; never bypasses an existing Product/Official authority boundary. */
 export function renderCareerMultifactorResearchHtml(report: CareerMultifactorReport): string {
   const e = escapeHtml;
+  const wholeChart = report.wholeChart.paragraphs.map(paragraph => '<p>' + e(paragraph) + '</p>').join('');
   const rows = report.sections.map(s => `<section><h2>${e(s.headline)}</h2><p>${e(s.paragraph)}</p><details><summary>근거와 출처</summary><p>${e(s.calculatedPositions.join(' · '))}</p><p>${e(s.calculatedFactPaths.join(' · '))}</p><p>${e(s.upstreamClaimIds.join(' · '))}</p><p>${e(s.sourceIds.join(' · '))}</p><p>${e(s.ruleId)}</p></details></section>`).join('\n');
   const extraRows = report.additionalVerifiedSections.map(s => `<section><h3>${e(s.headline)}</h3><p>${e(s.paragraph)}</p><details><summary>근거와 출처</summary><p>${e(s.calculatedPositions.join(' · '))}</p><p>${e(s.calculatedFactPaths.join(' · '))}</p><p>${e(s.upstreamClaimIds.join(' · '))}</p><p>${e(s.sourceIds.join(' · '))}</p><p>${e(s.ruleId)}</p></details></section>`).join('\n');
   const additionalMarkup = extraRows.length === 0
@@ -444,5 +444,5 @@ export function renderCareerMultifactorResearchHtml(report: CareerMultifactorRep
   const missingMarkup = report.missing.length > 0
     ? `<section aria-label="아직 설명할 수 없는 부분"><h2>아직 설명할 수 없는 부분</h2><ul>${report.missing.map(reason => `<li>${e(reason)}</li>`).join('')}</ul></section>`
     : '';
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header>${readingGuideMarkup}${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${additionalMarkup}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header><section aria-labelledby="career-whole-chart"><h2 id="career-whole-chart">명식 전체에서 읽는 결론</h2>${wholeChart}</section>${readingGuideMarkup}${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${additionalMarkup}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
 }

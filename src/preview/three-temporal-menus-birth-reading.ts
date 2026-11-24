@@ -1,4 +1,5 @@
 import { renderTemporalStemInteractions } from './temporal-stem-interaction-reading.js';
+import { currentWholeChartWindow, renderWholeChartPeriods } from './whole-chart-reading.js';
 import { renderTemporalBranchLayers } from './temporal-branch-layer-reading.js';
 import {
   formatTemporalKst,
@@ -96,6 +97,7 @@ function render(
   const life = lifeStage.report;
   const annualReference = report.annualReference;
   const monthlyFocus = report.monthly.referenceReading;
+  const activeMonth = currentWholeChartWindow(report.monthlyChartReading, monthlyFocus.referenceDateTime);
   const activeYear = report.annualEffectivePillar;
   const pillarNote = activeYear
     ? `입춘 기준 조회 시각의 세운은 ${activeYear.effectiveYear}년 ${activeYear.stem}${activeYear.branch}입니다. 연간 기본 문단은 선택한 서울 달력연도에 해당합니다.`
@@ -258,6 +260,7 @@ function render(
     e(yearNote) +
     (pillarNote ? '</p><p>' + e(pillarNote) : '') +
     '</p>' +
+    renderWholeChartPeriods(report.annualChartReading, e, formatTemporalKst) +
     annual +
     '</section>' +
     '<section id="monthly"><h2>이번 달 — ' +
@@ -265,8 +268,10 @@ function render(
     '월</h2>' +
     '<p>절입 시각은 ' + e(formatTemporalKst(report.monthly.jeolBoundary.at)) + '</p>' +
     '<h3>조회 시각에 해당하는 월운</h3>' +
+    (activeMonth ? renderWholeChartPeriods([activeMonth], e, formatTemporalKst) : '') +
     currentMonth +
     '<h3>절입 전후 전체 풀이</h3>' +
+    renderWholeChartPeriods(report.monthlyChartReading, e, formatTemporalKst) +
     monthly +
     '</section>' +
     '<section id="life-stage"><h2>삶의 단계 — 계산된 대운</h2><p>' +

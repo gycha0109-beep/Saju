@@ -535,6 +535,12 @@ function renderDomain(
             ? renderRelationshipReadingGuide(report as RelationshipNatalMultifactorReport)
             : '';
   const firstMeaning = renderFirstScreenSelectedInterpretations(domain, report);
+  const wholeChart = 'wholeChart' in report ? report.wholeChart : undefined;
+  const wholeChartHtml = wholeChart ? '<section><h3>명식 전체에서 읽는 결론</h3>' +
+    wholeChart.paragraphs.map(paragraph => '<p>' + escapeHtml(paragraph) + '</p>').join('') +
+    (wholeChart.evidence.length ? '<details><summary>판단 근거</summary>' +
+      renderList(wholeChart.evidence.map(item => [item.rule, ...item.paths, ...item.sources].join(' · '))) +
+      '</details>' : '') + '</section>' : '';
   const intimacy = 'intimacy' in report ? report.intimacy : undefined;
   const closeRelationship = intimacy === undefined ? '' :
     '<section aria-label="연애와 가까운 관계"><h3>' + escapeHtml(intimacy.headline) +
@@ -564,6 +570,7 @@ function renderDomain(
     '<p>' +
     escapeHtml(report.introduction) +
     '</p>' +
+    wholeChartHtml +
     firstMeaning +
     closeRelationship +
     details +
