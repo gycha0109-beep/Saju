@@ -78,7 +78,22 @@ describe('whole-chart interpretation by structural context', () => {
     expect(visible(a)).toEqual(visible(b));
     expect(a.month.branch).not.toBe(b.month.branch);
     expect(a.pattern.state).toBe('competing_month_signals');
+    expect(a.pattern.candidateAssessments).toHaveLength(a.pattern.candidates.length);
+    expect(
+      a.pattern.candidateAssessments.every(({ evidence }) =>
+        evidence.paths.some((path) => path.startsWith('derivedFacts.hiddenStems.month')),
+      ),
+    ).toBe(true);
+    expect(
+      buildWholeChartNatalReading(snapshot(first), 'career', NOW).paragraphs.join(' '),
+    ).toContain('복수 후보를 각각 검토했습니다');
+    expect(
+      buildWholeChartNatalReading(snapshot(first), 'career', NOW).semanticKey.some((key) =>
+        key.startsWith('month_candidate:'),
+      ),
+    ).toBe(true);
     expect(b.pattern.state).toBe('challenged');
+    expect(b.pattern.candidateAssessments).toHaveLength(1);
     expect(a.strength.state).toBe('contested_roots');
     expect(b.strength.state).toBe('roots_offset_season');
     const profile = (input: BirthInput) =>
