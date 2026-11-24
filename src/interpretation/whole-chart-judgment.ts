@@ -608,11 +608,9 @@ function assessMonthSignal(
             ? 'challenged'
             : requiresBodySupport && !bodySupportsClause
               ? 'strength_required'
-              : combinationUnderReview
-                ? 'candidate_only'
-                : supports.length
-                  ? 'supported'
-                  : 'candidate_only';
+              : supports.length
+                ? 'supported'
+                : 'candidate_only';
   const evidence: JudgmentEvidence = {
     rule:
       state === 'repair_under_review' || state === 'locally_protected'
