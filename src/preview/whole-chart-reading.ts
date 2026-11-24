@@ -294,10 +294,10 @@ const MONTH_SIGNAL_STATE: Record<string, string> = {
 function describeMonthSignals(pattern: ObservedWholeChart['pattern']) {
   if (pattern.monthSignalAssessments.length < 2) return '';
   const signals = pattern.monthSignalAssessments.map(
-    ({ signal, state, anchorBound, combinationUnderReview }) =>
-      `${signal.stem}·${signal.god}(${MONTH_SIGNAL_STATE[state] ?? state}${anchorBound ? ', 천간합 접점' : ''}${combinationUnderReview ? ', 지지 합 접점' : ''})`,
+    ({ signal, state, exposure, anchorBound, combinationUnderReview }) =>
+      `${signal.stem}·${signal.god}(${exposure === 'visible' ? '천간 투간' : '지장간 내 관측'}, ${MONTH_SIGNAL_STATE[state] ?? state}${anchorBound ? ', 천간합 접점' : ''}${combinationUnderReview ? ', 지지 합 접점' : ''})`,
   );
-  return `월지에서 복수의 지장간 투간 신호를 관찰했습니다: ${signals.join(' / ')}. 각 신호의 지원·제약·구응 접점은 따로 기록했지만, 후보의 정체·우선순위·격국 성립 또는 복수 격국의 공존은 확정하지 않습니다.`;
+  return `월지에서 복수의 지장간 신호를 관찰했습니다: ${signals.join(' / ')}. 각 신호의 지원·제약·구응 접점은 따로 기록했지만, 후보의 정체·우선순위·격국 성립 또는 복수 격국의 공존은 확정하지 않습니다.`;
 }
 
 function describePatternRoles({ pattern, roles }: ObservedWholeChart) {
@@ -468,8 +468,8 @@ export function buildWholeChartNatalReading(
       pattern.officerRepair.state,
       roles.status,
       ...pattern.supportContext.witnesses.map(({ state }) => state),
-      ...pattern.monthSignalAssessments.map(({ signal, state, anchorBound, combinationUnderReview }) =>
-        `month_signal:${signal.god}:${state}:${anchorBound ? 'bound' : 'unbound'}:${combinationUnderReview ? 'combination' : 'no_combination'}`,
+      ...pattern.monthSignalAssessments.map(({ signal, state, exposure, anchorBound, combinationUnderReview }) =>
+        `month_signal:${signal.god}:${exposure}:${state}:${anchorBound ? 'bound' : 'unbound'}:${combinationUnderReview ? 'combination' : 'no_combination'}`,
       ),
       ...(pattern.supportContext.concealed.length ? ['concealed_support'] : []),
       ...contacts,
