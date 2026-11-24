@@ -23,7 +23,7 @@ import {
   type WholeChartJudgment,
 } from './whole-chart-judgment.js';
 
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 const METHOD = { id: 'M-WHOLE-CHART-STRUCTURAL-JUDGMENT', version: VERSION };
 const RULE_SET = 'whole-chart-structural-judgment';
 export const WHOLE_CHART_CLAIM = 'WHOLE_CHART_STRUCTURAL_JUDGMENT';
@@ -32,6 +32,7 @@ const STATES = [
   'unavailable',
   'unresolved',
   'competing_month_signals',
+  'coexisting_month_candidates',
   'candidate_only',
   'repair_under_review',
   'locally_protected',
