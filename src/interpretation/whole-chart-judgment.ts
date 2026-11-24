@@ -673,28 +673,55 @@ function assessPattern(
   const competingMeeting = monthContacts.some(({ kind }) => kind === 'meeting');
   const monthSignals = exposed.length ? exposed : month;
   const monthStemObservations = monthSignals.map((position) => {
+    const clause = CLAUSES[position.god];
     const visibleMatches = visible.filter(({ stem }) => stem === position.stem);
     const stemCombinationContacts = contacts.filter(
       ({ kind, slots }) =>
         kind === 'stem_combination' &&
         visibleMatches.some(({ slot }) => slots.includes(slot)),
     );
+    const supportContext = qualifyPatternSupport(position, clause, positions, contacts);
+    const challenges = clause
+      ? visible.filter(({ god }) => clause.challenges.includes(god))
+      : [];
+    const repairApplicable = challenges.some(
+      ({ god }) =>
+        (position.god === '식신' && god === '편인') ||
+        (position.god === '상관' && god === '정관') ||
+        (position.god === '정관' && god === '상관') ||
+        (TEN_GOD_FAMILY[position.god] === 'wealth' && god === '겁재') ||
+        TEN_GOD_FAMILY[position.god] === 'resource',
+    );
+    const remedyCandidates =
+      clause && repairApplicable
+        ? visible.filter(({ god }) => clause.remedy.includes(god))
+        : [];
     return {
       position,
       exposure: visibleMatches.length ? ('visible' as const) : ('concealed' as const),
       visibleMatches: visibleMatches.map(({ slot, path }) => ({ slot, path })),
+      supportContext,
+      challenges,
+      remedyCandidates,
       stemCombinationContacts,
+      monthContacts,
       evidence: {
-        rule: 'month-hidden-stem-membership-and-visible-match-observation',
+        rule: 'month-hidden-stem-membership-support-and-contact-observation',
         paths: [
           position.path,
           ...visibleMatches.map(({ path }) => path),
+          ...supportContext.evidence.paths,
+          ...challenges.map(({ path }) => path),
+          ...remedyCandidates.map(({ path }) => path),
           ...stemCombinationContacts.flatMap(({ evidence }) => evidence.paths),
+          ...monthContacts.flatMap(({ evidence }) => evidence.paths),
         ],
         sources: [
           MONTH_SOURCE,
           SELECTION_SOURCE,
+          ...supportContext.evidence.sources,
           ...stemCombinationContacts.flatMap(({ evidence }) => evidence.sources),
+          ...monthContacts.flatMap(({ evidence }) => evidence.sources),
         ],
       },
     } as const;

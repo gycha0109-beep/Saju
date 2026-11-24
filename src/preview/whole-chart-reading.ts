@@ -293,16 +293,51 @@ const RELATION_LABEL: Record<string, string> = {
 
 function describeMonthStemObservations(pattern: ObservedWholeChart['pattern']) {
   if (pattern.monthStemObservations.length < 2) return '';
+  const describePositions = (items: readonly { slot: PillarSlot; god: string }[]) =>
+    [...new Set(items.map(({ slot, god }) => `${SLOT[slot]} ${god}`))].join('·');
   const observations = pattern.monthStemObservations.map(
-    ({ position, exposure, visibleMatches, stemCombinationContacts }) => {
+    ({
+      position,
+      exposure,
+      visibleMatches,
+      supportContext,
+      challenges,
+      remedyCandidates,
+      stemCombinationContacts,
+    }) => {
       const exposureText =
         exposure === 'visible'
           ? `동일 글자 천간 관측(${visibleMatches.map(({ slot }) => SLOT[slot]).join('·')})`
           : '월지 지장간 구성만 관측';
+      const roots = supportContext.witnesses.map(({ position: witness, roots, independentRoots }) => {
+        const rootSlots = independentRoots.length
+          ? independentRoots.map(({ slot }) => slot)
+          : roots.map(({ slot }) => slot);
+        const rootText = independentRoots.length
+          ? `독립 통근 ${[...new Set(rootSlots.map((slot) => SLOT[slot]))].join('·')}`
+          : roots.length
+            ? `뿌리 접점 검토 ${[...new Set(rootSlots.map((slot) => SLOT[slot]))].join('·')}`
+            : '동일 글자 뿌리 미확인';
+        return `${SLOT[witness.slot]} ${witness.god}(${rootText})`;
+      });
+      const supportParts = [
+        supportContext.active.length ? `지원 연결 ${describePositions(supportContext.active)}` : '',
+        roots.length ? `지원 근거 ${roots.join(' / ')}` : '',
+        supportContext.concealed.length
+          ? `지장간 지원 후보 ${describePositions(supportContext.concealed)}`
+          : '',
+      ].filter(Boolean);
+      const supportText = supportParts.length ? supportParts.join(', ') : '지원 연결 근거 미확인';
+      const challengeText = challenges.length
+        ? `제약 후보 ${describePositions(challenges)}`
+        : '직접 제약 후보 미확인';
+      const remedyText = remedyCandidates.length
+        ? `구응 후보 ${describePositions(remedyCandidates)}`
+        : '';
       const combinations = stemCombinationContacts.map(
         ({ slots }) => `천간 오합 접점(${slots.map((slot) => SLOT[slot]).join('·')})`,
       );
-      return `${position.stem}·${position.god}(${exposureText}${combinations.length ? `, ${combinations.join('·')}` : ''})`;
+      return `${position.stem}·${position.god}(${exposureText}; ${supportText}; ${challengeText}${remedyText ? `; ${remedyText}` : ''}${combinations.length ? `; ${combinations.join('·')}` : ''})`;
     },
   );
   const contacts = pattern.monthContacts.map(
@@ -312,7 +347,7 @@ function describeMonthStemObservations(pattern: ObservedWholeChart['pattern']) {
   const contactText = contacts.length
     ? `월지에 닿는 구조 접점은 ${contacts.join(' / ')}입니다.`
     : '현재 계산에서 확인된 월지 구조 접점은 없습니다.';
-  return `월지 지장간 구성 요소를 각각 관측했습니다: ${observations.join(' / ')}. ${contactText} 이 내용은 위치와 관계의 관측이며, 격국 후보의 정체·순위·강도·성립이나 복수 격국의 공존, 합화 및 구응 효과를 확정하지 않습니다.`;
+  return `월지 지장간 구성 요소를 각각 관측했습니다: ${observations.join(' / ')}. ${contactText} 각 신호의 지원·제약·통근은 관측 근거로만 기록하며, 격국 후보의 정체·순위·강도·성립이나 복수 격국의 공존, 합화 및 구응 효과를 확정하지 않습니다.`;
 }
 
 function describePatternRoles({ pattern, roles }: ObservedWholeChart) {
@@ -483,8 +518,35 @@ export function buildWholeChartNatalReading(
       pattern.officerRepair.state,
       roles.status,
       ...pattern.supportContext.witnesses.map(({ state }) => state),
-      ...pattern.monthStemObservations.map(({ position, exposure, visibleMatches, stemCombinationContacts }) =>
-        `month_component:${position.stem}:${position.god}:${exposure}:${visibleMatches.map(({ slot }) => slot).sort().join(',')}:${stemCombinationContacts.map(({ slots }) => slots.join(',')).sort().join(';')}`,
+      ...pattern.monthStemObservations.map(
+        ({
+          position,
+          exposure,
+          visibleMatches,
+          supportContext,
+          challenges,
+          remedyCandidates,
+          stemCombinationContacts,
+          monthContacts,
+        }) => {
+          const positionsKey = (items: readonly { slot: PillarSlot; god: string }[]) =>
+            items.map(({ slot, god }) => `${slot}.${god}`).sort().join(',');
+          const witnessKey = supportContext.witnesses
+            .map(({ position: witness, state, roots, independentRoots }) =>
+              `${witness.slot}.${witness.god}.${state}.roots=${positionsKey(roots)}.independent=${positionsKey(independentRoots)}`,
+            )
+            .sort()
+            .join(';');
+          const stemContactKey = stemCombinationContacts
+            .map(({ slots }) => [...slots].sort().join(','))
+            .sort()
+            .join(';');
+          const monthContactKey = monthContacts
+            .map(({ kind, slots }) => `${kind}.${[...slots].sort().join(',')}`)
+            .sort()
+            .join(';');
+          return `month_component:${position.stem}:${position.god}:${exposure}:visible=${visibleMatches.map(({ slot }) => slot).sort().join(',')}:active=${positionsKey(supportContext.active)}:witness=${witnessKey}:concealed=${positionsKey(supportContext.concealed)}:challenge=${positionsKey(challenges)}:remedy=${positionsKey(remedyCandidates)}:stem=${stemContactKey}:month=${monthContactKey}`;
+        },
       ),
       ...(pattern.supportContext.concealed.length ? ['concealed_support'] : []),
       ...contacts,

@@ -78,22 +78,27 @@ describe('whole-chart interpretation by structural context', () => {
     expect(visible(a)).toEqual(visible(b));
     expect(a.month.branch).not.toBe(b.month.branch);
     expect(a.pattern.state).toBe('competing_month_signals');
-    expect(a.pattern.monthSignalAssessments).toHaveLength(a.pattern.monthSignals.length);
+    expect(a.pattern.monthStemObservations.length).toBeGreaterThan(0);
     expect(
-      a.pattern.monthSignalAssessments.every(({ evidence }) =>
-        evidence.paths.some((path) => path.startsWith('derivedFacts.hiddenStems.month')),
+      a.pattern.monthStemObservations.every(
+        ({ evidence, supportContext, challenges, remedyCandidates, monthContacts }) =>
+          evidence.paths.some((path) => path.startsWith('derivedFacts.hiddenStems.month')) &&
+          Array.isArray(supportContext.witnesses) &&
+          Array.isArray(challenges) &&
+          Array.isArray(remedyCandidates) &&
+          Array.isArray(monthContacts),
       ),
     ).toBe(true);
     expect(
       buildWholeChartNatalReading(snapshot(first), 'career', NOW).paragraphs.join(' '),
-    ).toContain('복수의 지장간 신호를 관찰했습니다');
+    ).toContain('월지 지장간 구성 요소를 각각 관측했습니다');
     expect(
       buildWholeChartNatalReading(snapshot(first), 'career', NOW).semanticKey.some((key) =>
-        key.startsWith('month_signal:'),
+        key.startsWith('month_component:'),
       ),
     ).toBe(true);
     expect(b.pattern.state).toBe('challenged');
-    expect(b.pattern.monthSignalAssessments).toHaveLength(1);
+    expect(b.pattern.monthStemObservations).toHaveLength(1);
     expect(a.strength.state).toBe('contested_roots');
     expect(b.strength.state).toBe('roots_offset_season');
     const profile = (input: BirthInput) =>
@@ -101,7 +106,7 @@ describe('whole-chart interpretation by structural context', () => {
     expect(profile(first)).not.toEqual(profile(second));
   });
 
-  it('records multiple independently supported month signals without establishing a pattern', () => {
+  it('records per-signal support and contact observations without establishing a pattern', () => {
     const base = snapshot(birth(2000, 1, 10, 12, 0));
     if (base.derivedFacts.dayMaster.status !== 'resolved' || !base.derivedFacts.hiddenStems) {
       throw new Error('Expected a complete base snapshot for the synthetic structural fixture.');
@@ -176,8 +181,13 @@ describe('whole-chart interpretation by structural context', () => {
       judgment.pattern.monthStemObservations.map(({ position }) => position.god),
     ).toEqual(['정인', '정관']);
     expect(
-      judgment.pattern.monthStemObservations.every(({ evidence }) =>
-        evidence.paths.some((path) => path.startsWith('derivedFacts.hiddenStems.month')),
+      judgment.pattern.monthStemObservations.every(
+        ({ evidence, supportContext, challenges, remedyCandidates, monthContacts }) =>
+          evidence.paths.some((path) => path.startsWith('derivedFacts.hiddenStems.month')) &&
+          Array.isArray(supportContext.witnesses) &&
+          Array.isArray(challenges) &&
+          Array.isArray(remedyCandidates) &&
+          Array.isArray(monthContacts),
       ),
     ).toBe(true);
     expect(judgment.pattern.state).toBe('competing_month_signals');
