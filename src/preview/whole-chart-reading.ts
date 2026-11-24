@@ -412,7 +412,7 @@ export function buildWholeChartNatalReading(
         ? `${chart.month.branch}월의 대표 작용은 ${chart.month.god}입니다. 지장간에서 밖으로 드러난 ${pattern.anchor.god} 작용을 중심 후보로 삼았습니다.`
         : `${chart.month.branch}월의 지장간에서 살핀 중심 후보는 ${pattern.anchor.god}입니다.`
       : `${chart.month.branch}월은 ${FAMILY[family]}의 단서를 줍니다. ${chart.allResolved ? '월령 후보 사이의 우선순위는 보류합니다.' : '확정된 기둥을 기준으로 부분적으로 읽습니다.'}`;
-  const roleText = describePatternRoles(chart);
+  const roleText = pattern.monthSignalAssessments.length > 1 ? '' : describePatternRoles(chart);
   const supportText = pattern.monthSignalAssessments.length > 1 ? '' : describeSupportPositions(chart);
   const focusContacts =
     domain === 'relationship'
