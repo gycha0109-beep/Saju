@@ -181,6 +181,11 @@ describe('whole-chart interpretation by structural context', () => {
     expect(judgment.roles.xi).toEqual([]);
     const reading = buildWholeChartNatalReading(synthetic, 'career', NOW);
     expect(reading.paragraphs.join(' ')).toContain('지원·제약·구응 접점은 따로 기록했지만');
+    expect(
+      reading.paragraphs.filter((paragraph) =>
+        paragraph.includes('월지에서 복수의 지장간 신호를 관찰했습니다'),
+      ),
+    ).toHaveLength(1);
     expect(reading.paragraphs.join(' ')).toContain('정인');
     expect(reading.paragraphs.join(' ')).toContain('정관');
   });
