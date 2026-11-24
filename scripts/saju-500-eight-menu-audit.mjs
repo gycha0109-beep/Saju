@@ -122,6 +122,7 @@ function natalEntry(report, graphLinks) {
   const sections = report.sections ?? [];
   const additionalVerifiedSections = report.additionalVerifiedSections ?? [];
   const prose = sections.map((s) => s.headline + '\n' + s.paragraph);
+  if (report.wholeChart) prose.unshift(...report.wholeChart.paragraphs);
   if (report.intimacy) prose.push(report.intimacy.headline + '\n' + report.intimacy.paragraph);
   if (additionalVerifiedSections.length > 0) {
     prose.push(
@@ -137,12 +138,17 @@ function natalEntry(report, graphLinks) {
     prose.push(...report.missing.map((reason) => 'Support explanation:\n' + reason));
   }
   const meaning = sections.map((s) => [s.claimType, s.pattern, s.axis, s.channel]);
+  if (report.wholeChart) meaning.push(['whole_chart', ...report.wholeChart.semanticKey]);
   if (report.intimacy) meaning.push(['day_branch_intimacy', report.intimacy.kind]);
   if (sections.length === 0 && report.missing?.length) {
     meaning.push(['insufficient_support', ...report.missing]);
   }
   const evidence = {
     state: report.state,
+    ...(report.wholeChart ? { wholeChart: {
+      semanticKey: report.wholeChart.semanticKey,
+      rules: report.wholeChart.evidence.map(item => item.rule),
+    } } : {}),
     ...(report.intimacy ? { intimacy: {
       kind: report.intimacy.kind, ruleId: report.intimacy.ruleId, methodologyId: report.intimacy.methodologyId,
       sourceIds: report.intimacy.sourceIds, factPaths: report.intimacy.factPaths,
@@ -287,6 +293,11 @@ function temporalEntries(result) {
   const monthlyInteractions = report.monthly.stemInteractions;
   const annualBranchLayers = report.annual.branchLayers;
   const monthlyBranchLayers = report.monthly.branchLayers;
+  const annualChart = report.annualChartReading;
+  const monthlyChart = report.monthlyChartReading;
+  const chartMeaning = (windows) => windows.map(window => [window.direction, window.monthlyShift ?? null,
+    window.layers.map(layer => [layer.kind, layer.roleImpact,
+      layer.contacts.map(contact => [contact.slot, contact.relation])])]);
   const interactionText = (items) => items.map((item) => item.title + '\n' + item.text);
   const interactionMeaning = (items) => items.map((item) => [item.period, item.pair, item.state]);
   const interactionEvidence = (items) => items.map((item) => ({
@@ -312,7 +323,7 @@ function temporalEntries(result) {
   ];
   const a = entry(
     [...annual.map((s) => s.title + '\n' + s.text), annualNatalEvidence,
-      ...interactionText(annualInteractions), ...interactionText(annualBranchLayers)]
+      ...interactionText(annualInteractions), ...interactionText(annualBranchLayers), ...annualChart.map(window => window.text)]
       .join('\n\n'),
     annual.map((s) => [s.researchProfileId, s.title]),
     report.annualReference.state,
@@ -323,7 +334,7 @@ function temporalEntries(result) {
     focus.state === 'in_period' && focus.theme ? focus.theme.title + '\n' + focus.theme.text : '';
   const m = entry(
     [current, ...monthly.map((s) => s.title + '\n' + s.text), ...monthNatalEvidence,
-      ...interactionText(monthlyInteractions), ...interactionText(monthlyBranchLayers)]
+      ...interactionText(monthlyInteractions), ...interactionText(monthlyBranchLayers), ...monthlyChart.map(window => window.text)]
       .filter(Boolean)
       .join('\n\n'),
     [focus.state, focus.theme?.title ?? '', ...monthly.map((s) => [s.segmentId, s.title])],
@@ -423,6 +434,8 @@ function temporalEntries(result) {
   const layerMeaning = (items) => items.map(item => [item.period, item.slot, item.state]);
   a.comparisonMeaning = [...comparisonMeaning(a.sourceEvidence.natalComparison), ...interactionMeaning(annualInteractions), ...layerMeaning(annualBranchLayers)];
   m.comparisonMeaning = [...comparisonMeaning(m.sourceEvidence.natalComparison), ...interactionMeaning(monthlyInteractions), ...layerMeaning(monthlyBranchLayers)];
+  a.comparisonMeaning.push(...chartMeaning(annualChart));
+  m.comparisonMeaning.push(...chartMeaning(monthlyChart));
   a.evidenceComponents = annualEvidence;
   a.evidenceKey = createEvidenceFingerprint(annualEvidence);
   m.evidenceComponents = monthlyEvidence;
