@@ -291,7 +291,7 @@ const CANDIDATE_STATE: Record<string, string> = {
   supported: '독립적인 성립 근거 확인',
 };
 
-function describeMonthCandidates({ pattern }: ObservedWholeChart) {
+function describeMonthCandidates(pattern: ObservedWholeChart['pattern']) {
   if (pattern.candidateAssessments.length < 2) return '';
   const candidates = pattern.candidateAssessments.map(
     ({ position, state }) => `${position.stem}·${position.god}(${CANDIDATE_STATE[state] ?? state})`,
@@ -307,7 +307,7 @@ function describePatternRoles({ pattern, roles }: ObservedWholeChart) {
     return '월지의 복수 후보가 각각 독립적인 성립 근거를 갖습니다. 하나의 격국으로 단순화하지 않고 후보별 작용을 함께 반영합니다.';
   }
   if (pattern.state === 'competing_month_signals' && pattern.candidateAssessments.length > 1) {
-    return describeMonthCandidates({ pattern });
+    return describeMonthCandidates(pattern);
   }
   if (roles.status === 'competing_methods') {
     return '월령의 구조를 받치는 작용과 일간의 균형에 필요한 방향이 엇갈려, 한 가지 유리한 역할을 확정하는 판단은 보류합니다.';
@@ -416,7 +416,7 @@ export function buildWholeChartNatalReading(
   const paragraph = (candidateFamilies.length > 1 ? candidateFamilies : [family])
     .map((candidateFamily) => DOMAIN[domain][candidateFamily])
     .join(' ');
-  const candidateText = describeMonthCandidates(chart);
+  const candidateText = describeMonthCandidates(pattern);
   const observations = pattern.candidateAssessments.length > 1
     ? candidateText
     : pattern.anchor
