@@ -16,7 +16,7 @@ import { deriveGeneralNatalSourceScopedBranchBreakCandidates } from '../research
 import { buildSajuR34StrengthRootSubstrate } from '../research/saju-r34-strength-root-substrate.js';
 import { deterministicContentHash } from './rule-registry.js';
 
-export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v4';
+export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v5';
 export const TEN_GOD_FAMILY = {
   비견: 'peer',
   겁재: 'peer',
@@ -825,7 +825,11 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
     pattern.state === 'coexisting_month_candidates';
   const effectiveSupports =
     pattern.state === 'coexisting_month_candidates'
-      ? pattern.candidateAssessments.flatMap(({ supports }) => supports)
+      ? pattern.candidateAssessments.flatMap(({ state, officerRepair, supports }) =>
+          state === 'locally_protected' && officerRepair.state === 'local_protection'
+            ? officerRepair.remedies
+            : supports,
+        )
       : pattern.state === 'locally_protected' && pattern.officerRepair.state === 'local_protection'
         ? pattern.officerRepair.remedies
         : pattern.supports;
