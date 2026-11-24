@@ -591,7 +591,9 @@ function assessMonthCandidate(
     contacts,
     strength,
   );
+  const localProtection = officerRepair.state === 'local_protection';
   const requiresBodySupport = candidate.god === '편관';
+  const bodySupportsClause = strength.state === 'season_and_roots_support';
   const state = !allResolved
     ? 'unresolved'
     : !clause
@@ -707,9 +709,7 @@ function assessPattern(
   const disrupting = monthContacts.filter(({ kind }) => DISRUPTIVE.includes(kind));
   const remedies = primaryAssessment?.remedies ?? [];
   const officerRepair = primaryAssessment?.officerRepair ?? { state: 'not_applicable' as const };
-  const localProtection = officerRepair.state === 'local_protection';
   const requiresBodySupport = anchor?.god === '편관';
-  const bodySupportsClause = strength.state === 'season_and_roots_support';
   const coexistingCandidates =
     candidates.length > 1 &&
     !competingMeeting &&
