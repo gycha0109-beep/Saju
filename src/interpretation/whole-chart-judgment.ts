@@ -672,10 +672,33 @@ function assessPattern(
   );
   const competingMeeting = monthContacts.some(({ kind }) => kind === 'meeting');
   const monthSignals = exposed.length ? exposed : month;
-  const monthSignalAssessments = monthSignals.map((signal) => ({
-    ...assessMonthSignal(signal, visible, positions, contacts, monthContacts, strength, allResolved),
-    exposure: visible.some(({ stem }) => stem === signal.stem) ? 'visible' as const : 'concealed' as const,
-  }));
+  const monthStemObservations = monthSignals.map((position) => {
+    const visibleMatches = visible.filter(({ stem }) => stem === position.stem);
+    const stemCombinationContacts = contacts.filter(
+      ({ kind, slots }) =>
+        kind === 'stem_combination' &&
+        visibleMatches.some(({ slot }) => slots.includes(slot)),
+    );
+    return {
+      position,
+      exposure: visibleMatches.length ? ('visible' as const) : ('concealed' as const),
+      visibleMatches: visibleMatches.map(({ slot, path }) => ({ slot, path })),
+      stemCombinationContacts,
+      evidence: {
+        rule: 'month-hidden-stem-membership-and-visible-match-observation',
+        paths: [
+          position.path,
+          ...visibleMatches.map(({ path }) => path),
+          ...stemCombinationContacts.flatMap(({ evidence }) => evidence.paths),
+        ],
+        sources: [
+          MONTH_SOURCE,
+          SELECTION_SOURCE,
+          ...stemCombinationContacts.flatMap(({ evidence }) => evidence.sources),
+        ],
+      },
+    } as const;
+  });
   const anchor =
     allResolved &&
     !competingMeeting &&
@@ -684,7 +707,7 @@ function assessPattern(
       ? monthSignals[0]
       : undefined;
   const primaryAssessment = anchor
-    ? monthSignalAssessments.find(({ signal }) => signal.path === anchor.path)
+    ? assessMonthSignal(anchor, visible, positions, contacts, monthContacts, strength, allResolved)
     : undefined;
   const selection: JudgmentEvidence = {
     rule: 'month-membership-and-exact-transparency',
@@ -706,13 +729,13 @@ function assessPattern(
   const clause = anchor && CLAUSES[anchor.god];
   const supportContext = primaryAssessment?.supportContext ?? {
     active: [],
-    concealed: monthSignalAssessments.flatMap(({ supportContext: item }) => item.concealed),
-    witnesses: monthSignalAssessments.flatMap(({ supportContext: item }) => item.witnesses),
-    needsRoot: monthSignalAssessments.some(({ supportContext: item }) => item.needsRoot),
+    concealed: [],
+    witnesses: [],
+    needsRoot: false,
     evidence: {
-      rule: 'retain-each-month-selection-signal-evidence',
-      paths: [...new Set(monthSignalAssessments.flatMap(({ supportContext: item }) => item.evidence.paths))],
-      sources: [...new Set(monthSignalAssessments.flatMap(({ supportContext: item }) => item.evidence.sources))],
+      rule: 'month-structure-observation-only',
+      paths: [...new Set(monthStemObservations.flatMap(({ evidence }) => evidence.paths))],
+      sources: [...new Set(monthStemObservations.flatMap(({ evidence }) => evidence.sources))],
     },
   };
   const supports = primaryAssessment?.supports ?? [];
@@ -733,8 +756,8 @@ function assessPattern(
   return {
     state,
     anchor,
-    monthSignals,
-    monthSignalAssessments,
+    monthStemObservations,
+    monthContacts,
     supports,
     supportContext,
     challenges,
@@ -760,7 +783,7 @@ function assessPattern(
           ...remedies.map(({ path }) => path),
           ...('evidence' in officerRepair ? officerRepair.evidence.paths : []),
           ...monthContacts.flatMap(({ evidence }) => evidence.paths),
-          ...monthSignalAssessments.flatMap(({ evidence: item }) => item.paths),
+          ...monthStemObservations.flatMap(({ evidence }) => evidence.paths),
         ]),
       ],
       sources: [
@@ -770,7 +793,7 @@ function assessPattern(
         ...(requiresBodySupport ? strength.evidence.sources : []),
         ...new Set([
           ...monthContacts.flatMap(({ evidence }) => evidence.sources),
-          ...monthSignalAssessments.flatMap(({ evidence: item }) => item.sources),
+          ...monthStemObservations.flatMap(({ evidence }) => evidence.sources),
         ]),
       ],
     },
