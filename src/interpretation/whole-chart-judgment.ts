@@ -564,7 +564,7 @@ function assessMonthSignal(
   allResolved: boolean,
 ) {
   const clause = CLAUSES[signal.god];
-  const supportContext = qualifyPatternSupport(candidate, clause, positions, contacts);
+  const supportContext = qualifyPatternSupport(signal, clause, positions, contacts);
   const supports = supportContext.active;
   const challenges = clause ? visible.filter(({ god }) => clause.challenges.includes(god)) : [];
   const disrupting = monthContacts.filter(({ kind }) => DISRUPTIVE.includes(kind));
@@ -619,7 +619,7 @@ function assessMonthSignal(
         ? (clause?.repairRule ?? 'unsettled-month-remedy')
         : state === 'challenged'
           ? (clause?.pressureRule ?? 'month-contact')
-          : (clause?.supportRule ?? 'unsettled-month-candidate'),
+          : (clause?.supportRule ?? 'unsettled-month-selection-signal'),
     paths: [
       ...new Set([
         signal.path,
@@ -711,7 +711,7 @@ function assessPattern(
     witnesses: monthSignalAssessments.flatMap(({ supportContext: item }) => item.witnesses),
     needsRoot: monthSignalAssessments.some(({ supportContext: item }) => item.needsRoot),
     evidence: {
-      rule: 'retain-each-month-candidate-support-evidence',
+      rule: 'retain-each-month-selection-signal-evidence',
       paths: [...new Set(monthSignalAssessments.flatMap(({ supportContext: item }) => item.evidence.paths))],
       sources: [...new Set(monthSignalAssessments.flatMap(({ supportContext: item }) => item.evidence.sources))],
     },
