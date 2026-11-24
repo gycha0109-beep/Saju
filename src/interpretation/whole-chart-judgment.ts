@@ -14,9 +14,17 @@ import {
 } from '../research/compatibility-t10-direct-day-comparison.js';
 import { deriveGeneralNatalSourceScopedBranchBreakCandidates } from '../research/general-natal-source-scoped-branch-break.js';
 import { buildSajuR34StrengthRootSubstrate } from '../research/saju-r34-strength-root-substrate.js';
+import { buildI18DRootRelationReview } from '../research/i18d-root-relation-review.js';
+import { buildI18ESpecialPatternReviewRouter } from '../research/i18e-special-pattern-review-router.js';
+import { buildI19PostRelationRootEffectReview } from '../research/i19-post-relation-root-effect-review.js';
+import { buildI20RelativeForceEvidence } from '../research/i20-relative-force-evidence.js';
+import { buildI20DClashRescueRouter } from '../research/i20d-clash-rescue-router.js';
+import { buildI22SupportCompositionFrontier } from '../research/i22-support-composition-frontier.js';
+import { buildI23StrengthDecisionReadinessV2 } from '../research/i23-strength-decision-readiness-v2.js';
+import { buildI24ChallengeMechanismComposition } from '../research/i24-challenge-mechanism-composition.js';
 import { deterministicContentHash } from './rule-registry.js';
 
-export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v6';
+export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v7';
 export const TEN_GOD_FAMILY = {
   비견: 'peer',
   겁재: 'peer',
@@ -827,6 +835,52 @@ function assessPattern(
   } as const;
 }
 
+function buildStrengthDecisionReadiness(
+  snapshot: CanonicalSajuSnapshot,
+  positions: readonly TenGodPosition[],
+) {
+  const rootRelation = buildI18DRootRelationReview(snapshot);
+  const specialPattern = buildI18ESpecialPatternReviewRouter(snapshot);
+  const postRelationRoot = buildI19PostRelationRootEffectReview(rootRelation);
+  const relativeForce = buildI20RelativeForceEvidence(snapshot);
+  const clashRescue = buildI20DClashRescueRouter(rootRelation);
+
+  const supportObservations = relativeForce.positions.flatMap((position) => [
+    ...position.visibleSameElementStemPositions.map((slot) => ({
+      evidenceId: `visible-peer:${position.position}:${slot}`,
+      evidenceClass: 'visible_peer_support' as const,
+    })),
+    ...position.visibleResourceStemPositions.map((slot) => ({
+      evidenceId: `visible-resource:${position.position}:${slot}`,
+      evidenceClass: 'visible_resource_support' as const,
+    })),
+    ...position.resourceBranchPositions.map((slot) => ({
+      evidenceId: `resource-branch:${position.position}:${slot}`,
+      evidenceClass: 'resource_branch_support' as const,
+    })),
+  ]);
+  const supportFrontier = buildI22SupportCompositionFrontier(supportObservations);
+
+  const challengeObservations = positions.flatMap((position, index) => {
+    if (position.location !== 'hidden') return [];
+    const relation = TEN_GOD_FAMILY[position.god];
+    if (relation !== 'output' && relation !== 'wealth' && relation !== 'officer') return [];
+    return [{
+      evidenceId: `hidden-challenge:${index}:${position.slot}:${position.stem}:${position.god}`,
+      relation,
+    }];
+  });
+  const challengeComposition = buildI24ChallengeMechanismComposition(challengeObservations);
+
+  return buildI23StrengthDecisionReadinessV2({
+    specialPattern,
+    postRelationRoot,
+    supportFrontier,
+    clashRescue,
+    challengeComposition,
+  });
+}
+
 /** A deterministic interpretation of one canonical chart. Methods with unresolved predicates retain their reasons. */
 export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
   const day = snapshot.derivedFacts.dayMaster;
@@ -850,6 +904,7 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
   const visible = positions.filter(({ location }) => location === 'visible');
   const monthGod = getBranchTenGod(day.value.value, month.value.branch.value);
   const strength = assessStrength(snapshot, monthGod, positions, contacts);
+  const strengthReadiness = buildStrengthDecisionReadiness(snapshot, positions);
   const pattern = assessPattern(
     positions.filter(({ slot, location }) => slot === 'month' && location === 'hidden'),
     monthGod,
@@ -915,6 +970,7 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
     positions,
     contacts,
     strength,
+    strengthReadiness,
     pattern,
     roles,
     themes,
