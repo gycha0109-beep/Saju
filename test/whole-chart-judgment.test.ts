@@ -78,22 +78,22 @@ describe('whole-chart interpretation by structural context', () => {
     expect(visible(a)).toEqual(visible(b));
     expect(a.month.branch).not.toBe(b.month.branch);
     expect(a.pattern.state).toBe('competing_month_signals');
-    expect(a.pattern.candidateAssessments).toHaveLength(a.pattern.candidates.length);
+    expect(a.pattern.monthSignalAssessments).toHaveLength(a.pattern.monthSignals.length);
     expect(
-      a.pattern.candidateAssessments.every(({ evidence }) =>
+      a.pattern.monthSignalAssessments.every(({ evidence }) =>
         evidence.paths.some((path) => path.startsWith('derivedFacts.hiddenStems.month')),
       ),
     ).toBe(true);
     expect(
       buildWholeChartNatalReading(snapshot(first), 'career', NOW).paragraphs.join(' '),
-    ).toContain('복수 후보를 각각 검토했습니다');
+    ).toContain('복수의 지장간 투간 신호를 관찰했습니다');
     expect(
       buildWholeChartNatalReading(snapshot(first), 'career', NOW).semanticKey.some((key) =>
-        key.startsWith('month_candidate:'),
+        key.startsWith('month_signal:'),
       ),
     ).toBe(true);
     expect(b.pattern.state).toBe('challenged');
-    expect(b.pattern.candidateAssessments).toHaveLength(1);
+    expect(b.pattern.monthSignalAssessments).toHaveLength(1);
     expect(a.strength.state).toBe('contested_roots');
     expect(b.strength.state).toBe('roots_offset_season');
     const profile = (input: BirthInput) =>
@@ -172,15 +172,15 @@ describe('whole-chart interpretation by structural context', () => {
     };
     const judgment = judgeWholeChart(synthetic);
     if (judgment.state !== 'observed') throw new Error('Expected the synthetic chart to be observable.');
-    expect(judgment.pattern.candidates.map(({ god }) => god)).toEqual(['정인', '정관']);
-    expect(judgment.pattern.candidateAssessments.map(({ state }) => state)).toEqual([
+    expect(judgment.pattern.monthSignals.map(({ god }) => god)).toEqual(['정인', '정관']);
+    expect(judgment.pattern.monthSignalAssessments.map(({ state }) => state)).toEqual([
       'supported',
       'supported',
     ]);
-    expect(judgment.pattern.state).toBe('coexisting_month_candidates');
-    expect(judgment.roles.xi.map(({ god }) => god)).toEqual(['정관', '정인']);
+    expect(judgment.pattern.state).toBe('competing_month_signals');
+    expect(judgment.roles.xi).toEqual([]);
     const reading = buildWholeChartNatalReading(synthetic, 'career', NOW);
-    expect(reading.paragraphs.join(' ')).toContain('성립 근거가 독립적으로 확인됩니다');
+    expect(reading.paragraphs.join(' ')).toContain('지원·제약·구응 접점은 따로 기록했지만');
     expect(reading.paragraphs.join(' ')).toContain('정인');
     expect(reading.paragraphs.join(' ')).toContain('정관');
   });
