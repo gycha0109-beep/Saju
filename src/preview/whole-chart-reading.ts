@@ -70,6 +70,21 @@ const DOMAIN: Record<WholeChartNatalDomain, Record<TenGodFamily, string>> = {
     resource: '안심하고 의지할 조건과 서로에게 필요한 거리를 함께 봅니다.',
   },
 };
+const CONTACT_CONTEXT: Record<WholeChartNatalDomain, [string, string]> = {
+  career: [
+    '일하는 환경과 연결해 보는 월지',
+    '협력할 조건과 업무 방식을 조정할 조건을 함께 살핍니다.',
+  ],
+  business: [
+    '운영 환경과 연결해 보는 월지',
+    '거래와 협업 조건이 바뀔 때 누가 결정하고 책임지는지 살핍니다.',
+  ],
+  wealth: ['자원 흐름과 연결해 보는 월지', '기존 수입이나 지출 조건 가운데 조정할 몫을 살핍니다.'],
+  relationship: [
+    '배우자궁의 위치인 일지',
+    '가까워지는 조건과 함께 생활하면서 다시 조율할 몫을 구분해 살핍니다.',
+  ],
+};
 const STRENGTH: Record<ObservedWholeChart['strength']['state'], string> = {
   season_and_roots_support:
     '계절과 충돌이 관측되지 않은 통근 단서가 함께 일간을 받쳐 주어, 먼저 어떤 힘을 어떻게 쓰는지 살핍니다.',
@@ -251,6 +266,77 @@ function describeWindow(window: WholeChartPeriods['windows'][number], monthly: b
     .join(' ');
 }
 
+function describePatternRoles({ pattern, roles }: ObservedWholeChart) {
+  if (roles.status === 'competing_methods') {
+    return '월령의 구조를 받치는 작용과 일간의 균형에 필요한 방향이 엇갈려, 한 가지 유리한 역할을 확정하는 판단은 보류합니다.';
+  }
+  if (pattern.state === 'locally_protected' && pattern.officerRepair.state === 'local_protection') {
+    const safeguards = pattern.officerRepair.remedies.map(
+      ({ slot, god }) => `${SLOT[slot]}의 ${god}`,
+    );
+    return `상관이 정관을 제약할 수 있습니다. ${safeguards.join('·')} 작용이 이 부담을 조절할 근거가 됩니다.`;
+  }
+  if (roles.xi.length) {
+    const effective = new Set(roles.xi.map(({ slot, god }) => `${SLOT[slot]}의 ${god}`));
+    return `이 구조는 ${[...effective].join(', ')} 작용이 뒷받침합니다.`;
+  }
+  switch (pattern.officerRepair.state) {
+    case 'competing_wealth':
+      return '상관의 부담을 덜어 줄 인성이 드러났고 그 인성을 제약할 재성도 함께 있어, 정관을 보호하는 효과는 보류합니다.';
+    case 'grounding_or_combination_unsettled':
+      return '드러난 인성이 상관을 조절할 수 있으나 통근이나 천간합을 함께 검토해야 하므로 효과를 보류합니다.';
+  }
+  if (pattern.remedies.length) {
+    return `${pattern.challenges.map(({ god }) => god).join('·')}의 부담과 ${pattern.remedies.map(({ god }) => god).join('·')}의 구응 가능성이 공존합니다.`;
+  }
+  return pattern.challenges.length
+    ? `중심 작용을 제약할 수 있는 요소는 ${pattern.challenges.map(({ god }) => god).join('·')}입니다.`
+    : '';
+}
+
+function describeSupportPositions(
+  { pattern, positions }: ObservedWholeChart,
+  domain: WholeChartNatalDomain,
+) {
+  const { supportContext } = pattern;
+  const rooted = supportContext.witnesses.filter(
+    ({ state }) => state === 'exposed_with_independent_root',
+  );
+  if (rooted.length) {
+    const links = rooted.map(({ position, independentRoots }) => {
+      const places = [...new Set(independentRoots.map(({ slot }) => SLOT[slot]))].join('·');
+      return `${SLOT[position.slot]}의 ${position.god} 작용에는 ${places} 지장간의 뿌리가 있습니다.`;
+    });
+    return links.join(' ');
+  }
+  if (supportContext.witnesses.length) {
+    if (supportContext.needsRoot) {
+      return '산출물을 자원으로 연결할 재성이 천간에 드러났습니다. 같은 재성의 독립적인 지장간 뿌리를 확인하지 못해 연결의 지속성은 보류합니다.';
+    }
+    if (
+      supportContext.witnesses.some(
+        ({ state }) => state === 'root_under_review' || state === 'combination_review',
+      )
+    ) {
+      return '천간에 드러난 지원 단서에 합이나 뿌리의 접촉이 같이 걸려, 그 지원이 실제로 얼마나 작용하는지는 보류합니다.';
+    }
+  }
+  if (supportContext.concealed.length) {
+    const names = new Set(
+      supportContext.concealed.map(({ slot, god }) => `${SLOT[slot]}의 ${god}`),
+    );
+    return `${[...names].join('·')} 작용은 지장간에 있습니다. 이 역할이 밖으로 드러날 조건이 생기면 중심 구조를 뒷받침할 수 있습니다.`;
+  }
+  if (
+    domain === 'wealth' &&
+    supportContext.needsRoot &&
+    positions.every(({ god }) => TEN_GOD_FAMILY[god] !== 'wealth')
+  ) {
+    return '원국에서 식신이 만드는 반복 가능한 산출을 먼저 봅니다. 산출에 대가가 붙는 시기나 거래 조건은 재성 근거가 드러나는 구간에서 따로 확인합니다.';
+  }
+  return '';
+}
+
 export function buildWholeChartNatalReading(
   snapshot: CanonicalSajuSnapshot,
   domain: WholeChartNatalDomain,
@@ -272,33 +358,15 @@ export function buildWholeChartNatalReading(
       ? `${chart.month.branch}월의 대표 작용은 ${chart.month.god}입니다. 지장간에서 밖으로 드러난 ${pattern.anchor.god} 작용을 중심 후보로 삼았습니다.`
       : `${chart.month.branch}월의 지장간에서 살핀 중심 후보는 ${pattern.anchor.god}입니다.`
     : `${chart.month.branch}월은 ${FAMILY[family]}의 단서를 줍니다. ${chart.allResolved ? '월령 후보 사이의 우선순위는 보류합니다.' : '확정된 기둥을 기준으로 부분적으로 읽습니다.'}`;
-  const roleText =
-    roles.status === 'competing_methods'
-      ? '월령의 구조를 받치는 작용과 일간의 균형에 필요한 방향이 엇갈려, 한 가지 유리한 역할을 확정하는 판단은 보류합니다.'
-      : pattern.state === 'locally_protected' && pattern.officerRepair.state === 'local_protection'
-        ? `상관이 정관을 제약할 수 있습니다. ${pattern.officerRepair.remedies.map(({ slot, god }) => `${SLOT[slot]}의 ${god}`).join('·')} 작용이 이 부담을 조절할 근거가 됩니다.`
-        : roles.xi.length
-          ? `${[...new Set(roles.xi.map((item) => `${SLOT[item.slot]}의 ${item.god}`))].join(', ')}가 이 구조의 작용을 뒷받침합니다.`
-          : pattern.officerRepair.state === 'competing_wealth'
-            ? '상관의 부담을 덜어 줄 인성이 드러났고 그 인성을 제약할 재성도 함께 있어, 정관을 보호하는 효과는 보류합니다.'
-            : pattern.officerRepair.state === 'grounding_or_combination_unsettled'
-              ? '드러난 인성이 상관을 조절할 수 있으나 통근이나 천간합을 함께 검토해야 하므로 효과를 보류합니다.'
-              : pattern.remedies.length
-                ? `${pattern.challenges.map((item) => item.god).join('·')}의 부담과 ${pattern.remedies.map((item) => item.god).join('·')}의 구응 가능성이 공존합니다.`
-                : pattern.challenges.length
-                  ? `${pattern.challenges.map((item) => item.god).join('·')}이 중심 작용을 제약할 수 있습니다.`
-                  : '';
+  const roleText = describePatternRoles(chart);
+  const supportText = describeSupportPositions(chart, domain);
   const focusContacts =
     domain === 'relationship'
       ? chart.themes.relationship.dayBranchContacts
       : chart.contacts.filter((item) => item.slots.includes('month'));
   const contacts = [...new Set(focusContacts.map((item) => CONTACT[item.kind]))];
   const contactText = contacts.length
-    ? `${domain === 'relationship' ? '배우자궁의 위치인 일지' : '일하는 환경과 연결해 보는 월지'}에는 ${contacts.join('·')} 접점이 있습니다. ${
-        domain === 'relationship'
-          ? '가까워지는 조건과 함께 생활하면서 다시 조율할 몫을 구분해 살핍니다.'
-          : '협력할 조건과 기존 방식의 조정이 필요한 조건을 함께 살핍니다.'
-      }`
+    ? `${CONTACT_CONTEXT[domain][0]}에는 ${contacts.join('·')} 접점이 있습니다. ${CONTACT_CONTEXT[domain][1]}`
     : '';
   const spouse = chart.themes.relationship;
   const storage = chart.themes.wealth;
@@ -333,6 +401,8 @@ export function buildWholeChartNatalReading(
       pattern.selectionMode,
       pattern.officerRepair.state,
       roles.status,
+      ...pattern.supportContext.witnesses.map(({ state }) => state),
+      ...(pattern.supportContext.concealed.length ? ['concealed_support'] : []),
       ...contacts,
       ...(topical ? ['present_topic_witness'] : []),
       period?.direction ?? 'no_period',
@@ -341,12 +411,14 @@ export function buildWholeChartNatalReading(
     paragraphs: [
       `${observations} ${paragraph} ${STRENGTH[strength.state]}`,
       [roleText, contactText].filter(Boolean).join(' '),
+      supportText,
       topical,
       ...(periodTopic ? [describeTopic(periodTopic)] : []),
     ].filter(Boolean),
     evidence: [
       pattern.selection,
       pattern.evidence,
+      pattern.supportContext.evidence,
       strength.evidence,
       roles.evidence,
       ...focusContacts.map((item) => item.evidence),

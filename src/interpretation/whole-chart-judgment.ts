@@ -16,7 +16,7 @@ import { deriveGeneralNatalSourceScopedBranchBreakCandidates } from '../research
 import { buildSajuR34StrengthRootSubstrate } from '../research/saju-r34-strength-root-substrate.js';
 import { deterministicContentHash } from './rule-registry.js';
 
-export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v2';
+export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v3';
 export const TEN_GOD_FAMILY = {
   비견: 'peer',
   겁재: 'peer',
@@ -37,6 +37,8 @@ const SEASON_SOURCE = 'https://www.donglishuzhai.net/chapter/3719.html';
 const MONTH_SOURCE = 'https://www.donglishuzhai.net/chapter/3721.html';
 const SELECTION_SOURCE = 'https://www.donglishuzhai.net/chapter/3723.html';
 const OFFICER_SOURCE = 'https://m.donglishuzhai.net/chapter/3744.html';
+const STRESS_SOURCE = 'https://www.donglishuzhai.net/chapter/3740.html';
+const FOOD_WEALTH_SOURCE = 'https://www.donglishuzhai.net/chapter/3750.html';
 const FUYI_SOURCE = 'https://ncc.com.tw/fate/paleo/bg/bg_033.htm';
 const SPOUSE_SOURCE =
   'https://www.shidianguji.com/zh/book/NGJ892411999032112149610/chapter/1lqbsmhhckpvt';
@@ -423,10 +425,77 @@ function resolveOfficerRepair(
   return { state: 'local_protection', remedies: effectiveRemedies, evidence } as const;
 }
 
+function qualifyPatternSupport(
+  anchor: TenGodPosition | undefined,
+  clause: PatternClause | undefined,
+  positions: readonly TenGodPosition[],
+  contacts: readonly ChartContact[],
+) {
+  const allowed = clause?.follows ?? [];
+  const hidden = positions.filter(
+    ({ location, god }) => location === 'hidden' && allowed.includes(god),
+  );
+  const visible = positions.filter(
+    ({ location, god }) => location === 'visible' && allowed.includes(god),
+  );
+  const needsRoot = anchor?.god === '식신';
+  const witnesses = visible.map((position) => {
+    const roots = hidden.filter(({ stem }) => stem === position.stem);
+    const independentRoots = roots.filter(({ slot }) => !hasContact(contacts, slot, ROOT_CONTEST));
+    const state = hasContact(contacts, position.slot, ['stem_combination'])
+      ? 'combination_review'
+      : independentRoots.length
+        ? 'exposed_with_independent_root'
+        : roots.length
+          ? 'root_under_review'
+          : 'exposed_without_same_stem_root';
+    return { position, roots, independentRoots, state } as const;
+  });
+  const active = witnesses
+    .filter(
+      ({ state }) =>
+        state === 'exposed_with_independent_root' ||
+        (!needsRoot && state === 'exposed_without_same_stem_root'),
+    )
+    .map(({ position }) => position);
+  const concealed = hidden.filter(
+    ({ stem, slot }) =>
+      !visible.some((position) => position.stem === stem) &&
+      !hasContact(contacts, slot, ROOT_CONTEST),
+  );
+  const contestedEvidence = contacts
+    .filter(
+      ({ kind, slots }) =>
+        (kind === 'stem_combination' && visible.some(({ slot }) => slots.includes(slot))) ||
+        (ROOT_CONTEST.includes(kind) && hidden.some(({ slot }) => slots.includes(slot))),
+    )
+    .map(({ evidence }) => evidence);
+  const evidence: JudgmentEvidence = {
+    rule: needsRoot ? 'food-wealth-requires-wealth-root' : 'compare-exposed-and-hidden-support',
+    paths: [
+      ...new Set([
+        ...visible.map(({ path }) => path),
+        ...hidden.map(({ path }) => path),
+        'derivedFacts.structuralRelations',
+        ...contestedEvidence.flatMap(({ paths }) => paths),
+      ]),
+    ],
+    sources: [
+      ...new Set([
+        STRESS_SOURCE,
+        ...(needsRoot ? [FOOD_WEALTH_SOURCE] : []),
+        ...contestedEvidence.flatMap(({ sources }) => sources),
+      ]),
+    ],
+  };
+  return { active, concealed, witnesses, needsRoot, evidence } as const;
+}
+
 function assessPattern(
   month: readonly TenGodPosition[],
   monthGod: TenGod,
   visible: readonly TenGodPosition[],
+  positions: readonly TenGodPosition[],
   contacts: readonly ChartContact[],
   strength: ReturnType<typeof assessStrength>,
   allResolved: boolean,
@@ -462,7 +531,8 @@ function assessPattern(
         ? 'exposed_representative_month_role'
         : 'single_hidden_month_role';
   const clause = anchor && CLAUSES[anchor.god];
-  const supports = clause ? visible.filter(({ god }) => clause.follows.includes(god)) : [];
+  const supportContext = qualifyPatternSupport(anchor, clause, positions, contacts);
+  const supports = supportContext.active;
   const challenges = clause ? visible.filter(({ god }) => clause.challenges.includes(god)) : [];
   const disrupting = monthContacts.filter(({ kind }) => DISRUPTIVE.includes(kind));
   const anchorBound =
@@ -518,6 +588,7 @@ function assessPattern(
     anchor,
     candidates,
     supports,
+    supportContext,
     challenges,
     remedies,
     disrupting,
@@ -536,6 +607,7 @@ function assessPattern(
           ...selection.paths,
           ...(requiresBodySupport ? strength.evidence.paths : []),
           ...supports.map(({ path }) => path),
+          ...supportContext.evidence.paths,
           ...challenges.map(({ path }) => path),
           ...remedies.map(({ path }) => path),
           ...('evidence' in officerRepair ? officerRepair.evidence.paths : []),
@@ -544,6 +616,7 @@ function assessPattern(
       ],
       sources: [
         PATTERN_SOURCE,
+        ...supportContext.evidence.sources,
         ...('evidence' in officerRepair ? officerRepair.evidence.sources : []),
         ...(requiresBodySupport ? strength.evidence.sources : []),
         ...new Set(monthContacts.flatMap(({ evidence }) => evidence.sources)),
@@ -579,6 +652,7 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
     positions.filter(({ slot, location }) => slot === 'month' && location === 'hidden'),
     monthGod,
     visible,
+    positions,
     contacts,
     strength,
     allResolved,

@@ -151,6 +151,46 @@ describe('whole-chart interpretation by structural context', () => {
     expect(shift.pattern.anchor?.god).toBe('정관');
   });
 
+  it('distinguishes rooted, exposed-only, concealed, and absent wealth under a Food God anchor', () => {
+    const rooted = birth(1960, 11, 4, 0, 30);
+    const exposed = birth(1960, 1, 10, 0, 30);
+    const concealed = birth(1960, 1, 10, 4, 30);
+    const absent = birth(1960, 4, 5, 6, 30);
+    const rootedChart = observed(rooted);
+    const exposedChart = observed(exposed);
+    const concealedChart = observed(concealed);
+    const absentChart = observed(absent);
+    for (const chart of [rootedChart, exposedChart, concealedChart, absentChart])
+      expect(chart.pattern.anchor?.god).toBe('식신');
+    expect(rootedChart.pattern.state).toBe('supported');
+    expect(rootedChart.pattern.supportContext.witnesses).toContainEqual(
+      expect.objectContaining({
+        state: 'exposed_with_independent_root',
+        independentRoots: [
+          expect.objectContaining({ location: 'hidden', slot: 'day', god: '편재' }),
+        ],
+      }),
+    );
+    expect(exposedChart.pattern.supportContext.witnesses[0]?.state).toBe(
+      'exposed_without_same_stem_root',
+    );
+    expect(concealedChart.pattern.supportContext.concealed.map(({ slot }) => slot)).toEqual([
+      'month',
+      'day',
+    ]);
+    expect([exposedChart.roles.xi, concealedChart.roles.xi, absentChart.roles.xi]).toEqual([
+      [],
+      [],
+      [],
+    ]);
+    const text = (input: BirthInput) =>
+      buildWholeChartNatalReading(snapshot(input), 'wealth', NOW).paragraphs.join(' ');
+    expect(text(rooted)).toContain('일주 지장간의 뿌리');
+    expect(text(exposed)).toContain('연결의 지속성은 보류');
+    expect(text(concealed)).toContain('지장간에 있습니다');
+    expect(text(absent)).toContain('식신이 만드는 반복 가능한 산출');
+  });
+
   it('preserves verified positions without inferring an unknown hour or a spouse star from missing input', () => {
     const input = {
       ...birth(1998, 3, 28, 22, 19),
