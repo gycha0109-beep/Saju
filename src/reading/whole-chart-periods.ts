@@ -209,10 +209,7 @@ export function judgeWholeChartPeriods(
         judgment.themes.wealth.state === 'not_observed' &&
         god !== undefined &&
         TEN_GOD_FAMILY[god] === 'wealth';
-      const regulation =
-        god && roles?.fuyi.status === 'conditional_direction'
-          ? roles.fuyi.families?.includes(TEN_GOD_FAMILY[god]) === true
-          : false;
+      const regulation = false;
       const hiddenMonthRole =
         judgment.state === 'observed' &&
         judgment.pattern.selectionMode === 'single_hidden_month_role' &&
@@ -228,7 +225,7 @@ export function judgeWholeChartPeriods(
         judgment.state === 'observed' &&
         judgment.pattern.challenges.some((item) => item.god === god)
           ? 'repeats_challenge'
-          : roles?.xi.some((item) => item.god === god)
+          : roles?.supportCandidates.some((item) => item.god === god)
             ? 'repeats_support'
             : roles?.repair.some((item) => item.god === god)
               ? 'repeats_possible_remedy'
@@ -289,8 +286,6 @@ export function judgeWholeChartPeriods(
       !cycle || (monthly && !month) || judgment.state !== 'observed' || !judgment.allResolved
         ? 'held'
         : (pressure && support) ||
-            (judgment.roles.status === 'competing_methods' &&
-              layers.some((layer) => layer.regulation))
           ? 'competing'
           : pressure
             ? 'pressure'

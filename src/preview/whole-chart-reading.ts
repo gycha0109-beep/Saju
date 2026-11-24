@@ -372,8 +372,8 @@ function describePatternRoles({ pattern, roles }: ObservedWholeChart) {
   if (pattern.state === 'competing_month_signals' && pattern.monthStemObservations.length > 1) {
     return describeMonthStemObservations(pattern);
   }
-  if (roles.status === 'competing_methods') {
-    return '월령의 구조를 받치는 작용과 일간의 균형에 필요한 방향이 엇갈려, 한 가지 유리한 역할을 확정하는 판단은 보류합니다.';
+  if (roles.status === 'competing_month_signals') {
+    return '월령에서 복수의 작용이 함께 관측되어 하나의 중심 역할로 확정하지 않습니다.';
   }
   if (pattern.state === 'locally_protected' && pattern.officerRepair.state === 'local_protection') {
     const safeguards = pattern.officerRepair.remedies.map(
@@ -381,8 +381,8 @@ function describePatternRoles({ pattern, roles }: ObservedWholeChart) {
     );
     return `상관이 정관을 제약할 수 있습니다. ${safeguards.join('·')} 작용이 이 부담을 조절할 근거가 됩니다.`;
   }
-  if (roles.xi.length) {
-    const effective = new Set(roles.xi.map(({ slot, god }) => `${SLOT[slot]}의 ${god}`));
+  if (roles.supportCandidates.length) {
+    const effective = new Set(roles.supportCandidates.map(({ slot, god }) => `${SLOT[slot]}의 ${god}`));
     return `이 구조는 ${[...effective].join(', ')} 작용이 뒷받침합니다.`;
   }
   switch (pattern.officerRepair.state) {

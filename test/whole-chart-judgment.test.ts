@@ -191,7 +191,12 @@ describe('whole-chart interpretation by structural context', () => {
       ),
     ).toBe(true);
     expect(judgment.pattern.state).toBe('competing_month_signals');
-    expect(judgment.roles.xi).toEqual([]);
+    expect(judgment.roles.supportCandidates).toEqual([]);
+    expect(judgment.roles).not.toHaveProperty('yong');
+    expect(judgment.roles).not.toHaveProperty('xi');
+    expect(judgment.roles).not.toHaveProperty('ji');
+    expect(judgment.roles.fuyiReview.status).toBe('held_pending_methodology');
+    expect(judgment.roles.fuyiReview.direction).toBe('not_determined');
     const reading = buildWholeChartNatalReading(synthetic, 'career', NOW);
     expect(reading.paragraphs.join(' ')).toContain('격국 후보의 정체·순위·강도·성립');
     expect(
@@ -218,8 +223,8 @@ describe('whole-chart interpretation by structural context', () => {
     expect(other.pattern.anchor?.god).toBe('상관');
     expect(good.pattern.state).toBe('supported');
     expect(other.pattern.state).toBe('challenged');
-    expect(good.roles.xi.length).toBeGreaterThan(0);
-    expect(other.roles.xi).toEqual([]);
+    expect(good.roles.supportCandidates.length).toBeGreaterThan(0);
+    expect(other.roles.supportCandidates).toEqual([]);
     expect(good.pattern.evidence.paths).toContain(good.pattern.anchor?.path);
     expect(other.pattern.disrupting.length + other.pattern.challenges.length).toBeGreaterThan(0);
     for (const domain of ['career', 'business', 'wealth', 'relationship'] as const) {
@@ -238,7 +243,7 @@ describe('whole-chart interpretation by structural context', () => {
     expect(chart.pattern.state).toBe('repair_under_review');
     expect(chart.pattern.challenges.length).toBeGreaterThan(0);
     expect(chart.pattern.remedies.length).toBeGreaterThan(0);
-    expect(chart.roles.xi).toEqual([]);
+    expect(chart.roles.supportCandidates).toEqual([]);
     expect(observed(input)).toEqual(chart);
   });
 
@@ -253,11 +258,11 @@ describe('whole-chart interpretation by structural context', () => {
       expect(chart.pattern.remedies.length).toBeGreaterThan(0);
     }
     expect(protectedChart.pattern.state).toBe('locally_protected');
-    expect(protectedChart.roles.xi.map(({ god }) => god)).toEqual(['정인']);
+    expect(protectedChart.roles.supportCandidates.map(({ god }) => god)).toEqual(['정인']);
     expect(ungrounded.pattern.officerRepair.state).toBe('grounding_or_combination_unsettled');
     expect(wealthCounter.pattern.officerRepair.state).toBe('competing_wealth');
-    expect(ungrounded.roles.xi).toEqual([]);
-    expect(wealthCounter.roles.xi).toEqual([]);
+    expect(ungrounded.roles.supportCandidates).toEqual([]);
+    expect(wealthCounter.roles.supportCandidates).toEqual([]);
     expect(
       buildWholeChartNatalReading(snapshot(protectedInput), 'career', NOW).paragraphs.join(' '),
     ).toContain('정인 작용이 이 부담을 조절할 근거');
@@ -301,7 +306,7 @@ describe('whole-chart interpretation by structural context', () => {
       'month',
       'day',
     ]);
-    expect([exposedChart.roles.xi, concealedChart.roles.xi, absentChart.roles.xi]).toEqual([
+    expect([exposedChart.roles.supportCandidates, concealedChart.roles.supportCandidates, absentChart.roles.supportCandidates]).toEqual([
       [],
       [],
       [],

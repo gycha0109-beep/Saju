@@ -16,7 +16,7 @@ import { deriveGeneralNatalSourceScopedBranchBreakCandidates } from '../research
 import { buildSajuR34StrengthRootSubstrate } from '../research/saju-r34-strength-root-substrate.js';
 import { deterministicContentHash } from './rule-registry.js';
 
-export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v5';
+export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v6';
 export const TEN_GOD_FAMILY = {
   비견: 'peer',
   겁재: 'peer',
@@ -877,24 +877,15 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
   const distinctEffectiveSupports = [
     ...new Map(effectiveSupports.map((item) => [`${item.path}:${item.god}`, item])).values(),
   ];
-  const fuyi =
-    strength.state === 'season_and_roots_support'
-      ? {
-          status: 'conditional_direction',
-          direction: 'regulate_or_drain',
-          families: ['officer', 'output'],
-        }
-      : strength.state === 'season_and_grounded_pressure' &&
-          allResolved &&
-          positions.every(({ god }) => !isSupporting(god))
-        ? { status: 'conditional_direction', direction: 'support', families: ['peer', 'resource'] }
-        : { status: 'held_pending_relative_strength' };
-  const methodConflict =
-    supported &&
-    fuyi.status === 'conditional_direction' &&
-    effectiveSupports.some(({ god }) =>
-      fuyi.direction === 'support' ? !isSupporting(god) : isSupporting(god),
-    );
+  const fuyiReview = {
+    status: 'held_pending_methodology',
+    direction: 'not_determined',
+    requiredInputs: [
+      'FINAL_BODY_STRENGTH',
+      'FUIYI_APPLICABILITY',
+      'CROSS_METHOD_RECONCILIATION',
+    ],
+  } as const;
   const roleEvidence: JudgmentEvidence = {
     rule: 'keep-month-pattern-and-body-regulation-distinct-on-conflict',
     paths: [...new Set([...pattern.evidence.paths, ...strength.evidence.paths])],
@@ -902,13 +893,18 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
   };
   // An established structural support can still be unsuitable for regulating the body.
   const roles = {
-    method: 'month_pattern',
-    yong: pattern.anchor,
-    xi: supported && !methodConflict ? distinctEffectiveSupports : [],
-    ji: pattern.state === 'locally_protected' ? [] : pattern.challenges,
-    repair: pattern.remedies,
-    fuyi,
-    status: methodConflict ? 'competing_methods' : supported ? 'conditional_pattern_roles' : 'held',
+    method: 'month_pattern_observation',
+    monthRoleCandidate: pattern.anchor,
+    supportCandidates: supported ? distinctEffectiveSupports : [],
+    challengeCandidates: pattern.state === 'locally_protected' ? [] : pattern.challenges,
+    remedyCandidates: pattern.remedies,
+    fuyiReview,
+    status:
+      pattern.state === 'competing_month_signals'
+        ? 'competing_month_signals'
+        : supported
+          ? 'month_pattern_support_observed'
+          : 'held',
     evidence: roleEvidence,
   } as const;
   const material = {
