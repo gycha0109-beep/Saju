@@ -245,6 +245,7 @@ export const BUSINESS_NATAL_MULTIFACTOR_NARRATIVES: readonly ClaimNarrativeProfi
     ],
   })));
 export const BUSINESS_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
+  wholeChartJudgment: 'research',
   packId: 'PACK-BUSINESS-NATAL-SOURCE-BOUNDED-MULTIFACTOR-RESEARCH',
   version: `${BUSINESS_NATAL_MULTIFACTOR_VERSION}.month-food`,
   name: 'Business natal multifactor synthesis / internal research',

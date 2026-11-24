@@ -1,4 +1,5 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
+import { requireWholeChartJudgment } from '../interpretation/interpretation-engine.js';
 import { buildWholeChartNatalReading, type WholeChartNatalReading } from './whole-chart-reading.js';
 import { deriveBranchPairRelation } from '../calculation/structural-relations.js';
 import {
@@ -391,7 +392,9 @@ export function buildRelationshipNatalMultifactorReport(
   }
   return {
     snapshotId: snapshot.snapshotId,
-    wholeChart: buildWholeChartNatalReading(snapshot, 'relationship', execution.run.startedAt),
+    wholeChart: buildWholeChartNatalReading(
+      snapshot, 'relationship', execution.run.startedAt, requireWholeChartJudgment(snapshot, execution),
+    ),
     calculationHash: snapshot.calculationHash,
     version: RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION,
     state,

@@ -191,6 +191,7 @@ export const CAREER_MULTIFACTOR_NARRATIVE_PROFILES: readonly ClaimNarrativeProfi
   })));
 
 export const CAREER_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
+  wholeChartJudgment: 'research',
   packId: 'PACK-CAREER-NATAL-MULTIFACTOR-SOURCE-BOUNDED-RESEARCH',
   version: CAREER_MULTIFACTOR_VERSION,
   name: 'Career multifactor structural interpretation / research only',

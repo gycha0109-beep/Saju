@@ -1,5 +1,5 @@
-import { runInterpretation } from '../interpretation/interpretation-engine.js';
-import { judgeWholeChart } from '../interpretation/whole-chart-judgment.js';
+import { requireWholeChartJudgment, runInterpretation } from '../interpretation/interpretation-engine.js';
+import type { WholeChartJudgment } from '../interpretation/whole-chart-judgment.js';
 import { judgeWholeChartPeriods } from '../reading/whole-chart-periods.js';
 import { currentWholeChartWindow, describeWholeChartPeriods, renderWholeChartPeriods } from './whole-chart-reading.js';
 import { buildResearchTemporalBranchLayers, effectiveAnnualPillar } from '../reading/research-temporal-branch-layers.js';
@@ -45,7 +45,7 @@ export interface GeneralAnnualMonthlyExplorationReport {
   targetYear: number;
   targetMonth: number;
   annual: GeneralAnnualExplorationReport;
-  wholeChart: ReturnType<typeof judgeWholeChart>;
+  wholeChart: WholeChartJudgment;
   annualChartReading: ReturnType<typeof describeWholeChartPeriods>;
   monthlyChartReading: ReturnType<typeof describeWholeChartPeriods>;
   annualEffectivePillar?: ReturnType<typeof effectiveAnnualPillar>;
@@ -287,7 +287,7 @@ export function buildGeneralAnnualMonthlyExplorationReport(
       interpretation: 'co_observed_only_no_interaction_claim' as const,
     };
   });
-  const wholeChart = judgeWholeChart(snapshot);
+  const wholeChart = requireWholeChartJudgment(snapshot, execution);
   return {
     version: GENERAL_ANNUAL_MONTHLY_EXPLORATION_VERSION,
     mode: 'internal_exploration',

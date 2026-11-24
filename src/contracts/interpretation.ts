@@ -133,6 +133,8 @@ export interface InterpretationPack {
   ambiguityPolicy: 'propagate' | 'skip_requires_resolved';
   compositionPolicyRef: VersionedRef;
   claimContractMode?: 'legacy_permissive' | 'registered_required';
+  /** Opts an internal research pack into a traceable judgment for its canonical input. */
+  wholeChartJudgment?: 'research';
   status: 'research' | 'staging' | 'production' | 'deprecated';
 }
 

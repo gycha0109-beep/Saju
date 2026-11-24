@@ -5,6 +5,7 @@ import type {
   EarthlyBranch,
   HeavenlyStem,
   PillarSlot,
+  TenGod,
 } from '../contracts/calculation.js';
 import { TEN_GOD_FAMILY, type WholeChartJudgment } from '../interpretation/whole-chart-judgment.js';
 import type { MonthlyInterpretationFacts } from './monthly-interpretation-facts.js';
@@ -14,6 +15,65 @@ import { effectiveAnnualPillar } from './research-temporal-branch-layers.js';
 const KST_OFFSET = 9 * 3600000;
 const SLOTS = ['year', 'month', 'day', 'hour'] as const;
 type Ganji = { stem: HeavenlyStem; branch: EarthlyBranch };
+type Area = 'career' | 'wealth' | 'relationship';
+type PeriodLayer = {
+  kind: 'dayun' | 'annual' | 'monthly';
+  god: TenGod | undefined;
+  contacts: readonly { slot: PillarSlot; relation: 'combination' | 'clash' }[];
+  roleImpact: 'repeats_challenge' | 'repeats_support' | 'repeats_possible_remedy' | 'unsettled';
+};
+
+function periodTopics(layers: readonly PeriodLayer[], monthly: boolean) {
+  const signals: {
+    area: Area;
+    layer: PeriodLayer['kind'];
+    direction: 'support' | 'pressure';
+    basis: string;
+  }[] = [];
+  for (const layer of layers) {
+    for (const contact of layer.contacts) {
+      const area =
+        contact.slot === 'day' ? 'relationship' : contact.slot === 'month' ? 'career' : undefined;
+      if (area)
+        signals.push({
+          area,
+          layer: layer.kind,
+          direction: contact.relation === 'clash' ? 'pressure' : 'support',
+          basis: `${contact.slot}:${contact.relation}`,
+        });
+    }
+    if (
+      !layer.god ||
+      (layer.roleImpact !== 'repeats_challenge' && layer.roleImpact !== 'repeats_support')
+    )
+      continue;
+    const family = TEN_GOD_FAMILY[layer.god];
+    const areas: readonly Area[] =
+      family === 'output' ? ['career', 'wealth'] : family === 'wealth' ? ['wealth'] : ['career'];
+    for (const area of areas)
+      signals.push({
+        area,
+        layer: layer.kind,
+        direction: layer.roleImpact === 'repeats_challenge' ? 'pressure' : 'support',
+        basis: layer.god,
+      });
+  }
+  const areas = ['career', 'wealth', 'relationship'] as const;
+  return areas.flatMap((area) => {
+    const evidence = signals.filter((item) => item.area === area);
+    if (monthly ? !evidence.some((item) => item.layer === 'monthly') : evidence.length === 0)
+      return [];
+    const support = evidence.some((item) => item.direction === 'support');
+    const pressure = evidence.some((item) => item.direction === 'pressure');
+    return [
+      {
+        area,
+        direction: support && pressure ? 'competing' : pressure ? 'pressure' : 'support',
+        evidence,
+      },
+    ] as const;
+  });
+}
 
 function contactAt(snapshot: CanonicalSajuSnapshot, branch: EarthlyBranch, slot: PillarSlot) {
   const pillar = snapshot.pillars[slot];
@@ -146,6 +206,7 @@ export function judgeWholeChartPeriods(
       layers,
       direction,
       monthlyShift,
+      topics: direction === 'held' ? [] : periodTopics(layers, monthly !== undefined),
     };
   });
   return {

@@ -552,6 +552,7 @@ export const WEALTH_NATAL_MULTIFACTOR_NARRATIVES: readonly ClaimNarrativeProfile
   })),
 );
 export const WEALTH_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
+  wholeChartJudgment: 'research',
   packId: 'PACK-WEALTH-NATAL-SOURCE-BOUNDED-MULTIFACTOR-RESEARCH',
   version: WEALTH_NATAL_MULTIFACTOR_VERSION,
   name: 'Wealth natal multifactor synthesis / internal research',

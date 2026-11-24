@@ -430,6 +430,7 @@ export const GENERAL_MONTHLY_TENSION_RULES: readonly RuleDefinition[] = Object.f
 );
 
 export const GENERAL_MONTHLY_READING_PACK = Object.freeze({
+  wholeChartJudgment: 'research',
   packId: 'PACK-GENERAL-MONTHLY-READING-CANDIDATE',
   version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION,
   name: 'General Monthly Reading Research Candidate',

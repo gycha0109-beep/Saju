@@ -1,4 +1,5 @@
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
+import { requireWholeChartJudgment } from '../interpretation/interpretation-engine.js';
 import { buildWholeChartNatalReading, type WholeChartNatalReading } from './whole-chart-reading.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -397,7 +398,9 @@ export function buildCareerMultifactorResearchReport(
   return {
     version: CAREER_MULTIFACTOR_REPORT_VERSION,
     snapshotId: snapshot.snapshotId,
-    wholeChart: buildWholeChartNatalReading(snapshot, 'career', execution.run.startedAt),
+    wholeChart: buildWholeChartNatalReading(
+      snapshot, 'career', execution.run.startedAt, requireWholeChartJudgment(snapshot, execution),
+    ),
     calculationHash: snapshot.calculationHash,
     state,
     title: '나의 일과 역할 — 명식 구조 기반 해석',

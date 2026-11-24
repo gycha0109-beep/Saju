@@ -6,6 +6,7 @@ import {
   type JudgmentEvidence,
   type ObservedWholeChart,
   type TenGodFamily,
+  type WholeChartJudgment,
 } from '../interpretation/whole-chart-judgment.js';
 import { judgeWholeChartPeriods, type WholeChartPeriods } from '../reading/whole-chart-periods.js';
 
@@ -130,12 +131,28 @@ function describeWindow(window: WholeChartPeriods['windows'][number], monthly: b
           adds_coordination: '월운에서 새로 확인되는 합의 자리에서 상대와 맞춰 갈 조건을 살핍니다.',
           limited_change: '이번 월운이 연운과 대운의 작용을 추가로 바꾼다는 근거는 제한됩니다.',
         }[window.monthlyShift];
+  const topics = window.topics.map(({ area, direction }) => {
+    const label = { career: '직업', wealth: '재물', relationship: '관계' }[area];
+    const focus = {
+      career: '업무 일정과 역할 배분',
+      wealth: '교환 조건과 지출에 쓸 몫',
+      relationship: '약속과 생활의 경계',
+    }[area];
+    return `${label}에서는 ${focus}을 ${
+      direction === 'competing'
+        ? '이어갈 부분과 조율할 부분으로 나눠 봅니다.'
+        : direction === 'pressure'
+          ? '조정할 조건이 무엇인지 먼저 봅니다.'
+          : '이어갈 여지가 있는지 봅니다.'
+    }`;
+  });
   return [
     focus
       ? `${monthly ? '이 구간의 월운' : '입춘 기준 세운'}은 ${focus.pillar.stem}${focus.pillar.branch}입니다.`
       : '',
     title,
     specificMonth,
+    ...topics,
     activities.size ? `지지 충이 닿는 자리에서 ${[...activities].join('과 ')}을 점검합니다.` : '',
     signals.length ? `원국 판단과 연결되는 천간은 ${signals.join(', ')}입니다.` : '',
     regulation ? `${regulation}은 또한 일간을 조절하는 데 검토할 작용입니다.` : '',
@@ -148,8 +165,8 @@ export function buildWholeChartNatalReading(
   snapshot: CanonicalSajuSnapshot,
   domain: WholeChartNatalDomain,
   reference: string,
+  chart: WholeChartJudgment = judgeWholeChart(snapshot),
 ): WholeChartNatalReading {
-  const chart = judgeWholeChart(snapshot);
   if (chart.state === 'unavailable')
     return {
       state: 'unavailable',
@@ -240,6 +257,12 @@ export function describeWholeChartPeriods(periods: WholeChartPeriods) {
   return periods.windows.map((window) => ({
     ...window,
     text: describeWindow(window, periods.scope === 'monthly'),
+    evidence: {
+      rule: periods.rule,
+      paths: periods.paths,
+      snapshotId: periods.snapshotId,
+      calculationHash: periods.calculationHash,
+    },
   }));
 }
 
@@ -257,14 +280,16 @@ export function renderWholeChartPeriods(
 ) {
   return periods
     .map(
-      ({ startsAt, endsAt, text }) =>
+      ({ startsAt, endsAt, text, evidence }) =>
         '<p><strong>' +
         escape(format(startsAt)) +
         '부터 ' +
         escape(format(endsAt)) +
         ' 전까지</strong> ' +
         escape(text) +
-        '</p>',
+        '</p><details><summary>구간 판단 근거</summary><p>' +
+        escape([evidence.rule, ...evidence.paths].join(' · ')) +
+        '</p></details>',
     )
     .join('');
 }

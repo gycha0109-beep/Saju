@@ -1,4 +1,5 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import { judgeWholeChart, type WholeChartJudgment } from './whole-chart-judgment.js';
 import type {
   ClaimRelation,
   EvidenceIndexEntry,
@@ -72,6 +73,7 @@ export interface InterpretationExecutionResult {
     errors: readonly string[];
   };
   evidenceIndex: Readonly<Record<string, EvidenceIndexEntry>>;
+  wholeChartJudgment?: WholeChartJudgment;
 }
 
 function ruleKey(ruleId: string, version: string): string {
@@ -239,6 +241,7 @@ function makeRunHash(
   evaluations: readonly RuleEvaluation[],
   claims: readonly InterpretationClaim[],
   relations: readonly ClaimRelation[],
+  wholeChartJudgment?: WholeChartJudgment,
 ): string {
   return deterministicContentHash({
     snapshotHash: snapshot.calculationHash,
@@ -259,6 +262,7 @@ function makeRunHash(
     evaluations: evaluations.map(stableEvaluationRecord),
     claims,
     relations,
+    ...(wholeChartJudgment ? { wholeChartJudgment } : {}),
   });
 }
 
@@ -339,6 +343,11 @@ export function runInterpretation(
   const integrityErrors = [...graphIntegrity.errors, ...relationErrors].sort();
   const integrityValid = integrityErrors.length === 0;
   const completeness = executionCompleteness(registry, sortedEvaluations, integrityValid);
+  const wholeChartJudgment =
+    registry.pack.status === 'research' && registry.pack.wholeChartJudgment === 'research' &&
+    integrityValid && completeness.state !== 'failed'
+      ? judgeWholeChart(snapshot)
+      : undefined;
   const runHash = makeRunHash(
     snapshot,
     registry,
@@ -346,6 +355,7 @@ export function runInterpretation(
     sortedEvaluations,
     sortedClaims,
     claimRelations,
+    wholeChartJudgment,
   );
   const interpretationRunId = `interpretation_${runHash.slice(0, 24)}`;
   const status: InterpretationRun['status'] =
@@ -393,5 +403,18 @@ export function runInterpretation(
     claimRelations,
     integrity: { valid: integrityValid, errors: integrityErrors },
     evidenceIndex: graphIntegrity.evidenceIndex,
+    ...(wholeChartJudgment ? { wholeChartJudgment } : {}),
   };
+}
+
+export function requireWholeChartJudgment(
+  snapshot: CanonicalSajuSnapshot, execution: InterpretationExecutionResult,
+) {
+  const judgment = execution.wholeChartJudgment;
+  if (!judgment || !execution.integrity.valid || execution.run.status === 'failed' ||
+      execution.run.snapshotId !== snapshot.snapshotId || execution.run.snapshotHash !== snapshot.calculationHash ||
+      judgment.snapshotId !== snapshot.snapshotId || judgment.calculationHash !== snapshot.calculationHash) {
+    throw new TypeError('Whole-chart judgment must belong to the same successful interpretation run.');
+  }
+  return judgment;
 }

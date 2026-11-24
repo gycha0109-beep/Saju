@@ -179,6 +179,7 @@ export const RELATIONSHIP_NATAL_MULTIFACTOR_NARRATIVES: readonly ClaimNarrativeP
     ],
   }))));
 export const RELATIONSHIP_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
+  wholeChartJudgment: 'research',
   packId: 'PACK-RELATIONSHIP-NATAL-SOURCE-BOUNDED-MULTIFACTOR-RESEARCH',
   version: `${RELATIONSHIP_NATAL_MULTIFACTOR_VERSION}.intimacy`,
   name: 'Relationship natal multifactor synthesis / internal research',

@@ -297,7 +297,8 @@ function temporalEntries(result) {
   const monthlyChart = report.monthlyChartReading;
   const chartMeaning = (windows) => windows.map(window => [window.direction, window.monthlyShift ?? null,
     window.layers.map(layer => [layer.kind, layer.roleImpact,
-      layer.contacts.map(contact => [contact.slot, contact.relation])])]);
+      layer.contacts.map(contact => [contact.slot, contact.relation])]),
+    window.topics.map(({ area, direction }) => [area, direction])]);
   const interactionText = (items) => items.map((item) => item.title + '\n' + item.text);
   const interactionMeaning = (items) => items.map((item) => [item.period, item.pair, item.state]);
   const interactionEvidence = (items) => items.map((item) => ({

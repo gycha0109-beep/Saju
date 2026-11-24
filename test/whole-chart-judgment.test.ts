@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import type { BirthInput } from '../src/contracts/calculation.js';
 import { judgeWholeChart } from '../src/interpretation/whole-chart-judgment.js';
+import {
+  requireWholeChartJudgment,
+  runInterpretation,
+} from '../src/interpretation/interpretation-engine.js';
+import { createCareerMultifactorResearchRegistry } from '../src/research/career-natal-multifactor-candidate.js';
 import { buildThreeTemporalMenusBirthReading } from '../src/preview/three-temporal-menus-birth-reading.js';
 import { runNatalS6QualityRegression } from '../src/preview/natal-five-domain-quality-regression.js';
 import {
@@ -42,6 +47,19 @@ function observed(input: BirthInput) {
 }
 
 describe('whole-chart interpretation by structural context', () => {
+  it('binds the common judgment to the same verified interpretation run and calculation', () => {
+    const first = snapshot(birth(1992, 6, 25, 22, 40, 'male'));
+    const second = snapshot(birth(1969, 10, 1, 3, 5));
+    const registry = createCareerMultifactorResearchRegistry();
+    const execution = runInterpretation(first, registry, { now: new Date(NOW) });
+    expect(requireWholeChartJudgment(first, execution)).toEqual(judgeWholeChart(first));
+    expect(() => requireWholeChartJudgment(second, execution)).toThrow(
+      /same successful interpretation run/u,
+    );
+    expect(runInterpretation(first, registry, { now: new Date(NOW) }).run.runHash).toBe(
+      execution.run.runHash,
+    );
+  });
   it('changes the underlying interpretation when the visible Ten-God sequence is identical', () => {
     const first = birth(1992, 6, 25, 22, 40, 'male');
     const second = birth(1969, 10, 1, 3, 5);
