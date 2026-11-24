@@ -204,6 +204,11 @@ export function judgeWholeChartPeriods(
         return relation === 'none' ? [] : [{ slot, relation }];
       });
       const roles = judgment.state === 'observed' ? judgment.roles : undefined;
+      const introducesWealth =
+        judgment.state === 'observed' &&
+        judgment.themes.wealth.state === 'not_observed' &&
+        god !== undefined &&
+        TEN_GOD_FAMILY[god] === 'wealth';
       const regulation =
         god && roles?.fuyi.status === 'conditional_direction'
           ? roles.fuyi.families?.includes(TEN_GOD_FAMILY[god]) === true
@@ -228,7 +233,16 @@ export function judgeWholeChartPeriods(
             : roles?.repair.some((item) => item.god === god)
               ? 'repeats_possible_remedy'
               : 'unsettled';
-      return { kind, pillar, god, contacts, roleImpact, regulation, hiddenMonthRole } as const;
+      return {
+        kind,
+        pillar,
+        god,
+        contacts,
+        roleImpact,
+        regulation,
+        hiddenMonthRole,
+        introducesWealth,
+      } as const;
     };
     const layers = [
       ...(cycle ? [layer(cycle.pillar, 'dayun')] : []),

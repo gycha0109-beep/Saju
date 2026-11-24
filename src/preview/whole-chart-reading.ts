@@ -112,6 +112,12 @@ export interface WholeChartNatalReading {
   semanticKey: readonly string[];
   paragraphs: readonly string[];
   evidence: readonly JudgmentEvidence[];
+  wealthBasis?: {
+    observation: ObservedWholeChart['themes']['wealth']['state'];
+    indirectPath?: NonNullable<
+      ObservedWholeChart['themes']['wealth']['indirectEvidence']
+    >['relation'];
+  };
 }
 
 export function buildSelectedWholeChartNatalReading(
@@ -188,6 +194,14 @@ function describeTopic(topic: WholeChartPeriods['windows'][number]['topics'][num
   return `${label}에서는 ${reasons.join('·')}에 따라 ${focus}을 ${action}`;
 }
 
+function describeIncomingWealth(window: WholeChartPeriods['windows'][number]) {
+  if (window.direction === 'held') return '';
+  const arriving = window.layers.filter(({ introducesWealth }) => introducesWealth);
+  if (!arriving.length) return '';
+  const origins = arriving.map(({ kind, god }) => `${TIMING_SCOPE[kind]}의 ${god}`);
+  return `원국에서 잠재해 있던 거래와 대가의 주제는 ${origins.join('·')} 작용이 드러나는 구간에서 구체적으로 살핍니다.`;
+}
+
 function describeWindow(window: WholeChartPeriods['windows'][number], monthly: boolean) {
   const focus = monthly
     ? window.layers.find((item) => item.kind === 'monthly')
@@ -258,6 +272,7 @@ function describeWindow(window: WholeChartPeriods['windows'][number], monthly: b
     specificMonth,
     ...(window.direction === 'held' ? [] : [...competingBackground, ...revealedRoles]),
     ...topics,
+    describeIncomingWealth(window),
     activities.size ? `지지 충이 닿는 자리에서 ${[...activities].join('과 ')}을 점검합니다.` : '',
     signals.length ? `원국 판단과 연결되는 천간은 ${signals.join(', ')}입니다.` : '',
     regulation ? `${regulation}은 또한 일간을 조절하는 데 검토할 작용입니다.` : '',
@@ -294,10 +309,7 @@ function describePatternRoles({ pattern, roles }: ObservedWholeChart) {
     : '';
 }
 
-function describeSupportPositions(
-  { pattern, positions }: ObservedWholeChart,
-  domain: WholeChartNatalDomain,
-) {
+function describeSupportPositions({ pattern }: ObservedWholeChart) {
   const { supportContext } = pattern;
   const rooted = supportContext.witnesses.filter(
     ({ state }) => state === 'exposed_with_independent_root',
@@ -327,14 +339,31 @@ function describeSupportPositions(
     );
     return `${[...names].join('·')} 작용은 지장간에 있습니다. 이 역할이 밖으로 드러날 조건이 생기면 중심 구조를 뒷받침할 수 있습니다.`;
   }
-  if (
-    domain === 'wealth' &&
-    supportContext.needsRoot &&
-    positions.every(({ god }) => TEN_GOD_FAMILY[god] !== 'wealth')
-  ) {
-    return '원국에서 식신이 만드는 반복 가능한 산출을 먼저 봅니다. 산출에 대가가 붙는 시기나 거래 조건은 재성 근거가 드러나는 구간에서 따로 확인합니다.';
-  }
   return '';
+}
+
+function describeIndirectWealth(chart: ObservedWholeChart) {
+  const evidence = chart.themes.wealth.indirectEvidence;
+  if (!evidence) return '';
+  const describe = (witnesses: typeof evidence.production) =>
+    [
+      ...new Set(
+        witnesses.map(
+          ({ slot, god, location }) =>
+            `${SLOT[slot]}${location === 'hidden' ? ' 지장간' : ''}의 ${god}`,
+        ),
+      ),
+    ].join('·');
+  const production = describe(evidence.production);
+  const resources = describe(evidence.resources);
+  const basis = {
+    production_and_resources: `${production} 작용은 반복해 만들 결과물을, ${resources} 작용은 이를 계속 만들기 위해 남겨 둘 시간·도구·협력 조건을 읽는 근거입니다.`,
+    production: `${production} 작용에서 반복해 만들 수 있는 결과물의 종류와 산출 조건을 봅니다.`,
+    resources: `${resources} 작용에서 계속 활용할 수 있는 기존 자원과 이를 유지하는 조건을 봅니다.`,
+    no_independent_path:
+      '원국에서 산출이나 자원 유지의 연결을 뒷받침하는 독립적인 근거도 확인하기 어렵습니다.',
+  }[evidence.relation];
+  return `확정된 원국의 천간·지지·지장간에서 재성은 관측되지 않습니다. ${basis} 거래 조건과 대가는 재성 근거가 드러나는 시기에 따로 살핍니다.`;
 }
 
 export function buildWholeChartNatalReading(
@@ -359,7 +388,7 @@ export function buildWholeChartNatalReading(
       : `${chart.month.branch}월의 지장간에서 살핀 중심 후보는 ${pattern.anchor.god}입니다.`
     : `${chart.month.branch}월은 ${FAMILY[family]}의 단서를 줍니다. ${chart.allResolved ? '월령 후보 사이의 우선순위는 보류합니다.' : '확정된 기둥을 기준으로 부분적으로 읽습니다.'}`;
   const roleText = describePatternRoles(chart);
-  const supportText = describeSupportPositions(chart, domain);
+  const supportText = describeSupportPositions(chart);
   const focusContacts =
     domain === 'relationship'
       ? chart.themes.relationship.dayBranchContacts
@@ -375,11 +404,13 @@ export function buildWholeChartNatalReading(
       ? `전통 배우자성의 단서는 ${[...new Set(spouse.spouseWitnesses.map((item) => SLOT[item.slot] + '의 ' + item.god))].join(', ')}입니다. ${spouse.dayBranchContacts.length ? '일지에 닿는 관계와 함께 약속의 방식과 조율의 조건을 봅니다.' : '가까운 관계에서 역할을 이해하는 단서로 읽습니다.'}`
       : domain === 'wealth' && storage.wealthInStorage.length
         ? `${[...new Set(storage.wealthInStorage.map((item) => SLOT[item.slot] + ' 지장간의 ' + item.god))].join(', ')}에서 재성의 저장 단서를 확인했습니다. ${storage.storageContacts.length ? '접촉 조건도 걸려 있어 유지와 소모를 함께 살핍니다.' : '꾸준히 남길 자원의 조건을 살핍니다.'}`
-        : '';
+        : domain === 'wealth'
+          ? describeIndirectWealth(chart)
+          : '';
   const topicEvidence =
     domain === 'relationship' && spouse.spouseWitnesses.length
       ? [spouse.evidence]
-      : domain === 'wealth' && storage.wealthInStorage.length
+      : domain === 'wealth' && (storage.wealthInStorage.length || storage.indirectEvidence)
         ? [storage.evidence]
         : [];
   const date = Date.parse(reference);
@@ -394,6 +425,14 @@ export function buildWholeChartNatalReading(
   return {
     judgmentId: chart.judgmentId,
     state: chart.pattern.state,
+    ...(domain === 'wealth'
+      ? {
+          wealthBasis: {
+            observation: storage.state,
+            indirectPath: storage.indirectEvidence?.relation,
+          },
+        }
+      : {}),
     semanticKey: [
       family,
       strength.state,
@@ -405,8 +444,16 @@ export function buildWholeChartNatalReading(
       ...(pattern.supportContext.concealed.length ? ['concealed_support'] : []),
       ...contacts,
       ...(topical ? ['present_topic_witness'] : []),
+      ...(domain === 'wealth' && storage.indirectEvidence
+        ? [storage.indirectEvidence.relation]
+        : []),
       period?.direction ?? 'no_period',
       periodTopic?.direction ?? 'no_direct_topic',
+      ...(domain === 'wealth' && period?.direction !== 'held'
+        ? (period?.layers
+            .filter(({ introducesWealth }) => introducesWealth)
+            .map(({ kind, god }) => `${kind}:${god}`) ?? [])
+        : []),
     ],
     paragraphs: [
       `${observations} ${paragraph} ${STRENGTH[strength.state]}`,
@@ -414,6 +461,7 @@ export function buildWholeChartNatalReading(
       supportText,
       topical,
       ...(periodTopic ? [describeTopic(periodTopic)] : []),
+      ...(domain === 'wealth' && period ? [describeIncomingWealth(period)] : []),
     ].filter(Boolean),
     evidence: [
       pattern.selection,

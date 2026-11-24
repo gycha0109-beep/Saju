@@ -298,7 +298,8 @@ function temporalEntries(result) {
   const chartMeaning = (windows) => windows.map(window => [window.direction, window.monthlyShift ?? null,
     window.layers.map(layer => [layer.kind, layer.roleImpact,
       layer.contacts.map(contact => [contact.slot, contact.relation]),
-      window.direction === 'held' ? null : (layer.hiddenMonthRole?.god ?? null)]),
+      window.direction === 'held' ? null : (layer.hiddenMonthRole?.god ?? null),
+      window.direction === 'held' || !layer.introducesWealth ? null : layer.god]),
     window.layerRelations.filter(contact => window.direction !== 'held' && contact.effect === 'support_under_review')
       .map(contact => [contact.background, contact.current, contact.relation, contact.effect]),
     window.topics.map(({ area, direction }) => [area, direction])]);
@@ -527,6 +528,20 @@ function summarize(rows) {
     examples: rows.slice(0, 2).map((r) => ({ birth: r.birth, text: r.text.slice(0, 550) })),
   };
 }
+function summarizeIndirectWealth(rows) {
+  const absent = rows.filter(({ wholeChartWealthBasis }) =>
+    wholeChartWealthBasis?.observation === 'not_observed');
+  const byPath = {};
+  for (const { wholeChartWealthBasis: { indirectPath } } of absent) {
+    byPath[indirectPath] = (byPath[indirectPath] ?? 0) + 1;
+  }
+  return {
+    chartCount: absent.length,
+    chartsWithoutLegacyWealthSection: absent.filter(({ sections }) => sections.length === 0).length,
+    byPath,
+  };
+}
+
 export function runFiveHundredSajuAudit(count = DEFAULT_COUNT, { includeCases = false } = {}) {
   if (count !== DEFAULT_COUNT && !EXPANDED_COUNTS.includes(count))
     throw new RangeError('Supported fixed-seed audit sample sizes are 500, 3000 or 10000.');
@@ -617,6 +632,7 @@ export function runFiveHundredSajuAudit(count = DEFAULT_COUNT, { includeCases = 
             calculationHash: chartKey,
             reportState: report.state,
             reportMissing: [...report.missing],
+            wholeChartWealthBasis: report.wholeChart?.wealthBasis,
             sections: report.sections.map((section) => ({
               claimType: section.claimType,
               pattern: section.pattern,
@@ -728,6 +744,7 @@ export function runFiveHundredSajuAudit(count = DEFAULT_COUNT, { includeCases = 
     rootCauseDiagnostics: {
       version: ROOT_CAUSE_AUDIT_VERSION,
       wealth: summarizeMissingWealthCauses(wealthMissingCases),
+      wealthWithoutDirectWitness: summarizeIndirectWealth(wealthChartDiagnostics),
       annualRepetition: analyzeTemporalRepetition(rows['올해']),
       monthlyRepetition: analyzeTemporalRepetition(rows['이번 달']),
     },
@@ -742,6 +759,7 @@ export function runFiveHundredSajuAudit(count = DEFAULT_COUNT, { includeCases = 
       JSON.stringify({
         wealthMissing: result.rootCauseDiagnostics.wealth.missingCaseCount,
         missingCauses: result.rootCauseDiagnostics.wealth.byCause,
+        wealthWithoutDirectWitness: result.rootCauseDiagnostics.wealthWithoutDirectWitness,
         annualRepeated: result.rootCauseDiagnostics.annualRepetition.casesInRepeatedGroups,
         monthlyRepeated: result.rootCauseDiagnostics.monthlyRepetition.casesInRepeatedGroups,
       }) +

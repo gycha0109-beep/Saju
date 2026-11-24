@@ -188,7 +188,60 @@ describe('whole-chart interpretation by structural context', () => {
     expect(text(rooted)).toContain('일주 지장간의 뿌리');
     expect(text(exposed)).toContain('연결의 지속성은 보류');
     expect(text(concealed)).toContain('지장간에 있습니다');
-    expect(text(absent)).toContain('식신이 만드는 반복 가능한 산출');
+    expect(text(absent)).toContain('천간·지지·지장간에서 재성은 관측되지 않습니다');
+  });
+
+  it('reads independent production and resource facts when all wealth channels are empty', () => {
+    const input = birth(1984, 12, 5, 5, 2);
+    const chart = observed(input);
+    const theme = chart.themes.wealth;
+    expect(theme.state).toBe('not_observed');
+    expect(theme.indirectEvidence?.production).toContainEqual(
+      expect.objectContaining({ location: 'visible', slot: 'year' }),
+    );
+    expect(theme.evidence.paths).toContain('derivedFacts.hiddenStems.hour');
+    expect(
+      buildWholeChartNatalReading(snapshot(input), 'wealth', NOW).paragraphs.join(' '),
+    ).toContain('거래 조건과 대가는 재성 근거가 드러나는 시기');
+
+    const unknown = observed({ ...input, time: { known: false } });
+    expect(unknown.themes.wealth.state).toBe('unresolved');
+    expect(unknown.themes.wealth.indirectEvidence).toBeUndefined();
+
+    const visibleWealth = observed(birth(1960, 1, 10, 0, 30));
+    expect(visibleWealth.themes.wealth.state).toBe('observed');
+    expect(visibleWealth.themes.wealth.indirectEvidence).toBeUndefined();
+  });
+
+  it('changes the wealth evidence at the exact annual and monthly transitions for that chart', () => {
+    const result = buildThreeTemporalMenusBirthReading(birth(1984, 12, 5, 5, 2), {
+      requestId: 'whole-chart-incoming-wealth',
+      targetYear: 2026,
+      targetMonth: 8,
+      referenceDateTime: '2026-08-15T00:00:00.000Z',
+    });
+    const { annualChartReading, monthlyChartReading } = result.annualMonthly.report;
+    expect(
+      annualChartReading
+        .find(({ effectiveYear }) => effectiveYear === 2025)
+        ?.layers.find(({ kind }) => kind === 'annual')?.introducesWealth,
+    ).toBe(false);
+    expect(
+      annualChartReading
+        .find(({ effectiveYear }) => effectiveYear === 2026)
+        ?.layers.find(({ kind }) => kind === 'annual')?.introducesWealth,
+    ).toBe(true);
+    expect(
+      monthlyChartReading
+        .find(({ monthSegment }) => monthSegment === 'before_jeol')
+        ?.layers.find(({ kind }) => kind === 'monthly')?.introducesWealth,
+    ).toBe(false);
+    const lateMonth = monthlyChartReading.find(({ monthSegment }) => monthSegment === 'after_jeol');
+    expect(lateMonth?.layers.find(({ kind }) => kind === 'monthly')).toMatchObject({
+      introducesWealth: true,
+      pillar: { stem: '병' },
+    });
+    expect(lateMonth?.text).toMatch(/거래와 대가의 주제는 .*월운의/u);
   });
 
   it('preserves verified positions without inferring an unknown hour or a spouse star from missing input', () => {

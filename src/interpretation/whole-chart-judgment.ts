@@ -16,7 +16,7 @@ import { deriveGeneralNatalSourceScopedBranchBreakCandidates } from '../research
 import { buildSajuR34StrengthRootSubstrate } from '../research/saju-r34-strength-root-substrate.js';
 import { deterministicContentHash } from './rule-registry.js';
 
-export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v3';
+export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v4';
 export const TEN_GOD_FAMILY = {
   비견: 'peer',
   겁재: 'peer',
@@ -257,6 +257,10 @@ function thematicStructures(
   snapshot: CanonicalSajuSnapshot,
   positions: readonly TenGodPosition[],
   contacts: readonly ChartContact[],
+  allResolved: boolean,
+  dayMaster: HeavenlyStem,
+  strength: ReturnType<typeof assessStrength>,
+  pattern: ReturnType<typeof assessPattern>,
 ) {
   const traditionalSex = snapshot.input.sexForTraditionalCalculation;
   const partnerFamily =
@@ -273,6 +277,51 @@ function thematicStructures(
       STORAGE_BRANCHES.includes(pillar.value.branch.value)
     );
   });
+  const wealthWitnesses = positions.filter(({ god }) => TEN_GOD_FAMILY[god] === 'wealth');
+  const wealthBranchWitnesses = SLOTS.filter((slot) => {
+    const pillar = snapshot.pillars[slot];
+    return (
+      pillar.status === 'resolved' &&
+      TEN_GOD_FAMILY[getBranchTenGod(dayMaster, pillar.value.branch.value)] === 'wealth'
+    );
+  });
+  const hasDirectWealth = wealthWitnesses.length > 0 || wealthBranchWitnesses.length > 0;
+  const wealthState = hasDirectWealth ? 'observed' : allResolved ? 'not_observed' : 'unresolved';
+  const unboundOutput = positions.filter(
+    ({ god, location, slot }) =>
+      TEN_GOD_FAMILY[god] === 'output' &&
+      location === 'visible' &&
+      !hasContact(contacts, slot, ['stem_combination']),
+  );
+  const anchoredSupport = strength.groundedSupport
+    .map(({ position }) => position)
+    .filter(({ slot }) => !hasContact(contacts, slot, ['stem_combination']));
+  const monthAnchor =
+    pattern.anchor && !hasContact(contacts, 'month', ROOT_CONTEST) ? pattern.anchor : undefined;
+  const latentProduction =
+    monthAnchor && TEN_GOD_FAMILY[monthAnchor.god] === 'output' ? [monthAnchor] : [];
+  const availableResource =
+    monthAnchor && TEN_GOD_FAMILY[monthAnchor.god] === 'resource'
+      ? [monthAnchor, ...anchoredSupport]
+      : anchoredSupport;
+  const indirectEvidence =
+    wealthState === 'not_observed'
+      ? ({
+          production: [...unboundOutput, ...latentProduction],
+          resources: availableResource,
+          relation:
+            (unboundOutput.length || latentProduction.length) && availableResource.length
+              ? 'production_and_resources'
+              : unboundOutput.length || latentProduction.length
+                ? 'production'
+                : availableResource.length
+                  ? 'resources'
+                  : 'no_independent_path',
+        } as const)
+      : undefined;
+  const indirectPaths = indirectEvidence
+    ? [...indirectEvidence.production, ...indirectEvidence.resources].map(({ path }) => path)
+    : [];
   return {
     relationship: {
       dayBranchContacts: contacts.filter(
@@ -291,14 +340,28 @@ function thematicStructures(
       },
     },
     wealth: {
+      state: wealthState,
+      indirectEvidence,
       wealthInStorage,
       storageContacts: contacts.filter(({ slots }) =>
         wealthInStorage.some(({ slot }) => slots.includes(slot)),
       ),
       evidence: {
-        rule: 'storage-branch-containing-wealth-stem',
-        paths: wealthInStorage.flatMap(({ slot, path }) => [`pillars.${slot}`, path]),
-        sources: [SEASON_SOURCE],
+        rule: indirectEvidence
+          ? 'verify-three-wealth-channels-and-observe-independent-production-or-support'
+          : 'storage-branch-containing-wealth-stem',
+        paths: [
+          ...new Set([
+            ...wealthInStorage.flatMap(({ slot, path }) => [`pillars.${slot}`, path]),
+            ...wealthWitnesses.map(({ path }) => path),
+            ...wealthBranchWitnesses.map((slot) => `pillars.${slot}`),
+            ...indirectPaths,
+            ...(indirectEvidence
+              ? SLOTS.flatMap((slot) => [`pillars.${slot}`, `derivedFacts.hiddenStems.${slot}`])
+              : []),
+          ]),
+        ],
+        sources: indirectEvidence ? [STRESS_SOURCE, FOOD_WEALTH_SOURCE] : [SEASON_SOURCE],
       },
     },
   } as const;
@@ -657,7 +720,15 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
     strength,
     allResolved,
   );
-  const themes = thematicStructures(snapshot, positions, contacts);
+  const themes = thematicStructures(
+    snapshot,
+    positions,
+    contacts,
+    allResolved,
+    day.value.value,
+    strength,
+    pattern,
+  );
   const supported = pattern.state === 'supported' || pattern.state === 'locally_protected';
   const effectiveSupports =
     pattern.state === 'locally_protected' && pattern.officerRepair.state === 'local_protection'
