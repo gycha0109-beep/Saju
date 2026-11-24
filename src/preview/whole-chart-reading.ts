@@ -281,7 +281,34 @@ function describeWindow(window: WholeChartPeriods['windows'][number], monthly: b
     .join(' ');
 }
 
+const CANDIDATE_STATE: Record<string, string> = {
+  unresolved: '필수 정보가 미확정',
+  candidate_only: '후보 근거만 확인',
+  repair_under_review: '구응 근거 검토 중',
+  locally_protected: '국소 구응 근거 확인',
+  challenged: '합·충 또는 제약 근거 확인',
+  strength_required: '일간의 뒷받침 추가 확인 필요',
+  supported: '독립적인 성립 근거 확인',
+};
+
+function describeMonthCandidates({ pattern }: ObservedWholeChart) {
+  if (pattern.candidateAssessments.length < 2) return '';
+  const candidates = pattern.candidateAssessments.map(
+    ({ position, state }) => `${position.stem}·${position.god}(${CANDIDATE_STATE[state] ?? state})`,
+  );
+  if (pattern.state === 'coexisting_month_candidates') {
+    return `월지의 복수 후보를 각각 검토한 결과 ${candidates.join(' / ')}의 성립 근거가 독립적으로 확인됩니다. 하나만 선택하지 않고 함께 작용하는 후보로 보존합니다.`;
+  }
+  return `월지의 복수 후보를 각각 검토했습니다: ${candidates.join(' / ')}. 후보별 합·충·통근·구응 조건이 같지 않아 하나의 격국으로 확정하지 않습니다.`;
+}
+
 function describePatternRoles({ pattern, roles }: ObservedWholeChart) {
+  if (pattern.state === 'coexisting_month_candidates') {
+    return '월지의 복수 후보가 각각 독립적인 성립 근거를 갖습니다. 하나의 격국으로 단순화하지 않고 후보별 작용을 함께 반영합니다.';
+  }
+  if (pattern.state === 'competing_month_signals' && pattern.candidateAssessments.length > 1) {
+    return describeMonthCandidates({ pattern });
+  }
   if (roles.status === 'competing_methods') {
     return '월령의 구조를 받치는 작용과 일간의 균형에 필요한 방향이 엇갈려, 한 가지 유리한 역할을 확정하는 판단은 보류합니다.';
   }
@@ -380,13 +407,23 @@ export function buildWholeChartNatalReading(
       evidence: [],
     };
   const { strength, pattern, roles } = chart;
+  const candidateFamilies = [
+    ...new Set(
+      pattern.candidateAssessments.map(({ position }) => TEN_GOD_FAMILY[position.god]),
+    ),
+  ];
   const family = TEN_GOD_FAMILY[pattern.anchor?.god ?? chart.month.god];
-  const paragraph = DOMAIN[domain][family];
-  const observations = pattern.anchor
-    ? pattern.selectionMode === 'exposed_secondary_month_role'
-      ? `${chart.month.branch}월의 대표 작용은 ${chart.month.god}입니다. 지장간에서 밖으로 드러난 ${pattern.anchor.god} 작용을 중심 후보로 삼았습니다.`
-      : `${chart.month.branch}월의 지장간에서 살핀 중심 후보는 ${pattern.anchor.god}입니다.`
-    : `${chart.month.branch}월은 ${FAMILY[family]}의 단서를 줍니다. ${chart.allResolved ? '월령 후보 사이의 우선순위는 보류합니다.' : '확정된 기둥을 기준으로 부분적으로 읽습니다.'}`;
+  const paragraph = (candidateFamilies.length > 1 ? candidateFamilies : [family])
+    .map((candidateFamily) => DOMAIN[domain][candidateFamily])
+    .join(' ');
+  const candidateText = describeMonthCandidates(chart);
+  const observations = pattern.candidateAssessments.length > 1
+    ? candidateText
+    : pattern.anchor
+      ? pattern.selectionMode === 'exposed_secondary_month_role'
+        ? `${chart.month.branch}월의 대표 작용은 ${chart.month.god}입니다. 지장간에서 밖으로 드러난 ${pattern.anchor.god} 작용을 중심 후보로 삼았습니다.`
+        : `${chart.month.branch}월의 지장간에서 살핀 중심 후보는 ${pattern.anchor.god}입니다.`
+      : `${chart.month.branch}월은 ${FAMILY[family]}의 단서를 줍니다. ${chart.allResolved ? '월령 후보 사이의 우선순위는 보류합니다.' : '확정된 기둥을 기준으로 부분적으로 읽습니다.'}`;
   const roleText = describePatternRoles(chart);
   const supportText = describeSupportPositions(chart);
   const focusContacts =
@@ -443,6 +480,9 @@ export function buildWholeChartNatalReading(
       pattern.officerRepair.state,
       roles.status,
       ...pattern.supportContext.witnesses.map(({ state }) => state),
+      ...pattern.candidateAssessments.map(({ position, state, anchorBound }) =>
+        `month_candidate:${position.god}:${state}:${anchorBound ? 'bound' : 'unbound'}`,
+      ),
       ...(pattern.supportContext.concealed.length ? ['concealed_support'] : []),
       ...contacts,
       ...(topical ? ['present_topic_witness'] : []),
@@ -469,6 +509,7 @@ export function buildWholeChartNatalReading(
       pattern.selection,
       pattern.evidence,
       pattern.supportContext.evidence,
+      ...pattern.candidateAssessments.map(({ evidence }) => evidence),
       strength.evidence,
       roles.evidence,
       ...focusContacts.map((item) => item.evidence),
