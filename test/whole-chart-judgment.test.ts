@@ -201,6 +201,12 @@ describe('whole-chart interpretation by structural context', () => {
     ).toHaveLength(1);
     expect(reading.paragraphs.join(' ')).toContain('정인');
     expect(reading.paragraphs.join(' ')).toContain('정관');
+    expect(reading.paragraphs.join(' ')).toContain('정인(학습과 지원) 관점에서는');
+    expect(reading.paragraphs.join(' ')).toContain('정관(책임과 규범) 관점에서는');
+    expect(reading.paragraphs.join(' ')).not.toContain(
+      '성과를 실제 자원으로 연결하는 역할에서 교환 기준과 결과 책임을 함께 봅니다.',
+    );
+    expect(reading.semanticKey[0]).toContain('competing_month_signals:');
   });
 
   it('distinguishes two charts with the same Hurting Officer anchor using counterevidence', () => {

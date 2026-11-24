@@ -350,6 +350,24 @@ function describeMonthStemObservations(pattern: ObservedWholeChart['pattern']) {
   return `월지 지장간 구성 요소를 각각 관측했습니다: ${observations.join(' / ')}. ${contactText} 각 신호의 지원·제약·통근은 관측 근거로만 기록하며, 격국 후보의 정체·순위·강도·성립이나 복수 격국의 공존, 합화 및 구응 효과를 확정하지 않습니다.`;
 }
 
+function describeCompetingMonthPerspectives(
+  domain: WholeChartNatalDomain,
+  pattern: ObservedWholeChart['pattern'],
+) {
+  const perspectives = new Map<TenGodFamily, string[]>();
+  for (const { position } of pattern.monthStemObservations) {
+    const family = TEN_GOD_FAMILY[position.god];
+    const gods = perspectives.get(family) ?? [];
+    if (!gods.includes(position.god)) gods.push(position.god);
+    perspectives.set(family, gods);
+  }
+  const details = [...perspectives.entries()].map(
+    ([family, gods]) =>
+      `${gods.join('·')}(${FAMILY[family]}) 관점에서는 ${DOMAIN[domain][family]}`,
+  );
+  return `월령에서 복수의 십신 작용이 관측되어 하나를 대표로 선택하지 않습니다. ${details.join(' ')}`;
+}
+
 function describePatternRoles({ pattern, roles }: ObservedWholeChart) {
   if (pattern.state === 'competing_month_signals' && pattern.monthStemObservations.length > 1) {
     return describeMonthStemObservations(pattern);
@@ -452,8 +470,15 @@ export function buildWholeChartNatalReading(
       evidence: [],
     };
   const { strength, pattern, roles } = chart;
+  const competingMonthSignals =
+    pattern.state === 'competing_month_signals' && pattern.monthStemObservations.length > 1;
   const family = TEN_GOD_FAMILY[pattern.anchor?.god ?? chart.month.god];
-  const paragraph = DOMAIN[domain][family];
+  const paragraph = competingMonthSignals
+    ? describeCompetingMonthPerspectives(domain, pattern)
+    : DOMAIN[domain][family];
+  const semanticFamily = competingMonthSignals
+    ? `competing_month_signals:${[...new Set(pattern.monthStemObservations.map(({ position }) => TEN_GOD_FAMILY[position.god]))].sort().join('|')}`
+    : family;
   const monthStemText = describeMonthStemObservations(pattern);
   const observations = pattern.monthStemObservations.length > 1
     ? monthStemText
@@ -511,7 +536,7 @@ export function buildWholeChartNatalReading(
         }
       : {}),
     semanticKey: [
-      family,
+      semanticFamily,
       strength.state,
       pattern.state,
       pattern.selectionMode,
