@@ -281,28 +281,43 @@ function describeWindow(window: WholeChartPeriods['windows'][number], monthly: b
     .join(' ');
 }
 
-const MONTH_SIGNAL_STATE: Record<string, string> = {
-  unresolved: '필수 정보 미확정',
-  candidate_only: '격국 성립 판단 보류',
-  repair_under_review: '구응 관계 추가 확인',
-  locally_protected: '국소 구응 관계 관측(효과 미확정)',
-  challenged: '합·충 또는 제약 관계 관측',
-  strength_required: '일간의 뒷받침 추가 확인',
-  supported: '지원 관계 관측(격국 성립은 미확정)',
+const RELATION_LABEL: Record<string, string> = {
+  combination: '육합',
+  clash: '충',
+  punishment: '형',
+  harm: '해',
+  break: '파',
+  meeting: '삼합',
+  stem_combination: '천간 오합',
 };
 
-function describeMonthSignals(pattern: ObservedWholeChart['pattern']) {
-  if (pattern.monthSignalAssessments.length < 2) return '';
-  const signals = pattern.monthSignalAssessments.map(
-    ({ signal, state, exposure, anchorBound, combinationUnderReview }) =>
-      `${signal.stem}·${signal.god}(${exposure === 'visible' ? '천간 투간' : '지장간 내 관측'}, ${MONTH_SIGNAL_STATE[state] ?? state}${anchorBound ? ', 천간합 접점' : ''}${combinationUnderReview ? ', 지지 합 접점' : ''})`,
+function describeMonthStemObservations(pattern: ObservedWholeChart['pattern']) {
+  if (pattern.monthStemObservations.length < 2) return '';
+  const observations = pattern.monthStemObservations.map(
+    ({ position, exposure, visibleMatches, stemCombinationContacts }) => {
+      const exposureText =
+        exposure === 'visible'
+          ? `동일 글자 천간 관측(${visibleMatches.map(({ slot }) => SLOT[slot]).join('·')})`
+          : '월지 지장간 구성만 관측';
+      const combinations = stemCombinationContacts.map(
+        ({ slots }) => `천간 오합 접점(${slots.map((slot) => SLOT[slot]).join('·')})`,
+      );
+      return `${position.stem}·${position.god}(${exposureText}${combinations.length ? `, ${combinations.join('·')}` : ''})`;
+    },
   );
-  return `월지에서 복수의 지장간 신호를 관찰했습니다: ${signals.join(' / ')}. 각 신호의 지원·제약·구응 접점은 따로 기록했지만, 후보의 정체·우선순위·격국 성립 또는 복수 격국의 공존은 확정하지 않습니다.`;
+  const contacts = pattern.monthContacts.map(
+    ({ kind, slots }) =>
+      `${RELATION_LABEL[kind] ?? kind}(${slots.map((slot) => SLOT[slot]).join('·')})`,
+  );
+  const contactText = contacts.length
+    ? `월지에 닿는 구조 접점은 ${contacts.join(' / ')}입니다.`
+    : '현재 계산에서 확인된 월지 구조 접점은 없습니다.';
+  return `월지 지장간 구성 요소를 각각 관측했습니다: ${observations.join(' / ')}. ${contactText} 이 내용은 위치와 관계의 관측이며, 격국 후보의 정체·순위·강도·성립이나 복수 격국의 공존, 합화 및 구응 효과를 확정하지 않습니다.`;
 }
 
 function describePatternRoles({ pattern, roles }: ObservedWholeChart) {
-  if (pattern.state === 'competing_month_signals' && pattern.monthSignalAssessments.length > 1) {
-    return describeMonthSignals(pattern);
+  if (pattern.state === 'competing_month_signals' && pattern.monthStemObservations.length > 1) {
+    return describeMonthStemObservations(pattern);
   }
   if (roles.status === 'competing_methods') {
     return '월령의 구조를 받치는 작용과 일간의 균형에 필요한 방향이 엇갈려, 한 가지 유리한 역할을 확정하는 판단은 보류합니다.';
@@ -404,16 +419,16 @@ export function buildWholeChartNatalReading(
   const { strength, pattern, roles } = chart;
   const family = TEN_GOD_FAMILY[pattern.anchor?.god ?? chart.month.god];
   const paragraph = DOMAIN[domain][family];
-  const monthSignalText = describeMonthSignals(pattern);
-  const observations = pattern.monthSignalAssessments.length > 1
-    ? monthSignalText
+  const monthStemText = describeMonthStemObservations(pattern);
+  const observations = pattern.monthStemObservations.length > 1
+    ? monthStemText
     : pattern.anchor
       ? pattern.selectionMode === 'exposed_secondary_month_role'
         ? `${chart.month.branch}월의 대표 작용은 ${chart.month.god}입니다. 지장간에서 밖으로 드러난 ${pattern.anchor.god} 작용을 중심 후보로 삼았습니다.`
         : `${chart.month.branch}월의 지장간에서 살핀 중심 후보는 ${pattern.anchor.god}입니다.`
       : `${chart.month.branch}월은 ${FAMILY[family]}의 단서를 줍니다. ${chart.allResolved ? '월령 후보 사이의 우선순위는 보류합니다.' : '확정된 기둥을 기준으로 부분적으로 읽습니다.'}`;
-  const roleText = pattern.monthSignalAssessments.length > 1 ? '' : describePatternRoles(chart);
-  const supportText = pattern.monthSignalAssessments.length > 1 ? '' : describeSupportPositions(chart);
+  const roleText = pattern.monthStemObservations.length > 1 ? '' : describePatternRoles(chart);
+  const supportText = pattern.monthStemObservations.length > 1 ? '' : describeSupportPositions(chart);
   const focusContacts =
     domain === 'relationship'
       ? chart.themes.relationship.dayBranchContacts
@@ -468,8 +483,8 @@ export function buildWholeChartNatalReading(
       pattern.officerRepair.state,
       roles.status,
       ...pattern.supportContext.witnesses.map(({ state }) => state),
-      ...pattern.monthSignalAssessments.map(({ signal, state, exposure, anchorBound, combinationUnderReview }) =>
-        `month_signal:${signal.god}:${exposure}:${state}:${anchorBound ? 'bound' : 'unbound'}:${combinationUnderReview ? 'combination' : 'no_combination'}`,
+      ...pattern.monthStemObservations.map(({ position, exposure, visibleMatches, stemCombinationContacts }) =>
+        `month_component:${position.stem}:${position.god}:${exposure}:${visibleMatches.map(({ slot }) => slot).sort().join(',')}:${stemCombinationContacts.map(({ slots }) => slots.join(',')).sort().join(';')}`,
       ),
       ...(pattern.supportContext.concealed.length ? ['concealed_support'] : []),
       ...contacts,
@@ -497,7 +512,7 @@ export function buildWholeChartNatalReading(
       pattern.selection,
       pattern.evidence,
       pattern.supportContext.evidence,
-      ...pattern.monthSignalAssessments.map(({ evidence }) => evidence),
+      ...pattern.monthStemObservations.map(({ evidence }) => evidence),
       strength.evidence,
       roles.evidence,
       ...focusContacts.map((item) => item.evidence),
