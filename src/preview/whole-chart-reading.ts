@@ -432,6 +432,34 @@ function describeSupportPositions({ pattern }: ObservedWholeChart) {
   return '';
 }
 
+function describeDirectWealth(chart: ObservedWholeChart) {
+  const { flow } = chart.themes.wealth;
+  const label = ({ slot, stem, god, location }: ObservedWholeChart['positions'][number]) =>
+    `${SLOT[slot]}${location === 'hidden' ? ' 지장간' : ' 천간'} ${stem} ${god}`;
+  if (!flow.exposed.length && !flow.concealed.length) return '';
+  const parts = flow.exposed.map(({ position, roots, independentRoots, state }) => {
+    const rootNames = (items: typeof roots) => [...new Set(items.map(label))].join('·');
+    const context = {
+      exposed_with_independent_root: `${rootNames(independentRoots)}에서 같은 글자의 독립 통근 근거가 확인됩니다.`,
+      root_under_review: `${rootNames(roots)}에 뿌리가 있으나 관계 접점이 함께 있어 실제 작용은 검토해야 합니다.`,
+      exposed_without_same_stem_root: '같은 글자의 지장간 뿌리가 확인되지 않아 지속 조건을 따로 살핍니다.',
+      root_unresolved: '확정되지 않은 기둥이 있어 통근 유무를 판단하지 않습니다.',
+      combination_review: '천간합 접점이 있어 재성의 실제 작용을 확정하지 않습니다.',
+    }[state];
+    return `${label(position)}이 드러난 재성입니다. ${context}`;
+  });
+  if (flow.concealed.length) {
+    parts.push(`${flow.concealed.map(({ position, relationUnderReview }) => label(position) + (relationUnderReview ? '(지지 관계 검토)' : '')).join('·')}은 천간에 같은 글자가 드러나지 않은 재성입니다. 잠재된 교환 조건으로 구분합니다.`);
+  }
+  if (flow.output.length) {
+    const output = flow.output.map(label).join('·');
+    parts.push(`${output}의 산출 단서와 위 재성을 함께 읽습니다. ${flow.state === 'output_with_independently_rooted_wealth' ? '드러난 재성에 독립 통근 근거가 있어 산출과 교환을 함께 검토할 구조가 확인됩니다.' : '산출과 교환의 연결이 실제로 작동하는 조건은 따로 살핍니다.'}`);
+  } else {
+    parts.push(chart.allResolved ? '식상 산출 근거가 천간·지장간에서 확인되지 않아 재성 자체의 교환·자원 조건을 중심으로 읽습니다.' : '확정된 천간·지장간에서 식상 산출 단서는 확인되지 않아 교환 조건만 읽습니다.');
+  }
+  return parts.join(' ');
+}
+
 function describeIndirectWealth(chart: ObservedWholeChart) {
   const evidence = chart.themes.wealth.indirectEvidence;
   if (!evidence) return '';
@@ -507,6 +535,7 @@ export function buildWholeChartNatalReading(
         : domain === 'wealth'
           ? describeIndirectWealth(chart)
           : '';
+  const directWealthText = domain === 'wealth' ? describeDirectWealth(chart) : '';
   const topicEvidence =
     domain === 'relationship' && spouse.spouseWitnesses.length
       ? [spouse.evidence]
@@ -576,6 +605,19 @@ export function buildWholeChartNatalReading(
       ...(pattern.supportContext.concealed.length ? ['concealed_support'] : []),
       ...contacts,
       ...(topical ? ['present_topic_witness'] : []),
+      ...(directWealthText ? [
+        `wealth_flow:${storage.flow.state}`,
+        ...storage.flow.exposed.map(({ position, state, roots, independentRoots }) =>
+          `wealth_exposed:${position.slot}:${position.stem}:${position.god}:${state}:${(state === 'exposed_with_independent_root' ? independentRoots : state === 'root_under_review' ? roots : []).map(({ slot, stem, god }) => `${slot}:${stem}:${god}`).join('|')}`,
+        ),
+        ...storage.flow.concealed.map(({ position, relationUnderReview }) =>
+          `wealth_hidden:${position.slot}:${position.stem}:${position.god}:${relationUnderReview}`,
+        ),
+        ...storage.flow.output.map(({ slot, stem, god, location }) =>
+          `wealth_output:${slot}:${stem}:${god}:${location}`,
+        ),
+        ...(storage.flow.output.length ? [] : [`wealth_output_scope:${chart.allResolved}`]),
+      ] : []),
       ...(domain === 'wealth' && storage.indirectEvidence
         ? [storage.indirectEvidence.relation]
         : []),
@@ -592,6 +634,7 @@ export function buildWholeChartNatalReading(
       [roleText, contactText].filter(Boolean).join(' '),
       supportText,
       topical,
+      directWealthText,
       ...(periodTopic ? [describeTopic(periodTopic)] : []),
       ...(domain === 'wealth' && period ? [describeIncomingWealth(period)] : []),
     ].filter(Boolean),
@@ -604,6 +647,7 @@ export function buildWholeChartNatalReading(
       roles.evidence,
       ...focusContacts.map((item) => item.evidence),
       ...topicEvidence,
+      ...(directWealthText ? [storage.flow.evidence] : []),
     ],
   };
 }

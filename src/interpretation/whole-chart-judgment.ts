@@ -23,7 +23,7 @@ import { buildI23StrengthDecisionReadinessV2 } from '../research/i23-strength-de
 import { buildI24ChallengeMechanismComposition } from '../research/i24-challenge-mechanism-composition.js';
 import { deterministicContentHash } from './rule-registry.js';
 
-export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v7';
+export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v8';
 export const TEN_GOD_FAMILY = {
   비견: 'peer',
   겁재: 'peer',
@@ -285,6 +285,55 @@ function thematicStructures(
     );
   });
   const wealthWitnesses = positions.filter(({ god }) => TEN_GOD_FAMILY[god] === 'wealth');
+  // Apply the same exact-stem root and relation checks used for month-pattern support,
+  // without treating a hidden Wealth member as an exposed or effective one.
+  const directWealth = wealthWitnesses.filter(({ location }) => location === 'visible').map((position) => {
+    const roots = wealthWitnesses.filter(({ location, stem }) => location === 'hidden' && stem === position.stem);
+    const independentRoots = roots.filter(({ slot }) => !hasContact(contacts, slot, ROOT_CONTEST));
+    const state = hasContact(contacts, position.slot, ['stem_combination'])
+      ? 'combination_review'
+      : independentRoots.length
+        ? 'exposed_with_independent_root'
+        : roots.length
+          ? 'root_under_review'
+          : allResolved
+            ? 'exposed_without_same_stem_root'
+            : 'root_unresolved';
+    return { position, roots, independentRoots, state } as const;
+  });
+  const concealedWealth = wealthWitnesses.filter(({ location, stem }) =>
+    location === 'hidden' && !directWealth.some(({ position }) => position.stem === stem),
+  ).map((position) => ({
+    position,
+    relationUnderReview: hasContact(contacts, position.slot, ROOT_CONTEST),
+  }));
+  const outputWitnesses = positions.filter(({ god }) => TEN_GOD_FAMILY[god] === 'output');
+  const wealthFlow = {
+    exposed: directWealth,
+    concealed: concealedWealth,
+    output: outputWitnesses,
+    // A rooted Wealth witness and an observed output are distinct facts; this is
+    // a qualified structural reading, not a settled cross-channel effect.
+    state: !wealthWitnesses.length
+      ? 'no_exact_wealth_stem'
+      : !outputWitnesses.length
+        ? 'wealth_without_observed_output'
+        : directWealth.some(({ state }) => state === 'exposed_with_independent_root')
+          ? 'output_with_independently_rooted_wealth'
+          : directWealth.length
+            ? 'output_with_exposed_wealth_under_review'
+            : 'output_with_concealed_wealth',
+    evidence: {
+      rule: 'observe-output-wealth-generation-and-exact-wealth-root-context',
+      paths: [...new Set([
+        ...wealthWitnesses.map(({ path }) => path),
+        ...outputWitnesses.map(({ path }) => path),
+        'derivedFacts.structuralRelations',
+        ...SLOTS.map((slot) => `derivedFacts.hiddenStems.${slot}`),
+      ])],
+      sources: [PATTERN_SOURCE, FOOD_WEALTH_SOURCE],
+    },
+  } as const;
   const wealthBranchWitnesses = SLOTS.filter((slot) => {
     const pillar = snapshot.pillars[slot];
     return (
@@ -348,6 +397,7 @@ function thematicStructures(
     },
     wealth: {
       state: wealthState,
+      flow: wealthFlow,
       indirectEvidence,
       wealthInStorage,
       storageContacts: contacts.filter(({ slots }) =>

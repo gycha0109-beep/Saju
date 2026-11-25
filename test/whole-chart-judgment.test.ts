@@ -343,6 +343,24 @@ describe('whole-chart interpretation by structural context', () => {
     expect(text(absent)).toContain('천간·지지·지장간에서 재성은 관측되지 않습니다');
   });
 
+  it('uses exact exposed and concealed Wealth roots in the selected wealth reading', () => {
+    const rooted = birth(1960, 11, 4, 0, 30);
+    const exposed = birth(1960, 1, 10, 0, 30);
+    const concealed = birth(1960, 1, 10, 4, 30);
+    const first = observed(rooted).themes.wealth.flow;
+    const second = observed(exposed).themes.wealth.flow;
+    const third = observed(concealed).themes.wealth.flow;
+    expect(first.exposed.some(({ state }) => state === 'exposed_with_independent_root')).toBe(true);
+    expect(second.exposed.some(({ state }) => state === 'exposed_without_same_stem_root')).toBe(true);
+    expect(third.concealed.length).toBeGreaterThan(0);
+    const reading = buildWholeChartNatalReading(snapshot(rooted), 'wealth', NOW);
+    expect(reading.paragraphs.join(' ')).toContain('같은 글자의 독립 통근 근거');
+    expect(reading.evidence).toContainEqual(first.evidence);
+    expect(reading.semanticKey.some((key) => key.startsWith('wealth_exposed:'))).toBe(true);
+    expect(buildWholeChartNatalReading(snapshot(concealed), 'wealth', NOW).paragraphs.join(' ')).toContain('천간에 같은 글자가 드러나지 않은 재성');
+    expect(buildWholeChartNatalReading(snapshot(rooted), 'career', NOW).semanticKey.some((key) => key.startsWith('wealth_exposed:'))).toBe(false);
+  });
+
   it('reads independent production and resource facts when all wealth channels are empty', () => {
     const input = birth(1984, 12, 5, 5, 2);
     const chart = observed(input);
