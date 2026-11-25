@@ -17,7 +17,6 @@ import { buildSajuR34StrengthRootSubstrate } from '../research/saju-r34-strength
 import { buildI18DRootRelationReview } from '../research/i18d-root-relation-review.js';
 import { buildI18ESpecialPatternReviewRouter } from '../research/i18e-special-pattern-review-router.js';
 import { buildI19PostRelationRootEffectReview } from '../research/i19-post-relation-root-effect-review.js';
-import { buildI20RelativeForceEvidence } from '../research/i20-relative-force-evidence.js';
 import { buildI20DClashRescueRouter } from '../research/i20d-clash-rescue-router.js';
 import { buildI22SupportCompositionFrontier } from '../research/i22-support-composition-frontier.js';
 import { buildI23StrengthDecisionReadinessV2 } from '../research/i23-strength-decision-readiness-v2.js';
@@ -842,23 +841,28 @@ function buildStrengthDecisionReadiness(
   const rootRelation = buildI18DRootRelationReview(snapshot);
   const specialPattern = buildI18ESpecialPatternReviewRouter(snapshot);
   const postRelationRoot = buildI19PostRelationRootEffectReview(rootRelation);
-  const relativeForce = buildI20RelativeForceEvidence(snapshot);
   const clashRescue = buildI20DClashRescueRouter(rootRelation);
-
-  const supportObservations = relativeForce.positions.flatMap((position) => [
-    ...position.visibleSameElementStemPositions.map((slot) => ({
-      evidenceId: `visible-peer:${position.position}:${slot}`,
-      evidenceClass: 'visible_peer_support' as const,
-    })),
-    ...position.visibleResourceStemPositions.map((slot) => ({
-      evidenceId: `visible-resource:${position.position}:${slot}`,
-      evidenceClass: 'visible_resource_support' as const,
-    })),
-    ...position.resourceBranchPositions.map((slot) => ({
-      evidenceId: `resource-branch:${position.position}:${slot}`,
-      evidenceClass: 'resource_branch_support' as const,
-    })),
-  ]);
+  // The relative-force module compares each branch with its own support,
+  // not the day master. Use exact day-master Ten-God observations here.
+  const day = snapshot.derivedFacts.dayMaster;
+  const supportObservations = day.status === 'resolved' && rootRelation.status === 'RESOLVED_BASIS_ROUTED'
+    ? [
+        ...positions.filter(({ location, god }) => location === 'visible' && isSupporting(god))
+          .map(({ path, god }) => ({
+            evidenceId: path,
+            evidenceClass: TEN_GOD_FAMILY[god] === 'peer'
+              ? 'visible_peer_support' as const
+              : 'visible_resource_support' as const,
+          })),
+        ...SLOTS.flatMap((slot) => {
+          const pillar = snapshot.pillars[slot];
+          return pillar.status === 'resolved' &&
+            TEN_GOD_FAMILY[getBranchTenGod(day.value.value, pillar.value.branch.value)] === 'resource'
+            ? [{ evidenceId: `pillars.${slot}.branch`, evidenceClass: 'resource_branch_support' as const }]
+            : [];
+        }),
+      ]
+    : [];
   const supportFrontier = buildI22SupportCompositionFrontier(supportObservations);
 
   const challengeObservations = positions.flatMap((position, index) => {
