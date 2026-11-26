@@ -51,8 +51,8 @@ export const RELATIONSHIP_NATAL_SOCIALITY_T5_SOURCE: SourceReference = Object.fr
   provenanceTier: 'scholarly_secondary',
   rights: {
     license: 'CC BY-NC 3.0',
-    copyrightStatus: 'open_license',
-    reusePolicy: 'paraphrase_only',
+    copyrightStatus: 'open_license' as const,
+    reusePolicy: 'paraphrase_only' as const,
   },
   notes:
     'Official KoreaScience full-text PDF, DOI 10.21186/IPR.2022.7.1.025. Pages 31-33 summarize Kim Ki-seung’s modern Ten-God sociality descriptors. This is secondary evidence; the cited underlying books were not independently inspected. CC BY-NC 3.0 does not authorize commercial reuse. Internal research only.',
