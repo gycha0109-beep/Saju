@@ -264,7 +264,9 @@ export const BUSINESS_NATAL_MULTIFACTOR_NARRATIVES: readonly ClaimNarrativeProfi
       { templateKey: 'summary', language: 'ko', text:
         (channel === 'visible_stems'
           ? '천간에서 실제로 관측된 조합입니다. '
-          : '지지 대표 십신에서 관측된 보조 조합입니다. ') + pattern.summary },
+          : channel === 'branches'
+            ? '지지 대표 십신에서 관측된 보조 조합입니다. '
+            : '지장간에서 별도로 관측된 조합입니다. ') + pattern.summary },
     ],
   })));
 export const BUSINESS_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
