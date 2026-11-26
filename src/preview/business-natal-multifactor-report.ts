@@ -340,7 +340,7 @@ function selectBusinessMeaningSections(anchor: BusinessNatalMultifactorSection, 
       section,
       newAreas: businessMeaningAreasForSection(section).filter((area) => required.includes(area) && !usedAreas.has(area)),
       newPaths: section.observedFactPaths.filter((path) => !usedPaths.has(path)),
-    })).filter((item) => item.newAreas.length > 0 && item.newPaths.length > 0).sort((left, right) =>
+    })).filter((item) => item.newAreas.length > 0 && item.newPaths.length > 0 && item.newPaths.length === item.section.observedFactPaths.length).sort((left, right) =>
       right.newAreas.length - left.newAreas.length || right.newPaths.length - left.newPaths.length ||
       AXES.indexOf(left.section.axis) - AXES.indexOf(right.section.axis) ||
       (left.section.channel === right.section.channel ? 0 : left.section.channel === 'visible_stems' ? -1 : left.section.channel === 'branches' ? 0 : 1),
@@ -358,7 +358,8 @@ function selectBusinessMeaningSections(anchor: BusinessNatalMultifactorSection, 
   }
   const monthFood = remaining.find((section) =>
     section.pattern === 'MONTH_FOOD_WEALTH' &&
-    section.observedFactPaths.some((path) => !usedPaths.has(path)),
+    section.observedFactPaths.length > 0 &&
+    section.observedFactPaths.every((path) => !usedPaths.has(path)),
   );
   if (monthFood) selected.push(monthFood);
   return { sections: selected, overlapOnlyCount };
