@@ -57,7 +57,7 @@ The article is licensed **CC BY-NC 3.0**. The candidate uses paraphrases only an
 
 ## 7. Separate 2012 source lead
 
-The publisher's public catalogue for 闻晨植《五行结构论》 confirms bibliographic metadata and a Chapter 5 section titled `十神六亲解读家庭、人际关系`. The CCTSS catalogue reports that no electronic edition has been uploaded; no lawful public body witness was available. This book is not used by the current T5 candidate and remains an unverified lead for any future T8 method review.
+The official publisher catalogue for 闻晨植《五行结构论》 lists publication date 2012-09-01, ISBN 9787548603986, 169 pages, and a Chapter 5 section titled `十神六亲解读家庭、人际关系`; it also lists `天干五合情感论` and a separate `论婚恋` section. The publisher page exposes metadata and a table of contents, but no public sample or full text. Google Books lists a 188-page record without a preview; the pagination discrepancy remains unresolved. The CCTSS catalogue page could not be retrieved in this review, so its electronic-access status is unverified. No lawful public body witness was acquired. This book is not used by the current T5 candidate and remains an unverified lead for any future T8 method review.
 
 ## 8. Decision
 
