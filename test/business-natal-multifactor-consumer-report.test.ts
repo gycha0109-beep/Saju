@@ -175,10 +175,12 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
         expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(section.sourceIds.length).toBeGreaterThan(0);
       }
-      if(report.state !== 'complete') {
+      if (report.state === 'partial') {
         explainedPartials++;
         expect(report.meaningCoverage.required.length).toBeGreaterThan(0);
         expect(report.missing.join(' ')).toMatch(/사업 핵심 영역|중심 해석 근거/u);
+      } else if (report.state === 'insufficient') {
+        expect(report.sections).toHaveLength(0);
       }
       expect(report.researchOnly).toBe(true);
       expect(report.mayPublish).toBe(false);

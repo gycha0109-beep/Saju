@@ -250,10 +250,13 @@ function renderWealthReadingGuide(report: WealthNatalMultifactorReport, birthTim
     );
   });
 
+  const requiredMeaningComplete =
+    report.meaningCoverage.required.includes('exchange') &&
+    report.meaningCoverage.missing.length === 0;
   guard(
-    (report.state === 'complete' && guide.supporting.length === 2) ||
-      (report.state === 'partial' && (!birthTimeKnown || guide.supporting.length < 2)),
-    'Wealth guide cannot misrepresent minimum useful reading status',
+    (report.state === 'complete' && birthTimeKnown && requiredMeaningComplete) ||
+      (report.state === 'partial' && (!birthTimeKnown || !requiredMeaningComplete)),
+    'Wealth guide cannot misrepresent semantic coverage or birth-time limits',
   );
   return (
     '<section class="reading-guide" aria-label="재물운 읽기 요약"><h3>' +
@@ -307,10 +310,14 @@ function renderBusinessReadingGuide(report: BusinessNatalMultifactorReport): str
       'Business support reuses or changes its actual observations',
     );
   });
+  const requiredMeaningComplete =
+    report.meaningCoverage.required.length > 0 &&
+    report.meaningCoverage.missing.length === 0;
+  const birthTimeLimited = report.missing.some((item) => item.includes('출생시각 미상'));
   guard(
-    (report.state === 'complete' && guide.supporting.length === 2) ||
-      (report.state === 'partial' && guide.supporting.length < 2),
-    'Business guide cannot override the actual MUR state',
+    (report.state === 'complete' && !birthTimeLimited && requiredMeaningComplete) ||
+      (report.state === 'partial' && (birthTimeLimited || !requiredMeaningComplete)),
+    'Business guide cannot override semantic coverage or birth-time limits',
   );
 
   return (
