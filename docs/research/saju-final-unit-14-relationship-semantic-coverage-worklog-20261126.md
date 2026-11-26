@@ -27,7 +27,7 @@ See `relationship-natal-sociality-t5-methodology-evidence-v1.md`.
 
 ### 2012 《五行结构论》 lead
 
-The publisher catalogue confirms the 2012 book identity and a Chapter 5 section on Ten-God kinship/family/interpersonal relations. The official publisher listing reports 169 pages. Google Books reports 188 pages without a public preview, and CCTSS reports that no electronic edition has been uploaded. The pagination discrepancy remains unresolved and no lawful public body witness was acquired. This book is not used for the T5 candidate.
+The official publisher catalogue confirms the 2012-09-01 book identity, ISBN 9787548603986, 169 pages, and a Chapter 5 section on Ten-God kinship/family/interpersonal relations; it also lists separate sections on stem combinations/emotion and marriage. The publisher page exposes metadata and a table of contents, but no public sample or full text. Google Books reports 188 pages and no preview; the pagination discrepancy remains unresolved. The CCTSS catalogue page could not be retrieved, so its electronic-access status is unverified. No lawful public body witness was acquired. This book is not used for the T5 candidate.
 
 ## 3. Implementation
 
