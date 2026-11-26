@@ -196,7 +196,7 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(partial.report.sections.length).toBeGreaterThan(0);
     for (const section of partial.report.sections) {
       expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
-      expect(section.paragraph).toMatch(/비겁\\(|인성\\(|식상\\(|재성\\(|관성\\(/u);
+      expect(section.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
       expect(section.observedPositions.every(position => section.paragraph.includes(position))).toBe(true);
       expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
       expect(section.sourceIds.length).toBeGreaterThan(0);
