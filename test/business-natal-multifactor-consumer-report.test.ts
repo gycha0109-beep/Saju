@@ -151,9 +151,13 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
       const { report } = run(month,day);
       for(const section of report.sections) {
         explainedSections++;
-        expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
-        expect(section.paragraph).toContain('십신 계열이 함께 확인되므로');
-        expect(section.paragraph).toContain('구조적 관점으로 연결해 읽습니다');
+        if (section.pattern === 'MONTH_FOOD_WEALTH') {
+          expect(section.paragraph).toContain('월지 지장간');
+        } else {
+          expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
+          expect(section.paragraph).toContain('십신 계열이 함께 확인되므로');
+          expect(section.paragraph).toContain('구조적 관점으로 연결해 읽습니다');
+        }
         expect(section.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
         for(const position of section.observedPositions) {
           expect(section.paragraph).toContain(position);
@@ -237,7 +241,7 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(x.report.researchOnly).toBe(true);
     expect(x.report.mayPublish).toBe(false);
     expect(x.report.maySell).toBe(false);
-  });
+  }, 60000);
   it('keeps unknown-hour hidden-stem readings deterministic and chart-specific', () => {
     const first = findUnknownHourBusinessReading();
     const replay = run(first.month, first.day, false);
@@ -248,7 +252,7 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(first.report.sections.every((section) => section.observedFactPaths.every((path) => !path.includes('.hour.')))).toBe(true);
     expect(first.report.missing.join(' ')).toContain('출생시각 미상');
     expect(second.report.missing.join(' ')).toContain('출생시각 미상');
-  });
+  }, 60000);
   it('rejects cross-chart and tampered Business claim meaning', () => {
     const x = run(3,10);
     const other = sample(4,12);

@@ -452,7 +452,7 @@ export function buildBusinessNatalMultifactorReport(
     .map((claim) => toSection(claim, snapshot, execution, registry))
     .sort((a, b) =>
       AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
-      (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : a.channel === 'branches' ? 0 : 1),
+      (['visible_stems', 'branches', 'hidden_stems'] as const).indexOf(a.channel) - (['visible_stems', 'branches', 'hidden_stems'] as const).indexOf(b.channel),
     );
   const core = result.find((section) => section.axis === 'core') ??
     result.find((section) => section.axis === 'execution') ??
