@@ -31,7 +31,7 @@ export const GENERAL_NATAL_HIDDEN_STEM_FAMILY_TEN_GODS: Readonly<
   officer: ['정관', '편관'],
 };
 
-export const GENERAL_NATAL_HIDDEN_STEM_SOURCE: SourceReference = Object.freeze({
+export const GENERAL_NATAL_HIDDEN_STEM_SOURCE = Object.freeze({
   sourceId: 'SRC-GENERAL-NATAL-YUANHAI-HIDDEN-STEMS-WIKISOURCE',
   sourceType: 'classical_text',
   title: '淵海子平',
@@ -45,7 +45,7 @@ export const GENERAL_NATAL_HIDDEN_STEM_SOURCE: SourceReference = Object.freeze({
   rights: { copyrightStatus: 'public_domain', reusePolicy: 'paraphrase_only' },
   notes:
     'The Wikisource page marks the transcription incomplete and its scan source unverified. Used only to identify hidden-stem contents and positions; not as authority for strength, prominence, fortune polarity, or outcomes.',
-});
+} satisfies SourceReference);
 
 export const GENERAL_NATAL_HIDDEN_STEM_SOURCE_REFS: RuleDefinition['sourceRefs'] = [
   {
