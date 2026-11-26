@@ -156,7 +156,6 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
 
   it('explains which observed family and pillar supports the Korean conclusion and why a partial reading stops', () => {
     let explainedSections = 0;
-    let explainedPartials = 0;
     for(const month of [2,3,4,5,6,7]) for(const day of [3,7,11,17,23]) {
       const { report } = run(month,day);
       for(const section of report.sections) {
@@ -176,7 +175,6 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
         expect(section.sourceIds.length).toBeGreaterThan(0);
       }
       if (report.state === 'partial') {
-        explainedPartials++;
         expect(report.meaningCoverage.required.length).toBeGreaterThan(0);
         expect(report.missing.join(' ')).toMatch(/사업 핵심 영역|중심 해석 근거/u);
       } else if (report.state === 'insufficient') {
@@ -188,7 +186,21 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
       expect(report.usefulComplete).toBe(false);
     }
     expect(explainedSections).toBeGreaterThan(0);
-    expect(explainedPartials).toBeGreaterThan(0);
+    // With the third, hidden-stem channel available, the known-hour cohort may
+    // now have no partial examples. The unknown-hour case remains the explicit
+    // source-backed partial-reading fixture.
+    const partial = findUnknownHourBusinessReading();
+    expect(partial.report.state).toBe('partial');
+    expect(partial.report.meaningCoverage.required.length).toBeGreaterThan(0);
+    expect(partial.report.missing.join(' ')).toContain('출생시각 미상');
+    expect(partial.report.sections.length).toBeGreaterThan(0);
+    for (const section of partial.report.sections) {
+      expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
+      expect(section.paragraph).toMatch(/비겁\\(|인성\\(|식상\\(|재성\\(|관성\\(/u);
+      expect(section.observedPositions.every(position => section.paragraph.includes(position))).toBe(true);
+      expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
+      expect(section.sourceIds.length).toBeGreaterThan(0);
+    }
   }, 60000);
 
   it('shows actual coordination-only T8 evidence as a partial report, never a fabricated overall core', () => {

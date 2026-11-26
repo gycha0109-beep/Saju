@@ -498,6 +498,18 @@ function renderDomain(
         'calculatedFactPaths' in section ? section.calculatedFactPaths : section.observedFactPaths;
       return paths.length > 0 && paths.every((path) => !/\.hour\./u.test(path));
     });
+  // Wealth and Business now define completion by the applicable semantic
+  // areas actually covered, not by a fixed number of repeated paragraphs.
+  const semanticCompletionSatisfied =
+    domain === 'career'
+      ? report.sections.length >= 1
+      : domain === 'wealth' && 'meaningCoverage' in report
+        ? (report.meaningCoverage.required as readonly string[]).includes('exchange') &&
+          report.meaningCoverage.missing.length === 0
+        : domain === 'business' && 'meaningCoverage' in report
+          ? report.meaningCoverage.required.length > 0 &&
+            report.meaningCoverage.missing.length === 0
+          : report.sections.length >= 3;
   guard(
     report.researchOnly === true &&
       report.usefulComplete === false &&
@@ -506,7 +518,7 @@ function renderDomain(
       report.title.trim().length > 0 &&
       report.introduction.trim().length > 0 &&
       ['complete', 'partial', 'insufficient'].includes(report.state) &&
-      (report.state !== 'complete' || report.sections.length >= (domain === 'career' ? 1 : 3)) &&
+      (report.state !== 'complete' || semanticCompletionSatisfied) &&
       (report.state !== 'insufficient' || report.sections.length === 0) &&
       (report.state !== 'partial' || report.missing.length > 0) &&
       // Same-chart evidence is not interchangeable across domain claims.
