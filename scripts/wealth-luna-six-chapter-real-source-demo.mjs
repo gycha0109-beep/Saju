@@ -34,9 +34,19 @@ const samples=[
 const outDir=resolve(process.argv[2]??'outputs/wealth-luna-sixchapter-source');
 mkdirSync(outDir,{recursive:true});
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
+const TEN_GOD_FAMILY_NAMES=Object.freeze({
+ output:'식상',wealth:'재성',officer:'관성',peer:'비겁',resource:'인성',
+});
 function unitMeaning(unit){
  const headline=unit.canonicalText?.headline?.trim()??'';
  const summary=unit.canonicalText?.summary?.trim()??'';
+ const families=unit.semanticPayload?.families;
+ if(!Array.isArray(families)||families.length===0 ||
+   families.some(family=>!Object.hasOwn(TEN_GOD_FAMILY_NAMES,family))){
+   throw Error('Wealth conclusion has no auditable Ten-God premise: '+unit.claimId);
+ }
+ const tenGodReason=families.map(family=>TEN_GOD_FAMILY_NAMES[family]).join('·')+
+   '의 존재를 결합한 판단입니다. 이는 해당 십성 계열의 존재를 조건으로 한 규칙이지 강약·격국·실제 재산을 확정한 해석이 아닙니다.';
  if(headline.length<8||summary.length<25 || !Array.isArray(unit.sourceRefs)||unit.sourceRefs.length===0
    || !unit.semanticPayload?.wealthKind || unit.taxonomy?.category!=='wealth') {
    throw Error('Approved wealth interpretation content/trace missing: '+unit.claimId);
@@ -44,6 +54,7 @@ function unitMeaning(unit){
  return Object.freeze({
    unitId:unit.unitId,kind:unit.semanticPayload.wealthKind,
    canonicalMeaning:headline+' — '+summary,
+   tenGodFamilies:[...families],tenGodReason,
    sourceRefs:[...unit.sourceRefs],claimRef:unit.claimId,
    methodologyRef:unit.methodologyRef?.id??null,
  });
