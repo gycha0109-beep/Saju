@@ -9,6 +9,7 @@ import {
   RELATIONSHIP_NATAL_SOCIALITY_T5_METHODOLOGY,
   RELATIONSHIP_NATAL_SOCIALITY_T5_PACK,
   RELATIONSHIP_NATAL_SOCIALITY_T5_RULES,
+  RELATIONSHIP_NATAL_SOCIALITY_T5_RULE_SET,
   RELATIONSHIP_NATAL_SOCIALITY_T5_SOURCE,
   RELATIONSHIP_NATAL_SOCIALITY_T5_VERSION,
   createRelationshipNatalSocialityT5Registry,
@@ -62,7 +63,7 @@ describe('relationship natal sociality T5 research candidate', () => {
     expect(RELATIONSHIP_NATAL_SOCIALITY_T5_METHODOLOGY.status).toBe('research');
     expect(RELATIONSHIP_NATAL_SOCIALITY_T5_PACK.status).toBe('research');
     expect(RELATIONSHIP_NATAL_SOCIALITY_T5_PACK.enabledRuleSets).toEqual([
-      'relationship-natal-sociality-t5-research',
+      RELATIONSHIP_NATAL_SOCIALITY_T5_RULE_SET,
     ]);
     expect(RELATIONSHIP_NATAL_SOCIALITY_T5_RULES).toHaveLength(20);
     expect(RELATIONSHIP_NATAL_SOCIALITY_T5_RULES.every(
