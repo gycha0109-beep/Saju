@@ -28,12 +28,23 @@ function run(month: number, day: number, known = true) {
   return { snapshot, execution,
     report: buildBusinessNatalMultifactorReport(snapshot, execution, registry) };
 }
+function findUnknownHourBusinessReading() {
+  for (const month of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+    for (const day of [3, 7, 11, 17, 23]) {
+      const result = run(month, day, false);
+      if (result.report.sections.some((section) => section.channel === 'hidden_stems')) {
+        return { ...result, month, day };
+      }
+    }
+  }
+  throw new Error('No resolved hidden-stem Business T8 fixture found');
+}
 describe('actual-source Business natal T5→T8→Korean five-domain report', () => {
   it('is Business-only, research-only, and every T8 has 2/3 exact T5 inputs', () => {
     expect(registry.pack.packId).toBe(BUSINESS_NATAL_MULTIFACTOR_PACK.packId);
-    expect(BUSINESS_NATAL_MULTIFACTOR_RULES).toHaveLength(21);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(21);
+    expect(BUSINESS_NATAL_MULTIFACTOR_RULES).toHaveLength(31);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(15);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(31);
     expect(registry.rules.filter(r => r.taxonomy.subcategory === 'self_baseline')).toHaveLength(0);
     for(const rule of BUSINESS_NATAL_MULTIFACTOR_RULES) {
       expect(rule.taxonomy.category).toBe('business');
@@ -42,7 +53,8 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
       expect(upstream.length).toBeGreaterThanOrEqual(2);
       expect(upstream.every(i => i.cardinality === 'exactly_one' && i.required)).toBe(true);
       expect(rule.inputs.some(i => i.pathOrClaimType === 'derivedFacts.hiddenStems.month')).toBe(anchored);
-      expect(rule.sourceRefs).toHaveLength(anchored ? 3 : 2);
+      const hidden = rule.output.claimType.endsWith('_HIDDEN_STEMS');
+      expect(rule.sourceRefs).toHaveLength(anchored ? 4 : hidden ? 3 : 2);
       expect(rule.status).toBe('research');
     }
     expect(inspectMyeonghwaProductionComposition({registry}).status).toBe('blocked');
@@ -63,6 +75,7 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(section?.paragraph).toContain('같은 품질로 반복해 만들 수 있는 산출물');
     expect(section?.observedFactPaths).toContain('derivedFacts.hiddenStems.month.value.0');
     expect(section?.sourceIds).toContain('SRC-BUSINESS-JAPYEONG-JINJEON-FOOD-WEALTH');
+    expect(section?.sourceIds).toContain('SRC-GENERAL-NATAL-YUANHAI-HIDDEN-STEMS-WIKISOURCE');
     const held = read(1953, 12, 16, 1, 29);
     expect(held.execution.claims.some(item => item.claimType === section?.claimType)).toBe(false);
     expect(held.report.sections.length).toBeGreaterThan(0);
@@ -91,7 +104,7 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
         expect(s.observedPositions).toHaveLength(s.observedFactPaths.length);
         expect(s.observedPositions.every(p=>s.paragraph.includes(p))).toBe(true);
         expect(s.observedFactPaths.every(path =>
-          /^derivedFacts\.(tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value|hiddenStems\.month\.value\.[0-2])$/u.test(path)))
+          /^derivedFacts\.(tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value|hiddenStems\.(year|month|day|hour)\.value\.[0-2])$/u.test(path)))
           .toBe(true);
       }
       expect(x.report.mayPublish).toBe(false);
@@ -101,12 +114,25 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(run(3,10).report).toEqual(run(3,10).report);
   }, 30000);
 
-  it('requires distinct actual Business interpretation axes for MUR complete', () => {
+  it('judges Business completeness by applicable meaning areas rather than a fixed section count', () => {
     const x = run(3,10);
+    expect(new Set(x.report.meaningCoverage.required).size).toBe(x.report.meaningCoverage.required.length);
+    for (const section of x.report.sections) {
+      expect(new Set(section.observedFactPaths).size).toBe(section.observedFactPaths.length);
+      expect(section.observedPositions).toHaveLength(section.observedFactPaths.length);
+    }
+    if (x.report.readingGuide) {
+      const supportPaths = x.report.readingGuide.supporting.flatMap((section) => section.distinctObservedFactPaths);
+      expect(new Set(supportPaths).size).toBe(supportPaths.length);
+      const core = x.report.sections.find((section) => section.claimType === x.report.readingGuide?.coreClaimType);
+      expect(core).toBeDefined();
+      expect(supportPaths.every((path) => !core?.observedFactPaths.includes(path))).toBe(true);
+    }
     if(x.report.state === 'complete') {
-      expect(x.report.sections).toHaveLength(3);
-      expect(new Set(x.report.sections.map(s=>s.axis)).size).toBe(3);
-      expect(new Set(x.report.sections.map(s=>s.pattern)).size).toBe(3);
+      expect(x.report.sections.length).toBeGreaterThan(0);
+      expect(x.report.meaningCoverage.missing).toEqual([]);
+      expect(x.report.meaningCoverage.required.every((area) =>
+        x.report.meaningCoverage.covered.includes(area))).toBe(true);
     } else {
       expect(x.report.missing.length).toBeGreaterThan(0);
       expect(x.report.state).toMatch(/partial|insufficient/);
@@ -130,14 +156,17 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
 
   it('explains which observed family and pillar supports the Korean conclusion and why a partial reading stops', () => {
     let explainedSections = 0;
-    let explainedPartials = 0;
     for(const month of [2,3,4,5,6,7]) for(const day of [3,7,11,17,23]) {
       const { report } = run(month,day);
       for(const section of report.sections) {
         explainedSections++;
-        expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
-        expect(section.paragraph).toContain('십신 계열이 함께 확인되므로');
-        expect(section.paragraph).toContain('구조적 관점으로 연결해 읽습니다');
+        if (section.pattern === 'MONTH_FOOD_WEALTH') {
+          expect(section.paragraph).toContain('월지 지장간');
+        } else {
+          expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
+          expect(section.paragraph).toContain('십신 계열이 함께 확인되므로');
+          expect(section.paragraph).toContain('구조적 관점으로 연결해 읽습니다');
+        }
         expect(section.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
         for(const position of section.observedPositions) {
           expect(section.paragraph).toContain(position);
@@ -145,10 +174,11 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
         expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(section.sourceIds.length).toBeGreaterThan(0);
       }
-      if(report.state !== 'complete') {
-        explainedPartials++;
-        expect(report.missing.join(' ')).toMatch(/추가 해석 축 [1-3]개/u);
-        expect(report.missing.join(' ')).toContain('이 명식에서 확인된 해석 축');
+      if (report.state === 'partial') {
+        expect(report.meaningCoverage.required.length).toBeGreaterThan(0);
+        expect(report.missing.join(' ')).toMatch(/사업 핵심 영역|중심 해석 근거/u);
+      } else if (report.state === 'insufficient') {
+        expect(report.sections).toHaveLength(0);
       }
       expect(report.researchOnly).toBe(true);
       expect(report.mayPublish).toBe(false);
@@ -156,15 +186,42 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
       expect(report.usefulComplete).toBe(false);
     }
     expect(explainedSections).toBeGreaterThan(0);
-    expect(explainedPartials).toBeGreaterThan(0);
+    // With the third, hidden-stem channel available, the known-hour cohort may
+    // now have no partial examples. The unknown-hour case remains the explicit
+    // source-backed partial-reading fixture.
+    const partial = findUnknownHourBusinessReading();
+    expect(partial.report.state).toBe('partial');
+    expect(partial.report.meaningCoverage.required.length).toBeGreaterThan(0);
+    expect(partial.report.missing.join(' ')).toContain('출생시각 미상');
+    expect(partial.report.sections.length).toBeGreaterThan(0);
+    for (const section of partial.report.sections) {
+      expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
+      expect(section.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
+      expect(section.observedPositions.every(position => section.paragraph.includes(position))).toBe(true);
+      expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
+      expect(section.sourceIds.length).toBeGreaterThan(0);
+    }
   }, 60000);
 
   it('shows actual coordination-only T8 evidence as a partial report, never a fabricated overall core', () => {
     let found = false;
     for(const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
       for(const day of [3,7,11,17,23]) {
-        const { execution, report } = run(month, day);
-        const active = execution.claims.filter(c => c.taxonomy.tier === 'T8' &&
+        const { execution, snapshot } = run(month, day);
+        const legacyClaims = execution.claims.filter((claim) =>
+          !claim.claimType.endsWith('_HIDDEN_STEMS_THEME') &&
+          (claim.value as { channel?: string } | undefined)?.channel !== 'hidden_stems',
+        );
+        const legacyIds = new Set(legacyClaims.map((claim) => claim.claimId));
+        const legacyExecution = {
+          ...execution,
+          claims: legacyClaims,
+          claimRelations: execution.claimRelations.filter((relation) =>
+            legacyIds.has(relation.fromClaimId) && legacyIds.has(relation.toClaimId),
+          ),
+        };
+        const report = buildBusinessNatalMultifactorReport(snapshot, legacyExecution, registry);
+        const active = legacyClaims.filter(c => c.taxonomy.tier === 'T8' &&
           c.taxonomy.category === 'business' &&
           c.predicate === 'business_multifactor_structure' && c.state === 'active');
         const observed = active.map(c => (c.value as {axis?:string}).axis);
@@ -172,8 +229,8 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
           !observed.includes('coordination')) continue;
         found = true;
         expect(report.state).toBe('partial');
-        expect(report.sections).toHaveLength(1);
-        expect(report.sections[0]?.axis).toBe('coordination');
+        expect(report.sections.length).toBeGreaterThan(0);
+        expect(report.sections.every((section) => section.axis === 'coordination')).toBe(true);
         expect(report.sections[0]?.observedPositions.length).toBeGreaterThanOrEqual(2);
         expect(report.sections[0]?.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
@@ -189,40 +246,37 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(found).toBe(true);
   }, 60000);
 
-  it('shows actual resolved natal pillars, not fabricated T8 meaning, with unknown birth hour', () => {
-    const x = run(3, 10, false);
+  it('uses only resolved hidden-stem positions for a partial Business reading when birth hour is unknown', () => {
+    const x = findUnknownHourBusinessReading();
     expect(x.snapshot.derivedFacts.tenGods.status).toBe('unavailable');
-    expect(x.report.state).toBe('insufficient');
-    expect(x.report.sections).toHaveLength(0);
-    expect(x.report.missing.join(' ')).toContain('십신(T5) 전체가 미확정');
+    expect(x.report.state).toBe('partial');
+    expect(x.report.sections.length).toBeGreaterThan(0);
+    expect(x.report.sections.every((section) => section.channel === 'hidden_stems')).toBe(true);
+    expect(x.report.sections.every((section) => section.observedFactPaths.every((path) => !path.includes('.hour.')))).toBe(true);
+    expect(x.report.missing.join(' ')).toContain('출생시각 미상');
     expect(x.report.introduction).toContain('출생시각이 없어도 확인 가능한');
-    expect(x.report.introduction).toContain('다중 근거 T8 해석을 뜻하지 않습니다');
-    for (const [slot, label] of [
-      ['year', '연주'], ['month', '월주'], ['day', '일주'],
-    ] as const) {
+    expect(x.report.introduction).toContain('지장간에서 확인된 근거만 부분적으로 사용합니다');
+    for (const [slot, label] of [['year', '연주'], ['month', '월주'], ['day', '일주']] as const) {
       const fact = x.snapshot.pillars[slot];
-      const observed = fact.status === 'resolved'
-        ? fact.value.stem.value + fact.value.branch.value
-        : '미확정';
+      const observed = fact.status === 'resolved' ? fact.value.stem.value + fact.value.branch.value : '미확정';
       expect(x.report.introduction).toContain(label + ' ' + observed);
     }
     expect(x.report.usefulComplete).toBe(false);
     expect(x.report.researchOnly).toBe(true);
     expect(x.report.mayPublish).toBe(false);
     expect(x.report.maySell).toBe(false);
-  });
-
-  it('keeps the same unknown-hour factual context on replay but changes with a real chart', () => {
-    const first = run(3, 10, false);
-    const replay = run(3, 10, false);
-    const second = run(4, 12, false);
+  }, 60000);
+  it('keeps unknown-hour hidden-stem readings deterministic and chart-specific', () => {
+    const first = findUnknownHourBusinessReading();
+    const replay = run(first.month, first.day, false);
+    const second = run(first.month === 12 ? 1 : first.month + 1, first.day === 23 ? 7 : first.day + 4, false);
     expect(replay.report).toEqual(first.report);
     expect(second.report.introduction).not.toEqual(first.report.introduction);
-    expect(first.report.sections).toHaveLength(0);
-    expect(second.report.sections).toHaveLength(0);
-    expect(first.report.missing).toEqual(second.report.missing);
-  });
-
+    expect(first.report.sections.every((section) => section.channel === 'hidden_stems')).toBe(true);
+    expect(first.report.sections.every((section) => section.observedFactPaths.every((path) => !path.includes('.hour.')))).toBe(true);
+    expect(first.report.missing.join(' ')).toContain('출생시각 미상');
+    expect(second.report.missing.join(' ')).toContain('출생시각 미상');
+  }, 60000);
   it('rejects cross-chart and tampered Business claim meaning', () => {
     const x = run(3,10);
     const other = sample(4,12);
@@ -250,7 +304,7 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
         if (!value.pattern || !added.has(value.pattern)) continue;
         emitted.add(value.pattern);
         expect(claim.upstreamClaimRefs.length).toBeGreaterThanOrEqual(2);
-        expect(claim.sourceRefs.length).toBe(2);
+        expect(claim.sourceRefs.length).toBeGreaterThanOrEqual(2);
         expect(claim.ruleRefs).toHaveLength(1);
       }
       for (const section of result.report.sections) if (added.has(section.pattern)) {

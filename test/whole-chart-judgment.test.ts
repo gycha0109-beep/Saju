@@ -67,6 +67,30 @@ describe('whole-chart interpretation by structural context', () => {
       execution.run.runHash,
     );
   });
+  it('attaches a source-bounded non-numeric readiness graph instead of a strong/weak verdict', () => {
+    const chart = observed(birth(1992, 6, 25, 22, 40, 'male'));
+    expect(chart.strengthReadiness.ordinaryStrengthClassificationAuthorized).toBe(false);
+    expect(chart.strengthReadiness.numericScoringAuthorized).toBe(false);
+    expect(chart.strengthReadiness.strongWeakVerdict).toBe('not_emitted');
+    expect(chart.strengthReadiness.blockers).toContain('SUPPORT_EFFECT_VERDICT_UNRESOLVED');
+    expect(chart.strengthReadiness.blockers).toContain('CHALLENGE_EFFECT_VERDICT_UNRESOLVED');
+    expect(chart.strengthReadiness.blockers).toContain('CLASSIFIER_POLICY_NOT_AUTHORIZED');
+    expect([
+      'STOP_WITH_INDETERMINATE',
+      'ROUTE_SPECIAL_PATTERN_REVIEW',
+      'STOP_FOR_METHODOLOGY_REVIEW',
+    ]).toContain(chart.strengthReadiness.terminalDecision);
+  });
+
+  it('routes unknown-time strength review to an indeterminate scenario instead of using the base snapshot', () => {
+    const input = birth(1992, 6, 25, 22, 40, 'male');
+    const chart = observed({ ...input, time: { known: false } });
+    expect(chart.strengthReadiness.status).toBe('INPUT_INDETERMINATE');
+    expect(chart.strengthReadiness.terminalDecision).toBe('STOP_WITH_INDETERMINATE');
+    expect(chart.strengthReadiness.blockers[0]).toBe('INPUT_OR_SCENARIO_INDETERMINATE');
+    expect(chart.strengthReadiness.strongWeakVerdict).toBe('not_emitted');
+  });
+
   it('changes the underlying interpretation when the visible Ten-God sequence is identical', () => {
     const first = birth(1992, 6, 25, 22, 40, 'male');
     const second = birth(1969, 10, 1, 3, 5);
@@ -317,6 +341,24 @@ describe('whole-chart interpretation by structural context', () => {
     expect(text(exposed)).toContain('연결의 지속성은 보류');
     expect(text(concealed)).toContain('지장간에 있습니다');
     expect(text(absent)).toContain('천간·지지·지장간에서 재성은 관측되지 않습니다');
+  });
+
+  it('uses exact exposed and concealed Wealth roots in the selected wealth reading', () => {
+    const rooted = birth(1960, 11, 4, 0, 30);
+    const exposed = birth(1960, 1, 10, 0, 30);
+    const concealed = birth(1960, 1, 10, 4, 30);
+    const first = observed(rooted).themes.wealth.flow;
+    const second = observed(exposed).themes.wealth.flow;
+    const third = observed(concealed).themes.wealth.flow;
+    expect(first.exposed.some(({ state }) => state === 'exposed_with_independent_root')).toBe(true);
+    expect(second.exposed.some(({ state }) => state === 'exposed_without_same_stem_root')).toBe(true);
+    expect(third.concealed.length).toBeGreaterThan(0);
+    const reading = buildWholeChartNatalReading(snapshot(rooted), 'wealth', NOW);
+    expect(reading.paragraphs.join(' ')).toContain('같은 글자의 독립 통근 근거');
+    expect(reading.evidence).toContainEqual(first.evidence);
+    expect(reading.semanticKey.some((key) => key.startsWith('wealth_exposed:'))).toBe(true);
+    expect(buildWholeChartNatalReading(snapshot(concealed), 'wealth', NOW).paragraphs.join(' ')).toContain('천간에 같은 글자가 드러나지 않은 재성');
+    expect(buildWholeChartNatalReading(snapshot(rooted), 'career', NOW).semanticKey.some((key) => key.startsWith('wealth_exposed:'))).toBe(false);
   });
 
   it('reads independent production and resource facts when all wealth channels are empty', () => {

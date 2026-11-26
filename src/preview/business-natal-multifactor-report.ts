@@ -1,6 +1,6 @@
+import { getTenGod } from 'manseryeok';
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
 import { buildSelectedWholeChartNatalReading, type WholeChartNatalReading } from './whole-chart-reading.js';
-import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -11,15 +11,29 @@ import {
   BUSINESS_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/business-natal-multifactor-candidate.js';
 
-export const BUSINESS_NATAL_MULTIFACTOR_REPORT_VERSION = '0.4.0-research-preview' as const;
+export const BUSINESS_NATAL_MULTIFACTOR_REPORT_VERSION = '0.5.0-research-preview' as const;
 type Axis = 'core' | 'execution' | 'governance' | 'preparation' | 'coordination';
 type Status = 'complete' | 'partial' | 'insufficient';
-type Channel = 'visible_stems' | 'branches';
+type Family = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
+type Channel = 'visible_stems' | 'branches' | 'hidden_stems';
+export type BusinessMeaningArea =
+  | 'production_proposal'
+  | 'exchange_resource'
+  | 'operations_responsibility'
+  | 'preparation_execution'
+  | 'initiative_collaboration'
+  | 'sustainability';
+export interface BusinessMeaningCoverage {
+  required: readonly BusinessMeaningArea[];
+  covered: readonly BusinessMeaningArea[];
+  missing: readonly BusinessMeaningArea[];
+}
 export interface BusinessNatalMultifactorSection {
   claimType: string;
   pattern: string;
   axis: Axis;
   channel: Channel;
+  families: readonly Family[];
   headline: string;
   paragraph: string;
   upstreamClaimIds: readonly string[];
@@ -46,6 +60,7 @@ export interface BusinessNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly BusinessNatalMultifactorSection[];
+  meaningCoverage: BusinessMeaningCoverage;
   readingGuide?: BusinessNatalReadingGuide;
   wholeChart: WholeChartNatalReading;
   missing: readonly string[];
@@ -70,13 +85,6 @@ const EVIDENCE_ROLES: Readonly<Record<string, string>> = {
   'wealth': '재성(현실 자원·교환)',
   'officer': '관성(규범·역할 기준)'
 };
-const AXIS_NAMES: Readonly<Record<Axis, string>> = {
-  'core': '전체 구조',
-  'execution': '실행',
-  'governance': '운영 기준',
-  'preparation': '준비',
-  'coordination': '조율'
-};
 const LIMITATIONS = [
   '전통 문헌의 제한된 구조 관계를 이용한 미검토 연구 풀이입니다. 실제 삶의 성격·사건을 판정하지 않습니다.',
   '사업 성공·실패, 매출, 창업 역량, 수익, 조직 갈등이나 미래 사업 사건을 예측하지 않습니다.',
@@ -95,7 +103,7 @@ function unknownHourCalculatedContext(snapshot: CanonicalSajuSnapshot): string {
   });
   return '출생시각이 없어도 확인 가능한 본인 명식의 계산 사실은 ' +
     observed.join(' · ') + '입니다. 이는 실제 명식의 간지 관찰일 뿐 ' +
-    '사업에 관한 개인별 다중 근거 T8 해석을 뜻하지 않습니다.';
+    '시주가 필요한 천간·지지 대표 십신 근거는 제외하고, 확정된 연주·월주·일주 지장간에서 확인된 근거만 부분적으로 사용합니다.';
 }
 
 function guard(v: unknown, message: string): asserts v {
@@ -108,27 +116,61 @@ function textFor(claimType: string, key: 'headline'|'summary') {
   guard(matches.length === 1 && matches[0]!.text.length > 0, 'Korean narrative template missing');
   return matches[0]!.text;
 }
-function positions(snapshot: CanonicalSajuSnapshot, channel: Channel, families: readonly string[]) {
+function positions(
+  snapshot: CanonicalSajuSnapshot,
+  channel: Channel,
+  families: readonly string[],
+) {
+  guard(
+    families.length >= 2 &&
+      families.length <= 3 &&
+      new Set(families).size === families.length &&
+      families.every((family) => FAMILIES[family] !== undefined),
+    'unresolved or unsupported exact chart input',
+  );
+
+  if (channel === 'hidden_stems') {
+    const dayMaster = snapshot.derivedFacts.dayMaster;
+    const hidden = snapshot.derivedFacts.hiddenStems;
+    guard(dayMaster.status === 'resolved' && hidden !== undefined,
+      'hidden-stem observations require the resolved day master and canonical hidden stems');
+    const result = (['year', 'month', 'day', 'hour'] as const).flatMap((slot) => {
+      const fact = hidden[slot];
+      if (fact.status !== 'resolved') return [];
+      return fact.value.flatMap((stem, index) => {
+        const god = getTenGod(dayMaster.value.value, stem);
+        const family = families.find((candidate) => FAMILIES[candidate]!.includes(god));
+        if (!family) return [];
+        return [{
+          family,
+          display: SLOT_NAMES[slot] + ' 지장간 ' + stem + '(' + god + ')',
+          factPath: 'derivedFacts.hiddenStems.' + slot + '.value.' + index,
+        }];
+      });
+    });
+    guard(families.every((family) => result.some((item) => item.family === family)),
+      'T8 hidden-stem family is not observed in its claimed channel');
+    return result;
+  }
+
   const fact = snapshot.derivedFacts.tenGods;
-  guard(fact.status === 'resolved' && families.length >= 2 &&
-    families.length <= 3 && new Set(families).size === families.length &&
-    families.every(f => FAMILIES[f] !== undefined),
-    'unresolved or unsupported exact chart input');
+  guard(fact.status === 'resolved', 'visible-stem and branch T5 require resolved whole-chart Ten-Gods');
   const slots: readonly PillarSlot[] = channel === 'visible_stems'
-    ? ['year','month','hour'] : ['year','month','day','hour'];
+    ? ['year', 'month', 'hour']
+    : ['year', 'month', 'day', 'hour'];
   const key = channel === 'visible_stems' ? 'stem' : 'branch';
-  const result = slots.flatMap(slot => {
-    const v = fact.value[slot][key];
-    if(v?.status !== 'resolved') return [];
-    const family = families.find(x => FAMILIES[x]!.includes(v.value));
-    if(!family) return [];
+  const result = slots.flatMap((slot) => {
+    const value = fact.value[slot][key];
+    if (value?.status !== 'resolved') return [];
+    const family = families.find((candidate) => FAMILIES[candidate]!.includes(value.value));
+    if (!family) return [];
     return [{
       family,
-      display: `${SLOT_NAMES[slot]} ${key === 'stem' ? '천간' : '지지 대표 십신'} ${v.value}`,
-      factPath: `derivedFacts.tenGods.value.${slot}.${key}.value`,
+      display: SLOT_NAMES[slot] + ' ' + (key === 'stem' ? '천간 ' : '지지 대표 십신 ') + value.value,
+      factPath: 'derivedFacts.tenGods.value.' + slot + '.' + key + '.value',
     }];
   });
-  guard(families.every(f => result.some(x => x.family === f)),
+  guard(families.every((family) => result.some((item) => item.family === family)),
     'T8 upstream family is not observed in its claimed channel');
   return result;
 }
@@ -141,7 +183,7 @@ function toSection(
   const value = claim.value as Record<string, unknown>;
   guard(value && typeof value === 'object' && typeof value.pattern === 'string' &&
     AXES.includes(value.axis as Axis) &&
-    (value.channel === 'visible_stems' || value.channel === 'branches') &&
+    (value.channel === 'visible_stems' || value.channel === 'branches' || value.channel === 'hidden_stems') &&
     Array.isArray(value.families) &&
     value.realLifeOutcomeAuthorized === false && value.futureTimingAuthorized === false &&
     value.healthOrMoneyOutcomeAuthorized === false && value.numericScoringAuthorized === false,
@@ -196,7 +238,7 @@ function toSection(
       'missing actually observed Ten-God family for narrative');
     return `${EVIDENCE_ROLES[family]}: ${found.map(location => location.display).join(' · ')}`;
   });
-  const channelName = value.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
+  const channelName = value.channel === 'visible_stems' ? '천간' : value.channel === 'branches' ? '지지 대표 십신' : '지장간';
   const headline = textFor(claim.claimType,'headline');
   const hidden = snapshot.derivedFacts.hiddenStems?.month;
   const stems = snapshot.derivedFacts.tenGods;
@@ -223,6 +265,7 @@ function toSection(
     pattern: value.pattern,
     axis: value.axis as Axis,
     channel: value.channel as Channel,
+    families: [...(value.families as Family[])],
     headline: textFor(claim.claimType,'headline'),
     paragraph,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
@@ -231,6 +274,95 @@ function toSection(
     observedPositions: [...locations, ...anchors].map(x => x.display),
     observedFactPaths: [...locations, ...anchors].map(x => x.factPath),
   };
+}
+const BUSINESS_MEANING_ORDER: readonly BusinessMeaningArea[] = [
+  'production_proposal', 'exchange_resource', 'operations_responsibility',
+  'preparation_execution', 'initiative_collaboration', 'sustainability',
+];
+const BUSINESS_MEANING_LABEL: Readonly<Record<BusinessMeaningArea, string>> = {
+  production_proposal: '산출·제안', exchange_resource: '교환·자원',
+  operations_responsibility: '운영·책임', preparation_execution: '준비·실행',
+  initiative_collaboration: '주도·협업', sustainability: '지속 조건',
+};
+
+function requiredBusinessMeaningAreas(snapshot: CanonicalSajuSnapshot, execution: InterpretationExecutionResult): BusinessMeaningArea[] {
+  const byChannel = new Map<Channel, Set<Family>>([
+    ['visible_stems', new Set<Family>()], ['branches', new Set<Family>()], ['hidden_stems', new Set<Family>()],
+  ]);
+  for (const claim of execution.claims) {
+    if (claim.state !== 'active' || claim.taxonomy.tier !== 'T5' || claim.snapshotId !== snapshot.snapshotId || claim.sourceRefs.length === 0) continue;
+    const match = /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES|HIDDEN_STEMS)_THEME$/u.exec(claim.claimType);
+    if (match) byChannel.get(match[2]!.toLowerCase() as Channel)?.add(match[1]!.toLowerCase() as Family);
+  }
+  const required = new Set<BusinessMeaningArea>();
+  for (const families of byChannel.values()) {
+    if (families.size < 2) continue;
+    if (families.has('output')) required.add('production_proposal');
+    if (families.has('wealth')) required.add('exchange_resource');
+    if (families.has('officer')) required.add('operations_responsibility');
+    if (families.has('resource')) required.add('preparation_execution');
+    if (families.has('peer')) required.add('initiative_collaboration');
+    if (families.has('resource') && (families.has('wealth') || families.has('officer'))) required.add('sustainability');
+  }
+  return BUSINESS_MEANING_ORDER.filter((area) => required.has(area));
+}
+
+function businessMeaningAreasForSection(section: BusinessNatalMultifactorSection): BusinessMeaningArea[] {
+  const families = new Set(section.families);
+  if (families.size < 2) return [];
+  const areas = new Set<BusinessMeaningArea>();
+  if (families.has('output')) areas.add('production_proposal');
+  if (families.has('wealth')) areas.add('exchange_resource');
+  if (families.has('officer')) areas.add('operations_responsibility');
+  if (families.has('resource')) areas.add('preparation_execution');
+  if (families.has('peer')) areas.add('initiative_collaboration');
+  if (families.has('resource') && (families.has('wealth') || families.has('officer'))) areas.add('sustainability');
+  return BUSINESS_MEANING_ORDER.filter((area) => areas.has(area));
+}
+
+function buildBusinessMeaningCoverage(required: readonly BusinessMeaningArea[], sections: readonly BusinessNatalMultifactorSection[]): BusinessMeaningCoverage {
+  const coveredSet = new Set(sections.flatMap(businessMeaningAreasForSection));
+  return {
+    required: [...required],
+    covered: BUSINESS_MEANING_ORDER.filter((area) => coveredSet.has(area)),
+    missing: required.filter((area) => !coveredSet.has(area)),
+  };
+}
+
+function selectBusinessMeaningSections(anchor: BusinessNatalMultifactorSection, candidates: readonly BusinessNatalMultifactorSection[], required: readonly BusinessMeaningArea[]) {
+  const selected = [anchor];
+  const remaining = candidates.filter((section) => section.claimType !== anchor.claimType);
+  const usedPaths = new Set(anchor.observedFactPaths);
+  const usedAreas = new Set(businessMeaningAreasForSection(anchor));
+  let overlapOnlyCount = 0;
+  while (required.some((area) => !usedAreas.has(area))) {
+    const ranked = remaining.map((section) => ({
+      section,
+      newAreas: businessMeaningAreasForSection(section).filter((area) => required.includes(area) && !usedAreas.has(area)),
+      newPaths: section.observedFactPaths.filter((path) => !usedPaths.has(path)),
+    })).filter((item) => item.newAreas.length > 0 && item.newPaths.length > 0 && item.newPaths.length === item.section.observedFactPaths.length).sort((left, right) =>
+      right.newAreas.length - left.newAreas.length || right.newPaths.length - left.newPaths.length ||
+      AXES.indexOf(left.section.axis) - AXES.indexOf(right.section.axis) ||
+      (left.section.channel === right.section.channel ? 0 : left.section.channel === 'visible_stems' ? -1 : left.section.channel === 'branches' ? 0 : 1),
+    );
+    const next = ranked[0];
+    if (!next) {
+      overlapOnlyCount += remaining.filter((section) => businessMeaningAreasForSection(section).some((area) => required.includes(area) && !usedAreas.has(area))).length;
+      break;
+    }
+    selected.push(next.section);
+    next.newPaths.forEach((path) => usedPaths.add(path));
+    next.newAreas.forEach((area) => usedAreas.add(area));
+    const index = remaining.findIndex((section) => section.claimType === next.section.claimType);
+    if (index >= 0) remaining.splice(index, 1);
+  }
+  const monthFood = remaining.find((section) =>
+    section.pattern === 'MONTH_FOOD_WEALTH' &&
+    section.observedFactPaths.length > 0 &&
+    section.observedFactPaths.every((path) => !usedPaths.has(path)),
+  );
+  if (monthFood) selected.push(monthFood);
+  return { sections: selected, overlapOnlyCount };
 }
 /**
  * Product-readable arrangement of EXISTING selected, research-only Business
@@ -241,6 +373,7 @@ function buildBusinessNatalReadingGuide(
   core: BusinessNatalMultifactorSection | undefined,
   supports: readonly BusinessNatalMultifactorSection[],
   state: Status,
+  meaningCoverage: BusinessMeaningCoverage,
 ): BusinessNatalReadingGuide | undefined {
   if (core === undefined || core.axis === 'coordination') return undefined;
   guard(core.sourceIds.length > 0 && core.upstreamClaimIds.length >= 2 &&
@@ -274,8 +407,8 @@ function buildBusinessNatalReadingGuide(
     ...supports.map((section, index) =>
       `또 다른 관점인 ‘${section.headline}’은 기존 관찰과 다른 ${supporting[index]!.distinctObservedPositions.join(' · ')}의 계산 사실을 추가해 구별합니다.`),
     ...(state === 'complete'
-      ? ['서로 다른 구조적 관점 세 가지를 확인했지만, 이것은 창업 적성·매출·사업 성공이나 실패를 판정하지 않습니다.']
-      : [`이 명식에서 독립적으로 설명할 수 있는 보조 관점은 ${supporting.length}개뿐이어서, 사업운 전체 종합 설명은 보류합니다.`]),
+      ? ['적용 가능한 핵심 의미 영역인 ' + meaningCoverage.covered.map((area) => BUSINESS_MEANING_LABEL[area]).join('·') + '을 실제 명식 근거로 연결했습니다. 이것은 창업 적성·매출·사업 성공이나 실패를 판정하지 않습니다.']
+      : ['확인된 핵심 의미 영역은 ' + (meaningCoverage.covered.map((area) => BUSINESS_MEANING_LABEL[area]).join('·') || '없음') + '이며, 연결되지 않은 영역은 별도로 표시합니다.']),
   ];
   return {
     title: '이 명식의 사업·실행 중심과 보조 관점',
@@ -314,44 +447,61 @@ export function buildBusinessNatalMultifactorReport(
     claims.every(c => selected.has(c.claimId)) &&
     (claims.length === 0 || selection.evidence !== undefined),
     'Business meaning not selected by existing ReadingIntent/EvidenceSelector');
-  // Canonical tenGods is unavailable with unknown birth time. Do not
-  // promote a scenario-based Claim into a complete person-level reading.
-  const result = snapshot.completeness.birthTimeKnown
-    ? claims.map(c => toSection(c, snapshot, execution, registry))
-        .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
-          (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
-    : [];
-  // Prefer the 3-input core. When not observed, a narrower two-input core can
-  // still be rendered, but completion needs two OTHER independently grounded axes.
-  const core = result.find(s => s.axis === 'core') ??
-    result.find(s => s.axis === 'execution') ??
-    result.find(s => s.axis === 'governance') ??
-    result.find(s => s.axis === 'preparation');
-  // A genuine source-bound coordination-only observation is visible as a PARTIAL
-  // reading, never promoted to a MUR core or a consumer product completion.
-  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
-  const chosen: BusinessNatalMultifactorSection[] = core
-    ? [core, ...(supportSelection?.supporting ?? [])]
-    : result.filter(section => section.axis === 'coordination').slice(0, 1);
+  // Visible/branch T5 still requires resolved whole-chart Ten-Gods.
+  // Shared hidden-stem T5 remains usable for resolved year/month/day when hour is unknown.
+  const result = claims
+    .map((claim) => toSection(claim, snapshot, execution, registry))
+    .sort((a, b) =>
+      AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
+      (['visible_stems', 'branches', 'hidden_stems'] as const).indexOf(a.channel) - (['visible_stems', 'branches', 'hidden_stems'] as const).indexOf(b.channel),
+    );
+  const core = result.find((section) => section.axis === 'core') ??
+    result.find((section) => section.axis === 'execution') ??
+    result.find((section) => section.axis === 'governance') ??
+    result.find((section) => section.axis === 'preparation');
+  const coordination = result.find((section) => section.axis === 'coordination');
+  const requiredAreas = requiredBusinessMeaningAreas(snapshot, execution);
+  const anchor = core ?? coordination;
+  const supportSelection = anchor
+    ? selectBusinessMeaningSections(anchor, result, requiredAreas)
+    : undefined;
+  const chosen: BusinessNatalMultifactorSection[] = supportSelection?.sections ?? [];
+  const meaningCoverage = buildBusinessMeaningCoverage(requiredAreas, chosen);
   const missing: string[] = [];
-  if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
-  if(!core && chosen.length > 0) missing.push('중심 해석 근거가 없어 실제 확인된 조율 관점만 부분적으로 보여줍니다. 전체 사업운 종합으로 확장할 수 없습니다.');
-  if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
-    missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
+  if (!core) missing.push('출처 있는 원국 중심 복합 해석 축');
+  if (!core && chosen.length > 0) {
+    missing.push('중심 해석 근거가 없어 실제 확인된 조율 관점만 부분적으로 보여줍니다. 전체 사업운 종합으로 확장할 수 없습니다.');
   }
-  if(chosen.length < 3) {
-    const observed = chosen.map(s => `${AXIS_NAMES[s.axis]}(${s.channel === 'visible_stems' ? '천간' : '지지'})`);
-    missing.push(`이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}. 최소 유효 풀이에는 독립된 근거의 추가 해석 축 ${3 - chosen.length}개가 더 필요합니다.`);
+  if (requiredAreas.length === 0) {
+    missing.push('같은 관측 채널에서 두 개 이상의 사업 관련 십신 계열을 연결하는 근거가 확인되지 않았습니다.');
   }
+  if (meaningCoverage.missing.length > 0) {
+    missing.push(
+      '명식에서 확인된 사업 핵심 영역 중 ' +
+        meaningCoverage.missing.map((area) => BUSINESS_MEANING_LABEL[area]).join('·') +
+        ' 근거가 선택된 풀이에 연결되지 않았습니다.',
+    );
+  }
+  if (supportSelection && supportSelection.overlapOnlyCount > 0 && meaningCoverage.missing.length > 0) {
+    missing.push('추가 해석 후보가 기존 문단과 같은 계산 위치를 반복하여 독립 근거로 선택되지 않았습니다.');
+  }
+  const hasRequiredMeaning = requiredAreas.length > 0 && meaningCoverage.missing.length === 0;
   const state: Status = snapshot.completeness.birthTimeKnown &&
-    core !== undefined && chosen.length === 3
+    core !== undefined && hasRequiredMeaning
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly BusinessNatalMultifactorSection[] = chosen;
   const readingGuide = buildBusinessNatalReadingGuide(
-    core, core === undefined ? [] : chosen.slice(1), state,
+    core,
+    core === undefined ? [] : chosen.filter((section) => section.claimType !== core.claimType),
+    state,
+    meaningCoverage,
   );
-  if(!snapshot.completeness.birthTimeKnown) {
-    missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 사업의 다중 근거 T8 해석은 보류합니다.');
+  if (!snapshot.completeness.birthTimeKnown) {
+    missing.unshift(
+      result.some((section) => section.channel === 'hidden_stems')
+        ? '출생시각 미상: 시주 근거는 제외하고 확정된 연주·월주·일주 지장간에서 확인된 사업 해석만 부분 반영합니다.'
+        : '출생시각 미상: 시주가 필요한 천간·지지 대표 십신 근거가 미확정이므로 다중 근거 사업 해석은 보류합니다.',
+    );
   }
   return {
     snapshotId: snapshot.snapshotId,
@@ -365,6 +515,7 @@ export function buildBusinessNatalMultifactorReport(
     introduction: '실제 명식의 십신 관계를 바탕으로 산출과 실행, 운영 기준, 준비와 협업의 관계를 함께 살펴봅니다. 창업 적성이나 사업 성과를 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    meaningCoverage,
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :

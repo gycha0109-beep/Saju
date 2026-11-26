@@ -7,15 +7,23 @@ import {
   GENERAL_NATAL_USEFUL_TEN_GOD_RULES,
 } from './general-natal-useful-reading-candidate.js';
 import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
+import {
+  GENERAL_NATAL_HIDDEN_STEM_SOURCE,
+  GENERAL_NATAL_HIDDEN_STEM_T5_METHOD_ID,
+  GENERAL_NATAL_HIDDEN_STEM_T5_METHODOLOGY,
+  GENERAL_NATAL_HIDDEN_STEM_T5_RULE_SET_ID,
+  GENERAL_NATAL_HIDDEN_STEM_T5_VERSION,
+  GENERAL_NATAL_HIDDEN_STEM_TEN_GOD_RULES,
+} from './general-natal-hidden-stem-ten-god-candidate.js';
 
 /** Canonical T5 -> source-qualified Business T8; no parallel product interpretation. */
-export const BUSINESS_NATAL_MULTIFACTOR_VERSION = '0.2.0-research' as const;
+export const BUSINESS_NATAL_MULTIFACTOR_VERSION = '0.3.0-research' as const;
 const METHOD_ID = 'M-BUSINESS-NATAL-MULTIFACTOR-EXECUTION-GOVERNANCE-V1';
 const RULE_SET = 'business-natal-source-bounded-multifactor';
 const MONTH_FOOD_PATTERN = 'MONTH_FOOD_WEALTH';
 type Family = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
 type Axis = 'core' | 'execution' | 'governance' | 'preparation' | 'coordination';
-type Channel = 'visible_stems' | 'branches';
+type Channel = 'visible_stems' | 'branches' | 'hidden_stems';
 interface Pattern {
   id: string;
   families: readonly Family[];
@@ -80,10 +88,11 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     summary: '비겁의 자기 기준·동료 관점과 재성의 교환·자원 관점이 함께 관측됩니다. 운영상 선택의 주체와 자원에 관한 관점을 구별해 보는 제한된 독해이며 투자 성향, 수익, 동업 성공이나 실제 금전관계를 예측하지 않습니다.',
   },
 ]);
-const CHANNELS: readonly Channel[] = ['visible_stems', 'branches'];
-const PATTERN_CHANNELS = PATTERNS.flatMap(pattern =>
-  CHANNELS.filter(channel => pattern.id !== MONTH_FOOD_PATTERN || channel === 'visible_stems')
-    .map(channel => ({ pattern, channel })),
+const CHANNELS: readonly Channel[] = ['visible_stems', 'branches', 'hidden_stems'];
+const PATTERN_CHANNELS = PATTERNS.flatMap((pattern) =>
+  (pattern.id === MONTH_FOOD_PATTERN
+    ? CHANNELS.filter((channel) => channel === 'visible_stems')
+    : CHANNELS).map((channel) => ({ pattern, channel })),
 );
 const FOOD_SOURCE: SourceReference = {
   sourceId: 'SRC-BUSINESS-JAPYEONG-JINJEON-FOOD-WEALTH',
@@ -102,7 +111,7 @@ const BUSINESS_MONTH_METHOD: MethodologyDefinition = {
     'No hidden-stem rank, established pattern, strength, remedy efficacy, or business outcome is decided.',
   ],
   requiredFactTypes: ['derivedFacts.hiddenStems.month', 'derivedFacts.tenGods'],
-  sourceIds: [FOOD_SOURCE.sourceId, GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, GENERAL_NATAL_CONCLUSION_SOURCE.sourceId],
+  sourceIds: [FOOD_SOURCE.sourceId, GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, GENERAL_NATAL_CONCLUSION_SOURCE.sourceId, GENERAL_NATAL_HIDDEN_STEM_SOURCE.sourceId],
   status: 'research',
 };
 const VISIBLE_SLOTS = ['year', 'month', 'hour'] as const;
@@ -143,6 +152,19 @@ const SOURCE_REFS: RuleDefinition['sourceRefs'] = [
   { sourceId: GENERAL_NATAL_CONCLUSION_SOURCE.sourceId, supportType: 'interpretive_basis',
     notes: 'Research-only classical cross-reference for generation/control relations.' },
 ];
+function sourceRefsForChannel(channel: Channel): RuleDefinition['sourceRefs'] {
+  return channel === 'hidden_stems'
+    ? [
+        ...SOURCE_REFS,
+        {
+          sourceId: GENERAL_NATAL_HIDDEN_STEM_SOURCE.sourceId,
+          supportType: 'interpretive_basis',
+          notes: 'Uses the separate hidden-stem T5 channel; no hidden-stem prominence or strength is inferred.',
+        },
+      ]
+    : SOURCE_REFS;
+}
+
 const QUALITY: RuleDefinition['quality'] = {
   provenanceQuality: 'secondary_only',
   testCoverage: 'fixture_matrix',
@@ -163,8 +185,9 @@ export const BUSINESS_NATAL_MULTIFACTOR_METHODOLOGY: MethodologyDefinition = Obj
     'Business structures can frame execution and governance questions, but cannot determine ability, profits, entrepreneurship success, income, health, or future events.',
     'This methodology is an unreviewed internal research candidate and is not admitted to Product/Commerce.',
   ],
-  requiredFactTypes: ['derivedFacts.tenGods'],
-  sourceIds: [GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, GENERAL_NATAL_CONCLUSION_SOURCE.sourceId],
+  requiredFactTypes: [],
+  optionalFactTypes: ['derivedFacts.tenGods', 'derivedFacts.dayMaster', 'derivedFacts.hiddenStems'],
+  sourceIds: [GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, GENERAL_NATAL_CONCLUSION_SOURCE.sourceId, GENERAL_NATAL_HIDDEN_STEM_SOURCE.sourceId],
   status: 'research',
 });
 
@@ -217,8 +240,8 @@ function rule(pattern: Pattern, channel: Channel): RuleDefinition {
       tags: ['research', 'business-natal', 'source-bound-multifactor', pattern.axis, channel],
     },
     sourceRefs: anchored
-      ? [...SOURCE_REFS, { sourceId: FOOD_SOURCE.sourceId, supportType: 'interpretive_basis' }]
-      : SOURCE_REFS,
+      ? [...sourceRefsForChannel(channel), { sourceId: GENERAL_NATAL_HIDDEN_STEM_SOURCE.sourceId, supportType: 'interpretive_basis', notes: 'Supports the exact month hidden-stem position used by this anchored rule.' }, { sourceId: FOOD_SOURCE.sourceId, supportType: 'interpretive_basis' }]
+      : sourceRefsForChannel(channel),
     quality: QUALITY,
     status: 'research',
   };
@@ -241,7 +264,9 @@ export const BUSINESS_NATAL_MULTIFACTOR_NARRATIVES: readonly ClaimNarrativeProfi
       { templateKey: 'summary', language: 'ko', text:
         (channel === 'visible_stems'
           ? '천간에서 실제로 관측된 조합입니다. '
-          : '지지 대표 십신에서 관측된 보조 조합입니다. ') + pattern.summary },
+          : channel === 'branches'
+            ? '지지 대표 십신에서 관측된 보조 조합입니다. '
+            : '지장간에서 별도로 관측된 조합입니다. ') + pattern.summary },
     ],
   })));
 export const BUSINESS_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze({
@@ -254,9 +279,11 @@ export const BUSINESS_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze
       version: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.version },
     { id: METHOD_ID, version: BUSINESS_NATAL_MULTIFACTOR_VERSION },
     { id: BUSINESS_MONTH_METHOD.methodologyId, version: BUSINESS_MONTH_METHOD.version },
+    { id: GENERAL_NATAL_HIDDEN_STEM_T5_METHOD_ID, version: GENERAL_NATAL_HIDDEN_STEM_T5_VERSION },
   ],
   enabledRuleSets: [...new Set([
     ...GENERAL_NATAL_USEFUL_TEN_GOD_RULES.map(x => x.ruleSetId),
+    GENERAL_NATAL_HIDDEN_STEM_T5_RULE_SET_ID,
     RULE_SET,
   ])],
   conflictPolicy: 'preserve_all',
@@ -269,9 +296,10 @@ export const BUSINESS_NATAL_MULTIFACTOR_PACK: InterpretationPack = Object.freeze
 });
 export function createBusinessNatalMultifactorRegistry(createdAt = '1970-01-01T00:00:00.000Z') {
   return createWholeChartRegistrySnapshot({
-    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...BUSINESS_NATAL_MULTIFACTOR_RULES],
+    rules: [...GENERAL_NATAL_USEFUL_TEN_GOD_RULES, ...GENERAL_NATAL_HIDDEN_STEM_TEN_GOD_RULES, ...BUSINESS_NATAL_MULTIFACTOR_RULES],
     methodologies: [GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
+      GENERAL_NATAL_HIDDEN_STEM_T5_METHODOLOGY,
       BUSINESS_NATAL_MULTIFACTOR_METHODOLOGY, BUSINESS_MONTH_METHOD],
-    sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE, FOOD_SOURCE],
+    sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_HIDDEN_STEM_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE, FOOD_SOURCE],
   }, BUSINESS_NATAL_MULTIFACTOR_PACK, createdAt);
 }

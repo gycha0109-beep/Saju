@@ -120,6 +120,13 @@ function reportDetails(reports: NatalFiveDomainMultifactorReports) {
       state: report.state,
       missing: report.missing,
       limitations: report.limitations,
+      meaningCoverage: 'meaningCoverage' in report
+        ? {
+            required: [...report.meaningCoverage.required],
+            covered: [...report.meaningCoverage.covered],
+            missing: [...report.meaningCoverage.missing],
+          }
+        : undefined,
       sections: report.sections.map(section => ({
         claimType: section.claimType, pattern: section.pattern, axis: section.axis,
         channel: section.channel, headline: section.headline, paragraph: section.paragraph,
@@ -198,16 +205,33 @@ export function runNatalS6QualityRegression(): {
     for (const domain of domains) {
       if (domain.state === 'complete') {
         const core = domain.sections[0];
-        requireEvidence(
+        const semanticCompletion =
           domain.domain === 'career'
             ? core !== undefined && core.axis !== 'tension' &&
               core.claimType === reports.career.readingGuide?.coreClaimType
-            : domain.sections.length >= 3,
+            : domain.domain === 'wealth'
+              ? domain.meaningCoverage?.required.includes('exchange') === true &&
+                domain.meaningCoverage.missing.length === 0
+              : domain.domain === 'business'
+                ? (domain.meaningCoverage?.required.length ?? 0) > 0 &&
+                  domain.meaningCoverage?.missing.length === 0
+                : domain.sections.length >= 3;
+        requireEvidence(
+          semanticCompletion,
           caseId + '/' + domain.domain + ': invalid minimum useful reading',
         );
       }
-      requireEvidence(new Set(domain.sections.map(s => s.axis)).size === domain.sections.length,
-        caseId + '/' + domain.domain + ': repeated axis substituted for distinct evidence');
+      if (domain.domain === 'business') {
+        const paths = domain.sections.flatMap(section => section.factPaths);
+        requireEvidence(
+          new Set(domain.sections.map(section => section.claimType)).size === domain.sections.length &&
+            new Set(paths).size === paths.length,
+          caseId + '/' + domain.domain + ': repeated Claim or calculated evidence substituted for a new meaning area',
+        );
+      } else {
+        requireEvidence(new Set(domain.sections.map(s => s.axis)).size === domain.sections.length,
+          caseId + '/' + domain.domain + ': repeated axis substituted for distinct evidence');
+      }
       for (const section of domain.sections) {
         requireEvidence(section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
           section.ruleId === 'RULE-' + section.claimType &&
@@ -218,7 +242,7 @@ export function runNatalS6QualityRegression(): {
         caseId + '/' + domain.domain + ': incomplete Korean meaning or provenance');
       }
       if (scenario === 'unknown_time') {
-        if (domain.domain === 'wealth' && domain.sections.length > 0) {
+        if ((domain.domain === 'wealth' || domain.domain === 'business') && domain.sections.length > 0) {
           requireEvidence(
             domain.state === 'partial' &&
               domain.missing.length > 0 &&

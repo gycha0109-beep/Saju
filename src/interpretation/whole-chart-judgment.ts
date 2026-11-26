@@ -14,9 +14,16 @@ import {
 } from '../research/compatibility-t10-direct-day-comparison.js';
 import { deriveGeneralNatalSourceScopedBranchBreakCandidates } from '../research/general-natal-source-scoped-branch-break.js';
 import { buildSajuR34StrengthRootSubstrate } from '../research/saju-r34-strength-root-substrate.js';
+import { buildI18DRootRelationReview } from '../research/i18d-root-relation-review.js';
+import { buildI18ESpecialPatternReviewRouter } from '../research/i18e-special-pattern-review-router.js';
+import { buildI19PostRelationRootEffectReview } from '../research/i19-post-relation-root-effect-review.js';
+import { buildI20DClashRescueRouter } from '../research/i20d-clash-rescue-router.js';
+import { buildI22SupportCompositionFrontier } from '../research/i22-support-composition-frontier.js';
+import { buildI23StrengthDecisionReadinessV2 } from '../research/i23-strength-decision-readiness-v2.js';
+import { buildI24ChallengeMechanismComposition } from '../research/i24-challenge-mechanism-composition.js';
 import { deterministicContentHash } from './rule-registry.js';
 
-export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v6';
+export const WHOLE_CHART_JUDGMENT_VERSION = 'whole-chart-judgment-v8';
 export const TEN_GOD_FAMILY = {
   비견: 'peer',
   겁재: 'peer',
@@ -278,6 +285,55 @@ function thematicStructures(
     );
   });
   const wealthWitnesses = positions.filter(({ god }) => TEN_GOD_FAMILY[god] === 'wealth');
+  // Apply the same exact-stem root and relation checks used for month-pattern support,
+  // without treating a hidden Wealth member as an exposed or effective one.
+  const directWealth = wealthWitnesses.filter(({ location }) => location === 'visible').map((position) => {
+    const roots = wealthWitnesses.filter(({ location, stem }) => location === 'hidden' && stem === position.stem);
+    const independentRoots = roots.filter(({ slot }) => !hasContact(contacts, slot, ROOT_CONTEST));
+    const state = hasContact(contacts, position.slot, ['stem_combination'])
+      ? 'combination_review'
+      : independentRoots.length
+        ? 'exposed_with_independent_root'
+        : roots.length
+          ? 'root_under_review'
+          : allResolved
+            ? 'exposed_without_same_stem_root'
+            : 'root_unresolved';
+    return { position, roots, independentRoots, state } as const;
+  });
+  const concealedWealth = wealthWitnesses.filter(({ location, stem }) =>
+    location === 'hidden' && !directWealth.some(({ position }) => position.stem === stem),
+  ).map((position) => ({
+    position,
+    relationUnderReview: hasContact(contacts, position.slot, ROOT_CONTEST),
+  }));
+  const outputWitnesses = positions.filter(({ god }) => TEN_GOD_FAMILY[god] === 'output');
+  const wealthFlow = {
+    exposed: directWealth,
+    concealed: concealedWealth,
+    output: outputWitnesses,
+    // A rooted Wealth witness and an observed output are distinct facts; this is
+    // a qualified structural reading, not a settled cross-channel effect.
+    state: !wealthWitnesses.length
+      ? 'no_exact_wealth_stem'
+      : !outputWitnesses.length
+        ? 'wealth_without_observed_output'
+        : directWealth.some(({ state }) => state === 'exposed_with_independent_root')
+          ? 'output_with_independently_rooted_wealth'
+          : directWealth.length
+            ? 'output_with_exposed_wealth_under_review'
+            : 'output_with_concealed_wealth',
+    evidence: {
+      rule: 'observe-output-wealth-generation-and-exact-wealth-root-context',
+      paths: [...new Set([
+        ...wealthWitnesses.map(({ path }) => path),
+        ...outputWitnesses.map(({ path }) => path),
+        'derivedFacts.structuralRelations',
+        ...SLOTS.map((slot) => `derivedFacts.hiddenStems.${slot}`),
+      ])],
+      sources: [PATTERN_SOURCE, FOOD_WEALTH_SOURCE],
+    },
+  } as const;
   const wealthBranchWitnesses = SLOTS.filter((slot) => {
     const pillar = snapshot.pillars[slot];
     return (
@@ -341,6 +397,7 @@ function thematicStructures(
     },
     wealth: {
       state: wealthState,
+      flow: wealthFlow,
       indirectEvidence,
       wealthInStorage,
       storageContacts: contacts.filter(({ slots }) =>
@@ -827,6 +884,57 @@ function assessPattern(
   } as const;
 }
 
+function buildStrengthDecisionReadiness(
+  snapshot: CanonicalSajuSnapshot,
+  positions: readonly TenGodPosition[],
+) {
+  const rootRelation = buildI18DRootRelationReview(snapshot);
+  const specialPattern = buildI18ESpecialPatternReviewRouter(snapshot);
+  const postRelationRoot = buildI19PostRelationRootEffectReview(rootRelation);
+  const clashRescue = buildI20DClashRescueRouter(rootRelation);
+  // The relative-force module compares each branch with its own support,
+  // not the day master. Use exact day-master Ten-God observations here.
+  const day = snapshot.derivedFacts.dayMaster;
+  const supportObservations = day.status === 'resolved' && rootRelation.status === 'RESOLVED_BASIS_ROUTED'
+    ? [
+        ...positions.filter(({ location, god }) => location === 'visible' && isSupporting(god))
+          .map(({ path, god }) => ({
+            evidenceId: path,
+            evidenceClass: TEN_GOD_FAMILY[god] === 'peer'
+              ? 'visible_peer_support' as const
+              : 'visible_resource_support' as const,
+          })),
+        ...SLOTS.flatMap((slot) => {
+          const pillar = snapshot.pillars[slot];
+          return pillar.status === 'resolved' &&
+            TEN_GOD_FAMILY[getBranchTenGod(day.value.value, pillar.value.branch.value)] === 'resource'
+            ? [{ evidenceId: `pillars.${slot}.branch`, evidenceClass: 'resource_branch_support' as const }]
+            : [];
+        }),
+      ]
+    : [];
+  const supportFrontier = buildI22SupportCompositionFrontier(supportObservations);
+
+  const challengeObservations = positions.flatMap((position, index) => {
+    if (position.location !== 'hidden') return [];
+    const relation = TEN_GOD_FAMILY[position.god];
+    if (relation !== 'output' && relation !== 'wealth' && relation !== 'officer') return [];
+    return [{
+      evidenceId: `hidden-challenge:${index}:${position.slot}:${position.stem}:${position.god}`,
+      relation,
+    }];
+  });
+  const challengeComposition = buildI24ChallengeMechanismComposition(challengeObservations);
+
+  return buildI23StrengthDecisionReadinessV2({
+    specialPattern,
+    postRelationRoot,
+    supportFrontier,
+    clashRescue,
+    challengeComposition,
+  });
+}
+
 /** A deterministic interpretation of one canonical chart. Methods with unresolved predicates retain their reasons. */
 export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
   const day = snapshot.derivedFacts.dayMaster;
@@ -850,6 +958,7 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
   const visible = positions.filter(({ location }) => location === 'visible');
   const monthGod = getBranchTenGod(day.value.value, month.value.branch.value);
   const strength = assessStrength(snapshot, monthGod, positions, contacts);
+  const strengthReadiness = buildStrengthDecisionReadiness(snapshot, positions);
   const pattern = assessPattern(
     positions.filter(({ slot, location }) => slot === 'month' && location === 'hidden'),
     monthGod,
@@ -915,6 +1024,7 @@ export function judgeWholeChart(snapshot: CanonicalSajuSnapshot) {
     positions,
     contacts,
     strength,
+    strengthReadiness,
     pattern,
     roles,
     themes,
