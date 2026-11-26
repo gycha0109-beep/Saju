@@ -120,6 +120,13 @@ function reportDetails(reports: NatalFiveDomainMultifactorReports) {
       state: report.state,
       missing: report.missing,
       limitations: report.limitations,
+      meaningCoverage: 'meaningCoverage' in report
+        ? {
+            required: [...report.meaningCoverage.required],
+            covered: [...report.meaningCoverage.covered],
+            missing: [...report.meaningCoverage.missing],
+          }
+        : undefined,
       sections: report.sections.map(section => ({
         claimType: section.claimType, pattern: section.pattern, axis: section.axis,
         channel: section.channel, headline: section.headline, paragraph: section.paragraph,
@@ -198,11 +205,19 @@ export function runNatalS6QualityRegression(): {
     for (const domain of domains) {
       if (domain.state === 'complete') {
         const core = domain.sections[0];
-        requireEvidence(
+        const semanticCompletion =
           domain.domain === 'career'
             ? core !== undefined && core.axis !== 'tension' &&
               core.claimType === reports.career.readingGuide?.coreClaimType
-            : domain.sections.length >= 3,
+            : domain.domain === 'wealth'
+              ? domain.meaningCoverage?.required.includes('exchange') === true &&
+                domain.meaningCoverage.missing.length === 0
+              : domain.domain === 'business'
+                ? (domain.meaningCoverage?.required.length ?? 0) > 0 &&
+                  domain.meaningCoverage?.missing.length === 0
+                : domain.sections.length >= 3;
+        requireEvidence(
+          semanticCompletion,
           caseId + '/' + domain.domain + ': invalid minimum useful reading',
         );
       }
