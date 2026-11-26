@@ -117,8 +117,17 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
   it('judges Business completeness by applicable meaning areas rather than a fixed section count', () => {
     const x = run(3,10);
     expect(new Set(x.report.meaningCoverage.required).size).toBe(x.report.meaningCoverage.required.length);
-    const paths = x.report.sections.flatMap((section) => section.observedFactPaths);
-    expect(new Set(paths).size).toBe(paths.length);
+    for (const section of x.report.sections) {
+      expect(new Set(section.observedFactPaths).size).toBe(section.observedFactPaths.length);
+      expect(section.observedPositions).toHaveLength(section.observedFactPaths.length);
+    }
+    if (x.report.readingGuide) {
+      const supportPaths = x.report.readingGuide.supporting.flatMap((section) => section.distinctObservedFactPaths);
+      expect(new Set(supportPaths).size).toBe(supportPaths.length);
+      const core = x.report.sections.find((section) => section.claimType === x.report.readingGuide?.coreClaimType);
+      expect(core).toBeDefined();
+      expect(supportPaths.every((path) => !core?.observedFactPaths.includes(path))).toBe(true);
+    }
     if(x.report.state === 'complete') {
       expect(x.report.sections.length).toBeGreaterThan(0);
       expect(x.report.meaningCoverage.missing).toEqual([]);

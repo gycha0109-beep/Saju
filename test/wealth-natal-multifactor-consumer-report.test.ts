@@ -204,8 +204,17 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(x.report.meaningCoverage.required.length).toBeGreaterThan(0);
     expect(x.report.meaningCoverage.required).toContain('exchange');
     expect(new Set(x.report.sections.map((s) => s.pattern)).size).toBe(x.report.sections.length);
-    const observedPaths = x.report.sections.flatMap((section) => section.observedFactPaths);
-    expect(new Set(observedPaths).size).toBe(observedPaths.length);
+    for (const section of x.report.sections) {
+      expect(new Set(section.observedFactPaths).size).toBe(section.observedFactPaths.length);
+      expect(section.observedPositions).toHaveLength(section.observedFactPaths.length);
+    }
+    if (x.report.readingGuide) {
+      const supportPaths = x.report.readingGuide.supporting.flatMap((section) => section.distinctObservedFactPaths);
+      expect(new Set(supportPaths).size).toBe(supportPaths.length);
+      const core = x.report.sections.find((section) => section.claimType === x.report.readingGuide?.coreClaimType);
+      expect(core).toBeDefined();
+      expect(supportPaths.every((path) => !core?.observedFactPaths.includes(path))).toBe(true);
+    }
     if (x.report.state === 'complete') {
       expect(x.report.sections.length).toBeGreaterThan(0);
       expect(x.report.meaningCoverage.missing).toEqual([]);
