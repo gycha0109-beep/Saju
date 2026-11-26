@@ -1,3 +1,7 @@
+> **Superseded status notice (2026-11-26):** The full article body is now publicly accessible from the official KoreaScience PDF at https://www.koreascience.or.kr/article/JAKO202209059084683.pdf and has been reviewed. This historical access-boundary record is superseded for body availability by `relationship-natal-sociality-t5-methodology-evidence-v1.md`. The spouse-specific decision remains unchanged: the paper supports general Ten-God sociality facets only; it does not define a spouse selector or authorize spouse T8, compatibility, or relationship outcomes.
+
+---
+
 # Relationship / Spouse T8 — 이남연·김기승 2022 free-provider transport access boundary
 
 ## Status
