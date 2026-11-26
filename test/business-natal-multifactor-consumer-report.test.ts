@@ -54,7 +54,7 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
       expect(upstream.every(i => i.cardinality === 'exactly_one' && i.required)).toBe(true);
       expect(rule.inputs.some(i => i.pathOrClaimType === 'derivedFacts.hiddenStems.month')).toBe(anchored);
       const hidden = rule.output.claimType.endsWith('_HIDDEN_STEMS');
-      expect(rule.sourceRefs).toHaveLength(anchored || hidden ? 3 : 2);
+      expect(rule.sourceRefs).toHaveLength(anchored ? 4 : hidden ? 3 : 2);
       expect(rule.status).toBe('research');
     }
     expect(inspectMyeonghwaProductionComposition({registry}).status).toBe('blocked');
@@ -75,6 +75,7 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(section?.paragraph).toContain('같은 품질로 반복해 만들 수 있는 산출물');
     expect(section?.observedFactPaths).toContain('derivedFacts.hiddenStems.month.value.0');
     expect(section?.sourceIds).toContain('SRC-BUSINESS-JAPYEONG-JINJEON-FOOD-WEALTH');
+    expect(section?.sourceIds).toContain('SRC-GENERAL-NATAL-YUANHAI-HIDDEN-STEMS-WIKISOURCE');
     const held = read(1953, 12, 16, 1, 29);
     expect(held.execution.claims.some(item => item.claimType === section?.claimType)).toBe(false);
     expect(held.report.sections.length).toBeGreaterThan(0);

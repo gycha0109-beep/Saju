@@ -19,6 +19,7 @@ import {
   GENERAL_NATAL_HIDDEN_STEM_TEN_GOD_RULES as WEALTH_NATAL_HIDDEN_STEM_TEN_GOD_RULES,
   generalHiddenStemPresenceCondition as hiddenStemPresenceCondition,
 } from './general-natal-hidden-stem-ten-god-candidate.js';
+export { WEALTH_NATAL_HIDDEN_STEM_T5_METHODOLOGY, WEALTH_NATAL_HIDDEN_STEM_TEN_GOD_RULES };
 import {
   GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
   GENERAL_NATAL_USEFUL_READING_SOURCE,

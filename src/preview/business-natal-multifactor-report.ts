@@ -287,7 +287,7 @@ const BUSINESS_MEANING_LABEL: Readonly<Record<BusinessMeaningArea, string>> = {
 
 function requiredBusinessMeaningAreas(snapshot: CanonicalSajuSnapshot, execution: InterpretationExecutionResult): BusinessMeaningArea[] {
   const byChannel = new Map<Channel, Set<Family>>([
-    ['visible_stems', new Set()], ['branches', new Set()], ['hidden_stems', new Set()],
+    ['visible_stems', new Set<Family>()], ['branches', new Set<Family>()], ['hidden_stems', new Set<Family>()],
   ]);
   for (const claim of execution.claims) {
     if (claim.state !== 'active' || claim.taxonomy.tier !== 'T5' || claim.snapshotId !== snapshot.snapshotId || claim.sourceRefs.length === 0) continue;

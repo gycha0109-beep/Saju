@@ -421,9 +421,9 @@ function requiredWealthMeaningAreas(
   execution: InterpretationExecutionResult,
 ): WealthMeaningArea[] {
   const byChannel = new Map<Channel, Set<Family>>([
-    ['visible_stems', new Set()],
-    ['branches', new Set()],
-    ['hidden_stems', new Set()],
+    ['visible_stems', new Set<Family>()],
+    ['branches', new Set<Family>()],
+    ['hidden_stems', new Set<Family>()],
   ]);
   for (const claim of execution.claims) {
     if (

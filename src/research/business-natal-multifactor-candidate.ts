@@ -111,7 +111,7 @@ const BUSINESS_MONTH_METHOD: MethodologyDefinition = {
     'No hidden-stem rank, established pattern, strength, remedy efficacy, or business outcome is decided.',
   ],
   requiredFactTypes: ['derivedFacts.hiddenStems.month', 'derivedFacts.tenGods'],
-  sourceIds: [FOOD_SOURCE.sourceId, GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, GENERAL_NATAL_CONCLUSION_SOURCE.sourceId],
+  sourceIds: [FOOD_SOURCE.sourceId, GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, GENERAL_NATAL_CONCLUSION_SOURCE.sourceId, GENERAL_NATAL_HIDDEN_STEM_SOURCE.sourceId],
   status: 'research',
 };
 const VISIBLE_SLOTS = ['year', 'month', 'hour'] as const;
@@ -240,7 +240,7 @@ function rule(pattern: Pattern, channel: Channel): RuleDefinition {
       tags: ['research', 'business-natal', 'source-bound-multifactor', pattern.axis, channel],
     },
     sourceRefs: anchored
-      ? [...sourceRefsForChannel(channel), { sourceId: FOOD_SOURCE.sourceId, supportType: 'interpretive_basis' }]
+      ? [...sourceRefsForChannel(channel), { sourceId: GENERAL_NATAL_HIDDEN_STEM_SOURCE.sourceId, supportType: 'interpretive_basis', notes: 'Supports the exact month hidden-stem position used by this anchored rule.' }, { sourceId: FOOD_SOURCE.sourceId, supportType: 'interpretive_basis' }]
       : sourceRefsForChannel(channel),
     quality: QUALITY,
     status: 'research',
