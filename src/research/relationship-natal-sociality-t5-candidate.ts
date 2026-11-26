@@ -38,7 +38,7 @@ export const RELATIONSHIP_NATAL_SOCIALITY_T5_SOURCE: SourceReference = Object.fr
   sourceType: 'paper',
   title: '명리학에서 십성(十星)의 성립과 개념 확장에 관한 연구',
   author: '이남연·김기승',
-  publisher: 'Industrial Promotion Research',
+  publisher: 'Industrial Promotion Institute',
   publicationYear: 2022,
   language: 'ko',
   locator: {
@@ -89,7 +89,7 @@ const SOCIALITY: Readonly<Record<TenGod, SocialityMeaning>> = Object.freeze({
     family: 'peer',
     headline: '주관과 추진력',
     resourceExpression: '뚜렷한 주관과 추진력을 바탕으로 상황에 적극적으로 참여하는 관점',
-    cautionExpression: '경쟁심·질투·교만이 강해져 타인과의 협력이 거칠어질 수 있는 지점',
+    cautionExpression: '질투심이나 교만·불손함으로 표현될 수 있는 지점',
   },
   식신: {
     family: 'output',
