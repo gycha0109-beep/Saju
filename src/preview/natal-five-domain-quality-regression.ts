@@ -221,8 +221,17 @@ export function runNatalS6QualityRegression(): {
           caseId + '/' + domain.domain + ': invalid minimum useful reading',
         );
       }
-      requireEvidence(new Set(domain.sections.map(s => s.axis)).size === domain.sections.length,
-        caseId + '/' + domain.domain + ': repeated axis substituted for distinct evidence');
+      if (domain.domain === 'business') {
+        const paths = domain.sections.flatMap(section => section.factPaths);
+        requireEvidence(
+          new Set(domain.sections.map(section => section.claimType)).size === domain.sections.length &&
+            new Set(paths).size === paths.length,
+          caseId + '/' + domain.domain + ': repeated Claim or calculated evidence substituted for a new meaning area',
+        );
+      } else {
+        requireEvidence(new Set(domain.sections.map(s => s.axis)).size === domain.sections.length,
+          caseId + '/' + domain.domain + ': repeated axis substituted for distinct evidence');
+      }
       for (const section of domain.sections) {
         requireEvidence(section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
           section.ruleId === 'RULE-' + section.claimType &&
