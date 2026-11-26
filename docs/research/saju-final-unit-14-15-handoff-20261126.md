@@ -1,5 +1,16 @@
 # 명하 Saju Unit 14–15 이관 프롬프트
 
+## 2026-11-26 후속 실행 상태
+
+- PR #2825는 Unit 08 기능 브랜치에 병합됐다: 9dcd1e5929a4ac2b2eababb97737f08504a7a118.
+- PR #2826은 Unit 14 기능 브랜치에 병합됐다: 3d5656820af471d0c25534bc030add3aa0324796.
+- 두 병합 모두 main 병합이 아니다. Unit 14·15 누적 작업은 Unit 16의 기준점으로 유지한다.
+- 일반 관계 T8은 Authority Bridge와 종결 revision 대조 결과 새 승인 후보가 없다. 기존 닫힌 범위를 재개하지 않는다.
+- 다음 독립 실행 가능 P1 공백은 연간 T9 실행 Claim을 결합 Reader에 연결하는 작업으로 선정했다. 브랜치: saju-final-unit-16-annual-t9-claim-integration.
+- Unit 16은 기존 research 규칙만 소비하며 Official Reading·Production·Commerce 권한을 변경하지 않는다.
+
+---
+
 **기준일:** 2026-11-26  
 **목적:** 새 대화에서 현재 구현 지점부터 사주 트랙을 이어서 진행한다. 이미 완료한 구현·검증을 반복하지 말고, 승인된 로드맵 밖의 작업을 만들지 않는다.
 

@@ -4,6 +4,7 @@ import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-e
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import { buildAnnualMonthlyBirthResearchReading } from '../src/preview/annual-monthly-birth-research-runtime.js';
 import { buildTemporalResearchMenuReadings } from '../src/preview/temporal-research-menu-reading.js';
+import { GENERAL_ANNUAL_POLICY_SOURCE } from '../src/research/general-annual-reading-candidate.js';
 
 const REFERENCE = '2026-09-03T13:00:00.000Z';
 const NOW = new Date(REFERENCE);
@@ -132,15 +133,29 @@ describe('annual/monthly temporal scenario and evidence-link matrix', () => {
         }
       }
 
-      // Annual is a source-pinned research-profile projection, not an executed official Claim.
+      // Annual and monthly both consume selected research T9 Claims; neither grants Official authority.
       expect(result.report.annual.sections.length, scenario.id).toBeGreaterThan(0);
       for (const section of result.report.annual.sections) {
+        expect(section.evidenceStatus, scenario.id + '/annual evidence').toBe(
+          'executed_research_t9_claim_not_official',
+        );
+        expect(section.claimId, scenario.id + '/annual claim').toBeTruthy();
         expect(section.candidateRuleId, scenario.id + '/annual candidate rule').toBeTruthy();
+        expect(section.ruleIds?.length, scenario.id + '/annual rules').toBeGreaterThan(0);
         expect(section.methodologyId, scenario.id + '/annual methodology').toBeTruthy();
-        expect(section.policySourceId, scenario.id + '/annual source').toBeTruthy();
-        expect(section.calculationFactPaths.length, scenario.id + '/annual fact path')
-          .toBeGreaterThan(0);
-        expect('claimId' in section, scenario.id + '/annual must not invent a Claim ID').toBe(false);
+        expect(section.sourceIds, scenario.id + '/annual sources').toContain(
+          GENERAL_ANNUAL_POLICY_SOURCE.sourceId,
+        );
+        expect(section.factPaths?.length, scenario.id + '/annual fact paths').toBeGreaterThan(0);
+        expect(section.factPaths).toContain('temporal.targetYear');
+        if (section.kind === 'core') {
+          expect(section.factPaths).toContain('temporal.annualStemTenGod');
+        } else {
+          expect(section.relatedPillar).toBeDefined();
+          expect(section.factPaths).toContain(
+            'temporal.annualBranchRelations.' + section.relatedPillar,
+          );
+        }
       }
 
       // Monthly T9 sections are executed research Claims with source/rule/method/fact provenance.
@@ -176,13 +191,22 @@ describe('annual/monthly temporal scenario and evidence-link matrix', () => {
       expect(monthlyMenu?.authority.maySell).toBe(false);
       expect(monthlyMenu?.referenceFocus?.state).toBe('in_period');
 
+      const annualSectionsByClaimId = new Map(
+        result.report.annual.sections.map(section => [section.claimId, section]),
+      );
       for (const section of annualMenu?.sections ?? []) {
-        expect(section.evidenceKind).toBe('annual_research_profile');
-        expect(section.claimId).toBeUndefined();
+        expect(section.evidenceKind).toBe('annual_t9_research_claim');
+        expect(section.claimId).toBeTruthy();
         expect(section.candidateRuleId).toBeTruthy();
+        expect(section.ruleIds?.length).toBeGreaterThan(0);
         expect(section.methodologyId).toBeTruthy();
         expect(section.sourceIds.length).toBeGreaterThan(0);
         expect(section.factPaths.length).toBeGreaterThan(0);
+        const source = annualSectionsByClaimId.get(section.claimId);
+        expect(source).toBeDefined();
+        expect(section.ruleIds).toEqual(source?.ruleIds);
+        expect(section.sourceIds).toEqual(source?.sourceIds);
+        expect(section.factPaths).toEqual(source?.factPaths);
       }
 
       const monthlySectionsByClaimId = new Map(

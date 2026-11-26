@@ -7,10 +7,10 @@
 | 단계 | 현행 상태 | 완료 조건 |
 | --- | --- | --- |
 | 1. 공통 판단 | 월령 복수 투간 신호와 지원·제약·합충 접점은 연구용 관측으로 분리되어 있다. 격국·강약·용희기 최종 판정은 미확정이다. | 저장소의 연구 권한 기준상 격국 후보의 정체·성립·우선순위·최종 사실 생성은 아직 허용되지 않는다. 합화, 복합 구응의 보편 우선순위, 상대 강약 및 용희기 최종 판정도 확정하지 않는다. |
-| 2. 원국 네 메뉴 | 직업·사업·재물·관계 Reader 경로는 존재하지만 메뉴별 T8 의미 영역의 완성은 별도 판정이 필요하다. Unit 14의 사회성 후보는 T5 연구용이며 관계 T8을 완성하지 않는다. | 각 분야가 명식별 중심 작용과 약점, 적용 범위 및 필요한 시기 변화를 실제 근거로 설명해야 한다. 관계 일반 T8의 도메인별 근거·방법론 권한은 아직 닫혀 있다. |
-| 3. 시기 두 메뉴 | Unit 15에서 연간·월간 8개 출생 입력 시나리오 검증을 추가했고 Whole Chart Regression이 통과했다. 의미 종합과 공식 발급은 미완료다. | 원국의 역할과 기간 작용을 연결해 각 기간의 독립적 결론과 분야별 이유를 제공한다. 입춘·절입·대운 경계와 시나리오별 근거를 보존한다. |
-| 4. 검증 | Unit 14와 Unit 15 PR의 Whole Chart Regression은 각각 통과했다. 이번 두 HEAD에서 500건·10,000건 전체 감사를 다시 실행한 것은 아니다. | 동일 십신·상이한 구조, 상충 및 미확정 조건, 경계 시각, 500건·10,000건 및 기존 상품 요청·발급·Reader·권한 경로를 최신 변경 범위에 맞춰 검증한다. |
-| 5. 통합 | PR #2825(Unit 14)와 PR #2826(Unit 15)가 열린 상태이며 #2826은 #2825 위에 쌓인 후속 PR이다. main 병합 전이다. | 필수 검증과 병합 상태를 확인하고 구현 및 문서를 동기화한다. 모든 완료 조건을 확인한 뒤에만 `ROADMAP_COMPLETE`를 기록한다. |
+| 2. 원국 네 메뉴 | 직업·사업·재물·관계 Reader 경로는 존재하지만 메뉴별 T8 의미 영역의 완성은 별도 판정이 필요하다. 관계 T8은 Authority Bridge 종결 상태이며, Career T8도 현재 방법론의 근거 공백이 남아 있다. | 각 분야가 명식별 중심 작용과 약점, 적용 범위 및 필요한 시기 변화를 실제 근거로 설명해야 한다. 관계 일반 T8의 도메인별 근거·방법론 권한은 아직 닫혀 있다. |
+| 3. 시기 두 메뉴 | Unit 15의 8개 시나리오 검증에 이어 Unit 16에서 연간 T9 Reader가 실행·선택된 연구 Claim을 소비하도록 연결했다. 연간·월간 모두 연구 전용이며 공식 발급과 분야별 시기 종합은 미완료다. | 원국의 역할과 기간 작용을 연결해 각 기간의 독립적 결론과 분야별 이유를 제공한다. 입춘·절입·대운 경계와 시나리오별 근거를 보존한다. |
+| 4. 검증 | Unit 14·15 최신 HEAD의 Whole Chart Regression은 통과했다. Unit 16 PR CI에서 typecheck·Reader 회귀와 500건·10,000건 메뉴 감사를 함께 실행 중이며 결과는 해당 run 기준으로 기록한다. | 동일 십신·상이한 구조, 상충 및 미확정 조건, 경계 시각, 500건·10,000건 및 기존 상품 요청·발급·Reader·권한 경로를 최신 변경 범위에 맞춰 검증한다. |
+| 5. 통합 | #2825는 Unit 08 기능 브랜치에, #2826은 Unit 14 기능 브랜치에 병합됐다. Unit 16은 Unit 14·15 통합 HEAD에서 이어지며, 전체 스택은 아직 main에 병합되지 않았다. | 필수 검증과 병합 상태를 확인하고 구현 및 문서를 동기화한다. 모든 완료 조건을 확인한 뒤에만 `ROADMAP_COMPLETE`를 기록한다. |
 
 종합해석의 적격성은 각 주장의 근거와 사례별 의미로 판단한다. 기존 문단 수, 연구용 `complete` 비율은 회귀 관측에 쓰인다. 별도 상품의 권한·서명·동의·발급은 제품 정책에 따른다. [공통 판단의 구현 범위](research/whole-chart-judgment-20261124.md)
 
@@ -24,20 +24,56 @@
 - 개인 십성의 사회성 표현을 T5 연구 후보로 제한했다. 구현은 10개 십성 × 천간/지지 관측 경로의 20개 T5 규칙이며, 두 경로는 관측 위치의 출처 추적을 위한 구분이다. 별도 가중치·우세·빈도 점수는 없다.
 - 해당 논문은 CC BY-NC 3.0의 2차 연구다. 후보는 연구 전용이며 상업 제품·Preview·Official Reading·Production·Commerce에 연결하지 않는다.
 - 이 논문은 여러 T5를 합치는 일반 관계 T8 규칙을 제공하지 않는다. 기존 일반 관계 T8 연구 후보와 배우자 전용 T8은 별도 범위로 유지한다.
-- [PR #2825](https://github.com/gycha0109-beep/Saju/pull/2825) — HEAD `338069359290da7718f9772a04c5725efa9d6534`; [Whole Chart Regression run 45757062891](https://github.com/gycha0109-beep/Saju/actions/runs/45757062891) 성공. PR은 OPEN / 미병합이다.
+- [PR #2825](https://github.com/gycha0109-beep/Saju/pull/2825) — 당시 코드 HEAD `338069359290da7718f9772a04c5725efa9d6534`; 최신 문서 HEAD `37d7bb4858a41ad9e8f5cd5cd3d3392cb47e59ff`의 [Whole Chart Regression run 45774111557](https://github.com/gycha0109-beep/Saju/actions/runs/45774111557) 성공. Unit 08 기능 브랜치에 `9dcd1e5929a4ac2b2eababb97737f08504a7a118`로 병합됐으며 main 병합은 아니다.
 
 ### Unit 15 — 연간·월간 시나리오 및 근거 연결
 
 - 양력 입춘 전·후, 시각 미상, 평달·윤달, 설날과 양력 대응일 등 8개 실제 출생 입력 시나리오를 기존 연간·월간 연구 실행 경로에 연결했다.
 - Canonical snapshot/hash 일치, 연간 후보의 출처 연결, 월간 실행 Claim의 Rule/Methodology/Source/Fact Path/기간 연결, 시각 미상 및 윤달 경계를 확인한다.
 - 새 T9 의미 규칙, 교차 기간 상호작용, Official Reading·판매 권한은 추가하지 않았다.
-- [PR #2826](https://github.com/gycha0109-beep/Saju/pull/2826) — HEAD `cbf5dd22ec24a3b5465a402948758fd6af6493a7`; [Whole Chart Regression run 45759048762](https://github.com/gycha0109-beep/Saju/actions/runs/45759048762) 성공. PR은 OPEN / 미병합이며 Unit 14 브랜치에 종속된다.
+- [PR #2826](https://github.com/gycha0109-beep/Saju/pull/2826) — 당시 코드 HEAD `cbf5dd22ec24a3b5465a402948758fd6af6493a7`; 최신 HEAD `aa2f164c8ce4131f8f1b186811f6f0b089c762c1`의 [Whole Chart Regression run 45773698354](https://github.com/gycha0109-beep/Saju/actions/runs/45773698354) 성공. Unit 14 기능 브랜치에 `3d5656820af471d0c25534bc030add3aa0324796`로 병합됐다.
 
 ### 다음 순서
 
-1. PR #2825와 #2826의 스택·CI·문서 상태를 보존하며 통합한다. 이미 성공한 전체 회귀를 이유 없이 반복하지 않는다.
-2. 일반 관계 T8은 기존 20개 T8 연구 규칙과 Authority Bridge의 관계별 근거 요구를 대조한다. 2022년 논문을 T8 근거로 승격하지 않는다.
-3. 관계별 근거가 부족하면 기존 제한을 유지하고, 닫힌 11개 규칙·일지 친밀도 대체 후보를 되살리지 않는다. 실제 구현 가능한 다음 gap을 기존 우선순위에 따라 선택한다.
+1. PR #2825와 #2826은 각 지정 기능 브랜치에 병합됐으며 main에는 아직 병합되지 않았다. 성공한 회귀를 이유 없이 반복하지 않는다.
+2. 일반 관계 T8은 Authority Bridge와 종결 revision을 대조한 결과 현재 승인 가능한 새 후보가 없다. 기존 제한과 닫힌 11개 규칙을 유지한다.
+3. 다음 독립 실행 가능 P1 공백으로 Unit 16 연간 T9 Claim 소비 경로를 선택했다. Career T8은 B22의 근거 공백이 해소되지 않아 계속 보류한다.
+
+
+## 2026-11-26 — Unit 16 연간 T9 Claim 소비 경로 연결
+
+관계 T8은 기존 Authority Bridge와 종결 revision에서 새로 승인 가능한 후보가 없는 상태다. Career T8도 B22의 제한적 근거 확보 과제가 남아 있고, 이번 공개 검색에서는 합법적으로 확인 가능한 원문 본문이나 현재 방법론에 맞는 새 근거를 확보하지 못했다. 이 때문에 의미 권한을 임의로 승격하지 않고, 기존 T9 규칙만으로 실행 가능한 Reader 연결 공백을 선택했다.
+
+### 확인한 실행 공백
+
+- 연간 T9 registry·execution·composition selection은 이미 실행되고 있었다.
+- 그러나 결합 연간·월간 Reader는 연간 핵심 섹션을 facts만으로 정적 연구 프로필 투영해 실행·선택된 Claim 여부와 무관하게 표시할 수 있었다.
+- 월간 경로는 실제 선택된 활성 T9 Claim의 Claim ID·Rule·Methodology·Source·Fact Path를 확인한다. 연간 경로도 동일한 증거 계약을 적용해야 한다.
+
+### 구현 내용
+
+- 기존 연간 research pack의 활성·선택된 T9 Claim만 연간 섹션으로 소비한다.
+- Canonical Snapshot/hash, 실행 요청, Registry snapshot, pack version, exact annual period를 검증한다.
+- Claim의 taxonomy, semantic key, annual Ten-God 또는 natal branch-clash fact, Rule·Methodology·Source 관계를 검증한다.
+- Claim이 선택되지 않으면 정적 프로필로 대체하지 않고 해당 섹션을 생략하며 부족 사유를 남긴다.
+- 연간 메뉴와 HTML에 Claim ID, Rule IDs, Source IDs, Fact Paths를 표시한다.
+- 기존 profile-only builder는 문구 검토용으로 남기되, 결합 Reader의 fallback으로 사용하지 않는다.
+
+### 권한 경계
+
+- 기존 T9 규칙과 내부 정책 출처만 사용한다. 신규 의미 규칙·방법론·출처를 추가하지 않는다.
+- 결과는 계속 research-only다. Official Reading, Preview publication, Production, Commerce, 판매 권한은 변경하지 않는다.
+- 관계 T8·Career T8의 미해결 근거를 보완하거나 대체하지 않는다.
+
+### 검증
+
+- 8개 연간·월간 출생 입력 시나리오에서 연간 Claim 선택과 출처 추적을 확인하도록 테스트를 갱신했다.
+- HTML 및 temporal menu가 같은 Claim·Rule·Source·Fact Path를 보존하는지 검사한다.
+- Unit 16 PR CI에 포함된 500건·10,000건 메뉴 감사 결과는 run 완료 후 기록한다.
+
+**브랜치:** saju-final-unit-16-annual-t9-claim-integration  
+**기준 HEAD:** 3d5656820af471d0c25534bc030add3aa0324796  
+**main 병합:** 미실행. 전체 여섯 메뉴 완료 또는 ROADMAP_COMPLETE를 선언하지 않는다.
 
 ## 종전 실측 기반 개선 기록
 

@@ -22,8 +22,12 @@ export interface TemporalResearchMenuSection {
   title: string;
   chartWindows?: GeneralAnnualMonthlyExplorationReport['annualChartReading'];
   text: string;
-  evidenceKind: 'annual_research_profile' | 'monthly_t9_research_claim' | 'canonical_dayun_fact';
-  /** Monthly claim ID is only an internal research Claim, not Official authority. */
+  evidenceKind:
+    | 'annual_research_profile'
+    | 'annual_t9_research_claim'
+    | 'monthly_t9_research_claim'
+    | 'canonical_dayun_fact';
+  /** Annual/monthly IDs identify selected internal research Claims, not Official authority. */
   claimId?: string;
   researchProfileKey?: string;
   candidateRuleId?: string;
@@ -158,13 +162,16 @@ export function buildTemporalResearchMenuReadings(
     section.text.trim().length > 0).map(section => ({
       title: section.title,
       text: section.text,
-      evidenceKind: 'annual_research_profile' as const,
-      // The annual section ID is a research semantic key, not a source ID.
+      evidenceKind: section.claimId
+        ? 'annual_t9_research_claim' as const
+        : 'annual_research_profile' as const,
+      ...(section.claimId === undefined ? {} : { claimId: section.claimId }),
       researchProfileKey: section.id,
       candidateRuleId: section.candidateRuleId,
+      ...(section.ruleIds === undefined ? {} : { ruleIds: section.ruleIds }),
       methodologyId: section.methodologyId,
-      sourceIds: [section.policySourceId],
-      factPaths: [...section.calculationFactPaths],
+      sourceIds: [...(section.sourceIds ?? [section.policySourceId])],
+      factPaths: [...(section.factPaths ?? section.calculationFactPaths)],
       ...(section.kind === 'core' ? {
         ...natalComparison('annual'), stemInteractions: joined.annual.stemInteractions,
         branchLayers: joined.annual.branchLayers,
@@ -263,7 +270,10 @@ export function buildTemporalResearchMenuReadings(
   })) ?? [];
 
   const annualHasMeaning = annual.some(section =>
-    section.evidenceKind === 'annual_research_profile');
+    section.evidenceKind === 'annual_research_profile' ||
+    section.evidenceKind === 'annual_t9_research_claim');
+  const annualHasExecutedClaims = annual.some(section =>
+    section.evidenceKind === 'annual_t9_research_claim');
   const monthlyHasMeaning = monthly.some(section =>
     section.evidenceKind === 'monthly_t9_research_claim');
   const lifeHasFacts = lifeSections.length > 0;
@@ -273,13 +283,15 @@ export function buildTemporalResearchMenuReadings(
       menuId: 'annual', label: '올해',
       availability: annualHasMeaning ? 'partial' : 'unavailable',
       meaning: annualHasMeaning ? 'bounded_research_interpretation' : 'none',
-      statusMessage: annualHasMeaning
-        ? '개인별 연간 연구 문구만 제공됩니다. 연운 Official 해석은 미승인입니다.'
-        : '올해의 개인별 연구 풀이가 아직 실행되지 않았습니다.',
+      statusMessage: annualHasExecutedClaims
+        ? '실행·선택된 연간 연구 T9 Claim을 표시합니다. 연운 Official 해석은 미승인입니다.'
+        : annualHasMeaning
+          ? '개인별 연간 연구 프로필 투영만 제공됩니다. 연운 Official 해석은 미승인입니다.'
+          : '올해의 개인별 연구 풀이가 아직 실행되지 않았습니다.',
       sections: annual,
       missing: joined === undefined
         ? ['연도 및 출생정보를 입력하고 연운 연구 풀이를 실행해야 합니다.']
-        : [...joined.annual.caveats],
+        : [...joined.annual.missing, ...joined.annual.caveats],
       provenance: joinedProvenance,
       authority: AUTHORITY,
     },

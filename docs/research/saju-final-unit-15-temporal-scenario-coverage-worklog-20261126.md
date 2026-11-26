@@ -1,7 +1,9 @@
 # Saju Final Unit 15 — Annual/Monthly Scenario and Evidence-Link Coverage
 
 **Updated:** 2026-11-26  
-**Status:** IMPLEMENTED · WHOLE CHART REGRESSION GREEN · PR OPEN / NOT MERGED
+**Status:** IMPLEMENTED · WHOLE CHART REGRESSION GREEN · MERGED INTO UNIT 14 FEATURE BRANCH (NOT MAIN)
+
+**Post-merge update (2026-11-26):** PR #2826 was merged into the Unit 14 feature branch at 3d5656820af471d0c25534bc030add3aa0324796. The merge did not target main.
 
 ## 1. Roadmap scope
 
@@ -27,7 +29,7 @@ Eight actual input scenarios are exercised through the existing annual/monthly r
 For each scenario, the test verifies:
 
 - The annual/monthly result uses the same canonical snapshot and calculation hash as the production-default calculator.
-- The annual profile projection has candidate rule, methodology, source, and fact-path references but does not invent an executed Claim ID.
+- At Unit 15 completion, the annual profile projection had candidate rule, methodology, source, and fact-path references but did not expose an executed Claim ID. Unit 16 supersedes this joined-Reader behavior by consuming selected annual research T9 Claims and preserving their Claim IDs.
 - Each monthly T9 section has an executed research Claim ID, rule IDs, methodology, source IDs, fact paths, and calculated interval.
 - The temporal menu projection preserves the exact monthly Claim IDs and provenance.
 - Natal context and temporal comparison references retain their own Claim, rule, methodology, source, and fact-path links.
@@ -49,12 +51,12 @@ For each scenario, the test verifies:
 - Base: `saju-final-unit-14-relationship-semantic-coverage`
 - HEAD at update: `cbf5dd22ec24a3b5465a402948758fd6af6493a7`
 - [Whole Chart Regression run 45759048762](https://github.com/gycha0109-beep/Saju/actions/runs/45759048762): **success**
-- PR state: **OPEN / NOT MERGED**
+- PR state at the original worklog snapshot: **OPEN / NOT MERGED**; later merged into the Unit 14 feature branch as recorded above.
 
 The scenario matrix is included in the successful Whole Chart Regression run. A new 500/10,000 menu audit was not executed on this Unit 15 HEAD; prior audit evidence remains historical baseline, not a new Unit 15 result.
 
 ## 6. Next work
 
-1. Preserve the passing run and do not repeat the whole regression without a relevant code change.
-2. Review the stacked PR after Unit 14 documentation/base updates; keep the eight scenario cases and evidence/authority boundaries intact.
-3. Run only targeted tests and the required CI for any subsequent temporal-path code change. Do not add T9 semantic rules, cross-period outcomes, Official Reading, or sale authority under this scenario-coverage task.
+1. Preserve the passing Unit 15 run; do not repeat the whole regression without a relevant code change.
+2. Unit 16 connects the existing annual T9 execution and selected Claims to the joined annual Reader. It adds no semantic rules or cross-period outcomes.
+3. Continue the temporal roadmap only where an actual runtime or evidence gap remains. Keep Official Reading, Production, and sale authority unchanged.

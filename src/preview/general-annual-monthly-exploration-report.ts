@@ -20,7 +20,7 @@ import type {
 } from '../reading/monthly-interpretation-facts.js';
 import { buildTemporalReadingContext } from '../reading/temporal-reading-context.js';
 import {
-  buildGeneralAnnualExplorationReport,
+  buildExecutedGeneralAnnualExplorationReport,
   type GeneralAnnualExplorationReport,
 } from './general-annual-exploration-report.js';
 import {
@@ -164,7 +164,14 @@ export function buildGeneralAnnualMonthlyExplorationReport(
   const annualSelection = buildReadingCompositionEvidence(snapshot, annualExecution, annualRegistry, annualRequest);
   const annualSelected = new Set(annualSelection.selection.selectedClaimIds);
   const annual: GeneralAnnualExplorationReport = {
-    ...buildGeneralAnnualExplorationReport(annualFacts),
+    ...buildExecutedGeneralAnnualExplorationReport(
+      snapshot,
+      annualFacts,
+      annualExecution,
+      annualRegistry,
+      annualRequest,
+      annualSelection.selection.selectedClaimIds,
+    ),
     stemInteractions: readTemporalStemInteractions(annualExecution,
       annualSelected, GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType),
     branchLayers: readTemporalBranchLayers(annualExecution, annualSelected, GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType),
@@ -455,24 +462,29 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
         (section.kind === 'core' ? renderTemporalNatalEvidence(report, 'annual') +
           renderTemporalStemInteractions(report.annual.stemInteractions, 'annual', e) +
           renderTemporalBranchLayers(report.annual.branchLayers, 'annual', e) : '') +
-        '<details><summary>올해 문구의 계산 근거와 연구 출처</summary>' +
-        '<p>해석 범위: 내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)</p>' +
+        '<details><summary>올해 해석의 Claim·계산 근거와 출처</summary>' +
+        '<p>해석 범위: ' +
+        (section.claimId
+          ? '내부 연구 T9 Claim (Official Reading 권한 없음)'
+          : '내부 연구 프로필 투영 (실행된 Claim 아님)') +
+        '</p>' +
+        (section.claimId ? '<p>Claim: ' + e(section.claimId) + '</p>' : '') +
         '<p>문구 프로필: ' +
         e(section.researchProfileId) +
         '</p>' +
         '<p>후보 Claim 유형: ' +
         e(section.candidateClaimType) +
-        '</p><p>후보 규칙: ' +
-        e(section.candidateRuleId) +
+        '</p><p>규칙: ' +
+        e((section.ruleIds ?? [section.candidateRuleId]).join(' · ')) +
         '</p>' +
         '<p>계산 경로: ' +
-        e(section.calculationFactPaths.join(' · ')) +
+        e((section.factPaths ?? section.calculationFactPaths).join(' · ')) +
         '</p>' +
         '<p>연구 방법론: ' +
         e(section.methodologyId) +
         '</p>' +
         '<p>출처: ' +
-        e(section.policySourceId) +
+        e((section.sourceIds ?? [section.policySourceId]).join(' · ')) +
         ' (명하 내부 연구 정책, 독립 고전 근거 아님)</p>' +
         '</details></article>',
     )
@@ -577,6 +589,7 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
           .join('')) +
     '</section>';
   const caveats = [
+    ...report.annual.missing,
     ...report.annual.caveats,
     ...report.monthly.missing,
     ...report.monthly.caveats,

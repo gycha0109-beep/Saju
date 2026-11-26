@@ -3,6 +3,8 @@
 **Updated:** 2026-11-26  
 **Status:** T5 SOCIALITY RESEARCH CANDIDATE IMPLEMENTED · CI GREEN · GENERAL RELATIONSHIP T8 NOT AUTHORIZED
 
+**Post-merge update (2026-11-26):** PR #2825 was merged into the Unit 08 feature branch at 9dcd1e5929a4ac2b2eababb97737f08504a7a118. PR #2826 was subsequently merged into the Unit 14 feature branch at 3d5656820af471d0c25534bc030add3aa0324796. Neither merge targets main.
+
 ## 1. Track scope
 
 This unit concerns `relationship:natal:general` sociality coverage only. Spouse, romance, compatibility, and family-role interpretation remain separate scopes.
@@ -65,15 +67,15 @@ The separate terminal authority-seeking revision v0.7.0 remains a zero-candidate
 - Base: `saju-final-unit-08-role-semantics`
 - HEAD at update: `338069359290da7718f9772a04c5725efa9d6534`
 - [Whole Chart Regression run 45757062891](https://github.com/gycha0109-beep/Saju/actions/runs/45757062891): **success**
-- PR state: **OPEN / NOT MERGED**
+- PR state at the original worklog snapshot: **OPEN / NOT MERGED**. It was later merged into the Unit 08 feature branch; see the post-merge update above.
 
 Unit 15 is a dependent follow-up PR (#2826), not part of this branch's current HEAD. Its scenario matrix and CI status are recorded in the Unit 15 worklog.
 
 ## 6. Next work
 
-1. Preserve the passing Unit 14 CI and review the stacked PR state; do not repeat the full regression without a relevant code change.
-2. Reconcile the existing Relationship T8 research candidate against the Authority Bridge's relationship-specific source requirements. The 2022 paper is not a T8 admission source.
-3. If no qualifying relationship-domain method is available, keep the unsupported T8 claims research-only and move to the next independently executable gap under the six-menu roadmap. Do not revive the terminal 11-rule surface or day-branch intimacy replacement.
+1. Relationship T8 was checked against the Authority Bridge and terminal revision; no new admissible candidate was found. Keep its closed surface closed.
+2. Unit 16 takes the next independently executable P1 gap: connect the existing annual T9 execution and selected Claims to the joined annual Reader without granting Official authority.
+3. Career T8 remains blocked by the existing B22 source-evidence gaps. Do not repeat broad source hunting or promote the T5 sociality paper into T8.
 
 ## 7. Completion state
 

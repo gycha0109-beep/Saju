@@ -101,8 +101,8 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).toContain(report.referenceReading.theme!.text);
     expect(html).toContain(report.referenceReading.theme!.claimId);
     expect(html).toContain(report.annual.sections[0]!.text);
-    expect(html).toContain('올해 문구의 계산 근거와 연구 출처');
-    expect(html).toContain('내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)');
+    expect(html).toContain('올해 해석의 Claim·계산 근거와 출처');
+    expect(html).toContain('내부 연구 T9 Claim (Official Reading 권한 없음)');
     expect(html).toContain('명하 내부 연구 정책, 독립 고전 근거 아님');
     expect(GENERAL_ANNUAL_POLICY_SOURCE.sourceType).toBe('internal_research');
     expect(GENERAL_ANNUAL_POLICY_SOURCE.provenanceTier).toBe('internal');
@@ -128,16 +128,19 @@ describe('one-person annual to monthly source-bound research reading', () => {
     ).toBe(true);
 
     for (const section of report.annual.sections) {
-      expect(section.evidenceStatus).toBe(
-        'research_profile_projection_not_an_executed_official_claim',
-      );
+      expect(section.evidenceStatus).toBe('executed_research_t9_claim_not_official');
+      expect(section.claimId).toBeTruthy();
+      expect(section.ruleIds?.length).toBeGreaterThan(0);
+      expect(section.sourceIds).toContain(GENERAL_ANNUAL_POLICY_SOURCE.sourceId);
+      expect(section.factPaths?.length).toBeGreaterThan(0);
       expect(section.policySourceId).toBe(GENERAL_ANNUAL_POLICY_SOURCE.sourceId);
       expect(section.methodologyId).toBe(GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId);
+      expect(html).toContain(section.claimId!);
       expect(html).toContain(section.researchProfileId);
       expect(html).toContain(section.candidateClaimType);
       expect(html).toContain(section.policySourceId);
       expect(html).toContain(section.methodologyId);
-      for (const path of section.calculationFactPaths) expect(html).toContain(path);
+      for (const path of section.factPaths ?? section.calculationFactPaths) expect(html).toContain(path);
     }
     for (const item of themes) {
       expect(html).toContain(item.title);

@@ -14,6 +14,8 @@ on:
       - 'src/research/**'
       - 'test/whole-chart-judgment.test.ts'
       - 'test/annual-monthly-birth-research-scenario-matrix.test.ts'
+      - 'test/general-annual-exploration-report.test.ts'
+      - 'test/general-annual-monthly-exploration-report.test.ts'
       - 'test/production-relationship-official-reading-issuer.test.ts'
 
 permissions:
@@ -48,6 +50,8 @@ jobs:
           test/relationship-natal-multifactor-consumer-report.test.ts
           test/annual-monthly-birth-research-runtime.test.ts
           test/annual-monthly-birth-research-scenario-matrix.test.ts
+          test/general-annual-exploration-report.test.ts
+          test/general-annual-monthly-exploration-report.test.ts
           test/consumer-reading-request-adapter.test.ts
           test/lunar-leap-institutional.test.ts
           test/production-calculation-service-auth.test.ts
