@@ -1,11 +1,13 @@
 # Saju Final Unit 14 — Relationship Semantic Coverage Worklog
 
 **Updated:** 2026-11-26  
-**Status:** PARTIAL RESEARCH IMPLEMENTATION · T5 SOCIALITY CANDIDATE ADDED · T8 GENERAL RELATIONSHIP NOT AUTHORIZED
+**Status:** T5 SOCIALITY RESEARCH CANDIDATE IMPLEMENTED · CI GREEN · GENERAL RELATIONSHIP T8 NOT AUTHORIZED
 
 ## 1. Track scope
 
-This unit concerns `relationship:natal:general` only. Spouse, romance, compatibility, and family-role interpretations remain separate scopes. The previously terminal 11-rule general-relationship candidate and the day-branch intimacy replacement lead remain closed; neither is restored.
+This unit concerns `relationship:natal:general` sociality coverage only. Spouse, romance, compatibility, and family-role interpretation remain separate scopes.
+
+The terminal 11-rule authority-seeking surface and the day-branch intimacy replacement lead remain closed. Neither is restored by this unit.
 
 ## 2. Source decision
 
@@ -21,7 +23,9 @@ The full official KoreaScience PDF for 이남연·김기승 (2022), `명리학�
 
 The article supports individual Ten-God sociality descriptors and broader human-relations discussion. It does not define a multi-factor relationship synthesis rule. It therefore supports a **T5 sociality facet candidate only**, not T8.
 
-The paper summarizes Kim Ki-seung's modern Myeongri method and cites underlying books that were not independently inspected. The source is non-commercial; the candidate is internal research only and cannot be used in the commercial product without separate rights.
+The paper summarizes Kim Ki-seung's modern Myeongri method and cites underlying books that were not independently inspected. The source is non-commercial; the candidate is internal research only and is not authorized for commercial product use without separately established rights.
+
+The candidate keeps visible-stem and branch observation paths separate for provenance. This distinction does not assert source-backed channel-specific meaning, weighting, dominance, or frequency scoring.
 
 See `relationship-natal-sociality-t5-methodology-evidence-v1.md`.
 
@@ -34,24 +38,43 @@ The official publisher catalogue confirms the 2012-09-01 book identity, ISBN 978
 - Added `src/research/relationship-natal-sociality-t5-candidate.ts`.
 - Added `test/relationship-natal-sociality-t5-candidate.test.ts`.
 - Added `docs/research/relationship-natal-sociality-t5-methodology-evidence-v1.md`.
-- Candidate contains 20 T5 rules (10 Ten Gods × visible-stem/branch channels).
-- Every output is one source-bounded sociality facet; no counting, scoring, dominance, or cross-facet synthesis.
-- No T8 rule, narrative consumer, Preview route, Official Reading route, Production route, or Commerce route is enabled.
-- The earlier incorrect T8 projection candidate based on the 2022 paper was removed before this T5-only implementation.
+- Candidate contains 20 T5 rules (10 Ten Gods × visible-stem/branch observation paths).
+- Each output is one source-bounded sociality facet. No counting, scoring, dominance, cross-facet synthesis, or relationship outcome is produced.
+- No T8 consumer or Preview/Official/Production/Commerce integration was added by this unit.
+
+### Existing Relationship T8 research surface — unchanged
+
+The separate `src/research/relationship-natal-multifactor-candidate.ts` remains a research-only candidate (v0.2.0) with 20 relationship T8 rules. Its pack also contains three day-branch intimacy rules. It is not promoted or changed by this unit.
+
+The existing Authority Bridge review (Issue #1797) states that the currently bound general Ten-God and generation/control sources do not establish the exact Relationship-domain projections. The candidate therefore remains `research`; Preview readiness is not Engine semantic authority.
+
+The separate terminal authority-seeking revision v0.7.0 remains a zero-candidate surface. Spouse T8 source-bound runtime and Compatibility T10 are separate scopes and must not be used as general-relationship authority.
 
 ## 4. Authority and rights boundary
 
-- The article is a secondary source and remains `secondary_only`, `unreviewed`, and `research`.
-- CC BY-NC 3.0 prohibits assuming commercial reuse rights.
-- No spouse, romance, compatibility, family-role, gender-role, relationship-quality, or future-outcome claim is authorized.
+- The 2022 article is secondary evidence; the methodology, pack, and rules remain `research`.
+- CC BY-NC 3.0 does not authorize commercial reuse.
+- No spouse, romance, compatibility, family-role, gender-role, relationship-quality, or future-outcome claim is authorized by this paper.
 - The paper does not supply a T8 multi-factor synthesis method. General-relationship T8 remains closed.
+- No existing official reading, product, or Production authority was changed.
 
-## 5. Next work
+## 5. CI and PR status
 
-1. Run the candidate test and the repository's whole-chart regression suite through CI.
-2. Review the resulting PR and preserve the research-only / non-commercial gate.
-3. Continue the six-menu roadmap without reviving the closed T8 candidates. Any future T8 relationship work requires a source that explicitly defines a multi-factor general-relationship method and has usable commercial rights.
+- PR: [#2825](https://github.com/gycha0109-beep/Saju/pull/2825)
+- Branch: `saju-final-unit-14-relationship-semantic-coverage`
+- Base: `saju-final-unit-08-role-semantics`
+- HEAD at update: `338069359290da7718f9772a04c5725efa9d6534`
+- [Whole Chart Regression run 45757062891](https://github.com/gycha0109-beep/Saju/actions/runs/45757062891): **success**
+- PR state: **OPEN / NOT MERGED**
 
-## 6. Completion state
+Unit 15 is a dependent follow-up PR (#2826), not part of this branch's current HEAD. Its scenario matrix and CI status are recorded in the Unit 15 worklog.
 
-Unit 14 has produced a bounded T5 research candidate. It has **not** completed general-relationship T8 semantic coverage and must not be marked as full menu completion.
+## 6. Next work
+
+1. Preserve the passing Unit 14 CI and review the stacked PR state; do not repeat the full regression without a relevant code change.
+2. Reconcile the existing Relationship T8 research candidate against the Authority Bridge's relationship-specific source requirements. The 2022 paper is not a T8 admission source.
+3. If no qualifying relationship-domain method is available, keep the unsupported T8 claims research-only and move to the next independently executable gap under the six-menu roadmap. Do not revive the terminal 11-rule surface or day-branch intimacy replacement.
+
+## 7. Completion state
+
+Unit 14 has produced a bounded T5 sociality research candidate and passed its Whole Chart Regression CI. It has **not** completed general-relationship T8 semantic coverage, official reading, Production, or the six-menu roadmap. Do not declare `ROADMAP_COMPLETE`.
