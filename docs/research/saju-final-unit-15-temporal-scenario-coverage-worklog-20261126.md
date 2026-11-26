@@ -1,7 +1,7 @@
 # Saju Final Unit 15 — Annual/Monthly Scenario and Evidence-Link Coverage
 
 **Updated:** 2026-11-26  
-**Status:** IMPLEMENTED · CI PENDING
+**Status:** IMPLEMENTED · WHOLE CHART REGRESSION GREEN · PR OPEN / NOT MERGED
 
 ## 1. Roadmap scope
 
@@ -42,6 +42,19 @@ For each scenario, the test verifies:
 - No life-stage meaning is inferred from the Dayun calculation-only menu.
 - No Production, Official Reading, Preview publication, or Commerce authority is changed.
 
-## 5. Next work
+## 5. CI and PR status
 
-Run this matrix with the existing whole-chart regression and 500/10,000 menu audits. Resolve only failures caused by this change; preserve existing scenario-specific evidence and authority boundaries.
+- PR: [#2826](https://github.com/gycha0109-beep/Saju/pull/2826)
+- Branch: `saju-final-unit-15-temporal-scenario-coverage`
+- Base: `saju-final-unit-14-relationship-semantic-coverage`
+- HEAD at update: `cbf5dd22ec24a3b5465a402948758fd6af6493a7`
+- [Whole Chart Regression run 45759048762](https://github.com/gycha0109-beep/Saju/actions/runs/45759048762): **success**
+- PR state: **OPEN / NOT MERGED**
+
+The scenario matrix is included in the successful Whole Chart Regression run. A new 500/10,000 menu audit was not executed on this Unit 15 HEAD; prior audit evidence remains historical baseline, not a new Unit 15 result.
+
+## 6. Next work
+
+1. Preserve the passing run and do not repeat the whole regression without a relevant code change.
+2. Review the stacked PR after Unit 14 documentation/base updates; keep the eight scenario cases and evidence/authority boundaries intact.
+3. Run only targeted tests and the required CI for any subsequent temporal-path code change. Do not add T9 semantic rules, cross-period outcomes, Official Reading, or sale authority under this scenario-coverage task.
