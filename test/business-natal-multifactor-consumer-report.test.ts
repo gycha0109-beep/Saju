@@ -103,7 +103,7 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
         expect(s.observedPositions).toHaveLength(s.observedFactPaths.length);
         expect(s.observedPositions.every(p=>s.paragraph.includes(p))).toBe(true);
         expect(s.observedFactPaths.every(path =>
-          /^derivedFacts\.(tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value|hiddenStems\.month\.value\.[0-2])$/u.test(path)))
+          /^derivedFacts\.(tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value|hiddenStems\.(year|month|day|hour)\.value\.[0-2])$/u.test(path)))
           .toBe(true);
       }
       expect(x.report.mayPublish).toBe(false);
