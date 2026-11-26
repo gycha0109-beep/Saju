@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "fr300-r2e-prep-ast-controlled-pilot-intake-readiness-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-27",
+  "contracts": {
+    "submissionReceipt": "FR300-R2D-SR-AST-CONTROLLED-ACCESS-SUBMISSION-RECEIPT-v1",
+    "intakeReadiness": "FR300-R2E-PREP-AST-CONTROLLED-PILOT-INTAKE-READINESS-v1"
+  },
+  "submission": {
+    "providerRouteRef": "ast_face_official_controlled_access_contact",
+    "providerFacingRequestSent": true,
+    "sentMailboxEvidenceObserved": true,
+    "signedDuaAttached": true,
+    "signedDuaByteLength": 133917,
+    "signedDuaSha256": "838d33c7a6e7b19f123299a02ee6fb027a4cb60aae34a9412c265134d8a175ff",
+    "signatoryIdentityBoundOutsidePublicRepository": true,
+    "signatoryPiiPersistedInPublicRepository": false,
+    "duaSigned": true,
+    "duaSubmitted": true,
+    "controlledAccessRequested": true,
+    "providerAcknowledged": false,
+    "controlledAccessApproved": false,
+    "participantArtifactDownloaded": false
+  },
+  "storageBoundary": {
+    "rawArtifactMayEnterGit": false,
+    "rawArtifactMayEnterGitLfs": false,
+    "rawArtifactMayEnterGithubIssue": false,
+    "rawArtifactMayEnterPublicCloud": false,
+    "thirdPartyPublicCloudProcessingAuthorized": false,
+    "isolatedStorageRequired": true,
+    "publicRepositorySubjectLevelScalarPersistence": false,
+    "publicRepositoryAggregateNonIdentifyingMetricsOnly": true,
+    "providerLandmarksMayIssueFR266Truth": false,
+    "providerLandmarksMayIssueFR297Truth": false
+  },
+  "syntheticFixtureCoverage": {
+    "realParticipantArtifactsUsed": 0,
+    "integrityHashMismatch": "quarantine_integrity_failure",
+    "malformedObj": "artifact_structural_failure",
+    "unknownUnitMaximumAuthority": "M1_device_class_metric_capable",
+    "documentedUnitWithoutExactArtifactBindingMaximumAuthority": "M2_exact_acquisition_export_metric_documented",
+    "exactBoundScalePreservingUnitAuthority": "M3_exact_ast_raw_artifact_scale_source_bound",
+    "sameNeutralSessionWithoutExactPair": "P2_same_neutral_acquisition_condition",
+    "exactManifestAndCapturePair": "P3_exact_controlled_artifact_pair_binding",
+    "p2WithValidatedRegistrationAlternative": "ready_for_external_registration"
+  },
+  "realArtifactAdmission": {
+    "providerApprovalRequired": true,
+    "duaScopeBindingRequired": true,
+    "approvedHandlingEnvironmentRequired": true
+  },
+  "currentGate": {
+    "disposition": "controlled_intake_tooling_ready_provider_response_pending",
+    "providerResponseState": "pending",
+    "controlledIntakeToolingReady": true,
+    "syntheticFixtureValidationOnly": true,
+    "realParticipantArtifactIntakePerformed": false,
+    "realParticipantArtifactInspected": false,
+    "currentRealMetricAuthorityLevel": "M1_device_class_metric_capable",
+    "currentRealPairingAuthorityLevel": "P2_same_neutral_acquisition_condition",
+    "realFR299MetricScaleVerified": false,
+    "realFR299CorrespondenceVerified": false
+  },
+  "authority": {
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29",
+    "paidSpendAuthorized": false,
+    "productionActivated": false,
+    "commerceActivated": false
+  }
+}

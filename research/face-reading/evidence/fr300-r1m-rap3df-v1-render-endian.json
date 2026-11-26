@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "fr300-r1m-v1-render-endian-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "datasetRef": "doi:10.17632/kpdkpcs8zb.3",
+  "datasetVersion": 3,
+  "status": "render_relationship_uniquely_resolved_endian",
+  "workflowRunId": 36195003877,
+  "workflowHeadSha": "bf360373fad9b0c1b30996952f08df4a79fde930",
+  "rawArtifact": {
+    "fileId": "bd54dc2a-b810-4ac1-8f7c-7bcbf5b00085",
+    "filename": "k1_box_xyz_depth.data",
+    "publisherSha256": "sha256:bdaa756600ad3539b7a3d0de7725123bc94e11ed974c775cd11aa3a02b45feb3",
+    "localSha256": "sha256:bdaa756600ad3539b7a3d0de7725123bc94e11ed974c775cd11aa3a02b45feb3",
+    "byteLength": 35462,
+    "digestMatches": true,
+    "sizeMatches": true
+  },
+  "viewArtifact": {
+    "fileId": "448cf03c-9ccd-43db-b348-5fffef023c62",
+    "filename": "k1_box_xyz_depth_view.bmp",
+    "publisherSha256": "sha256:c63502bf94de15226f839fca5264a9d5d255db9e8485c3deda36497490d7b873",
+    "localSha256": "sha256:c63502bf94de15226f839fca5264a9d5d255db9e8485c3deda36497490d7b873",
+    "byteLength": 53694,
+    "digestMatches": true,
+    "sizeMatches": true
+  },
+  "bmpContract": {
+    "width": 119,
+    "height": 149,
+    "signedHeight": 149,
+    "bitsPerPixel": 24,
+    "compression": 0,
+    "rowStride": 360,
+    "bottomUp": true
+  },
+  "hypotheses": {
+    "little": {
+      "pixelCount": 17731,
+      "exactPixelMatches": 17731,
+      "exactPixelMatchRatio": 1,
+      "informativePixels": 8574,
+      "informativeMatches": 8574,
+      "informativeMatchRatio": 1
+    },
+    "big": {
+      "pixelCount": 17731,
+      "exactPixelMatches": 9157,
+      "exactPixelMatchRatio": 0.51644013310022,
+      "informativePixels": 8574,
+      "informativeMatches": 0,
+      "informativeMatchRatio": 0
+    }
+  },
+  "selectedByteOrder": "little",
+  "selectionAuthority": "matched_creator_render_relationship",
+  "numericPlausibilityUsedForSelection": false,
+  "physicalUnitStatus": "blocked",
+  "nativeKinectMetricEquivalence": false,
+  "realFR299BundleEligible": false,
+  "fr300R2Eligible": false,
+  "productMaterialization": "18/29"
+}

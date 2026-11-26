@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "fr300-r1s-zc-minds-exact-public-metadata-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-26",
+  "costPolicy": {
+    "zeroCostOnly": true,
+    "paidSpendAuthorized": false,
+    "subjectArtifactDownloadPerformed": false
+  },
+  "dataset": {
+    "id": "minds_libras_rgbd",
+    "doi": "10.5281/zenodo.4322984"
+  },
+  "publicDistributionMetadata": {
+    "source": "https://live.european-language-grid.eu/catalogue/lcr/21907",
+    "sourceClass": "zenodo_derived_catalog_metadata",
+    "version": "1",
+    "publicationDate": "2020-12-15",
+    "distributionForm": "downloadable",
+    "archiveFormat": "zip",
+    "sizeBytes": 2149770033,
+    "license": "Creative Commons Attribution 4.0 International",
+    "licenseId": "CC-BY-4.0",
+    "exactPublisherArchiveFilename": null,
+    "exactPublisherArchiveChecksum": null,
+    "exactPublisherFileId": null,
+    "adjudication": "partial_metadata_bound_filename_checksum_unresolved"
+  },
+  "creatorSchemaAuthority": {
+    "source": "https://repositorio.ufmg.br/bitstream/1843/39785/3/Tamires_Tese_MINDS.pdf",
+    "sourceClass": "creator_ufmg_doctoral_thesis",
+    "supportedFacts": [
+      "kinect_v2_for_xbox_one_rgbd_capture",
+      "1200_rgbd_samples_described",
+      "150_frames_per_rgbd_sample",
+      "face_text_representation_11_logical_rows_per_frame",
+      "face_text_representation_1650_logical_lines_per_150_frame_sample",
+      "face_model_xyz_1347_points",
+      "face_model_reference_sensor_geometric_center",
+      "face_model_documented_unit_meter",
+      "face_model_documented_x_range_minus_2_2_to_plus_2_2_meter",
+      "face_model_documented_y_range_minus_1_6_to_plus_1_6_meter",
+      "face_model_documented_z_range_0_to_4_meter",
+      "color_face_model_maps_same_1347_indices_to_rgb_frame",
+      "depth_face_model_maps_same_1347_indices_to_depth_frame",
+      "face_rotation_pitch_yaw_roll_euler_documented",
+      "head_pivot_xyz_documented",
+      "animation_units_17_documented",
+      "kinect_nose_tip_index_18_documented",
+      "kinect_nose_top_index_24_documented"
+    ]
+  },
+  "rightsBoundary": {
+    "datasetCopyrightLicenseBound": true,
+    "copyrightLicenseCommercialCompatibility": "cc_by_4_0_allows_commercial_copyright_use_subject_to_license_terms",
+    "participantCommercialProductDevelopmentScope": "unresolved",
+    "participantConsentEvidenceRef": null,
+    "datasetCopyrightLicenseSubstitutesForParticipantConsent": false,
+    "subjectArtifactInspectionAuthorized": false
+  },
+  "metricBoundary": {
+    "creatorDocumentedMeterSemantics": true,
+    "releasedBytesInspected": false,
+    "exactArtifactChecksumBound": false,
+    "releasedByteMeterSurvivability": "unresolved",
+    "quantizationOrNormalizationExcluded": false,
+    "rgb3DSameCaptureBindingIssued": false,
+    "canonicalRegistrationIssued": false,
+    "fr299MetricScaleVerifiedIssued": false
+  },
+  "providerIndexBoundary": {
+    "noseTipIndex": 18,
+    "noseTopIndex": 24,
+    "allowedUses": [
+      "topology_orientation_check",
+      "debugging",
+      "region_of_interest_hint",
+      "correspondence_sanity_check"
+    ],
+    "fr266GroundTruthIssued": false,
+    "fr297GroundTruthIssued": false,
+    "noseTopEquivalentToFR297BridgeRootIssued": false
+  },
+  "gate": {
+    "status": "public_metadata_and_creator_schema_bound_subject_artifact_inspection_blocked",
+    "disposition": "hold_before_subject_artifact_inspection",
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29"
+  },
+  "nextEvidencePriority": [
+    "bind_zenodo_publisher_archive_filename_and_checksum_without_subject_content_inspection",
+    "find_source_authority_for_participant_commercial_product_development_scope",
+    "only_after_rights_gate_inspect_released_face_artifact_metric_survivability",
+    "only_after_metric_survivability_validate_external_canonical_registration"
+  ]
+}

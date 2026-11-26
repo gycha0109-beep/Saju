@@ -1,0 +1,186 @@
+{
+  "schemaVersion": "fr300-r1q-commercial-metric-3d-candidate-refresh-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-26",
+  "predecessorAuthority": {
+    "rap3dfV1": "rejected_for_metric_reference",
+    "rap3dfV2": "rejected_for_metric_reference",
+    "staleR1HPrioritiesSuperseded": true
+  },
+  "searchPolicy": {
+    "rightsFirst": true,
+    "datasetCommercialRightsSeparateFromParticipantProductScope": true,
+    "noCandidateAutoPromotedToFR299": true,
+    "noCandidateAutoPromotedToFR300R2": true
+  },
+  "sourceReceipts": [
+    {
+      "candidate": "bfm2009_example_scans",
+      "source": "https://faces.dmi.unibas.ch/bfm/main.php?id=scans&nav=1-1-1",
+      "sourceClass": "official_dataset_page",
+      "supportedFacts": [
+        "ten_registered_example_3d_face_scans",
+        "matlab_and_ply",
+        "270_deterministic_renderings",
+        "feature_point_projections_available"
+      ]
+    },
+    {
+      "candidate": "bfm2009_example_scans",
+      "source": "https://faces.dmi.unibas.ch/bfm/main.php?id=downloads&nav=1-2",
+      "sourceClass": "official_license_page",
+      "supportedFacts": [
+        "default_license_noncommercial",
+        "commercial_licensing_contact_explicitly_available"
+      ]
+    },
+    {
+      "candidate": "nexdata_vietnam_200_3d_liveness",
+      "source": "https://www.nexdata.ai/datasets/computervision/1259",
+      "sourceClass": "vendor_dataset_page",
+      "supportedFacts": [
+        "paid_dataset_for_commercial_use",
+        "200_people",
+        "iphone_x_or_newer",
+        "public_formats_jpg_xml_json",
+        "3d_face_recognition_use_case"
+      ]
+    },
+    {
+      "candidate": "nexdata_40_3d_2d_liveness",
+      "source": "https://www.nexdata.ai/datasets/computervision/1198",
+      "sourceClass": "vendor_dataset_page",
+      "supportedFacts": [
+        "3d_and_2d_living_face",
+        "40_people",
+        "iphone_x_or_newer",
+        "public_formats_mp4_mov_jpg_xml_json"
+      ]
+    },
+    {
+      "candidate": "facebase_3d_facial_norms",
+      "source": "https://www.facebase.org/resources/human/facial_norms/notes/",
+      "sourceClass": "official_dataset_page",
+      "supportedFacts": [
+        "stereophotogrammetry",
+        "obj_3d_surfaces",
+        "measurements_in_millimeters",
+        "individual_level_access_controlled",
+        "irb_and_dac_required",
+        "surface_files_untextured"
+      ]
+    },
+    {
+      "candidate": "d4fly_multimodal",
+      "source": "https://d4fly.eu/dataset/",
+      "sourceClass": "official_dataset_page",
+      "supportedFacts": [
+        "3d_face_ply_meshes",
+        "31_subjects",
+        "licensed_access"
+      ]
+    },
+    {
+      "candidate": "d4fly_multimodal",
+      "source": "https://d4fly.eu/qa/",
+      "sourceClass": "official_project_policy_page",
+      "supportedFacts": [
+        "shared_only_for_research_purposes"
+      ]
+    },
+    {
+      "candidate": "uea_3d_face",
+      "source": "https://uea3dfaces.org/",
+      "sourceClass": "official_dataset_page",
+      "supportedFacts": [
+        "high_resolution_scanning_ground_truth",
+        "paired_photographs",
+        "free_noncommercial_academic_research_only"
+      ]
+    },
+    {
+      "candidate": "stirling_esrc_3d_face",
+      "source": "https://pics.stir.ac.uk/ESRC/",
+      "sourceClass": "official_dataset_page",
+      "supportedFacts": [
+        "di3d_obj_scans",
+        "2d_and_stereo_faces",
+        "license_agreement_required"
+      ]
+    },
+    {
+      "candidate": "texas_3dfrd",
+      "source": "https://live.ece.utexas.edu/research/texas3dfr/",
+      "sourceClass": "official_dataset_page",
+      "supportedFacts": [
+        "1149_color_range_pairs",
+        "0_32_mm_resolution",
+        "simultaneously_captured_and_registered",
+        "commercial_use_forbidden"
+      ]
+    },
+    {
+      "candidate": "iiitd_kinect_rgbd",
+      "source": "https://www.iab-rubric.org/resources/biometric-datasets/face",
+      "sourceClass": "official_dataset_page",
+      "supportedFacts": [
+        "rgbd_face_database",
+        "research_and_educational_only",
+        "commercial_use_forbidden"
+      ]
+    },
+    {
+      "candidate": "notre_dame_3d_tec",
+      "source": "https://cvrl.nd.edu/projects/data/",
+      "sourceClass": "official_dataset_page",
+      "supportedFacts": [
+        "428_minolta_vivid_910_scans",
+        "signed_license_required"
+      ]
+    },
+    {
+      "candidate": "lock3dface",
+      "source": "https://irip.buaa.edu.cn/lock3dface/index.html",
+      "sourceClass": "official_dataset_page",
+      "supportedFacts": [
+        "5671_rgbd_video_clips",
+        "509_individuals",
+        "signed_agreement_required"
+      ]
+    },
+    {
+      "candidate": "eurecom_kinect_face",
+      "source": "https://rgb-d.eurecom.fr/",
+      "sourceClass": "official_dataset_page",
+      "supportedFacts": [
+        "rgb_depth_and_associated_3d",
+        "52_people",
+        "organization_usage_agreement_required"
+      ]
+    }
+  ],
+  "screeningSummary": {
+    "candidateCount": 20,
+    "qualifyNext": [
+      "bfm2009_example_scans",
+      "nexdata_vietnam_200_3d_liveness",
+      "nexdata_40_3d_2d_liveness"
+    ],
+    "holdRights": [
+      "frgc_v2",
+      "facebase_3d_facial_norms",
+      "notre_dame_3d_tec",
+      "lock3dface",
+      "eurecom_kinect_face"
+    ],
+    "terminalRejectCount": 12,
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0
+  },
+  "nextEvidencePriority": [
+    "bfm2009_commercial_license_scope_and_official_metric_unit_qualification",
+    "nexdata_metric_artifact_schema_and_participant_product_scope_qualification",
+    "custom_metric_3d_capture_cost_and_consent_design_if_market_candidates_fail"
+  ],
+  "productMaterialization": "18/29"
+}

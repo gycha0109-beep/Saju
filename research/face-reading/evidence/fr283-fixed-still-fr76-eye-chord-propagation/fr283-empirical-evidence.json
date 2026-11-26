@@ -1,0 +1,317 @@
+{
+  "schemaVersion": "fr283-fixed-still-fr76-eye-chord-propagation-empirical-evidence-v1",
+  "contractVersion": "FR283-FIXED-STILL-FR76-EYE-CHORD-PROPAGATION-v1",
+  "runA": "2026-09-24T06:20:48.649Z",
+  "runB": "2026-09-24T06:20:59.799Z",
+  "runtime": "@mediapipe/tasks-vision@0.10.35 / IMAGE",
+  "modelSha256": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
+  "visionBundleSha256": "55d7ab624fbb70dcc5adc4ae6d7ea9cfcb569139d3dbfbf2b1deafcb966bc0fe",
+  "scalarIdentityExcludingGeneratedAt": true,
+  "allSixTracedFinalMetricMatchFR76": true,
+  "allSixTracedPoseMatchFR76": true,
+  "conditions": [
+    {
+      "condition": "front",
+      "stages": [
+        {
+          "stage": "screen_pixels_y_up",
+          "unit": "pixel",
+          "horizontalSpanMean": 165.24232864379883,
+          "signedVerticalRiseMean": 28.41162109375,
+          "angleMeanDeg": 9.750514725530863
+        },
+        {
+          "stage": "projected_near_plane",
+          "unit": "virtual_camera_near_plane_unit",
+          "horizontalSpanMean": 0.09888733322948981,
+          "signedVerticalRiseMean": 0.017002601365803838,
+          "angleMeanDeg": 9.750514725530872
+        },
+        {
+          "stage": "first_intermediate",
+          "unit": "virtual_camera_near_plane_unit",
+          "horizontalSpanMean": 0.09888733322948981,
+          "signedVerticalRiseMean": 0.017002601365803838,
+          "angleMeanDeg": 9.750514725530872
+        },
+        {
+          "stage": "second_intermediate",
+          "unit": "fr76_internal_coordinate_unit",
+          "horizontalSpanMean": 2.7606737696910697,
+          "signedVerticalRiseMean": 0.48061901087634634,
+          "angleMeanDeg": 9.872678527513582
+        },
+        {
+          "stage": "runtime_metric_pre_pose",
+          "unit": "fr76_internal_coordinate_unit",
+          "horizontalSpanMean": 2.5705882143737315,
+          "signedVerticalRiseMean": 0.44758500060238837,
+          "angleMeanDeg": 9.872678527513582
+        },
+        {
+          "stage": "canonical_metric_post_pose",
+          "unit": "centimeter",
+          "horizontalSpanMean": 2.572198341480504,
+          "signedVerticalRiseMean": 0.4043820669727728,
+          "angleMeanDeg": 8.932932491118898
+        }
+      ],
+      "scales": {
+        "firstIterationScaleMean": 0.03744439822553207,
+        "secondIterationScaleMean": 1.073953609225092,
+        "totalScaleMean": 0.04021490247829777
+      }
+    },
+    {
+      "condition": "high_angle",
+      "stages": [
+        {
+          "stage": "screen_pixels_y_up",
+          "unit": "pixel",
+          "horizontalSpanMean": 160.18878936767578,
+          "signedVerticalRiseMean": 34.553558349609375,
+          "angleMeanDeg": 12.173120335737691
+        },
+        {
+          "stage": "projected_near_plane",
+          "unit": "virtual_camera_near_plane_unit",
+          "horizontalSpanMean": 0.09586310192938798,
+          "signedVerticalRiseMean": 0.02067817166960914,
+          "angleMeanDeg": 12.173120335737694
+        },
+        {
+          "stage": "first_intermediate",
+          "unit": "virtual_camera_near_plane_unit",
+          "horizontalSpanMean": 0.09586310192938798,
+          "signedVerticalRiseMean": 0.02067817166960914,
+          "angleMeanDeg": 12.173120335737694
+        },
+        {
+          "stage": "second_intermediate",
+          "unit": "fr76_internal_coordinate_unit",
+          "horizontalSpanMean": 2.7719058808824233,
+          "signedVerticalRiseMean": 0.588117860782006,
+          "angleMeanDeg": 11.986290435719667
+        },
+        {
+          "stage": "runtime_metric_pre_pose",
+          "unit": "fr76_internal_coordinate_unit",
+          "horizontalSpanMean": 2.5975818464919715,
+          "signedVerticalRiseMean": 0.5511422467973861,
+          "angleMeanDeg": 11.986290435719667
+        },
+        {
+          "stage": "canonical_metric_post_pose",
+          "unit": "centimeter",
+          "horizontalSpanMean": 2.5993579593229654,
+          "signedVerticalRiseMean": 0.42501338438016734,
+          "angleMeanDeg": 9.286831546793888
+        }
+      ],
+      "scales": {
+        "firstIterationScaleMean": 0.03536674042721795,
+        "secondIterationScaleMean": 1.0671097697284009,
+        "totalScaleMean": 0.03773988539231684
+      }
+    },
+    {
+      "condition": "low_angle",
+      "stages": [
+        {
+          "stage": "screen_pixels_y_up",
+          "unit": "pixel",
+          "horizontalSpanMean": 169.37860107421875,
+          "signedVerticalRiseMean": 7.9579925537109375,
+          "angleMeanDeg": 2.706869977890239
+        },
+        {
+          "stage": "projected_near_plane",
+          "unit": "virtual_camera_near_plane_unit",
+          "horizontalSpanMean": 0.10136263694562539,
+          "signedVerticalRiseMean": 0.0047623672938728046,
+          "angleMeanDeg": 2.7068699778902268
+        },
+        {
+          "stage": "first_intermediate",
+          "unit": "virtual_camera_near_plane_unit",
+          "horizontalSpanMean": 0.10136263694562539,
+          "signedVerticalRiseMean": 0.0047623672938728046,
+          "angleMeanDeg": 2.7068699778902268
+        },
+        {
+          "stage": "second_intermediate",
+          "unit": "fr76_internal_coordinate_unit",
+          "horizontalSpanMean": 2.8950317134934247,
+          "signedVerticalRiseMean": 0.16207116409606448,
+          "angleMeanDeg": 3.2200050971954233
+        },
+        {
+          "stage": "runtime_metric_pre_pose",
+          "unit": "fr76_internal_coordinate_unit",
+          "horizontalSpanMean": 2.7142807986077937,
+          "signedVerticalRiseMean": 0.1518257611092072,
+          "angleMeanDeg": 3.2200050971954246
+        },
+        {
+          "stage": "canonical_metric_post_pose",
+          "unit": "centimeter",
+          "horizontalSpanMean": 2.7150885748821665,
+          "signedVerticalRiseMean": 0.24501774680093868,
+          "angleMeanDeg": 5.170770713557902
+        }
+      ],
+      "scales": {
+        "firstIterationScaleMean": 0.037888169891295634,
+        "secondIterationScaleMean": 1.0666286110817325,
+        "totalScaleMean": 0.04041210786928462
+      }
+    }
+  ],
+  "frontRelativeContrasts": [
+    {
+      "condition": "high_angle",
+      "baselineCondition": "front",
+      "stages": [
+        {
+          "stage": "screen_pixels_y_up",
+          "unit": "pixel",
+          "deltaHorizontalSpan": -5.053539276123047,
+          "deltaHorizontalSpanPercentOfFront": -3.058259537734186,
+          "deltaSignedVerticalRise": 6.141937255859375,
+          "deltaSignedVerticalRisePercentOfFront": 21.617693814769623,
+          "deltaAngleDeg": 2.422605610206828
+        },
+        {
+          "stage": "projected_near_plane",
+          "unit": "virtual_camera_near_plane_unit",
+          "deltaHorizontalSpan": -0.0030242313001018345,
+          "deltaHorizontalSpanPercentOfFront": -3.058259537734161,
+          "deltaSignedVerticalRise": 0.0036755703038053034,
+          "deltaSignedVerticalRisePercentOfFront": 21.617693814769574,
+          "deltaAngleDeg": 2.4226056102068227
+        },
+        {
+          "stage": "first_intermediate",
+          "unit": "virtual_camera_near_plane_unit",
+          "deltaHorizontalSpan": -0.0030242313001018345,
+          "deltaHorizontalSpanPercentOfFront": -3.058259537734161,
+          "deltaSignedVerticalRise": 0.0036755703038053034,
+          "deltaSignedVerticalRisePercentOfFront": 21.617693814769574,
+          "deltaAngleDeg": 2.4226056102068227
+        },
+        {
+          "stage": "second_intermediate",
+          "unit": "fr76_internal_coordinate_unit",
+          "deltaHorizontalSpan": 0.011232111191353589,
+          "deltaHorizontalSpanPercentOfFront": 0.4068612276708996,
+          "deltaSignedVerticalRise": 0.10749884990565967,
+          "deltaSignedVerticalRisePercentOfFront": 22.36674943624254,
+          "deltaAngleDeg": 2.113611908206085
+        },
+        {
+          "stage": "runtime_metric_pre_pose",
+          "unit": "fr76_internal_coordinate_unit",
+          "deltaHorizontalSpan": 0.02699363211824002,
+          "deltaHorizontalSpanPercentOfFront": 1.0500955371732472,
+          "deltaSignedVerticalRise": 0.10355724619499773,
+          "deltaSignedVerticalRisePercentOfFront": 23.136889318369427,
+          "deltaAngleDeg": 2.113611908206085
+        },
+        {
+          "stage": "canonical_metric_post_pose",
+          "unit": "centimeter",
+          "deltaHorizontalSpan": 0.027159617842461348,
+          "deltaHorizontalSpanPercentOfFront": 1.0558912741864546,
+          "deltaSignedVerticalRise": 0.020631317407394545,
+          "deltaSignedVerticalRisePercentOfFront": 5.101936780194474,
+          "deltaAngleDeg": 0.35389905567499014
+        }
+      ]
+    },
+    {
+      "condition": "low_angle",
+      "baselineCondition": "front",
+      "stages": [
+        {
+          "stage": "screen_pixels_y_up",
+          "unit": "pixel",
+          "deltaHorizontalSpan": 4.136272430419922,
+          "deltaHorizontalSpanPercentOfFront": 2.5031554955487167,
+          "deltaSignedVerticalRise": -20.453628540039062,
+          "deltaSignedVerticalRisePercentOfFront": -71.99036081942702,
+          "deltaAngleDeg": -7.043644747640624
+        },
+        {
+          "stage": "projected_near_plane",
+          "unit": "virtual_camera_near_plane_unit",
+          "deltaHorizontalSpan": 0.0024753037161355795,
+          "deltaHorizontalSpanPercentOfFront": 2.50315549554875,
+          "deltaSignedVerticalRise": -0.012240234071931033,
+          "deltaSignedVerticalRisePercentOfFront": -71.99036081942715,
+          "deltaAngleDeg": -7.043644747640645
+        },
+        {
+          "stage": "first_intermediate",
+          "unit": "virtual_camera_near_plane_unit",
+          "deltaHorizontalSpan": 0.0024753037161355795,
+          "deltaHorizontalSpanPercentOfFront": 2.50315549554875,
+          "deltaSignedVerticalRise": -0.012240234071931033,
+          "deltaSignedVerticalRisePercentOfFront": -71.99036081942715,
+          "deltaAngleDeg": -7.043644747640645
+        },
+        {
+          "stage": "second_intermediate",
+          "unit": "fr76_internal_coordinate_unit",
+          "deltaHorizontalSpan": 0.134357943802355,
+          "deltaHorizontalSpanPercentOfFront": 4.866853348535643,
+          "deltaSignedVerticalRise": -0.31854784678028186,
+          "deltaSignedVerticalRisePercentOfFront": -66.27866138699991,
+          "deltaAngleDeg": -6.652673430318158
+        },
+        {
+          "stage": "runtime_metric_pre_pose",
+          "unit": "fr76_internal_coordinate_unit",
+          "deltaHorizontalSpan": 0.14369258423406217,
+          "deltaHorizontalSpanPercentOfFront": 5.589871743384997,
+          "deltaSignedVerticalRise": -0.29575923949318117,
+          "deltaSignedVerticalRisePercentOfFront": -66.0788987779147,
+          "deltaAngleDeg": -6.652673430318157
+        },
+        {
+          "stage": "canonical_metric_post_pose",
+          "unit": "centimeter",
+          "deltaHorizontalSpan": 0.1428902334016624,
+          "deltaHorizontalSpanPercentOfFront": 5.5551794392114315,
+          "deltaSignedVerticalRise": -0.1593643201718341,
+          "deltaSignedVerticalRisePercentOfFront": -39.40934408017757,
+          "deltaAngleDeg": -3.762161777560996
+        }
+      ]
+    }
+  ],
+  "descriptiveAdjudication": {
+    "lowAngleProjectionPreservesScreenAngleAndRiseRatio": true,
+    "lowAngleSecondIntermediateAttenuatesSignedVerticalRisePercentFrom": -71.99036081942702,
+    "lowAngleSecondIntermediateAttenuatesSignedVerticalRisePercentTo": -66.27866138699991,
+    "lowAnglePrePoseAngleDeltaDeg": -6.652673430318157,
+    "lowAngleCanonicalPostPoseSignedVerticalRisePercent": -39.40934408017757,
+    "lowAngleCanonicalPostPoseAngleDeltaDeg": -3.762161777560996,
+    "dominantAttenuationTransition": "runtime_metric_pre_pose_to_canonical_metric_post_pose",
+    "interpretation": "descriptive_only"
+  },
+  "boundaries": {
+    "rawImagePersisted": false,
+    "rawLandmarksPersisted": false,
+    "rawIntermediateLandmarksPersisted": false,
+    "poseMatrixPersisted": false,
+    "providerRunRefPersisted": false,
+    "thresholdIssued": false,
+    "calibrationIssued": false,
+    "correctionFormulaIssued": false,
+    "causalClassificationIssued": false,
+    "frozenMetricReplaced": false,
+    "traditionalBindingIssued": false,
+    "productionActivated": false,
+    "commerceActivated": false
+  }
+}

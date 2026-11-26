@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "fr281-fixed-still-metric-eye-chord-empirical-evidence-v1",
+  "contractVersion": "FR281-FIXED-STILL-FR76-METRIC-EYE-CHORD-DECOMPOSITION-v1",
+  "runA": "2026-09-24T05:26:08.897Z",
+  "runB": "2026-09-24T05:26:23.094Z",
+  "scalarIdentityExcludingGeneratedAt": true,
+  "fr208Fr76AngleIdentityAllSix": true,
+  "observations": [
+    {"imageLabel":"front_1","condition":"front","fr76AngleDeg":8.46205453919191,"metricHorizontalSpanCm":2.5660789443331664,"metricSignedVerticalRiseCm":0.3817879417714438,"screenAngleDeg":9.49906284643758,"screenHorizontalSpanPx":167.40115356445312,"screenSignedVerticalRisePx":28.0352783203125},
+    {"imageLabel":"front_2","condition":"front","fr76AngleDeg":9.403810443045884,"metricHorizontalSpanCm":2.5783177386278417,"metricSignedVerticalRiseCm":0.42697619217410177,"screenAngleDeg":10.001966604624146,"screenHorizontalSpanPx":163.08350372314453,"screenSignedVerticalRisePx":28.7879638671875},
+    {"imageLabel":"high_1","condition":"high_angle","fr76AngleDeg":9.114969047359235,"metricHorizontalSpanCm":2.6010515838677364,"metricSignedVerticalRiseCm":0.4172710748355013,"screenAngleDeg":11.679727984608459,"screenHorizontalSpanPx":157.13145446777344,"screenSignedVerticalRisePx":32.45086669921875},
+    {"imageLabel":"high_2","condition":"high_angle","fr76AngleDeg":9.458694046228542,"metricHorizontalSpanCm":2.597664334778195,"metricSignedVerticalRiseCm":0.4327556939248334,"screenAngleDeg":12.666512686866923,"screenHorizontalSpanPx":163.24612426757812,"screenSignedVerticalRisePx":36.65625},
+    {"imageLabel":"low_1","condition":"low_angle","fr76AngleDeg":4.276210118534825,"metricHorizontalSpanCm":2.7592977989871805,"metricSignedVerticalRiseCm":0.20625175230307002,"screenAngleDeg":1.4075722672722142,"screenHorizontalSpanPx":171.82379150390625,"screenSignedVerticalRisePx":4.226654052734375},
+    {"imageLabel":"low_2","condition":"low_angle","fr76AngleDeg":6.065331308580978,"metricHorizontalSpanCm":2.6708793507771524,"metricSignedVerticalRiseCm":0.28378374129880735,"screenAngleDeg":4.006167688508264,"screenHorizontalSpanPx":166.93341064453125,"screenSignedVerticalRisePx":11.6893310546875}
+  ],
+  "conditions": [
+    {"condition":"front","fr76AngleDeg":{"mean":8.932932491118898,"span":0.9417559038539736},"metricHorizontalSpanCm":{"mean":2.572198341480504,"span":0.012238794294675337},"metricSignedVerticalRiseCm":{"mean":0.4043820669727728,"span":0.04518825040265795},"screenAngleDeg":{"mean":9.750514725530863,"span":0.5029037581865659},"screenHorizontalSpanPx":{"mean":165.24232864379883,"span":4.317649841308594},"screenSignedVerticalRisePx":{"mean":28.41162109375,"span":0.752685546875}},
+    {"condition":"high_angle","fr76AngleDeg":{"mean":9.286831546793888,"span":0.3437249988693072},"metricHorizontalSpanCm":{"mean":2.5993579593229654,"span":0.0033872490895414664},"metricSignedVerticalRiseCm":{"mean":0.42501338438016734,"span":0.015484619089332075},"screenAngleDeg":{"mean":12.173120335737691,"span":0.9867847022584648},"screenHorizontalSpanPx":{"mean":160.18878936767578,"span":6.1146697998046875},"screenSignedVerticalRisePx":{"mean":34.553558349609375,"span":4.20538330078125}},
+    {"condition":"low_angle","fr76AngleDeg":{"mean":5.170770713557902,"span":1.7891211900461528},"metricHorizontalSpanCm":{"mean":2.7150885748821665,"span":0.08841844821002809},"metricSignedVerticalRiseCm":{"mean":0.24501774680093868,"span":0.07753198899573732},"screenAngleDeg":{"mean":2.706869977890239,"span":2.59859542123605},"screenHorizontalSpanPx":{"mean":169.37860107421875,"span":4.890380859375},"screenSignedVerticalRisePx":{"mean":7.9579925537109375,"span":7.462677001953125}}
+  ],
+  "frontRelativeContrasts": [
+    {"condition":"high_angle","deltaFR76AngleDeg":0.35389905567499014,"deltaMetricHorizontalSpanCm":0.027159617842461348,"deltaMetricSignedVerticalRiseCm":0.020631317407394545,"deltaScreenAngleDeg":2.422605610206828,"deltaScreenHorizontalSpanPx":-5.053539276123047,"deltaScreenSignedVerticalRisePx":6.141937255859375},
+    {"condition":"low_angle","deltaFR76AngleDeg":-3.762161777560996,"deltaMetricHorizontalSpanCm":0.1428902334016624,"deltaMetricSignedVerticalRiseCm":-0.1593643201718341,"deltaScreenAngleDeg":-7.043644747640624,"deltaScreenHorizontalSpanPx":4.136272430419922,"deltaScreenSignedVerticalRisePx":-20.453628540039062}
+  ],
+  "descriptiveRatios": {
+    "lowVsFrontMetricHorizontalSpanPercent": 5.555179439211422,
+    "lowVsFrontMetricSignedVerticalRisePercent": -39.40934408017757,
+    "lowVsFrontScreenHorizontalSpanPercent": 2.5031554955487145,
+    "lowVsFrontScreenSignedVerticalRisePercent": -71.99036081942702
+  },
+  "boundaries": {
+    "rawImagePersisted": false,
+    "rawScreenLandmarksPersisted": false,
+    "rawMetricLandmarksPersisted": false,
+    "poseMatrixPersisted": false,
+    "providerRunRefPersisted": false,
+    "thresholdIssued": false,
+    "calibrationIssued": false,
+    "correctionFormulaIssued": false,
+    "causalClassificationIssued": false,
+    "frozenMetricReplaced": false,
+    "traditionalBindingIssued": false,
+    "productionActivated": false,
+    "commerceActivated": false
+  }
+}

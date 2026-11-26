@@ -1,0 +1,2427 @@
+{
+  "schemaVersion": "face-reading-migration-manifest/v1",
+  "source": {
+    "repository": "gycha0109-beep/MyeongHa",
+    "commit": "09fdc7839f2452bcc8022ba368b03d72b23f31dc",
+    "rootTreeSha": "8742baab2f3048d906a6618b2f23deb309bfd9f8",
+    "packageTreeSha": "2f31d15ebfbc4ec42b3e59165600d88ee70bb58c",
+    "packageSrcTreeSha": "a80070623b85db0a11dc924b2bbc58553c4c7c74",
+    "packageJsonBlobSha": "7fc9dc90c84b6aabc9887ff974546308466812e2"
+  },
+  "target": {
+    "repository": "gycha0109-beep/Saju",
+    "baseCommit": "6483b0bb8821e8ed2a67b699d51ce9e1aa2b07d3",
+    "path": "packages/face-reading",
+    "migrationBranch": "migration/face-reading-from-myeongha"
+  },
+  "invariants": {
+    "sourcePackageFileCount": 91,
+    "packageName": "@myeongha/face-reading",
+    "packageVersion": "0.0.0",
+    "mediapipeTasksVisionVersion": "0.10.35",
+    "historicalProvenanceMustRemainUnchanged": true,
+    "methodologySemanticChangesAllowed": false
+  },
+  "inventoryMethod": {
+    "canonicalPathClasses": [
+      "packages/face-reading/**",
+      "test/face-reading*.test.*",
+      "scripts/face-reading-* and scripts/face-reading/**",
+      ".github/workflows/face-reading*.yml|yaml",
+      "research-evidence/face-reading/**",
+      "docs/FACE_READING*.md"
+    ],
+    "supplementaryReferenceGrep": "(@myeongha/face-reading|packages/face-reading|face-reading|Face Reading|FACE_READING)"
+  },
+  "categoryCounts": {
+    "workflow": 40,
+    "doc": 95,
+    "reference": 3,
+    "package": 91,
+    "evidence": 11,
+    "script": 16,
+    "test": 84
+  },
+  "files": [
+    {
+      "path": ".github/workflows/face-reading-adjudicated-provider-raw-join.yml",
+      "blobSha": "c02f914176161cde71a0950b3c29daf2625e813f",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-browser-image-decode-verification.yml",
+      "blobSha": "2baf4b407e408fc22e7bfa93fae4ab0b20c80b0a",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-browser-pixel-raster-evidence.yml",
+      "blobSha": "1d08905a14a4dd0e32d719b343e91561907d6a20",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-capture-quality-raw-observations.yml",
+      "blobSha": "8199d7e39a38dc2406b9dce17850541358a9c746",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-central-chin-external-provenance-verification.yml",
+      "blobSha": "4e90199862a35a75be676f5a6ba9972563b27f3a",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-central-chin-external-trust-evidence-intake.yml",
+      "blobSha": "097219b98a3195993508ee9a50bb8fcb01e9c2e0",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-central-chin-paired-acquisition-provenance.yml",
+      "blobSha": "81e40e8bb09cb0745dcc06d1ea3efc148f29dcd3",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-central-chin-paired-dataset-ledger.yml",
+      "blobSha": "47961cb1a2d0edd715958350bb30a35d1cf5a451",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-central-chin-paired-evidence-intake.yml",
+      "blobSha": "0b7106921f0976056fd700928d5e98f4900d1fa7",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-central-chin-reference-trace-protocol.yml",
+      "blobSha": "446defb83ece2103c1082c3527dfd1e97f01092e",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-chin-contour-endpoint-candidate-admission.yml",
+      "blobSha": "7ecb42bf232c4f0c56c3b71e2a331ac1da8dba3f",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-chin-inferior-contour-scope-adjudication.yml",
+      "blobSha": "3814d1be04f7d05f972e69487cf9b15db047d23b",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-default-network-runtime-e2e.yml",
+      "blobSha": "48274e69a34fb615266d30ec045be6865582469c",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-dige-chin-contour-evidence-bridge.yml",
+      "blobSha": "ad7b196f14ddc261c555f6649b4669d41f404892",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-external-human-reference-review-attestation.yml",
+      "blobSha": "5e2e2e109964b7a1a4935840930bab8764a4a603",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-eyebrow-component-role-probe.yml",
+      "blobSha": "4fbb21b6b88952772ae58bfdfc2b1db2b735abce",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-face-oval-inferior-extremum-probe.yml",
+      "blobSha": "16eb68021287a45bca5d1761140c71c5688bfeae",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-frdata224-batch-a-acquisition.yml",
+      "blobSha": "19de86d2f73893ff474a32f9a1d0c992a8a20967",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-frdata224-batch-a-annotation-packet.yml",
+      "blobSha": "99cf98c247bcfbae376df778f8c3a8edaeaef02d",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-frdata224-wikimedia-access-smoke.yml",
+      "blobSha": "c710c957ee4f285bd51e6455c7985449e1bffa70",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-human-construct-reference-admission.yml",
+      "blobSha": "8db0385c35802fe56ea57a217aa71e9e34c1d015",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-image-dimension-verification.yml",
+      "blobSha": "d9de7a370f7d07169de451403da936fd52f7ac7d",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-independent-face-annotation-packet.yml",
+      "blobSha": "d6e1bd522ece4ecf22e171cd9fda7e1f09f75629",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-independent-face-ground-truth.yml",
+      "blobSha": "a80b308e516c54ddb9a8b668e712c65dcb2d0691",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-independent-face-source-asset-intake.yml",
+      "blobSha": "71c21d7763579520be77b75b781fc899dc0c76f8",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-independent-face-source-asset-storage.yml",
+      "blobSha": "545152220313f1753e9b585a4e11508d3749311f",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-independent-human-adjudication.yml",
+      "blobSha": "f5613de9f3c4835346507ca9b942f644648b0ffb",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-menton-dataset-intake.yml",
+      "blobSha": "da8b9c047790ebb3b044a6b0cfe72fc5ed0b0654",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-menton-side-reference-trace-raw-join.yml",
+      "blobSha": "b9de60eea6057bc2d53e8b2e9d4a6b1995d544af",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-metric-eligibility-readiness.yml",
+      "blobSha": "b58225615b557b8567556bcd853df882698b6fd5",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-npm-artifact-byte-attestation.yml",
+      "blobSha": "37f62fc7fee0775955fc1fa93917d90b127c8d14",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-provider-detection-construct-validation.yml",
+      "blobSha": "e50c0fcfd1ac5648487c6e44f30ea8b23d8906d6",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-provider-face-candidate-observations.yml",
+      "blobSha": "2fbbd70a6f63c9e4844bde5a106d9c760920eb0f",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-provider-face-count-raw-scoring.yml",
+      "blobSha": "f709167eeecf35b12fc75ce9cc333b951f72a025",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-provider-independent-chin-contour-geometry.yml",
+      "blobSha": "22866a5f9eb8d7c96d5f272bb54636cb02b54397",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-provider-run-identity-binding.yml",
+      "blobSha": "26d4b9e876b23c263900df93aca68f4907d7f917",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-real-runtime-e2e.yml",
+      "blobSha": "50afbd774ccb0e055388d8c71dbcb1e5875f45bf",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-soft-tissue-mental-tubercle-definition-gap.yml",
+      "blobSha": "16226204681009bfd1d1b414699b4071bdaf0ffa",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-source-build-recipe-attestation.yml",
+      "blobSha": "89c97698723780e79c178033c7786208c8de89ea",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": ".github/workflows/face-reading-source-reproducible-build-probe.yml",
+      "blobSha": "3b370ce0cc31a792e61eca786ec136cb81ec0e5b",
+      "mode": "100644",
+      "category": "workflow",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_ENGINE_AUTHORITY_V0.3.md",
+      "blobSha": "03905eee8e5589702704137c4bc7d833885d86f3",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FACELAB_COMPATIBILITY_V0.md",
+      "blobSha": "290b4000777b620cc4207969f70f125936cedd1c",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA01_MENTON_DATASET_INTAKE.md",
+      "blobSha": "55d22643ab43fa9f403c13462c28e6bc01e142ea",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA02_IMAGE_DIMENSION_VERIFICATION.md",
+      "blobSha": "3f0af84c70db831a3ef624030ca6ebeaec6f25f5",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA03_BROWSER_IMAGE_DECODE_VERIFICATION.md",
+      "blobSha": "9d17ce227345d1d3f3540e4162fc8e9d6a27db21",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA04_BROWSER_PIXEL_RASTER_EVIDENCE.md",
+      "blobSha": "2016d2cf772c6ae47fe7bdf2530cc44fc3b5f4bc",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA05_CAPTURE_QUALITY_RAW_OBSERVATIONS.md",
+      "blobSha": "43dc31ef4542eb047e0610f989b1c5406c3d7377",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA06_PROVIDER_FACE_CANDIDATE_OBSERVATIONS.md",
+      "blobSha": "1c8f024637921a69649991440cd9248a50e52716",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA07_INDEPENDENT_FACE_GROUND_TRUTH.md",
+      "blobSha": "a6bafcc1fdd0c02960bba4c2d88a8ee572119e96",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA08_PROVIDER_FACE_COUNT_RAW_SCORING.md",
+      "blobSha": "d132825169d8a09099ac11d84dca2459b413fd9a",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA09_PROVIDER_RUN_IDENTITY_BINDING.md",
+      "blobSha": "e5ed8a2f90803d7774ed54b44cfd755002a53acc",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA10_INDEPENDENT_FACE_ADJUDICATION.md",
+      "blobSha": "c4ba198554c5d047c6f94c6756437d30ab894fd8",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA11_ADJUDICATED_PROVIDER_RAW_JOIN.md",
+      "blobSha": "f7bca49c52cf20487954a0f973d84dfbf5e26558",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA12_METRIC_ELIGIBILITY_READINESS.md",
+      "blobSha": "fad265088549f7096d0fe2ed260ddec1c737c497",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA13_PROVIDER_DETECTION_CONSTRUCT_VALIDATION.md",
+      "blobSha": "0770f57269acb215e68d1c3d2669d6317ef008d4",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA14_HUMAN_CONSTRUCT_REFERENCE_ADMISSION.md",
+      "blobSha": "6326d4d1f7e3fcb3074b3521afa53b89fb50f6ff",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR_DATA15_EXTERNAL_HUMAN_REFERENCE_REVIEW_ATTESTATION.md",
+      "blobSha": "cc65cfda2cf733b010eb841427f32f777c4a0223",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR10_CHARACTER_PRESENTATION_INVARIANCE_V0.1.md",
+      "blobSha": "544bee9b306294569f46e631399418c5d22739b7",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR11_CHARACTER_RUNTIME_FOLLOWUPS_V0.1.md",
+      "blobSha": "2d72ea7a8ac34cee421fb1b0cf592b8f0795708b",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR12_TWELVE_PALACE_LOCATOR_AUTHORITY_V0.1.md",
+      "blobSha": "34c224376618840741956dc32f7defb41f00b1f2",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR13_SEMANTIC_ANCHOR_REGISTRY_V0.1.md",
+      "blobSha": "acac70f25b8bfd3f209c1c281d970fbceb022c25",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR14_NEUTRAL_PROVIDER_BINDING_CONTRACT_V0.1.md",
+      "blobSha": "ab8f4e8dd6a23213c9c8aff540ac0c7e421bb0e9",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR15_NEUTRAL_OBSERVATION_SCHEMA_V0.1.md",
+      "blobSha": "e083276677c0beb474bfa4db89c4f7548bfcba73",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR16_PROVIDER_ADAPTER_EVIDENCE_V0.1.md",
+      "blobSha": "4c6159db09b4c9423cbb66562c9e6a9015723fa9",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR17_NEUTRAL_DERIVATION_REGISTRY_V0.1.md",
+      "blobSha": "08f9b2780e5dd0d721c5ba25f2e03b4d15262cb7",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR18_PROVIDER_RELEASE_LATERALITY_ATTESTATION_V0.1.md",
+      "blobSha": "9c860791e1250fa3ab597bdd9b33aec7d775e809",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR18_PUBLISHED_ARTIFACT_IDENTITY_ADDENDUM_V0.2.md",
+      "blobSha": "a398b86c46c0dbc8749b558a6fe76bb401763ca4",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR19_CAPTURE_ORIENTATION_AUTHORITY_V0.1.md",
+      "blobSha": "8c081ee3b32635787257acb032be5ae1cf009091",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR2_THREE_DIVISIONS_V0.1.md",
+      "blobSha": "34308c15a434b7f3a88d361a00d7f1a7a6c48430",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR20_LATERALITY_CONSUMPTION_POLICY_V0.1.md",
+      "blobSha": "141b4722cbdf5284ec4050d2e8d8d43340d99283",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR21A_METRIC_OPERATIONALIZATION_RULE_LATERALITY_CONTRACT_V0.1.md",
+      "blobSha": "3e4979bac4d978dd91393bf21f1977380588988b",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR21B_CONTROLLED_DIRECT_CAPTURE_ATTESTATION_V0.1.md",
+      "blobSha": "aa2caf45ec33a71e12aa13f88172491cd9fef57c",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR22_MYEONGHA_FACE_OBSERVATION_PROVIDER_CONTRACT_V0.1.md",
+      "blobSha": "f92bed99bb9a070a0c2a7fadab9a6c7a76c5a461",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR23_PROVIDER_CONFORMANCE_EVIDENCE_V0.1.md",
+      "blobSha": "fbe8bc69ce7d344f87bb3d0525037c7cbb39a168",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR24_RESEARCH_EYE_PAIR_RUNTIME_BRIDGE_V0.1.md",
+      "blobSha": "a385708bf8ecdd3d8e6a05fe2acf488e4cdadfd4",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR25_MEDIAPIPE_RAW_EYE_LANDMARK_ADAPTER_V0.1.md",
+      "blobSha": "08a74c32d02edfdcb167427a0c65f59f127dccad",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR26_MEDIAPIPE_FACE_LANDMARKER_RESEARCH_RUNTIME_V0.1.md",
+      "blobSha": "4ea67b54aa6ba8abec6fc6d78eacd2ac0c4065f5",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR28_DEFAULT_NETWORK_RUNTIME_VERIFICATION_V0.1.md",
+      "blobSha": "42d4cc7e24145392dc723ae25a29e9318f1269c2",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR3_FIVE_OFFICERS_SIX_FUS_V0.1.md",
+      "blobSha": "ba865f7bec4eeaa73144538d1a0add0a9ae60aaf",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR32_MEDIAPIPE_SOURCE_BUILD_NON_EQUIVALENCE_V0.1.md",
+      "blobSha": "49f9202c2bf22a2f276f425757c6b11d5c2005fe",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR33_MAYI_THREE_DIVISIONS_BOUNDARY_VARIANTS_V0.1.md",
+      "blobSha": "5ec133109383b262a14e2a44d5de64d7339264ac",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR34_MAYI_THREE_DIVISIONS_NEUTRAL_ANCHOR_REQUIREMENTS_V0.1.md",
+      "blobSha": "5e846ba52be81d0dec8bf6892b53d0e4c000209d",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR35_THREE_DIVISIONS_NEUTRAL_SURFACE_EXTENSION_V0.1.md",
+      "blobSha": "d38dd459f5824058338a698c58f481d6126dc8fe",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR36_THREE_DIVISIONS_VERTICAL_REFERENCE_DERIVATIONS_V0.1.md",
+      "blobSha": "e0d245e8bb610473aeec33d390c783cc1217407a",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR37_MEDIAPIPE_PUBLISHED_TOPOLOGY_SURFACE_GAP_V0.1.md",
+      "blobSha": "1c7427c9aa4caba5c614cfabea3e2888182299f6",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR38_MEDIAPIPE_PUBLISHED_DERIVATION_GAP_RECONCILIATION_V0.1.md",
+      "blobSha": "c89be1589de8e0c27b7345825a69f5da0c129e34",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR39_MEDIAPIPE_PUBLISHED_EYEBROW_COMPONENT_DECOMPOSITION_V0.1.md",
+      "blobSha": "875c98047771d7ca176b2796cfbe6889941aa874",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR4_NOSE_GEOMETRY_V0.1.md",
+      "blobSha": "5c6217f020aba5ccfca98fe7245b71cb7db0e249",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR40_MEDIAPIPE_EYEBROW_SOURCE_RUNTIME_SEMANTIC_GAP_V0.1.md",
+      "blobSha": "61e53b73a3cba3dfdf10af60ba7f41cb7223ec25",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR41_EYEBROW_NEUTRAL_ANATOMICAL_EVIDENCE_ADMISSION_V0.1.md",
+      "blobSha": "abb991c55a99c8553c0f92752ed785d49b0f2f94",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR42_MEDIAPIPE_EYEBROW_COMPONENT_GEOMETRIC_ROLE_PROBE_V0.1.md",
+      "blobSha": "6432c13fabb616c596375677d6b366e4a8143c2a",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR43_EYEBROW_INDEPENDENT_ROLE_VALIDATION_PROTOCOL_V0.1.md",
+      "blobSha": "44c1258f97d197bef79a85f44651ce956f69a54b",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR44_EYEBROW_PREREGISTERED_ROLE_SCORING_V0.1.md",
+      "blobSha": "0cd1545ea9299481474795206ca185142e5e2903",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR45_MEDIAPIPE_FACE_OVAL_INFERIOR_EXTREMUM_V0.1.md",
+      "blobSha": "82f9cf65ebf465660683e066dbd74a1c1dc21aa8",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR46_SOFT_TISSUE_MENTON_NEUTRAL_VALIDATION_V0.1.md",
+      "blobSha": "ec69d3afebce2f72ee8ca6e2c965baa452e08b36",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR47_MENTON_VALIDATION_DATASET_CONTRACT_V0.1.md",
+      "blobSha": "719063df1ee09840f16a6d84c6450fc60e5aa5e7",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR48_MENTON_PREREGISTERED_SCORING_CALIBRATION_V0.1.md",
+      "blobSha": "f85a4893d3e762dcbc8d792d83aa485d17408555",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR49_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "e6a535d209c766b8bc3ab38473bce484f7244209",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR49_DIGE_CHIN_CONTOUR_EVIDENCE_BRIDGE_V0.1.md",
+      "blobSha": "0a3cb7820a73d57958007bec6aed10f12564ca79",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR49_SOURCE_NOTES_V0.1.md",
+      "blobSha": "21bcc7a3573e088ede4b082d336332f45d814ada",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR5_CALIBRATION_AUTHORITY_V0.1.md",
+      "blobSha": "de317eaf573a8a77bcc8a97ce073082810bed104",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR50_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "8fcc060f1411e4b6f9c6752046b92ce2eda77752",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR50_PROVIDER_INDEPENDENT_CHIN_CONTOUR_GEOMETRY_V0.1.md",
+      "blobSha": "5a7f9790f92d01fdc8a1b24727ae89664113f6f8",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR51_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "8dc7917b1a493f31885d016a3287b288cc9f9d3f",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR51_CHIN_INFERIOR_CONTOUR_SCOPE_ADJUDICATION_V0.1.md",
+      "blobSha": "26f8655920b500e6a4b77fd79a3936c3ce275320",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR52_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "ebcefa55e6e9295ac449ccb59cb36576c0905924",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR52_CHIN_CONTOUR_ENDPOINT_CANDIDATE_ADMISSION_V0.1.md",
+      "blobSha": "995f1e5b4b75a8bb0ef3060ce1a103225eed24db",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR53_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "8c9c68608e919f8c254ae8d89e17d182cfb62d3a",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR53_SOFT_TISSUE_MENTAL_TUBERCLE_DEFINITION_GAP_V0.1.md",
+      "blobSha": "c6f7eb16f41df5e277db9dff4843cd9f47a8e357",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR54_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "0057507e7bf01fb60d796611314092733112e98e",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR54_CENTRAL_CHIN_REFERENCE_TRACE_PROTOCOL_V0.1.md",
+      "blobSha": "eb5cf0ee37e0e891715b75845989408de891b9f2",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR55_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "ce3f7c9fef4366f5e0a1021bf0a4c6c7327692d1",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR55_MENTON_SIDE_REFERENCE_TRACE_RAW_JOIN_V0.1.md",
+      "blobSha": "f25aabd25ef387b9fd9f8c5369a456d273a4d8e1",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR56_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "cd6c4b453141d5ce5276e9ccbb23e9df787e8842",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR56_CENTRAL_CHIN_PAIRED_EVIDENCE_INTAKE_V0.1.md",
+      "blobSha": "8ce8ef200cf0dcf4a4e3dbecda439aaa9910e139",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR57_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "9006345bf73479fb32b54c87482a7bdfb706e7c7",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR57_CENTRAL_CHIN_PAIRED_DATASET_LEDGER_V0.1.md",
+      "blobSha": "a40a246a48d31193869bbfa869ee283b86f2ccc9",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR58_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "66fd6c4a66df08aa132d8afc1ae1afa8173a7e82",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR58_CENTRAL_CHIN_PAIRED_ACQUISITION_PROVENANCE_V0.1.md",
+      "blobSha": "6cf3bb67234c3fc8dbc0e747176ab5321435831b",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR59_CENTRAL_CHIN_EXTERNAL_PROVENANCE_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "ca73a568ac5e4d4137ce87f673a08133e8d084cf",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR59_CENTRAL_CHIN_EXTERNAL_PROVENANCE_VERIFICATION_V0.1.md",
+      "blobSha": "65a93a4bacfd345271a5dbfeeac80e7a82c6e6f8",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR6_CALIBRATION_PROTOCOL_V0.1.md",
+      "blobSha": "6edb178a5070ad8f900c0c82079298905e7bbc6d",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR60_CENTRAL_CHIN_EXTERNAL_TRUST_EVIDENCE_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "9ef8c559d1f5efead299466979546acdd0336a24",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR60_CENTRAL_CHIN_EXTERNAL_TRUST_EVIDENCE_INTAKE_V0.1.md",
+      "blobSha": "b1db62f338fb8488c53538f09caff7dbd8a163aa",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR7_EVIDENCE_REPORTS_V0.1.md",
+      "blobSha": "6c9846101e9c882fe7b1dd1c134e746a9462aa9f",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR8_DIRECT_SOURCE_VERIFICATION_V0.1.md",
+      "blobSha": "ecaa95ae6e200542e6ddd5aa46d436217811ca12",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FR9_RESEARCH_DIAGNOSIS_RUNTIME_V0.1.md",
+      "blobSha": "126cf2104a7d064796c619b1d50ed50d68a61b16",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FRDATA07A_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "c238de7cafed6e6444e235aff80f493988afa648",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FRDATA07A_INDEPENDENT_FACE_SOURCE_ASSET_INTAKE_V0.1.md",
+      "blobSha": "8674877d7c1c7d3caa97d317b83f1412ab518c02",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FRDATA07B_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "7ff47ebc2bac102d66bd7ae5ba96039e4412cc06",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FRDATA07B_INDEPENDENT_FACE_SOURCE_ASSET_STORAGE_V0.1.md",
+      "blobSha": "128ea30619c8f40c33e265ff3785a11840f2d00e",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FRDATA07C_AUTHORITY_DECISION_V0.1.md",
+      "blobSha": "55b74fe291e6062de508a8d2e8eac3fe4d933bc7",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_FRDATA07C_PROVIDER_BLIND_ANNOTATION_PACKET_V0.1.md",
+      "blobSha": "93ff566437501811baea93e7d995a91f7463d7d8",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_IMPLEMENTATION_BASELINE_V0.md",
+      "blobSha": "2300293e42db84bdcc7a98a08a58f0c5b7f29a62",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/FACE_READING_SOURCE_METHOD_INVENTORY_V0.md",
+      "blobSha": "6013b971352b50c7c61c4464a7d63bc921c7ceb9",
+      "mode": "100644",
+      "category": "doc",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "docs/MASTER_SPEC_INDEX.md",
+      "blobSha": "6993e9c57755dd3d6fd9db6e297be11f5d245630",
+      "mode": "100644",
+      "category": "reference",
+      "disposition": "audit-only"
+    },
+    {
+      "path": "packages/domain/src/character-face-presentation.ts",
+      "blobSha": "77a064bcb9424fab6e78beeec4453ab6df919540",
+      "mode": "100644",
+      "category": "reference",
+      "disposition": "audit-only"
+    },
+    {
+      "path": "packages/domain/src/character-face-runtime.ts",
+      "blobSha": "0aaed65cd68932fa6aa57fb3db13ed4755ed9857",
+      "mode": "100644",
+      "category": "reference",
+      "disposition": "audit-only"
+    },
+    {
+      "path": "packages/face-reading/package.json",
+      "blobSha": "7fc9dc90c84b6aabc9887ff974546308466812e2",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/adjudicated-provider-raw-join-frdata11.ts",
+      "blobSha": "b9bc21ed6f194e62d70f54e1865006dddfd90158",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/browser-image-decode-frdata03.ts",
+      "blobSha": "c9b5ca97623a3ab0375f8ae583c3fc39f2d5de66",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/browser-pixel-evidence-frdata04.ts",
+      "blobSha": "3f5ce11146bef8839036225c7fcadaf5b69308fb",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/calibration-authority.ts",
+      "blobSha": "a107c5a7a2e9b429f84b01b60c06d594d8c84478",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/calibration-authorization.ts",
+      "blobSha": "f3801a53de209f68be2901e4ae06d7f7369622ab",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/calibration-protocol.ts",
+      "blobSha": "5b20a3e10fa9f9891371ab3f15e93ca3d49b66d8",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/capture-orientation-authority-fr19.ts",
+      "blobSha": "69a61cedd480dbcc92ae8e955edee459ea728753",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/capture-quality-raw-observations-frdata05.ts",
+      "blobSha": "5b7a5fdae65e74433ddc9fe727d0b956cce0e2f9",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/central-chin-external-provenance-verification-fr59.ts",
+      "blobSha": "804fbf82168750af69d61340e040c5d62ae16bad",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/central-chin-external-trust-evidence-intake-fr60.ts",
+      "blobSha": "f76faa5f3795114849406f847319f3e604654375",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/central-chin-paired-acquisition-provenance-fr58.ts",
+      "blobSha": "c932479a02bd0f133fbc0f8e3cecbe8d9b4b454f",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/central-chin-paired-dataset-ledger-fr57.ts",
+      "blobSha": "7e1d4a493c3bc645a29ed175ae2311eb54d7075c",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/central-chin-paired-evidence-intake-fr56.ts",
+      "blobSha": "54c3f9ed162f7f1fd2b40c4164bec8827c641802",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/central-chin-reference-trace-protocol-fr54.ts",
+      "blobSha": "8c7cf8673451001acb7a457b3c98b4f667902699",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/chin-contour-endpoint-candidate-admission-fr52.ts",
+      "blobSha": "eb3d665d39fb0c6624d4ad03ea4c0a96bd594b1d",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/chin-inferior-contour-scope-adjudication-fr51.ts",
+      "blobSha": "e597078c281982453bc0703474f1ffa51692c2da",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/chin-inferior-neutral-validation-fr46.ts",
+      "blobSha": "4ca9a541f230b3a427c7f6089f4db2dfe99a73a4",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/chin-inferior-preregistered-scoring-fr48.ts",
+      "blobSha": "19c7d683932ed6d397da244cab151ccc7197b13b",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/chin-inferior-validation-dataset-fr47.ts",
+      "blobSha": "ed2952ab7cb4527620d22b1bc5595c867a405120",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/contracts.ts",
+      "blobSha": "29bb0d2820aa304eb714acdda1ffbd8d60b53b7c",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/controlled-capture-attestation-fr21b.ts",
+      "blobSha": "590b5151d6f4db6eedc973eec66c6f6b5c8528bc",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/dige-chin-contour-evidence-bridge-fr49.ts",
+      "blobSha": "df6e85c9643312ced1519bd438586c7505da4717",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/direct-source-verification.ts",
+      "blobSha": "bde65493e4cae9edde7fd91083b2946868ac5c76",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/evidence-reports.ts",
+      "blobSha": "e1713406a14ed21074e22e5d2947671c5bd410eb",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/external-human-reference-review-attestation-frdata15.ts",
+      "blobSha": "00ab3ad7b62563465c950b4b750cda51c250e5e3",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/eyebrow-independent-role-validation-protocol-fr43.ts",
+      "blobSha": "e840dc2e58cbbfdd4f0bff565e0e88671c799e42",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/eyebrow-neutral-anatomical-evidence-admission-fr41.ts",
+      "blobSha": "ad02a2d94c3e75b167f48e3dddbf612c458683b4",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/eyebrow-preregistered-role-scoring-fr44.ts",
+      "blobSha": "0371aec38a70d0236f64a404c2270ad85d0c31d0",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/face-eye-pair-research-bridge-fr24.ts",
+      "blobSha": "64c4ea1e139f1fbb5cd4e738a07bca3890c3b257",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/face-observation-provider-contract-fr22.ts",
+      "blobSha": "05472f4f63c535b29b80f1851290583d50e852fd",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/facelab-compat.ts",
+      "blobSha": "71bc1632fbcb66ccffb475c194ed9adc5a65a15d",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/facelab-fr3-requirements.ts",
+      "blobSha": "fb50123b7dfe60aea0c7e9fb8f88b025019da5b7",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/five-officers-six-fus-research-v0.ts",
+      "blobSha": "4d4c4a75df5785b31bb981b94464573d53cc9133",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/human-face-construct-reference-admission-frdata14.ts",
+      "blobSha": "370e8ec5bc2b805e81286ab1ebdb58b1dabdd4b5",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/image-byte-dimensions-frdata02.ts",
+      "blobSha": "649f73b954bb43030257d4179b6c1295d63f384c",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/independent-face-adjudication-frdata10.ts",
+      "blobSha": "40bc2e6b78201401e33699307313f54474b3dda9",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/independent-face-annotation-packet-frdata07c.ts",
+      "blobSha": "20095a36831fbc803cce422971cc3ef53b53a0c7",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/independent-face-ground-truth-frdata07.ts",
+      "blobSha": "cfc6b12201f69b7815b981eb043013c4556e41d1",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/independent-face-source-asset-intake-frdata07a.ts",
+      "blobSha": "9f8154da62c5675b300fa97cb2a90aaf2f5f54f7",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/independent-face-source-asset-storage-frdata07b.ts",
+      "blobSha": "4599331645ac1e78b38456419894ed99237bc428",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/index.ts",
+      "blobSha": "97151f021e3c8b7eb4e1178dbb6bb29fb77f9909",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/laterality-consumption-policy-fr20.ts",
+      "blobSha": "0a317b6965e2be75e2f2bdd874be2492cd0890dc",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mayi-three-divisions-boundary-variants-fr33.ts",
+      "blobSha": "80a17c69ce9d6b7cbe60e8dd0eda837dacf47583",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mayi-three-divisions-neutral-anchor-requirements-fr34.ts",
+      "blobSha": "b79cb4d0bb4a5d2a4a83d015866a653ea06f9806",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-default-network-runtime-evidence-fr28.ts",
+      "blobSha": "f41a2907cbcd0c31148289f3753f5a7e30920e67",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-eye-landmark-adapter-fr25.ts",
+      "blobSha": "75d3aaf21e1c235014ef03c5c02e7a04b1c135a3",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-eyebrow-component-geometric-role-probe-fr42.ts",
+      "blobSha": "7a83d9c18f216d4625fcbf9753d76c347b80911a",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-eyebrow-source-runtime-semantic-gap-fr40.ts",
+      "blobSha": "bbeacfe86cd36f82bd03ff061343e757045aa204",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-face-landmarker-runtime-fr26.ts",
+      "blobSha": "9d5747978f9a563c3daba7e36859f7a4ec1c6dde",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-face-oval-inferior-extremum-fr45.ts",
+      "blobSha": "0c3a141423c49e159c9ce37c9390754745737629",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-face-oval-inferior-extremum-runtime-evidence-fr45.ts",
+      "blobSha": "e0ba2577b60bfc3f710626a09a3c900a3afdf050",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-npm-artifact-byte-attestation-fr30.ts",
+      "blobSha": "651d1085542557b72fc74d637c600217ff2a41b5",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-published-derivation-gap-reconciliation-fr38.ts",
+      "blobSha": "28656d4a26cee6b9e438f7f2bb380166f6a016b7",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-published-eyebrow-component-decomposition-fr39.ts",
+      "blobSha": "b402162c270d89df3c00243d295cac14ade05126",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-published-topology-surface-gap-fr37.ts",
+      "blobSha": "25dbe23603f6d627fe1bed0f56ac26dacd6b87ca",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-real-runtime-evidence-fr27.ts",
+      "blobSha": "dc1f5e603fcebafcbef7289a579aa976997241f2",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-release-tag-provenance-fr29.ts",
+      "blobSha": "1b39ae978f7d7a8922f207406e5e91a988f19332",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-source-build-non-equivalence-fr32.ts",
+      "blobSha": "8c5e327f06fdc6d771f477dfb5de308a3c7a23b4",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/mediapipe-source-build-recipe-attestation-fr31.ts",
+      "blobSha": "ae472df48a3251268dd356d9d4dea7106c9835b2",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/menton-dataset-intake-frdata01.ts",
+      "blobSha": "367778c7f406105eb10d5f7963bb7e035800637a",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/menton-side-reference-trace-raw-join-fr55.ts",
+      "blobSha": "5b841d9b990c26ff3b8d7a40a1b2f0ee8b215fcd",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/metric-eligibility-readiness-frdata12.ts",
+      "blobSha": "67da4725c142d43f1e450f600f9ccee860d87bd6",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/neutral-derivation-algorithms-fr17.ts",
+      "blobSha": "52bc69d9cb85fcd6ab0ecaa434835dc03a32744a",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/neutral-derivation-evidence-fr17.ts",
+      "blobSha": "ad4661e8ec5c4b8a485ae7317966a03ef9d42ee0",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/neutral-derivation-registry-fr17.ts",
+      "blobSha": "8d9b7a3763c2cca523ed279eb93ab21f5dc3067e",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/neutral-observation-schema-fr15.ts",
+      "blobSha": "d783627840eead45a6e681ac83734a0e2f5129d0",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/neutral-provider-binding-contract-fr14.ts",
+      "blobSha": "889d34bc231c4dd4d23b1ab0aa8ef915d28f2345",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/neutral-provider-bindings-fr14.ts",
+      "blobSha": "29d86db4dbf4d15142c55bf485090ee628934a3a",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/nose-geometry.ts",
+      "blobSha": "f0b0349d06a69a16c30454bc7e66f5f2586b4a70",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/provider-adapter-evidence-fr16.ts",
+      "blobSha": "697a53bc6853cb1495fdced58aec4bce94bcf151",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/provider-conformance-evidence-fr23.ts",
+      "blobSha": "27efbd58a8f246d0c9576c4b6304441a2377745b",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/provider-detection-construct-validation-frdata13.ts",
+      "blobSha": "2aa43fa52eefa30854a0473c5b53b16099cc9696",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/provider-face-candidate-observations-frdata06.ts",
+      "blobSha": "eeb0bb20d5bb1259b741aa28528c230ecf199279",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/provider-face-count-raw-scoring-frdata08.ts",
+      "blobSha": "a42c82f0729cf0e32e56599e88138f3b288f3f37",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/provider-independent-chin-contour-geometry-fr50.ts",
+      "blobSha": "4fde95ecf18387858b5c1ac10045dcdcdde02154",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/provider-release-attestation-fr18.ts",
+      "blobSha": "015d4646299d8af9a9a4a14d30d8916be3b6bc1b",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/provider-run-identity-binding-frdata09.ts",
+      "blobSha": "e9ae05769c81bf84c8e073d52104ad923e0ea0f5",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/research-diagnosis-runtime.ts",
+      "blobSha": "1f9154e914bb2c9c1cc2058f77ca4fe6014fd41a",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/research-pack-v0.ts",
+      "blobSha": "a3c4e55d70521902dd301b8eaeec30b955fc8c78",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/semantic-anchor-authority-fr13.ts",
+      "blobSha": "fde9b851525d43982033e6b01840933262a14c6d",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/semantic-anchor-registry-fr13.ts",
+      "blobSha": "39c5a0b110063f244417fb6a6ccb2935e88015b7",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/semantic-projection.ts",
+      "blobSha": "6b4f26eaad57ed8726a90ba648b0410f0eb1d0e7",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/soft-tissue-mental-tubercle-definition-gap-fr53.ts",
+      "blobSha": "8e836d867a9c1534ff29b9991d6142027c5d78b2",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/source-corroboration.ts",
+      "blobSha": "05346afd005cce38749efd57d86e93154b9f3cd6",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/three-divisions-neutral-surface-extension-fr35.ts",
+      "blobSha": "3bcb130e8db6d826e742823d437e987d34a8216c",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/three-divisions-vertical-reference-derivations-fr36.ts",
+      "blobSha": "966d2d4b1120a6f4f5f7201e5123813521fd55a1",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/three-divisions.ts",
+      "blobSha": "5e469e792fb7c0233069d54ef0c5deed9cc36f8b",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/twelve-palaces-authority-fr12.ts",
+      "blobSha": "ad8fbfdae0591b04fece5204d6c705b8f697b21f",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/twelve-palaces-research-v0.ts",
+      "blobSha": "0e011477021d74649ad672abf39696a219663724",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "packages/face-reading/src/validation.ts",
+      "blobSha": "8843f76f95548bdebe817c63cba209a98799233f",
+      "mode": "100644",
+      "category": "package",
+      "disposition": "transfer-byte-preserving"
+    },
+    {
+      "path": "research-evidence/face-reading/frdata224/batch-a/annotation-packet-v1-binding.json",
+      "blobSha": "c99d79d075914828a0a15a03a34a3f9473b169ba",
+      "mode": "100644",
+      "category": "evidence",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "research-evidence/face-reading/frdata224/batch-a/annotation-packet-v1/assets/item-569ccfc84561411b9c5815967bacde64cc3c6d7f37a374d90004ff163bf91a49.jpg",
+      "blobSha": "0bf4e38b9766cdc8629010e8962e6b3a45a76d3b",
+      "mode": "100644",
+      "category": "evidence",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "research-evidence/face-reading/frdata224/batch-a/annotation-packet-v1/assets/item-830a0839c606819e075bf5d0293b3b4af2f152d1d7c23b7ddde2abc5618176f2.jpg",
+      "blobSha": "c21fff294f685160a16bac954fdfc281203cfa18",
+      "mode": "100644",
+      "category": "evidence",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "research-evidence/face-reading/frdata224/batch-a/annotation-packet-v1/assets/item-ca9422872cd1e0852aac88f357d274ff6b13c6f9cfc11723bfe5cd57aa1727b1.jpg",
+      "blobSha": "751acd80711cf724892ca3c90e5e211e6612d3e9",
+      "mode": "100644",
+      "category": "evidence",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "research-evidence/face-reading/frdata224/batch-a/annotation-packet-v1/INSTRUCTIONS.md",
+      "blobSha": "962e0082e957331658edfdbd4e67017fa8979ba5",
+      "mode": "100644",
+      "category": "evidence",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "research-evidence/face-reading/frdata224/batch-a/annotation-packet-v1/manifest.json",
+      "blobSha": "fad6e7b2e87bba8f246cfdd062a1b3ed1ef871a1",
+      "mode": "100644",
+      "category": "evidence",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "research-evidence/face-reading/frdata224/batch-a/assets/capture-frdata224-batch-a-001.jpg",
+      "blobSha": "751acd80711cf724892ca3c90e5e211e6612d3e9",
+      "mode": "100644",
+      "category": "evidence",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "research-evidence/face-reading/frdata224/batch-a/assets/capture-frdata224-batch-a-002.jpg",
+      "blobSha": "0bf4e38b9766cdc8629010e8962e6b3a45a76d3b",
+      "mode": "100644",
+      "category": "evidence",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "research-evidence/face-reading/frdata224/batch-a/assets/capture-frdata224-batch-a-003.jpg",
+      "blobSha": "c21fff294f685160a16bac954fdfc281203cfa18",
+      "mode": "100644",
+      "category": "evidence",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "research-evidence/face-reading/frdata224/batch-a/manifest.json",
+      "blobSha": "2aa9921fff16f0d1ffd86753f36d23d93da38dcd",
+      "mode": "100644",
+      "category": "evidence",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "research-evidence/face-reading/frdata224/batch-a/README.md",
+      "blobSha": "d982a08349464bbeb2866a55f282a7fefa08b40a",
+      "mode": "100644",
+      "category": "evidence",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr-data01-menton-dataset-intake.mjs",
+      "blobSha": "5eba72e6c5e05e3c1170d1aa4e3605f5120caa32",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr-data02-image-dimensions.mjs",
+      "blobSha": "3a705998304084ca800e8a8ab200ce50227ccfc0",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr-data03-browser-image-decode.mjs",
+      "blobSha": "86acb63cbfdfa6515b36c4c9a7026d9413ffc743",
+      "mode": "100755",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr-data04-browser-pixel-evidence.mjs",
+      "blobSha": "f961ecb9bf5e1f2cee8909cd290ace36eddf7c9b",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr-data04-selftest-fixture.mjs",
+      "blobSha": "c5ae37b56bca34dbbc66936b56bbcbbf9e974c38",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr-data05-capture-quality-raw-observations.mjs",
+      "blobSha": "d8326256fa52fed000eafe9ad148a00e4d25a4bd",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr-data06-provider-face-candidates.mjs",
+      "blobSha": "c934e9ac48bfd68ffbf91cb78cfff02422483da2",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr27-real-runtime-e2e.mjs",
+      "blobSha": "9c50cd1aa130411aad2eb0470899094dbdfc0a5b",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr28-default-network-runtime-e2e.mjs",
+      "blobSha": "f65cef0002f3d84a2dc3833608bf1bb50d583a02",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr30-npm-artifact-byte-attestation.mjs",
+      "blobSha": "db768e3594266e4b5a67ddadd79c14595729bb07",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr31-source-build-recipe-attestation.mjs",
+      "blobSha": "8a000e6cd1f88fe95fc711b1a81163c367b93f6c",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr32-mediapipe-source-build-non-equivalence.mjs",
+      "blobSha": "6d3478c96257fe1ff1cef85e334d6b1106217055",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr42-eyebrow-component-role-probe.mjs",
+      "blobSha": "8a77ef7f14669b70bfaef77f00f8cad3616b2326",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading-fr45-face-oval-inferior-extremum-probe.mjs",
+      "blobSha": "c59ea180fd364407daa1f2cdf07111a35be1fb0c",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading/acquire-frdata224-batch-a.mjs",
+      "blobSha": "2b2616ae138eccff491f46b392f727810730c222",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "scripts/face-reading/prepare-frdata224-batch-a-annotation-packet.mjs",
+      "blobSha": "0a1104eed43795f756eedd74d4adc2787fec68e4",
+      "mode": "100644",
+      "category": "script",
+      "disposition": "historical-source-only"
+    },
+    {
+      "path": "test/face-reading-authority.test.ts",
+      "blobSha": "384fe1715822f95284c1a2fe770edf3fdc61d7c0",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data01-menton-dataset-intake.test.ts",
+      "blobSha": "0163fa93512fbb9d42fa1bbf75b60b81472747e5",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data02-image-dimensions.test.ts",
+      "blobSha": "e3be0b26f6399610b177df4bea22a66d97070dbd",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data03-browser-image-decode.test.ts",
+      "blobSha": "51c541fb430392816298ec08d76a5cc89facd5ef",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data04-browser-pixel-evidence.test.ts",
+      "blobSha": "8854ec731c0f222d1dda5cf68b3f7f16b8eaeaba",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data05-capture-quality-raw-observations.test.ts",
+      "blobSha": "f2901173446519e56bb10e7c481bf848367e35b7",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data06-provider-face-candidates.test.ts",
+      "blobSha": "58cb13b4a759b4ed81e7281401604fdff52370eb",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data07-independent-face-ground-truth.test.ts",
+      "blobSha": "aac481d02822b6e0908d91da80c1b115f3f8c706",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data08-provider-face-count-raw-scoring.test.ts",
+      "blobSha": "eeaea711346c96daad4180c76a40597a225e0ca8",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data09-provider-run-identity-binding.test.ts",
+      "blobSha": "fa52510354453abac4b0dc1d964f51064512665b",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data10-adjudication-freeze-order.test.ts",
+      "blobSha": "47afad0144c21162bee24886d6b670f7a6aaebcf",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data10-independent-face-adjudication.test.ts",
+      "blobSha": "39cb401485388e22fffa61bdd4cfc89788dad382",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data11-adjudicated-provider-raw-join.test.ts",
+      "blobSha": "5015ff6f398029aee474aa0c554b3ab419567028",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data12-metric-eligibility-readiness.test.ts",
+      "blobSha": "c4734f58d61a9dd2ba1f8ac5ff72d491bd07439a",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data13-provider-detection-construct-validation.test.ts",
+      "blobSha": "be0dad6bc807c7b8653124eb5ca5bdf504f446c7",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data14-human-construct-reference-admission.test.ts",
+      "blobSha": "901e6c644e90a0eb39dd89e1c3d2e083d6f8bd01",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr-data15-external-human-reference-review-attestation.test.ts",
+      "blobSha": "5bdd0fb95e3d9dde7826d4e9adaf4bc0988171cd",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr10-character-presentation-invariance.test.ts",
+      "blobSha": "25af22fbf54582d4b6b35c6893f20de0922c1cc3",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr11-character-runtime-followups.test.ts",
+      "blobSha": "1b51b7e62ad87f638c0007d060423dd279128bdc",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr12-twelve-palace-locators.test.ts",
+      "blobSha": "4a29d9b11835709b917e092391ffe410e1ae7b61",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr13-semantic-anchor-registry.test.ts",
+      "blobSha": "4d796312c64e66aa95cfe91f007a395714be8df3",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr14-neutral-provider-bindings.test.ts",
+      "blobSha": "3fd555f8f661d3265b8a0b46a4983c86f2a4e102",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr15-neutral-observation-schema.test.ts",
+      "blobSha": "789d759193741ab2174a8dd53728a4b7bf8df154",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr16-provider-adapter-evidence.test.ts",
+      "blobSha": "a165294faa1d2cd4191f62ecb33218596a5e62eb",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr17-neutral-derivation-registry.test.ts",
+      "blobSha": "21a75a70b1134c278023b9f874bd6453ba074827",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr18-provider-release-attestation.test.ts",
+      "blobSha": "cafdd6cca9cec1eb04a6782087d689db4e2fc493",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr19-capture-orientation-authority.test.ts",
+      "blobSha": "be4f9c43483c3b6507394380237e21fd62c989b7",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr20-laterality-consumption-policy.test.ts",
+      "blobSha": "4a139025b15bd0a15060116714bfcbf009442a04",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr21a-laterality-contract.test.ts",
+      "blobSha": "c2726aa0718132490bffbcd69130c910c5bda499",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr21b-controlled-capture-attestation.test.ts",
+      "blobSha": "70988e0b7814abcd0e2fc7700a48efe6f8eaf091",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr22-provider-contract.test.ts",
+      "blobSha": "920c9f53c771efb515d1ed903d61394bf4f3fb2f",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr23-provider-conformance-evidence.test.ts",
+      "blobSha": "96c4c87b2b157916ab7aad02046f2821608fcce0",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr24-eye-pair-research-bridge.test.ts",
+      "blobSha": "6396266d7e260f29e6574e5149cef433d13d0fa5",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr25-mediapipe-eye-landmark-adapter.test.ts",
+      "blobSha": "350f38755506078a9e64b8e4e41d70153b02ab82",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr26-mediapipe-face-landmarker-runtime.test.ts",
+      "blobSha": "0e31eac585136392751e432699d3ee4fb4c623a6",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr27-real-runtime-evidence.test.ts",
+      "blobSha": "da0403400c367d23525773ad84f001e58a93ecbd",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr28-default-network-runtime-evidence.test.ts",
+      "blobSha": "bcfab6e5a19565aa6914c862016eb898dad42b05",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr29-mediapipe-release-tag-provenance.test.ts",
+      "blobSha": "af95eb70a38884616f8376eaf709994066d15487",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr3-facelab.test.ts",
+      "blobSha": "7affde3b503f3959cba01d91645cdb2c8e704b6b",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr3.test.ts",
+      "blobSha": "24adcaa6ba9fcf8639bb4cd63c2d24e3d00e9785",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr30-mediapipe-npm-artifact-byte-attestation.test.ts",
+      "blobSha": "eb38889216a3b6719fad1eda7fdbe6383dd4c221",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr31-mediapipe-source-build-recipe-attestation.test.ts",
+      "blobSha": "bc9c36d24b7f3a1ba2b0d83471dbc239d8e562b3",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr32-mediapipe-source-build-non-equivalence.test.ts",
+      "blobSha": "b1e05b761d4e5e5ecff8927187703bb6ff492692",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr33-mayi-three-divisions-boundary-variants.test.ts",
+      "blobSha": "aa16f40a023fb648283f5c3f316538f971ebdace",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr34-mayi-three-divisions-neutral-anchor-requirements.test.ts",
+      "blobSha": "c99194db1ad37a9defb8c459bf09b7ef58aacb1f",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr35-three-divisions-neutral-surface-extension.test.ts",
+      "blobSha": "5945cb6ce01e2c0f68af54cbb7831ca5aae2239d",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr36-three-divisions-vertical-reference-derivations.test.ts",
+      "blobSha": "9c1971d983a637fc7067747c2bb4041159d5acab",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr37-mediapipe-published-topology-surface-gap.test.ts",
+      "blobSha": "5a3efdbe85d70dc421076b99c80ebba555102de5",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr38-mediapipe-published-derivation-gap-reconciliation.test.ts",
+      "blobSha": "58518e572904aa6385a60622337ddfac8dcdb741",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr39-mediapipe-published-eyebrow-component-decomposition.test.ts",
+      "blobSha": "c769a9b20dd25f93396411ba3bf811f84ebf0deb",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr4-discriminating.test.ts",
+      "blobSha": "8a0bd549450f260840c90f96a40e006138dcb898",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr4-nose-geometry.test.ts",
+      "blobSha": "9fbfae3ab2f5563c1620ffdc6c007897c6a07270",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr40-mediapipe-eyebrow-source-runtime-semantic-gap.test.ts",
+      "blobSha": "7257559fa2d9a07a9f1eba4ba00c392e9c492d2e",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr41-eyebrow-neutral-anatomical-evidence-admission.test.ts",
+      "blobSha": "46e95975756fcd10f789cd3aaad2a3299a50ea95",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr42-mediapipe-eyebrow-component-geometric-role-probe.test.ts",
+      "blobSha": "9c0d3c70267048523be441a7dcb1fd65f1b00c7f",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr43-eyebrow-independent-role-validation-protocol.test.ts",
+      "blobSha": "1fd2d41dc7bfcca7cd9d71c7abd0e9a8962538d6",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr44-eyebrow-preregistered-role-scoring.test.ts",
+      "blobSha": "1621620b39a6185d5a3948ea4a0e41df06dd4c48",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr45-mediapipe-face-oval-inferior-extremum.test.ts",
+      "blobSha": "e75b20e930bce5cdf39a2093f1ff9dccc2a17509",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr45-mediapipe-face-oval-runtime-evidence.test.ts",
+      "blobSha": "09cec150a6d870da1a53e009b4ac9807a07b82bb",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr46-chin-inferior-neutral-validation.test.ts",
+      "blobSha": "9c28e55a19112cfb58e4d26996932dd1a1d3b7e9",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr47-menton-validation-dataset.test.ts",
+      "blobSha": "aa4b79054041ee974d5d5d340af0c771242ef582",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr48-menton-preregistered-scoring.test.ts",
+      "blobSha": "29bfa8c57b1dcc5ace0ffccdc0d0ddf8658eca64",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr49-dige-chin-contour-evidence-bridge.test.ts",
+      "blobSha": "b53d79aa2445fddb3d4bd3129a32867978ce86e4",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr5-authorization.test.ts",
+      "blobSha": "aa7ff631a78d722e7a944b14cba2212010597a95",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr5-calibration.test.ts",
+      "blobSha": "3fb8a9cb732d042fbedb01258f5a788443686cbf",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr50-provider-independent-chin-contour-geometry.test.ts",
+      "blobSha": "973677ea0ad65dc1333f89ac0e8c128863a2ddb1",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr51-chin-inferior-contour-scope-adjudication.test.ts",
+      "blobSha": "8b38fc8ba15585cc8640b75b19cf75112b32ccd7",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr52-chin-contour-endpoint-candidate-admission.test.ts",
+      "blobSha": "c84b6c4c2f25465861f55772f6dbc234b61b60e2",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr53-soft-tissue-mental-tubercle-definition-gap.test.ts",
+      "blobSha": "8ad03f629a5c884951a8b2cbdfbe955d9fc4e1a7",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr54-central-chin-reference-trace-protocol.test.ts",
+      "blobSha": "b41a2f58be2cfb13496ea33ddb9b31febd70df36",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr55-menton-side-reference-trace-raw-join.test.ts",
+      "blobSha": "db7d89b7caf24bf8137ed022254b070159b12990",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr56-central-chin-paired-evidence-intake.test.ts",
+      "blobSha": "1b763ee5948e423d9a7ae9c13de0c9678496d4a1",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr57-central-chin-paired-dataset-ledger.test.ts",
+      "blobSha": "ad01421b77543b01d4942a50d4531f87c0dcc306",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr58-central-chin-paired-acquisition-provenance.test.ts",
+      "blobSha": "210f9df1e855cdb3f801235c099df125947a66d4",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr59-central-chin-external-provenance-verification.test.ts",
+      "blobSha": "2fc6998c90a8a5b233c034a1a7e69e138b4b44fb",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr6-calibration-protocol.test.ts",
+      "blobSha": "0aa03154fff6618fe14214e15637e8c7f5136d1b",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr60-central-chin-external-trust-evidence-intake.test.ts",
+      "blobSha": "6c0240579d94b75ea00c906c08f1dec4a2f4d320",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr7-evidence-reports.test.ts",
+      "blobSha": "8ebd3042027bf9f7bebb0f527c779daf583534ad",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr8-direct-source-verification.test.ts",
+      "blobSha": "8402b7c35c515be4b0ae42edfec17ec52f2913cb",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr9-grounding-authority.test.ts",
+      "blobSha": "23f120c3301029cfba6898e522a66aea3a6a4e98",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-fr9-research-diagnosis-runtime.test.ts",
+      "blobSha": "f20e102afa2ca1d96d5a36e891585e4657d5be91",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-frdata07a-independent-face-source-asset-intake.test.ts",
+      "blobSha": "930d11bf12aaab3d97d874de4f8cfd886aaf4d84",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-frdata07b-independent-face-source-asset-storage.test.ts",
+      "blobSha": "8535a1b2e4d15f69a2ac502f05dd0221c8d6ad25",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    },
+    {
+      "path": "test/face-reading-frdata07c-independent-face-annotation-packet.test.ts",
+      "blobSha": "9901f9be724d9935b00d35d46088687a7e0c1117",
+      "mode": "100644",
+      "category": "test",
+      "disposition": "verification-source-only"
+    }
+  ]
+}

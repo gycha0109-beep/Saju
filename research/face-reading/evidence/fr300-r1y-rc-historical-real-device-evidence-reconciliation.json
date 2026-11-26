@@ -1,0 +1,135 @@
+{
+  "schemaVersion": "fr300-r1y-rc-historical-real-device-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-27",
+  "contractVersion": "FR300-R1Y-RC-HISTORICAL-REAL-DEVICE-RECONCILIATION-v1",
+  "device": {
+    "model": "SM-S938N",
+    "realDeviceObserved": true
+  },
+  "historicalChain": [
+    {
+      "stage": "FR273",
+      "issue": 1401,
+      "pr": 1402,
+      "mergeSha": "8aa5fab5c9f02a4a0acb737e084cb1af29f418e3",
+      "toolPath": "tools/fr273-android-depth-probe/",
+      "result": {
+        "realCapabilityProbeExecuted": true,
+        "userFacingCameraCountReferencedByGovernedRecord": 2,
+        "userFacingDepthOutputAvailable": false,
+        "userFacingDepth16Available": false,
+        "userFacingMetricDepthPathAvailable": false,
+        "faceImageCaptured": false
+      }
+    },
+    {
+      "stage": "FR275",
+      "issue": 1404,
+      "pr": 1405,
+      "mergeSha": "91deb9703ddfd0279d15bf9a8b00259f0394bed1",
+      "toolPath": "tools/fr275-arcore-raw-depth-probe/",
+      "result": {
+        "realDeviceProbeExecuted": true,
+        "arcoreRawDepthOperational": true,
+        "worldFacing": true,
+        "rawDepthConfidenceSampledEphemerally": true,
+        "persistedRgbDepthConfidenceFrames": false,
+        "fr299AuthorityEstablished": false
+      }
+    },
+    {
+      "stage": "FR276",
+      "issue": 1409,
+      "pr": 1410,
+      "mergeSha": "2388c4961266503f0306d671d4721ca11db57a17",
+      "toolPath": "tools/fr276-arcore-depth-cadence/",
+      "result": {
+        "measuredMotionRunExecuted": true,
+        "elapsedSeconds": 20.026,
+        "newRawDepthFrameCount": 92,
+        "newDepthRateHz": 4.594,
+        "medianNewDepthIntervalMs": 166.596,
+        "centralValidDepthCoverageMean": 0.995854,
+        "acquisitionErrorsObserved": false
+      }
+    },
+    {
+      "stage": "FR278",
+      "issue": 1414,
+      "pr": 1415,
+      "mergeSha": "e7aeb3cfdd8fdc1fcf80b8ff9fb2ae11b474834e",
+      "toolPath": "tools/fr278-arcore-planar-validation/",
+      "result": {
+        "realNonhumanCalibrationExperimentExecuted": true,
+        "nominalDistancesMm": [500, 700, 900],
+        "repeatsPerDistance": 3,
+        "secondsPerTrial": 5,
+        "rawDepthResolution": "160x90",
+        "centralRoiFraction": 0.2,
+        "opaqueTargetRerun": {
+          "measuredMedian500Mm": 535.5,
+          "measuredMedian700Mm": 725.0,
+          "measuredMedian900Mm": 653.5,
+          "knownStep500To700Mm": 200,
+          "recoveredStep500To700Mm": 189.5,
+          "stepError500To700Mm": -10.5,
+          "stepErrorPercent500To700": -5.25,
+          "step700To900UsableForMetricConclusion": false,
+          "invalidReason700To900": "900mm_roi_contamination_or_target_membership_failure"
+        },
+        "metricAccuracyValidatedForFR299": false,
+        "repeatabilityValidatedForFR299": false,
+        "metricAuthorityDisposition": "partially_characterized_not_admitted"
+      }
+    },
+    {
+      "stage": "FR280",
+      "issue": 1420,
+      "supersededOn": "2026-09-24",
+      "result": {
+        "sameFrameSteppedPlaneGateExecuted": false,
+        "gateSupersededForProductPriority": true,
+        "productInput": "ordinary_smartphone_rgb_selfie_25_30_cm",
+        "specialDepthMayBecomeProductPrerequisite": false,
+        "arcoreGloballyRejected": false,
+        "nextResearchPriority": "ordinary_rgb_selfie_feature_authority_and_independent_benchmark"
+      }
+    }
+  ],
+  "receiptSemantics": {
+    "nativeR1XRuntimeReceiptProducedAtTheTime": false,
+    "historicalReceiptReconstructedFromGovernedRecords": true,
+    "reconstructionEquivalentToNativeR1XRuntimeArtifact": false
+  },
+  "duplicateWorkRetirement": {
+    "newCapabilityApkRequired": false,
+    "repeatFR273Required": false,
+    "repeatFR275Required": false,
+    "repeatFR276Required": false,
+    "repeatFR278Required": false
+  },
+  "canonicalCurrentGate": {
+    "realDeviceObserved": true,
+    "concreteDeviceModelBound": true,
+    "historicalRealDeviceCapabilityEvidenceExists": true,
+    "realNonhumanCalibrationExperimentExecuted": true,
+    "frontUserFacingCamera2MetricDepthLane": "unavailable_on_sm_s938n",
+    "arcoreRawDepthLane": "operational_research_reference_candidate_only",
+    "arcoreMetricAccuracyValidatedForFR299": false,
+    "arcoreRepeatabilityValidatedForFR299": false,
+    "specialDepthMayBecomeProductRequirement": false,
+    "specialDepthMayRemainOfflineResearchReferenceCandidate": true,
+    "humanFaceCaptureAuthorizedByThisStage": false,
+    "biometricArtifactCollectionAuthorizedByThisStage": false,
+    "newHardwarePurchaseAuthorized": false,
+    "paidSpendAuthorized": false,
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29",
+    "productionActivated": false,
+    "commerceActivated": false
+  },
+  "disposition": "historical_evidence_reconciled_rgb_selfie_benchmark_next",
+  "nextActionWithoutNewExternalAuthorization": "return_to_ordinary_rgb_selfie_independent_benchmark_reference_strategy"
+}

@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "fr300-r1z-bm-rgb-selfie-independent-benchmark-strategy-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-27",
+  "contractVersion": "FR300-R1Z-BM-RGB-SELFIE-INDEPENDENT-BENCHMARK-v1",
+  "firstBenchmarkTarget": "nose.tip_bridge_relative_projection",
+  "predecessors": {
+    "fr282": "FR282-RGB-SELFIE-FEATURE-AUTHORITY-MATRIX-v1",
+    "fr295": "FR295-RGB-RELATIVE-3D-BENCHMARK-PROTOCOL-v1",
+    "fr298ReferenceAxis": "neutral.nose.tip_bridge.relative_depth_component_ratio@0.1.0",
+    "fr299": "FR299-INDEPENDENT-3D-NOSE-REFERENCE-BUNDLE-v1",
+    "fr300R1Y": "FR300-R1Y-RC-HISTORICAL-REAL-DEVICE-RECONCILIATION-v1"
+  },
+  "productCandidateLane": {
+    "cameraClass": "ordinary_smartphone_rgb_front_camera",
+    "minimumDistanceCm": 25,
+    "maximumDistanceCm": 30,
+    "rgbOnly": true,
+    "specialDepthHardwareRequired": false,
+    "arcoreRequired": false,
+    "metric3DInputConsumed": false,
+    "physicalMillimeterOutputClaimed": false,
+    "outputSemantics": "unitless_relative_shape_only",
+    "traditionalSemanticBindingClaimed": false
+  },
+  "referenceAuthority": {
+    "finalBenchmarkReferenceClass": "fr299_grade_independent_metric_3d_only",
+    "acceptedSourceClasses": [
+      "independent_calibrated_3d",
+      "independent_validated_depth"
+    ],
+    "metricScaleVerifiedRequired": true,
+    "providerIndependentRequired": true,
+    "candidateProviderOutputBlindRequired": true,
+    "candidateProviderIndexBlindRequired": true,
+    "traditionalLabelBlindRequired": true,
+    "sameCaptureOrValidatedRegistrationRequired": true,
+    "referenceFrozenBeforeCandidateScoringRequired": true,
+    "candidateDerivedGeometryMayServeAsReference": false,
+    "historicalArcoreRole": "research_reference_candidate_only_not_fr299_truth"
+  },
+  "pairBinding": {
+    "candidateAndReferenceSubjectBindingMustMatch": true,
+    "candidateRgbObservationMustMatchFR299RgbBinding": true,
+    "fr299CorrespondenceVerifiedRequired": true
+  },
+  "evaluation": {
+    "perPairMetrics": [
+      "signed_error",
+      "absolute_error",
+      "relative_error_when_reference_nonzero"
+    ],
+    "zeroReferenceRelativeError": null,
+    "cohortMetrics": [
+      "mean_absolute_error",
+      "median_absolute_error",
+      "mean_signed_bias",
+      "signed_error_standard_deviation",
+      "spearman_rank_correlation_when_defined"
+    ],
+    "stratificationAxes": [
+      "distance",
+      "yaw",
+      "pitch",
+      "device",
+      "lighting"
+    ],
+    "acceptanceThresholdIssued": false,
+    "benchmarkWinnerIssued": false
+  },
+  "rightsSchema": {
+    "separateFields": [
+      "internal_research_use",
+      "commercial_research_and_development",
+      "raw_artifact_redistribution",
+      "derived_metric_metadata_publication",
+      "product_runtime_use"
+    ],
+    "pairAdmissionRequires": {
+      "internalResearchUse": "explicitly_allowed",
+      "commercialResearchAndDevelopment": "explicitly_allowed"
+    },
+    "rawRedistributionNeedNotBeAllowedForInternalBenchmark": true,
+    "productRuntimeUseNeedNotBeAllowedForInternalBenchmark": true
+  },
+  "privacyBoundary": {
+    "rawRgbMayBeCommittedToGit": false,
+    "raw3DMayBeCommittedToGit": false,
+    "rawDepthMayBeCommittedToGit": false,
+    "derivedScalarReceiptMayBePersisted": true,
+    "artifactDigestMayBePersisted": true,
+    "governedOpaqueRefMayBePersisted": true,
+    "aggregateMetricMayBePersisted": true
+  },
+  "stageActions": {
+    "datasetAcquired": false,
+    "humanSubjectCaptured": false,
+    "realBenchmarkPairMaterialized": false,
+    "controlledAccessRequested": false,
+    "duaSigned": false,
+    "externalContactPerformed": false,
+    "paidSpendAuthorized": false
+  },
+  "authorityBoundary": {
+    "fr299ReferenceMaterialized": false,
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2Authorized": false,
+    "fr300R2EligibleCandidateCount": 0,
+    "traditionalBindingIssued": false,
+    "productMaterialization": "18/29",
+    "productionActivated": false,
+    "commerceActivated": false
+  },
+  "disposition": "benchmark_strategy_frozen_reference_acquisition_next",
+  "nextActionWithoutNewExternalAuthorization": "qualify_and_acquire_first_fr299_grade_rgb_3d_reference_pair_for_nose_tip_bridge_relative_projection"
+}

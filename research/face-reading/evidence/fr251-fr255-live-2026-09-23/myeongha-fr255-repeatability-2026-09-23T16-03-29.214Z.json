@@ -1,0 +1,817 @@
+{
+  "schemaVersion": "fr255-longitudinal-repeatability-observation-bundle-v1",
+  "artifactVersion": "0.1.0",
+  "contractVersion": "FR255-LONGITUDINAL-REPEATABILITY-OBSERVATION-BUNDLE-v1",
+  "authorityState": "longitudinal_repeatability_observations_descriptive_only_no_threshold_or_calibration",
+  "studyRef": "study.fr255:ee960dad5ef684b28e0e08ee",
+  "createdAt": "2026-09-23T15:48:17.665Z",
+  "updatedAt": "2026-09-23T16:03:27.940Z",
+  "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+  "observations": [
+    {
+      "schemaVersion": "fr255-longitudinal-observation-v1",
+      "observationOrdinal": 1,
+      "sourceExecutionRef": "sha256:e17056e446daf3bedd2de597b551e6e5bdfbeb154f5adfcfe2a673c79f251a7d",
+      "sourceGeneratedAt": "2026-09-23T15:47:42.563Z",
+      "importedAt": "2026-09-23T15:48:17.665Z",
+      "elapsedSincePreviousObservationMs": null,
+      "participantContinuity": {
+        "baselineParticipantOperatorAttested": true,
+        "sameParticipantAsPreviousOperatorAttested": null,
+        "independentlyVerified": false,
+        "identityMatchingPerformed": false
+      },
+      "executionSeparation": {
+        "separateFR251ExecutionOperatorAttested": true,
+        "elapsedTimeRecordedWithoutMinimumThreshold": true,
+        "temporalSeparationIndependentlyVerified": false
+      },
+      "captureConditions": {
+        "schemaVersion": "fr255-capture-condition-observation-v1",
+        "deviceClass": "phone",
+        "cameraFacing": "front",
+        "orientation": "portrait",
+        "lightingCondition": "indoor_typical",
+        "glassesPresent": "absent",
+        "hairOccludingEyeRegion": "absent",
+        "neutralExpressionOperatorAttested": true,
+        "frontalPoseOperatorAttested": true,
+        "operatorObservationOnly": true,
+        "independentlyVerified": false,
+        "qualityThresholdApplied": false
+      },
+      "sourceMechanics": {
+        "requiredSlotCount": 4,
+        "recordedSlotCount": 4,
+        "acceptedCaptureCount": 4,
+        "rejectedCaptureCount": 0,
+        "mechanicsReviewState": "four_slot_operator_attested_mechanics_complete",
+        "fourRequiredSlotsObserved": true
+      },
+      "slots": [
+        {
+          "sessionOrdinal": 1,
+          "captureOrdinal": 1,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 7.116334430941334
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 1,
+          "captureOrdinal": 2,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 6.8811429187910464
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 2,
+          "captureOrdinal": 1,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 7.107606383141093
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 2,
+          "captureOrdinal": 2,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 6.571091758013203
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        }
+      ],
+      "sessionSummaries": [
+        {
+          "sessionOrdinal": 1,
+          "acceptedMetricCount": 2,
+          "acceptedValuesDegrees": [
+            7.116334430941334,
+            6.8811429187910464
+          ],
+          "meanDegrees": 6.998738674866191,
+          "absoluteDifferenceDegrees": 0.23519151215028788,
+          "rangeDegrees": 0.23519151215028788,
+          "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+        },
+        {
+          "sessionOrdinal": 2,
+          "acceptedMetricCount": 2,
+          "acceptedValuesDegrees": [
+            7.107606383141093,
+            6.571091758013203
+          ],
+          "meanDegrees": 6.839349070577148,
+          "absoluteDifferenceDegrees": 0.5365146251278894,
+          "rangeDegrees": 0.5365146251278894,
+          "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+        }
+      ],
+      "observationSummary": {
+        "acceptedMetricCount": 4,
+        "acceptedMetricMeanDegrees": 6.919043872721669,
+        "firstSessionMeanDegrees": 6.998738674866191,
+        "secondSessionMeanDegrees": 6.839349070577148,
+        "signedDifferenceSecondMinusFirstSessionMeanDegrees": -0.1593896042890428,
+        "absoluteDifferenceBetweenSessionMeansDegrees": 0.1593896042890428,
+        "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+      },
+      "previousObservationDigest": null,
+      "observationDigest": "sha256:b17993fe60138b25977ac4af05fd613d9e6f2fe7ef568261c58ae6a3498708f9"
+    },
+    {
+      "schemaVersion": "fr255-longitudinal-observation-v1",
+      "observationOrdinal": 2,
+      "sourceExecutionRef": "sha256:144f11e48e360f401f9992a4162bec88efa57ffaf040fbc4a1af1e60b99c39b4",
+      "sourceGeneratedAt": "2026-09-23T15:49:04.293Z",
+      "importedAt": "2026-09-23T15:49:25.224Z",
+      "elapsedSincePreviousObservationMs": 81730,
+      "participantContinuity": {
+        "baselineParticipantOperatorAttested": true,
+        "sameParticipantAsPreviousOperatorAttested": true,
+        "independentlyVerified": false,
+        "identityMatchingPerformed": false
+      },
+      "executionSeparation": {
+        "separateFR251ExecutionOperatorAttested": true,
+        "elapsedTimeRecordedWithoutMinimumThreshold": true,
+        "temporalSeparationIndependentlyVerified": false
+      },
+      "captureConditions": {
+        "schemaVersion": "fr255-capture-condition-observation-v1",
+        "deviceClass": "phone",
+        "cameraFacing": "front",
+        "orientation": "portrait",
+        "lightingCondition": "indoor_typical",
+        "glassesPresent": "absent",
+        "hairOccludingEyeRegion": "absent",
+        "neutralExpressionOperatorAttested": true,
+        "frontalPoseOperatorAttested": true,
+        "operatorObservationOnly": true,
+        "independentlyVerified": false,
+        "qualityThresholdApplied": false
+      },
+      "sourceMechanics": {
+        "requiredSlotCount": 4,
+        "recordedSlotCount": 4,
+        "acceptedCaptureCount": 4,
+        "rejectedCaptureCount": 0,
+        "mechanicsReviewState": "four_slot_operator_attested_mechanics_complete",
+        "fourRequiredSlotsObserved": true
+      },
+      "slots": [
+        {
+          "sessionOrdinal": 1,
+          "captureOrdinal": 1,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 7.337708535308878
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 1,
+          "captureOrdinal": 2,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 6.33722924387655
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 2,
+          "captureOrdinal": 1,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 7.198524468256368
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 2,
+          "captureOrdinal": 2,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 6.98051918724347
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        }
+      ],
+      "sessionSummaries": [
+        {
+          "sessionOrdinal": 1,
+          "acceptedMetricCount": 2,
+          "acceptedValuesDegrees": [
+            7.337708535308878,
+            6.33722924387655
+          ],
+          "meanDegrees": 6.837468889592714,
+          "absoluteDifferenceDegrees": 1.0004792914323284,
+          "rangeDegrees": 1.0004792914323284,
+          "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+        },
+        {
+          "sessionOrdinal": 2,
+          "acceptedMetricCount": 2,
+          "acceptedValuesDegrees": [
+            7.198524468256368,
+            6.98051918724347
+          ],
+          "meanDegrees": 7.089521827749919,
+          "absoluteDifferenceDegrees": 0.21800528101289807,
+          "rangeDegrees": 0.21800528101289807,
+          "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+        }
+      ],
+      "observationSummary": {
+        "acceptedMetricCount": 4,
+        "acceptedMetricMeanDegrees": 6.963495358671316,
+        "firstSessionMeanDegrees": 6.837468889592714,
+        "secondSessionMeanDegrees": 7.089521827749919,
+        "signedDifferenceSecondMinusFirstSessionMeanDegrees": 0.2520529381572052,
+        "absoluteDifferenceBetweenSessionMeansDegrees": 0.2520529381572052,
+        "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+      },
+      "previousObservationDigest": "sha256:b17993fe60138b25977ac4af05fd613d9e6f2fe7ef568261c58ae6a3498708f9",
+      "observationDigest": "sha256:94c3f8b263771f0f6bc68bdd716374808278e13cd95bc4cf3da3314fc67848c2"
+    },
+    {
+      "schemaVersion": "fr255-longitudinal-observation-v1",
+      "observationOrdinal": 3,
+      "sourceExecutionRef": "sha256:c3f8c189c2c18fb306ee729f4a2c68f18bfc76978ade67ba571b65222f4f6674",
+      "sourceGeneratedAt": "2026-09-23T16:01:57.504Z",
+      "importedAt": "2026-09-23T16:02:22.064Z",
+      "elapsedSincePreviousObservationMs": 773211,
+      "participantContinuity": {
+        "baselineParticipantOperatorAttested": true,
+        "sameParticipantAsPreviousOperatorAttested": true,
+        "independentlyVerified": false,
+        "identityMatchingPerformed": false
+      },
+      "executionSeparation": {
+        "separateFR251ExecutionOperatorAttested": true,
+        "elapsedTimeRecordedWithoutMinimumThreshold": true,
+        "temporalSeparationIndependentlyVerified": false
+      },
+      "captureConditions": {
+        "schemaVersion": "fr255-capture-condition-observation-v1",
+        "deviceClass": "phone",
+        "cameraFacing": "front",
+        "orientation": "portrait",
+        "lightingCondition": "indoor_typical",
+        "glassesPresent": "absent",
+        "hairOccludingEyeRegion": "absent",
+        "neutralExpressionOperatorAttested": true,
+        "frontalPoseOperatorAttested": true,
+        "operatorObservationOnly": true,
+        "independentlyVerified": false,
+        "qualityThresholdApplied": false
+      },
+      "sourceMechanics": {
+        "requiredSlotCount": 4,
+        "recordedSlotCount": 4,
+        "acceptedCaptureCount": 4,
+        "rejectedCaptureCount": 0,
+        "mechanicsReviewState": "four_slot_operator_attested_mechanics_complete",
+        "fourRequiredSlotsObserved": true
+      },
+      "slots": [
+        {
+          "sessionOrdinal": 1,
+          "captureOrdinal": 1,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 7.805328871660896
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 1,
+          "captureOrdinal": 2,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 8.744407893593127
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 2,
+          "captureOrdinal": 1,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 7.955467813300924
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 2,
+          "captureOrdinal": 2,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 7.784889161560423
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        }
+      ],
+      "sessionSummaries": [
+        {
+          "sessionOrdinal": 1,
+          "acceptedMetricCount": 2,
+          "acceptedValuesDegrees": [
+            7.805328871660896,
+            8.744407893593127
+          ],
+          "meanDegrees": 8.274868382627012,
+          "absoluteDifferenceDegrees": 0.9390790219322316,
+          "rangeDegrees": 0.9390790219322316,
+          "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+        },
+        {
+          "sessionOrdinal": 2,
+          "acceptedMetricCount": 2,
+          "acceptedValuesDegrees": [
+            7.955467813300924,
+            7.784889161560423
+          ],
+          "meanDegrees": 7.870178487430674,
+          "absoluteDifferenceDegrees": 0.17057865174050058,
+          "rangeDegrees": 0.17057865174050058,
+          "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+        }
+      ],
+      "observationSummary": {
+        "acceptedMetricCount": 4,
+        "acceptedMetricMeanDegrees": 8.072523435028844,
+        "firstSessionMeanDegrees": 8.274868382627012,
+        "secondSessionMeanDegrees": 7.870178487430674,
+        "signedDifferenceSecondMinusFirstSessionMeanDegrees": -0.4046898951963387,
+        "absoluteDifferenceBetweenSessionMeansDegrees": 0.4046898951963387,
+        "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+      },
+      "previousObservationDigest": "sha256:94c3f8b263771f0f6bc68bdd716374808278e13cd95bc4cf3da3314fc67848c2",
+      "observationDigest": "sha256:f990000a80f55ec2b9af1367aff9440d0eda8b6979361f4a826873fda8581d11"
+    },
+    {
+      "schemaVersion": "fr255-longitudinal-observation-v1",
+      "observationOrdinal": 4,
+      "sourceExecutionRef": "sha256:926b8bf0a6b4924c422c78aa33b8ce29c51eed7b8d59191d68216cfdd04cdbfd",
+      "sourceGeneratedAt": "2026-09-23T16:02:59.804Z",
+      "importedAt": "2026-09-23T16:03:27.940Z",
+      "elapsedSincePreviousObservationMs": 62300,
+      "participantContinuity": {
+        "baselineParticipantOperatorAttested": true,
+        "sameParticipantAsPreviousOperatorAttested": true,
+        "independentlyVerified": false,
+        "identityMatchingPerformed": false
+      },
+      "executionSeparation": {
+        "separateFR251ExecutionOperatorAttested": true,
+        "elapsedTimeRecordedWithoutMinimumThreshold": true,
+        "temporalSeparationIndependentlyVerified": false
+      },
+      "captureConditions": {
+        "schemaVersion": "fr255-capture-condition-observation-v1",
+        "deviceClass": "phone",
+        "cameraFacing": "front",
+        "orientation": "portrait",
+        "lightingCondition": "indoor_typical",
+        "glassesPresent": "absent",
+        "hairOccludingEyeRegion": "absent",
+        "neutralExpressionOperatorAttested": true,
+        "frontalPoseOperatorAttested": true,
+        "operatorObservationOnly": true,
+        "independentlyVerified": false,
+        "qualityThresholdApplied": false
+      },
+      "sourceMechanics": {
+        "requiredSlotCount": 4,
+        "recordedSlotCount": 4,
+        "acceptedCaptureCount": 4,
+        "rejectedCaptureCount": 0,
+        "mechanicsReviewState": "four_slot_operator_attested_mechanics_complete",
+        "fourRequiredSlotsObserved": true
+      },
+      "slots": [
+        {
+          "sessionOrdinal": 1,
+          "captureOrdinal": 1,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 8.015308645274352
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 1,
+          "captureOrdinal": 2,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 8.538269566542773
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 2,
+          "captureOrdinal": 1,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 8.941876694110473
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        },
+        {
+          "sessionOrdinal": 2,
+          "captureOrdinal": 2,
+          "resultStatus": "accepted_for_dry_run_mechanics_only",
+          "qualityAssessment": {
+            "singleFace": true,
+            "frontalPose": true,
+            "sharpness": true,
+            "bilateralEyeRegionVisibility": true,
+            "bilateralEyeLandmarkCoverage": true,
+            "majorEyeRegionOcclusionAbsent": true
+          },
+          "rejectionReasons": [],
+          "primaryMetric": {
+            "metricRef": "neutral.eye.outer_corner_tilt.mean_degrees@0.1.0",
+            "unit": "degree",
+            "value": 7.382788049664428
+          },
+          "metricExtractorInvoked": true,
+          "workingBufferZeroizedAfterProcessing": true,
+          "rawBytesPersisted": false,
+          "rawImageDigestPersisted": false,
+          "reviewImagePersisted": false,
+          "faceEmbeddingPersisted": false,
+          "identityTemplatePersisted": false
+        }
+      ],
+      "sessionSummaries": [
+        {
+          "sessionOrdinal": 1,
+          "acceptedMetricCount": 2,
+          "acceptedValuesDegrees": [
+            8.015308645274352,
+            8.538269566542773
+          ],
+          "meanDegrees": 8.276789105908563,
+          "absoluteDifferenceDegrees": 0.522960921268421,
+          "rangeDegrees": 0.522960921268421,
+          "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+        },
+        {
+          "sessionOrdinal": 2,
+          "acceptedMetricCount": 2,
+          "acceptedValuesDegrees": [
+            8.941876694110473,
+            7.382788049664428
+          ],
+          "meanDegrees": 8.16233237188745,
+          "absoluteDifferenceDegrees": 1.559088644446045,
+          "rangeDegrees": 1.559088644446045,
+          "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+        }
+      ],
+      "observationSummary": {
+        "acceptedMetricCount": 4,
+        "acceptedMetricMeanDegrees": 8.219560738898007,
+        "firstSessionMeanDegrees": 8.276789105908563,
+        "secondSessionMeanDegrees": 8.16233237188745,
+        "signedDifferenceSecondMinusFirstSessionMeanDegrees": -0.1144567340211129,
+        "absoluteDifferenceBetweenSessionMeansDegrees": 0.1144567340211129,
+        "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+      },
+      "previousObservationDigest": "sha256:f990000a80f55ec2b9af1367aff9440d0eda8b6979361f4a826873fda8581d11",
+      "observationDigest": "sha256:6c94f8c48cfff8ffec83c463fd58b92ad3c6ce348fbfa621bbace39e20e5e168"
+    }
+  ],
+  "descriptiveSummary": {
+    "observationBlockCount": 4,
+    "sourceSessionCount": 8,
+    "acceptedCaptureMetricCount": 16,
+    "sessionMeanCount": 8,
+    "sessionMeansDegrees": [
+      6.998738674866191,
+      6.839349070577148,
+      6.837468889592714,
+      7.089521827749919,
+      8.274868382627012,
+      7.870178487430674,
+      8.276789105908563,
+      8.16233237188745
+    ],
+    "meanOfSessionMeansDegrees": 7.543655851329959,
+    "medianOfSessionMeansDegrees": 7.479850157590296,
+    "minimumSessionMeanDegrees": 6.837468889592714,
+    "maximumSessionMeanDegrees": 8.276789105908563,
+    "rangeOfSessionMeansDegrees": 1.4393202163158492,
+    "populationStandardDeviationOfSessionMeansDegrees": 0.6184106959366137,
+    "medianAbsoluteDeviationOfSessionMeansDegrees": 0.6414411775053654,
+    "withinSessionAbsoluteDifferencesDegrees": [
+      0.23519151215028788,
+      0.5365146251278894,
+      1.0004792914323284,
+      0.21800528101289807,
+      0.9390790219322316,
+      0.17057865174050058,
+      0.522960921268421,
+      1.559088644446045
+    ],
+    "observationBlockMeansDegrees": [
+      6.919043872721669,
+      6.963495358671316,
+      8.072523435028844,
+      8.219560738898007
+    ],
+    "firstToLatestObservationMeanSignedDifferenceDegrees": 1.3005168661763378,
+    "firstToLatestObservationMeanAbsoluteDifferenceDegrees": 1.3005168661763378,
+    "evaluationState": "descriptive_only_no_repeatability_pass_fail"
+  },
+  "chainHeadDigest": "sha256:6c94f8c48cfff8ffec83c463fd58b92ad3c6ce348fbfa621bbace39e20e5e168",
+  "privacyBoundary": {
+    "sourceParticipantRefRetained": false,
+    "sourceOperatorRefRetained": false,
+    "rawMediaPersisted": false,
+    "rawImageDigestPersisted": false,
+    "rawLandmarkSetPersisted": false,
+    "derivedFullFaceMetricGeometryPersisted": false,
+    "faceEmbeddingPersisted": false,
+    "identityTemplatePersisted": false
+  },
+  "authorityBoundary": {
+    "participantIdentityIndependentlyVerified": false,
+    "temporalSeparationIndependentlyVerified": false,
+    "captureQualityConstructValidated": false,
+    "empiricalRepeatabilityEstablished": false,
+    "repeatabilityPassFailIssued": false,
+    "numericRepeatabilityThresholdIssued": false,
+    "numericCaptureQualityThresholdIssued": false,
+    "calibrationIssued": false,
+    "confidenceGradeIssued": false,
+    "interpretationValidityEstablished": false,
+    "traditionalBindingIssued": false,
+    "productionActivated": false,
+    "commerceActivated": false
+  },
+  "nextFrontier": "collect_additional_separately_executed_fr251_observation_blocks_then_review_descriptive_within_and_between_session_variation_before_any_threshold_or_calibration_proposal"
+}

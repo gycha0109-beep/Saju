@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "fr300-r1s-rights-minds-participant-scope-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-26",
+  "datasetRef": "doi:10.5281/zenodo.4322984",
+  "sourceReview": [
+    {
+      "source": "https://repositorio.ufmg.br/bitstream/1843/39785/3/Tamires_Tese_MINDS.pdf",
+      "sourceClass": "creator_ufmg_doctoral_thesis",
+      "supportedFacts": [
+        "public_dataset_described",
+        "12_signallers_described",
+        "rgb_depth_body_face_data_described"
+      ],
+      "participantCommercialProductDevelopmentConsentStatementLocated": false,
+      "irbOrCaaeAuthorityLocatedForMindsCollection": false
+    },
+    {
+      "source": "doi:10.1007/s00521-021-05802-4",
+      "sourceClass": "peer_reviewed_dataset_article",
+      "supportedFacts": [
+        "public_database_described",
+        "12_signallers_described",
+        "1200_rgbd_samples_described",
+        "compliance_with_ethical_standards_section_located",
+        "conflict_of_interest_statement_present"
+      ],
+      "informedConsentStatementLocated": false,
+      "ethicalApprovalStatementLocated": false,
+      "participantCommercialProductDevelopmentConsentStatementLocated": false
+    },
+    {
+      "source": "https://live.european-language-grid.eu/catalogue/lcr/21907",
+      "sourceClass": "zenodo_derived_public_catalog_metadata",
+      "supportedFacts": [
+        "cc_by_4_0_dataset_copyright_license",
+        "downloadable_zip_distribution"
+      ],
+      "participantCommercialProductDevelopmentConsentStatementLocated": false
+    }
+  ],
+  "searchTermsReviewed": [
+    "consent",
+    "consentimento",
+    "informed consent",
+    "ethical approval",
+    "CAAE",
+    "CEP",
+    "TCLE",
+    "uso de imagem",
+    "direito de imagem"
+  ],
+  "adjudication": {
+    "absenceFinding": "no_public_source_authority_located_not_proof_consent_never_existed",
+    "datasetCopyrightLicenseStatus": "cc_by_4_0_bound",
+    "participantCommercialProductDevelopmentScope": "unresolved_after_public_source_review",
+    "subjectArtifactInspectionAuthorized": false,
+    "externalContactAuthorized": false,
+    "subjectArtifactDownloadPerformed": false,
+    "disposition": "rights_hold_public_evidence_exhausted_for_current_surface",
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29"
+  },
+  "nextEvidencePriority": [
+    "zenodo_publisher_file_identity_metadata_if_public_endpoint_becomes_available",
+    "primary_participant_consent_or_data_use_authority_if_publicly_locatable",
+    "otherwise_prepare_author_or_institution_rights_question_without_sending",
+    "do_not_inspect_subject_face_artifacts_until_rights_gate_changes"
+  ]
+}

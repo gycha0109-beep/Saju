@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "fr279-fixed-still-screen-eye-chord-empirical-evidence-v1",
+  "contractVersion": "FR279-FIXED-STILL-SCREEN-EYE-CHORD-DECOMPOSITION-v1",
+  "runA": "2026-09-24T05:08:22.568Z",
+  "runB": "2026-09-24T05:08:35.363Z",
+  "runtime": "@mediapipe/tasks-vision@0.10.35 / IMAGE",
+  "modelSha256": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
+  "visionBundleSha256": "55d7ab624fbb70dcc5adc4ae6d7ea9cfcb569139d3dbfbf2b1deafcb966bc0fe",
+  "scalarIdentityExcludingGeneratedAt": true,
+  "fr269AngleIdentityAllSix": true,
+  "observations": [
+    {"imageLabel":"front_1","condition":"front","screenAngleDeg":9.49906284643758,"meanHorizontalSpanPx":167.40115356445312,"meanSignedVerticalRisePx":28.0352783203125,"verticalOrientationDeg":-4.802985034913519,"screenFaceBoxAreaFraction":0.3215840468323439},
+    {"imageLabel":"front_2","condition":"front","screenAngleDeg":10.001966604624146,"meanHorizontalSpanPx":163.08350372314453,"meanSignedVerticalRisePx":28.7879638671875,"verticalOrientationDeg":-4.656476316212187,"screenFaceBoxAreaFraction":0.30602956242487167},
+    {"imageLabel":"high_1","condition":"high_angle","screenAngleDeg":11.679727984608459,"meanHorizontalSpanPx":157.13145446777344,"meanSignedVerticalRisePx":32.45086669921875,"verticalOrientationDeg":-11.46856374829388,"screenFaceBoxAreaFraction":0.2683759000212351},
+    {"imageLabel":"high_2","condition":"high_angle","screenAngleDeg":12.666512686866923,"meanHorizontalSpanPx":163.24612426757812,"meanSignedVerticalRisePx":36.65625,"verticalOrientationDeg":-14.06494897417403,"screenFaceBoxAreaFraction":0.28181701024936245},
+    {"imageLabel":"low_1","condition":"low_angle","screenAngleDeg":1.4075722672722142,"meanHorizontalSpanPx":171.82379150390625,"meanSignedVerticalRisePx":4.226654052734375,"verticalOrientationDeg":14.079798156311663,"screenFaceBoxAreaFraction":0.30496516331031653},
+    {"imageLabel":"low_2","condition":"low_angle","screenAngleDeg":4.006167688508264,"meanHorizontalSpanPx":166.93341064453125,"meanSignedVerticalRisePx":11.6893310546875,"verticalOrientationDeg":8.887115391444274,"screenFaceBoxAreaFraction":0.3099602913307997}
+  ],
+  "conditions": [
+    {"condition":"front","screenAngleDeg":{"mean":9.750514725530863,"span":0.5029037581865659},"horizontalSpanPx":{"mean":165.24232864379883,"span":4.317649841308594},"signedVerticalRisePx":{"mean":28.41162109375,"span":0.752685546875},"verticalOrientationDeg":{"mean":-4.729730675562852,"span":0.14650871870133297},"screenFaceBoxAreaFraction":{"mean":0.31380680462860777,"span":0.015554484407472202}},
+    {"condition":"high_angle","screenAngleDeg":{"mean":12.173120335737691,"span":0.9867847022584648},"horizontalSpanPx":{"mean":160.18878936767578,"span":6.1146697998046875},"signedVerticalRisePx":{"mean":34.553558349609375,"span":4.20538330078125},"verticalOrientationDeg":{"mean":-12.766756361233956,"span":2.59638522588015},"screenFaceBoxAreaFraction":{"mean":0.2750964551352988,"span":0.013441110228127329}},
+    {"condition":"low_angle","screenAngleDeg":{"mean":2.706869977890239,"span":2.59859542123605},"horizontalSpanPx":{"mean":169.37860107421875,"span":4.890380859375},"signedVerticalRisePx":{"mean":7.9579925537109375,"span":7.462677001953125},"verticalOrientationDeg":{"mean":11.483456773877968,"span":5.192682764867387},"screenFaceBoxAreaFraction":{"mean":0.3074627273205581,"span":0.004995128020483186}}
+  ],
+  "frontRelativeContrasts": [
+    {"condition":"high_angle","deltaScreenAngleDeg":2.422605610206828,"deltaHorizontalSpanPx":-5.053539276123047,"deltaSignedVerticalRisePx":6.141937255859375,"deltaVerticalOrientationDeg":-8.037025685671104,"deltaScreenFaceBoxAreaFraction":-0.03871034949330898},
+    {"condition":"low_angle","deltaScreenAngleDeg":-7.043644747640624,"deltaHorizontalSpanPx":4.136272430419922,"deltaSignedVerticalRisePx":-20.453628540039062,"deltaVerticalOrientationDeg":16.21318744944082,"deltaScreenFaceBoxAreaFraction":-0.006344077308049645}
+  ],
+  "boundaries": {
+    "rawImagePersisted": false,
+    "rawLandmarksPersisted": false,
+    "poseMatrixPersisted": false,
+    "providerRunRefPersisted": false,
+    "thresholdIssued": false,
+    "calibrationIssued": false,
+    "correctionFormulaIssued": false,
+    "causalClassificationIssued": false,
+    "frozenMetricReplaced": false,
+    "traditionalBindingIssued": false,
+    "productionActivated": false,
+    "commerceActivated": false
+  }
+}

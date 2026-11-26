@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "fr300-r1v-zc-ast-controlled-preflight-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-26",
+  "candidate": "ast_face_controlled_raw",
+  "contractVersion": "FR300-R1V-ZC-AST-CONTROLLED-PREFLIGHT-v1",
+  "sources": [
+    {
+      "source": "https://doi.org/10.1038/s41597-026-07098-2",
+      "sourceClass": "peer_reviewed_data_descriptor",
+      "supportedFacts": [
+        "controlled_raw_scans_are_original_3d_meshes_prior_to_topology_standardization",
+        "controlled_raw_scan_format_is_OBJ",
+        "structured_light_capture_is_documented",
+        "synchronized_frontal_left_right_RGB_exists_for_52_additionally_consenting_participants",
+        "standardized_capture_rig_positions_and_angles_are_documented"
+      ],
+      "notSourceBound": [
+        "exact_scanner_model",
+        "exact_scanner_calibration",
+        "exact_scanner_metric_accuracy",
+        "raw_OBJ_physical_coordinate_unit",
+        "raw_OBJ_export_scale_semantics",
+        "exact_scanner_to_RGB_extrinsics",
+        "exact_per_capture_3D_RGB_registration_receipt"
+      ]
+    },
+    {
+      "source": "https://github.com/zhaopu99/AST-face/blob/main/README.md",
+      "sourceClass": "official_dataset_processing_and_access_repository",
+      "supportedFacts": [
+        "raw_scans_are_controlled_access",
+        "textures_and_synchronized_RGB_are_controlled_identifiable_modalities_where_consenting",
+        "52_participants_consented_to_identifiable_modalities",
+        "controlled_access_requires_DUA_and_OSF_permission",
+        "OSF_hosted_DUA_is_declared_authoritative",
+        "GitHub_DUA_copy_is_declared_a_convenience_mirror"
+      ]
+    },
+    {
+      "source": "https://github.com/zhaopu99/AST-face/blob/main/Data%20Usage%20Agreement%20(DUA)%20.pdf",
+      "sourceClass": "official_repository_DUA_mirror",
+      "blobSha": "5ab05af1b97cf6f1728e6c4a363414e804a650d7",
+      "supportedFacts": [
+        "controlled_scope_includes_raw_3D_scans",
+        "controlled_scope_includes_consented_textures_and_synchronized_multiview_RGB",
+        "academic_or_industrial_research_and_development_is_permitted_for_internal_analysis_and_evaluation",
+        "biometric_identification_verification_surveillance_identity_profiling_and_identity_recognition_training_or_evaluation_are_prohibited",
+        "controlled_files_and_identifiable_derivatives_must_not_be_redistributed",
+        "non_identifying_aggregate_outputs_may_be_published_subject_to_DUA_conditions",
+        "secure_storage_and_lifecycle_deletion_obligations_apply"
+      ],
+      "authorityLimitation": "OSF_hosted_DUA_is_authoritative_and_was_not_byte_compared_to_this_mirror"
+    }
+  ],
+  "rightsAdjudication": {
+    "githubMirrorInspected": true,
+    "osfAuthoritativeDuaByteVerifiedAgainstMirror": false,
+    "industrialInternalResearchAndDevelopment": "permitted_for_internal_analysis_and_evaluation_on_inspected_mirror",
+    "broadProductionRuntimeReuse": "not_established_by_internal_analysis_and_evaluation_permission",
+    "controlledFileRedistributionPermitted": false,
+    "identifiableDerivativeRedistributionPermitted": false
+  },
+  "metricAdjudication": {
+    "rawScansArePreTopologyStandardization": true,
+    "publicStandardizedMeshMaySubstituteControlledRawMetricGeometry": false,
+    "rawObjPhysicalCoordinateUnit": "not_source_bound",
+    "rawObjExportScaleSemantics": "not_source_bound",
+    "metricScaleVerified": false,
+    "genericStructuredLightCaptureMaySubstituteExactMetricUnitAuthority": false
+  },
+  "rgbAdjudication": {
+    "synchronizedRgbConsentingParticipantCount": 52,
+    "synchronizedRgbCaptureDocumented": true,
+    "sameCaptureBindingEstablishedForFR299": false,
+    "validatedRegistrationBindingEstablishedForFR299": false,
+    "correspondenceVerifiedForFR299": false
+  },
+  "annotationBoundary": {
+    "providerLandmarksMayIssueFR266Truth": false,
+    "providerLandmarksMayIssueFR297Truth": false
+  },
+  "operationalBoundary": {
+    "controlledDataAccessRequested": false,
+    "controlledDataAccessAuthorizedByThisTrack": false,
+    "duaSigned": false,
+    "duaSent": false,
+    "externalContactPerformed": false,
+    "controlledSubjectArtifactDownloaded": false,
+    "controlledSubjectArtifactInspected": false,
+    "paidSpendAuthorized": false,
+    "productionActivated": false,
+    "commerceActivated": false
+  },
+  "disposition": {
+    "value": "hold_external_authority",
+    "controlledPathTerminalReject": false,
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29"
+  },
+  "reopenConditions": [
+    "authoritative_OSF_DUA_version_confirmed_for_intended_bounded_internal_validation_use",
+    "exact_raw_OBJ_physical_unit_or_equivalent_metric_scale_authority_source_bound",
+    "scanner_or_export_documentation_binds_metric_scale_to_exact_controlled_raw_artifact",
+    "exact_subject_capture_level_3D_RGB_binding_or_validated_registration_receipt_available",
+    "controlled_access_separately_authorized_before_subject_artifact_request_or_download"
+  ],
+  "nextFrontierWithoutNewExternalAuthorization": "FR300-R1W-ZC-existing-hardware-metric-reference-feasibility"
+}

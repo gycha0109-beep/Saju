@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "fr300-r2d-aq-ast-controlled-access-request-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-27",
+  "contractVersion": "FR300-R2D-AQ-AST-CONTROLLED-ACCESS-REQUEST-v1",
+  "userAuthorization": {
+    "explicit": true,
+    "authenticatedOsfDuaRetrievalAuthorized": true,
+    "authoritativeDuaReviewAuthorized": true,
+    "rightsAdjudicationAuthorized": true,
+    "controlledAccessRequestExecutionAuthorizedIfCompatible": true,
+    "boundedRightsClarificationAuthorizedIfAmbiguous": true,
+    "rawParticipantArtifactDownloadAuthorizedByR2D": false,
+    "paidSpendAuthorized": false
+  },
+  "externalExecutionContext": {
+    "authenticatedOsfSessionAvailable": false,
+    "browserSessionConnectorAvailable": false,
+    "signerIdentityBound": false,
+    "authoritativeDuaRetrieved": false,
+    "authoritativeDuaReviewed": false,
+    "authoritativeDuaSha256": null,
+    "rightsCompatibility": "not_reviewed",
+    "duaSigned": false,
+    "requestSubmitted": false,
+    "providerAcknowledged": false,
+    "providerAccessState": "not_requested",
+    "clarificationSent": false,
+    "rawParticipantArtifactDownloaded": false
+  },
+  "currentState": "dua_retrieval_required",
+  "disposition": "user_authorized_external_execution_blocked_authenticated_osf_session_required",
+  "blocker": "authenticated_osf_browser_session_required",
+  "authority": {
+    "accessRequestExecutionAuthorizedByUser": true,
+    "accessRequestActuallySubmitted": false,
+    "controlledAccessApproved": false,
+    "rawParticipantArtifactUseAuthorized": false,
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29",
+    "productionActivated": false,
+    "commerceActivated": false
+  }
+}
