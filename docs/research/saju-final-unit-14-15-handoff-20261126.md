@@ -15,7 +15,7 @@
 
 - `main`: 마지막 확인 HEAD `9e9231b181b4c848b26be6eec1ef4a55a17debf9`
 - Unit 08 기반 브랜치 `saju-final-unit-08-role-semantics`: `8e188b185d461aca90d59e3130686c3d34cfeb0c`
-- Unit 14 브랜치 `saju-final-unit-14-relationship-semantic-coverage`: `abbb2c32d8e4d9dd96b1d3cc1e7f778bc2b455c5`
+- Unit 14 브랜치 `saju-final-unit-14-relationship-semantic-coverage`: handoff 문서 갱신 전 HEAD `98277b55623fc2c88b441e4303cdfd01a9806d07`; 새 HEAD는 이 handoff 갱신 커밋이므로 새 세션에서 다시 조회할 것
 - Unit 15 브랜치 `saju-final-unit-15-temporal-scenario-coverage`: `aa2f164c8ce4131f8f1b186811f6f0b089c762c1`
 
 | PR | 내용 | Base → Head | 상태 |
@@ -26,8 +26,10 @@
 두 PR은 누적 브랜치 구조다. #2826을 #2825와 무관한 독립 PR처럼 처리하지 않는다. #2825는 main이 아니라 Unit 08 브랜치를 대상으로 한다. #2824는 Unit 08 브랜치에 병합된 상태지만 main 병합을 뜻하지 않는다.
 
 CI:
-- Unit 14 HEAD의 [Whole Chart Regression run 45757062891](https://github.com/gycha0109-beep/Saju/actions/runs/45757062891): SUCCESS
-- Unit 15 HEAD의 [Whole Chart Regression run 45759048762](https://github.com/gycha0109-beep/Saju/actions/runs/45759048762): SUCCESS
+- Unit 14 코드 HEAD `338069359290da7718f9772a04c5725efa9d6534`의 [Whole Chart Regression run 45757062891](https://github.com/gycha0109-beep/Saju/actions/runs/45757062891): SUCCESS. 이후 Roadmap·Worklog·handoff 문서 갱신 커밋으로 새 run이 시작됐으므로 최신 상태를 다시 확인한다.
+- Unit 15 코드 HEAD `cbf5dd22ec24a3b5465a402948758fd6af6493a7`의 [Whole Chart Regression run 45759048762](https://github.com/gycha0109-beep/Saju/actions/runs/45759048762): SUCCESS. Worklog 갱신 커밋 이후에도 새 run이 시작됐으므로 최신 상태를 다시 확인한다.
+- 문서 갱신 HEAD의 마지막 확인 시점에는 Unit 14 run `45773891254`가 PENDING, Unit 15 run `45773698354`가 IN_PROGRESS였다. 이 handoff 수정 자체도 새 CI를 유발할 수 있으므로 새 세션에서 현재 상태를 조회한다.
+- #2825 자동 병합 설정은 최신 체크가 불안정한 상태라 거절됐다. CI Green 및 mergeability 재확인 후 다시 시도한다. #2826은 Unit 14 base 갱신 이후 mergeable=false로 표시되어 재확인이 필요하다.
 
 CI 통과는 해당 코드·테스트의 기술 검증이다. 명리 의미 권한, Production, Official Reading, 게시·판매 권한을 부여하지 않는다. 두 HEAD에서 500건·10,000건 전체 감사를 새로 실행한 것은 아니다.
 
