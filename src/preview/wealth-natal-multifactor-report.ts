@@ -17,6 +17,20 @@ import {
 
 export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.5.0-research-preview' as const;
 type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension' | 'context';
+type Family = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
+export type WealthMeaningArea =
+  | 'value_formation'
+  | 'exchange'
+  | 'maintenance'
+  | 'allocation'
+  | 'responsibility'
+  | 'supplementary_path';
+export interface WealthMeaningCoverage {
+  required: readonly WealthMeaningArea[];
+  covered: readonly WealthMeaningArea[];
+  missing: readonly WealthMeaningArea[];
+  optional: readonly WealthMeaningArea[];
+}
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches' | 'hidden_stems';
 export interface WealthNatalMultifactorSection {
@@ -24,6 +38,7 @@ export interface WealthNatalMultifactorSection {
   pattern: string;
   axis: Axis;
   channel: Channel;
+  families: readonly Family[];
   headline: string;
   paragraph: string;
   upstreamClaimIds: readonly string[];
@@ -50,6 +65,7 @@ export interface WealthNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly WealthNatalMultifactorSection[];
+  meaningCoverage: WealthMeaningCoverage;
   readingGuide?: WealthNatalReadingGuide;
   wholeChart: WholeChartNatalReading;
   missing: readonly string[];
@@ -373,6 +389,7 @@ function toSection(
     pattern: value.pattern,
     axis: value.axis as Axis,
     channel: value.channel as Channel,
+    families: [...(value.families as Family[])],
     headline: textFor(claim.claimType, 'headline'),
     paragraph: `${textFor(claim.claimType, 'summary')} 이 명식에서 확인한 위치는 ${observedByFamily.join(' / ')}입니다.`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
@@ -382,6 +399,95 @@ function toSection(
     observedFactPaths: locations.map((x) => x.factPath),
   };
 }
+const WEALTH_MEANING_ORDER: readonly WealthMeaningArea[] = [
+  'value_formation',
+  'exchange',
+  'maintenance',
+  'allocation',
+  'responsibility',
+  'supplementary_path',
+];
+const WEALTH_MEANING_LABEL: Readonly<Record<WealthMeaningArea, string>> = {
+  value_formation: '가치 형성',
+  exchange: '교환·자원',
+  maintenance: '유지·관리',
+  allocation: '배분·협력',
+  responsibility: '책임·지출',
+  supplementary_path: '보완 경로',
+};
+
+function requiredWealthMeaningAreas(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+): WealthMeaningArea[] {
+  const byChannel = new Map<Channel, Set<Family>>([
+    ['visible_stems', new Set()],
+    ['branches', new Set()],
+    ['hidden_stems', new Set()],
+  ]);
+  for (const claim of execution.claims) {
+    if (
+      claim.state !== 'active' ||
+      claim.taxonomy.tier !== 'T5' ||
+      claim.snapshotId !== snapshot.snapshotId ||
+      claim.sourceRefs.length === 0
+    ) continue;
+    const match =
+      /^TEN_GOD_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES|HIDDEN_STEMS)_THEME$/u.exec(
+        claim.claimType,
+      );
+    if (!match) continue;
+    byChannel.get(match[2]!.toLowerCase() as Channel)?.add(match[1]!.toLowerCase() as Family);
+  }
+
+  const required = new Set<WealthMeaningArea>();
+  for (const families of byChannel.values()) {
+    if (!families.has('wealth')) continue;
+    required.add('exchange');
+    if (families.has('output')) required.add('value_formation');
+    if (families.has('resource') || families.has('officer')) required.add('maintenance');
+    if (families.has('peer')) required.add('allocation');
+    if (families.has('officer')) required.add('responsibility');
+  }
+  return WEALTH_MEANING_ORDER.filter((area) => required.has(area));
+}
+
+function wealthMeaningAreasForSection(
+  section: WealthNatalMultifactorSection,
+): WealthMeaningArea[] {
+  const families = new Set(section.families);
+  const areas = new Set<WealthMeaningArea>();
+  if (families.has('wealth')) {
+    areas.add('exchange');
+    if (families.has('output')) areas.add('value_formation');
+    if (families.has('resource') || families.has('officer')) areas.add('maintenance');
+    if (families.has('peer')) areas.add('allocation');
+    if (families.has('officer')) areas.add('responsibility');
+  } else if (
+    section.axis === 'context' &&
+    families.has('output') &&
+    (families.has('peer') || families.has('resource'))
+  ) {
+    areas.add('supplementary_path');
+  }
+  return WEALTH_MEANING_ORDER.filter((area) => areas.has(area));
+}
+
+function buildWealthMeaningCoverage(
+  required: readonly WealthMeaningArea[],
+  sections: readonly WealthNatalMultifactorSection[],
+): WealthMeaningCoverage {
+  const coveredSet = new Set(sections.flatMap(wealthMeaningAreasForSection));
+  const requiredSet = new Set(required);
+  const covered = WEALTH_MEANING_ORDER.filter((area) => coveredSet.has(area));
+  return {
+    required: [...required],
+    covered,
+    missing: required.filter((area) => !coveredSet.has(area)),
+    optional: covered.filter((area) => !requiredSet.has(area)),
+  };
+}
+
 /**
  * Reorganize only source-owned, selected Wealth T8 observations into a
  * readable first-screen explanation. Not a new Claim or wealth prediction.
@@ -511,6 +617,7 @@ export function buildWealthNatalMultifactorReport(
     ? selectIndependentNatalSupportingAxes(
         core,
         result.filter((section) => section.axis !== 'context'),
+        result.length,
       )
     : undefined;
   const tensionOnly = result.filter((section) => section.axis === 'tension').slice(0, 1);
@@ -549,17 +656,25 @@ export function buildWealthNatalMultifactorReport(
       '관성·인성 또는 관성·비겁의 간접적인 구조 설명만 확인됩니다. 이것은 재성 중심 재물운 종합 해석이 아니며 결과를 부분 연구 관점으로 제한합니다.',
     );
   }
-  if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
+  const requiredAreas = requiredWealthMeaningAreas(snapshot, execution);
+  const meaningCoverage = buildWealthMeaningCoverage(requiredAreas, chosen);
+  if (requiredAreas.length === 0) {
+    missing.push('동일 관측 채널에서 재성과 연결되는 출처 있는 T5 근거가 없어 교환 중심 재물 종합 결론을 만들 수 없습니다.');
+  }
+  if (meaningCoverage.missing.length > 0) {
     missing.push(
-      '서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.',
+      `명식에서 확인된 재물 관련 핵심 영역 중 ${meaningCoverage.missing.map((area) => WEALTH_MEANING_LABEL[area]).join('·')} 근거가 아직 선택된 풀이에 연결되지 않았습니다.`,
     );
   }
-  const missingSupportingAxes =
-    2 - (core ? chosen.length - 1 : chosen.filter((s) => s.axis === 'tension').length);
-  if (missingSupportingAxes > 0)
-    missing.push(`중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
+  if (supportSelection && supportSelection.overlapOnlyCount > 0 && meaningCoverage.missing.length > 0) {
+    missing.push(
+      '추가 해석 후보가 기존 문단과 같은 계산 위치를 반복하여 독립 근거로 선택되지 않았습니다.',
+    );
+  }
+  const hasRequiredMeaning = requiredAreas.includes('exchange') &&
+    meaningCoverage.missing.length === 0;
   const state: Status =
-    snapshot.completeness.birthTimeKnown && core !== undefined && chosen.length === 3
+    snapshot.completeness.birthTimeKnown && core !== undefined && hasRequiredMeaning
       ? 'complete'
       : result.length
         ? 'partial'
@@ -588,6 +703,7 @@ export function buildWealthNatalMultifactorReport(
       '실제 명식의 십신 관계를 바탕으로 가치를 만들어 내는 과정, 자원을 다루는 기준, 준비와 배분 사이의 구조를 함께 살펴봅니다. 수입이나 재산을 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    meaningCoverage,
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [

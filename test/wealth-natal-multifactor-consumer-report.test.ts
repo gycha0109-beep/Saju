@@ -199,12 +199,18 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(run(3, 10).report).toEqual(run(3, 10).report);
   }, 30000);
 
-  it('requires distinct actual Wealth interpretation axes for MUR complete', () => {
+  it('judges Wealth completeness by required meaning areas, not a fixed paragraph count', () => {
     const x = run(3, 10);
+    expect(x.report.meaningCoverage.required.length).toBeGreaterThan(0);
+    expect(x.report.meaningCoverage.required).toContain('exchange');
+    expect(new Set(x.report.sections.map((s) => s.pattern)).size).toBe(x.report.sections.length);
+    const observedPaths = x.report.sections.flatMap((section) => section.observedFactPaths);
+    expect(new Set(observedPaths).size).toBe(observedPaths.length);
     if (x.report.state === 'complete') {
-      expect(x.report.sections).toHaveLength(3);
-      expect(new Set(x.report.sections.map((s) => s.axis)).size).toBe(3);
-      expect(new Set(x.report.sections.map((s) => s.pattern)).size).toBe(3);
+      expect(x.report.sections.length).toBeGreaterThan(0);
+      expect(x.report.meaningCoverage.missing).toEqual([]);
+      expect(x.report.meaningCoverage.required.every((area) =>
+        x.report.meaningCoverage.covered.includes(area))).toBe(true);
     } else {
       expect(x.report.missing.length).toBeGreaterThan(0);
       expect(x.report.state).toMatch(/partial|insufficient/);
