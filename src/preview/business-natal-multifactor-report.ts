@@ -374,6 +374,7 @@ function buildBusinessNatalReadingGuide(
   core: BusinessNatalMultifactorSection | undefined,
   supports: readonly BusinessNatalMultifactorSection[],
   state: Status,
+  meaningCoverage: BusinessMeaningCoverage,
 ): BusinessNatalReadingGuide | undefined {
   if (core === undefined || core.axis === 'coordination') return undefined;
   guard(core.sourceIds.length > 0 && core.upstreamClaimIds.length >= 2 &&
@@ -407,8 +408,8 @@ function buildBusinessNatalReadingGuide(
     ...supports.map((section, index) =>
       `또 다른 관점인 ‘${section.headline}’은 기존 관찰과 다른 ${supporting[index]!.distinctObservedPositions.join(' · ')}의 계산 사실을 추가해 구별합니다.`),
     ...(state === 'complete'
-      ? ['서로 다른 구조적 관점 세 가지를 확인했지만, 이것은 창업 적성·매출·사업 성공이나 실패를 판정하지 않습니다.']
-      : [`이 명식에서 독립적으로 설명할 수 있는 보조 관점은 ${supporting.length}개뿐이어서, 사업운 전체 종합 설명은 보류합니다.`]),
+      ? ['적용 가능한 핵심 의미 영역인 ' + meaningCoverage.covered.map((area) => BUSINESS_MEANING_LABEL[area]).join('·') + '을 실제 명식 근거로 연결했습니다. 이것은 창업 적성·매출·사업 성공이나 실패를 판정하지 않습니다.']
+      : ['확인된 핵심 의미 영역은 ' + (meaningCoverage.covered.map((area) => BUSINESS_MEANING_LABEL[area]).join('·') || '없음') + '이며, 연결되지 않은 영역은 별도로 표시합니다.']),
   ];
   return {
     title: '이 명식의 사업·실행 중심과 보조 관점',
@@ -447,44 +448,61 @@ export function buildBusinessNatalMultifactorReport(
     claims.every(c => selected.has(c.claimId)) &&
     (claims.length === 0 || selection.evidence !== undefined),
     'Business meaning not selected by existing ReadingIntent/EvidenceSelector');
-  // Canonical tenGods is unavailable with unknown birth time. Do not
-  // promote a scenario-based Claim into a complete person-level reading.
-  const result = snapshot.completeness.birthTimeKnown
-    ? claims.map(c => toSection(c, snapshot, execution, registry))
-        .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
-          (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
-    : [];
-  // Prefer the 3-input core. When not observed, a narrower two-input core can
-  // still be rendered, but completion needs two OTHER independently grounded axes.
-  const core = result.find(s => s.axis === 'core') ??
-    result.find(s => s.axis === 'execution') ??
-    result.find(s => s.axis === 'governance') ??
-    result.find(s => s.axis === 'preparation');
-  // A genuine source-bound coordination-only observation is visible as a PARTIAL
-  // reading, never promoted to a MUR core or a consumer product completion.
-  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
-  const chosen: BusinessNatalMultifactorSection[] = core
-    ? [core, ...(supportSelection?.supporting ?? [])]
-    : result.filter(section => section.axis === 'coordination').slice(0, 1);
+  // Visible/branch T5 still requires resolved whole-chart Ten-Gods.
+  // Shared hidden-stem T5 remains usable for resolved year/month/day when hour is unknown.
+  const result = claims
+    .map((claim) => toSection(claim, snapshot, execution, registry))
+    .sort((a, b) =>
+      AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
+      (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : a.channel === 'branches' ? 0 : 1),
+    );
+  const core = result.find((section) => section.axis === 'core') ??
+    result.find((section) => section.axis === 'execution') ??
+    result.find((section) => section.axis === 'governance') ??
+    result.find((section) => section.axis === 'preparation');
+  const coordination = result.find((section) => section.axis === 'coordination');
+  const requiredAreas = requiredBusinessMeaningAreas(snapshot, execution);
+  const anchor = core ?? coordination;
+  const supportSelection = anchor
+    ? selectBusinessMeaningSections(anchor, result, requiredAreas)
+    : undefined;
+  const chosen: BusinessNatalMultifactorSection[] = supportSelection?.sections ?? [];
+  const meaningCoverage = buildBusinessMeaningCoverage(requiredAreas, chosen);
   const missing: string[] = [];
-  if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
-  if(!core && chosen.length > 0) missing.push('중심 해석 근거가 없어 실제 확인된 조율 관점만 부분적으로 보여줍니다. 전체 사업운 종합으로 확장할 수 없습니다.');
-  if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
-    missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
+  if (!core) missing.push('출처 있는 원국 중심 복합 해석 축');
+  if (!core && chosen.length > 0) {
+    missing.push('중심 해석 근거가 없어 실제 확인된 조율 관점만 부분적으로 보여줍니다. 전체 사업운 종합으로 확장할 수 없습니다.');
   }
-  if(chosen.length < 3) {
-    const observed = chosen.map(s => `${AXIS_NAMES[s.axis]}(${s.channel === 'visible_stems' ? '천간' : '지지'})`);
-    missing.push(`이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}. 최소 유효 풀이에는 독립된 근거의 추가 해석 축 ${3 - chosen.length}개가 더 필요합니다.`);
+  if (requiredAreas.length === 0) {
+    missing.push('같은 관측 채널에서 두 개 이상의 사업 관련 십신 계열을 연결하는 근거가 확인되지 않았습니다.');
   }
+  if (meaningCoverage.missing.length > 0) {
+    missing.push(
+      '명식에서 확인된 사업 핵심 영역 중 ' +
+        meaningCoverage.missing.map((area) => BUSINESS_MEANING_LABEL[area]).join('·') +
+        ' 근거가 선택된 풀이에 연결되지 않았습니다.',
+    );
+  }
+  if (supportSelection && supportSelection.overlapOnlyCount > 0 && meaningCoverage.missing.length > 0) {
+    missing.push('추가 해석 후보가 기존 문단과 같은 계산 위치를 반복하여 독립 근거로 선택되지 않았습니다.');
+  }
+  const hasRequiredMeaning = requiredAreas.length > 0 && meaningCoverage.missing.length === 0;
   const state: Status = snapshot.completeness.birthTimeKnown &&
-    core !== undefined && chosen.length === 3
+    core !== undefined && hasRequiredMeaning
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly BusinessNatalMultifactorSection[] = chosen;
   const readingGuide = buildBusinessNatalReadingGuide(
-    core, core === undefined ? [] : chosen.slice(1), state,
+    core,
+    core === undefined ? [] : chosen.filter((section) => section.claimType !== core.claimType),
+    state,
+    meaningCoverage,
   );
-  if(!snapshot.completeness.birthTimeKnown) {
-    missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 사업의 다중 근거 T8 해석은 보류합니다.');
+  if (!snapshot.completeness.birthTimeKnown) {
+    missing.unshift(
+      result.some((section) => section.channel === 'hidden_stems')
+        ? '출생시각 미상: 시주 근거는 제외하고 확정된 연주·월주·일주 지장간에서 확인된 사업 해석만 부분 반영합니다.'
+        : '출생시각 미상: 시주가 필요한 천간·지지 대표 십신 근거가 미확정이므로 다중 근거 사업 해석은 보류합니다.',
+    );
   }
   return {
     snapshotId: snapshot.snapshotId,
@@ -498,6 +516,7 @@ export function buildBusinessNatalMultifactorReport(
     introduction: '실제 명식의 십신 관계를 바탕으로 산출과 실행, 운영 기준, 준비와 협업의 관계를 함께 살펴봅니다. 창업 적성이나 사업 성과를 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    meaningCoverage,
     ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
