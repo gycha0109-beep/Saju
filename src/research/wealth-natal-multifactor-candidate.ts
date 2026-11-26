@@ -1,5 +1,3 @@
-import { getTenGod } from 'manseryeok';
-import type { HeavenlyStem, TenGod } from '../contracts/calculation.js';
 import type { ClaimNarrativeProfile } from '../contracts/narrative.js';
 import type {
   InterpretationPack,
@@ -10,6 +8,17 @@ import type {
   SourceReference,
 } from '../contracts/interpretation.js';
 import { createWholeChartRegistrySnapshot } from '../interpretation/whole-chart-claims.js';
+import {
+  GENERAL_NATAL_HIDDEN_STEM_FAMILY_TEN_GODS as FAMILY_TEN_GODS,
+  GENERAL_NATAL_HIDDEN_STEM_SOURCE as HIDDEN_STEMS_SOURCE,
+  GENERAL_NATAL_HIDDEN_STEM_SLOTS as HIDDEN_STEM_SLOTS,
+  GENERAL_NATAL_HIDDEN_STEM_T5_METHOD_ID as HIDDEN_STEM_METHOD_ID,
+  GENERAL_NATAL_HIDDEN_STEM_T5_METHODOLOGY as WEALTH_NATAL_HIDDEN_STEM_T5_METHODOLOGY,
+  GENERAL_NATAL_HIDDEN_STEM_T5_RULE_SET_ID as HIDDEN_STEM_RULE_SET,
+  GENERAL_NATAL_HIDDEN_STEM_T5_VERSION as HIDDEN_STEM_METHOD_VERSION,
+  GENERAL_NATAL_HIDDEN_STEM_TEN_GOD_RULES as WEALTH_NATAL_HIDDEN_STEM_TEN_GOD_RULES,
+  generalHiddenStemPresenceCondition as hiddenStemPresenceCondition,
+} from './general-natal-hidden-stem-ten-god-candidate.js';
 import {
   GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
   GENERAL_NATAL_USEFUL_READING_SOURCE,
@@ -23,9 +32,6 @@ const EXISTING_WEALTH_VERSION = '0.2.0-research';
 const METHOD_ID = 'M-WEALTH-NATAL-MULTIFACTOR-RESOURCE-CHOICE-V1';
 export const WEALTH_MONTH_OUTPUT_METHOD_ID = 'M-WEALTH-NATAL-MONTH-OUTPUT-CONTEXT-V1';
 const RULE_SET = 'wealth-natal-source-bounded-multifactor';
-const HIDDEN_STEM_METHOD_ID = 'M-WEALTH-NATAL-HIDDEN-STEM-T5-OBSERVATION-V1';
-const HIDDEN_STEM_METHOD_VERSION = '0.1.0-research' as const;
-const HIDDEN_STEM_RULE_SET = 'wealth-natal-hidden-stem-ten-god-observation';
 type Family = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
 type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension' | 'context';
 type Channel = 'visible_stems' | 'branches' | 'hidden_stems';
@@ -158,188 +164,12 @@ const SOURCE_REFS: RuleDefinition['sourceRefs'] = [
     notes: 'Research-only classical cross-reference for generation/control relations.',
   },
 ];
-const HIDDEN_STEMS_SOURCE = Object.freeze({
-  sourceId: 'SRC-GENERAL-NATAL-YUANHAI-HIDDEN-STEMS-WIKISOURCE',
-  sourceType: 'classical_text',
-  title: '\u6DF5\u6D77\u5B50\u5E73',
-  language: 'zh-Hant',
-  locator: {
-    section:
-      '\u8AD6\u5929\u5E72\u5730\u652F\u6697\u85CF\u7E3D\u8A23 / \u53C8\u5730\u652F\u85CF\u9041\u6B4C',
-  },
-  url: 'https://zh.wikisource.org/zh-hant/%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3',
-  accessedAt: '2026-11-21',
-  provenanceTier: 'cross_reference',
-  rights: { copyrightStatus: 'public_domain', reusePolicy: 'paraphrase_only' },
-  notes:
-    'The Wikisource page marks the transcription incomplete and its scan source unverified. Used only to identify hidden-stem contents and positions; not as authority for strength, prominence, fortune polarity, or outcomes.',
-} satisfies SourceReference);
-const HIDDEN_STEM_SOURCE_REFS: RuleDefinition['sourceRefs'] = [
-  {
-    sourceId: GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId,
-    supportType: 'interpretive_basis',
-    notes:
-      'Provides the day-master to Ten-God correspondence; only neutral family mapping is used.',
-  },
-  {
-    sourceId: HIDDEN_STEMS_SOURCE.sourceId,
-    supportType: 'interpretive_basis',
-    notes:
-      'Lists hidden stems by branch; used only for the distinct hidden_stems observation channel.',
-  },
-];
-const HIDDEN_STEM_SLOTS = ['year', 'month', 'day', 'hour'] as const;
-const HIDDEN_STEM_INDEXES = [0, 1, 2] as const;
-const DAY_STEMS: readonly HeavenlyStem[] = [
-  '\uAC11',
-  '\uC744',
-  '\uBCD1',
-  '\uC815',
-  '\uBB34',
-  '\uAE30',
-  '\uACBD',
-  '\uC2E0',
-  '\uC784',
-  '\uACC4',
-];
-const FAMILY_TEN_GODS: Readonly<Record<Family, readonly TenGod[]>> = {
-  peer: ['\uBE44\uACAC', '\uAC81\uC7AC'],
-  resource: ['\uC815\uC778', '\uD3B8\uC778'],
-  output: ['\uC2DD\uC2E0', '\uC0C1\uAD00'],
-  wealth: ['\uC815\uC7AC', '\uD3B8\uC7AC'],
-  officer: ['\uC815\uAD00', '\uD3B8\uAD00'],
-};
-export const WEALTH_NATAL_HIDDEN_STEM_T5_METHODOLOGY: MethodologyDefinition = Object.freeze({
-  methodologyId: HIDDEN_STEM_METHOD_ID,
-  version: HIDDEN_STEM_METHOD_VERSION,
-  family: 'ten_gods',
-  name: 'Hidden-stem Ten-God family observation (research)',
-  description:
-    'Maps each canonical hidden stem against the resolved day master and records family presence in a third, independent observation channel.',
-  assumptions: [
-    'Hidden stems remain separate from visible stems and branch representative Ten-God observations.',
-    'Each hidden stem is mapped against the exact resolved day master; only family presence is recorded.',
-    'No hidden-stem strength, dominance, rooting, favorable/unfavorable polarity, or financial outcome is inferred.',
-    'A resolved day master and resolved year, month, and day hidden-stem facts are sufficient for observations independent of the birth hour.',
-    'An unavailable hour hidden-stem fact is excluded locally; it does not invalidate resolved year, month, or day observations.',
-    'Ambiguous required pillar facts remain unresolved and do not produce a confirmed T5 observation.',
-    'Wealth T8 combinations may consume hidden-stem T5 claims only with other hidden_stems claims from the same canonical chart.',
-    'This is an unreviewed internal research candidate and is not admitted to Product/Commerce.',
-  ],
-  requiredFactTypes: [
-    'derivedFacts.dayMaster',
-    'derivedFacts.hiddenStems.year',
-    'derivedFacts.hiddenStems.month',
-    'derivedFacts.hiddenStems.day',
-  ],
-  optionalFactTypes: ['derivedFacts.hiddenStems.hour'],
-  sourceIds: [GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, HIDDEN_STEMS_SOURCE.sourceId],
-  status: 'research',
-});
 const QUALITY: RuleDefinition['quality'] = {
   provenanceQuality: 'secondary_only',
   testCoverage: 'fixture_matrix',
   methodologyStability: 'contested',
   reviewerStatus: 'unreviewed',
 };
-
-function hiddenStemPresenceCondition(
-  tenGods: readonly TenGod[],
-  slots: readonly (typeof HIDDEN_STEM_SLOTS)[number][] = HIDDEN_STEM_SLOTS,
-): RuleExpression {
-  const byDayMaster: RuleExpression[] = DAY_STEMS.map((dayStem) => {
-    const allowedHiddenStems = DAY_STEMS.filter((hiddenStem) =>
-      tenGods.includes(getTenGod(dayStem, hiddenStem)),
-    );
-    return {
-      op: 'and' as const,
-      expressions: [
-        {
-          op: 'eq' as const,
-          left: { kind: 'input' as const, key: 'dayMaster', path: 'value' },
-          right: { kind: 'literal' as const, value: dayStem },
-        },
-        {
-          op: 'or' as const,
-          expressions: slots.flatMap((slot) =>
-            HIDDEN_STEM_INDEXES.map((index) => ({
-              op: 'in' as const,
-              value: {
-                kind: 'input' as const,
-                key: 'hidden' + slot[0]!.toUpperCase() + slot.slice(1),
-                path: String(index),
-              },
-              set: allowedHiddenStems,
-            })),
-          ),
-        },
-      ],
-    };
-  });
-  return {
-    op: 'and',
-    expressions: [
-      { op: 'exists', value: { kind: 'input', key: 'dayMaster', path: 'value' } },
-      { op: 'or', expressions: byDayMaster },
-    ],
-  };
-}
-function hiddenStemT5Rule(family: Family): RuleDefinition {
-  return {
-    ruleId: 'RULE-WEALTH-NATAL-T5-' + family.toUpperCase() + '-HIDDEN-STEMS',
-    version: EXISTING_WEALTH_VERSION,
-    ruleSetId: HIDDEN_STEM_RULE_SET,
-    taxonomy: { tier: 'T5', category: 'ten_gods', subcategory: family + '_hidden_stems' },
-    methodologyRef: { id: HIDDEN_STEM_METHOD_ID, version: HIDDEN_STEM_METHOD_VERSION },
-    title: family + ' Ten-God family observed in hidden stems',
-    description:
-      'Records hidden-stem family presence as a separate observation channel; it does not score prominence or predict an outcome.',
-    inputs: [
-      {
-        key: 'dayMaster',
-        source: 'derived_fact',
-        pathOrClaimType: 'derivedFacts.dayMaster',
-        acceptedStatuses: ['resolved'],
-        required: true,
-        ambiguityBehavior: 'scenario_preserving',
-      },
-      ...HIDDEN_STEM_SLOTS.map((slot) => ({
-        key: 'hidden' + slot[0]!.toUpperCase() + slot.slice(1),
-        source: 'derived_fact' as const,
-        pathOrClaimType: 'derivedFacts.hiddenStems.' + slot,
-        acceptedStatuses:
-          slot === 'hour' ? (['resolved', 'unavailable'] as const) : (['resolved'] as const),
-        required: slot !== 'hour',
-        ambiguityBehavior: 'scenario_preserving' as const,
-      })),
-    ],
-    condition: hiddenStemPresenceCondition(FAMILY_TEN_GODS[family]),
-    output: {
-      claimType: 'TEN_GOD_' + family.toUpperCase() + '_HIDDEN_STEMS_THEME',
-      subject: 'natal_chart',
-      predicate: 'ten_god_theme',
-      value: {
-        family,
-        channel: 'hidden_stems',
-        headline: family + ' family observed in hidden stems',
-        summary:
-          'A hidden-stem Ten-God family is observed. This is a distinct positional observation, not a strength or outcome judgment.',
-        consumerSection: 'wealth',
-        fortunePolarity: 'not_determined',
-        dominance: 'not_scored',
-      },
-      polarity: 'neutral',
-      emphasis: 'moderate',
-      tags: ['research', 'ten-god-theme', 'hidden-stems', 'non-predictive'],
-    },
-    sourceRefs: HIDDEN_STEM_SOURCE_REFS,
-    quality: QUALITY,
-    status: 'research',
-  };
-}
-export const WEALTH_NATAL_HIDDEN_STEM_TEN_GOD_RULES: readonly RuleDefinition[] = Object.freeze(
-  (['peer', 'resource', 'output', 'wealth', 'officer'] as const).map(hiddenStemT5Rule),
-);
 
 export const WEALTH_NATAL_MULTIFACTOR_METHODOLOGY: MethodologyDefinition = Object.freeze({
   methodologyId: METHOD_ID,
