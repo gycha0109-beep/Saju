@@ -185,8 +185,8 @@ export const BUSINESS_NATAL_MULTIFACTOR_METHODOLOGY: MethodologyDefinition = Obj
     'Business structures can frame execution and governance questions, but cannot determine ability, profits, entrepreneurship success, income, health, or future events.',
     'This methodology is an unreviewed internal research candidate and is not admitted to Product/Commerce.',
   ],
-  requiredFactTypes: ['derivedFacts.tenGods'],
-  optionalFactTypes: ['derivedFacts.dayMaster', 'derivedFacts.hiddenStems'],
+  requiredFactTypes: [],
+  optionalFactTypes: ['derivedFacts.tenGods', 'derivedFacts.dayMaster', 'derivedFacts.hiddenStems'],
   sourceIds: [GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, GENERAL_NATAL_CONCLUSION_SOURCE.sourceId, GENERAL_NATAL_HIDDEN_STEM_SOURCE.sourceId],
   status: 'research',
 });

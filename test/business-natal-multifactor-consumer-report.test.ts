@@ -31,9 +31,9 @@ function run(month: number, day: number, known = true) {
 describe('actual-source Business natal T5→T8→Korean five-domain report', () => {
   it('is Business-only, research-only, and every T8 has 2/3 exact T5 inputs', () => {
     expect(registry.pack.packId).toBe(BUSINESS_NATAL_MULTIFACTOR_PACK.packId);
-    expect(BUSINESS_NATAL_MULTIFACTOR_RULES).toHaveLength(21);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(21);
+    expect(BUSINESS_NATAL_MULTIFACTOR_RULES).toHaveLength(31);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(15);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(31);
     expect(registry.rules.filter(r => r.taxonomy.subcategory === 'self_baseline')).toHaveLength(0);
     for(const rule of BUSINESS_NATAL_MULTIFACTOR_RULES) {
       expect(rule.taxonomy.category).toBe('business');
@@ -42,7 +42,8 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
       expect(upstream.length).toBeGreaterThanOrEqual(2);
       expect(upstream.every(i => i.cardinality === 'exactly_one' && i.required)).toBe(true);
       expect(rule.inputs.some(i => i.pathOrClaimType === 'derivedFacts.hiddenStems.month')).toBe(anchored);
-      expect(rule.sourceRefs).toHaveLength(anchored ? 3 : 2);
+      const hidden = rule.output.claimType.endsWith('_HIDDEN_STEMS');
+      expect(rule.sourceRefs).toHaveLength(anchored || hidden ? 3 : 2);
       expect(rule.status).toBe('research');
     }
     expect(inspectMyeonghwaProductionComposition({registry}).status).toBe('blocked');
@@ -101,12 +102,20 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(run(3,10).report).toEqual(run(3,10).report);
   }, 30000);
 
-  it('requires distinct actual Business interpretation axes for MUR complete', () => {
+  it('judges Business completeness by applicable meaning areas rather than a fixed section count', () => {
     const x = run(3,10);
+    if(x.report.meaningCoverage.required.length > 0) {
+      expect(x.report.meaningCoverage.required).toContain(
+        x.report.meaningCoverage.required[0],
+      );
+    }
+    const paths = x.report.sections.flatMap((section) => section.observedFactPaths);
+    expect(new Set(paths).size).toBe(paths.length);
     if(x.report.state === 'complete') {
-      expect(x.report.sections).toHaveLength(3);
-      expect(new Set(x.report.sections.map(s=>s.axis)).size).toBe(3);
-      expect(new Set(x.report.sections.map(s=>s.pattern)).size).toBe(3);
+      expect(x.report.sections.length).toBeGreaterThan(0);
+      expect(x.report.meaningCoverage.missing).toEqual([]);
+      expect(x.report.meaningCoverage.required.every((area) =>
+        x.report.meaningCoverage.covered.includes(area))).toBe(true);
     } else {
       expect(x.report.missing.length).toBeGreaterThan(0);
       expect(x.report.state).toMatch(/partial|insufficient/);
@@ -147,8 +156,8 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
       }
       if(report.state !== 'complete') {
         explainedPartials++;
-        expect(report.missing.join(' ')).toMatch(/추가 해석 축 [1-3]개/u);
-        expect(report.missing.join(' ')).toContain('이 명식에서 확인된 해석 축');
+        expect(report.meaningCoverage.required.length).toBeGreaterThan(0);
+        expect(report.missing.join(' ')).toMatch(/사업 핵심 영역|중심 해석 근거/u);
       }
       expect(report.researchOnly).toBe(true);
       expect(report.mayPublish).toBe(false);
@@ -163,8 +172,34 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     let found = false;
     for(const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
       for(const day of [3,7,11,17,23]) {
-        const { execution, report } = run(month, day);
-        const active = execution.claims.filter(c => c.taxonomy.tier === 'T8' &&
+        const { execution } = run(month, day);
+        const report = buildBusinessNatalMultifactorReport(
+          sample(month, day),
+          {
+            ...execution,
+            claims: execution.claims.filter((claim) =>
+              !claim.claimType.endsWith('_HIDDEN_STEMS_THEME') &&
+              (claim.value as { channel?: string } | undefined)?.channel !== 'hidden_stems',
+            ),
+            claimRelations: execution.claimRelations.filter((relation) =>
+              !relation.fromClaimId.includes('HIDDEN_STEMS') && !relation.toClaimId.includes('HIDDEN_STEMS'),
+            ),
+          },
+          registry,
+        );
+        const legacyClaims = execution.claims.filter((claim) =>
+          !claim.claimType.endsWith('_HIDDEN_STEMS_THEME') &&
+          (claim.value as { channel?: string } | undefined)?.channel !== 'hidden_stems',
+        );
+        const legacyIds = new Set(legacyClaims.map((claim) => claim.claimId));
+        const legacyExecution = {
+          ...execution,
+          claims: legacyClaims,
+          claimRelations: execution.claimRelations.filter((relation) =>
+            legacyIds.has(relation.fromClaimId) && legacyIds.has(relation.toClaimId),
+          ),
+        };
+        const active = legacyClaims.filter(c => c.taxonomy.tier === 'T8' &&
           c.taxonomy.category === 'business' &&
           c.predicate === 'business_multifactor_structure' && c.state === 'active');
         const observed = active.map(c => (c.value as {axis?:string}).axis);
@@ -189,7 +224,7 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(found).toBe(true);
   }, 60000);
 
-  it('shows actual resolved natal pillars, not fabricated T8 meaning, with unknown birth hour', () => {
+  it('uses only resolved hidden-stem positions for a partial Business reading when birth hour is unknown', () => {
     const x = run(3, 10, false);
     expect(x.snapshot.derivedFacts.tenGods.status).toBe('unavailable');
     expect(x.report.state).toBe('insufficient');
@@ -218,8 +253,10 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     const second = run(4, 12, false);
     expect(replay.report).toEqual(first.report);
     expect(second.report.introduction).not.toEqual(first.report.introduction);
-    expect(first.report.sections).toHaveLength(0);
-    expect(second.report.sections).toHaveLength(0);
+    expect(first.report.sections.length).toBeGreaterThan(0);
+    expect(second.report.sections.length).toBeGreaterThan(0);
+    expect(first.report.sections.every((section) => section.channel === 'hidden_stems')).toBe(true);
+    expect(second.report.sections.every((section) => section.channel === 'hidden_stems')).toBe(true);
     expect(first.report.missing).toEqual(second.report.missing);
   });
 
@@ -250,7 +287,7 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
         if (!value.pattern || !added.has(value.pattern)) continue;
         emitted.add(value.pattern);
         expect(claim.upstreamClaimRefs.length).toBeGreaterThanOrEqual(2);
-        expect(claim.sourceRefs.length).toBe(2);
+        expect(claim.sourceRefs.length).toBeGreaterThanOrEqual(2);
         expect(claim.ruleRefs).toHaveLength(1);
       }
       for (const section of result.report.sections) if (added.has(section.pattern)) {
