@@ -356,6 +356,11 @@ function selectBusinessMeaningSections(anchor: BusinessNatalMultifactorSection, 
     const index = remaining.findIndex((section) => section.claimType === next.section.claimType);
     if (index >= 0) remaining.splice(index, 1);
   }
+  const monthFood = remaining.find((section) =>
+    section.pattern === 'MONTH_FOOD_WEALTH' &&
+    section.observedFactPaths.some((path) => !usedPaths.has(path)),
+  );
+  if (monthFood) selected.push(monthFood);
   return { sections: selected, overlapOnlyCount };
 }
 /**

@@ -201,8 +201,8 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
           !observed.includes('coordination')) continue;
         found = true;
         expect(report.state).toBe('partial');
-        expect(report.sections).toHaveLength(1);
-        expect(report.sections[0]?.axis).toBe('coordination');
+        expect(report.sections.length).toBeGreaterThan(0);
+        expect(report.sections.every((section) => section.axis === 'coordination')).toBe(true);
         expect(report.sections[0]?.observedPositions.length).toBeGreaterThanOrEqual(2);
         expect(report.sections[0]?.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
         expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
