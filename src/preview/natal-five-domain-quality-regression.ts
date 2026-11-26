@@ -242,7 +242,7 @@ export function runNatalS6QualityRegression(): {
         caseId + '/' + domain.domain + ': incomplete Korean meaning or provenance');
       }
       if (scenario === 'unknown_time') {
-        if (domain.domain === 'wealth' && domain.sections.length > 0) {
+        if ((domain.domain === 'wealth' || domain.domain === 'business') && domain.sections.length > 0) {
           requireEvidence(
             domain.state === 'partial' &&
               domain.missing.length > 0 &&
