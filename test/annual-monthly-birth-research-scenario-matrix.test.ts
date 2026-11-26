@@ -93,7 +93,19 @@ describe('annual/monthly temporal scenario and evidence-link matrix', () => {
       expect(result.report.wholeChartGrounding.evidenceBundleHash, scenario.id).toBeTruthy();
       expect(result.report.natalContext.snapshotId, scenario.id).toBe(snapshot.snapshotId);
       expect(result.report.natalContext.calculationHash, scenario.id).toBe(snapshot.calculationHash);
-      expect(result.report.natalContext.sections.length, scenario.id).toBeGreaterThan(0);
+      expect(result.report.natalContext.availability, scenario.id).toBe(
+        result.report.natalContext.sections.length === 0
+          ? 'insufficient_evidence'
+          : 'bounded_natal_t8_research',
+      );
+      if (result.report.natalContext.sections.length === 0) {
+        expect(
+          result.report.temporalNatalComparison.every((comparison) =>
+            comparison.natalMatches.length === 0,
+          ),
+          scenario.id + '/no unsupported natal comparison',
+        ).toBe(true);
+      }
 
       for (const section of result.report.natalContext.sections) {
         expect(section.claimId, scenario.id + '/natal claim').toBeTruthy();
