@@ -232,7 +232,7 @@ function positions(snapshot: CanonicalSajuSnapshot, channel: Channel, families: 
         return [
           {
             family,
-            display: SLOT_NAMES[slot] + ' ' + '\uC9C0\uC7A5\uAC04' + ' ' + stem + ' ' + tenGod,
+            display: SLOT_NAMES[slot] + ' ' + '\uC9C0\uC7A5\uAC04' + ' ' + stem + '(' + tenGod + ')',
             factPath: 'derivedFacts.hiddenStems.' + slot + '.value.' + index,
           },
         ];
